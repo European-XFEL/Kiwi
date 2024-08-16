@@ -1,0 +1,537 @@
+import React from "react";
+
+import { useEffect, useRef, useState } from "react";
+
+import { useAppDispatch } from "../AppHooks";
+
+import { GuiServerConnector } from "../GuiServerConnector";
+
+import { AccessLevel } from "../karabo_data/AccessLevel";
+import { GuiServerInfo } from "../karabo_data/GuiServerInfo";
+
+import AuthServerClient from "../http_clients/AuthServerClient";
+import AuthenticationResult from "../http_data/AuthenticationResult";
+
+import { store } from "../store";
+import { setLoggedIn } from "../store/slices/globalAppStateSlice";
+
+import {
+  Box,
+  Button,
+  Grid,
+  Divider,
+  Paper,
+  Stack,
+  TextField,
+  CircularProgress,
+  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Checkbox,
+  FormControlLabel,
+  FormGroup,
+} from "@mui/material";
+
+enum ActivityStatus {
+  NO_ACTIVITY,
+  PROBING_SERVER,
+  CONNECTING_SERVER,
+  AUTH_USER,
+}
+
+const LoginPanel: React.FC = () => {
+  // The login panel dispatches setLoggedIn actions upon successful logins.
+  const dispatch = useAppDispatch();
+
+  //
+  // Panel state - no need to use the AppState store for these.
+  //
+  const [activityStatus, setActivityStatus] = useState<ActivityStatus>(
+    ActivityStatus.NO_ACTIVITY
+  );
+  const [errorMsg, setErrorMessage] = useState("");
+  const [probedServerInfo, setProbedServerInfo] =
+    useState<GuiServerInfo | null>(null);
+  const [userName, setUserName] = useState("");
+  const [passwd, setPasswd] = useState("");
+
+  //
+  // Refs to DOM elements
+  //
+  const hostRef = useRef<HTMLInputElement>(null);
+  const portRef = useRef<HTMLInputElement>(null);
+  const userRef = useRef<HTMLInputElement>(null);
+  const accessLevelRef = useRef<HTMLInputElement>(null);
+  const passwdRef = useRef<HTMLInputElement>(null);
+  const loginRef = useRef<HTMLButtonElement>(null);
+
+  // Refs to values to be preserved between renders of the component
+  const authServerURLRef = useRef("");
+
+  //
+  // ProbeServer success and error handlers.
+  //
+  const onProbeSuccess = (serverInfoHash: GuiServerInfo) => {
+    setProbedServerInfo(serverInfoHash);
+    setErrorMessage("");
+    setActivityStatus(ActivityStatus.NO_ACTIVITY);
+  };
+
+  const onProbeFailure = (errMsg: string) => {
+    setErrorMessage(errMsg);
+    setActivityStatus(ActivityStatus.NO_ACTIVITY);
+    setProbedServerInfo(null);
+  };
+
+  const doProbeServer = () => {
+    // It can be safely assumed that the Refs have been initialized and point
+    // to the DOM element.
+    const hostValue = hostRef.current!.value.trim();
+    const portValue = parseInt(portRef.current!.value);
+    if (!hostValue || !portValue) {
+      // At least the host or the port is empty; nothing to do.
+      return;
+    }
+    setActivityStatus(ActivityStatus.PROBING_SERVER);
+    setErrorMessage("");
+    GuiServerConnector.inst.probeServer(
+      hostValue,
+      portValue,
+      onProbeSuccess,
+      onProbeFailure
+    );
+  };
+
+  //
+  // Panel initialization
+  //
+  useEffect(() => {
+    if (!authServerURLRef.current) {
+      // The component is being initialized.
+
+      // Loads the AuthenticationServer url - no need to do it more than once.
+      authServerURLRef.current = store.getState().appSettings.auth_server_url;
+
+      // Loads the last used host:port on initialization.
+      const host = localStorage.getItem("lastHost") || "localhost";
+      let port = 44444;
+      const lastPort = parseInt(localStorage.getItem("lastPort") || "");
+      if (!isNaN(lastPort)) {
+        port = lastPort;
+      }
+      if (hostRef.current) {
+        hostRef.current.value = host;
+        hostRef.current.focus();
+      }
+      if (portRef.current) {
+        portRef.current.value = `${port}`;
+      }
+      // Call probeServer for the initial host:port combination.
+      setActivityStatus(ActivityStatus.PROBING_SERVER);
+      setErrorMessage("");
+      GuiServerConnector.inst.probeServer(
+        host,
+        port,
+        onProbeSuccess,
+        onProbeFailure
+      );
+    } else {
+      // The component is being updated - focus the first field of the
+      // credentials panel (username) if the current host:port is for a valid
+      // GUI Server connection and the focus in the host:port panel.
+      if (
+        userRef.current &&
+        probedServerInfo &&
+        (document.activeElement === hostRef.current ||
+          document.activeElement === portRef.current)
+      ) {
+        userRef.current.focus();
+      }
+    }
+  }, [probedServerInfo]);
+
+  //
+  // Latched probing of GUI Server specified by (hostname, port)
+  //
+  let latchTimerID = 0;
+
+  const onHostnameChanged = (_e: React.ChangeEvent<HTMLInputElement>) => {
+    if (latchTimerID > 0) {
+      // There's an ongoing wait for launching a server probe; reset it
+      clearTimeout(latchTimerID);
+    }
+    if (errorMsg) {
+      setErrorMessage("");
+    }
+    latchTimerID = window.setTimeout(doProbeServer, 900);
+  };
+
+  const onPortChanged = (_e: React.ChangeEvent<HTMLInputElement>) => {
+    if (latchTimerID > 0) {
+      // There's an ongoing wait for launching a server probe; reset it
+      clearTimeout(latchTimerID);
+    }
+    if (errorMsg) {
+      setErrorMessage("");
+    }
+    latchTimerID = window.setTimeout(doProbeServer, 900);
+  };
+
+  //
+  // User login (with and without authentication)
+  //
+  const doLogin = () => {
+    const hostValue = hostRef.current!.value.trim();
+    const portValue = parseInt(portRef.current!.value);
+    if (probedServerInfo?.authRequired) {
+      setActivityStatus(ActivityStatus.AUTH_USER);
+      // Authenticate the user and if successfull, start the session with
+      // the GUI Server.
+      authenticateUser()
+        .then((authResult: AuthenticationResult) => {
+          setActivityStatus(ActivityStatus.NO_ACTIVITY);
+          if (!authResult.success) {
+            setErrorMessage(`Auth error: ${authResult.error_msg!}`);
+          } else {
+            const once_token = authResult.once_token!;
+            const refresh_token = authResult.refresh_token!;
+            setActivityStatus(ActivityStatus.CONNECTING_SERVER);
+            GuiServerConnector.inst.startAuthSession(
+              hostValue,
+              portValue,
+              once_token,
+              refresh_token,
+              onAuthSessionStarted,
+              onSessionStartFailure
+            );
+          }
+        })
+        .catch((error) => {
+          setActivityStatus(ActivityStatus.NO_ACTIVITY);
+          setErrorMessage(`Auth error: ${error.message}`);
+        });
+    } else {
+      // Non authenticated login
+      setActivityStatus(ActivityStatus.CONNECTING_SERVER);
+      GuiServerConnector.inst.startNonAuthSession(
+        hostValue,
+        portValue,
+        userName,
+        onNonAuthSessionStarted,
+        onSessionStartFailure
+      );
+    }
+  };
+
+  const onAuthSessionStarted = (
+    accessLevel: AccessLevel,
+    host: string,
+    port: number,
+    topic: string,
+    serverVersion: string
+  ) => {
+    localStorage.setItem("lastHost", host);
+    localStorage.setItem("lastPort", `${port}`);
+    setActivityStatus(ActivityStatus.NO_ACTIVITY);
+    dispatch(
+      setLoggedIn({
+        accessLevel: accessLevel,
+        loggedUser: userName,
+        guiServerHost: host,
+        guiServerPort: port,
+        guiServerTopic: topic,
+        guiServerVersion: serverVersion,
+      })
+    );
+  };
+
+  const onNonAuthSessionStarted = (
+    host: string,
+    port: number,
+    topic: string,
+    serverVersion: string
+  ) => {
+    localStorage.setItem("lastHost", host);
+    localStorage.setItem("lastPort", `${port}`);
+    setActivityStatus(ActivityStatus.NO_ACTIVITY);
+    dispatch(
+      setLoggedIn({
+        accessLevel: parseInt(accessLevelRef.current!.value),
+        loggedUser: userName,
+        guiServerHost: host,
+        guiServerPort: port,
+        guiServerTopic: topic,
+        guiServerVersion: serverVersion,
+      })
+    );
+  };
+
+  const onSessionStartFailure = (errMsg: string) => {
+    setActivityStatus(ActivityStatus.NO_ACTIVITY);
+    setErrorMessage(`Login error: ${errMsg}`);
+  };
+
+  const authenticateUser = async (): Promise<AuthenticationResult> => {
+    const authCli = new AuthServerClient(authServerURLRef.current);
+    const authRes = await authCli.authenticateUser({
+      username: userName,
+      password: passwd,
+    });
+    return authRes;
+  };
+
+  //
+  // Rendering of sections of the Login panel
+  //
+  const renderStatusBox = () => {
+    if (errorMsg) {
+      return (
+        <Box sx={{ flexGrow: 1, p: 1, color: "error.main" }}>
+          <Typography variant="body2">{errorMsg}</Typography>
+        </Box>
+      );
+    }
+
+    let statusText = "";
+    let inProgress = false;
+
+    switch (activityStatus) {
+      case ActivityStatus.AUTH_USER:
+        statusText = "Authenticating user ...";
+        inProgress = true;
+        break;
+      case ActivityStatus.CONNECTING_SERVER:
+        statusText = "Connecting to GUI Server ...";
+        inProgress = true;
+        break;
+      case ActivityStatus.PROBING_SERVER:
+        statusText = "Probing GUI Server ...";
+        inProgress = true;
+        break;
+    }
+
+    if (inProgress) {
+      return (
+        <React.Fragment>
+          <CircularProgress size={24} />
+          <Box sx={{ flexGrow: 1, p: 1 }}>
+            <Typography variant="body2">{statusText}</Typography>
+          </Box>
+        </React.Fragment>
+      );
+    } else {
+      return (
+        <Box sx={{ flexGrow: 1, p: 1 }}>
+          <Typography variant="body2">{statusText}</Typography>
+        </Box>
+      );
+    }
+  };
+
+  const renderTopicLabel = () => {
+    if (probedServerInfo && probedServerInfo.topic) {
+      return <Box>Topic: {probedServerInfo.topic}</Box>;
+    } else {
+      return <Box></Box>;
+    }
+  };
+
+  const renderLoginButton = () => {
+    let disabled = true;
+    if (activityStatus === ActivityStatus.NO_ACTIVITY) {
+      // The login button can only be active when there's no ongoing background
+      // activity status.
+      if (
+        probedServerInfo &&
+        probedServerInfo.authRequired &&
+        userName &&
+        passwd
+      ) {
+        // A GUI Server with authenticated login, a user name and a password are
+        // specified - login is possible.
+        disabled = false;
+      } else if (
+        probedServerInfo &&
+        !probedServerInfo.authRequired &&
+        userName
+      ) {
+        // A GUI Server with non authenticated login and a user name are
+        // specified - login is possible.
+        disabled = false;
+      }
+    }
+    if (disabled) {
+      return (
+        <Button ref={loginRef} variant="contained" disabled>
+          Login
+        </Button>
+      );
+    } else {
+      return (
+        <Button
+          ref={loginRef}
+          variant="contained"
+          onClick={() => {
+            doLogin();
+          }}
+        >
+          Login
+        </Button>
+      );
+    }
+  };
+
+  const renderCredentialsPanel = () => {
+    if (probedServerInfo && probedServerInfo.authRequired) {
+      return (
+        <React.Fragment>
+          <Box>User Authenticated Login</Box>
+          <Divider />
+          <Grid container spacing={2} sx={{ alignItems: "flex-end" }}>
+            <Grid item xs={12}>
+              <TextField
+                label="Username"
+                inputRef={userRef}
+                variant="standard"
+                sx={{ width: "50%" }}
+                onChange={() => {
+                  if (errorMsg) {
+                    setErrorMessage("");
+                  }
+                  setUserName(userRef.current!.value);
+                }}
+              ></TextField>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="Password"
+                inputRef={passwdRef}
+                variant="standard"
+                type="password"
+                sx={{ width: "50%" }}
+                onChange={() => {
+                  if (errorMsg) {
+                    setErrorMessage("");
+                  }
+                  setPasswd(passwdRef.current!.value);
+                }}
+                onKeyUp={(evt: React.KeyboardEvent<HTMLDivElement>) => {
+                  if (evt.key === "Enter" && !loginRef.current!.disabled) {
+                    // User pressed Enter in the password field while login is
+                    // enabled. Go ahead and trigger the login.
+                    doLogin();
+                  }
+                }}
+              ></TextField>
+            </Grid>
+            <Grid item xs={12} sx={{ marginTop: 4 }}>
+              <FormGroup>
+                <FormControlLabel
+                  control={<Checkbox />}
+                  label="Remember Login"
+                  labelPlacement="end"
+                />
+              </FormGroup>
+            </Grid>
+          </Grid>
+        </React.Fragment>
+      );
+    } else if (probedServerInfo) {
+      return (
+        <React.Fragment>
+          <Box>Access Level Login</Box>
+          <Divider />
+          <Grid container spacing={2} sx={{ alignItems: "flex-end" }}>
+            <Grid item xs={12}>
+              <TextField
+                label="Username"
+                inputRef={userRef}
+                variant="standard"
+                sx={{ width: "50%" }}
+                onChange={() => {
+                  if (errorMsg) {
+                    setErrorMessage("");
+                  }
+                  setUserName(userRef.current!.value);
+                }}
+              ></TextField>
+            </Grid>
+            <Grid item xs={12}>
+              <FormControl variant="standard" sx={{ width: "50%" }}>
+                <InputLabel id="access_level_label">Access Level</InputLabel>
+                <Select
+                  labelId="access_level_label"
+                  label="Access Level"
+                  inputRef={accessLevelRef}
+                >
+                  <MenuItem value="0">{AccessLevel[0]}</MenuItem>
+                  <MenuItem value="1">{AccessLevel[1]}</MenuItem>
+                  <MenuItem value="2">{AccessLevel[2]}</MenuItem>
+                  <MenuItem value="3">{AccessLevel[3]}</MenuItem>
+                  <MenuItem value="4">{AccessLevel[4]}</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+        </React.Fragment>
+      );
+    }
+    // When there's no ProbedServerInfo available nothing is rendered.
+    // Might be used to display login instructions later.
+  };
+
+  //
+  // Login panel rendering
+  //
+  return (
+    <Paper elevation={8} sx={{ padding: "0.5em" }}>
+      <Box>
+        <Paper square={true} sx={{ p: 1, bgcolor: "primary.main" }}>
+          Login to GUI Server
+        </Paper>
+      </Box>
+      <Stack spacing={0.2} sx={{ marginBottom: 3, marginTop: 3, p: 1 }}>
+        <Box>GUI Server</Box>
+        <Divider />
+        <Grid container spacing={2} sx={{ alignItems: "flex-end" }}>
+          <Grid item xs={12}>
+            <TextField
+              label="Hostname"
+              inputRef={hostRef}
+              variant="standard"
+              sx={{ width: "92%" }}
+              onChange={onHostnameChanged}
+            ></TextField>
+          </Grid>
+          <Grid item xs={3}>
+            <TextField
+              label="Port"
+              inputRef={portRef}
+              variant="standard"
+              type="number"
+              sx={{ width: "92%" }}
+              onChange={onPortChanged}
+            ></TextField>
+          </Grid>
+          <Grid item sm={8} sx={{ textAlign: "right" }}>
+            {renderTopicLabel()}
+          </Grid>
+        </Grid>
+      </Stack>
+      <Stack spacing={0.2} sx={{ p: 1, marginBottom: 2 }}>
+        {renderCredentialsPanel()}
+      </Stack>
+      <Divider />
+      <Box sx={{ p: 1, display: "flex" }}>
+        <Box sx={{ flexGrow: 1, display: "flex", alignItems: "center" }}>
+          {renderStatusBox()}
+        </Box>
+        {renderLoginButton()}
+      </Box>
+    </Paper>
+  );
+};
+
+export default LoginPanel;
