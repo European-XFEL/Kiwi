@@ -4,7 +4,7 @@ import GUIServerHostInfo from "../http_data/GUIServerHostInfo";
 
 class FacilityInfoClient extends BaseHttpClient {
   constructor() {
-    super(process.env.REACT_APP_FACILITY_INFO_BASE_URL as string);
+    super(import.meta.env.VITE_REACT_APP_FACILITY_INFO_BASE_URL as string);
   }
 
   getAPIInfo = () => this.inst.get<APIInfo>("/");
