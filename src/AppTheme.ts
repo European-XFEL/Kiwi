@@ -3,10 +3,10 @@ import { createTheme } from "@mui/material/styles";
 const appTheme = createTheme({
   palette: {
     primary: {
-      main: "#ededed",
-      light: "#f0f0f0",
-      dark: "#a5a5a5",
-      contrastText: "#0d1546",
+      main: "#e58a02",
+      light: "#fe9902",
+      dark: "#fe9902",
+      contrastText: "#ffffff",
     },
     secondary: {
       main: "#f39200",
@@ -15,10 +15,16 @@ const appTheme = createTheme({
     warning: {
       main: "#ffee58",
     },
+    text: {
+      primary: "#0D1546",
+      secondary: "162267",
+    },
   },
   typography: {
     allVariants: {
-      fontFamily: ["Helvetica", "arial", "sans-serif"].join(","),
+      fontFamily: ["Neue Helvetica", "Helvetica", "arial", "sans-serif"].join(
+        ","
+      ),
     },
   },
 });

@@ -2,7 +2,6 @@ import React, { useEffect } from "react";
 
 import { Stack } from "@mui/material";
 
-import AppHeader from "./components/AppHeader";
 import AppBody from "./components/AppBody";
 
 import { CssBaseline } from "@mui/material";
@@ -42,7 +41,6 @@ const App: React.FC = () => {
     <ThemeProvider theme={appTheme}>
       <CssBaseline enableColorScheme={true}>
         <Stack direction="column" sx={{ height: "100%", p: 1.5 }}>
-          <AppHeader />
           <AppBody />
         </Stack>
       </CssBaseline>

@@ -2,16 +2,30 @@ import React from "react";
 
 import { useAppSelector } from "../AppHooks";
 
-import { Box, CircularProgress, Container, Paper } from "@mui/material";
-import { Grid } from "@mui/material";
+import { Box, CircularProgress, Container, Paper, Stack } from "@mui/material";
 
 import LoginPanel from "./LoginPanel";
+import LoggedInHeader from "./LoggedInHeader";
+import LoggedOutHeader from "./LoggedOutHeader";
+import LoggedInFooter from "./LoggedInFooter";
+import WelcomePage from "./WelcomePage";
+import SceneCanvas from "./SceneCanvas";
 
 const AppBody: React.FC = () => {
   const globalState = useAppSelector(
     (state) => state.globalAppState.globalState
   );
   const lastError = useAppSelector((state) => state.globalAppState.lastError);
+  const loadedScene = useAppSelector(
+    (state) => state.globalAppState.loadedScene
+  );
+
+  const renderLoggedInBody = () => {
+    if (loadedScene == undefined) {
+      return <WelcomePage />;
+    }
+    return <SceneCanvas />;
+  };
 
   let contents = <div></div>;
   if (globalState === "INIT") {
@@ -33,19 +47,23 @@ const AppBody: React.FC = () => {
     );
   } else if (globalState === "LOGGED_IN") {
     contents = (
-      <Grid container spacing={3} sx={{ mt: 1, mb: 1, flexGrow: 1 }}>
-        &nsbp;
-      </Grid>
+      <Stack direction="column" display="flex" sx={{ height: "100%" }}>
+        <LoggedInHeader />
+        {renderLoggedInBody()}
+        <LoggedInFooter />
+      </Stack>
     );
   } else if (globalState === "LOGGED_OUT") {
     contents = (
-      <Container maxWidth="sm" sx={{ padding: "2em" }}>
+      <Container maxWidth="sm">
+        <LoggedOutHeader />
         <LoginPanel />
       </Container>
     );
   } else if (globalState === "ERROR") {
     contents = (
       <Container maxWidth="sm" sx={{ padding: "2em" }}>
+        <LoggedOutHeader />
         <Paper
           elevation={8}
           sx={{ bgcolor: "#ee0000", color: "#ffffff", padding: "1.5em" }}
