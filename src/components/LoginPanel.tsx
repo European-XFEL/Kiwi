@@ -28,7 +28,11 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  IconButton,
+  InputAdornment,
+  OutlinedInput,
 } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 enum ActivityStatus {
   NO_ACTIVITY,
@@ -52,6 +56,7 @@ const LoginPanel: React.FC = () => {
     useState<GuiServerInfo | null>(null);
   const [userName, setUserName] = useState("");
   const [passwd, setPasswd] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   //
   // Refs to DOM elements
@@ -194,6 +199,7 @@ const LoginPanel: React.FC = () => {
             GuiServerConnector.inst.startAuthSession(
               hostValue,
               portValue,
+              userName,
               once_token,
               refresh_token,
               onAuthSessionStarted,
@@ -207,11 +213,13 @@ const LoginPanel: React.FC = () => {
         });
     } else {
       // Non authenticated login
+      const accessLevel = parseInt(accessLevelRef.current!.value);
       setActivityStatus(ActivityStatus.CONNECTING_SERVER);
       GuiServerConnector.inst.startNonAuthSession(
         hostValue,
         portValue,
         userName,
+        accessLevel,
         onNonAuthSessionStarted,
         onSessionStartFailure
       );
@@ -242,6 +250,7 @@ const LoginPanel: React.FC = () => {
   };
 
   const onNonAuthSessionStarted = (
+    accessLevel: AccessLevel,
     host: string,
     port: number,
     topic: string,
@@ -252,7 +261,7 @@ const LoginPanel: React.FC = () => {
     setActivityStatus(ActivityStatus.NO_ACTIVITY);
     dispatch(
       setLoggedIn({
-        accessLevel: parseInt(accessLevelRef.current!.value),
+        accessLevel: accessLevel,
         loggedUser: userName,
         guiServerHost: host,
         guiServerPort: port,
@@ -390,7 +399,7 @@ const LoginPanel: React.FC = () => {
                   label="Username"
                   inputRef={userRef}
                   variant="outlined"
-                  size="small"
+                  size="medium"
                   sx={{ width: "100%" }}
                   onChange={() => {
                     if (errorMsg) {
@@ -401,27 +410,49 @@ const LoginPanel: React.FC = () => {
                 ></TextField>
               </Grid>
               <Grid item xs={12}>
-                <TextField
-                  label="Password"
-                  inputRef={passwdRef}
-                  variant="outlined"
-                  size="small"
-                  type="password"
-                  sx={{ width: "100%" }}
-                  onChange={() => {
-                    if (errorMsg) {
-                      setErrorMessage("");
+                <FormControl variant="outlined">
+                  <InputLabel htmlFor="outlined-adornment-password">
+                    Password
+                  </InputLabel>
+                  <OutlinedInput
+                    label="Password"
+                    inputRef={passwdRef}
+                    size="medium" // Note: size small breaks the layout of the password label (below the baseline)
+                    type={showPassword ? "text" : "password"}
+                    sx={{ width: "100%" }}
+                    onChange={() => {
+                      if (errorMsg) {
+                        setErrorMessage("");
+                      }
+                      setPasswd(passwdRef.current!.value);
+                    }}
+                    onKeyUp={(evt: React.KeyboardEvent<HTMLInputElement>) => {
+                      if (evt.key === "Enter" && !loginRef.current!.disabled) {
+                        // User pressed Enter in the password field while login is
+                        // enabled. Go ahead and trigger the login.
+                        doLogin();
+                      }
+                    }}
+                    endAdornment={
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label="toggle password visibility"
+                          onClick={() => {
+                            setShowPassword(!showPassword);
+                          }}
+                          onMouseDown={(
+                            evt: React.MouseEvent<HTMLButtonElement>
+                          ) => {
+                            evt.preventDefault();
+                          }}
+                          edge="end"
+                        >
+                          {showPassword ? <Visibility /> : <VisibilityOff />}
+                        </IconButton>
+                      </InputAdornment>
                     }
-                    setPasswd(passwdRef.current!.value);
-                  }}
-                  onKeyUp={(evt: React.KeyboardEvent<HTMLDivElement>) => {
-                    if (evt.key === "Enter" && !loginRef.current!.disabled) {
-                      // User pressed Enter in the password field while login is
-                      // enabled. Go ahead and trigger the login.
-                      doLogin();
-                    }
-                  }}
-                ></TextField>
+                  ></OutlinedInput>
+                </FormControl>
               </Grid>
             </Grid>
           </Paper>
@@ -438,7 +469,7 @@ const LoginPanel: React.FC = () => {
                   label="Username"
                   inputRef={userRef}
                   variant="outlined"
-                  size="small"
+                  size="medium"
                   sx={{ width: "100%" }}
                   onChange={() => {
                     if (errorMsg) {
@@ -452,7 +483,7 @@ const LoginPanel: React.FC = () => {
                 <FormControl
                   variant="outlined"
                   sx={{ width: "100%" }}
-                  size="small"
+                  size="medium"
                 >
                   <InputLabel id="access_level_label">Access Level</InputLabel>
                   <Select
@@ -491,7 +522,7 @@ const LoginPanel: React.FC = () => {
                 label="Hostname"
                 inputRef={hostRef}
                 variant="outlined"
-                size="small"
+                size="medium"
                 sx={{ width: "100%" }}
                 onChange={onHostnameChanged}
               ></TextField>
@@ -502,7 +533,7 @@ const LoginPanel: React.FC = () => {
                 inputRef={portRef}
                 variant="outlined"
                 type="number"
-                size="small"
+                size="medium"
                 sx={{ width: "100%" }}
                 onChange={onPortChanged}
               ></TextField>

@@ -20,6 +20,8 @@ import { Hash } from "./karabo_hash/types";
 
 import { store } from "./store";
 import { setTopology } from "./store/slices/sysTopologySlice";
+import { GuiSessionData, GuiSessionStore } from "./store/GuiSessionStore";
+import AuthServerClient from "./http_clients/AuthServerClient";
 
 interface GuiServerSession {
   host: string;
@@ -30,18 +32,14 @@ interface GuiServerSession {
   isAuthSession: boolean;
   userLogged: boolean;
   userId?: string; // only defined for non-auth sessions - sent by the GUI client.
+  accessLevel?: AccessLevel;
   oneTimeToken?: string; // only defined for auth sessions - sent by the GUI client.
   refreshToken?: string; // only defined for auth sessions - sent by the GUI client.
-  startAuthHandler?: (
+  startHandler: (
     accessLevel: AccessLevel,
     host: string,
     port: number,
-    topic: string,
-    serverVersion: string
-  ) => void;
-  startNonAuthHandler?: (
-    host: string,
-    port: number,
+    userId: string,
     topic: string,
     serverVersion: string
   ) => void;
@@ -77,6 +75,7 @@ export class GuiServerConnector {
    * @param ws the web socket client that was successfully connected.
    * @param _ev the connection event (not used).
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
   #_onWsOpen = (ws: Websocket, _ev: Event): any => {
     // A GUI Server session always starts with a message instructing the
     // WebSocketProxy to connect to a GUI Server.
@@ -92,6 +91,7 @@ export class GuiServerConnector {
    * @param ws the websocket client that got the messsage.
    * @param ev the message event - message payload in the data property.
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   #_onWsMessage = (ws: Websocket, ev: MessageEvent<any>): any => {
     if (typeof ev.data === "string") {
       // The only occasions when the WebSocketProxy does not send a
@@ -114,7 +114,7 @@ export class GuiServerConnector {
           // and must trigger the sending of a login message to the GUI Server.
           // We use the GUI Server sent message here to extract the topic and
           // version of the GUI Server being connected to.
-          let serverInfo = guiServerInfoFromHash(hash);
+          const serverInfo = guiServerInfoFromHash(hash);
           this.#_session!.topic = serverInfo.topic;
           this.#_session!.serverVersion = serverInfo.version;
           let loginHash: Hash;
@@ -137,12 +137,26 @@ export class GuiServerConnector {
           ws.send(packEncodedHash(loginMsg));
 
           if (!this.#_session?.isAuthSession) {
+            console.log(
+              `Saving non-auth session data. this.#_session=${JSON.stringify(
+                this.#_session
+              )}`
+            );
+            GuiSessionStore.inst.saveNonAuthGuiSession(
+              this.#_session!.host,
+              this.#_session!.port,
+              this.#_session!.userId!,
+              this.#_session!.accessLevel!
+            );
+
             // A non authenticated login is immediately followed by the sending of the systemTopology;
             // there's no reply for the login. So we immediately call the non-Auth handler.
             this.#_session!.userLogged = true;
-            this.#_session!.startNonAuthHandler!(
+            this.#_session!.startHandler!(
+              this.#_session!.accessLevel!,
               this.#_session!.host,
               this.#_session!.port,
+              this.#_session!.userId!,
               this.#_session!.topic,
               this.#_session!.serverVersion
             );
@@ -154,10 +168,22 @@ export class GuiServerConnector {
           // message sent by the GUI Server - "notification" is not necessarily used to
           // communicate an error.
           const loginInfoHash = loginInfoFromHash(hash);
-          this.#_session?.startAuthHandler!(
+          //   console.log(
+          //     `Saving auth session data. loginInfoHash = ${JSON.stringify(
+          //       loginInfoHash
+          //     )}\n this.#_session=${JSON.stringify(this.#_session)}`
+          //   );
+          GuiSessionStore.inst.saveAuthGuiSession(
+            this.#_session!.host,
+            this.#_session!.port,
+            this.#_session!.userId!,
+            this.#_session!.refreshToken!
+          );
+          this.#_session?.startHandler!(
             loginInfoHash.accessLevel,
             this.#_session!.host,
             this.#_session!.port,
+            this.#_session!.userId!,
             // We can count on topic and serverVersion being defined, because they were
             // on the payload of a "brokerInformation" (or "serverInformation") message
             // that certainly has been received after the connection to the GUI server
@@ -190,6 +216,7 @@ export class GuiServerConnector {
    * @param ws the websocket client for which the error ocurred.
    * @param ev the error event (not used).
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
   #_onWsError = (ws: Websocket, _ev: Event): any => {
     if (!ws.underlyingWebsocket) {
       this.#_session?.startErrorHandler(
@@ -230,6 +257,7 @@ export class GuiServerConnector {
     onError: (errMsg: string) => void
   ): void {
     new WebsocketBuilder(GuiServerConnector.#_wsProxyURL)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       .onOpen((ws, _ev) => {
         ws.send(JSON.stringify({ host: host, port: port }));
       })
@@ -256,6 +284,7 @@ export class GuiServerConnector {
           });
         }
       })
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       .onError((ws, _ev) => {
         if (!ws.underlyingWebsocket) {
           onError("Websocket client initialization error");
@@ -277,6 +306,7 @@ export class GuiServerConnector {
   startAuthSession(
     host: string,
     port: number,
+    userId: string,
     oneTimeToken: string,
     refreshToken: string,
     onStartedHandler: (
@@ -297,6 +327,7 @@ export class GuiServerConnector {
     this.#_session = {
       host: host,
       port: port,
+      userId: userId,
       ws: new WebsocketBuilder(GuiServerConnector.#_wsProxyURL)
         .onOpen(this.#_onWsOpen)
         .onMessage(this.#_onWsMessage)
@@ -306,7 +337,7 @@ export class GuiServerConnector {
       userLogged: false,
       oneTimeToken: oneTimeToken,
       refreshToken: refreshToken,
-      startAuthHandler: onStartedHandler,
+      startHandler: onStartedHandler,
       startErrorHandler: onErrorHandler,
     };
   }
@@ -315,7 +346,9 @@ export class GuiServerConnector {
     host: string,
     port: number,
     userId: string,
+    accessLevel: AccessLevel,
     onStartedHandler: (
+      accessLevel: AccessLevel,
       host: string,
       port: number,
       topic: string,
@@ -340,13 +373,103 @@ export class GuiServerConnector {
       isAuthSession: false,
       userLogged: false,
       userId: userId,
-      startNonAuthHandler: onStartedHandler,
+      accessLevel: accessLevel,
+      startHandler: onStartedHandler,
       startErrorHandler: onErrorHandler,
     };
+  }
+
+  async resumeGuiSession(
+    authServerCli: AuthServerClient,
+    onResumedHandler: (
+      accessLevel: AccessLevel,
+      host: string,
+      port: number,
+      userId: string,
+      topic: string,
+      serverVersion: string
+    ) => void,
+    onNoSessionHandler: () => void,
+    onErrorHandler: (errMsg: string) => void
+  ): Promise<void> {
+    if (this.#_session) {
+      console.log(
+        "Invalid use of resumeGuiSession! An active GUI Server session already exists!"
+      );
+      return;
+    }
+    let sessionData: GuiSessionData | undefined;
+    try {
+      sessionData = await GuiSessionStore.inst.loadGuiSessionData();
+      if (sessionData && sessionData.refreshToken == undefined) {
+        // There is a non-authenticated GUI session to be resumed
+        this.#_session = {
+          host: sessionData.host,
+          port: sessionData.port,
+          ws: new WebsocketBuilder(GuiServerConnector.#_wsProxyURL)
+            .onOpen(this.#_onWsOpen)
+            .onMessage(this.#_onWsMessage)
+            .onError(this.#_onWsError)
+            .build(),
+          isAuthSession: false,
+          userLogged: false,
+          userId: sessionData.userId,
+          accessLevel: sessionData.accessLevel,
+          startHandler: onResumedHandler,
+          startErrorHandler: onErrorHandler,
+        };
+      } else if (sessionData) {
+        // There is an authenticated GUI session to be resumed
+        // Obtain a onetime token from the refresh token
+        const res = await authServerCli.refreshTokens(
+          sessionData.refreshToken!,
+          sessionData.userId
+        );
+        if (!res.success) {
+          // As the session data does not allow successful resume, delete it
+          GuiSessionStore.inst.deleteGuiSession();
+          onErrorHandler(res.error_msg!);
+          return;
+        }
+        this.#_session = {
+          host: sessionData.host,
+          port: sessionData.port,
+          userId: sessionData.userId,
+          ws: new WebsocketBuilder(GuiServerConnector.#_wsProxyURL)
+            .onOpen(this.#_onWsOpen)
+            .onMessage(this.#_onWsMessage)
+            .onError(this.#_onWsError)
+            .build(),
+          isAuthSession: true,
+          userLogged: false,
+          oneTimeToken: res.once_token,
+          refreshToken: res.refresh_token,
+          startHandler: onResumedHandler,
+          startErrorHandler: onErrorHandler,
+        };
+        // Update the stored session data with the new refresh token
+        await GuiSessionStore.inst.saveAuthGuiSession(
+          sessionData.host,
+          sessionData.port,
+          sessionData.userId,
+          res.refresh_token!
+        );
+      } else {
+        // There's no session to resume
+        onNoSessionHandler();
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      // As the session data does not allow successful resume, delete it
+      GuiSessionStore.inst.deleteGuiSession();
+      onErrorHandler(error.toString());
+      return;
+    }
   }
 
   finishSession(): void {
     this.#_session?.ws.close();
     this.#_session = undefined;
+    GuiSessionStore.inst.deleteGuiSession();
   }
 }

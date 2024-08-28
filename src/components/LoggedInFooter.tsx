@@ -1,4 +1,4 @@
-import { Stack, Divider, Typography } from "@mui/material";
+import { Stack, Divider, Typography, Tooltip } from "@mui/material";
 import React, { useEffect, useState } from "react";
 
 import { useAppSelector } from "../AppHooks";
@@ -59,18 +59,15 @@ const LoggedInFooter: React.FC = () => {
           </Typography>
         </span>
         <span>
-          <Typography variant="body2">
-            GUI Server:{" "}
-            <b>
-              {appState.sessionInfo?.guiServerHost}:
-              {appState.sessionInfo?.guiServerPort}
-            </b>
-          </Typography>
-        </span>
-        <span>
-          <Typography variant="body2">
-            GUI Server Version: <b>{appState.sessionInfo?.guiServerVersion}</b>
-          </Typography>
+          <Tooltip title={`version: ${appState.sessionInfo?.guiServerVersion}`}>
+            <Typography variant="body2">
+              GUI Server:{" "}
+              <b>
+                {appState.sessionInfo?.guiServerHost}:
+                {appState.sessionInfo?.guiServerPort}
+              </b>
+            </Typography>
+          </Tooltip>
         </span>
         <span style={{ flexGrow: 1 }}>&nbsp;</span>
         <span>
