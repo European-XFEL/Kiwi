@@ -76,7 +76,7 @@ export const notificationInfoFromHash = (hash: Hash): NotificationInfo => {
 
 export const sysTopologyInfoFromHash = (hash: Hash): SystemTopologyInfo => {
   // Gather info on devices
-  let devices: DeviceInfo[] = [];
+  const devices: DeviceInfo[] = [];
   // TODO: devise a way to get rid of the hacky "as unknown as Hash" castings below.
   //       Probably use generics for the KaraboType value_ (currently any). The
   //       sequence "as unknown as Hash" is a workaround for the type checks done by
@@ -110,7 +110,7 @@ export const sysTopologyInfoFromHash = (hash: Hash): SystemTopologyInfo => {
     });
   }
   // Gather info on device servers
-  let servers: DeviceServerInfo[] = [];
+  const servers: DeviceServerInfo[] = [];
   const serverHash = sysTopology.value.server.value as unknown as Hash;
   // devices.value is a Hash where each key is a deviceId string and each
   // value is a Hash containing the device instance info as attributes.
