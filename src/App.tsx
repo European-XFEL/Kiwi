@@ -27,7 +27,7 @@ import AuthServerClient from "./http_clients/AuthServerClient";
 
 const App: React.FC = () => {
   const dispatch = useAppDispatch();
-  const resumedGuiSessionRef = React.useRef("");
+  const executedOnceRef = React.useRef("");
 
   useEffect(() => {
     initAppSettings()
@@ -35,7 +35,7 @@ const App: React.FC = () => {
         dispatch(setWsProxyUrl(settings.wsProxyURL));
         dispatch(setAuthServerUrl(settings.authServerURL));
 
-        if (!resumedGuiSessionRef.current) {
+        if (!executedOnceRef.current) {
           // First execution of useEffect since appStart - this is needed to
           // prevent duplicate execution of useEffect when React.StrictMode is enabled.
           // See https://react.dev/reference/react/useEffect#caveats for more info
@@ -43,7 +43,14 @@ const App: React.FC = () => {
           // activation of the application. Duplicate execution generates refresh-token
           // that won't be used and causes sync to be lost between the refresh-token
           // actually being sent to the server and the one stored in the LocalStorage.
-          resumedGuiSessionRef.current = "true";
+          // The same single-execution constraint also applies to the definiton of the
+          // handler for the onSessionDropped event.
+          executedOnceRef.current = "true";
+
+          GuiServerConnector.inst.onSessionDropped = (err_msg: string) => {
+            // Goes to error state when an unexpected GUI session drop occurs.
+            dispatch(setError(err_msg));
+          };
 
           GuiServerConnector.inst.resumeGuiSession(
             new AuthServerClient(settings.authServerURL),

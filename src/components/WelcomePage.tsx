@@ -11,7 +11,7 @@ const WelcomePage: React.FC = () => {
     >
       <Box sx={{ flexGrow: 1 }} />
       <Stack direction="column" spacing={"0.5em"} justifyContent="left">
-        <Typography variant="h5">Karabo Kiwi</Typography>
+        <Typography variant="h5">Kiwi</Typography>
         <Typography variant="body1">
           View Karabo scenes in the browser
         </Typography>

@@ -27,12 +27,40 @@ import { AccessLevel } from "../karabo_data/AccessLevel";
 
 import { useAppSelector } from "../AppHooks";
 import { setLoggedOut } from "../store/slices/globalAppStateSlice";
+import SelectProjectSceneDialog from "./SelectProjectSceneDialog";
+import SelectDeviceSceneDialog from "./SelectDeviceSceneDialog";
 
 const LoggedInHeader: React.FC = () => {
   // The header panel dispatches setLoggedOut actions upon user requests.
   const dispatch = useAppDispatch();
 
   const appState = useAppSelector((state) => state.globalAppState);
+
+  const [openLoadFromScene, setOpenLoadFromScene] = React.useState(false);
+  const onLoadFromSceneClick = () => {
+    setOpenLoadFromScene(true);
+  };
+  const onLoadFromSceneCancel = () => {
+    setOpenLoadFromScene(false);
+  };
+  const onLoadFromSceneSelected = (sceneUUID: string) => {
+    // TODO: Dispatch action to load scene from project
+    console.log(`Will open scene ${sceneUUID}`);
+    setOpenLoadFromScene(false);
+  };
+
+  const [openLoadFromDevice, setOpenLoadFromDevice] = React.useState(false);
+  const onLoadFromDeviceClick = () => {
+    setOpenLoadFromDevice(true);
+  };
+  const onLoadFromDeviceCancel = () => {
+    setOpenLoadFromDevice(false);
+  };
+  const onLoadFromDeviceSelected = (deviceId: string, sceneId: string) => {
+    // TODO: Dispatch action to load scene from device
+    console.log(`Will open scene ${sceneId} from ${deviceId}`);
+    setOpenLoadFromDevice(false);
+  };
 
   const [anchorUserMenu, setAnchorUserMenu] =
     React.useState<null | HTMLElement>(null);
@@ -83,18 +111,30 @@ const LoggedInHeader: React.FC = () => {
           <Box width={"0.2em"} />
           <Button
             size="small"
-            variant="outlined"
+            variant="contained"
             startIcon={<FolderOutlined />}
+            onClick={onLoadFromSceneClick}
           >
             Load Project Scene
           </Button>
+          <SelectProjectSceneDialog
+            open={openLoadFromScene}
+            onSceneSelected={onLoadFromSceneSelected}
+            onCancel={onLoadFromSceneCancel}
+          />
           <Button
             size="small"
-            variant="outlined"
+            variant="contained"
             startIcon={<DynamicFormOutlined />}
+            onClick={onLoadFromDeviceClick}
           >
             Load Device Scene
           </Button>
+          <SelectDeviceSceneDialog
+            open={openLoadFromDevice}
+            onSceneSelected={onLoadFromDeviceSelected}
+            onCancel={onLoadFromDeviceCancel}
+          />
           <Box width={"0.2em"} />
           <Divider orientation="vertical" flexItem />
           <Box width={"0.2em"} />

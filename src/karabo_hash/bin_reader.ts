@@ -65,7 +65,7 @@ function readFloat64(parser: BinaryDecoder): Types.Float64 {
 
 function readBool(parser: BinaryDecoder): Types.Bool {
   parser.pos += 1;
-  return new Types.Bool(parser.data[parser.pos - 1] === 0);
+  return new Types.Bool(parser.data[parser.pos - 1] === 1);
 }
 
 // function readVectorBool(parser: BinaryDecoder): boolean[] {

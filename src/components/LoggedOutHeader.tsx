@@ -17,7 +17,7 @@ const LoggedOutHeader: React.FC = () => {
       }}
     >
       <Grid item sx={{ flexGrow: 1, fontWeight: "bold" }}>
-        KARABO KIWI
+        KIWI
       </Grid>
       <Grid>
         <img

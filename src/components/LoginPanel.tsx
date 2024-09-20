@@ -380,6 +380,7 @@ const LoginPanel: React.FC = () => {
           onClick={() => {
             doLogin();
           }}
+          sx={{ minWidth: "5em" }}
         >
           Login
         </Button>
@@ -549,8 +550,21 @@ const LoginPanel: React.FC = () => {
         {renderCredentialsPanel()}
       </Stack>
       {/* <Divider /> */}
-      <Box sx={{ p: 1, display: "flex" }}>
-        <Box sx={{ flexGrow: 1, display: "flex", alignItems: "center" }}>
+      <Box
+        sx={{
+          p: 1,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Box
+          sx={{
+            flexGrow: 1,
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
           {renderStatusBox()}
         </Box>
         {renderLoginButton()}
