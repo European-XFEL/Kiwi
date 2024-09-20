@@ -50,6 +50,7 @@ export enum HashTypes {
 
 export interface KaraboType {
   type_: HashTypes;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value_: any;
 }
 
@@ -67,15 +68,18 @@ export class HashValue {
 }
 
 export class Hash {
-  readonly type = HashTypes.Hash;
+  readonly type_ = HashTypes.Hash;
 
-  constructor(public value: HashValue) {}
+  constructor(public value_: HashValue) {}
+  get value(): HashValue {
+    return this.value_;
+  }
 }
 
 export class VectorHash {
-  readonly type = HashTypes.VectorHash;
+  readonly type_ = HashTypes.VectorHash;
 
-  constructor(public value: HashValue[]) {}
+  constructor(public value_: HashValue[]) {}
 }
 
 export interface SchemaValue {
@@ -105,9 +109,9 @@ class Integer {
   }
 }
 
-function makeInteger(type: HashTypes, min: number, max: number) {
+function makeInteger(_type: HashTypes, min: number, max: number) {
   return class Int implements KaraboType {
-    readonly type_ = HashTypes.UInt8;
+    readonly type_ = _type;
 
     readonly _min = min;
 
@@ -122,7 +126,7 @@ function makeInteger(type: HashTypes, min: number, max: number) {
 export const AutoUInt8 = makeInteger(HashTypes.UInt8, 0, 2 ** 8 - 1);
 
 export class UInt8 extends Integer {
-  readonly type = HashTypes.UInt8;
+  readonly type_ = HashTypes.UInt8;
 
   readonly min = 0;
 
@@ -194,7 +198,7 @@ export class VectorInt16 implements KaraboType {
 }
 
 export class UInt32 extends Integer {
-  readonly type = HashTypes.UInt32;
+  readonly type_ = HashTypes.UInt32;
 
   readonly min = 0;
 

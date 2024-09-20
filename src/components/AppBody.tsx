@@ -68,9 +68,9 @@ const AppBody: React.FC = () => {
           elevation={8}
           sx={{ bgcolor: "#ee0000", color: "#ffffff", padding: "1.5em" }}
         >
-          <p>Application Initialization Failure:</p>
+          <h4>Application Error:</h4>
           <h3>{lastError}</h3>
-          <p>please wait a few seconds and refresh the page</p>
+          <p>Please wait a few seconds and refresh this page</p>
         </Paper>
       </Container>
     );
