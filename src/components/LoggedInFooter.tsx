@@ -5,6 +5,7 @@ import { useAppSelector } from "../AppHooks";
 
 const LoggedInFooter: React.FC = () => {
   const appState = useAppSelector((state) => state.globalAppState);
+  const loadedSceneState = useAppSelector((state) => state.loadedScene);
   const [connectedFor, setConnectedFor] = useState("");
 
   const updateConnectedFor = () => {
@@ -69,7 +70,20 @@ const LoggedInFooter: React.FC = () => {
             </Typography>
           </Tooltip>
         </span>
-        <span style={{ flexGrow: 1 }}>&nbsp;</span>
+        <span style={{ flexGrow: 1 }}>
+          {loadedSceneState.scene !== undefined ? (
+            <Typography variant="body2">
+              Scene size (pixels):{" "}
+              {/* de-DE is used to force the group separator to be a dot */}
+              <b>
+                {loadedSceneState.scene?.width.toLocaleString("de-DE")}
+              </b> x{" "}
+              <b>{loadedSceneState.scene?.height.toLocaleString("de-DE")}</b>
+            </Typography>
+          ) : (
+            <Typography variant="body2">&nbsp;</Typography>
+          )}
+        </span>
         <span>
           <Typography variant="body2">
             Connected for: <b>{connectedFor}</b>

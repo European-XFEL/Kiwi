@@ -61,12 +61,13 @@ export class GuiServerConnector {
   // #region Singleton support
   private constructor() {}
 
-  static #_wsProxyURL: string;
+  static get #_wsProxyURL(): string {
+    return store.getState().appSettings.ws_proxy_url;
+  }
+
   static #_inst?: GuiServerConnector;
   static get inst(): GuiServerConnector {
     if (!GuiServerConnector.#_inst) {
-      GuiServerConnector.#_wsProxyURL =
-        store.getState().appSettings.ws_proxy_url;
       GuiServerConnector.#_inst = new GuiServerConnector();
     }
     return GuiServerConnector.#_inst;
@@ -499,7 +500,7 @@ export class GuiServerConnector {
    * @param ws the websocket client for which the error ocurred.
    * @param ev the error event (not used).
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   #_onWsError = (ws: Websocket, ev: Event): any => {
     if (this.#_session?.userLogged) {
       // A WebSocket error while there's a user logged to a GUI Server is

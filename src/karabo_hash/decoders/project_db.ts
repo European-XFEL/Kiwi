@@ -52,6 +52,7 @@ export const listProjectsResultFromHash = (hash: Hash): ListProjectsResult => {
 };
 
 export const loadProjectItemsResultFromHash = (
+  projectName: string,
   hash: Hash
 ): LoadProjectItemsResult => {
   const reason = hash.value.reply.value.value.reason.value.value_ as string;
@@ -116,11 +117,17 @@ export const loadProjectItemsResultFromHash = (
         // Build a ProjectSceneInfo object
         const item = {
           domain: domain,
+          projectName: projectName,
           uuid: uuid,
           name: xmlObj.xml["@_simple_name"],
           description: xmlObj.xml["@_description"],
           dateModified: xmlObj.xml["@_date"],
-          svg: xmlObj.svg,
+          // NOTE: Some older scenes have the root element of the svg as "svg",
+          //       while some newer scenes have "svg:svg"
+          svg:
+            xmlObj.xml["svg:svg"] != undefined
+              ? JSON.stringify(xmlObj.xml["svg:svg"])
+              : JSON.stringify(xmlObj.xml["svg"]),
         };
         items.push(item);
       }

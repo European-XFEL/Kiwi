@@ -26,6 +26,11 @@ const appTheme = createTheme({
         ","
       ),
     },
+    button: {
+      fontWeight: "bolder",
+      letterSpacing: "0.1em",
+      wordSpacing: "0.15em",
+    },
   },
 });
 

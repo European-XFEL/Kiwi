@@ -8,24 +8,14 @@ import LoginPanel from "./LoginPanel";
 import LoggedInHeader from "./LoggedInHeader";
 import LoggedOutHeader from "./LoggedOutHeader";
 import LoggedInFooter from "./LoggedInFooter";
-import WelcomePage from "./WelcomePage";
-import SceneCanvas from "./SceneCanvas";
+import { Outlet } from "react-router-dom";
 
 const AppBody: React.FC = () => {
   const globalState = useAppSelector(
     (state) => state.globalAppState.globalState
   );
-  const lastError = useAppSelector((state) => state.globalAppState.lastError);
-  const loadedScene = useAppSelector(
-    (state) => state.globalAppState.loadedScene
-  );
 
-  const renderLoggedInBody = () => {
-    if (loadedScene == undefined) {
-      return <WelcomePage />;
-    }
-    return <SceneCanvas />;
-  };
+  const lastError = useAppSelector((state) => state.globalAppState.lastError);
 
   let contents = <div></div>;
   if (globalState === "INIT") {
@@ -45,14 +35,6 @@ const AppBody: React.FC = () => {
         </Paper>
       </Container>
     );
-  } else if (globalState === "LOGGED_IN") {
-    contents = (
-      <Stack direction="column" display="flex" sx={{ height: "100%" }}>
-        <LoggedInHeader />
-        {renderLoggedInBody()}
-        <LoggedInFooter />
-      </Stack>
-    );
   } else if (globalState === "LOGGED_OUT") {
     contents = (
       <Container maxWidth="sm">
@@ -60,7 +42,7 @@ const AppBody: React.FC = () => {
         <LoginPanel />
       </Container>
     );
-  } else if (globalState === "ERROR") {
+  } else if (globalState === "UNRECOVERABLE_ERROR") {
     contents = (
       <Container maxWidth="sm" sx={{ padding: "2em" }}>
         <LoggedOutHeader />
@@ -73,6 +55,14 @@ const AppBody: React.FC = () => {
           <p>Please wait a few seconds and refresh this page</p>
         </Paper>
       </Container>
+    );
+  } else {
+    contents = (
+      <Stack direction="column" display="flex" sx={{ height: "100%" }}>
+        <LoggedInHeader />
+        <Outlet />
+        <LoggedInFooter />
+      </Stack>
     );
   }
 

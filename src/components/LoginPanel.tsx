@@ -33,6 +33,7 @@ import {
   OutlinedInput,
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 
 enum ActivityStatus {
   NO_ACTIVITY,
@@ -44,6 +45,10 @@ enum ActivityStatus {
 const LoginPanel: React.FC = () => {
   // The login panel dispatches setLoggedIn actions upon successful logins.
   const dispatch = useAppDispatch();
+
+  // After a successful login, the user is navigated to the app page with no
+  // scene loaded
+  const navigate = useNavigate();
 
   //
   // Panel state - no need to use the AppState store for these.
@@ -247,6 +252,7 @@ const LoginPanel: React.FC = () => {
         sessionStartEpoc: Date.now(),
       })
     );
+    navigate("no_scene");
   };
 
   const onNonAuthSessionStarted = (
@@ -270,6 +276,7 @@ const LoginPanel: React.FC = () => {
         sessionStartEpoc: Date.now(),
       })
     );
+    navigate("no_scene");
   };
 
   const onSessionStartFailure = (errMsg: string) => {
