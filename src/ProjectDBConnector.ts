@@ -9,6 +9,7 @@ import {
   isSceneInfo,
   DbItemInfo,
   isProjectContentsInfo,
+  LoadProjectSceneResult,
 } from "./karabo_data/ProjectDbInfo";
 import {
   buildBeginUserSessionHash,
@@ -38,10 +39,6 @@ export class ProjectDBConnector {
     GuiServerConnector.inst.registerHashHandler(
       "projectListItems",
       this.#_onListProjectsHash
-    );
-    GuiServerConnector.inst.registerHashHandler(
-      "projectLoadItems",
-      this.#_onLoadItemsHash
     );
   }
 
@@ -109,12 +106,13 @@ export class ProjectDBConnector {
   // #region List Scenes
   listScenes(
     domain: string,
+    projectName: string,
     uuidProject: string,
     onScenes: (scenesInfo: ListProjectScenesResult) => void
   ): void {
     this.#_ensureDBInitialized();
     // Stores the callback to be called when the list of scenes is ready.
-    if (this.#_onListScenesCallback) {
+    if (this.#_onListScenesCallback || this.#_onGetSceneCallback) {
       // There's already a pending getScenes operation. Refuse the new request.
       const scenesInfo = {
         scenes: [],
@@ -124,11 +122,18 @@ export class ProjectDBConnector {
       onScenes(scenesInfo);
       return;
     }
+    // Registers the handler for handling projectLoadItems messages from the GUI Server
+    // for the duration of the listScenes operation.
+    GuiServerConnector.inst.registerHashHandler(
+      "projectLoadItems",
+      this.#_onLoadItemsHash
+    );
     this.#_onListScenesCallback = onScenes;
     // Starts the sequence of operations to get the list of scenes of a project.
     // Differently from the listDomains and listProjects operations, listScenes
     // requires multiple round-trips of "loadItems" operations.
     this.#_collectedScenes = [];
+    this.#_projectName = projectName;
     this.#_loadItemsErr = undefined;
     this.#_pendingLoadItems = 1;
     const projectItem = {
@@ -144,6 +149,7 @@ export class ProjectDBConnector {
   // Internal data to keep track of the sequence of projectLoadItems operations
   // involved in a listScenes operation.
   #_pendingLoadItems: number = 0;
+  #_projectName: string = "";
   #_collectedScenes?: ProjectSceneInfo[];
   #_loadItemsErr?: string;
 
@@ -160,11 +166,10 @@ export class ProjectDBConnector {
     }
     let itemsInfo: LoadProjectItemsResult | undefined = undefined;
     try {
-      itemsInfo = loadProjectItemsResultFromHash(hash);
+      itemsInfo = loadProjectItemsResultFromHash(this.#_projectName, hash);
       if (itemsInfo.error_msg !== undefined) {
         // An error occurred; store the message and interrupt the operation.
         this.#_loadItemsErr = itemsInfo.error_msg;
-        // return;
       }
     } catch (e) {
       if (e instanceof Error) {
@@ -173,7 +178,6 @@ export class ProjectDBConnector {
         this.#_loadItemsErr = "Error loading project items";
       }
       console.error(`Error loading project items: ${e}`);
-      // return;
     }
     if (itemsInfo !== undefined) {
       // Iterates through the retrieved project items, collecting the scenes and
@@ -227,7 +231,98 @@ export class ProjectDBConnector {
       // If not here, they would be retained until another listScenes operation
       // is launched.
       this.#_collectedScenes = undefined;
+      // Unregister the hash handler for the duration of the listScenes operation.
+      GuiServerConnector.inst.unregisterHashHandler("projectLoadItems");
     }
+  };
+
+  // #endregion
+
+  // #region GetScene
+  getScene(
+    domain: string,
+    projectName: string,
+    uuid: string,
+    onScene: (loadSceneResult: LoadProjectSceneResult) => void
+  ): void {
+    this.#_ensureDBInitialized();
+    // Stores the callback to be called when the GUI Server sends back the scene.
+    if (this.#_onGetSceneCallback || this.#_onListScenesCallback) {
+      // There's already a pending getScene or listScene operation. Refuse the new request.
+      // Those operations can't be concurrently executed because they handle "projectLoadItems"
+      // hashes sent by the GUI Server differently.
+      const loadSceneResult: LoadProjectSceneResult = {
+        scene: undefined,
+        error_msg:
+          "There's already a pending getScene operation. Cannot start a new one!",
+      };
+      onScene(loadSceneResult);
+      return;
+    }
+    // Registers the handler for handling projectLoadItems messages from the GUI Server
+    // for the duration of the getScene operation.
+    GuiServerConnector.inst.registerHashHandler(
+      "projectLoadItems",
+      this.#_onLoadSceneHash
+    );
+    this.#_onGetSceneCallback = onScene;
+    this.#_projectName = projectName;
+    GuiServerConnector.inst.sendHash(
+      buildLoadItemsHash([{ domain: domain, uuid: uuid }])
+    );
+  }
+
+  // The callback to be registered by an external caller for the getScene operation.
+  #_onGetSceneCallback?: (scenesInfo: LoadProjectSceneResult) => void;
+
+  #_onLoadSceneHash = (hash: Hash): void => {
+    let itemsInfo: LoadProjectItemsResult | undefined = undefined;
+    let loadSceneErr: string | undefined = undefined;
+    try {
+      itemsInfo = loadProjectItemsResultFromHash(this.#_projectName, hash);
+      if (itemsInfo.error_msg !== undefined) {
+        // An error occurred
+        loadSceneErr = itemsInfo.error_msg;
+      }
+    } catch (e) {
+      if (e instanceof Error) {
+        loadSceneErr = (e as Error).message;
+      } else {
+        loadSceneErr = "Error getting project scene";
+      }
+      console.error(`Error loading project scene: ${loadSceneErr}`);
+    }
+    if (itemsInfo!.projectItems.length !== 1) {
+      // An error occurred - only one item should have been returned.
+      loadSceneErr = "Error loading project scene - multiple items returned";
+    } else if (!isSceneInfo(itemsInfo!.projectItems[0])) {
+      // An error occurred - the returned item is not a scene.
+      loadSceneErr = "Error loading project scene - no scene returned";
+    }
+    if (loadSceneErr !== undefined) {
+      // An error occurred
+      this.#_onGetSceneCallback?.({
+        scene: undefined,
+        error_msg: loadSceneErr,
+      });
+    } else {
+      const sceneInfo = itemsInfo!.projectItems[0] as ProjectSceneInfo;
+      this.#_onGetSceneCallback?.({
+        scene: {
+          domain: sceneInfo.domain,
+          projectName: this.#_projectName,
+          uuid: sceneInfo.uuid,
+          name: sceneInfo.name,
+          description: sceneInfo.description,
+          svg: sceneInfo.svg,
+          dateModified: sceneInfo.dateModified,
+        },
+        error_msg: undefined,
+      });
+    }
+    this.#_onGetSceneCallback = undefined;
+    // Unregister the hash handler for the duration of the getScene operation.
+    GuiServerConnector.inst.unregisterHashHandler("projectLoadItems");
   };
 
   // #endregion

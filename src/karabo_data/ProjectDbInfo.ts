@@ -6,6 +6,7 @@ export interface DbItemInfo {
 
 export interface ProjectSceneInfo extends DbItemInfo {
   name: string;
+  projectName: string;
   description?: string;
   svg: string;
   /// Last modification date in 'YYYY-MM-DD HH:MM:SS' format
@@ -69,6 +70,11 @@ export interface ListProjectsResult {
 
 export interface LoadProjectItemsResult {
   projectItems: DbItemInfo[];
+  error_msg?: string; // undefined if no error
+}
+
+export interface LoadProjectSceneResult {
+  scene?: ProjectSceneInfo; // undefined if error
   error_msg?: string; // undefined if no error
 }
 

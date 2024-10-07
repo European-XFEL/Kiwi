@@ -1,6 +1,6 @@
 import {
   AccountCircleOutlined,
-  DynamicFormOutlined,
+  //   DynamicFormOutlined,
   EjectOutlined,
   FolderOutlined,
   Logout,
@@ -27,32 +27,60 @@ import { AccessLevel } from "../karabo_data/AccessLevel";
 
 import { useAppSelector } from "../AppHooks";
 import { setLoggedOut } from "../store/slices/globalAppStateSlice";
+import { setLoadedScene } from "../store/slices/loadedSceneSlice";
 import SelectProjectSceneDialog from "./SelectProjectSceneDialog";
 import SelectDeviceSceneDialog from "./SelectDeviceSceneDialog";
+import { ProjectSceneInfo } from "../karabo_data/ProjectDbInfo";
+import { useLocation, useNavigate } from "react-router-dom";
+import { ProjectSceneCache } from "../store/ProjectSceneCache";
 
 const LoggedInHeader: React.FC = () => {
-  // The header panel dispatches setLoggedOut actions upon user requests.
+  // The header panel dispatches setLoggedOut actions upon user requests to log out.
   const dispatch = useAppDispatch();
+
+  // Used to inspect the URL for loaded scene data whenever it changes.
+  const location = useLocation();
 
   const appState = useAppSelector((state) => state.globalAppState);
 
+  // After dispatching the setProjectSceneOpening action, a programmatic
+  // navigation to the scene URL must take place.
+  const navigate = useNavigate();
+
   const [openLoadFromScene, setOpenLoadFromScene] = React.useState(false);
+  const [sceneName, setSceneName] = React.useState("");
+
   const onLoadFromSceneClick = () => {
     setOpenLoadFromScene(true);
   };
   const onLoadFromSceneCancel = () => {
     setOpenLoadFromScene(false);
   };
-  const onLoadFromSceneSelected = (sceneUUID: string) => {
-    // TODO: Dispatch action to load scene from project
-    console.log(`Will open scene ${sceneUUID}`);
+  const onLoadFromSceneSelected = (selectedScene: ProjectSceneInfo) => {
     setOpenLoadFromScene(false);
+    ProjectSceneCache.inst.storeSceneInfo(selectedScene);
+    navigate(
+      `/scene?host=${appState.sessionInfo!.guiServerHost}&port=${
+        appState.sessionInfo!.guiServerPort
+      }&domain=${encodeURIComponent(
+        selectedScene.domain
+      )}&projectName=${encodeURIComponent(
+        selectedScene.projectName
+      )}&uuid=${encodeURIComponent(selectedScene.uuid)}`
+    );
+  };
+
+  const onUnloadSceneClick = () => {
+    dispatch(setLoadedScene(undefined));
+    setSceneName("");
+    navigate("/");
   };
 
   const [openLoadFromDevice, setOpenLoadFromDevice] = React.useState(false);
-  const onLoadFromDeviceClick = () => {
-    setOpenLoadFromDevice(true);
-  };
+  // TODO: uncomment the lines below when the device scene loading is implemented
+  //   const onLoadFromDeviceClick = () => {
+  //     setOpenLoadFromDevice(true);
+  //   };
   const onLoadFromDeviceCancel = () => {
     setOpenLoadFromDevice(false);
   };
@@ -78,6 +106,20 @@ const LoggedInHeader: React.FC = () => {
   const onUserMenuClose = () => {
     setAnchorUserMenu(null);
   };
+
+  React.useEffect(() => {
+    // Retrieve scene data from URL query params, if possible.
+    ProjectSceneCache.inst.getSceneInfoFromQueryParams(
+      location.search,
+      (info: ProjectSceneInfo | null) => {
+        if (info) {
+          setSceneName(`${info.domain} :: ${info.projectName} :: ${info.name}`);
+        } else {
+          setSceneName("");
+        }
+      }
+    );
+  }, [location]);
 
   return (
     <Stack direction="column">
@@ -122,14 +164,15 @@ const LoggedInHeader: React.FC = () => {
             onSceneSelected={onLoadFromSceneSelected}
             onCancel={onLoadFromSceneCancel}
           />
-          <Button
+          {/* TODO: Uncomment the lines below when the device scene loading is implemented */}
+          {/* <Button
             size="small"
             variant="contained"
             startIcon={<DynamicFormOutlined />}
             onClick={onLoadFromDeviceClick}
           >
             Load Device Scene
-          </Button>
+          </Button> */}
           <SelectDeviceSceneDialog
             open={openLoadFromDevice}
             onSceneSelected={onLoadFromDeviceSelected}
@@ -138,14 +181,23 @@ const LoggedInHeader: React.FC = () => {
           <Box width={"0.2em"} />
           <Divider orientation="vertical" flexItem />
           <Box width={"0.2em"} />
-          <Tooltip title="Unload Scene">
+          <Tooltip title={`Unload Scene (${sceneName})`}>
             <span>
-              <IconButton size="medium" color="primary" disabled>
+              <IconButton
+                size="medium"
+                color="primary"
+                onClick={onUnloadSceneClick}
+                {...(sceneName.length > 0
+                  ? { disabled: false }
+                  : { disabled: true })}
+              >
                 <EjectOutlined fontSize="medium" />
               </IconButton>
             </span>
           </Tooltip>
-          <Typography variant="body2">[No Scene Loaded]</Typography>
+          <Typography variant="body1">
+            {sceneName.length > 0 ? sceneName : "[No Scene Loaded]"}
+          </Typography>
         </Stack>
         <Box width={"0.2em"} />
         <Divider orientation="vertical" flexItem />

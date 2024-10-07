@@ -90,14 +90,16 @@ function SelectProjectSceneDialog(props: SelectProjectSceneDialogProps) {
   const onDomainChange = (evt: SelectChangeEvent) => {
     setSelectedDomain(evt.target.value);
     updateProjects(evt.target.value.toString());
-    // Scenes will be populated again when a project for the new selected domain
-    // is selected.
-    setScenes([]);
-    setSelectedScene(undefined);
   };
 
   const updateProjects = (domain: string) => {
     setActivityStatus(ActivityStatus.GETTING_PROJECTS);
+
+    // Scenes will be populated again when a project for the new selected domain
+    // is selected.
+    setScenes([]);
+    setSelectedScene(undefined);
+
     ProjectDBConnector.inst.listProjects(domain, (projectsInfo) => {
       if (projectsInfo.error_msg) {
         setErrorMessage(projectsInfo.error_msg);
@@ -116,7 +118,7 @@ function SelectProjectSceneDialog(props: SelectProjectSceneDialogProps) {
         if (projectsFiltered.length > 0) {
           const selProject = projectsFiltered[0];
           setSelectedProject(selProject);
-          updateScenes(selProject.domain, selProject.uuid);
+          updateScenes(selProject.domain, selProject.name, selProject.uuid);
           setSelectedScene(undefined);
         }
       }
@@ -124,19 +126,28 @@ function SelectProjectSceneDialog(props: SelectProjectSceneDialogProps) {
     });
   };
 
-  const updateScenes = (domain: string, uuidProject: string) => {
+  const updateScenes = (
+    domain: string,
+    projectName: string,
+    uuidProject: string
+  ) => {
     setActivityStatus(ActivityStatus.GETTING_SCENES);
-    ProjectDBConnector.inst.listScenes(domain, uuidProject, (scenesInfo) => {
-      if (scenesInfo.error_msg) {
-        setErrorMessage(scenesInfo.error_msg);
-      } else {
-        setScenes(scenesInfo.scenes);
-        if (scenesInfo.scenes.length > 0) {
-          setSelectedScene(scenesInfo.scenes[0]);
+    ProjectDBConnector.inst.listScenes(
+      domain,
+      projectName,
+      uuidProject,
+      (scenesInfo) => {
+        if (scenesInfo.error_msg) {
+          setErrorMessage(scenesInfo.error_msg);
+        } else {
+          setScenes(scenesInfo.scenes);
+          if (scenesInfo.scenes.length > 0) {
+            setSelectedScene(scenesInfo.scenes[0]);
+          }
         }
+        setActivityStatus(ActivityStatus.NO_ACTIVITY);
       }
-      setActivityStatus(ActivityStatus.NO_ACTIVITY);
-    });
+    );
   };
 
   const onDBInitError = () => {
@@ -151,7 +162,7 @@ function SelectProjectSceneDialog(props: SelectProjectSceneDialogProps) {
     project: ProjectItemInfo
   ) => {
     setSelectedProject(project);
-    updateScenes(project.domain, project.uuid);
+    updateScenes(project.domain, project.name, project.uuid);
     setSelectedScene(undefined);
   };
 
@@ -253,6 +264,10 @@ function SelectProjectSceneDialog(props: SelectProjectSceneDialogProps) {
               currentTopicIdx >= 0 ? currentTopic : domainsInfo.domains[0];
             setSelectedDomain(startupDomain);
             updateProjects(startupDomain);
+          } else {
+            // The current domain selection has been preserved; update projects
+            // and scenes downstream
+            updateProjects(selectedDomain);
           }
         }
         setActivityStatus(ActivityStatus.NO_ACTIVITY);
@@ -446,7 +461,11 @@ function SelectProjectSceneDialog(props: SelectProjectSceneDialogProps) {
         </Button>
         <Button
           variant="contained"
-          onClick={handleSelectScene}
+          onClick={(evt) => {
+            evt.preventDefault();
+            evt.stopPropagation();
+            handleSelectScene();
+          }}
           disabled={selectedScene === undefined}
           sx={{ minWidth: "11em" }}
         >

@@ -1,20 +1,24 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
+import { SceneModel } from "../../view_models/SceneModel";
 
 export interface GlobalAppState {
-  // TODO: Refine ERROR: INIT_ERROR, SCENE_OPEN_ERROR, TRANSIENT_ERROR, DISCONNECTED_ERROR
-  // INIT_ERROR -> Advice to reload the page (takes full page view port). Goes back to INIT
+  // UNRECOVERABLE_ERROR -> Advice to reload the page (takes full page view port). Goes back to INIT
   // SCENE_OPEN_ERROR -> Modal that takes the central area of the logged-in view port,
   //                     back to the default "Welcome Screen" when dialog dismissed with
   //                     state LOGGED_IN
-  // TRANSIENT_ERROR -> When a scene has been successfully loaded (e.g. unexpected value
-  //                    for a property). Displays a temporary (and dismissable) pop up
-  //                    at the bottom of the screen and follows up life
-  // DISCONNECTED_ERROR -> Advice to reload the page (takes full page view port). Goes back to INIT
-  globalState: "INIT" | "LOGGED_IN" | "LOGGED_OUT" | "ERROR";
+  // SCENE_DISPLAY_ERROR -> When a scene has been successfully loaded (e.g. unexpected value
+  //                        for a property). Displays a temporary (and dismissable) pop up
+  //                        at the bottom of the screen and follows up life
+  globalState:
+    | "INIT"
+    | "LOGGED_IN"
+    | "LOGGED_OUT"
+    | "UNRECOVERABLE_ERROR"
+    | "SCENE_OPEN_ERROR";
   lastError: string;
   sessionInfo?: GuiServerSessionInfo;
-  loadedScene?: string;
+  loadedScene?: SceneModel;
 }
 
 export interface GuiServerSessionInfo {
@@ -38,14 +42,13 @@ export const globalAppStateSlice = createSlice({
   initialState,
   reducers: {
     setError: (state: GlobalAppState, action: PayloadAction<string>) => {
-      state.globalState = "ERROR";
+      state.globalState = "UNRECOVERABLE_ERROR";
       state.lastError = action.payload;
+      state.sessionInfo = undefined;
     },
-    setLoggedIn: (
-      state: GlobalAppState,
-      action: PayloadAction<GuiServerSessionInfo>
-    ) => {
+    setLoggedIn: (state, action: PayloadAction<GuiServerSessionInfo>) => {
       state.globalState = "LOGGED_IN";
+      state.loadedScene = undefined;
       state.sessionInfo = {
         loggedUser: action.payload.loggedUser,
         accessLevel: action.payload.accessLevel,
@@ -56,13 +59,13 @@ export const globalAppStateSlice = createSlice({
         sessionStartEpoc: action.payload.sessionStartEpoc,
       };
     },
-    setLoggedOut: (state: GlobalAppState) => {
+    setLoggedOut: (state) => {
       state.globalState = "LOGGED_OUT";
       state.sessionInfo = undefined;
+      state.loadedScene = undefined;
     },
   },
 });
-
 export const { setError, setLoggedIn, setLoggedOut } =
   globalAppStateSlice.actions;
 
