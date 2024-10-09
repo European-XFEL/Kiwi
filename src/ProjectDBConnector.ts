@@ -1,4 +1,4 @@
-import { Hash } from "./karabo_hash/types";
+import { Hash } from "karabo-ts";
 import { GuiServerConnector } from "./GuiServerConnector";
 import {
   ListDomainsResult,

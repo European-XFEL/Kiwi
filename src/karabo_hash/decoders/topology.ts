@@ -3,7 +3,7 @@ import {
   DeviceInfo,
   DeviceServerInfo,
 } from "../../karabo_data/TopologyInfo";
-import { Hash } from "../types";
+import { Hash } from "karabo-ts";
 
 export const sysTopologyInfoFromHash = (hash: Hash): SystemTopologyInfo => {
   // Gather info on devices

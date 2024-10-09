@@ -17,9 +17,7 @@ import { GuiServerInfo } from "./karabo_data/GuiServerInfo";
 
 import { Websocket, WebsocketBuilder } from "websocket-ts";
 
-import BinaryEncoder from "./karabo_hash/bin_writer";
-
-import { Hash } from "./karabo_hash/types";
+import { BinaryEncoder, Hash } from "karabo-ts";
 
 import { store } from "./store";
 import { setTopology } from "./store/slices/sysTopologySlice";
@@ -83,7 +81,7 @@ export class GuiServerConnector {
       );
       return;
     }
-    const encodedHash = new BinaryEncoder(hash).encode();
+    const encodedHash = new BinaryEncoder().encodeHash(hash);
     this.#_session.ws.send(packEncodedHash(encodedHash));
   }
 
@@ -567,7 +565,7 @@ export class GuiServerConnector {
         this.#_session?.userId
       );
     }
-    const loginMsg = new BinaryEncoder(loginHash).encode();
+    const loginMsg = new BinaryEncoder().encodeHash(loginHash);
     ws.send(packEncodedHash(loginMsg));
 
     if (!this.#_session?.isAuthSession) {

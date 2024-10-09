@@ -1,6 +1,4 @@
-import { Hash } from "./types";
-
-import BinaryDecoder from "./bin_reader";
+import { BinaryDecoder, Hash } from "karabo-ts";
 
 /**
  * Parses a Blob, the type of WebSocketEvent.data, supposed to contain a
