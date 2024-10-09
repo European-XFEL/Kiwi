@@ -1,4 +1,4 @@
-import { Hash } from "../types";
+import { Hash, HashValue } from "karabo-ts";
 import {
   DbItemInfo,
   ListDomainsResult,
@@ -13,40 +13,34 @@ export const beginUserSessionResultFromHash = (hash: Hash): boolean => {
 };
 
 export const listDomainsResultFromHash = (hash: Hash): ListDomainsResult => {
-  const reason = hash.value.reply.value.value.reason.value.value_ as string;
+  const reason = hash.value.reply.value.value_.reason.value.value_ as string;
   return {
     error_msg: reason.length == 0 ? undefined : reason,
     domains:
       reason.length > 0
         ? []
-        : (hash.value.reply.value.value.domains.value.value_ as string[]),
+        : (hash.value.reply.value.value_.domains.value.value_ as string[]),
   };
 };
 
 export const listProjectsResultFromHash = (hash: Hash): ListProjectsResult => {
-  const reason = hash.value.reply.value.value.reason.value.value_ as string;
+  const reason = hash.value.reply.value.value_.reason.value.value_ as string;
   if (reason.length > 0) {
     // An error occurred
     return { error_msg: reason, projects: [] };
   } else {
-    const projects: ProjectItemInfo[] = [];
-    const itemsHashes = hash.value.reply.value.value.items.value;
+    const itemsHashes = hash.value.reply.value.value_.items.value.value_;
     const domain =
-      hash.value.request.value.value.args.value.value.domain.value.value_;
-    for (let i = 0; i < itemsHashes.length; i++) {
-      const uuid = itemsHashes[i].value.uuid.value.value_;
-      const name = itemsHashes[i].value.simple_name.value.value_;
-      const date = itemsHashes[i].value.date.value.value_;
-      const isTrashed =
-        itemsHashes[i].value.is_trashed.value.value_.toLowerCase() === "true";
-      projects.push({
+      hash.value.request.value.value_.args.value.value.domain.value.value_;
+    const projects: ProjectItemInfo[] = itemsHashes.map((item: HashValue) => {
+      return{
         domain: domain,
-        uuid: uuid,
-        name: name,
-        dateModified: date,
-        isTrashed: isTrashed,
-      });
-    }
+        uuid: item.uuid.value.value_,
+        name: item.simple_name.value.value_,
+        dateModified: item.date.value.value_,
+        isTrashed: item.is_trashed.value.value_.toLowerCase() === "true"
+      };
+    });
     return { error_msg: undefined, projects: projects };
   }
 };
@@ -55,17 +49,18 @@ export const loadProjectItemsResultFromHash = (
   projectName: string,
   hash: Hash
 ): LoadProjectItemsResult => {
-  const reason = hash.value.reply.value.value.reason.value.value_ as string;
+  const reason = hash.value.reply.value.value_.reason.value.value_ as string;
   if (reason.length > 0) {
     // An error occurred
     return { error_msg: reason, projectItems: [] };
   } else {
     const items: DbItemInfo[] = [];
-    const itemHashes = hash.value.reply.value.value.items.value;
+    const itemHashes = hash.value.reply.value.value_.items.value.value_;
     for (let i = 0; i < itemHashes.length; i++) {
-      const domain = itemHashes[i].value.domain.value.value_;
-      const uuid = itemHashes[i].value.uuid.value.value_;
-      const xml = itemHashes[i].value.xml.value.value_;
+      const item = itemHashes[i];
+      const domain = item.domain.value.value_;
+      const uuid = item.uuid.value.value_;
+      const xml = item.xml.value.value_;
       const parser = new XMLParser({
         ignoreAttributes: false,
         attributeNamePrefix: "@_",
