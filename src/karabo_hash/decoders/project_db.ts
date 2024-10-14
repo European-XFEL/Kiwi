@@ -9,36 +9,37 @@ import {
 import { XMLParser } from "fast-xml-parser";
 
 export const beginUserSessionResultFromHash = (hash: Hash): boolean => {
-  return hash.value.success.value.value_ as boolean;
+  return hash.getValue("success") as boolean;
 };
 
 export const listDomainsResultFromHash = (hash: Hash): ListDomainsResult => {
-  const reason = hash.value.reply.value.value_.reason.value.value_ as string;
+  const reason = hash.getValue("reply.reason") as string;
   return {
     error_msg: reason.length == 0 ? undefined : reason,
     domains:
       reason.length > 0
         ? []
-        : (hash.value.reply.value.value_.domains.value.value_ as string[]),
+        : (hash.getValue("reply.domains") as string[]),
   };
 };
 
 export const listProjectsResultFromHash = (hash: Hash): ListProjectsResult => {
-  const reason = hash.value.reply.value.value_.reason.value.value_ as string;
+  const reason = hash.getValue("reply.reason") as string;
   if (reason.length > 0) {
     // An error occurred
     return { error_msg: reason, projects: [] };
   } else {
-    const itemsHashes = hash.value.reply.value.value_.items.value.value_;
+    const itemsHashes = hash.getValue("reply.items") as HashValue[];
     const domain =
-      hash.value.request.value.value_.args.value.value.domain.value.value_;
-    const projects: ProjectItemInfo[] = itemsHashes.map((item: HashValue) => {
-      return{
+      hash.getValue("request.args.domain") as string;
+    const projects: ProjectItemInfo[] = itemsHashes.map((hv: HashValue) => {
+      const item : Hash = new Hash(hv);
+      return {
         domain: domain,
-        uuid: item.uuid.value.value_,
-        name: item.simple_name.value.value_,
-        dateModified: item.date.value.value_,
-        isTrashed: item.is_trashed.value.value_.toLowerCase() === "true"
+        uuid: item.getValue("uuid") as string,
+        name: item.getValue("simple_name") as string,
+        dateModified: item.getValue("date") as string,
+        isTrashed: (item.getValue("is_trashed") as string).toLowerCase() === "true"
       };
     });
     return { error_msg: undefined, projects: projects };
@@ -49,18 +50,18 @@ export const loadProjectItemsResultFromHash = (
   projectName: string,
   hash: Hash
 ): LoadProjectItemsResult => {
-  const reason = hash.value.reply.value.value_.reason.value.value_ as string;
+  const reason = hash.getValue("reply.reason") as string;
   if (reason.length > 0) {
     // An error occurred
     return { error_msg: reason, projectItems: [] };
   } else {
     const items: DbItemInfo[] = [];
-    const itemHashes = hash.value.reply.value.value_.items.value.value_;
+    const itemHashes = hash.getValue("reply.items") as unknown as HashValue[];
     for (let i = 0; i < itemHashes.length; i++) {
-      const item = itemHashes[i];
-      const domain = item.domain.value.value_;
-      const uuid = item.uuid.value.value_;
-      const xml = item.xml.value.value_;
+      const item = new Hash(itemHashes[i]);
+      const domain = item.getValue("domain") as string;
+      const uuid = item.getValue("uuid") as string;
+      const xml = item.getValue("xml") as string;
       const parser = new XMLParser({
         ignoreAttributes: false,
         attributeNamePrefix: "@_",

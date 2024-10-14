@@ -25,11 +25,7 @@ export const blobToHash = async (blob: Blob): Promise<Hash> => {
  * @returns the value of the hash's "type" property (blank if the hash has no type property).
  */
 export const hashProtocolType = (hash: Hash): string => {
-  let typeValue = "";
-  if ("type" in hash.value) {
-    typeValue = hash.value.type.value.value_ as string;
-  }
-  return typeValue;
+  return hash.getValue("type") as string ?? "";
 };
 
 /**
