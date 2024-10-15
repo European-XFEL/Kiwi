@@ -1,0 +1,114 @@
+{
+  "svg:g": [
+    {
+      "svg:rect": [
+        {
+          "@_krb:class": "Label",
+          "@_x": "30",
+          "@_y": "70",
+          "@_width": "39",
+          "@_height": "21",
+          "@_krb:text": "State",
+          "@_krb:font": "Source Sans Pro,10,-1,5,50,0,0,0,0,0",
+          "@_krb:foreground": "#000000",
+          "@_krb:frameWidth": "0",
+          "@_krb:background": "transparent"
+        },
+        {
+          "@_krb:class": "DisplayComponent",
+          "@_krb:widget": "DisplayStateColor",
+          "@_krb:keys": "Karabo_GuiServer_0.state",
+          "@_x": "69",
+          "@_y": "70",
+          "@_width": "31",
+          "@_height": "21",
+          "@_krb:show_string": "false"
+        }
+      ],
+      "@_krb:direction": "0",
+      "@_krb:class": "BoxLayout",
+      "@_krb:x": "30",
+      "@_krb:y": "70",
+      "@_krb:height": "21",
+      "@_krb:width": "70"
+    },
+    {
+      "svg:rect": [
+        {
+          "@_krb:class": "Label",
+          "@_x": "30",
+          "@_y": "20",
+          "@_width": "57",
+          "@_height": "21",
+          "@_krb:text": "DeviceID",
+          "@_krb:font": "Source Sans Pro,10,-1,5,50,0,0,0,0,0",
+          "@_krb:foreground": "#000000",
+          "@_krb:frameWidth": "0",
+          "@_krb:background": "transparent"
+        },
+        {
+          "@_krb:class": "DisplayComponent",
+          "@_krb:widget": "DisplayLabel",
+          "@_krb:keys": "Karabo_GuiServer_0.deviceId",
+          "@_x": "87",
+          "@_y": "20",
+          "@_width": "139",
+          "@_height": "21"
+        }
+      ],
+      "@_krb:direction": "0",
+      "@_krb:class": "BoxLayout",
+      "@_krb:x": "30",
+      "@_krb:y": "20",
+      "@_krb:height": "21",
+      "@_krb:width": "196"
+    },
+    {
+      "svg:rect": [
+        {
+          "@_krb:class": "Label",
+          "@_x": "30",
+          "@_y": "120",
+          "@_width": "189",
+          "@_height": "21",
+          "@_krb:text": "Connected clients count",
+          "@_krb:font": "Source Code Pro,10,-1,5,50,0,0,0,0,0",
+          "@_krb:foreground": "#000000",
+          "@_krb:frameWidth": "0",
+          "@_krb:background": "#ffcc00"
+        },
+        {
+          "@_krb:class": "DisplayComponent",
+          "@_krb:widget": "DisplayLabel",
+          "@_krb:keys": "Karabo_GuiServer_0.connectedClientCount",
+          "@_x": "219",
+          "@_y": "120",
+          "@_width": "72",
+          "@_height": "21"
+        }
+      ],
+      "@_krb:direction": "0",
+      "@_krb:class": "BoxLayout",
+      "@_krb:x": "30",
+      "@_krb:y": "120",
+      "@_krb:height": "21",
+      "@_krb:width": "261"
+    }
+  ],
+  "svg:rect": {
+    "@_krb:class": "DisplayComponent",
+    "@_krb:widget": "DisplayCommand",
+    "@_krb:keys": "Karabo_GuiServer_0.slotDumpToLog",
+    "@_x": "30",
+    "@_y": "170",
+    "@_width": "139",
+    "@_height": "24",
+    "@_krb:requires_confirmation": "false"
+  },
+  "@_xmlns:svg": "http://www.w3.org/2000/svg",
+  "@_xmlns:krb": "http://karabo.eu/scene",
+  "@_krb:version": "2",
+  "@_krb:uuid": "e68e94f8-5a19-42bc-9d7b-ad8c20d5523b",
+  "@_height": "213",
+  "@_width": "323"
+}

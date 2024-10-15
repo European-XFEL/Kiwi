@@ -58,7 +58,11 @@ const AppBody: React.FC = () => {
     );
   } else {
     contents = (
-      <Stack direction="column" display="flex" sx={{ height: "100%" }}>
+      <Stack
+        direction="column"
+        display="flex"
+        sx={{ height: "100%", pt: 0, pb: 0 }}
+      >
         <LoggedInHeader />
         <Outlet />
         <LoggedInFooter />

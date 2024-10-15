@@ -91,7 +91,7 @@ const App: React.FC = () => {
   return (
     <ThemeProvider theme={appTheme}>
       <CssBaseline enableColorScheme={true}>
-        <Stack direction="column" sx={{ height: "100%", p: 1.5 }}>
+        <Stack direction="column" sx={{ height: "100%", p: 0 }}>
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<AppBody />}>

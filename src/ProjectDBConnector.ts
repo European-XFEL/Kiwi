@@ -292,7 +292,9 @@ export class ProjectDBConnector {
       }
       console.error(`Error loading project scene: ${loadSceneErr}`);
     }
-    if (itemsInfo!.projectItems.length !== 1) {
+    if (itemsInfo === undefined) {
+      loadSceneErr = "Error loading project scene - no scene returned";
+    } else if (itemsInfo!.projectItems.length !== 1) {
       // An error occurred - only one item should have been returned.
       loadSceneErr = "Error loading project scene - multiple items returned";
     } else if (!isSceneInfo(itemsInfo!.projectItems[0])) {

@@ -1,6 +1,6 @@
 {
-  "short_name": "GUI Protocol Viewer",
-  "name": "Karabo GUI Protocol Viewer",
+  "short_name": "Kiwi",
+  "name": "Karabo Interactive Web Interface",
   "icons": [
     {
       "src": "favicon.ico",

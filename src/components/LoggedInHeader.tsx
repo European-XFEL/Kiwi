@@ -131,7 +131,7 @@ const LoggedInHeader: React.FC = () => {
             alignItems: "center",
           }}
         >
-          <Box sx={{ mt: 1 }}>
+          <Box sx={{ mt: 1, pt: 1, pl: 1 }}>
             <img
               src="logo192.png"
               style={{ maxWidth: "56px", height: "auto" }}
@@ -202,7 +202,7 @@ const LoggedInHeader: React.FC = () => {
         <Box width={"0.2em"} />
         <Divider orientation="vertical" flexItem />
         <Box width={"0.2em"} />
-        <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+        <Stack direction="row" spacing={2} sx={{ alignItems: "center", pr: 1 }}>
           <Tooltip title="User Operations">
             <IconButton
               size="medium"
