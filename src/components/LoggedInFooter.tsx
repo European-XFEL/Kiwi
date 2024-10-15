@@ -55,7 +55,7 @@ const LoggedInFooter: React.FC = () => {
         }}
       >
         <span>
-          <Typography variant="body2">
+          <Typography variant="body2" sx={{ pt: 1, pb: 1, pl: 1 }}>
             Topic: <b>{appState.sessionInfo?.guiServerTopic}</b>
           </Typography>
         </span>
@@ -85,7 +85,7 @@ const LoggedInFooter: React.FC = () => {
           )}
         </span>
         <span>
-          <Typography variant="body2">
+          <Typography variant="body2" sx={{ pt: 1, pb: 1, pr: 1 }}>
             Connected for: <b>{connectedFor}</b>
           </Typography>
         </span>

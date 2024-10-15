@@ -1,0 +1,20 @@
+{
+  "svg:rect": {
+    "@_krb:class": "Label",
+    "@_x": "39",
+    "@_y": "59",
+    "@_width": "85",
+    "@_height": "20",
+    "@_krb:text": "A simple label",
+    "@_krb:font": "Source Sans Pro,10,-1,5,50,0,0,0,0,0",
+    "@_krb:foreground": "",
+    "@_krb:frameWidth": "1",
+    "@_krb:background": "#ffff99"
+  },
+  "@_xmlns:svg": "http://www.w3.org/2000/svg",
+  "@_xmlns:krb": "http://karabo.eu/scene",
+  "@_krb:version": "2",
+  "@_krb:uuid": "73d31361-b019-4d0c-9fd5-aa0acd536bb8",
+  "@_height": "200",
+  "@_width": "200"
+}

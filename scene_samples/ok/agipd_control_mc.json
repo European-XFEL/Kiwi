@@ -1,0 +1,580 @@
+{
+  "svg:rect": [
+    {
+      "@_fill": "none",
+      "@_height": "411",
+      "@_stroke": "#000000",
+      "@_stroke-dasharray": "",
+      "@_stroke-dashoffset": "0.0",
+      "@_stroke-linecap": "butt",
+      "@_stroke-linejoin": "miter",
+      "@_stroke-miterlimit": "4.0",
+      "@_stroke-opacity": "1.0",
+      "@_stroke-style": "1",
+      "@_stroke-width": "1.0",
+      "@_width": "1189",
+      "@_x": "12",
+      "@_y": "11"
+    },
+    {
+      "@_height": "34",
+      "@_width": "217",
+      "@_x": "818",
+      "@_y": "33",
+      "@_krb:class": "Label",
+      "@_krb:font": "Ubuntu,16,-1,5,75,0,0,0,0,0",
+      "@_krb:foreground": "",
+      "@_krb:frameWidth": "0",
+      "@_krb:text": "micro Controller - h2"
+    },
+    {
+      "@_height": "27",
+      "@_width": "117",
+      "@_x": "32",
+      "@_y": "390",
+      "@_krb:class": "Label",
+      "@_krb:font": "Ubuntu,11,-1,5,50,0,0,0,0,0",
+      "@_krb:foreground": "#000000",
+      "@_krb:frameWidth": "0",
+      "@_krb:text": "Raw Data - MC2"
+    },
+    {
+      "@_height": "34",
+      "@_width": "217",
+      "@_x": "200",
+      "@_y": "29",
+      "@_krb:class": "Label",
+      "@_krb:font": "Ubuntu,16,-1,5,75,0,0,0,0,0",
+      "@_krb:foreground": "",
+      "@_krb:frameWidth": "0",
+      "@_krb:text": "micro Controller - h1"
+    },
+    {
+      "@_height": "27",
+      "@_width": "117",
+      "@_x": "32",
+      "@_y": "364",
+      "@_krb:class": "Label",
+      "@_krb:font": "Ubuntu,11,-1,5,50,0,0,0,0,0",
+      "@_krb:foreground": "#000000",
+      "@_krb:frameWidth": "0",
+      "@_krb:text": "Raw Data - MC1"
+    },
+    {
+      "@_height": "27",
+      "@_width": "1030",
+      "@_x": "145",
+      "@_y": "365",
+      "@_krb:class": "DisplayComponent",
+      "@_krb:keys": "DETLAB_LAB_AGIPD1M1/CTRL/MC1.rawData",
+      "@_krb:widget": "EditableList"
+    },
+    {
+      "@_height": "27",
+      "@_width": "1024",
+      "@_x": "148",
+      "@_y": "393",
+      "@_krb:class": "DisplayComponent",
+      "@_krb:keys": "DETLAB_LAB_AGIPD1M1/CTRL/MC2.rawData",
+      "@_krb:widget": "EditableList"
+    }
+  ],
+  "svg:g": [
+    {
+      "svg:g": [
+        {
+          "svg:rect": [
+            {
+              "@_height": "27",
+              "@_width": "113",
+              "@_x": "590",
+              "@_y": "181",
+              "@_krb:class": "Label",
+              "@_krb:font": "Ubuntu,11,-1,5,50,0,0,0,0,0",
+              "@_krb:foreground": "#000000",
+              "@_krb:frameWidth": "0",
+              "@_krb:text": "Polling Interval"
+            },
+            {
+              "@_height": "32",
+              "@_width": "160",
+              "@_x": "694",
+              "@_y": "181",
+              "@_krb:class": "DisplayComponent",
+              "@_krb:keys": "DETLAB_LAB_AGIPD1M1/CTRL/MC2.pollInterval",
+              "@_krb:widget": "IntLineEdit"
+            },
+            {
+              "@_height": "32",
+              "@_width": "232",
+              "@_x": "854",
+              "@_y": "181",
+              "@_krb:class": "EditableApplyLaterComponent",
+              "@_krb:keys": "DETLAB_LAB_AGIPD1M1/CTRL/MC2.pollInterval",
+              "@_krb:widget": "IntLineEdit"
+            }
+          ],
+          "@_krb:class": "BoxLayout",
+          "@_krb:direction": "0",
+          "@_krb:height": "38",
+          "@_krb:width": "496",
+          "@_krb:x": "652",
+          "@_krb:y": "180"
+        },
+        {
+          "svg:rect": [
+            {
+              "@_height": "27",
+              "@_width": "75",
+              "@_x": "627",
+              "@_y": "209",
+              "@_krb:class": "Label",
+              "@_krb:font": "Ubuntu,11,-1,5,50,0,0,0,0,0",
+              "@_krb:foreground": "#000000",
+              "@_krb:frameWidth": "0",
+              "@_krb:text": "OPMODE"
+            },
+            {
+              "@_height": "32",
+              "@_width": "161",
+              "@_x": "693",
+              "@_y": "209",
+              "@_krb:class": "DisplayComponent",
+              "@_krb:keys": "DETLAB_LAB_AGIPD1M1/CTRL/MC2.opMode",
+              "@_krb:widget": "IntLineEdit"
+            },
+            {
+              "@_height": "32",
+              "@_width": "233",
+              "@_x": "854",
+              "@_y": "209",
+              "@_krb:class": "EditableApplyLaterComponent",
+              "@_krb:keys": "DETLAB_LAB_AGIPD1M1/CTRL/MC2.opMode",
+              "@_krb:widget": "IntLineEdit"
+            }
+          ],
+          "@_krb:class": "BoxLayout",
+          "@_krb:direction": "0",
+          "@_krb:height": "37",
+          "@_krb:width": "496",
+          "@_krb:x": "652",
+          "@_krb:y": "218"
+        },
+        {
+          "svg:rect": [
+            {
+              "@_height": "27",
+              "@_width": "94",
+              "@_x": "605",
+              "@_y": "247",
+              "@_krb:class": "Label",
+              "@_krb:font": "Ubuntu,11,-1,5,50,0,0,0,0,0",
+              "@_krb:foreground": "#000000",
+              "@_krb:frameWidth": "0",
+              "@_krb:text": "AUTOMATIC"
+            },
+            {
+              "@_height": "32",
+              "@_width": "161",
+              "@_x": "691",
+              "@_y": "247",
+              "@_krb:class": "DisplayComponent",
+              "@_krb:keys": "DETLAB_LAB_AGIPD1M1/CTRL/MC2.automatic",
+              "@_krb:widget": "IntLineEdit"
+            },
+            {
+              "@_height": "32",
+              "@_width": "233",
+              "@_x": "852",
+              "@_y": "247",
+              "@_krb:class": "EditableApplyLaterComponent",
+              "@_krb:keys": "DETLAB_LAB_AGIPD1M1/CTRL/MC2.automatic",
+              "@_krb:widget": "IntLineEdit"
+            }
+          ],
+          "@_krb:class": "BoxLayout",
+          "@_krb:direction": "0",
+          "@_krb:height": "37",
+          "@_krb:width": "496",
+          "@_krb:x": "652",
+          "@_krb:y": "255"
+        },
+        {
+          "svg:rect": [
+            {
+              "@_height": "27",
+              "@_width": "40",
+              "@_x": "655",
+              "@_y": "284",
+              "@_krb:class": "Label",
+              "@_krb:font": "Ubuntu,11,-1,5,50,0,0,0,0,0",
+              "@_krb:foreground": "#000000",
+              "@_krb:frameWidth": "0",
+              "@_krb:text": "AUX"
+            },
+            {
+              "@_height": "32",
+              "@_width": "161",
+              "@_x": "687",
+              "@_y": "284",
+              "@_krb:class": "DisplayComponent",
+              "@_krb:keys": "DETLAB_LAB_AGIPD1M1/CTRL/MC2.aux",
+              "@_krb:widget": "IntLineEdit"
+            },
+            {
+              "@_height": "32",
+              "@_width": "233",
+              "@_x": "848",
+              "@_y": "284",
+              "@_krb:class": "EditableApplyLaterComponent",
+              "@_krb:keys": "DETLAB_LAB_AGIPD1M1/CTRL/MC2.aux",
+              "@_krb:widget": "IntLineEdit"
+            }
+          ],
+          "@_krb:class": "BoxLayout",
+          "@_krb:direction": "0",
+          "@_krb:height": "37",
+          "@_krb:width": "496",
+          "@_krb:x": "652",
+          "@_krb:y": "292"
+        }
+      ],
+      "@_krb:class": "BoxLayout",
+      "@_krb:direction": "2",
+      "@_krb:height": "159",
+      "@_krb:width": "506",
+      "@_krb:x": "647",
+      "@_krb:y": "175"
+    },
+    {
+      "svg:g": [
+        {
+          "svg:rect": [
+            {
+              "@_height": "27",
+              "@_width": "113",
+              "@_x": "27",
+              "@_y": "181",
+              "@_krb:class": "Label",
+              "@_krb:font": "Ubuntu,11,-1,5,50,0,0,0,0,0",
+              "@_krb:foreground": "#000000",
+              "@_krb:frameWidth": "0",
+              "@_krb:text": "Polling Interval"
+            },
+            {
+              "@_height": "32",
+              "@_width": "160",
+              "@_x": "131",
+              "@_y": "181",
+              "@_krb:class": "DisplayComponent",
+              "@_krb:keys": "DETLAB_LAB_AGIPD1M1/CTRL/MC1.pollInterval",
+              "@_krb:widget": "IntLineEdit"
+            },
+            {
+              "@_height": "32",
+              "@_width": "232",
+              "@_x": "291",
+              "@_y": "181",
+              "@_krb:class": "EditableApplyLaterComponent",
+              "@_krb:keys": "DETLAB_LAB_AGIPD1M1/CTRL/MC1.pollInterval",
+              "@_krb:widget": "IntLineEdit"
+            }
+          ],
+          "@_krb:class": "BoxLayout",
+          "…:x": "27",
+          "@_krb:y": "219"
+        },
+        {
+          "svg:rect": [
+            {
+              "@_height": "27",
+              "@_width": "94",
+              "@_x": "40",
+              "@_y": "262",
+              "@_krb:class": "Label",
+              "@_krb:font": "Ubuntu,11,-1,5,50,0,0,0,0,0",
+              "@_krb:foreground": "#000000",
+              "@_krb:frameWidth": "0",
+              "@_krb:text": "AUTOMATIC"
+            },
+            {
+              "@_height": "32",
+              "@_width": "161",
+              "@_x": "126",
+              "@_y": "262",
+              "@_krb:class": "DisplayComponent",
+              "@_krb:keys": "DETLAB_LAB_AGIPD1M1/CTRL/MC1.automatic",
+              "@_krb:widget": "IntLineEdit"
+            },
+            {
+              "@_height": "32",
+              "@_width": "233",
+              "@_x": "287",
+              "@_y": "262",
+              "@_krb:class": "EditableApplyLaterComponent",
+              "@_krb:keys": "DETLAB_LAB_AGIPD1M1/CTRL/MC1.automatic",
+              "@_krb:widget": "IntLineEdit"
+            }
+          ],
+          "@_krb:class": "BoxLayout",
+          "@_krb:direction": "0",
+          "@_krb:height": "37",
+          "@_krb:width": "495",
+          "@_krb:x": "27",
+          "@_krb:y": "256"
+        },
+        {
+          "svg:rect": [
+            {
+              "@_height": "27",
+              "@_width": "40",
+              "@_x": "92",
+              "@_y": "299",
+              "@_krb:class": "Label",
+              "@_krb:font": "Ubuntu,11,-1,5,50,0,0,0,0,0",
+              "@_krb:foreground": "#000000",
+              "@_krb:frameWidth": "0",
+              "@_krb:text": "AUX"
+            },
+            {
+              "@_height": "32",
+              "@_width": "161",
+              "@_x": "124",
+              "@_y": "299",
+              "@_krb:class": "DisplayComponent",
+              "@_krb:keys": "DETLAB_LAB_AGIPD1M1/CTRL/MC1.aux",
+              "@_krb:widget": "IntLineEdit"
+            },
+            {
+              "@_height": "32",
+              "@_width": "233",
+              "@_x": "285",
+              "@_y": "299",
+              "@_krb:class": "EditableApplyLaterComponent",
+              "@_krb:keys": "DETLAB_LAB_AGIPD1M1/CTRL/MC1.aux",
+              "@_krb:widget": "IntLineEdit"
+            }
+          ],
+          "@_krb:class": "BoxLayout",
+          "@_krb:direction": "0",
+          "@_krb:height": "37",
+          "@_krb:width": "495",
+          "@_krb:x": "27",
+          "@_krb:y": "293"
+        }
+      ],
+      "@_krb:class": "BoxLayout",
+      "@_krb:direction": "2",
+      "@_krb:height": "159",
+      "@_krb:width": "505",
+      "@_krb:x": "22",
+      "@_krb:y": "176"
+    },
+    {
+      "svg:g": [
+        {
+          "svg:rect": [
+            {
+              "@_height": "27",
+              "@_width": "46",
+              "@_x": "108",
+              "@_y": "70",
+              "@_krb:class": "Label",
+              "@_krb:font": "Ubuntu,11,-1,5,50,0,0,0,0,0",
+              "@_krb:foreground": "#000000",
+              "@_krb:frameWidth": "0",
+              "@_krb:text": "State"
+            },
+            {
+              "@_height": "27",
+              "@_width": "146",
+              "@_x": "146",
+              "@_y": "70",
+              "@_krb:class": "DisplayComponent",
+              "@_krb:keys": "DETLAB_LAB_AGIPD1M1/CTRL/MC1.state",
+              "@_krb:widget": "DisplayLineEdit"
+            }
+          ],
+          "@_krb:class": "BoxLayout",
+          "@_krb:direction": "0",
+          "@_krb:height": "33",
+          "@_krb:width": "385",
+          "@_krb:x": "50",
+          "@_krb:y": "70"
+        },
+        {
+          "svg:rect": [
+            {
+              "@_height": "27",
+              "@_width": "93",
+              "@_x": "50",
+              "@_y": "106",
+              "@_krb:class": "Label",
+              "@_krb:font": "Ubuntu,11,-1,5,50,0,0,0,0,0",
+              "@_krb:foreground": "#000000",
+              "@_krb:frameWidth": "0",
+              "@_krb:text": "TINE_HOME"
+            },
+            {
+              "@_height": "27",
+              "@_width": "196",
+              "@_x": "135",
+              "@_y": "106",
+              "@_krb:class": "DisplayComponent",
+              "@_krb:keys": "DETLAB_LAB_AGIPD1M1/CTRL/MC1.tineHome",
+              "@_krb:widget": "DisplayLineEdit"
+            }
+          ],
+          "@_krb:class": "BoxLayout",
+          "@_krb:direction": "0",
+          "@_krb:height": "34",
+          "@_krb:width": "385",
+          "@_krb:x": "50",
+          "@_krb:y": "103"
+        },
+        {
+          "svg:rect": [
+            {
+              "@_height": "27",
+              "@_width": "65",
+              "@_x": "77",
+              "@_y": "144",
+              "@_krb:class": "Label",
+              "@_krb:font": "Ubuntu,11,-1,5,50,0,0,0,0,0",
+              "@_krb:foreground": "#000000",
+              "@_krb:frameWidth": "0",
+              "@_krb:text": "Address"
+            },
+            {
+              "@_height": "27",
+              "@_width": "146",
+              "@_x": "134",
+              "@_y": "144",
+              "@_krb:class": "DisplayComponent",
+              "@_krb:keys": "DETLAB_LAB_AGIPD1M1/CTRL/MC1.address",
+              "@_krb:widget": "DisplayLineEdit"
+            }
+          ],
+          "@_krb:class": "BoxLayout",
+          "@_krb:direction": "0",
+          "@_krb:height": "33",
+          "@_krb:width": "385",
+          "@_krb:x": "50",
+          "@_krb:y": "137"
+        }
+      ],
+      "@_krb:class": "BoxLayout",
+      "@_krb:direction": "2",
+      "@_krb:height": "110",
+      "@_krb:width": "395",
+      "@_krb:x": "45",
+      "@_krb:y": "65"
+    },
+    {
+      "svg:g": [
+        {
+          "svg:rect": [
+            {
+              "@_height": "27",
+              "@_width": "46",
+              "@_x": "763",
+              "@_y": "72",
+              "@_krb:class": "Label",
+              "@_krb:font": "Ubuntu,11,-1,5,50,0,0,0,0,0",
+              "@_krb:foreground": "#000000",
+              "@_krb:frameWidth": "0",
+              "@_krb:text": "State"
+            },
+            {
+              "@_height": "27",
+              "@_width": "146",
+              "@_x": "801",
+              "@_y": "72",
+              "@_krb:class": "DisplayComponent",
+              "@_krb:keys": "DETLAB_LAB_AGIPD1M1/CTRL/MC2.state",
+              "@_krb:widget": "DisplayLineEdit"
+            }
+          ],
+          "@_krb:class": "BoxLayout",
+          "@_krb:direction": "0",
+          "@_krb:height": "36",
+          "@_krb:width": "333",
+          "@_krb:x": "717",
+          "@_krb:y": "70"
+        },
+        {
+          "svg:rect": [
+            {
+              "@_height": "27",
+              "@_width": "93",
+              "@_x": "717",
+              "@_y": "105",
+              "@_krb:class": "Label",
+              "@_krb:font": "Ubuntu,11,-1,5,50,0,0,0,0,0",
+              "@_krb:foreground": "#000000",
+              "@_krb:frameWidth": "0",
+              "@_krb:text": "TINE_HOME"
+            },
+            {
+              "@_height": "27",
+              "@_width": "146",
+              "@_x": "802",
+              "@_y": "105",
+              "@_krb:class": "DisplayComponent",
+              "@_krb:keys": "DETLAB_LAB_AGIPD1M1/CTRL/MC2.tineHome",
+              "@_krb:widget": "DisplayLineEdit"
+            }
+          ],
+          "@_krb:class": "BoxLayout",
+          "@_krb:direction": "0",
+          "@_krb:height": "35",
+          "@_krb:width": "333",
+          "@_krb:x": "717",
+          "@_krb:y": "106"
+        },
+        {
+          "svg:rect": [
+            {
+              "@_height": "27",
+              "@_width": "65",
+              "@_x": "739",
+              "@_y": "137",
+              "@_krb:class": "Label",
+              "@_krb:font": "Ubuntu,11,-1,5,50,0,0,0,0,0",
+              "@_krb:foreground": "#000000",
+              "@_krb:frameWidth": "0",
+              "@_krb:text": "Address"
+            },
+            {
+              "@_height": "27",
+              "@_width": "146",
+              "@_x": "796",
+              "@_y": "137",
+              "@_krb:class": "DisplayComponent",
+              "@_krb:keys": "DETLAB_LAB_AGIPD1M1/CTRL/MC2.address",
+              "@_krb:widget": "DisplayLineEdit"
+            }
+          ],
+          "@_krb:class": "BoxLayout",
+          "@_krb:direction": "0",
+          "@_krb:height": "36",
+          "@_krb:width": "333",
+          "@_krb:x": "717",
+          "@_krb:y": "141"
+        }
+      ],
+      "@_krb:class": "BoxLayout",
+      "@_krb:direction": "2",
+      "@_krb:height": "117",
+      "@_krb:width": "343",
+      "@_krb:x": "712",
+      "@_krb:y": "65"
+    }
+  ],
+  "@_xmlns:svg": "http://www.w3.org/2000/svg",
+  "@_xmlns:krb": "http://karabo.eu/scene",
+  "@_height": "481",
+  "@_width": "1188",
+  "@_krb:uuid": "cc1da6d1-5852-4e92-bda1-8222c3e662b7",
+  "@_krb:version": "2"
+}

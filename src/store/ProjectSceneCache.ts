@@ -125,7 +125,7 @@ export class ProjectSceneCache {
 
   // #region Cache expiration
   static MAX_CACHE_ITEMS = 50;
-  static MAX_CACHE_AGE_MILLISECONDS = 10 * 60 * 1000; // 10 minutes
+  static MAX_CACHE_AGE_MILLISECONDS = 5 * 60 * 1000; // 5 minutes
   static CACHE_PRUNE_INTERVAL_SECONDS = 20;
 
   #_pruneCache = (): void => {
