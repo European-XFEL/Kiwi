@@ -10,6 +10,7 @@ const Rectangle: React.FC<RectangleElementProps> = (props) => {
   const renderInternalWidgets = (
     widgets: WidgetElement<SceneElementProps>[]
   ) => {
+    // Renders the rectangle's children
     return (
       <React.Fragment>
         {widgets.map((widget: WidgetElement<SceneElementProps>) => {
