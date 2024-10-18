@@ -1,5 +1,8 @@
 import { buildLoginHash } from "./karabo_hash/builders/gui_session";
-import { sysTopologyInfoFromHash } from "./karabo_hash/decoders/topology";
+import {
+  sysTopologyInfoFromHash,
+  sysTopologyUpdateInfoFromHash,
+} from "./karabo_hash/decoders/topology";
 import {
   guiServerInfoFromHash,
   loginInfoFromHash,
@@ -20,7 +23,7 @@ import { Websocket, WebsocketBuilder } from "websocket-ts";
 import { BinaryEncoder, Hash } from "karabo-ts";
 
 import { store } from "./store";
-import { setTopology } from "./store/slices/sysTopologySlice";
+import { setTopology, updateTopology } from "./store/slices/sysTopologySlice";
 import { GuiSessionData, GuiSessionStore } from "./store/GuiSessionStore";
 import AuthServerClient from "./http_clients/AuthServerClient";
 
@@ -482,6 +485,8 @@ export class GuiServerConnector {
           this.#_handleNotification(hash);
         } else if (protocolType === "systemTopology") {
           this.#_handleSystemTopology(hash);
+        } else if (protocolType === "topologyUpdate") {
+          this.#_handleTopologyUpdate(hash);
         } else if (this.#_hashHandlers.has(protocolType)) {
           // There is a handler currently registered for the protocol type - call it
           this.#_hashHandlers.get(protocolType)!(hash);
@@ -641,6 +646,11 @@ export class GuiServerConnector {
     // Initial topology received - update the topology slice of the Redux Store.
     const sysTopologyInfo = sysTopologyInfoFromHash(hash);
     store.dispatch(setTopology(sysTopologyInfo));
+  };
+
+  #_handleTopologyUpdate = (hash: Hash): void => {
+    const topologyUpdateInfo = sysTopologyUpdateInfoFromHash(hash);
+    store.dispatch(updateTopology(topologyUpdateInfo));
   };
 
   // #endregion
