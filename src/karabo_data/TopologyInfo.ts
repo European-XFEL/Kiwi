@@ -35,3 +35,9 @@ export interface SystemTopologyInfo {
   devices: DeviceInfo[];
   servers: DeviceServerInfo[];
 }
+
+export interface SystemTopologyUpdateInfo {
+  new: SystemTopologyInfo;
+  update: SystemTopologyInfo;
+  gone: SystemTopologyInfo;
+}
