@@ -491,8 +491,6 @@ export class GuiServerConnector {
           // There is a handler currently registered for the protocol type - call it
           this.#_hashHandlers.get(protocolType)!(hash);
         }
-
-        // TODO: (???) register the message received in the messages slice of the Redux Store.
       });
     }
   };

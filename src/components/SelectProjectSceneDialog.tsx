@@ -435,6 +435,10 @@ function SelectProjectSceneDialog(props: SelectProjectSceneDialogProps) {
                       key={`${index}::${scene.uuid}`}
                       selected={selectedScene?.uuid === scene.uuid}
                       onClick={(event) => handleSceneClick(event, scene)}
+                      onDoubleClick={(event) => {
+                        handleSceneClick(event, scene);
+                        handleSelectScene();
+                      }}
                     >
                       <TableCell>
                         <Typography noWrap>{scene.name}</Typography>
