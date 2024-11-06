@@ -3,10 +3,46 @@ import { Box } from "@mui/material";
 import { DynamicElementProps } from "../../karabo_data/SceneElements";
 import DeviceOfflineOverlay from "./DeviceOfflineOverlay";
 import { useAppSelector } from "../../AppHooks";
+import { DevicePropertyConnector } from "../../DevicePropertyConnector";
 
 const DisplayLabel: React.FC<DynamicElementProps> = (props) => {
-  // TODO: do the data binding - for now only display the karaboKeys
+  // Listening to the topology state is required to know whether the device is online or not.
   const sysTopologyState = useAppSelector((state) => state.sysTopology);
+
+  const [labelValue, setLabelValue] = React.useState<string>("");
+
+  const deviceId = props.karaboKeys.slice(0, props.karaboKeys.lastIndexOf("."));
+  const propertyId = props.karaboKeys.slice(
+    props.karaboKeys.lastIndexOf(".") + 1
+  );
+
+  // Handler for device property updates
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const onPropertyUpdate = (updatedValue: any) => {
+    setLabelValue(updatedValue);
+  };
+
+  // Register the component as a property updater when it is added to the DOM
+  // and unregister when it is removed from the DOM
+  React.useEffect(
+    () => {
+      DevicePropertyConnector.inst.registerPropertyMonitor(
+        deviceId,
+        propertyId,
+        onPropertyUpdate
+      );
+      return () => {
+        DevicePropertyConnector.inst.unregisterPropertyMonitor(
+          deviceId,
+          propertyId,
+          onPropertyUpdate
+        );
+      };
+    },
+    // Only registers/unregisters if either the deviceId or propertyId changes
+    [deviceId, propertyId]
+  );
+
   return (
     <Box
       sx={{
@@ -29,7 +65,7 @@ const DisplayLabel: React.FC<DynamicElementProps> = (props) => {
       {props.isSrcDeviceOffline(sysTopologyState.topology) ? (
         <DeviceOfflineOverlay {...props} />
       ) : (
-        props.karaboKeys.slice(props.karaboKeys.lastIndexOf(".") + 1)
+        labelValue
       )}
     </Box>
   );

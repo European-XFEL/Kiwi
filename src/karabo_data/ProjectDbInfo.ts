@@ -31,8 +31,6 @@ export interface ProjectContentsInfo extends ProjectItemInfo {
 
 // #region Custom type guards for project entities data structures
 
-// TODO: Add type guard for ProjectInfo (with the list of scenes and subprojects)
-
 export const isProjectItemInfo = (
   item: DbItemInfo
 ): item is ProjectItemInfo => {
