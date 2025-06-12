@@ -12,13 +12,11 @@ import {
   LoadProjectSceneResult,
 } from "./karabo_data/ProjectDbInfo";
 import {
-  buildBeginUserSessionHash,
   buildListDomainsHash,
   buildListProjectsHash,
   buildLoadItemsHash,
 } from "./karabo_hash/builders/project_db";
 import {
-  beginUserSessionResultFromHash,
   listDomainsResultFromHash,
   listProjectsResultFromHash,
   loadProjectItemsResultFromHash,
@@ -28,10 +26,6 @@ export class ProjectDBConnector {
   // #region Singleton
   private constructor() {
     // Registers the handlers for the hash types related to the ProjectDB
-    GuiServerConnector.inst.registerHashHandler(
-      "projectBeginUserSession",
-      this.#_onProjectBeginUserSession
-    );
     GuiServerConnector.inst.registerHashHandler(
       "projectListDomains",
       this.#_onListDomainsHash
@@ -56,7 +50,6 @@ export class ProjectDBConnector {
     domain: string,
     onProjects: (projectsInfo: ListProjectsResult) => void
   ): void {
-    this.#_ensureDBInitialized();
     // Stores the callback to be called when the GUI Server sends back the list of projects.
     if (this.#_onListProjectsCallback) {
       // There's already a pending getProjects operation. Refuse the new request.
@@ -110,7 +103,6 @@ export class ProjectDBConnector {
     uuidProject: string,
     onScenes: (scenesInfo: ListProjectScenesResult) => void
   ): void {
-    this.#_ensureDBInitialized();
     // Stores the callback to be called when the list of scenes is ready.
     if (this.#_onListScenesCallback || this.#_onGetSceneCallback) {
       // There's already a pending getScenes operation. Refuse the new request.
@@ -245,7 +237,6 @@ export class ProjectDBConnector {
     uuid: string,
     onScene: (loadSceneResult: LoadProjectSceneResult) => void
   ): void {
-    this.#_ensureDBInitialized();
     // Stores the callback to be called when the GUI Server sends back the scene.
     if (this.#_onGetSceneCallback || this.#_onListScenesCallback) {
       // There's already a pending getScene or listScene operation. Refuse the new request.
@@ -331,7 +322,6 @@ export class ProjectDBConnector {
 
   // #region List Domains
   listDomains(onDomains: (domainsInfo: ListDomainsResult) => void): void {
-    this.#_ensureDBInitialized();
     // Stores the callback to be called when the GUI Server sends back the list of domains.
     if (this.#_onListDomainsCallback) {
       // There's already a pending getDomains operation. Refuse the new request.
@@ -374,34 +364,5 @@ export class ProjectDBConnector {
     this.#_onListDomainsCallback?.(domainsInfo!);
     this.#_onListDomainsCallback = undefined;
   };
-  // #endregion
-
-  // #region ProjectDB Initialization
-  #_ensureDBInitialized(): void {
-    if (!GuiServerConnector.inst.isProjectDBInitialized) {
-      GuiServerConnector.inst.sendHash(buildBeginUserSessionHash());
-    }
-  }
-
-  // Handler for projectBeginUserSession responses received from the GUI Server
-  #_onProjectBeginUserSession = (hash: Hash): void => {
-    let dbInitialized = false;
-    try {
-      dbInitialized = beginUserSessionResultFromHash(hash);
-    } catch (e) {
-      console.error(`Error decoding the beginUserSession result: ${e}`);
-    }
-    GuiServerConnector.inst.projectDBInitialized = dbInitialized;
-    // Tells an external party interested in ProjectDB initialization errors about the error.
-    if (!dbInitialized) {
-      this.#_onDBInitializationError?.();
-    }
-  };
-
-  // Handler for ProjectDB initialization errors - to be set by an external party
-  #_onDBInitializationError?: () => void;
-  set onDBInitializationError(handler: () => void) {
-    this.#_onDBInitializationError = handler;
-  }
   // #endregion
 }

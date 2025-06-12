@@ -119,6 +119,7 @@ const LoginPanel: React.FC = () => {
   // Panel initialization
   //
   useEffect(() => {
+    // TODO: The authServerURL value MUST come from the probed server info, not from a setting!
     if (!authServerURLRef.current) {
       // The component is being initialized.
 

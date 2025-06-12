@@ -8,38 +8,31 @@ import {
 } from "../../karabo_data/ProjectDbInfo";
 import { XMLParser } from "fast-xml-parser";
 
-export const beginUserSessionResultFromHash = (hash: Hash): boolean => {
-  return hash.getValue("success") as boolean;
-};
-
 export const listDomainsResultFromHash = (hash: Hash): ListDomainsResult => {
-  const reason = hash.getValue("reply.reason") as string;
+  const reason = hash.getValue("reason") as string;
   return {
     error_msg: reason.length == 0 ? undefined : reason,
     domains:
-      reason.length > 0
-        ? []
-        : (hash.getValue("reply.domains") as string[]),
+      reason.length > 0 ? [] : (hash.getValue("reply.domains") as string[]),
   };
 };
 
 export const listProjectsResultFromHash = (hash: Hash): ListProjectsResult => {
-  const reason = hash.getValue("reply.reason") as string;
+  const reason = hash.getValue("reason") as string;
   if (reason.length > 0) {
     // An error occurred
     return { error_msg: reason, projects: [] };
   } else {
     const itemsHashes = hash.getValue("reply.items") as HashValue[];
-    const domain =
-      hash.getValue("request.args.domain") as string;
+    const domain = hash.getValue("request.args.domain") as string;
     const projects: ProjectItemInfo[] = itemsHashes.map((hv: HashValue) => {
-      const item : Hash = new Hash(hv);
+      const item: Hash = new Hash(hv);
       return {
         domain: domain,
         uuid: item.getValue("uuid") as string,
         name: item.getValue("simple_name") as string,
         dateModified: item.getValue("date") as string,
-        isTrashed: (item.getValue("is_trashed") as string).toLowerCase() === "true"
+        isTrashed: item.getValue("is_trashed") as boolean,
       };
     });
     return { error_msg: undefined, projects: projects };
@@ -50,7 +43,7 @@ export const loadProjectItemsResultFromHash = (
   projectName: string,
   hash: Hash
 ): LoadProjectItemsResult => {
-  const reason = hash.getValue("reply.reason") as string;
+  const reason = hash.getValue("reason") as string;
   if (reason.length > 0) {
     // An error occurred
     return { error_msg: reason, projectItems: [] };
