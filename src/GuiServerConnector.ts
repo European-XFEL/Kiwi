@@ -50,7 +50,6 @@ interface GuiServerSession {
   accessLevel?: AccessLevel;
   oneTimeToken?: string; // only defined for auth sessions - sent by the GUI client.
   refreshToken?: string; // only defined for auth sessions - sent by the GUI client.
-  projectDBInitialized: boolean;
   startHandler: SessionStartedHandler;
   startErrorHandler: SessionStartErrorHandler;
 }
@@ -86,25 +85,6 @@ export class GuiServerConnector {
     }
     const encodedHash = new BinaryEncoder().encodeHash(hash);
     this.#_session.ws.send(packEncodedHash(encodedHash));
-  }
-
-  /**
-   * Has the connection to the ProjectDB database been initialized for the current GUI Session?
-   *
-   * @returns true if the connection has been initialized, false otherwise.
-   */
-  get isProjectDBInitialized(): boolean {
-    return this.#_session?.projectDBInitialized ?? false;
-  }
-
-  set projectDBInitialized(initialized: boolean) {
-    if (!this.#_session) {
-      console.log(
-        "Invalid use of set ProjectDBInitialized! No active GUI Server session exists!"
-      );
-      return;
-    }
-    this.#_session.projectDBInitialized = initialized;
   }
 
   /**
