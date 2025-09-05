@@ -2,6 +2,7 @@
 export interface DbItemInfo {
   domain: string;
   uuid: string;
+  item_type: string;
 }
 
 export interface ProjectSceneInfo extends DbItemInfo {

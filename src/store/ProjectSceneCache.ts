@@ -103,7 +103,7 @@ export class ProjectSceneCache {
             onProjectSceneInfo(null);
             console.log(result.error_msg);
           }
-          // NOTE: this assignement is internal to the callback and cannot be
+          // NOTE: this assignment is internal to the callback and cannot be
           // moved outside, or the enforcement of only one scene retrieval at
           // a time via a network request would be lost.
           this.#_gettingSceneInfo = false;
