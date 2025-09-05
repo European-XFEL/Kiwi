@@ -131,6 +131,7 @@ export class ProjectDBConnector {
     const projectItem = {
       domain: domain,
       uuid: uuidProject,
+      item_type: "project",
     };
     GuiServerConnector.inst.sendHash(buildLoadItemsHash([projectItem]));
   }
@@ -179,12 +180,17 @@ export class ProjectDBConnector {
         if (isProjectContentsInfo(item)) {
           // For a project, load its contained scenes and subprojects
           for (const scene of item.scenes) {
-            itemsToQuery.push({ domain: scene.domain, uuid: scene.uuid });
+            itemsToQuery.push({
+              domain: scene.domain,
+              uuid: scene.uuid,
+              item_type: "scene",
+            });
           }
           for (const subproject of item.subprojects) {
             itemsToQuery.push({
               domain: subproject.domain,
               uuid: subproject.uuid,
+              item_type: "project",
             });
           }
           if (itemsToQuery.length > 0) {
@@ -259,7 +265,7 @@ export class ProjectDBConnector {
     this.#_onGetSceneCallback = onScene;
     this.#_projectName = projectName;
     GuiServerConnector.inst.sendHash(
-      buildLoadItemsHash([{ domain: domain, uuid: uuid }])
+      buildLoadItemsHash([{ domain: domain, uuid: uuid, item_type: "scene" }])
     );
   }
 

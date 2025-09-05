@@ -150,13 +150,6 @@ function SelectProjectSceneDialog(props: SelectProjectSceneDialogProps) {
     );
   };
 
-  const onDBInitError = () => {
-    setActivityStatus(ActivityStatus.NO_ACTIVITY);
-    setErrorMessage(
-      "ProjectDB initialization error! Please reopen the dialog."
-    );
-  };
-
   const handleProjectClick = (
     _event: React.MouseEvent<unknown>,
     project: ProjectItemInfo
@@ -236,7 +229,6 @@ function SelectProjectSceneDialog(props: SelectProjectSceneDialogProps) {
     if (!executedOnceRef.current) {
       // The executedOnceRef avoids multiple assignments of the onDBInitializationError when React.StrictMode is active.
       executedOnceRef.current = "true";
-      ProjectDBConnector.inst.onDBInitializationError = onDBInitError;
     }
     if (open) {
       setActivityStatus(ActivityStatus.GETTING_DOMAINS);

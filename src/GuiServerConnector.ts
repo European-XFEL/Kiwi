@@ -536,14 +536,14 @@ export class GuiServerConnector {
     if (this.#_session?.isAuthSession) {
       loginHash = buildLoginHash(
         "KIWI",
-        "2.20.0", // Must be >= 2.20.0 - the version required by the GUI Server for auth logins.
+        "3.0.0", // Must be >= 3.0.0rc13 - the version required by the Karabo 3 GUI Server for auth logins.
         this.#_session?.oneTimeToken,
         undefined
       );
     } else {
       loginHash = buildLoginHash(
         "KIWI",
-        "2.20.0", // Must be >= 2.20.0 - the version required by the GUI Server for auth logins.
+        "3.0.0", // Must be >= 3.0.0rc13 - the version required by the Karabo 3 GUI Server for auth logins.
         undefined,
         this.#_session?.userId
       );

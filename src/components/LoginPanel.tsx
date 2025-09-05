@@ -191,7 +191,7 @@ const LoginPanel: React.FC = () => {
     const portValue = parseInt(portRef.current!.value);
     if (probedServerInfo?.authRequired) {
       setActivityStatus(ActivityStatus.AUTH_USER);
-      // Authenticate the user and if successfull, start the session with
+      // Authenticate the user and if successful, start the session with
       // the GUI Server.
       authenticateUser()
         .then((authResult: AuthenticationResult) => {
