@@ -17,8 +17,8 @@ After cloning this project from `git`, execute the commands below to install and
 
 ```
 cd <working_folder_root>
-npm install
-npm run dev
+yarn install
+yarn dev
 ```` 
 
 ## Original README.md contents scaffolded by `vite` 
