@@ -113,6 +113,7 @@ const SceneCanvas: React.FC = () => {
         if (info) {
           try {
             const scene = new Scene(info.svg);
+           
             dispatch(
               setLoadedScene({
                 width: scene.width,

@@ -1,6 +1,6 @@
 import DisplayCommand from "../components/scene_widgets/DisplayCommand";
 import DisplayLabel from "../components/scene_widgets/DisplayLabel";
-import DisplayStateColor from "../components/scene_widgets/DisplayStateColor";
+import DisplayStateColor from "../components/scene_widgets/displayStateColor/DisplayStateColor";
 import Label from "../components/scene_widgets/Label";
 import Rectangle from "../components/scene_widgets/Rectangle";
 import {

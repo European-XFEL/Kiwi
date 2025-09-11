@@ -35,6 +35,7 @@ export interface LabelElementProps extends SceneElementProps {
   font: string;
   alignment: "LEFT" | "CENTER" | "RIGHT";
 }
+
 export class LabelElement extends WidgetElement<LabelElementProps> {
   text: string = "";
   backgroundColor: string = "#FFFFFF";
@@ -54,6 +55,7 @@ export interface DynamicElementProps extends SceneElementProps {
   fontWeight: "BOLD" | "NORMAL";
   isSrcDeviceOffline(topology: SystemTopologyInfo): string;
 }
+
 export class DynamicWidgetElement<
   PropsType extends DynamicElementProps
 > extends WidgetElement<PropsType> {
@@ -102,12 +104,16 @@ export class DisplayCommandElement extends DynamicWidgetElement<DisplayCommandEl
 export interface DisplayStateColorElementProps extends DynamicElementProps {
   showString: boolean;
 }
+
+
 export class DisplayStateColorElement extends DynamicWidgetElement<DisplayStateColorElementProps> {
   showString: boolean = false;
   get props(): DisplayStateColorElementProps {
     return { ...(this as unknown as DisplayStateColorElementProps) };
   }
 }
+
+
 
 export interface RectangleElementProps extends SceneElementProps {
   strokeWidth: number;
