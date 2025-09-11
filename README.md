@@ -8,20 +8,22 @@ The application has been bootstrapped using [vite](https://vitejs.dev/). As some
 
 ## Installation
 
-A local installation of [node](https://nodejs.org/) is required. 
+A local installation of [node](https://nodejs.org/) is required.
 
 The `vite`-compatible `node` versions are documented
 at https://vitejs.dev/guide/#scaffolding-your-first-vite-project.
 
-After cloning this project from `git`, execute the commands below to install and run the application:
+After cloning this project from `git`, execute the commands below to install and run the application (the installation of `yarn` might not be needed; try `yarn --version`
+before):
 
 ```
 cd <working_folder_root>
+npm install yarn
 yarn install
 yarn dev
-```` 
+````
 
-## Original README.md contents scaffolded by `vite` 
+## Original README.md contents scaffolded by `vite`
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
