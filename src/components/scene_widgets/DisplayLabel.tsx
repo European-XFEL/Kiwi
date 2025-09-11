@@ -4,6 +4,7 @@ import { DynamicElementProps } from "../../karabo_data/SceneElements";
 import DeviceOfflineOverlay from "./DeviceOfflineOverlay";
 import { useAppSelector } from "../../AppHooks";
 import { DevicePropertyConnector } from "../../DevicePropertyConnector";
+import { splitKaraboKeys } from "./shared/helpers/splitKaraboKeys";
 
 const DisplayLabel: React.FC<DynamicElementProps> = (props) => {
   // Listening to the topology state is required to know whether the device is online or not.
@@ -11,9 +12,9 @@ const DisplayLabel: React.FC<DynamicElementProps> = (props) => {
 
   const [labelValue, setLabelValue] = React.useState<string>("");
 
-  const deviceId = props.karaboKeys.slice(0, props.karaboKeys.lastIndexOf("."));
-  const propertyId = props.karaboKeys.slice(
-    props.karaboKeys.lastIndexOf(".") + 1
+  const { deviceId, propertyId } = React.useMemo(
+    () => splitKaraboKeys(props.karaboKeys),
+    [props.karaboKeys]
   );
 
   // Handler for device property updates
