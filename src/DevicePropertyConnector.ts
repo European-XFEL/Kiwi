@@ -14,7 +14,7 @@ export class DevicePropertyConnector {
   private constructor() {
     GuiServerConnector.inst.registerHashHandler(
       "deviceConfigurations",
-      this.#_onDeviceConfigurations
+      this.#_onDeviceConfigurations,
     );
   }
 
@@ -33,7 +33,7 @@ export class DevicePropertyConnector {
   registerPropertyMonitor(
     deviceId: string,
     propertyId: string,
-    propertyUpdateHandler: PropertyUpdateHandler
+    propertyUpdateHandler: PropertyUpdateHandler,
   ): void {
     if (!this.#_propertyMonitors.has(deviceId)) {
       // This is the first property being monitored for the device.
@@ -45,7 +45,7 @@ export class DevicePropertyConnector {
       // Creates the map of property update handlers for the device
       this.#_propertyMonitors.set(
         deviceId,
-        new Map<string, PropertyUpdateHandler[]>()
+        new Map<string, PropertyUpdateHandler[]>(),
       );
     }
     const devicePropertyMonitors = this.#_propertyMonitors.get(deviceId);
@@ -54,7 +54,7 @@ export class DevicePropertyConnector {
       // of the device. Creates the list to store the device property handlers.
       devicePropertyMonitors?.set(
         propertyId,
-        new Array<PropertyUpdateHandler>()
+        new Array<PropertyUpdateHandler>(),
       );
     }
     devicePropertyMonitors?.get(propertyId)?.push(propertyUpdateHandler);
@@ -63,13 +63,13 @@ export class DevicePropertyConnector {
   unregisterPropertyMonitor(
     deviceId: string,
     propertyId: string,
-    propertyUpdatehandler: PropertyUpdateHandler
+    propertyUpdatehandler: PropertyUpdateHandler,
   ): void {
     const propertyMonitors = this.#_propertyMonitors
       .get(deviceId)
       ?.get(propertyId);
     const handlerIdx = propertyMonitors?.findIndex(
-      (handler) => handler === propertyUpdatehandler
+      (handler) => handler === propertyUpdatehandler,
     );
     if (handlerIdx !== undefined && handlerIdx >= 0) {
       propertyMonitors?.splice(handlerIdx, 1);
