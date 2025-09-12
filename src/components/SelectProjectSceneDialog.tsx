@@ -31,6 +31,7 @@ import { useAppSelector } from "../AppHooks";
 import {
   ProjectItemInfo,
   ProjectSceneInfo,
+  asLocalDateTimeString,
 } from "../karabo_data/ProjectDbInfo";
 import { BackspaceOutlined, FilterAltOutlined } from "@mui/icons-material";
 
@@ -394,7 +395,9 @@ function SelectProjectSceneDialog(props: SelectProjectSceneDialogProps) {
                         <Typography noWrap>{project.name}</Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography noWrap>{project.dateModified}</Typography>
+                        <Typography noWrap>
+                          {asLocalDateTimeString(project.dateModified)}
+                        </Typography>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -436,7 +439,9 @@ function SelectProjectSceneDialog(props: SelectProjectSceneDialogProps) {
                         <Typography noWrap>{scene.name}</Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography noWrap>{scene.dateModified}</Typography>
+                        <Typography noWrap>
+                          {asLocalDateTimeString(scene.dateModified)}
+                        </Typography>
                       </TableCell>
                     </TableRow>
                   ))}

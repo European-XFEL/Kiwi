@@ -40,7 +40,7 @@ const DisplayLabel: React.FC<DynamicElementProps> = (props) => {
         );
       };
     },
-    // Only registers/unregisters if either the deviceId or propertyId changes
+    // Only registers/unregister if either the deviceId or propertyId changes
     [deviceId, propertyId]
   );
 

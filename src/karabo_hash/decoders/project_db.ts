@@ -33,6 +33,7 @@ export const listProjectsResultFromHash = (hash: Hash): ListProjectsResult => {
         name: item.getValue("simple_name") as string,
         dateModified: item.getValue("date") as string,
         isTrashed: item.getValue("is_trashed") as boolean,
+        item_type: "project",
       };
     });
     return { error_msg: undefined, projects: projects };
@@ -75,6 +76,7 @@ export const loadProjectItemsResultFromHash = (
             scenes.push({
               domain: domain,
               uuid: xmlScenes.KRB_Item[i].uuid["#text"],
+              item_type: itemType,
             });
           }
         }
@@ -89,6 +91,7 @@ export const loadProjectItemsResultFromHash = (
             subprojects.push({
               domain: domain,
               uuid: xmlSubprojects.KRB_Item[i].uuid["#text"],
+              item_type: "project", // A subproject is a project
             });
           }
         }
@@ -100,6 +103,7 @@ export const loadProjectItemsResultFromHash = (
           dateModified: xmlObj.xml["@_date"],
           scenes: scenes,
           subprojects: subprojects,
+          item_type: itemType,
         };
         items.push(item);
       } else if (itemType === "scene") {
@@ -117,6 +121,7 @@ export const loadProjectItemsResultFromHash = (
             xmlObj.xml["svg:svg"] != undefined
               ? JSON.stringify(xmlObj.xml["svg:svg"])
               : JSON.stringify(xmlObj.xml["svg"]),
+          item_type: itemType,
         };
         items.push(item);
       }
