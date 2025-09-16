@@ -53,7 +53,7 @@ export interface DynamicElementProps extends SceneElementProps {
   karaboKeys: string;
   fontSize: number;
   fontWeight: "BOLD" | "NORMAL";
-  isSrcDeviceOffline(topology: SystemTopologyInfo): string;
+  isSrcDeviceOffline(topology: SystemTopologyInfo): boolean;
 }
 
 export class DynamicWidgetElement<
