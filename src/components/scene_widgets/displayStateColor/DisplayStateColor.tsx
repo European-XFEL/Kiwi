@@ -7,7 +7,6 @@ import { useKaraboProperty } from "./hooks/useKaraboProperty";
 import { useGuiStateColor } from "./hooks/useGuiStateColor";
 
 
-//Totally inspired by the DisplayLabel widget this pattern is subject to debate
 
 const DisplayStateColor: React.FC<DisplayStateColorElementProps> = (props) => {
   // topology to decide offline/online

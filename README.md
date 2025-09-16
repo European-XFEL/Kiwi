@@ -22,6 +22,54 @@ npm install yarn
 yarn install
 yarn dev
 ````
+# Testing
+
+Jest is used for unit and integration testing with React Testing Library for component testing.
+
+## Running Tests
+
+Create test files with the `.test.tsx` or `.test.ts` extension (e.g., `MyComponent.test.tsx`) and run:
+
+```bash
+# Run tests in watch mode
+yarn test
+
+# Generate coverage report
+yarn cov
+
+```
+
+## Script Reference
+
+| Command | Description |
+|---------|-------------|
+| `test` | Runs tests in watch mode (development) |
+| `cov` | Generates coverage report for source files |
+
+
+## Test File Examples
+
+**Component Test:**
+```typescript
+// MyComponent.test.tsx
+import { render, screen } from '@testing-library/react'
+import MyComponent from './MyComponent'
+
+test('renders component correctly', () => {
+  render(<MyComponent />)
+  expect(screen.getByText('Hello World')).toBeInTheDocument()
+})
+```
+
+**Utility/Helpers Test:**
+```typescript
+// utils.test.ts
+import { myHelper } from './utils'
+
+test('helper function works correctly', () => {
+  expect(myHelper('input')).toBe('expected output')
+})
+```
 
 ## Original README.md contents scaffolded by `vite`
 
