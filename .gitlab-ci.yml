@@ -1,0 +1,36 @@
+# run CI only on branches and tags
+workflow:
+  rules:
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH
+
+stages:
+  - test
+
+variables:
+  NODE_ENV: test
+  # Use an explicit npm cache directory so we can cache it between jobs
+  NPM_CONFIG_CACHE: "$CI_PROJECT_DIR/.npm"
+
+# Global cache config: keyed by lockfile contents so changes invalidate cache.
+cache:
+  key:
+    files:
+      - yarn.lock
+  paths:
+    - node_modules/
+    - .npm/
+  policy: pull
+
+.default_node_image: &node_image
+  image: node:20
+
+test:
+  <<: *node_image
+  stage: test
+  script:
+    - node -v
+    - npm -v
+    - yarn -v
+    - yarn install --prefer-offline --no-audit --non-interactive
+    - yarn cov --watchAll=false
