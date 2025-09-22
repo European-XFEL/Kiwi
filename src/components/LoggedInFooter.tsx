@@ -1,15 +1,15 @@
 import { Stack, Divider, Typography, Tooltip } from "@mui/material";
 import React, { useEffect, useState } from "react";
 
-import { useAppSelector } from "../AppHooks";
+import { useGlobalStore } from "../store/globalAppStateStore";
 
 const LoggedInFooter: React.FC = () => {
-  const appState = useAppSelector((state) => state.globalAppState);
-  const loadedSceneState = useAppSelector((state) => state.loadedScene);
+  const { sessionInfo, loadedScene } = useGlobalStore();
+
   const [connectedFor, setConnectedFor] = useState("");
 
   const updateConnectedFor = () => {
-    const sessionStartEpoc = appState.sessionInfo?.sessionStartEpoc;
+    const sessionStartEpoc = sessionInfo?.sessionStartEpoc;
     let intervalMsecs = 1000;
     if (sessionStartEpoc != undefined) {
       const elapsedSecs = Math.floor((Date.now() - sessionStartEpoc) / 1000);
@@ -56,29 +56,26 @@ const LoggedInFooter: React.FC = () => {
       >
         <span>
           <Typography variant="body2" sx={{ pt: 1, pb: 1, pl: 1 }}>
-            Topic: <b>{appState.sessionInfo?.guiServerTopic}</b>
+            Topic: <b>{sessionInfo?.guiServerTopic}</b>
           </Typography>
         </span>
         <span>
-          <Tooltip title={`version: ${appState.sessionInfo?.guiServerVersion}`}>
+          <Tooltip title={`version: ${sessionInfo?.guiServerVersion}`}>
             <Typography variant="body2">
               GUI Server:{" "}
               <b>
-                {appState.sessionInfo?.guiServerHost}:
-                {appState.sessionInfo?.guiServerPort}
+                {sessionInfo?.guiServerHost}:{sessionInfo?.guiServerPort}
               </b>
             </Typography>
           </Tooltip>
         </span>
         <span style={{ flexGrow: 1 }}>
-          {loadedSceneState.scene !== undefined ? (
+          {loadedScene !== undefined ? (
             <Typography variant="body2">
               Scene size (pixels):{" "}
               {/* de-DE is used to force the group separator to be a dot */}
-              <b>
-                {loadedSceneState.scene?.width.toLocaleString("de-DE")}
-              </b> x{" "}
-              <b>{loadedSceneState.scene?.height.toLocaleString("de-DE")}</b>
+              <b>{loadedScene?.width.toLocaleString("de-DE")}</b> x{" "}
+              <b>{loadedScene?.height.toLocaleString("de-DE")}</b>
             </Typography>
           ) : (
             <Typography variant="body2">&nbsp;</Typography>

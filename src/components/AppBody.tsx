@@ -1,8 +1,7 @@
 import React from "react";
 
-import { useAppSelector } from "../AppHooks";
-
 import { Box, CircularProgress, Container, Paper, Stack } from "@mui/material";
+import { useGlobalStore } from "../store/globalAppStateStore";
 
 import LoginPanel from "./LoginPanel";
 import LoggedInHeader from "./LoggedInHeader";
@@ -11,11 +10,8 @@ import LoggedInFooter from "./LoggedInFooter";
 import { Outlet } from "react-router-dom";
 
 const AppBody: React.FC = () => {
-  const globalState = useAppSelector(
-    (state) => state.globalAppState.globalState
-  );
-
-  const lastError = useAppSelector((state) => state.globalAppState.lastError);
+  const globalState = useGlobalStore((s) => s.globalState);
+  const lastError = useGlobalStore((s) => s.lastError);
 
   let contents = <div></div>;
   if (globalState === "INIT") {

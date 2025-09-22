@@ -2,13 +2,12 @@ import React from "react";
 import { Box } from "@mui/material";
 import { DynamicElementProps } from "../../karabo_data/SceneElements";
 import DeviceOfflineOverlay from "./DeviceOfflineOverlay";
-import { useAppSelector } from "../../AppHooks";
+import useSystemTopologyStore from "../../store/systemTopologyStore";
 import { DevicePropertyConnector } from "../../DevicePropertyConnector";
 import { splitKaraboKeys } from "./shared/helpers/splitKaraboKeys";
 
 const DisplayLabel: React.FC<DynamicElementProps> = (props) => {
-  // Listening to the topology state is required to know whether the device is online or not.
-  const sysTopologyState = useAppSelector((state) => state.sysTopology);
+  const topology = useSystemTopologyStore((state) => state.topology);
 
   const [labelValue, setLabelValue] = React.useState<string>("");
 
@@ -63,7 +62,7 @@ const DisplayLabel: React.FC<DynamicElementProps> = (props) => {
         p: "1px",
       }}
     >
-      {props.isSrcDeviceOffline(sysTopologyState.topology) ? (
+      {props.isSrcDeviceOffline(topology) ? (
         <DeviceOfflineOverlay {...props} />
       ) : (
         labelValue
@@ -71,4 +70,5 @@ const DisplayLabel: React.FC<DynamicElementProps> = (props) => {
     </Box>
   );
 };
+
 export default DisplayLabel;

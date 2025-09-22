@@ -27,13 +27,13 @@ import {
 } from "@mui/material";
 import React, { useRef } from "react";
 import { ProjectDBConnector } from "../ProjectDBConnector";
-import { useAppSelector } from "../AppHooks";
 import {
   ProjectItemInfo,
   ProjectSceneInfo,
   asLocalDateTimeString,
 } from "../karabo_data/ProjectDbInfo";
 import { BackspaceOutlined, FilterAltOutlined } from "@mui/icons-material";
+import { useGlobalStore } from "../store/globalAppStateStore";
 
 enum ActivityStatus {
   NO_ACTIVITY,
@@ -51,7 +51,8 @@ export interface SelectProjectSceneDialogProps {
 function SelectProjectSceneDialog(props: SelectProjectSceneDialogProps) {
   // Access to the global app state is required to retrieve the current topic.
   // The current topic is used to for the initial domain selection.
-  const appState = useAppSelector((state) => state.globalAppState);
+
+  const { sessionInfo } = useGlobalStore();
 
   const { open, onSceneSelected, onCancel } = props;
 
@@ -249,7 +250,8 @@ function SelectProjectSceneDialog(props: SelectProjectSceneDialogProps) {
             // If there's no current domain selection, or the current domain is not among
             // the available domains anymore, select the domain that matches the current
             // topic (if any) or the first domain
-            const currentTopic = appState.sessionInfo!.guiServerTopic;
+
+            const currentTopic = sessionInfo?.guiServerTopic as string;
             const currentTopicIdx = domainsInfo.domains.findIndex(
               (domain) => domain === currentTopic
             );

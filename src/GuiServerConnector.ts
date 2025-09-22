@@ -15,6 +15,9 @@ import {
   packEncodedHash,
 } from "./karabo_hash/hash_utils";
 
+import { useAppSettingsStore } from "./store/appSettingsStore";
+import useSystemTopologyStore from "./store/systemTopologyStore";
+
 import { AccessLevel } from "./karabo_data/AccessLevel";
 import { GuiServerInfo } from "./karabo_data/GuiServerInfo";
 
@@ -22,8 +25,6 @@ import { Websocket, WebsocketBuilder } from "websocket-ts";
 
 import { BinaryEncoder, Hash } from "karabo-ts";
 
-import { store } from "./store";
-import { setTopology, updateTopology } from "./store/slices/sysTopologySlice";
 import { GuiSessionData, GuiSessionStore } from "./store/GuiSessionStore";
 import AuthServerClient from "./http_clients/AuthServerClient";
 
@@ -62,7 +63,7 @@ export class GuiServerConnector {
   private constructor() {}
 
   static get #_wsProxyURL(): string {
-    return store.getState().appSettings.ws_proxy_url;
+    return useAppSettingsStore.getState().wsProxyURL; // using zustand store
   }
 
   static #_inst?: GuiServerConnector;
@@ -179,7 +180,6 @@ export class GuiServerConnector {
       userLogged: false,
       oneTimeToken: oneTimeToken,
       refreshToken: refreshToken,
-      projectDBInitialized: false,
       startHandler: startHandler,
       startErrorHandler: startErrorHandler,
     };
@@ -208,7 +208,6 @@ export class GuiServerConnector {
       userLogged: false,
       userId: userId,
       accessLevel: accessLevel,
-      projectDBInitialized: false,
       startHandler: startHandler,
       startErrorHandler: startErrorHandler,
     };
@@ -621,14 +620,14 @@ export class GuiServerConnector {
   };
 
   #_handleSystemTopology = (hash: Hash): void => {
-    // Initial topology received - update the topology slice of the Redux Store.
+    // Initial topology received - update the topology store using Zustand
     const sysTopologyInfo = sysTopologyInfoFromHash(hash);
-    store.dispatch(setTopology(sysTopologyInfo));
+    useSystemTopologyStore.getState().setTopology(sysTopologyInfo);
   };
 
   #_handleTopologyUpdate = (hash: Hash): void => {
     const topologyUpdateInfo = sysTopologyUpdateInfoFromHash(hash);
-    store.dispatch(updateTopology(topologyUpdateInfo));
+    useSystemTopologyStore.getState().updateTopology(topologyUpdateInfo);
   };
 
   // #endregion

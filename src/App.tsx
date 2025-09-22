@@ -1,25 +1,15 @@
 import React, { useEffect } from "react";
-
 import { Stack } from "@mui/material";
 
 import AppBody from "./components/AppBody";
-
 import { CssBaseline } from "@mui/material";
-
 import { ThemeProvider } from "@mui/material/styles";
 import appTheme from "./AppTheme";
 
-import { useAppDispatch } from "./AppHooks";
 import { initAppSettings } from "./AppSettings";
-import {
-  setWsProxyUrl,
-  setAuthServerUrl,
-} from "./store/slices/appSettingsSlice";
-import {
-  setError,
-  setLoggedOut,
-  setLoggedIn,
-} from "./store/slices/globalAppStateSlice";
+import { useAppSettingsStore } from "./store/appSettingsStore";
+import { useGlobalStore } from "./store/globalAppStateStore"; // ⬅️ NEW
+
 import { AccessLevel } from "./karabo_data/AccessLevel";
 import { GuiServerConnector } from "./GuiServerConnector";
 import AuthServerClient from "./http_clients/AuthServerClient";
@@ -28,34 +18,33 @@ import SceneCanvas from "./components/SceneCanvas";
 import NoScenePanel from "./components/NoScenePanel";
 
 const App: React.FC = () => {
-  const dispatch = useAppDispatch();
   const executedOnceRef = React.useRef("");
+
+  const { setWsProxyUrl, setAuthServerUrl } = useAppSettingsStore();
+
+  const { setError, setLoggedIn, setLoggedOut } = useGlobalStore();
 
   useEffect(() => {
     const appSettings = initAppSettings();
-    dispatch(setWsProxyUrl(appSettings.wsProxyURL));
-    dispatch(setAuthServerUrl(appSettings.authServerURL));
+
+    setWsProxyUrl(appSettings.wsProxyURL);
+    console.log(appSettings.wsProxyURL);
+    setAuthServerUrl(appSettings.authServerURL);
+    console.log(appSettings.authServerURL);
 
     if (!executedOnceRef.current) {
-      // First execution of useEffect since appStart - this is needed to
-      // prevent duplicate execution of useEffect when React.StrictMode is enabled.
-      // See https://react.dev/reference/react/useEffect#caveats for more info
-      // The resume GUI Session logic must be executed only once per
-      // activation of the application. Duplicate execution generates refresh-token
-      // that won't be used and causes sync to be lost between the refresh-token
-      // actually being sent to the server and the one stored in the LocalStorage.
-      // The same single-execution constraint also applies to the definiton of the
-      // handler for the onSessionDropped event.
       executedOnceRef.current = "true";
 
+      // When session drops unexpectedly → error state
       GuiServerConnector.inst.onSessionDropped = (err_msg: string) => {
-        // Goes to error state when an unexpected GUI session drop occurs.
-        dispatch(setError(err_msg));
+        setError(err_msg); //zustand
       };
 
+      // Try to resume GUI session
       GuiServerConnector.inst.resumeGuiSession(
         new AuthServerClient(appSettings.authServerURL),
-        // Handles session resume
+
+        // Session resumed
         (
           accessLevel: AccessLevel,
           host: string,
@@ -64,29 +53,29 @@ const App: React.FC = () => {
           topic: string,
           serverVersion: string
         ) => {
-          dispatch(
-            setLoggedIn({
-              accessLevel: accessLevel,
-              loggedUser: userId,
-              guiServerHost: host,
-              guiServerPort: port,
-              guiServerTopic: topic,
-              guiServerVersion: serverVersion,
-              sessionStartEpoc: Date.now(),
-            })
-          );
+          setLoggedIn({
+            accessLevel,
+            loggedUser: userId,
+            guiServerHost: host,
+            guiServerPort: port,
+            guiServerTopic: topic,
+            guiServerVersion: serverVersion,
+            sessionStartEpoc: Date.now(),
+          }); //zustand
         },
-        // Handles no session to resume
+
+        // No session to resume
         () => {
-          dispatch(setLoggedOut());
+          setLoggedOut(); //zustand
         },
-        // Handles error trying to resume a session
+
+        // Error trying to resume session
         (errorMsg: string) => {
-          dispatch(setError(errorMsg));
+          setError(errorMsg); //zustand
         }
       );
     }
-  }, [dispatch]);
+  }, [setWsProxyUrl, setAuthServerUrl, setError, setLoggedIn, setLoggedOut]);
 
   return (
     <ThemeProvider theme={appTheme}>

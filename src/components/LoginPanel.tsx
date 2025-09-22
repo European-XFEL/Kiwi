@@ -1,8 +1,5 @@
-import React from "react";
-
-import { useEffect, useRef, useState } from "react";
-
-import { useAppDispatch } from "../AppHooks";
+import React, { useEffect } from "react";
+import { useEffect as useReactEffect, useRef, useState } from "react";
 
 import { GuiServerConnector } from "../GuiServerConnector";
 
@@ -11,9 +8,8 @@ import { GuiServerInfo } from "../karabo_data/GuiServerInfo";
 
 import AuthServerClient from "../http_clients/AuthServerClient";
 import AuthenticationResult from "../http_data/AuthenticationResult";
-
-import { store } from "../store";
-import { setLoggedIn } from "../store/slices/globalAppStateSlice";
+import { useAppSettingsStore } from "../store/appSettingsStore";
+import { useGlobalStore } from "../store/globalAppStateStore";
 
 import {
   Box,
@@ -43,15 +39,13 @@ enum ActivityStatus {
 }
 
 const LoginPanel: React.FC = () => {
-  // The login panel dispatches setLoggedIn actions upon successful logins.
-  const dispatch = useAppDispatch();
+  const setLoggedIn = useGlobalStore((s) => s.setLoggedIn);
 
-  // After a successful login, the user is navigated to the app page with no
-  // scene loaded
+  // After a successful login, navigate to "no_scene"
   const navigate = useNavigate();
 
   //
-  // Panel state - no need to use the AppState store for these.
+  // Panel state
   //
   const [activityStatus, setActivityStatus] = useState<ActivityStatus>(
     ActivityStatus.NO_ACTIVITY
@@ -63,6 +57,8 @@ const LoginPanel: React.FC = () => {
   const [passwd, setPasswd] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
+  const { authServerURL } = useAppSettingsStore();
+
   //
   // Refs to DOM elements
   //
@@ -73,7 +69,7 @@ const LoginPanel: React.FC = () => {
   const passwdRef = useRef<HTMLInputElement>(null);
   const loginRef = useRef<HTMLButtonElement>(null);
 
-  // Refs to values to be preserved between renders of the component
+  // Refs to values preserved between renders
   const authServerURLRef = useRef("");
 
   //
@@ -87,8 +83,7 @@ const LoginPanel: React.FC = () => {
 
   const onProbeFailure = (errMsg: string) => {
     if (latchTimerID != 0) {
-      // There's is a chance that the next probe will succeed. Don't
-      // show the error message yet.
+      // Next probe may succeed; suppress intermediate error
       return;
     }
     setErrorMessage(errMsg);
@@ -97,14 +92,10 @@ const LoginPanel: React.FC = () => {
   };
 
   const doProbeServer = () => {
-    // It can be safely assumed that the Refs have been initialized and point
-    // to the DOM element.
     const hostValue = hostRef.current!.value.trim();
     const portValue = parseInt(portRef.current!.value);
-    if (!hostValue || !portValue) {
-      // At least the host or the port is empty; nothing to do.
-      return;
-    }
+    if (!hostValue || !portValue) return;
+
     setActivityStatus(ActivityStatus.PROBING_SERVER);
     latchTimerID = 0;
     GuiServerConnector.inst.probeServer(
@@ -119,20 +110,15 @@ const LoginPanel: React.FC = () => {
   // Panel initialization
   //
   useEffect(() => {
-    // TODO: The authServerURL value MUST come from the probed server info, not from a setting!
+    // TODO: The authServerURL value SHOULD come from the probed server info
     if (!authServerURLRef.current) {
-      // The component is being initialized.
+      authServerURLRef.current = authServerURL;
 
-      // Loads the AuthenticationServer url - no need to do it more than once.
-      authServerURLRef.current = store.getState().appSettings.auth_server_url;
-
-      // Loads the last used host:port on initialization.
       const host = localStorage.getItem("lastHost") || "localhost";
       let port = 44444;
       const lastPort = parseInt(localStorage.getItem("lastPort") || "");
-      if (!isNaN(lastPort)) {
-        port = lastPort;
-      }
+      if (!isNaN(lastPort)) port = lastPort;
+
       if (hostRef.current) {
         hostRef.current.value = host;
         hostRef.current.focus();
@@ -140,7 +126,7 @@ const LoginPanel: React.FC = () => {
       if (portRef.current) {
         portRef.current.value = `${port}`;
       }
-      // Call probeServer for the initial host:port combination.
+
       setActivityStatus(ActivityStatus.PROBING_SERVER);
       GuiServerConnector.inst.probeServer(
         host,
@@ -149,9 +135,6 @@ const LoginPanel: React.FC = () => {
         onProbeFailure
       );
     } else {
-      // The component is being updated - focus the first field of the
-      // credentials panel (username) if the current host:port is for a valid
-      // GUI Server connection and the focus in the host:port panel.
       if (
         userRef.current &&
         probedServerInfo &&
@@ -161,25 +144,17 @@ const LoginPanel: React.FC = () => {
         userRef.current.focus();
       }
     }
-  }, [probedServerInfo]);
+  }, [probedServerInfo, authServerURL]);
 
   let latchTimerID = 0;
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const onHostnameChanged = (_e: React.ChangeEvent<HTMLInputElement>) => {
-    if (latchTimerID != 0) {
-      clearTimeout(latchTimerID);
-      latchTimerID = 0;
-    }
+    if (latchTimerID != 0) clearTimeout(latchTimerID);
     latchTimerID = window.setTimeout(doProbeServer, 900);
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const onPortChanged = (_e: React.ChangeEvent<HTMLInputElement>) => {
-    if (latchTimerID != 0) {
-      clearTimeout(latchTimerID);
-      latchTimerID = 0;
-    }
+    if (latchTimerID != 0) clearTimeout(latchTimerID);
     latchTimerID = window.setTimeout(doProbeServer, 900);
   };
 
@@ -189,10 +164,9 @@ const LoginPanel: React.FC = () => {
   const doLogin = () => {
     const hostValue = hostRef.current!.value.trim();
     const portValue = parseInt(portRef.current!.value);
+
     if (probedServerInfo?.authRequired) {
       setActivityStatus(ActivityStatus.AUTH_USER);
-      // Authenticate the user and if successful, start the session with
-      // the GUI Server.
       authenticateUser()
         .then((authResult: AuthenticationResult) => {
           setActivityStatus(ActivityStatus.NO_ACTIVITY);
@@ -218,7 +192,6 @@ const LoginPanel: React.FC = () => {
           setErrorMessage(`Auth error: ${error.message}`);
         });
     } else {
-      // Non authenticated login
       const accessLevel = parseInt(accessLevelRef.current!.value);
       setActivityStatus(ActivityStatus.CONNECTING_SERVER);
       GuiServerConnector.inst.startNonAuthSession(
@@ -242,17 +215,17 @@ const LoginPanel: React.FC = () => {
     localStorage.setItem("lastHost", host);
     localStorage.setItem("lastPort", `${port}`);
     setActivityStatus(ActivityStatus.NO_ACTIVITY);
-    dispatch(
-      setLoggedIn({
-        accessLevel: accessLevel,
-        loggedUser: userName,
-        guiServerHost: host,
-        guiServerPort: port,
-        guiServerTopic: topic,
-        guiServerVersion: serverVersion,
-        sessionStartEpoc: Date.now(),
-      })
-    );
+
+    setLoggedIn({
+      accessLevel,
+      loggedUser: userName,
+      guiServerHost: host,
+      guiServerPort: port,
+      guiServerTopic: topic,
+      guiServerVersion: serverVersion,
+      sessionStartEpoc: Date.now(),
+    });
+
     navigate("no_scene");
   };
 
@@ -266,17 +239,17 @@ const LoginPanel: React.FC = () => {
     localStorage.setItem("lastHost", host);
     localStorage.setItem("lastPort", `${port}`);
     setActivityStatus(ActivityStatus.NO_ACTIVITY);
-    dispatch(
-      setLoggedIn({
-        accessLevel: accessLevel,
-        loggedUser: userName,
-        guiServerHost: host,
-        guiServerPort: port,
-        guiServerTopic: topic,
-        guiServerVersion: serverVersion,
-        sessionStartEpoc: Date.now(),
-      })
-    );
+
+    setLoggedIn({
+      accessLevel,
+      loggedUser: userName,
+      guiServerHost: host,
+      guiServerPort: port,
+      guiServerTopic: topic,
+      guiServerVersion: serverVersion,
+      sessionStartEpoc: Date.now(),
+    });
+
     navigate("no_scene");
   };
 
@@ -295,7 +268,7 @@ const LoginPanel: React.FC = () => {
   };
 
   //
-  // Rendering of sections of the Login panel
+  // Rendering helpers
   //
   const renderStatusBox = () => {
     if (errorMsg) {
@@ -326,12 +299,12 @@ const LoginPanel: React.FC = () => {
 
     if (inProgress) {
       return (
-        <React.Fragment>
+        <>
           <CircularProgress size={24} />
           <Box sx={{ flexGrow: 1, p: 1 }}>
             <Typography variant="body2">{statusText}</Typography>
           </Box>
-        </React.Fragment>
+        </>
       );
     } else {
       return (
@@ -346,31 +319,20 @@ const LoginPanel: React.FC = () => {
     if (probedServerInfo && probedServerInfo.topic) {
       return <Box>Topic: {probedServerInfo.topic}</Box>;
     } else {
-      return <Box></Box>;
+      return <Box />;
     }
   };
 
   const renderLoginButton = () => {
     let disabled = true;
     if (activityStatus === ActivityStatus.NO_ACTIVITY) {
-      // The login button can only be active when there's no ongoing background
-      // activity status.
-      if (
-        probedServerInfo &&
-        probedServerInfo.authRequired &&
-        userName &&
-        passwd
-      ) {
-        // A GUI Server with authenticated login, a user name and a password are
-        // specified - login is possible.
+      if (probedServerInfo?.authRequired && userName && passwd) {
         disabled = false;
       } else if (
         probedServerInfo &&
         !probedServerInfo.authRequired &&
         userName
       ) {
-        // A GUI Server with non authenticated login and a user name are
-        // specified - login is possible.
         disabled = false;
       }
     }
@@ -399,7 +361,7 @@ const LoginPanel: React.FC = () => {
   const renderCredentialsPanel = () => {
     if (probedServerInfo && probedServerInfo.authRequired) {
       return (
-        <React.Fragment>
+        <>
           <Box>USER AUTHENTICATION</Box>
           <Paper elevation={3} sx={{ padding: "1.2em" }}>
             <Grid container spacing={2} sx={{ alignItems: "flex-end" }}>
@@ -411,12 +373,10 @@ const LoginPanel: React.FC = () => {
                   size="medium"
                   sx={{ width: "100%" }}
                   onChange={() => {
-                    if (errorMsg) {
-                      setErrorMessage("");
-                    }
+                    if (errorMsg) setErrorMessage("");
                     setUserName(userRef.current!.value);
                   }}
-                ></TextField>
+                />
               </Grid>
               <Grid item xs={12}>
                 <FormControl variant="outlined">
@@ -426,19 +386,15 @@ const LoginPanel: React.FC = () => {
                   <OutlinedInput
                     label="Password"
                     inputRef={passwdRef}
-                    size="medium" // Note: size small breaks the layout of the password label (below the baseline)
+                    size="medium"
                     type={showPassword ? "text" : "password"}
                     sx={{ width: "100%" }}
                     onChange={() => {
-                      if (errorMsg) {
-                        setErrorMessage("");
-                      }
+                      if (errorMsg) setErrorMessage("");
                       setPasswd(passwdRef.current!.value);
                     }}
                     onKeyUp={(evt: React.KeyboardEvent<HTMLInputElement>) => {
                       if (evt.key === "Enter" && !loginRef.current!.disabled) {
-                        // User pressed Enter in the password field while login is
-                        // enabled. Go ahead and trigger the login.
                         doLogin();
                       }
                     }}
@@ -460,16 +416,16 @@ const LoginPanel: React.FC = () => {
                         </IconButton>
                       </InputAdornment>
                     }
-                  ></OutlinedInput>
+                  />
                 </FormControl>
               </Grid>
             </Grid>
           </Paper>
-        </React.Fragment>
+        </>
       );
     } else if (probedServerInfo) {
       return (
-        <React.Fragment>
+        <>
           <Box>ACCESS LEVEL LOGIN</Box>
           <Paper elevation={3} sx={{ padding: "1.2em" }}>
             <Grid container spacing={2} sx={{ alignItems: "flex-end" }}>
@@ -481,12 +437,10 @@ const LoginPanel: React.FC = () => {
                   size="medium"
                   sx={{ width: "100%" }}
                   onChange={() => {
-                    if (errorMsg) {
-                      setErrorMessage("");
-                    }
+                    if (errorMsg) setErrorMessage("");
                     setUserName(userRef.current!.value);
                   }}
-                ></TextField>
+                />
               </Grid>
               <Grid item xs={4}>
                 <FormControl
@@ -510,15 +464,14 @@ const LoginPanel: React.FC = () => {
               </Grid>
             </Grid>
           </Paper>
-        </React.Fragment>
+        </>
       );
     }
-    // When there's no ProbedServerInfo available nothing is rendered.
-    // Might be used to display login instructions later.
+    return null;
   };
 
   //
-  // Login panel rendering
+  // Render
   //
   return (
     <Paper elevation={8} sx={{ padding: "0.5em" }}>
@@ -534,7 +487,7 @@ const LoginPanel: React.FC = () => {
                 size="medium"
                 sx={{ width: "100%" }}
                 onChange={onHostnameChanged}
-              ></TextField>
+              />
             </Grid>
             <Grid item xs={4}>
               <TextField
@@ -545,7 +498,7 @@ const LoginPanel: React.FC = () => {
                 size="medium"
                 sx={{ width: "100%" }}
                 onChange={onPortChanged}
-              ></TextField>
+              />
             </Grid>
             <Grid item xs={8} sx={{ width: "100%", textAlign: "right" }}>
               {renderTopicLabel()}
@@ -557,7 +510,7 @@ const LoginPanel: React.FC = () => {
       <Stack spacing={0.2} sx={{ p: 1, marginBottom: 3 }}>
         {renderCredentialsPanel()}
       </Stack>
-      {/* <Divider /> */}
+
       <Box
         sx={{
           p: 1,
