@@ -10,9 +10,6 @@ import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ProjectSceneCache } from "../store/ProjectSceneCache";
 import { ProjectSceneInfo } from "../karabo_data/ProjectDbInfo";
-import { useAppDispatch, useAppSelector } from "../AppHooks";
-import { setLoadedScene } from "../store/slices/loadedSceneSlice";
-import { setRecentScene } from "../store/slices/recentScenesSlice";
 import { UserRecentSceneModel } from "../view_models/RecentScenesModel";
 import {
   SceneElement,
@@ -20,6 +17,9 @@ import {
   WidgetElement,
 } from "../karabo_data/SceneElements";
 import { Scene } from "../karabo_data/Scene";
+import { useGlobalStore } from "../store/globalAppStateStore";
+import useRecentStore from "../store/recentScenesStore";
+import { useLoadedSceneStore } from "../store/loadedSceneStore";
 
 const SceneCanvas: React.FC = () => {
   const location = useLocation();
@@ -27,14 +27,10 @@ const SceneCanvas: React.FC = () => {
   const [scene, setScene] = React.useState<Scene | null>(null);
   const [loadingError, setLoadingError] = React.useState<string>("");
 
-  // The current GUI Session data, more specifically, the logged user is needed
-  // for registering the use of the scene.
-  const appState = useAppSelector((state) => state.globalAppState);
-
-  // The scene canvas dispatches setProjectSceneOpening actions whenever an URL
-  // designating a scene is activated. It also updates the list of recently
-  // used scenes.
-  const dispatch = useAppDispatch();
+  const { sessionInfo } = useGlobalStore();
+  const { setRecentScene } = useRecentStore();
+  const { setScene: setLoadedScene } = useLoadedSceneStore();
+  const loggedUser = sessionInfo?.loggedUser;
 
   const renderScene = () => {
     if (scene) {
@@ -62,6 +58,7 @@ const SceneCanvas: React.FC = () => {
                 );
               }
             }
+            return null; // avoid React warnings for missing returns
           })}
         </Paper>
       );
@@ -77,7 +74,7 @@ const SceneCanvas: React.FC = () => {
             }}
           >
             <h4>Couldn't load scene</h4>
-            <p>{loadingError}</p>
+            <p dangerouslySetInnerHTML={{ __html: loadingError }} />
           </Paper>
           <Button variant="contained" onClick={() => navigate("/")}>
             Back to Starting Page
@@ -106,46 +103,48 @@ const SceneCanvas: React.FC = () => {
   };
 
   React.useEffect(() => {
-    // Retrieve scene data from URL query params, if possible.
     ProjectSceneCache.inst.getSceneInfoFromQueryParams(
       location.search,
       (info: ProjectSceneInfo | null) => {
         if (info) {
           try {
-            const scene = new Scene(info.svg);
-           
-            dispatch(
-              setLoadedScene({
-                width: scene.width,
-                height: scene.height,
-              })
-            );
-            const userRecentScenes: UserRecentSceneModel = {
-              userId: appState.sessionInfo!.loggedUser,
-              domain: info.domain,
-              uuid: info.uuid,
-              name: info.name,
-              projectName: info.projectName,
-            };
-            dispatch(setRecentScene(userRecentScenes));
-            document.title = `Kiwi [${info.domain}:${info.name}]`;
-            if (info?.svg !== undefined) {
-              setScene(scene);
+            const parsed = new Scene(info.svg);
+
+            setLoadedScene({
+              width: parsed.width,
+              height: parsed.height,
+            });
+
+            if (loggedUser) {
+              const userRecentScenes: UserRecentSceneModel = {
+                userId: loggedUser,
+                domain: info.domain,
+                uuid: info.uuid,
+                name: info.name,
+                projectName: info.projectName,
+              };
+              setRecentScene(userRecentScenes);
             }
+
+            document.title = `Kiwi [${info.domain}:${info.name}]`;
+            setScene(parsed);
             setLoadingError("");
           } catch (e) {
-            setLoadingError(`Couldn't parse scene data. Details:<br />${e}`);
+            setLoadingError(
+              `Couldn't parse scene data. Details:<br />${String(e)}`
+            );
+            setScene(null);
           }
         } else {
           document.title = "Kiwi";
           setLoadingError(
-            "Couldn't retrieve scene data.<br />" +
-              "Please check the availability of the Project Database"
+            "Couldn't retrieve scene data.<br />Please check the availability of the Project Database"
           );
+          setScene(null);
         }
       }
     );
-  }, [location, dispatch, appState]);
+  }, [location.search, loggedUser, setLoadedScene, setRecentScene]);
 
   return (
     <Box
@@ -161,4 +160,5 @@ const SceneCanvas: React.FC = () => {
     </Box>
   );
 };
+
 export default SceneCanvas;

@@ -1,24 +1,22 @@
 import * as React from "react";
 import { Box, Typography } from "@mui/material";
 import { DisplayStateColorElementProps } from "../../../karabo_data/SceneElements";
-import { useAppSelector } from "../../../AppHooks";
+import useSystemTopologyStore from "../../../store/systemTopologyStore";
 import DeviceOfflineOverlay from "../DeviceOfflineOverlay";
 import { useKaraboProperty } from "./hooks/useKaraboProperty";
 import { useGuiStateColor } from "./hooks/useGuiStateColor";
 
-
-
 const DisplayStateColor: React.FC<DisplayStateColorElementProps> = (props) => {
-  // topology to decide offline/online
-  const topology = useAppSelector((s) => s.sysTopology.topology);
+  const topology = useSystemTopologyStore((state) => state.topology);
   const isOffline = props.isSrcDeviceOffline(topology);
 
   // subscribe to DEVICE/…/state and map it to a color
-  const { value: rawStateUnknown } = useKaraboProperty(props.karaboKeys, "UNKNOWN");
+  const { value: rawStateUnknown } = useKaraboProperty(
+    props.karaboKeys,
+    "UNKNOWN"
+  );
   const rawState = String(rawStateUnknown);
   const { colorValue } = useGuiStateColor(rawState);
-
-  //console.log(colorValue)
 
   return (
     <Box
@@ -44,7 +42,10 @@ const DisplayStateColor: React.FC<DisplayStateColorElementProps> = (props) => {
       {isOffline ? (
         <DeviceOfflineOverlay {...props} />
       ) : props.showString ? (
-        <Typography variant="caption" sx={{ fontWeight: "inherit", fontSize: "inherit" }}>
+        <Typography
+          variant="caption"
+          sx={{ fontWeight: "inherit", fontSize: "inherit" }}
+        >
           {rawState}
         </Typography>
       ) : null}

@@ -19,29 +19,22 @@ import {
 } from "@mui/material";
 import React from "react";
 
-import { useAppDispatch } from "../AppHooks";
-
 import { GuiServerConnector } from "../GuiServerConnector";
 
 import { AccessLevel } from "../karabo_data/AccessLevel";
 
-import { useAppSelector } from "../AppHooks";
-import { setLoggedOut } from "../store/slices/globalAppStateSlice";
-import { setLoadedScene } from "../store/slices/loadedSceneSlice";
 import SelectProjectSceneDialog from "./SelectProjectSceneDialog";
 import SelectDeviceSceneDialog from "./SelectDeviceSceneDialog";
 import { ProjectSceneInfo } from "../karabo_data/ProjectDbInfo";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ProjectSceneCache } from "../store/ProjectSceneCache";
+import { useGlobalStore } from "../store/globalAppStateStore";
 
 const LoggedInHeader: React.FC = () => {
-  // The header panel dispatches setLoggedOut actions upon user requests to log out.
-  const dispatch = useAppDispatch();
-
   // Used to inspect the URL for loaded scene data whenever it changes.
   const location = useLocation();
 
-  const appState = useAppSelector((state) => state.globalAppState);
+  const { sessionInfo, setLoggedOut, setLoadedScene } = useGlobalStore();
 
   // After dispatching the setProjectSceneOpening action, a programmatic
   // navigation to the scene URL must take place.
@@ -60,8 +53,8 @@ const LoggedInHeader: React.FC = () => {
     setOpenLoadFromScene(false);
     ProjectSceneCache.inst.storeSceneInfo(selectedScene);
     navigate(
-      `/scene?host=${appState.sessionInfo!.guiServerHost}&port=${
-        appState.sessionInfo!.guiServerPort
+      `/scene?host=${sessionInfo!.guiServerHost}&port=${
+        sessionInfo!.guiServerPort
       }&domain=${encodeURIComponent(
         selectedScene.domain
       )}&projectName=${encodeURIComponent(
@@ -71,7 +64,7 @@ const LoggedInHeader: React.FC = () => {
   };
 
   const onUnloadSceneClick = () => {
-    dispatch(setLoadedScene(undefined));
+    setLoadedScene(undefined);
     setSceneName("");
     navigate("/");
   };
@@ -100,7 +93,7 @@ const LoggedInHeader: React.FC = () => {
   const onLogoutClick = () => {
     setAnchorUserMenu(null);
     GuiServerConnector.inst.finishSession();
-    dispatch(setLoggedOut());
+    setLoggedOut();
   };
 
   const onUserMenuClose = () => {
@@ -232,8 +225,8 @@ const LoggedInHeader: React.FC = () => {
             onClose={onUserMenuClose}
           >
             <MenuItem onClick={onUserMenuClose}>
-              "{appState.sessionInfo?.loggedUser}" (
-              {AccessLevel[appState.sessionInfo!.accessLevel]})
+              "{sessionInfo?.loggedUser}" (
+              {AccessLevel[sessionInfo!.accessLevel]})
             </MenuItem>
             <Divider />
             <MenuItem onClick={onLogoutClick}>

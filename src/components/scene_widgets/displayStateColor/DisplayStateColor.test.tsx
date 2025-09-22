@@ -2,13 +2,25 @@ import { render, screen } from "@testing-library/react";
 import type { DisplayStateColorElementProps } from "../../../karabo_data/SceneElements";
 import { guiStateColors } from "../../../karabo_data/Indicators";
 
-// Mock AppHooks once (stable)
-jest.mock("../../../AppHooks", () => ({
-  useAppSelector: (fn: any) =>
-    fn({ sysTopology: { topology: { devices: [{ deviceId: "DEVICE_X" }] } } }),
+jest.mock("../../../store/systemTopologyStore", () => ({
+  __esModule: true,
+  default: jest.fn((selector) => {
+    // Mock the store state
+    const mockState = {
+      topology: {
+        devices: [{ deviceId: "DEVICE_X" }],
+        servers: [],
+      },
+      setTopology: jest.fn(),
+      updateTopology: jest.fn(),
+    };
+
+    // Call the selector with the mock state
+    return selector(mockState);
+  }),
 }));
 
-// Using the  'mock' prefix is one of the ways to mimick a hook- Jest allows this
+// Using the 'mock' prefix is one of the ways to mimic a hook - Jest allows this
 const mockUseKaraboProperty = jest.fn();
 jest.mock("./hooks/useKaraboProperty", () => ({
   useKaraboProperty: (...args: any[]) => mockUseKaraboProperty(...args),
@@ -57,7 +69,6 @@ afterEach(() => {
 describe("DisplayStateColor - showString behavior", () => {
   it("renders text when showString=true and device is online", () => {
     const { container } = renderWithKey(makeProps({ showString: true }));
-
     expect(screen.getByText("ERROR")).toBeInTheDocument();
     expect(container.firstChild as HTMLElement).toHaveStyle(
       `background-color: ${guiStateColors.errorColor}`
@@ -65,20 +76,18 @@ describe("DisplayStateColor - showString behavior", () => {
   });
 
   it("does not render text when showString=false (color only)", () => {
-    const { container, queryByText } = renderWithKey(
-      makeProps({ showString: false })
-    );
-    expect(queryByText?.("ERROR")).not.toBeInTheDocument();
+    const { container } = renderWithKey(makeProps({ showString: false }));
+    expect(screen.queryByText("ERROR")).not.toBeInTheDocument();
     expect(container.firstChild as HTMLElement).toHaveStyle(
       `background-color: ${guiStateColors.errorColor}`
     );
   });
 
   it("renders offline overlay and hides text when offline", () => {
-    const { queryByText } = renderWithKey(
+    renderWithKey(
       makeProps({ showString: true, isSrcDeviceOffline: () => true })
     );
-    expect(queryByText?.("ERROR")).not.toBeInTheDocument();
+    expect(screen.queryByText("ERROR")).not.toBeInTheDocument();
   });
 
   it("uses unknownColor for unmapped states", () => {
@@ -87,7 +96,6 @@ describe("DisplayStateColor - showString behavior", () => {
       propertyId: "state",
       value: "not-a-known-state",
     });
-
     const { container } = renderWithKey(makeProps());
     expect(container.firstChild as HTMLElement).toHaveStyle(
       `background-color: ${guiStateColors.unknownColor}`
