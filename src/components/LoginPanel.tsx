@@ -1,7 +1,7 @@
-import React, { useEffect } from "react";
-import { useEffect as useReactEffect, useRef, useState } from "react";
+import React from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { GuiServerConnector } from "../GuiServerConnector";
+import { GuiServerConnector } from "../karabo_connectors/GuiServerConnector";
 
 import { AccessLevel } from "../karabo_data/AccessLevel";
 import { GuiServerInfo } from "../karabo_data/GuiServerInfo";

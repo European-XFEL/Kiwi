@@ -1,8 +1,11 @@
 import * as React from "react";
-import { DevicePropertyConnector } from "../../../../DevicePropertyConnector";
+import { DevicePropertyConnector } from "../../../../karabo_connectors/DevicePropertyConnector";
 import { splitKaraboKeys } from "../../shared/helpers/splitKaraboKeys";
 
-export function useKaraboProperty(karaboKeys: string, initial: unknown = "UNKNOWN") {
+export function useKaraboProperty(
+  karaboKeys: string,
+  initial: unknown = "UNKNOWN"
+) {
   const { deviceId, propertyId } = React.useMemo(
     () => splitKaraboKeys(karaboKeys),
     [karaboKeys]
@@ -10,13 +13,20 @@ export function useKaraboProperty(karaboKeys: string, initial: unknown = "UNKNOW
 
   const [value, setValue] = React.useState<unknown>(initial);
 
-
   const onUpdate = React.useCallback((v: unknown) => setValue(v), []);
 
   React.useEffect(() => {
-    DevicePropertyConnector.inst.registerPropertyMonitor(deviceId, propertyId, onUpdate);
+    DevicePropertyConnector.inst.registerPropertyMonitor(
+      deviceId,
+      propertyId,
+      onUpdate
+    );
     return () => {
-      DevicePropertyConnector.inst.unregisterPropertyMonitor(deviceId, propertyId, onUpdate);
+      DevicePropertyConnector.inst.unregisterPropertyMonitor(
+        deviceId,
+        propertyId,
+        onUpdate
+      );
     };
   }, [deviceId, propertyId, onUpdate]);
 

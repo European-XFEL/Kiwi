@@ -11,7 +11,7 @@ import { useAppSettingsStore } from "./store/appSettingsStore";
 import { useGlobalStore } from "./store/globalAppStateStore"; // ⬅️ NEW
 
 import { AccessLevel } from "./karabo_data/AccessLevel";
-import { GuiServerConnector } from "./GuiServerConnector";
+import { GuiServerConnector } from "./karabo_connectors/GuiServerConnector";
 import AuthServerClient from "./http_clients/AuthServerClient";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import SceneCanvas from "./components/SceneCanvas";

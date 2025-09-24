@@ -19,7 +19,7 @@ import {
 } from "@mui/material";
 import React from "react";
 
-import { GuiServerConnector } from "../GuiServerConnector";
+import { GuiServerConnector } from "../karabo_connectors/GuiServerConnector";
 
 import { AccessLevel } from "../karabo_data/AccessLevel";
 
