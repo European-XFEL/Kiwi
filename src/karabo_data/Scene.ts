@@ -3,6 +3,7 @@ import DisplayLabel from "../components/scene_widgets/DisplayLabel";
 import DisplayStateColor from "../components/scene_widgets/displayStateColor/DisplayStateColor";
 import Label from "../components/scene_widgets/Label";
 import Rectangle from "../components/scene_widgets/Rectangle";
+import { QtFontDescriptor } from "../components/scene_widgets/shared/helpers/QtFontDescriptor";
 import {
   DisplayCommandElement,
   DisplayStateColorElement,
@@ -249,7 +250,14 @@ export class Scene {
     labelWidget.height = parseInt(labelObj["@_height"] as string);
     labelWidget.text = labelObj["@_krb:text"] as string;
     if (Object.prototype.hasOwnProperty.call(labelObj, "@_krb:font")) {
-      labelWidget.font = labelObj["@_krb:font"] as string;
+      const fontDescriptor = new QtFontDescriptor(
+        labelObj["@_krb:font"] as string
+      );
+      labelWidget.fontFamily = fontDescriptor.css_fontFamily;
+      labelWidget.fontSize = fontDescriptor.css_fontSize;
+      labelWidget.fontStyle = fontDescriptor.css_fontStyle;
+      labelWidget.fontWeight = fontDescriptor.css_fontWeight;
+      labelWidget.textDecoration = fontDescriptor.css_textDecoration;
     }
     if (Object.prototype.hasOwnProperty.call(labelObj, "@_krb:background")) {
       labelWidget.backgroundColor = labelObj["@_krb:background"] as string;

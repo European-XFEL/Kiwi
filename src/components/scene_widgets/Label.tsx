@@ -17,8 +17,11 @@ const Label: React.FC<LabelElementProps> = (props) => {
         color: props.foregroundColor,
         bgcolor: props.backgroundColor,
         // font: props.font,
-        fontFamily: "Arial, Helvetica, Sans-serif",
-        fontSize: 12,
+        fontFamily: props.fontFamily,
+        fontSize: props.fontSize,
+        fontWeight: props.fontWeight,
+        fontStyle: props.fontSize,
+        textDecoration: props.textDecoration,
         textAlign: props.alignment.toLowerCase(),
         p: "2px",
       }}

@@ -1,4 +1,8 @@
 import { DeviceInfo, SystemTopologyInfo } from "./TopologyInfo";
+import {
+  FONT_BASE_SIZE,
+  FONT_FAMILY_DEFAULT,
+} from "../components/scene_widgets/shared/helpers/QtFontDescriptor";
 
 export interface SceneElementProps {
   x: number;
@@ -9,11 +13,11 @@ export interface SceneElementProps {
 }
 
 export class SceneElement {
-  x: number = 0;
-  y: number = 0;
-  width: number = 0;
-  height: number = 0;
-  key: string = `sceneElement_${crypto.randomUUID()}`;
+  x = 0;
+  y = 0;
+  width = 0;
+  height = 0;
+  key = `sceneElement_${crypto.randomUUID()}`;
 
   get props(): SceneElementProps {
     return { ...this };
@@ -32,16 +36,24 @@ export interface LabelElementProps extends SceneElementProps {
   backgroundColor: string;
   foregroundColor: string;
   frameWidth: number;
-  font: string;
+  fontFamily: string;
+  fontSize: string;
+  fontStyle: string;
+  fontWeight: string;
+  textDecoration: string;
   alignment: "LEFT" | "CENTER" | "RIGHT";
 }
 
 export class LabelElement extends WidgetElement<LabelElementProps> {
-  text: string = "";
-  backgroundColor: string = "#FFFFFF";
-  foregroundColor: string = "#000000";
-  frameWidth: number = 0;
-  font: string = "Arial, 10";
+  text = "";
+  backgroundColor = "#FFFFFF";
+  foregroundColor = "#000000";
+  frameWidth = 0;
+  fontFamily = FONT_FAMILY_DEFAULT;
+  fontSize = `${FONT_BASE_SIZE}px`;
+  fontWeight = "normal";
+  fontStyle = "normal";
+  textDecoration = "none";
   alignment: "LEFT" | "CENTER" | "RIGHT" = "LEFT";
 
   get props(): LabelElementProps {
@@ -60,7 +72,7 @@ export class DynamicWidgetElement<
   PropsType extends DynamicElementProps
 > extends WidgetElement<PropsType> {
   karaboKeys: string = "";
-  fontSize: number = 10;
+  fontSize: number = FONT_BASE_SIZE;
   fontWeight: "BOLD" | "NORMAL" = "NORMAL";
 
   /**
@@ -105,15 +117,12 @@ export interface DisplayStateColorElementProps extends DynamicElementProps {
   showString: boolean;
 }
 
-
 export class DisplayStateColorElement extends DynamicWidgetElement<DisplayStateColorElementProps> {
   showString: boolean = false;
   get props(): DisplayStateColorElementProps {
     return { ...(this as unknown as DisplayStateColorElementProps) };
   }
 }
-
-
 
 export interface RectangleElementProps extends SceneElementProps {
   strokeWidth: number;
