@@ -5,6 +5,7 @@ import DeviceOfflineOverlay from "./DeviceOfflineOverlay";
 import useSystemTopologyStore from "../../store/systemTopologyStore";
 import { DevicePropertyConnector } from "../../karabo_connectors/DevicePropertyConnector";
 import { splitKaraboKeys } from "./shared/helpers/splitKaraboKeys";
+import { FONT_FAMILY_DEFAULT } from "./shared/helpers/QtFontDescriptor";
 
 const DisplayLabel: React.FC<DynamicElementProps> = (props) => {
   const topology = useSystemTopologyStore((state) => state.topology);
@@ -52,8 +53,8 @@ const DisplayLabel: React.FC<DynamicElementProps> = (props) => {
         left: `${props.x}px`,
         top: `${props.y}px`,
         overflow: "clip",
-        fontFamily: "Arial, Helvetica, Sans-serif",
-        fontSize: 12,
+        fontFamily: FONT_FAMILY_DEFAULT,
+        fontSize: props.fontSize,
         fontWeight: props.fontWeight.toLowerCase(),
         borderWidth: 1,
         borderStyle: "solid",
