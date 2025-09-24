@@ -10,17 +10,17 @@ import {
   DbItemInfo,
   isProjectContentsInfo,
   LoadProjectSceneResult,
-} from "./karabo_data/ProjectDbInfo";
+} from "../karabo_data/ProjectDbInfo";
 import {
   buildListDomainsHash,
   buildListProjectsHash,
   buildLoadItemsHash,
-} from "./karabo_hash/builders/project_db";
+} from "../karabo_hash/builders/project_db";
 import {
   listDomainsResultFromHash,
   listProjectsResultFromHash,
   loadProjectItemsResultFromHash,
-} from "./karabo_hash/decoders/project_db";
+} from "../karabo_hash/decoders/project_db";
 
 export class ProjectDBConnector {
   // #region Singleton

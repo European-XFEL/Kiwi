@@ -26,7 +26,7 @@ import {
   Typography,
 } from "@mui/material";
 import React, { useRef } from "react";
-import { ProjectDBConnector } from "../ProjectDBConnector";
+import { ProjectDBConnector } from "../karabo_connectors/ProjectDBConnector";
 import {
   ProjectItemInfo,
   ProjectSceneInfo,

@@ -1,32 +1,32 @@
-import { buildLoginHash } from "./karabo_hash/builders/gui_session";
+import { buildLoginHash } from "../karabo_hash/builders/gui_session";
 import {
   sysTopologyInfoFromHash,
   sysTopologyUpdateInfoFromHash,
-} from "./karabo_hash/decoders/topology";
+} from "../karabo_hash/decoders/topology";
 import {
   guiServerInfoFromHash,
   loginInfoFromHash,
   notificationInfoFromHash,
-} from "./karabo_hash/decoders/gui_session";
+} from "../karabo_hash/decoders/gui_session";
 
 import {
   blobToHash,
   hashProtocolType,
   packEncodedHash,
-} from "./karabo_hash/hash_utils";
+} from "../karabo_hash/hash_utils";
 
-import { useAppSettingsStore } from "./store/appSettingsStore";
-import useSystemTopologyStore from "./store/systemTopologyStore";
+import { useAppSettingsStore } from "../store/appSettingsStore";
+import useSystemTopologyStore from "../store/systemTopologyStore";
 
-import { AccessLevel } from "./karabo_data/AccessLevel";
-import { GuiServerInfo } from "./karabo_data/GuiServerInfo";
+import { AccessLevel } from "../karabo_data/AccessLevel";
+import { GuiServerInfo } from "../karabo_data/GuiServerInfo";
 
 import { Websocket, WebsocketBuilder } from "websocket-ts";
 
 import { BinaryEncoder, Hash } from "karabo-ts";
 
-import { GuiSessionData, GuiSessionStore } from "./store/GuiSessionStore";
-import AuthServerClient from "./http_clients/AuthServerClient";
+import { GuiSessionData, GuiSessionStore } from "../store/GuiSessionStore";
+import AuthServerClient from "../http_clients/AuthServerClient";
 
 type SessionStartedHandler = (
   accessLevel: AccessLevel,

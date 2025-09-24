@@ -2,7 +2,7 @@ import {
   LoadProjectSceneResult,
   ProjectSceneInfo,
 } from "../karabo_data/ProjectDbInfo";
-import { ProjectDBConnector } from "../ProjectDBConnector";
+import { ProjectDBConnector } from "../karabo_connectors/ProjectDBConnector";
 
 export class ProjectSceneCache {
   static readonly ITEM_PREFIX = "prjScene";
@@ -125,8 +125,8 @@ export class ProjectSceneCache {
 
   // #region Cache expiration
   static MAX_CACHE_ITEMS = 50;
-  static MAX_CACHE_AGE_MILLISECONDS = 5 * 60 * 1000; // 5 minutes
-  static CACHE_PRUNE_INTERVAL_SECONDS = 20;
+  static MAX_CACHE_AGE_MILLISECONDS = 30 * 1000; // 30 seconds
+  static CACHE_PRUNE_INTERVAL_SECONDS = 15;
 
   #_pruneCache = (): void => {
     // First step - remove all expired cache items

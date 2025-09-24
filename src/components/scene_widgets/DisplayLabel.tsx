@@ -3,7 +3,7 @@ import { Box } from "@mui/material";
 import { DynamicElementProps } from "../../karabo_data/SceneElements";
 import DeviceOfflineOverlay from "./DeviceOfflineOverlay";
 import useSystemTopologyStore from "../../store/systemTopologyStore";
-import { DevicePropertyConnector } from "../../DevicePropertyConnector";
+import { DevicePropertyConnector } from "../../karabo_connectors/DevicePropertyConnector";
 import { splitKaraboKeys } from "./shared/helpers/splitKaraboKeys";
 
 const DisplayLabel: React.FC<DynamicElementProps> = (props) => {
@@ -52,8 +52,6 @@ const DisplayLabel: React.FC<DynamicElementProps> = (props) => {
         left: `${props.x}px`,
         top: `${props.y}px`,
         overflow: "clip",
-        // fontSize: props.fontSize,
-        // fontWeight: props.fontWeight,
         fontFamily: "Arial, Helvetica, Sans-serif",
         fontSize: 12,
         fontWeight: props.fontWeight.toLowerCase(),
