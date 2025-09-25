@@ -3,6 +3,7 @@ import DisplayLabel from "../components/scene_widgets/DisplayLabel";
 import DisplayStateColor from "../components/scene_widgets/displayStateColor/DisplayStateColor";
 import Label from "../components/scene_widgets/Label";
 import Rectangle from "../components/scene_widgets/Rectangle";
+import { css_textAlign_for_KrbAlignh } from "../components/scene_widgets/shared/helpers/KrbAlignh";
 import { QtFontDescriptor } from "../components/scene_widgets/shared/helpers/QtFontDescriptor";
 import {
   DisplayCommandElement,
@@ -266,9 +267,9 @@ export class Scene {
       labelWidget.foregroundColor = labelObj["@_krb:foreground"] as string;
     }
     if (Object.prototype.hasOwnProperty.call(labelObj, "@_krb:alignh")) {
-      labelWidget.alignment = (
-        labelObj["@_krb:alignh"] as string
-      ).toUpperCase() as "LEFT" | "CENTER" | "RIGHT";
+      labelWidget.alignment = css_textAlign_for_KrbAlignh(
+        parseInt(labelObj["@_krb:alignh"])
+      );
     }
     if (Object.prototype.hasOwnProperty.call(labelObj, "@_krb:frameWidth")) {
       labelWidget.frameWidth = parseInt(labelObj["@_krb:frameWidth"] as string);
@@ -294,10 +295,10 @@ export class Scene {
       );
     }
     if (
-      Object.prototype.hasOwnProperty.call(dispLabelObj, "@_krb:fontWeight")
+      Object.prototype.hasOwnProperty.call(dispLabelObj, "@_krb:font_weight")
     ) {
       displayLabelElement.fontWeight = (
-        dispLabelObj["@_krb:fontWeight"] as string
+        dispLabelObj["@_krb:font_weight"] as string
       ).toUpperCase() as "BOLD" | "NORMAL";
     }
     return displayLabelElement;

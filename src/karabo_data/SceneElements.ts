@@ -41,7 +41,7 @@ export interface LabelElementProps extends SceneElementProps {
   fontStyle: string;
   fontWeight: string;
   textDecoration: string;
-  alignment: "LEFT" | "CENTER" | "RIGHT";
+  alignment: "left" | "center" | "right";
 }
 
 export class LabelElement extends WidgetElement<LabelElementProps> {
@@ -54,7 +54,7 @@ export class LabelElement extends WidgetElement<LabelElementProps> {
   fontWeight = "normal";
   fontStyle = "normal";
   textDecoration = "none";
-  alignment: "LEFT" | "CENTER" | "RIGHT" = "LEFT";
+  alignment: "left" | "center" | "right" = "left";
 
   get props(): LabelElementProps {
     return { ...this };
