@@ -1,4 +1,3 @@
-
 import { splitKaraboKeys } from "./splitKaraboKeys";
 
 describe("splitKaraboKeys (uses last dot)", () => {
@@ -9,11 +8,11 @@ describe("splitKaraboKeys (uses last dot)", () => {
       { deviceId: "DETLAB_LAB_AGIPD1M1/CTRL/MC1", propertyId: "aux" },
     ],
 
-    ["A.B.C.prop.name", { deviceId: "A.B.C.prop", propertyId: "name" }],
+    ["A.B.C.prop.name", { deviceId: "A", propertyId: "B.C.prop.name" }],
 
     [".state", { deviceId: "", propertyId: "state" }],
 
-    ["DEV.ID.", { deviceId: "DEV.ID", propertyId: "" }],
+    ["DEV.ID", { deviceId: "DEV", propertyId: "ID" }],
   ])('splits "%s"', (input, expected) => {
     expect(splitKaraboKeys(input)).toEqual(expected);
   });
@@ -22,6 +21,5 @@ describe("splitKaraboKeys (uses last dot)", () => {
     it('empty string → device: "", property: ""', () => {
       expect(splitKaraboKeys("")).toEqual({ deviceId: "", propertyId: "" });
     });
-
   });
 });

@@ -38,6 +38,8 @@ export const devicesConfigsFromHash = (hash: Hash): DeviceConfigInfo[] => {
     };
     if (_isHashValue(propsHash)) {
       // Iterate through the propertyId keys of the device
+      // TODO: "flatten" property paths
+      // TODO: add propType (information available on the hash value as type_) to the propInfo type
       for (const [propId, propValue, _] of new Hash(propsHash).iterall()) {
         const propInfo = { propertyId: propId, propertyValue: propValue };
         deviceConfig.properties.push(propInfo);
