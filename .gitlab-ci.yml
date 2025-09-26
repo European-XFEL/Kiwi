@@ -9,8 +9,6 @@ stages:
 
 variables:
   NODE_ENV: test
-  # Use an explicit npm cache directory so we can cache it between jobs
-  NPM_CONFIG_CACHE: "$CI_PROJECT_DIR/.npm"
 
 # Global cache config: keyed by lockfile contents so changes invalidate cache.
 cache:
@@ -19,7 +17,7 @@ cache:
       - yarn.lock
   paths:
     - node_modules/
-    - .npm/
+    - .yarn
   policy: pull
 
 .default_node_image: &node_image
@@ -28,9 +26,11 @@ cache:
 test:
   <<: *node_image
   stage: test
+  before_script:
+    - corepack enable
   script:
     - node -v
     - npm -v
     - yarn -v
-    - yarn install --prefer-offline --no-audit --non-interactive
+    - yarn install --immutable
     - yarn cov --watchAll=false
