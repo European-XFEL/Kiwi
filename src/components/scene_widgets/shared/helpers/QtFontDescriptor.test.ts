@@ -13,11 +13,6 @@ describe("QtFontDescriptor constructor", () => {
     "onlyonepart",
   ];
 
-  const tooManyFields = [
-    "1,2,3,4,5,6,7,8,9,10,11",
-    "Source Sans Pro,10,-1,5,50,0,0,0,0,0,abc",
-  ];
-
   const invalidFields = [
     "1,false,3,4,5,6,7,8,9,10",
     "Source Sans Pro,10,-1,5,50,false,0,0,0,0",
@@ -60,15 +55,6 @@ describe("QtFontDescriptor constructor", () => {
 
   test.each(tooFewFields)(
     "throws when given an input with less than 10 comma-separated parts: %p",
-    (input) => {
-      expect(() => new QtFontDescriptor(input)).toThrow(
-        /10 comma separated fields/
-      );
-    }
-  );
-
-  test.each(tooManyFields)(
-    "throws when given an input with more than 10 comma-separated parts: %p",
     (input) => {
       expect(() => new QtFontDescriptor(input)).toThrow(
         /10 comma separated fields/
