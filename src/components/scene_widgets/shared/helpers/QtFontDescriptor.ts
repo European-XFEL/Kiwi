@@ -36,9 +36,9 @@ export class QtFontDescriptor {
 
   constructor(readonly descriptor: string) {
     const parts = descriptor.split(",");
-    if (parts.length != 10) {
+    if (parts.length < 10) {
       throw new Error(
-        `Qt font descriptor should have 10 comma separated fields. '${descriptor}' has ${parts.length}.`
+        `Qt font descriptor should have at least 10 comma separated fields. '${descriptor}' has ${parts.length}.`
       );
     }
     this.fontFamily = parts[0];
