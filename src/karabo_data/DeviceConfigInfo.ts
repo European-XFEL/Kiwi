@@ -1,3 +1,6 @@
+import { HashTypes } from "karabo-ts";
+import { HashValueType } from "../karabo_hash/HashValueType";
+
 export interface DeviceConfigInfo {
   deviceId: string;
   properties: PropertyInfo[];
@@ -5,6 +8,6 @@ export interface DeviceConfigInfo {
 
 export interface PropertyInfo {
   propertyId: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  propertyValue: any;
+  propertyValue: HashValueType;
+  propertyType: HashTypes;
 }

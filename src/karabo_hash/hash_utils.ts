@@ -1,4 +1,5 @@
-import { BinaryDecoder, Hash } from "karabo-ts";
+import { BinaryDecoder, Hash, HashTypes, HashValue } from "karabo-ts";
+import { HashValueType } from "./HashValueType";
 
 /**
  * Parses a Blob, the type of WebSocketEvent.data, supposed to contain a
@@ -25,7 +26,7 @@ export const blobToHash = async (blob: Blob): Promise<Hash> => {
  * @returns the value of the hash's "type" property (blank if the hash has no type property).
  */
 export const hashProtocolType = (hash: Hash): string => {
-  return hash.getValue("type") as string ?? "";
+  return (hash.getValue("type") as string) ?? "";
 };
 
 /**
@@ -44,4 +45,52 @@ export const packEncodedHash = (encodedHash: ArrayBuffer): ArrayBuffer => {
     packedBuffView.setUint8(i, encodedHashView[i - 4]);
   }
   return packedBuff;
+};
+
+export interface HashLeafNode {
+  path: string;
+  value: HashValueType;
+  type: HashTypes;
+}
+
+export const flattenHash = (hash: Hash): HashLeafNode[] => {
+  function doFlattenHash(
+    hash: Hash,
+    hashLeaves: HashLeafNode[],
+    currentPath: string = ""
+  ) {
+    for (const [itemPath] of hash.items()) {
+      const currentKey =
+        currentPath.length > 0 ? `${currentPath}.${itemPath}` : itemPath;
+      const hashNode = hash.getNode(itemPath);
+      if (typeof hashNode !== "undefined") {
+        if (hashNode.value.type_ === HashTypes.Hash) {
+          doFlattenHash(
+            new Hash(hashNode.value.value_ as HashValue),
+            hashLeaves,
+            currentKey
+          );
+        } else if (hashNode.value.type_ === HashTypes.VectorHash) {
+          const hashVector = hashNode.value.value_ as HashValue[];
+          for (let i = 0; i < hashVector.length; i++) {
+            doFlattenHash(
+              new Hash(hashVector[i]),
+              hashLeaves,
+              `${currentKey}[${i}]`
+            );
+          }
+        } else {
+          hashLeaves.push({
+            path: currentKey,
+            value: hashNode.value.value_,
+            type: hashNode.value.type_,
+          });
+        }
+      }
+    }
+  }
+
+  const hashLeaves: HashLeafNode[] = [];
+  doFlattenHash(hash, hashLeaves);
+  return hashLeaves;
 };
