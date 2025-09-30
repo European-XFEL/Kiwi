@@ -20,7 +20,7 @@ const DisplayLabel: React.FC<DynamicElementProps> = (props) => {
   // Handler for device property updates
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onPropertyUpdate = (updatedValue: any) => {
-    setLabelValue(updatedValue);
+    setLabelValue(updatedValue.toString());
   };
 
   // Register the component as a property updater when it is added to the DOM

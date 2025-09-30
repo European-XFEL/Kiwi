@@ -452,13 +452,12 @@ const LoginPanel: React.FC = () => {
                   <Select
                     labelId="access_level_label"
                     label="Access Level"
+                    value={2}
                     inputRef={accessLevelRef}
                   >
                     <MenuItem value="0">{AccessLevel[0]}</MenuItem>
                     <MenuItem value="1">{AccessLevel[1]}</MenuItem>
                     <MenuItem value="2">{AccessLevel[2]}</MenuItem>
-                    <MenuItem value="3">{AccessLevel[3]}</MenuItem>
-                    <MenuItem value="4">{AccessLevel[4]}</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
