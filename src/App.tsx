@@ -1,50 +1,34 @@
 import React, { useEffect } from "react";
-import { Stack } from "@mui/material";
-
-import AppBody from "./components/AppBody";
-import { CssBaseline } from "@mui/material";
-import { ThemeProvider } from "@mui/material/styles";
-import appTheme from "./AppTheme";
-
 import { initAppSettings } from "./AppSettings";
 import { useAppSettingsStore } from "./store/appSettingsStore";
-import { useGlobalStore } from "./store/globalAppStateStore"; // ⬅️ NEW
-
+import { useGlobalStore } from "./store/globalAppStateStore";
 import { AccessLevel } from "./karabo_data/AccessLevel";
 import { GuiServerConnector } from "./karabo_connectors/GuiServerConnector";
 import AuthServerClient from "./http_clients/AuthServerClient";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import SceneCanvas from "./components/SceneCanvas";
-import NoScenePanel from "./components/NoScenePanel";
+import { BrowserRouter } from "react-router-dom";
+import AppRouter from "./components/router/AppRouter";
+import { appRoutes } from "./routes";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const App: React.FC = () => {
   const executedOnceRef = React.useRef("");
-
   const { setWsProxyUrl, setAuthServerUrl } = useAppSettingsStore();
-
   const { setError, setLoggedIn, setLoggedOut } = useGlobalStore();
 
   useEffect(() => {
     const appSettings = initAppSettings();
-
     setWsProxyUrl(appSettings.wsProxyURL);
-    console.log(appSettings.wsProxyURL);
     setAuthServerUrl(appSettings.authServerURL);
-    console.log(appSettings.authServerURL);
 
     if (!executedOnceRef.current) {
       executedOnceRef.current = "true";
 
-      // When session drops unexpectedly → error state
       GuiServerConnector.inst.onSessionDropped = (err_msg: string) => {
-        setError(err_msg); //zustand
+        setError(err_msg);
       };
 
-      // Try to resume GUI session
       GuiServerConnector.inst.resumeGuiSession(
         new AuthServerClient(appSettings.authServerURL),
-
-        // Session resumed
         (
           accessLevel: AccessLevel,
           host: string,
@@ -61,41 +45,24 @@ const App: React.FC = () => {
             guiServerTopic: topic,
             guiServerVersion: serverVersion,
             sessionStartEpoc: Date.now(),
-          }); //zustand
+          });
         },
-
-        // No session to resume
-        () => {
-          setLoggedOut(); //zustand
-        },
-
-        // Error trying to resume session
-        (errorMsg: string) => {
-          setError(errorMsg); //zustand
-        }
+        () => setLoggedOut(),
+        (errorMsg: string) => setError(errorMsg)
       );
     }
   }, [setWsProxyUrl, setAuthServerUrl, setError, setLoggedIn, setLoggedOut]);
 
   return (
-    <ThemeProvider theme={appTheme}>
-      <CssBaseline enableColorScheme={true}>
-        <Stack direction="column" sx={{ height: "100%", p: 0 }}>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<AppBody />}>
-                <Route path="scene" element={<SceneCanvas />} />
-                <Route path="no_scene" element={<NoScenePanel />} />
-              </Route>
-              {/* By default go to the no-scene loaded page */}
-              <Route index element={<Navigate replace to="no_scene" />} />
-              {/* Any unsupported URL should redirect to the no-scene page */}
-              <Route path="*" element={<Navigate replace to="no_scene" />} />
-            </Routes>
-          </BrowserRouter>
-        </Stack>
-      </CssBaseline>
-    </ThemeProvider>
+    <TooltipProvider delayDuration={150} skipDelayDuration={300}>
+      <BrowserRouter>
+        <AppRouter
+          routes={appRoutes}
+          indexRedirect="no_scene"
+          fallbackRedirect="no_scene"
+        />
+      </BrowserRouter>
+    </TooltipProvider>
   );
 };
 

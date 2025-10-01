@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Button } from "@mui/material";
+import { Button } from "@/components/ui/button";
 import { DisplayCommandElementProps } from "../../karabo_data/SceneElements";
 import { splitKaraboKeys } from "./shared/helpers/splitKaraboKeys";
 
@@ -11,10 +11,9 @@ const DisplayCommand: React.FC<DisplayCommandElementProps> = (props) => {
 
   return (
     <Button
-      size="small"
-      variant="contained"
-      sx={{
-        position: "absolute",
+      size="sm"
+      className="absolute border-2 border-gray-300 bg-primary/80 px-2"
+      style={{
         width: props.width,
         height: props.height,
         left: props.x,

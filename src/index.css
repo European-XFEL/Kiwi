@@ -4,15 +4,11 @@
 @custom-variant dark (&:is(.dark *));
 
 html,
-body,
-#root {
-  height: 100%;
-}
-html,
 body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: "Neue Helvetica", "Helvetica", "arial", sans-serif;
 }
 
 /* Map Tailwind design tokens to CSS variables */
@@ -49,7 +45,6 @@ body {
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  /* Optional chart + sidebar tokens (kept from your base) */
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -65,116 +60,114 @@ body {
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* OPTIONAL: expose brand warning to Tailwind via token */
   --color-warning: var(--warning);
 }
 
-/* ===== Light theme (default) ===== */
+/* ===== Light theme (default) - Matching MUI palette ===== */
 :root {
   --radius: 0.625rem;
 
-  /* neutrals */
-  --background: oklch(1 0 0); /* white */
-  --foreground: #0d1546; /* from MUI text.primary */
+  /* Background and foreground - using MUI text.primary */
+  --background: #ffffff;
+  --foreground: #0d1546; /* MUI text.primary */
 
-  --card: oklch(1 0 0);
+  --card: #ffffff;
   --card-foreground: #0d1546;
 
-  --popover: oklch(1 0 0);
+  --popover: #ffffff;
   --popover-foreground: #0d1546;
 
-  /* brand (from your MUI palette) */
-  --primary: #fe9902; /* MUI primary.main */
-  --primary-foreground: #ffffff;
+  /* Brand colors - directly from MUI palette */
+  --primary: #e58a02; /* MUI primary.main */
+  --primary-foreground: #ffffff; /* MUI primary.contrastText */
 
   --secondary: #f39200; /* MUI secondary.main */
-  --secondary-foreground: #ffffff;
+  --secondary-foreground: #ffffff; /* MUI secondary.contrastText */
 
-  /* optional status/utility */
+  /* Warning - from MUI */
   --warning: #ffee58; /* MUI warning.main */
 
-  /* subtle surfaces */
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  /* Muted and accent - using lighter variations of text colors */
+  --muted: #f5f5f5;
+  --muted-foreground: #162267; /* MUI text.secondary */
 
-  --accent: oklch(0.97 0 0);
+  --accent: #fef7ec; /* Light tint of primary */
   --accent-foreground: #0d1546;
 
-  --destructive: oklch(0.577 0.245 27.325);
+  /* Destructive */
+  --destructive: #d32f2f;
+  --destructive-foreground: #ffffff;
 
-  /* ui chrome */
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  /* UI chrome */
+  --border: #e0e0e0;
+  --input: #e0e0e0;
+  --ring: #e58a02; /* Using primary color for focus ring */
 
-  /* charts + sidebar */
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  /* Charts */
+  --chart-1: #e58a02;
+  --chart-2: #f39200;
+  --chart-3: #ffee58;
+  --chart-4: #fe9902;
+  --chart-5: #0d1546;
 
-  --sidebar: oklch(0.985 0 0);
+  /* Sidebar - matching overall theme */
+  --sidebar: #ffffff;
   --sidebar-foreground: #0d1546;
-  --sidebar-primary: #fe9902; /* align sidebar primary with brand */
+  --sidebar-primary: #e58a02;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent: #f5f5f5;
   --sidebar-accent-foreground: #0d1546;
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-border: #e0e0e0;
+  --sidebar-ring: #e58a02;
 }
 
-/* ===== Dark theme (activated by .dark on <html>) ===== */
+/* ===== Dark theme (optional) ===== */
 .dark {
-  /* neutrals */
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
+  --background: #0d1546; /* Using MUI text.primary as dark bg */
+  --foreground: #ffffff;
 
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
+  --card: #162267; /* Using MUI text.secondary as card bg */
+  --card-foreground: #ffffff;
 
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
+  --popover: #162267;
+  --popover-foreground: #ffffff;
 
-  /* brand: keep the same oranges, adjust foreground for contrast on bright bg */
-  --primary: #fe9902;
-  --primary-foreground: #0a0a0a;
+  /* Keep brand colors consistent */
+  --primary: #fe9902; /* MUI primary.light for better visibility on dark */
+  --primary-foreground: #0d1546;
 
   --secondary: #f39200;
-  --secondary-foreground: #0a0a0a;
+  --secondary-foreground: #ffffff;
 
-  /* optional status/utility */
   --warning: #ffee58;
 
-  /* subtle surfaces */
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
+  --muted: #1a2460;
+  --muted-foreground: #b0b0b0;
 
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --accent: #1a2460;
+  --accent-foreground: #ffffff;
 
-  --destructive: oklch(0.704 0.191 22.216);
+  --destructive: #ef5350;
+  --destructive-foreground: #ffffff;
 
-  /* ui chrome */
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.15);
+  --ring: #fe9902;
 
-  /* charts + sidebar */
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
+  --chart-1: #fe9902;
+  --chart-2: #f39200;
+  --chart-3: #ffee58;
+  --chart-4: #e58a02;
+  --chart-5: #ffffff;
 
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar: #162267;
+  --sidebar-foreground: #ffffff;
   --sidebar-primary: #fe9902;
-  --sidebar-primary-foreground: #0a0a0a;
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-primary-foreground: #0d1546;
+  --sidebar-accent: #1a2460;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-ring: #fe9902;
 }
 
 /* Base layer hook-up to Tailwind tokens */
@@ -184,5 +177,12 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Apply MUI typography styles */
+  button {
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    word-spacing: 0.15em;
   }
 }

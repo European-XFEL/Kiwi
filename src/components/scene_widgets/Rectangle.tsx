@@ -1,5 +1,4 @@
 import React from "react";
-import { Box } from "@mui/material";
 import {
   RectangleElementProps,
   SceneElementProps,
@@ -10,33 +9,39 @@ const Rectangle: React.FC<RectangleElementProps> = (props) => {
   const renderInternalWidgets = (
     widgets: WidgetElement<SceneElementProps>[]
   ) => {
-    // Renders the rectangle's children
     return (
       <React.Fragment>
-        {widgets.map((widget: WidgetElement<SceneElementProps>) => {
-          if (widget.reactComponent !== undefined) {
-            return React.createElement(widget.reactComponent!, widget.props);
+        {widgets.map(
+          (widget: WidgetElement<SceneElementProps>, idx: number) => {
+            if (widget.reactComponent !== undefined) {
+              const { key, ...restProps } = widget.props as any;
+              return React.createElement(widget.reactComponent!, {
+                key: `rect_widget_${idx}`,
+                ...restProps,
+              });
+            }
+            return null;
           }
-        })}
+        )}
       </React.Fragment>
     );
   };
 
   return (
-    <Box
-      sx={{
-        position: "absolute",
+    <div
+      className="absolute border-solid"
+      style={{
         width: props.width,
         height: props.height,
         left: `${props.x}px`,
         top: `${props.y}px`,
         borderWidth: props.strokeWidth,
         borderColor: props.strokeColor,
-        bgcolor: props.fillColor,
+        backgroundColor: props.fillColor,
       }}
     >
       {renderInternalWidgets(props.widgets)}
-    </Box>
+    </div>
   );
 };
 
