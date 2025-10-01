@@ -1,11 +1,3 @@
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Container,
-  Paper,
-  Stack,
-} from "@mui/material";
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ProjectSceneCache } from "../store/ProjectSceneCache";
@@ -20,6 +12,11 @@ import { Scene } from "../karabo_data/Scene";
 import { useGlobalStore } from "../store/globalAppStateStore";
 import useRecentStore from "../store/recentScenesStore";
 import { useLoadedSceneStore } from "../store/loadedSceneStore";
+import { Card, CardContent } from "./ui/card";
+import { Button } from "./ui/button";
+import { Spinner } from "./ui/spinner";
+import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
+import { AlertTriangle } from "lucide-react";
 
 const SceneCanvas: React.FC = () => {
   const location = useLocation();
@@ -32,72 +29,96 @@ const SceneCanvas: React.FC = () => {
   const { setScene: setLoadedScene } = useLoadedSceneStore();
   const loggedUser = sessionInfo?.loggedUser;
 
+  // measure container to compute scale
+  const containerRef = React.useRef<HTMLDivElement | null>(null);
+  const [scale, setScale] = React.useState(1);
+
+  // Recompute scale whenever container or scene size changes
+  React.useLayoutEffect(() => {
+    if (!containerRef.current) return;
+
+    const ro = new ResizeObserver(() => {
+      if (!containerRef.current || !scene) return;
+      const { width: cw, height: ch } =
+        containerRef.current.getBoundingClientRect();
+      if (scene.width > 0 && scene.height > 0 && cw > 0 && ch > 0) {
+        // leave a small padding margin (8px)
+        const availW = Math.max(cw - 8, 0);
+        const availH = Math.max(ch - 8, 0);
+        const s = Math.min(availW / scene.width, availH / scene.height, 1);
+        setScale(Number.isFinite(s) ? s : 1);
+      } else {
+        setScale(1);
+      }
+    });
+
+    ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, [scene]);
+
   const renderScene = () => {
     if (scene) {
       return (
-        <Paper
-          key={`scene_${scene}`}
-          sx={{
-            width: `${scene.width}px`,
-            height: `${scene.height}px`,
-            minWidth: scene.width,
-            minHeight: scene.height,
-            backgroundColor: "#eeeeee",
-            position: "relative",
-            overflow: "clip",
-          }}
-          elevation={4}
-        >
-          {scene.sceneElements.map((el: SceneElement) => {
-            if (el instanceof WidgetElement) {
-              const widget = el as WidgetElement<SceneElementProps>;
-              if (widget.reactComponent !== undefined) {
-                return React.createElement(
-                  widget.reactComponent!,
-                  widget.props
-                );
-              }
-            }
-            return null; // avoid React warnings for missing returns
-          })}
-        </Paper>
+        <div className="w-full h-full overflow-auto">
+          {/* Fit-to-container wrapper */}
+          <div
+            className="mx-auto"
+            style={{
+              width: Math.ceil(scene.width * scale),
+              height: Math.ceil(scene.height * scale),
+            }}
+          >
+            {/* Scaled canvas */}
+            <div
+              className="relative bg-[#eeeeee] shadow-lg rounded-md overflow-clip"
+              style={{
+                width: scene.width,
+                height: scene.height,
+                transform: `scale(${scale})`,
+                transformOrigin: "top left",
+              }}
+            >
+              {scene.sceneElements.map((el: SceneElement, idx: number) => {
+                if (el instanceof WidgetElement) {
+                  const widget = el as WidgetElement<SceneElementProps>;
+                  if (widget.reactComponent) {
+                    // Filter out 'key' from props if it exists, then add our own
+                    const { key, ...restProps } = widget.props as any;
+                    return React.createElement(widget.reactComponent, {
+                      key: `w_${idx}`,
+                      ...restProps,
+                    });
+                  }
+                }
+                return null;
+              })}
+            </div>
+          </div>
+        </div>
       );
     } else if (loadingError.length > 0) {
       return (
-        <Stack>
-          <Paper
-            elevation={8}
-            sx={{
-              bgcolor: "#ee0000",
-              color: "#ffffff",
-              padding: "1.5em",
-            }}
-          >
-            <h4>Couldn't load scene</h4>
-            <p dangerouslySetInnerHTML={{ __html: loadingError }} />
-          </Paper>
-          <Button variant="contained" onClick={() => navigate("/")}>
+        <div className="flex flex-col gap-4 max-w-2xl">
+          <Alert variant="destructive" className="border-destructive/50">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Couldn't load scene</AlertTitle>
+            <AlertDescription
+              dangerouslySetInnerHTML={{ __html: loadingError }}
+            />
+          </Alert>
+          <Button onClick={() => navigate("/no_scene")}>
             Back to Starting Page
           </Button>
-          <Box sx={{ height: "4em" }} />
-        </Stack>
+        </div>
       );
     } else {
       return (
-        <Container maxWidth="sm" sx={{ padding: "2em" }}>
-          <Paper
-            elevation={8}
-            sx={{
-              padding: "1.5em",
-              display: "flex",
-              alignItems: "center",
-              gap: "16px",
-            }}
-          >
-            <CircularProgress size={32} style={{ padding: 4 }} />
-            <Box sx={{ flexGrow: 1 }}>Loading scene ...</Box>
-          </Paper>
-        </Container>
+        <Card className="w-full max-w-md shadow-lg">
+          <CardContent className="flex items-center gap-4 p-6">
+            <Spinner className="text-primary" variant="default" size={32} />
+            <div className="flex-1">Loading scene ...</div>
+          </CardContent>
+        </Card>
       );
     }
   };
@@ -147,17 +168,9 @@ const SceneCanvas: React.FC = () => {
   }, [location.search, loggedUser, setLoadedScene, setRecentScene]);
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexGrow: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        overflow: "auto",
-      }}
-    >
+    <div ref={containerRef} className="w-full h-full p-2 sm:p-4 box-border">
       {renderScene()}
-    </Box>
+    </div>
   );
 };
 

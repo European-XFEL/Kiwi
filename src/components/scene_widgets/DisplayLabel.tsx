@@ -1,5 +1,4 @@
 import React from "react";
-import { Box } from "@mui/material";
 import { DynamicElementProps } from "../../karabo_data/SceneElements";
 import DeviceOfflineOverlay from "./DeviceOfflineOverlay";
 import useSystemTopologyStore from "../../store/systemTopologyStore";
@@ -25,43 +24,32 @@ const DisplayLabel: React.FC<DynamicElementProps> = (props) => {
 
   // Register the component as a property updater when it is added to the DOM
   // and unregister when it is removed from the DOM
-  React.useEffect(
-    () => {
-      DevicePropertyConnector.inst.registerPropertyMonitor(
+  React.useEffect(() => {
+    DevicePropertyConnector.inst.registerPropertyMonitor(
+      deviceId,
+      propertyId,
+      onPropertyUpdate
+    );
+    return () => {
+      DevicePropertyConnector.inst.unregisterPropertyMonitor(
         deviceId,
         propertyId,
         onPropertyUpdate
       );
-      return () => {
-        DevicePropertyConnector.inst.unregisterPropertyMonitor(
-          deviceId,
-          propertyId,
-          onPropertyUpdate
-        );
-      };
-    },
-    // Only registers/unregister if either the deviceId or propertyId changes
-    [deviceId, propertyId]
-  );
+    };
+  }, [deviceId, propertyId]);
 
   return (
-    <Box
-      sx={{
-        position: "absolute",
+    <div
+      className="absolute overflow-clip flex items-center justify-center border border-solid p-px"
+      style={{
         width: `${props.width}px`,
         height: `${props.height}px`,
         left: `${props.x}px`,
         top: `${props.y}px`,
-        overflow: "clip",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
         fontFamily: FONT_FAMILY_DEFAULT,
         fontSize: props.fontSize,
         fontWeight: props.fontWeight.toLowerCase(),
-        borderWidth: 1,
-        borderStyle: "solid",
-        p: "1px",
       }}
     >
       {props.isSrcDeviceOffline(topology) ? (
@@ -69,7 +57,7 @@ const DisplayLabel: React.FC<DynamicElementProps> = (props) => {
       ) : (
         labelValue
       )}
-    </Box>
+    </div>
   );
 };
 
