@@ -18,8 +18,8 @@ import {
 import { useAppSettingsStore } from "../store/appSettingsStore";
 import useSystemTopologyStore from "../store/systemTopologyStore";
 
-import { AccessLevel } from "../karabo_data/AccessLevel";
-import { GuiServerInfo } from "../karabo_data/GuiServerInfo";
+import { AccessLevel } from "@/karabo_data/SchemaEnums";
+import { GuiServerInfo } from "@/karabo_data/GuiServerInfo";
 
 import { Websocket, WebsocketBuilder } from "websocket-ts";
 

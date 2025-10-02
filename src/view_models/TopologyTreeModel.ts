@@ -1,5 +1,5 @@
-import { AccessLevel } from "../karabo_data/AccessLevel";
-import { SystemTopologyInfo } from "../karabo_data/TopologyInfo";
+import { AccessLevel } from "@/karabo_data/SchemaEnums";
+import { SystemTopologyInfo } from "@/karabo_data/TopologyInfo";
 
 class TopologyTreeModel {
   private _hosts: HostModel[];
