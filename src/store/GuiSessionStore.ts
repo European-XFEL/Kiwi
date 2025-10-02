@@ -1,5 +1,5 @@
 import DeepVault from "deepvault";
-import { AccessLevel } from "../karabo_data/AccessLevel";
+import { AccessLevel } from "@/karabo_data/SchemaEnums";
 
 /**  Subset of GuiSessionInfo needed to resume a GUI Session when the app starts. */
 export interface GuiSessionData {

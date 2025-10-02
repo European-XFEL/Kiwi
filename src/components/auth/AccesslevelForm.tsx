@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AccessLevel } from "@/karabo_data/AccessLevel";
+import { AccessLevel } from "@/karabo_data/SchemaEnums";
 
 export type AccessLevelFormProps = {
   onUserNameChange: (username: string) => void;
