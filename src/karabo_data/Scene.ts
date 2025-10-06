@@ -3,6 +3,7 @@ import DisplayLabel from "../components/scene_widgets/DisplayLabel";
 import DisplayStateColor from "../components/scene_widgets/displayStateColor/DisplayStateColor";
 import Label from "../components/scene_widgets/Label";
 import Rectangle from "../components/scene_widgets/Rectangle";
+import DisplayTrendGraph from "@/components/scene_widgets/plots/displayTrendGraph/DisplayTrendGraph";
 import { css_textAlign_for_KrbAlignh } from "../components/scene_widgets/shared/helpers/KrbAlignh";
 import { QtFontDescriptor } from "../components/scene_widgets/shared/helpers/QtFontDescriptor";
 import {
@@ -15,6 +16,8 @@ import {
   SceneElement,
   SceneElementProps,
   WidgetElement,
+  DisplayCommandElementProps,
+  DisplayTrendGraphElement,
 } from "./SceneElements";
 
 export class Scene {
@@ -215,6 +218,11 @@ export class Scene {
               rectChild,
               rect
             ) as WidgetElement<SceneElementProps>;
+          } else if (krbWidget.toLowerCase() === "displaytrendgraph") {
+            widgetElement = this.#_buildDisplayTrendGraphElement(
+              rectChild,
+              rect
+            ) as WidgetElement<SceneElementProps>;
           } else {
             // An unknown DisplayComponent widget - as a fallback render as a
             // static label.
@@ -390,6 +398,56 @@ export class Scene {
     placeHolder.frameWidth = 1;
     placeHolder.reactComponent = Label;
     return placeHolder;
+  };
+
+  #_buildDisplayTrendGraphElement = (
+    displayTrendGraphObj: any,
+    //It is a Rectangle element becos the bounding box is , svg:rect, it must return an element(class)
+    rect: RectangleElement
+  ): DisplayTrendGraphElement => {
+    const trendGraphElement = new DisplayTrendGraphElement();
+    trendGraphElement.reactComponent = DisplayTrendGraph;
+    trendGraphElement.x =
+      parseInt(displayTrendGraphObj["@_x"] as string) - rect.x;
+    trendGraphElement.y =
+      parseInt(displayTrendGraphObj["@_y"] as string) - rect.y;
+    trendGraphElement.width = parseInt(
+      displayTrendGraphObj["@_width"] as string
+    );
+    trendGraphElement.height = parseInt(
+      displayTrendGraphObj["@_height"] as string
+    );
+    trendGraphElement.karaboKeys = displayTrendGraphObj["@_krb:keys"] as string;
+
+    // Optional properties with defaults
+    const bool = (v?: string) => v?.toLowerCase() === "true";
+    const num = (v?: string) => parseFloat(v || "0");
+
+    trendGraphElement.xLabel = displayTrendGraphObj["@_krb:x_label"] || "";
+    trendGraphElement.yLabel = displayTrendGraphObj["@_krb:y_label"] || "";
+    trendGraphElement.xUnits = displayTrendGraphObj["@_krb:x_units"] || "";
+    trendGraphElement.yUnits = displayTrendGraphObj["@_krb:y_units"] || "";
+    trendGraphElement.xGrid = bool(displayTrendGraphObj["@_krb:x_grid"]);
+    trendGraphElement.yGrid = bool(displayTrendGraphObj["@_krb:y_grid"]);
+    trendGraphElement.xLog = bool(displayTrendGraphObj["@_krb:x_log"]);
+    trendGraphElement.yLog = bool(displayTrendGraphObj["@_krb:y_log"]);
+    trendGraphElement.xInvert = bool(displayTrendGraphObj["@_krb:x_invert"]);
+    trendGraphElement.yInvert = bool(displayTrendGraphObj["@_krb:y_invert"]);
+    trendGraphElement.xMin = num(displayTrendGraphObj["@_krb:x_min"]);
+    trendGraphElement.xMax = num(displayTrendGraphObj["@_krb:x_max"]);
+    trendGraphElement.yMin = num(displayTrendGraphObj["@_krb:y_min"]);
+    trendGraphElement.yMax = num(displayTrendGraphObj["@_krb:y_max"]);
+    trendGraphElement.xAutorange = bool(
+      displayTrendGraphObj["@_krb:x_autorange"]
+    );
+    trendGraphElement.yAutorange = bool(
+      displayTrendGraphObj["@_krb:y_autorange"]
+    );
+    trendGraphElement.title = displayTrendGraphObj["@_krb:title"] || "";
+    trendGraphElement.background =
+      displayTrendGraphObj["@_krb:background"] || "transparent";
+
+    return trendGraphElement;
   };
 
   // #endregion

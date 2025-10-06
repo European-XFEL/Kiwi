@@ -140,3 +140,56 @@ export class RectangleElement extends WidgetElement<RectangleElementProps> {
     return { ...(this as unknown as RectangleElementProps) };
   }
 }
+
+export interface DisplayTrendGraphElementProps extends DynamicElementProps {
+  //Axis labels and units
+  xLabel: string;
+  yLabel: string;
+  xUnits: string;
+  yUnits: string;
+  //Grid toggles
+  xGrid: boolean;
+  yGrid: boolean;
+  //Logarithmic scales
+  xLog: boolean;
+  yLog: boolean;
+  //Axis inversion
+  xInvert: boolean;
+  yInvert: boolean;
+  //Axis limits
+  xMin: number;
+  xMax: number;
+  yMin: number;
+  yMax: number;
+  //Auto-ranging flags
+  xAutorange: boolean;
+  yAutorange: boolean;
+  //Title and background color
+  title: string;
+  background: string;
+}
+
+export class DisplayTrendGraphElement extends DynamicWidgetElement<DisplayTrendGraphElementProps> {
+  xLabel = "";
+  yLabel = "";
+  xUnits = "";
+  yUnits = "";
+  xGrid = false;
+  yGrid = false;
+  xLog = false;
+  yLog = false;
+  xInvert = false;
+  yInvert = false;
+  xMin = 0.0;
+  xMax = 0.0;
+  yMin = 0.0;
+  yMax = 0.0;
+  xAutorange = true;
+  yAutorange = true;
+  title = "";
+  background = "transparent";
+
+  get props(): DisplayTrendGraphElementProps {
+    return { ...(this as unknown as DisplayTrendGraphElementProps) };
+  }
+}
