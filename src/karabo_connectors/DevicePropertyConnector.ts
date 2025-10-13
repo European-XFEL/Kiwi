@@ -5,9 +5,10 @@ import {
   buildStopMonitoringHash,
 } from "../karabo_hash/builders/monitoring_device";
 import { devicesConfigsFromHash } from "../karabo_hash/decoders/device_config";
+import { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type PropertyUpdateHandler = (updatedValue: any) => void;
+type PropertyUpdateHandler = (updatedProperty: PropertyInfo) => void;
 
 export class DevicePropertyConnector {
   // #region Singleton
@@ -27,7 +28,16 @@ export class DevicePropertyConnector {
   }
   // #endregion
 
-  // #region Bookkeeping of PropertyMonitors
+  // #region Management of PropertyMonitors
+
+  /**
+   * A map that manages property update handlers for monitored device properties.
+   *
+   * The map is structured as a two-level mapping:
+   * - The first level maps a `deviceId` (string) to a second-level map.
+   * - The second-level map maps a `propertyId` (string) to an array of `PropertyUpdateHandler` functions.
+   *
+   */
   #_propertyMonitors = new Map<string, Map<string, PropertyUpdateHandler[]>>();
 
   registerPropertyMonitor(
@@ -91,7 +101,7 @@ export class DevicePropertyConnector {
 
   // #endregion
 
-  // Handler for DeviceConfigurations messages received from the GUI Server
+  /** Handler for "deviceConfigurations" messages received from the GUI Server */
   #_onDeviceConfigurations = (hash: Hash): void => {
     const devicesConfigs = devicesConfigsFromHash(hash);
     for (const deviceConfig of devicesConfigs) {
@@ -106,7 +116,7 @@ export class DevicePropertyConnector {
               ?.get(propInfo.propertyId);
             if (propUpdateHandlers !== undefined) {
               for (const propUpdateHandler of propUpdateHandlers) {
-                propUpdateHandler(propInfo.propertyValue);
+                propUpdateHandler(propInfo);
               }
             }
           }

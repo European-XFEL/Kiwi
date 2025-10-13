@@ -1,4 +1,10 @@
-import { BinaryDecoder, Hash, HashTypes, HashValue } from "karabo-ts";
+import {
+  Attributes,
+  BinaryDecoder,
+  Hash,
+  HashTypes,
+  HashValue,
+} from "karabo-ts";
 import { HashValueType } from "./HashValueType";
 
 /**
@@ -51,6 +57,7 @@ export interface HashLeafNode {
   path: string;
   value: HashValueType;
   type: HashTypes;
+  attrs: Attributes;
 }
 
 export const flattenHash = (hash: Hash): HashLeafNode[] => {
@@ -59,17 +66,33 @@ export const flattenHash = (hash: Hash): HashLeafNode[] => {
     hashLeaves: HashLeafNode[],
     currentPath: string = ""
   ) {
-    for (const [itemPath] of hash.items()) {
+    for (const [itemPath] of hash.iterall()) {
       const currentKey =
         currentPath.length > 0 ? `${currentPath}.${itemPath}` : itemPath;
       const hashNode = hash.getNode(itemPath);
       if (typeof hashNode !== "undefined") {
         if (hashNode.value.type_ === HashTypes.Hash) {
-          doFlattenHash(
-            new Hash(hashNode.value.value_ as HashValue),
-            hashLeaves,
-            currentKey
-          );
+          if (
+            Object.entries(hashNode.value.value_).length === 0 &&
+            hashNode.attrs !== undefined
+          ) {
+            // Special case: the node is a Hash that doesn't contain items but
+            // has attributes. This happens, for instance, for command slots.
+            // They are also added as leaves, but their value will be an empty
+            // hash.
+            hashLeaves.push({
+              path: currentKey,
+              value: hashNode.value.value_,
+              type: hashNode.value.type_,
+              attrs: hashNode.attrs,
+            });
+          } else if (Object.entries(hashNode.value.value_).length > 0) {
+            doFlattenHash(
+              new Hash(hashNode.value.value_ as HashValue),
+              hashLeaves,
+              currentKey
+            );
+          }
         } else if (hashNode.value.type_ === HashTypes.VectorHash) {
           const hashVector = hashNode.value.value_ as HashValue[];
           for (let i = 0; i < hashVector.length; i++) {
@@ -84,6 +107,7 @@ export const flattenHash = (hash: Hash): HashLeafNode[] => {
             path: currentKey,
             value: hashNode.value.value_,
             type: hashNode.value.type_,
+            attrs: hashNode.attrs,
           });
         }
       }

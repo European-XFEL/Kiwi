@@ -6,7 +6,7 @@ import {
   PASSIVE,
   DISABLED,
   EXACT_TO_COLOR,
-} from "../../../../karabo_data/Indicators";
+} from "@/karabo_data/Indicators";
 
 export function mapGuiStateColor(raw: string): GuiStateColorKey {
   //important because karabos state/indicator re all in upperCase
