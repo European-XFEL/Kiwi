@@ -13,3 +13,10 @@ export const buildStopMonitoringHash = (deviceId: string): Hash => {
     deviceId: deviceId,
   });
 };
+
+export const buildGetDeviceSchemaHash = (deviceId: string): Hash => {
+  return makeHash({
+    type: "getDeviceSchema",
+    deviceId: deviceId,
+  });
+};

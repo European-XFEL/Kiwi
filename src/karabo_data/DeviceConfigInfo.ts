@@ -1,5 +1,5 @@
-import { HashTypes } from "karabo-ts";
-import { HashValueType } from "../karabo_hash/HashValueType";
+import { Attributes, HashTypes } from "karabo-ts";
+import { HashValueType } from "@/karabo_hash/HashValueType";
 
 export interface DeviceConfigInfo {
   deviceId: string;
@@ -10,4 +10,5 @@ export interface PropertyInfo {
   propertyId: string;
   propertyValue: HashValueType;
   propertyType: HashTypes;
+  propertyAttrs: Attributes;
 }
