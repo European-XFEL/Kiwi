@@ -1,8 +1,6 @@
 import React, { useMemo, useState } from "react";
 import Plot from "react-plotly.js";
 import type { Layout, Data } from "plotly.js";
-import useSystemTopologyStore from "../../../../store/systemTopologyStore";
-import DeviceOfflineOverlay from "../../DeviceOfflineOverlay";
 import { DisplayTrendGraphElementProps } from "@/karabo_data/SceneElements";
 import { useDisplayTrendGraph } from "./useDisplayTrendGraph";
 import { TraceFactory, ChartType } from "@/karabo_plots/traceFactory";
@@ -13,8 +11,8 @@ type Props = DisplayTrendGraphElementProps & {
 };
 
 const DisplayTrendGraph: React.FC<Props> = React.memo((props) => {
-  const topology = useSystemTopologyStore((s) => s.topology);
-  const isOffline = props.isSrcDeviceOffline(topology);
+  // TODO: the offline signaling for the TrendGraph is per serie as each serie
+  //       can be feed by a different device. Still to be solved.
 
   const [chartType, setChartType] = useState<ChartType>(
     props.defaultChartType ?? "line"
@@ -102,49 +100,45 @@ const DisplayTrendGraph: React.FC<Props> = React.memo((props) => {
         backgroundColor: props.background || "transparent",
       }}
     >
-      {isOffline ? (
-        <DeviceOfflineOverlay {...props} />
-      ) : (
-        <>
-          {/* Chart type selector */}
-          <div
-            className="absolute top-2 right-2 z-10"
-            style={{ pointerEvents: "auto" }}
+      <>
+        {/* Chart type selector */}
+        <div
+          className="absolute top-2 right-2 z-10"
+          style={{ pointerEvents: "auto" }}
+        >
+          <select
+            value={chartType}
+            onChange={(e) => setChartType(e.target.value as ChartType)}
+            className="text-xs border border-gray-300 rounded px-2 py-1 bg-white shadow-sm hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
           >
-            <select
-              value={chartType}
-              onChange={(e) => setChartType(e.target.value as ChartType)}
-              className="text-xs border border-gray-300 rounded px-2 py-1 bg-white shadow-sm hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-            >
-              <option value="line">Line</option>
-              <option value="points">Scatter</option>
-              <option value="area">Area</option>
-              <option value="heatmap">Heatmap</option>
-            </select>
-          </div>
+            <option value="line">Line</option>
+            <option value="points">Scatter</option>
+            <option value="area">Area</option>
+            <option value="heatmap">Heatmap</option>
+          </select>
+        </div>
 
-          {/* Main chart */}
-          <Plot
-            data={data}
-            layout={layout}
-            config={{
-              displayModeBar: false,
-              responsive: true,
-              scrollZoom: true,
-            }}
-            useResizeHandler
-            style={{ width: "100%", height: "100%" }}
-          />
+        {/* Main chart */}
+        <Plot
+          data={data}
+          layout={layout}
+          config={{
+            displayModeBar: false,
+            responsive: true,
+            scrollZoom: true,
+          }}
+          useResizeHandler
+          style={{ width: "100%", height: "100%" }}
+        />
 
-          {/* Optional debug counter */}
-          {/* <div
+        {/* Optional debug counter */}
+        {/* <div
             className="absolute top-2 left-2 text-xs px-2 py-1 rounded bg-black/60 text-white"
             style={{ pointerEvents: "none" }}
           >
             {dataPoints} pts
           </div> */}
-        </>
-      )}
+      </>
     </div>
   );
 });

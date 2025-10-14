@@ -1,4 +1,3 @@
-import { DeviceInfo, SystemTopologyInfo } from "./TopologyInfo";
 import {
   FONT_BASE_SIZE,
   FONT_FAMILY_DEFAULT,
@@ -65,7 +64,6 @@ export interface DynamicElementProps extends SceneElementProps {
   karaboKeys: string;
   fontSize: number;
   fontWeight: "BOLD" | "NORMAL";
-  isSrcDeviceOffline(topology: SystemTopologyInfo): boolean;
 }
 
 export class DynamicWidgetElement<
@@ -74,28 +72,6 @@ export class DynamicWidgetElement<
   karaboKeys: string = "";
   fontSize: number = FONT_BASE_SIZE;
   fontWeight: "BOLD" | "NORMAL" = "NORMAL";
-
-  /**
-   * Checks if the source device associated with this element is offline
-   * based on the provided system topology information.
-   *
-   * @param topology - The system topology information to check against.
-   * @returns `true` if the source device is offline, `false` otherwise.
-   */
-  isSrcDeviceOffline = (topology: SystemTopologyInfo) => {
-    const deviceId =
-      this.karaboKeys.indexOf(".") > 0
-        ? this.karaboKeys.slice(0, this.karaboKeys.indexOf("."))
-        : "";
-    if (deviceId.length < 1) {
-      // No defined source device is considered "online"
-      return false;
-    }
-    const deviceIdx = topology.devices.findIndex((value: DeviceInfo) => {
-      return value.deviceId === deviceId;
-    });
-    return deviceIdx < 0; // findIndex returned -1; device not in topology
-  };
 
   get props(): PropsType {
     return { ...(this as unknown as PropsType) };

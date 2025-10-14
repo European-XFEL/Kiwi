@@ -1,23 +1,23 @@
 import React from "react";
 import { DynamicElementProps } from "@/karabo_data/SceneElements";
 import DeviceOfflineOverlay from "@/components/scene_widgets/DeviceOfflineOverlay";
-import useSystemTopologyStore from "@/store/systemTopologyStore";
 import { DevicePropertyConnector } from "@/karabo_connectors/DevicePropertyConnector";
+import { splitKaraboKeys } from "./shared/helpers/splitKaraboKeys";
+import { FONT_FAMILY_DEFAULT } from "./shared/helpers/QtFontDescriptor";
 import { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
 import { HashTypes } from "karabo-ts";
-import { FONT_FAMILY_DEFAULT } from "./shared/helpers/QtFontDescriptor";
+import { TopologyConnector } from "@/karabo_connectors/TopologyConnector";
+import { DeviceInfo } from "@/karabo_data/TopologyInfo";
 import { useKaraboSchema } from "./shared/hooks/useKaraboSchema";
-import { splitKaraboKeys } from "./shared/helpers/splitKaraboKeys";
 
 const DisplayLabel: React.FC<DynamicElementProps> = (props) => {
-  const topology = useSystemTopologyStore((state) => state.topology);
-  const isOffline = props.isSrcDeviceOffline(topology);
-
-  const [labelValue, setLabelValue] = React.useState<string>("");
-
   const { deviceId, propertyId } = React.useMemo(
     () => splitKaraboKeys(props.karaboKeys),
     [props.karaboKeys]
+  );
+  const [labelValue, setLabelValue] = React.useState<string>("");
+  const [isOffline, setIsOffline] = React.useState<boolean>(
+    !TopologyConnector.inst.isDeviceOnline(deviceId)
   );
 
   const { propertyDescriptor } = useKaraboSchema(props.karaboKeys);
@@ -49,7 +49,27 @@ const DisplayLabel: React.FC<DynamicElementProps> = (props) => {
     []
   );
 
+  const onDeviceInfoUpdate = React.useCallback(
+    (updateInfo?: DeviceInfo) => {
+      if (updateInfo !== undefined && updateInfo!.deviceId !== deviceId) {
+        console.error(
+          `Topology update routing error: monitor for ${deviceId} received update for ${
+            updateInfo!.deviceId
+          }!`
+        );
+      }
+      setIsOffline(updateInfo === undefined);
+    },
+    [deviceId]
+  );
+
+  // Register the component as a property and schema updater when it is added
+  // to the DOM and unregister when it is removed from the DOM
   React.useEffect(() => {
+    TopologyConnector.inst.registerDeviceInfoMonitor(
+      deviceId,
+      onDeviceInfoUpdate
+    );
     DevicePropertyConnector.inst.registerPropertyMonitor(
       deviceId,
       propertyId,
@@ -61,8 +81,12 @@ const DisplayLabel: React.FC<DynamicElementProps> = (props) => {
         propertyId,
         onPropertyUpdate
       );
+      TopologyConnector.inst.unregisterDeviceInfoMonitor(
+        deviceId,
+        onDeviceInfoUpdate
+      );
     };
-  }, [deviceId, propertyId, onPropertyUpdate]);
+  }, [deviceId, propertyId, onDeviceInfoUpdate, onPropertyUpdate]);
 
   return (
     <div
