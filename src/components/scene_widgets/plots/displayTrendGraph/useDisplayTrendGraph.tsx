@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { throttle } from "lodash";
-import { useKaraboProperty } from "../../displayStateColor/hooks/useKaraboProperty";
+import { useKaraboPropertyInfo } from "../../shared/hooks/useKaraboProperty";
+import type { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
+import { Timestamp } from "@/shared/helpers/timestamps";
 
 interface TrendDataPoint {
-  timestamp: number;
+  timestamp: number; // epoch ms
   value: number;
 }
 
@@ -13,82 +15,109 @@ interface TrendConfig {
   throttleDelayMs?: number;
 }
 
-const DEFAULT_CONFIG = {
+const DEFAULT_CONFIG: Required<TrendConfig> = {
   maxDataPoints: 1000,
   timeWindowMs: 5 * 60 * 1000,
   throttleDelayMs: 100,
 };
 
+/**
+ * React hook for visualizing a Karabo property as a time series.
+ *
+ * It leverages the `Timestamp` class to obtain precise timestamps
+ * from Karabo's attosecond-resolution property attributes (`sec` + `frac`).
+ *
+ * Internally, all time values are handled in attoseconds for accuracy,
+ * but converted to milliseconds for efficient JavaScript processing and plotting.
+ */
 export const useDisplayTrendGraph = (
   karaboKeys: string,
   config: TrendConfig = {}
 ) => {
   const finalConfig = { ...DEFAULT_CONFIG, ...config };
-  const { value } = useKaraboProperty(karaboKeys, "UNKNOWN");
+  const { property } = useKaraboPropertyInfo(karaboKeys);
+
   const [trendData, setTrendData] = useState<TrendDataPoint[]>([]);
 
+  /** Convert PropertyInfo -> { timestamp(ms), value(number) } */
   const normalizeToTimeSeries = useCallback(
-    (val: unknown): TrendDataPoint | null => {
-      if (val == null || val === "UNKNOWN") return null;
-      const numericValue =
-        typeof val === "number" ? val : parseFloat(String(val));
-      if (!isFinite(numericValue)) return null;
-      return { timestamp: Date.now(), value: numericValue };
+    (p: PropertyInfo | null): TrendDataPoint | null => {
+      if (!p) return null;
+
+      const num =
+        typeof p.propertyValue === "number"
+          ? p.propertyValue
+          : Number(p.propertyValue);
+      if (!Number.isFinite(num)) return null;
+
+      const ms = Timestamp.fromPropertyAttrs(p.propertyAttrs).toMilliseconds();
+
+      return { timestamp: ms, value: num };
     },
     []
   );
 
+  /** Limit memory usage by pruning old or excess points */
   const pruneData = useCallback(
     (data: TrendDataPoint[]): TrendDataPoint[] => {
-      // Keep only the most recent maxDataPoints entries
-      if (data.length > finalConfig.maxDataPoints) {
-        return data.slice(-finalConfig.maxDataPoints);
+      let pruned = data;
+
+      if (Number.isFinite(finalConfig.timeWindowMs)) {
+        const cutoff = Date.now() - finalConfig.timeWindowMs;
+        pruned = pruned.filter((d) => d.timestamp >= cutoff);
       }
-      return data;
+
+      if (pruned.length > finalConfig.maxDataPoints) {
+        pruned = pruned.slice(-finalConfig.maxDataPoints);
+      }
+
+      return pruned;
     },
-    [finalConfig.maxDataPoints]
+    [finalConfig.maxDataPoints, finalConfig.timeWindowMs]
   );
 
-  // Use ref to avoid recreating throttle when TrendData changes
+  /** Keep stable ref for throttled updates */
   const updateTrendDataRef = useRef((point: TrendDataPoint) => {
     setTrendData((prev) => pruneData([...prev, point]));
   });
 
-  // Keep ref updated with latest pruneData
   useEffect(() => {
     updateTrendDataRef.current = (point: TrendDataPoint) => {
       setTrendData((prev) => pruneData([...prev, point]));
     };
   }, [pruneData]);
 
-  // ThrottleUpdate only recreates when delay changes(memoized), NOT when TrendData changes
-  const throttledUpdate = useMemo(() => {
-    return throttle(
-      (point: TrendDataPoint) => updateTrendDataRef.current(point), //ensures that callback stays fresh
-      finalConfig.throttleDelayMs,
-      { leading: true, trailing: true }
-    );
-  }, [finalConfig.throttleDelayMs]); // Only delay in deps!
+  /** Throttled update to reduce re-renders */
+  const throttledUpdate = useMemo(
+    () =>
+      throttle(
+        (point: TrendDataPoint) => updateTrendDataRef.current(point),
+        finalConfig.throttleDelayMs,
+        { leading: true, trailing: true }
+      ),
+    [finalConfig.throttleDelayMs]
+  );
 
+  /** React to incoming property updates */
   useEffect(() => {
-    const point = normalizeToTimeSeries(value);
+    const point = normalizeToTimeSeries(property);
     if (point) throttledUpdate(point);
-  }, [value, normalizeToTimeSeries, throttledUpdate]);
+  }, [property, normalizeToTimeSeries, throttledUpdate]);
 
-  useEffect(() => {
-    return () => throttledUpdate.cancel();
-  }, [throttledUpdate]);
+  /** Cleanup throttle on unmount */
+  useEffect(() => () => throttledUpdate.cancel(), [throttledUpdate]);
 
+  /** Reset when data source changes */
   useEffect(() => {
     setTrendData([]);
   }, [karaboKeys]);
 
+  /** Periodic pruning for long sessions */
   useEffect(() => {
-    const interval = setInterval(
-      () => setTrendData((prev) => pruneData(prev)),
-      5000
-    );
-    return () => clearInterval(interval);
+    const id = setInterval(() => {
+      setTrendData((prev) => pruneData(prev));
+    }, 5000);
+    return () => clearInterval(id);
   }, [pruneData]);
 
   return {

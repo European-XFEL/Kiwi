@@ -20,25 +20,24 @@ const DisplayTrendGraph: React.FC<Props> = React.memo((props) => {
     props.defaultChartType ?? "line"
   );
 
-  const { timestamps, values, dataPoints } = useDisplayTrendGraph(
-    props.karaboKeys,
-    {
-      maxDataPoints: 1000,
-      timeWindowMs: Infinity,
-      throttleDelayMs: 500,
-    }
-  );
+  const { timestamps, values } = useDisplayTrendGraph(props.karaboKeys, {
+    maxDataPoints: 1000,
+    timeWindowMs: Infinity,
+    throttleDelayMs: 500,
+  });
 
-  // useEffect(() => {
-  //   console.log("[DisplayTrendGraph] karaboKeys:", props.karaboKeys);
-  //   console.log("[DisplayTrendGraph] points:", dataPoints);
-  // }, [dataPoints, props.karaboKeys]);
-
+  /**
+   * Convert epoch timestamps (ms) → ISO strings
+   * Let Plotly handle time parsing natively with xaxis.type = "date"
+   */
   const formattedTimestamps = useMemo(
-    () => timestamps.map((ts) => new Date(ts).toLocaleTimeString()),
+    () => timestamps.map((ts) => new Date(ts).toISOString()),
     [timestamps]
   );
 
+  /**
+   * Choose trace input dynamically by chart type
+   */
   const traceInput =
     chartType === "heatmap"
       ? ({
@@ -57,17 +56,11 @@ const DisplayTrendGraph: React.FC<Props> = React.memo((props) => {
 
   const data: Data[] = [TraceFactory[chartType](traceInput)];
 
+  /**
+   * Dynamic Plotly layout
+   */
   const layout: Partial<Layout> = {
     autosize: true,
-    // title: {
-    //   text:
-    //     props.title ||
-    //     `${chartType.toUpperCase()}: ${props.karaboKeys.split(".").pop()}`,
-    //   font: { size: 12 },
-    //   x: 0,
-    //   xanchor: "left",
-    //   y: 0.98,
-    // },
     margin: { t: 36, r: 12, b: 36, l: 44 },
     paper_bgcolor: props.background || "transparent",
     plot_bgcolor: props.background || "rgba(0,0,0,0)",
@@ -76,12 +69,12 @@ const DisplayTrendGraph: React.FC<Props> = React.memo((props) => {
         text: chartType === "heatmap" ? "Time bins" : props.xLabel || "Time",
         standoff: 8,
       },
-
       automargin: true,
-      showgrid: chartType === "heatmap" ? false : props.xGrid ?? true,
-      showspikes: chartType === "heatmap" ? false : true,
+      showgrid: chartType !== "heatmap" && (props.xGrid ?? true),
+      showspikes: chartType !== "heatmap",
       spikemode: "across",
       spikesnap: "cursor",
+      type: chartType === "heatmap" ? undefined : "date",
     },
     yaxis: {
       title: {
@@ -89,8 +82,8 @@ const DisplayTrendGraph: React.FC<Props> = React.memo((props) => {
         standoff: 8,
       },
       automargin: true,
-      showgrid: chartType === "heatmap" ? false : props.yGrid ?? true,
-      showspikes: chartType === "heatmap" ? false : true,
+      showgrid: chartType !== "heatmap" && (props.yGrid ?? true),
+      showspikes: chartType !== "heatmap",
       spikemode: "across",
       spikesnap: "cursor",
     },
@@ -130,6 +123,7 @@ const DisplayTrendGraph: React.FC<Props> = React.memo((props) => {
             </select>
           </div>
 
+          {/* Main chart */}
           <Plot
             data={data}
             layout={layout}
@@ -142,14 +136,10 @@ const DisplayTrendGraph: React.FC<Props> = React.memo((props) => {
             style={{ width: "100%", height: "100%" }}
           />
 
-          {/* Data points counter - commented out */}
+          {/* Optional debug counter */}
           {/* <div
-            className="absolute top-2 right-2 text-xs px-2 py-1 rounded"
-            style={{
-              background: "rgba(0,0,0,0.5)",
-              color: "white",
-              pointerEvents: "none",
-            }}
+            className="absolute top-2 left-2 text-xs px-2 py-1 rounded bg-black/60 text-white"
+            style={{ pointerEvents: "none" }}
           >
             {dataPoints} pts
           </div> */}

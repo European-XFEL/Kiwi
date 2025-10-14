@@ -2,7 +2,7 @@ import * as React from "react";
 import { DisplayStateColorElementProps } from "../../../karabo_data/SceneElements";
 import useSystemTopologyStore from "../../../store/systemTopologyStore";
 import DeviceOfflineOverlay from "../DeviceOfflineOverlay";
-import { useKaraboProperty } from "./hooks/useKaraboProperty";
+import { useKaraboPropertyInfo } from "../shared/hooks/useKaraboProperty";
 import { useGuiStateColor } from "./hooks/useGuiStateColor";
 
 const DisplayStateColor: React.FC<DisplayStateColorElementProps> = React.memo(
@@ -10,11 +10,13 @@ const DisplayStateColor: React.FC<DisplayStateColorElementProps> = React.memo(
     const topology = useSystemTopologyStore((state) => state.topology);
     const isOffline = props.isSrcDeviceOffline(topology);
 
-    const { value: rawStateUnknown } = useKaraboProperty(
-      props.karaboKeys,
-      "UNKNOWN"
-    );
-    const rawState = String(rawStateUnknown);
+    // Now returns full PropertyInfo or null
+    const { property } = useKaraboPropertyInfo(props.karaboKeys);
+
+    // Extract readable string state
+    const rawState = property ? String(property.propertyValue) : "UNKNOWN";
+
+    // Convert state string → GUI color
     const { colorValue } = useGuiStateColor(rawState);
 
     return (

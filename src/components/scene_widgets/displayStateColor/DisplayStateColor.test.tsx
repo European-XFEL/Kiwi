@@ -2,10 +2,10 @@ import { render, screen } from "@testing-library/react";
 import type { DisplayStateColorElementProps } from "../../../karabo_data/SceneElements";
 import { guiStateColors } from "../../../karabo_data/Indicators";
 
+// --- Mock systemTopologyStore ---
 jest.mock("../../../store/systemTopologyStore", () => ({
   __esModule: true,
   default: jest.fn((selector) => {
-    // Mock the store state
     const mockState = {
       topology: {
         devices: [{ deviceId: "DEVICE_X" }],
@@ -14,20 +14,19 @@ jest.mock("../../../store/systemTopologyStore", () => ({
       setTopology: jest.fn(),
       updateTopology: jest.fn(),
     };
-
-    // Call the selector with the mock state
     return selector(mockState);
   }),
 }));
 
-// Using the 'mock' prefix is one of the ways to mimic a hook - Jest allows this
-const mockUseKaraboProperty = jest.fn();
-jest.mock("./hooks/useKaraboProperty", () => ({
-  useKaraboProperty: (...args: any[]) => mockUseKaraboProperty(...args),
+// --- Mock useKaraboPropertyInfo ---
+const mockUseKaraboPropertyInfo = jest.fn();
+jest.mock("../shared/hooks/useKaraboProperty", () => ({
+  useKaraboPropertyInfo: (...args: any[]) => mockUseKaraboPropertyInfo(...args),
 }));
 
-// Import component AFTER mocks
+// --- Import component AFTER mocks ---
 import DisplayStateColor from "./DisplayStateColor";
+import type { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
 
 function makeProps(
   overrides: Partial<DisplayStateColorElementProps> = {}
@@ -47,18 +46,20 @@ function makeProps(
   };
 }
 
-// Helper to pass key directly (avoid React warning)
 function renderWithKey(p: DisplayStateColorElementProps) {
   const { key, ...rest } = p;
   return render(<DisplayStateColor key={key} {...rest} />);
 }
 
 beforeEach(() => {
-  // default mock value for most tests
-  mockUseKaraboProperty.mockReturnValue({
-    deviceId: "DEVICE_X",
+  const mockProperty: PropertyInfo = {
     propertyId: "state",
-    value: "ERROR",
+    propertyValue: "ERROR",
+    propertyType: 0, // not used
+    propertyAttrs: {} as any,
+  };
+  mockUseKaraboPropertyInfo.mockReturnValue({
+    property: mockProperty,
   });
 });
 
@@ -91,11 +92,14 @@ describe("DisplayStateColor - showString behavior", () => {
   });
 
   it("uses unknownColor for unmapped states", () => {
-    mockUseKaraboProperty.mockReturnValue({
-      deviceId: "DEVICE_X",
+    const mockProperty: PropertyInfo = {
       propertyId: "state",
-      value: "not-a-known-state",
-    });
+      propertyValue: "not-a-known-state",
+      propertyType: 0,
+      propertyAttrs: {} as any,
+    };
+    mockUseKaraboPropertyInfo.mockReturnValue({ property: mockProperty });
+
     const { container } = renderWithKey(makeProps());
     expect(container.firstChild as HTMLElement).toHaveStyle(
       `background-color: ${guiStateColors.unknownColor}`
