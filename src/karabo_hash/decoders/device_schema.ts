@@ -1,7 +1,7 @@
 import { Hash, HashTypes, SchemaValue } from "karabo-ts";
 import {
   DeviceSchemaInfo,
-  PropertyAttributes,
+  PropertySchemaAttributes,
 } from "@/karabo_data/DeviceSchemaInfo";
 
 import { MetricPrefix, Unit } from "@/karabo_data/SchemaEnums";
@@ -11,14 +11,14 @@ export const deviceSchemaFromHash = (hash: Hash): DeviceSchemaInfo => {
   const deviceId = hash.getValue("deviceId");
   const schemaInfo = {
     deviceId: deviceId!.toString(),
-    propertyDescriptors: new Map<string, PropertyAttributes>(),
+    propertyDescriptors: new Map<string, PropertySchemaAttributes>(),
   };
   if (hash.getValue("schema") !== undefined) {
     const schemaHash = (hash.getValue("schema") as SchemaValue).hash;
     if (schemaHash !== undefined) {
       const schemaHashLeaves = flattenHash(schemaHash);
       for (const { path, attrs } of schemaHashLeaves) {
-        const propAttrs: Partial<PropertyAttributes> = {};
+        const propAttrs: Partial<PropertySchemaAttributes> = {};
         for (const [key, karaboVal] of Object.entries(attrs)) {
           switch (key) {
             case "valueType":
@@ -60,7 +60,7 @@ export const deviceSchemaFromHash = (hash: Hash): DeviceSchemaInfo => {
         // Type assertion to PropertyAttributes before adding to the map
         schemaInfo.propertyDescriptors.set(
           path,
-          propAttrs as PropertyAttributes
+          propAttrs as PropertySchemaAttributes
         );
       }
     }

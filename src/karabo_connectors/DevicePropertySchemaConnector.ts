@@ -4,9 +4,16 @@ import { DeviceSchemaInfo } from "@/karabo_data/DeviceSchemaInfo";
 import { buildGetDeviceSchemaHash } from "@/karabo_hash/builders/monitoring_device";
 import { deviceSchemaFromHash } from "@/karabo_hash/decoders/device_schema";
 
+// TODO: replace DeviceSchemaHandler with the more fine grained PropertySchemaUpdateHandler below
+//export type PropertySchemaUpdateHandler = (updatedSchema: PropertySchemaInfo) => void;
 type DeviceSchemaHandler = (deviceSchema: DeviceSchemaInfo) => void;
 
-export class DeviceSchemaConnector {
+// TODO: store and keep device schemas, merging schema updates into the current device schema image.
+// TODO: dispatch propertySchema events for registered device schema subscribers.
+// TODO: request full device schemas for a given device when the first observer for the device is
+//       registered.
+
+export class DevicePropertySchemaConnector {
   // #region Singleton
   private constructor() {
     GuiServerConnector.inst.registerHashHandler(
@@ -15,12 +22,13 @@ export class DeviceSchemaConnector {
     );
   }
 
-  static #_inst?: DeviceSchemaConnector;
-  static get inst(): DeviceSchemaConnector {
-    if (!DeviceSchemaConnector.#_inst) {
-      DeviceSchemaConnector.#_inst = new DeviceSchemaConnector();
+  static #_inst?: DevicePropertySchemaConnector;
+  static get inst(): DevicePropertySchemaConnector {
+    if (!DevicePropertySchemaConnector.#_inst) {
+      DevicePropertySchemaConnector.#_inst =
+        new DevicePropertySchemaConnector();
     }
-    return DeviceSchemaConnector.#_inst;
+    return DevicePropertySchemaConnector.#_inst;
   }
   // #endregion
 

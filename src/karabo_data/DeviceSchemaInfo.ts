@@ -10,10 +10,16 @@ import {
 
 export interface DeviceSchemaInfo {
   deviceId: string;
-  propertyDescriptors: Map<string, PropertyAttributes>;
+  propertyDescriptors: Map<string, PropertySchemaAttributes>;
 }
 
-export interface PropertyAttributes {
+export interface DevicePropertySchemaInfo {
+  deviceId: string;
+  propertyId: string;
+  propertyAttr: PropertySchemaAttributes;
+}
+
+export interface PropertySchemaAttributes {
   valueType: HashTypes;
   defaultValue: HashValueType;
   displayedName: string;

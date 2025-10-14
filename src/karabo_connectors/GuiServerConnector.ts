@@ -16,7 +16,6 @@ import {
 } from "../karabo_hash/hash_utils";
 
 import { useAppSettingsStore } from "../store/appSettingsStore";
-import useSystemTopologyStore from "../store/systemTopologyStore";
 
 import { AccessLevel } from "@/karabo_data/SchemaEnums";
 import { GuiServerInfo } from "@/karabo_data/GuiServerInfo";
@@ -27,6 +26,7 @@ import { BinaryEncoder, Hash } from "karabo-ts";
 
 import { GuiSessionData, GuiSessionStore } from "../store/GuiSessionStore";
 import AuthServerClient from "../http_clients/AuthServerClient";
+import { TopologyConnector } from "./TopologyConnector";
 
 type SessionStartedHandler = (
   accessLevel: AccessLevel,
@@ -622,12 +622,12 @@ export class GuiServerConnector {
   #_handleSystemTopology = (hash: Hash): void => {
     // Initial topology received - update the topology store using Zustand
     const sysTopologyInfo = sysTopologyInfoFromHash(hash);
-    useSystemTopologyStore.getState().setTopology(sysTopologyInfo);
+    TopologyConnector.inst.systemTopology = sysTopologyInfo;
   };
 
   #_handleTopologyUpdate = (hash: Hash): void => {
     const topologyUpdateInfo = sysTopologyUpdateInfoFromHash(hash);
-    useSystemTopologyStore.getState().updateTopology(topologyUpdateInfo);
+    TopologyConnector.inst.updateTopology(topologyUpdateInfo);
   };
 
   // #endregion

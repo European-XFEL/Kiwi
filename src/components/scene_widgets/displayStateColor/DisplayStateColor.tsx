@@ -1,14 +1,21 @@
 import * as React from "react";
 import { DisplayStateColorElementProps } from "../../../karabo_data/SceneElements";
-import useSystemTopologyStore from "../../../store/systemTopologyStore";
 import DeviceOfflineOverlay from "../DeviceOfflineOverlay";
 import { useKaraboPropertyInfo } from "../shared/hooks/useKaraboProperty";
 import { useGuiStateColor } from "./hooks/useGuiStateColor";
+import { splitKaraboKeys } from "../shared/helpers/splitKaraboKeys";
+import { TopologyConnector } from "@/karabo_connectors/TopologyConnector";
+import { DeviceInfo } from "@/karabo_data/TopologyInfo";
 
 const DisplayStateColor: React.FC<DisplayStateColorElementProps> = React.memo(
   (props) => {
-    const topology = useSystemTopologyStore((state) => state.topology);
-    const isOffline = props.isSrcDeviceOffline(topology);
+    const { deviceId } = React.useMemo(
+      () => splitKaraboKeys(props.karaboKeys),
+      [props.karaboKeys]
+    );
+    const [isOffline, setIsOffline] = React.useState<boolean>(
+      !TopologyConnector.inst.isDeviceOnline(deviceId)
+    );
 
     // Now returns full PropertyInfo or null
     const { property } = useKaraboPropertyInfo(props.karaboKeys);
@@ -18,6 +25,33 @@ const DisplayStateColor: React.FC<DisplayStateColorElementProps> = React.memo(
 
     // Convert state string → GUI color
     const { colorValue } = useGuiStateColor(rawState);
+
+    const onDeviceInfoUpdate = React.useCallback(
+      (updateInfo?: DeviceInfo) => {
+        if (updateInfo !== undefined && updateInfo!.deviceId !== deviceId) {
+          console.error(
+            `Topology update routing error: monitor for ${deviceId} received update for ${
+              updateInfo!.deviceId
+            }!`
+          );
+        }
+        setIsOffline(updateInfo === undefined);
+      },
+      [deviceId]
+    );
+
+    React.useEffect(() => {
+      TopologyConnector.inst.registerDeviceInfoMonitor(
+        deviceId,
+        onDeviceInfoUpdate
+      );
+      return () => {
+        TopologyConnector.inst.unregisterDeviceInfoMonitor(
+          deviceId,
+          onDeviceInfoUpdate
+        );
+      };
+    }, [deviceId, onDeviceInfoUpdate]);
 
     return (
       <div

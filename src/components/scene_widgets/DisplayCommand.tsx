@@ -2,7 +2,7 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { DisplayCommandElementProps } from "../../karabo_data/SceneElements";
 import { splitKaraboKeys } from "./shared/helpers/splitKaraboKeys";
-import { DeviceSchemaConnector } from "@/karabo_connectors/DeviceSchemaConnector";
+import { DevicePropertySchemaConnector } from "@/karabo_connectors/DevicePropertySchemaConnector";
 import { DeviceSchemaInfo } from "@/karabo_data/DeviceSchemaInfo";
 
 const DisplayCommand: React.FC<DisplayCommandElementProps> = (props) => {
@@ -26,9 +26,16 @@ const DisplayCommand: React.FC<DisplayCommandElementProps> = (props) => {
   );
 
   React.useEffect(() => {
-    DeviceSchemaConnector.inst.registerSchemaMonitor(deviceId, onSchemaUpdate);
+    // TODO: register with the TopologyConnector to handle device offline events - the offline overlay must also be shown when the device that host the slot is offline.
+    // TODO: subscribe to the session store to update when the user access level changes - needed to disable commands for users that are OBSERVER
+    // TODO: register as a monitor to the "state" property of the device - needed to change enabled state of the button based on the state and the value of "allowed states"
+    // TODO: adjust to the change in the type of the PropertySchemaUpdateHandler - will subscribe to the schema for the slot "property"
+    DevicePropertySchemaConnector.inst.registerSchemaMonitor(
+      deviceId,
+      onSchemaUpdate
+    );
     return () => {
-      DeviceSchemaConnector.inst.unregisterSchemaMonitor(
+      DevicePropertySchemaConnector.inst.unregisterSchemaMonitor(
         deviceId,
         onSchemaUpdate
       );

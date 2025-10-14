@@ -7,9 +7,14 @@ import {
 import { devicesConfigsFromHash } from "../karabo_hash/decoders/device_config";
 import { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type PropertyUpdateHandler = (updatedProperty: PropertyInfo) => void;
 
+// TODO: store and keep device configurations, merging device configuration updates into the current device configuration.
+//       this is needed to support only one startMonitoring request to the GUI Server per device. For components that are
+//       not the first PropertyMonitor for a given device, the DeviceConnector should send the current property value from
+//       the device's stored configuration at registration time.
+// TODO: request full device configuration for a given device when the first observer for the device is
+//       registered.
 export class DevicePropertyConnector {
   // #region Singleton
   private constructor() {
