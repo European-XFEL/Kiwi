@@ -11,9 +11,6 @@ type Props = DisplayTrendGraphElementProps & {
 };
 
 const DisplayTrendGraph: React.FC<Props> = React.memo((props) => {
-  // TODO: the offline signaling for the TrendGraph is per serie as each serie
-  //       can be feed by a different device. Still to be solved.
-
   const [chartType, setChartType] = useState<ChartType>(
     props.defaultChartType ?? "line"
   );
@@ -25,13 +22,11 @@ const DisplayTrendGraph: React.FC<Props> = React.memo((props) => {
   });
 
   /**
-   * Convert epoch timestamps (ms) → ISO strings
-   * Let Plotly handle time parsing natively with xaxis.type = "date"
+   * Pass milliseconds directly to Plotly
+   * Plotly handles epoch milliseconds natively when xaxis.type = "date"
+   * This respects the user's local timezone automatically
    */
-  const formattedTimestamps = useMemo(
-    () => timestamps.map((ts) => new Date(ts).toISOString()),
-    [timestamps]
-  );
+  const formattedTimestamps = useMemo(() => timestamps, [timestamps]);
 
   /**
    * Choose trace input dynamically by chart type
@@ -69,10 +64,14 @@ const DisplayTrendGraph: React.FC<Props> = React.memo((props) => {
       },
       automargin: true,
       showgrid: chartType !== "heatmap" && (props.xGrid ?? true),
+      gridcolor: "#e5e7eb",
       showspikes: chartType !== "heatmap",
       spikemode: "across",
       spikesnap: "cursor",
+      spikecolor: "#6b7280",
+      //type to "date" for proper timezone handling
       type: chartType === "heatmap" ? undefined : "date",
+      tickformat: "%H:%M",
     },
     yaxis: {
       title: {
@@ -81,9 +80,11 @@ const DisplayTrendGraph: React.FC<Props> = React.memo((props) => {
       },
       automargin: true,
       showgrid: chartType !== "heatmap" && (props.yGrid ?? true),
+      gridcolor: "#e5e7eb",
       showspikes: chartType !== "heatmap",
       spikemode: "across",
       spikesnap: "cursor",
+      spikecolor: "#6b7280",
     },
     hovermode: chartType === "heatmap" ? "closest" : "x unified",
     showlegend: false,
@@ -130,14 +131,6 @@ const DisplayTrendGraph: React.FC<Props> = React.memo((props) => {
           useResizeHandler
           style={{ width: "100%", height: "100%" }}
         />
-
-        {/* Optional debug counter */}
-        {/* <div
-            className="absolute top-2 left-2 text-xs px-2 py-1 rounded bg-black/60 text-white"
-            style={{ pointerEvents: "none" }}
-          >
-            {dataPoints} pts
-          </div> */}
       </>
     </div>
   );
