@@ -5,7 +5,10 @@ import { useKaraboPropertyInfo } from "../shared/hooks/useKaraboProperty";
 import { useGuiStateColor } from "./hooks/useGuiStateColor";
 import { splitKaraboKeys } from "../shared/helpers/splitKaraboKeys";
 import { TopologyConnector } from "@/karabo_connectors/TopologyConnector";
-import { DeviceInfo } from "@/karabo_data/TopologyInfo";
+import {
+  DeviceInfo,
+  TopologyEventType as TopologyEventType,
+} from "@/karabo_data/TopologyInfo";
 
 const DisplayStateColor: React.FC<DisplayStateColorElementProps> = React.memo(
   (props) => {
@@ -21,21 +24,19 @@ const DisplayStateColor: React.FC<DisplayStateColorElementProps> = React.memo(
     const { property } = useKaraboPropertyInfo(props.karaboKeys);
 
     // Extract readable string state
-    const rawState = property ? String(property.propertyValue) : "UNKNOWN";
+    const rawState = property ? String(property.value) : "UNKNOWN";
 
     // Convert state string → GUI color
     const { colorValue } = useGuiStateColor(rawState);
 
     const onDeviceInfoUpdate = React.useCallback(
-      (updateInfo?: DeviceInfo) => {
-        if (updateInfo !== undefined && updateInfo!.deviceId !== deviceId) {
+      (eventType: TopologyEventType, deviceInfo: DeviceInfo) => {
+        if (deviceInfo.deviceId !== deviceId) {
           console.error(
-            `Topology update routing error: monitor for ${deviceId} received update for ${
-              updateInfo!.deviceId
-            }!`
+            `Topology update routing error: monitor for ${deviceId} received update for ${deviceInfo.deviceId}!`
           );
         }
-        setIsOffline(updateInfo === undefined);
+        setIsOffline(eventType === TopologyEventType.GONE);
       },
       [deviceId]
     );

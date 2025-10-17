@@ -1,5 +1,5 @@
 import * as React from "react";
-import { DevicePropertySchemaConnector } from "@/karabo_connectors/DevicePropertySchemaConnector";
+import { DeviceSchemaConnector } from "@/karabo_connectors/DeviceSchemaConnector";
 import { DeviceSchemaInfo } from "@/karabo_data/DeviceSchemaInfo";
 import { splitKaraboKeys } from "@/components/scene_widgets/shared/helpers/splitKaraboKeys";
 
@@ -25,13 +25,13 @@ export function useKaraboSchema(karaboKeys: string) {
   );
 
   React.useEffect(() => {
-    DevicePropertySchemaConnector.inst.registerSchemaMonitor(
+    DeviceSchemaConnector.inst.registerSchemaMonitor(
       deviceId,
       handleSchemaUpdate
     );
 
     return () => {
-      DevicePropertySchemaConnector.inst.unregisterSchemaMonitor(
+      DeviceSchemaConnector.inst.unregisterSchemaMonitor(
         deviceId,
         handleSchemaUpdate
       );

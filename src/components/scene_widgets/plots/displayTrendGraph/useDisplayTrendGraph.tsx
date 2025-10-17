@@ -44,13 +44,10 @@ export const useDisplayTrendGraph = (
     (p: PropertyInfo | null): TrendDataPoint | null => {
       if (!p) return null;
 
-      const num =
-        typeof p.propertyValue === "number"
-          ? p.propertyValue
-          : Number(p.propertyValue);
+      const num = typeof p.value === "number" ? p.value : Number(p.value);
       if (!Number.isFinite(num)) return null;
 
-      const ms = Timestamp.fromPropertyAttrs(p.propertyAttrs).toMilliseconds();
+      const ms = Timestamp.fromPropertyAttrs(p.timeAttrs).toMilliseconds();
 
       return { timestamp: ms, value: num };
     },

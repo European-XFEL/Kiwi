@@ -48,10 +48,10 @@ beforeAll(() => {
 
 beforeEach(() => {
   const mockProperty: PropertyInfo = {
-    propertyId: "state",
-    propertyValue: "ERROR",
-    propertyType: 0, // not used
-    propertyAttrs: {} as any,
+    key: "state",
+    value: "ERROR",
+    type: 0, // not used
+    timeAttrs: {} as any,
   };
   mockUseKaraboPropertyInfo.mockReturnValue({
     property: mockProperty,
@@ -64,6 +64,7 @@ afterEach(() => {
 
 describe("DisplayStateColor - showString behavior", () => {
   it("renders text when showString=true and device is online", () => {
+    jest.spyOn(TopologyConnector.inst, "isDeviceOnline").mockReturnValue(true);
     const { container } = renderWithKey(makeProps({ showString: true }));
     expect(screen.getByText("ERROR")).toBeInTheDocument();
     expect(container.firstChild as HTMLElement).toHaveStyle(
@@ -88,10 +89,10 @@ describe("DisplayStateColor - showString behavior", () => {
 
   it("uses unknownColor for unmapped states", () => {
     const mockProperty: PropertyInfo = {
-      propertyId: "state",
-      propertyValue: "not-a-known-state",
-      propertyType: 0,
-      propertyAttrs: {} as any,
+      key: "state",
+      value: "not-a-known-state",
+      type: 0,
+      timeAttrs: {} as any,
     };
     mockUseKaraboPropertyInfo.mockReturnValue({ property: mockProperty });
 

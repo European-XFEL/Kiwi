@@ -1,20 +1,19 @@
 import { Hash } from "karabo-ts";
 import { GuiServerConnector } from "./GuiServerConnector";
 import {
+  buildGetDeviceSchemaHash,
   buildStartMonitoringHash,
   buildStopMonitoringHash,
 } from "../karabo_hash/builders/monitoring_device";
 import { devicesConfigsFromHash } from "../karabo_hash/decoders/device_config";
 import { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
+import { TopologyConnector } from "./TopologyConnector";
+import { DeviceSchemaConnector } from "./DeviceSchemaConnector";
+import { DeviceSchemaInfo } from "@/karabo_data/DeviceSchemaInfo";
+import { DeviceInfo, TopologyEventType } from "@/karabo_data/TopologyInfo";
 
 type PropertyUpdateHandler = (updatedProperty: PropertyInfo) => void;
 
-// TODO: store and keep device configurations, merging device configuration updates into the current device configuration.
-//       this is needed to support only one startMonitoring request to the GUI Server per device. For components that are
-//       not the first PropertyMonitor for a given device, the DeviceConnector should send the current property value from
-//       the device's stored configuration at registration time.
-// TODO: request full device configuration for a given device when the first observer for the device is
-//       registered.
 export class DevicePropertyConnector {
   // #region Singleton
   private constructor() {
@@ -33,7 +32,7 @@ export class DevicePropertyConnector {
   }
   // #endregion
 
-  // #region Management of PropertyMonitors
+  // #region PropertyMonitors Update Handlers
 
   /**
    * A map that manages property update handlers for monitored device properties.
@@ -43,27 +42,51 @@ export class DevicePropertyConnector {
    * - The second-level map maps a `propertyId` (string) to an array of `PropertyUpdateHandler` functions.
    *
    */
-  #_propertyMonitors = new Map<string, Map<string, PropertyUpdateHandler[]>>();
+  _propertyMonitors = new Map<string, Map<string, PropertyUpdateHandler[]>>();
 
   registerPropertyMonitor(
     deviceId: string,
     propertyId: string,
     propertyUpdateHandler: PropertyUpdateHandler
   ): void {
-    if (!this.#_propertyMonitors.has(deviceId)) {
+    if (!this._propertyMonitors.has(deviceId)) {
       // This is the first property being monitored for the device.
+      TopologyConnector.inst.registerDeviceInfoMonitor(
+        deviceId,
+        this._onDeviceInfoUpdate
+      );
 
-      // Instruct the GUI Server to start monitoring the device.
-      const hash = buildStartMonitoringHash(deviceId);
-      GuiServerConnector.inst.sendHash(hash);
+      if (TopologyConnector.inst.isDeviceOnline(deviceId)) {
+        this._startMonitoringDevice(deviceId);
+      } else {
+        // For offline devices, registers the pending start monitoring
+        this._pendingMonitorStarts.add(deviceId);
+      }
 
       // Creates the map of property update handlers for the device
-      this.#_propertyMonitors.set(
+      this._propertyMonitors.set(
         deviceId,
         new Map<string, PropertyUpdateHandler[]>()
       );
+    } else {
+      // The device already has at least one registered property monitor
+      if (!this._pendingMonitorStarts.has(deviceId)) {
+        // The device and its already being monitored. As a startMonitoring request
+        // will not be sent to the GUI Server, send a property update immediately.
+        // If there's still no configuration available for the device, it
+        // can be assumed that it will come soon as there's no pendency to start monitoring
+        // the device.
+        const propertyInfo = this._getDeviceProperty(deviceId, propertyId);
+        if (propertyInfo) {
+          this._dispatchPropUpdate(
+            deviceId,
+            propertyUpdateHandler,
+            propertyInfo
+          );
+        }
+      }
     }
-    const devicePropertyMonitors = this.#_propertyMonitors.get(deviceId);
+    const devicePropertyMonitors = this._propertyMonitors.get(deviceId);
     if (!devicePropertyMonitors?.has(propertyId)) {
       // There's still no update handler registered for the specific property
       // of the device. Creates the list to store the device property handlers.
@@ -80,7 +103,7 @@ export class DevicePropertyConnector {
     propertyId: string,
     propertyUpdatehandler: PropertyUpdateHandler
   ): void {
-    const propertyMonitors = this.#_propertyMonitors
+    const propertyMonitors = this._propertyMonitors
       .get(deviceId)
       ?.get(propertyId);
     const handlerIdx = propertyMonitors?.findIndex(
@@ -92,36 +115,173 @@ export class DevicePropertyConnector {
     if (propertyMonitors?.length === 0) {
       // Removed the last update handler for the device property - clear
       // also the second-level map entry for the property.
-      this.#_propertyMonitors.get(deviceId)?.delete(propertyId);
-      if (this.#_propertyMonitors.get(deviceId)?.keys.length === 0) {
-        // Removed the last update handler for any property of the device -
-        // clear also the first-level entry for the device and instruct the
-        // GUI Server to stop monitoring the device.
-        this.#_propertyMonitors.delete(deviceId);
-        const hash = buildStopMonitoringHash(deviceId);
-        GuiServerConnector.inst.sendHash(hash);
+      this._propertyMonitors.get(deviceId)?.delete(propertyId);
+      if (this._propertyMonitors.get(deviceId)?.keys.length === 0) {
+        // Removed the last update handler for any property of the device
+        TopologyConnector.inst.unregisterDeviceInfoMonitor(
+          deviceId,
+          this._onDeviceInfoUpdate
+        );
+        this._stopMonitoringDevice(deviceId);
+        this._propertyMonitors.delete(deviceId);
+        this._deviceConfigurations.delete(deviceId);
+        this._pendingMonitorStarts.delete(deviceId);
       }
     }
   }
 
+  private _startMonitoringDevice = (deviceId: string): void => {
+    let hash = buildGetDeviceSchemaHash(deviceId);
+    GuiServerConnector.inst.sendHash(hash);
+    hash = buildStartMonitoringHash(deviceId);
+    GuiServerConnector.inst.sendHash(hash);
+  };
+
+  private _stopMonitoringDevice = (deviceId: string): void => {
+    const hash = buildStopMonitoringHash(deviceId);
+    GuiServerConnector.inst.sendHash(hash);
+  };
+
   // #endregion
 
-  /** Handler for "deviceConfigurations" messages received from the GUI Server */
+  // #region Monitoring Start Pendencies
+
+  private _pendingMonitorStarts = new Set<string>();
+
+  private _onDeviceInfoUpdate = (
+    eventType: TopologyEventType,
+    deviceInfo: DeviceInfo
+  ): void => {
+    if (
+      eventType === TopologyEventType.NEW &&
+      this._pendingMonitorStarts.has(deviceInfo.deviceId)
+    ) {
+      // A device with pending start monitoring became online
+      this._startMonitoringDevice(deviceInfo.deviceId);
+      this._pendingMonitorStarts.delete(deviceInfo.deviceId);
+    } else if (
+      eventType === TopologyEventType.GONE &&
+      this._propertyMonitors.has(deviceInfo.deviceId)
+    ) {
+      // A device being monitored became offline - keep track of it as a
+      // device with a pending start monitoring. It will either start monitoring
+      // when the device becomes online or have its pending monitoring status
+      // cleared if all the registered monitors unregister
+      this._pendingMonitorStarts.add(deviceInfo.deviceId);
+      // NOTE: no need to send a stop monitoring request to the GUI Server as it
+      //       automatically removes the monitoring subscription when it detects
+      //       that the monitored device goes offline.
+    }
+  };
+
+  // #endregion
+
+  // #region Device Configuration Storage
+
+  private _deviceConfigurations = new Map<string, PropertyInfo[]>();
+
+  private _getDeviceProperty = (
+    deviceId: string,
+    propertyId: string
+  ): PropertyInfo | undefined => {
+    let propertyInfo: PropertyInfo | undefined = undefined;
+    if (this._deviceConfigurations.has(deviceId)) {
+      const propertyInfoIdx = this._deviceConfigurations
+        .get(deviceId)!
+        .findIndex(
+          (propertyInfo: PropertyInfo) => propertyInfo.key === propertyId
+        );
+      if (propertyInfoIdx >= 0) {
+        propertyInfo =
+          this._deviceConfigurations.get(deviceId)![propertyInfoIdx];
+      }
+    }
+    return propertyInfo;
+  };
+
+  /**
+   * Merges a given list of properties into the currently stored device configuration
+   * following the current device schema.
+   *
+   * @param deviceId the device whose configuration will be merged
+   * @param properties the list of properties to be merged in the device configuration
+   */
+  private _mergeConfiguration = (
+    deviceId: string,
+    properties: PropertyInfo[]
+  ): void => {
+    const schema = DeviceSchemaConnector.inst.getDeviceSchema(deviceId);
+    const currentProperties = this._deviceConfigurations.get(deviceId) ?? [];
+    if (schema === undefined) {
+      console.warn(
+        `Merging configuration for device "${deviceId}" whose schema is not yet known!`
+      );
+      const newPropertiesKeys = new Set(properties.map((p) => p.key));
+      const propertiesToKeep = currentProperties.filter(
+        (p) => !newPropertiesKeys.has(p.key)
+      );
+      this._deviceConfigurations.set(deviceId, [
+        ...propertiesToKeep,
+        ...properties,
+      ]);
+    } else {
+      // Device schema is known
+      const mergedProperties: PropertyInfo[] = [];
+      for (const propertyKey of schema.propertyDescriptors.keys()) {
+        const propertyIndex = properties.findIndex(
+          (propertyInfo: PropertyInfo) => propertyInfo.key === propertyKey
+        );
+        if (propertyIndex >= 0) {
+          // Schema property found in the new set of properties; use it
+          mergedProperties.push(properties[propertyIndex]);
+          continue;
+        }
+        const existingPropertyIndex = currentProperties.findIndex(
+          (propertyInfo: PropertyInfo) => propertyInfo.key === propertyKey
+        );
+        if (existingPropertyIndex >= 0) {
+          // Schema property found in the current set of properties; use it
+          mergedProperties.push(currentProperties[existingPropertyIndex]);
+        }
+      }
+      this._deviceConfigurations.set(deviceId, mergedProperties);
+    }
+  };
+
+  // #endregion
+
+  private _dispatchPropUpdate = (
+    deviceId: string,
+    propUpdateHandler: PropertyUpdateHandler,
+    propInfo: PropertyInfo
+  ): void => {
+    propInfo.schemaAttrs = DeviceSchemaConnector.inst
+      .getDeviceSchema(deviceId)
+      ?.propertyDescriptors.get(propInfo.key);
+    propUpdateHandler(propInfo);
+  };
+
+  /**
+   * Handler for "deviceConfigurations" messages received from the GUI Server.
+   * Updates stored configurations of monitored devices and dispatches updates
+   * to registered property monitors.
+   */
   #_onDeviceConfigurations = (hash: Hash): void => {
     const devicesConfigs = devicesConfigsFromHash(hash);
     for (const deviceConfig of devicesConfigs) {
       const deviceId = deviceConfig.deviceId;
-      if (this.#_propertyMonitors.has(deviceId)) {
+      if (this._propertyMonitors.has(deviceId)) {
         // There's at least of property update handler registered for the device
+        this._mergeConfiguration(deviceId, deviceConfig.properties);
         for (const propInfo of deviceConfig.properties) {
-          if (this.#_propertyMonitors.get(deviceId)?.has(propInfo.propertyId)) {
+          if (this._propertyMonitors.get(deviceId)?.has(propInfo.key)) {
             // Multiple update handlers for the same property of the same device can exist
-            const propUpdateHandlers = this.#_propertyMonitors
+            const propUpdateHandlers = this._propertyMonitors
               .get(deviceId)
-              ?.get(propInfo.propertyId);
+              ?.get(propInfo.key);
             if (propUpdateHandlers !== undefined) {
               for (const propUpdateHandler of propUpdateHandlers) {
-                propUpdateHandler(propInfo);
+                this._dispatchPropUpdate(deviceId, propUpdateHandler, propInfo);
               }
             }
           }
