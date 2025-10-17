@@ -1,7 +1,6 @@
 import { Hash } from "karabo-ts";
 import { GuiServerConnector } from "./GuiServerConnector";
 import {
-  buildGetDeviceSchemaHash,
   buildStartMonitoringHash,
   buildStopMonitoringHash,
 } from "../karabo_hash/builders/monitoring_device";
@@ -9,8 +8,8 @@ import { devicesConfigsFromHash } from "../karabo_hash/decoders/device_config";
 import { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
 import { TopologyConnector } from "./TopologyConnector";
 import { DeviceSchemaConnector } from "./DeviceSchemaConnector";
-import { DeviceSchemaInfo } from "@/karabo_data/DeviceSchemaInfo";
 import { DeviceInfo, TopologyEventType } from "@/karabo_data/TopologyInfo";
+import { DeviceSchemaInfo } from "@/karabo_data/DeviceSchemaInfo";
 
 type PropertyUpdateHandler = (updatedProperty: PropertyInfo) => void;
 
@@ -131,15 +130,31 @@ export class DevicePropertyConnector {
   }
 
   private _startMonitoringDevice = (deviceId: string): void => {
-    let hash = buildGetDeviceSchemaHash(deviceId);
-    GuiServerConnector.inst.sendHash(hash);
-    hash = buildStartMonitoringHash(deviceId);
+    DeviceSchemaConnector.inst.registerSchemaMonitor(
+      deviceId,
+      this._onDeviceSchemaUpdate
+    );
+    DeviceSchemaConnector.inst.requestDeviceSchema(deviceId);
+    const hash = buildStartMonitoringHash(deviceId);
     GuiServerConnector.inst.sendHash(hash);
   };
 
   private _stopMonitoringDevice = (deviceId: string): void => {
     const hash = buildStopMonitoringHash(deviceId);
     GuiServerConnector.inst.sendHash(hash);
+    DeviceSchemaConnector.inst.unregisterSchemaMonitor(
+      deviceId,
+      this._onDeviceSchemaUpdate
+    );
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private _onDeviceSchemaUpdate = (_deviceSchema: DeviceSchemaInfo) => {
+    // TODO: for all the subscribed slots and other special nodes types, generate
+    //       a property update event with the PropertyInfo updated with the
+    //       current schema values. This will allow scene widgets to just monitor
+    //       slots and other special node types without having to monitor the whole
+    //       device schema.
   };
 
   // #endregion
