@@ -51,8 +51,11 @@ export const deviceSchemaFromHash = (hash: Hash): DeviceSchemaInfo => {
                 propAttrs.metricPrefixSymbol = karaboVal.value_ as MetricPrefix;
               }
               break;
-            case "encoding":
-              propAttrs.encoding = karaboVal.value_ as number;
+            case "displayType":
+              propAttrs.displayType = karaboVal.value_ as string;
+              break;
+            case "nodeType":
+              propAttrs.nodeType = karaboVal.value_ as number;
               break;
             // TODO: handle remaining property attributes
           }

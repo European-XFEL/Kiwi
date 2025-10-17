@@ -33,10 +33,10 @@ export const devicesConfigsFromHash = (hash: Hash): DeviceConfigInfo[] => {
       currentDeviceId = deviceId;
     }
     deviceConfigInfo?.properties.push({
-      propertyId: propertyId,
-      propertyValue: value,
-      propertyType: type,
-      propertyAttrs: attrs,
+      key: propertyId,
+      value: value,
+      type: type,
+      timeAttrs: attrs,
     });
   }
   // Push the property info for the last device of the batch (if any)

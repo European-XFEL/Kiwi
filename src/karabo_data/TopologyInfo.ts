@@ -1,18 +1,20 @@
 import { AccessLevel } from "@/karabo_data/SchemaEnums";
 
+export enum TopologyEventType {
+  NEW,
+  UPDATE,
+  GONE,
+}
+
 export interface DeviceInfo {
   deviceId: string;
-  heartbeatInterval: number;
-  karaboVersion: string;
-  classId: string;
-  serverId: string;
-  visibility: AccessLevel;
-  host: string;
-  status: string; // "ok" || "error"
-  capabilities: number;
-  frac?: number;
-  sec?: number;
-  tid?: number;
+  heartbeatInterval?: number;
+  karaboVersion?: string;
+  classId?: string;
+  serverId?: string;
+  host?: string;
+  status?: string; // "ok" || "error"
+  capabilities?: number;
 }
 
 export interface DeviceServerInfo {

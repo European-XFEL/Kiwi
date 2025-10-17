@@ -113,3 +113,8 @@ export enum Encoding {
   YUV422_UYVY = 11,
   JPEG = 12,
 }
+
+export enum NodeType {
+  LEAF,
+  NODE,
+}

@@ -7,8 +7,10 @@ import { FONT_FAMILY_DEFAULT } from "./shared/helpers/QtFontDescriptor";
 import { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
 import { HashTypes } from "karabo-ts";
 import { TopologyConnector } from "@/karabo_connectors/TopologyConnector";
-import { DeviceInfo } from "@/karabo_data/TopologyInfo";
-import { useKaraboSchema } from "./shared/hooks/useKaraboSchema";
+import {
+  DeviceInfo,
+  TopologyEventType as TopologyEventType,
+} from "@/karabo_data/TopologyInfo";
 
 const DisplayLabel: React.FC<DynamicElementProps> = (props) => {
   const { deviceId, propertyId } = React.useMemo(
@@ -20,45 +22,37 @@ const DisplayLabel: React.FC<DynamicElementProps> = (props) => {
     !TopologyConnector.inst.isDeviceOnline(deviceId)
   );
 
-  const { propertyDescriptor } = useKaraboSchema(props.karaboKeys);
-
-  const unit = React.useMemo(() => {
-    if (!propertyDescriptor) return "";
-    const prefix = propertyDescriptor.metricPrefixSymbol ?? "";
-    const symbol = propertyDescriptor.unitSymbol ?? "";
-    return `${prefix}${symbol}`;
-  }, [propertyDescriptor]);
-
   const onPropertyUpdate = React.useCallback(
     (updatedProperty: PropertyInfo) => {
-      const propType = updatedProperty.propertyType;
+      const prefix = updatedProperty.schemaAttrs?.metricPrefixSymbol ?? "";
+      const symbol = updatedProperty.schemaAttrs?.unitSymbol ?? "";
+      const displayUnit = `${prefix}${symbol}`;
+      const propType = updatedProperty.type;
 
       if (propType === HashTypes.Float32 || propType === HashTypes.Float64) {
-        const num = Number(updatedProperty.propertyValue);
+        const num = Number(updatedProperty.value);
         const displayValue = Number.isNaN(num)
-          ? String(updatedProperty.propertyValue)
+          ? String(updatedProperty.value)
           : parseFloat(num.toPrecision(8)).toString();
 
-        setLabelValue(displayValue);
+        setLabelValue(`${displayValue} ${displayUnit}`);
         return;
       }
 
       // For all non-float types, show the string representation directly
-      setLabelValue(String(updatedProperty.propertyValue));
+      setLabelValue(`${String(updatedProperty.value)} ${displayUnit}`);
     },
     []
   );
 
   const onDeviceInfoUpdate = React.useCallback(
-    (updateInfo?: DeviceInfo) => {
-      if (updateInfo !== undefined && updateInfo!.deviceId !== deviceId) {
+    (eventType: TopologyEventType, deviceInfo: DeviceInfo) => {
+      if (deviceInfo.deviceId !== deviceId) {
         console.error(
-          `Topology update routing error: monitor for ${deviceId} received update for ${
-            updateInfo!.deviceId
-          }!`
+          `Topology update routing error: monitor for ${deviceId} received update for ${deviceInfo.deviceId}!`
         );
       }
-      setIsOffline(updateInfo === undefined);
+      setIsOffline(eventType === TopologyEventType.GONE);
     },
     [deviceId]
   );
@@ -101,11 +95,7 @@ const DisplayLabel: React.FC<DynamicElementProps> = (props) => {
         fontWeight: props.fontWeight.toLowerCase(),
       }}
     >
-      {isOffline ? (
-        <DeviceOfflineOverlay {...props} />
-      ) : (
-        `${labelValue} ${unit}`
-      )}
+      {isOffline ? <DeviceOfflineOverlay {...props} /> : `${labelValue}`}
     </div>
   );
 };

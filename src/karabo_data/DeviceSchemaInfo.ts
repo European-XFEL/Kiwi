@@ -5,7 +5,7 @@ import {
   AccessMode,
   ArchivePolicy,
   Assignment,
-  Encoding,
+  NodeType,
 } from "@/karabo_data/SchemaEnums";
 
 export interface DeviceSchemaInfo {
@@ -13,15 +13,12 @@ export interface DeviceSchemaInfo {
   propertyDescriptors: Map<string, PropertySchemaAttributes>;
 }
 
-export interface DevicePropertySchemaInfo {
-  deviceId: string;
-  propertyId: string;
-  propertyAttr: PropertySchemaAttributes;
-}
-
 export interface PropertySchemaAttributes {
   valueType: HashTypes;
   defaultValue: HashValueType;
+  // displayType serves as a "guide" for the GUI client for displaying the
+  // property. Usual values for it: "Slot", "ImageData", "NDArray", "OutputSchema"
+  displayType?: string;
   displayedName: string;
   description?: string;
   requiredAccessLevel: AccessLevel;
@@ -30,5 +27,5 @@ export interface PropertySchemaAttributes {
   assignment?: Assignment;
   unitSymbol?: string;
   metricPrefixSymbol?: string;
-  encoding?: Encoding;
+  nodeType: NodeType;
 }

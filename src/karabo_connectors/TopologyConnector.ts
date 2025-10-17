@@ -1,11 +1,15 @@
 import {
   DeviceInfo,
+  TopologyEventType,
   DeviceServerInfo,
   SystemTopologyInfo,
   SystemTopologyUpdateInfo,
 } from "@/karabo_data/TopologyInfo";
-/** If updatedInfo is not defined, it means the device is offline */
-export type DeviceInfoUpdateHandler = (updatedInfo?: DeviceInfo) => void;
+
+export type DeviceInfoUpdateHandler = (
+  infoType: TopologyEventType,
+  deviceInfo: DeviceInfo
+) => void;
 
 export class TopologyConnector {
   // #region Singleton
@@ -31,17 +35,43 @@ export class TopologyConnector {
     return this._systemTopology;
   }
   set systemTopology(topology: SystemTopologyInfo) {
-    // NOTE: Up until this point Kiwi doesn't need to support full topology update events, only partial updates.
-    //       If the need ever manifests, this is the point to trigger such events.
     this._systemTopology = topology;
+
+    for (const [deviceId, updateHandlers] of this._deviceInfoMonitors) {
+      const deviceIdx = this._getDeviceIdx(deviceId);
+      if (deviceIdx >= 0) {
+        // Monitored device is online
+        for (const updateHandler of updateHandlers) {
+          updateHandler(
+            TopologyEventType.NEW,
+            this._systemTopology.devices[deviceIdx]
+          );
+        }
+      } else {
+        // Monitored device is offline
+        for (const updateHandler of updateHandlers) {
+          updateHandler(TopologyEventType.GONE, {
+            deviceId: deviceId,
+          });
+        }
+      }
+    }
   }
 
-  isDeviceOnline = (deviceId: string): boolean => {
-    const deviceIdx = this.systemTopology.devices.findIndex(
+  /**
+   * Returns the index of the DeviceInfo record for a given deviceId in the topology
+   * */
+  _getDeviceIdx = (deviceId: string): number => {
+    const deviceIdx = this._systemTopology.devices.findIndex(
       (value: DeviceInfo) => {
         return value.deviceId === deviceId;
       }
     );
+    return deviceIdx;
+  };
+
+  isDeviceOnline = (deviceId: string): boolean => {
+    const deviceIdx = this._getDeviceIdx(deviceId);
     return deviceIdx >= 0;
   };
 
@@ -76,7 +106,7 @@ export class TopologyConnector {
             for (const updateHandler of this._deviceInfoMonitors.get(
               newDevice.deviceId
             )!) {
-              updateHandler(newDevice);
+              updateHandler(TopologyEventType.NEW, newDevice);
             }
           }
         } else {
@@ -118,7 +148,7 @@ export class TopologyConnector {
             for (const updateHandler of this._deviceInfoMonitors.get(
               modifiedDevice.deviceId
             )!) {
-              updateHandler(modifiedDevice);
+              updateHandler(TopologyEventType.UPDATE, modifiedDevice);
             }
           }
         } else {
@@ -162,7 +192,9 @@ export class TopologyConnector {
             )!) {
               // To signal that the device has been removed from the topology,
               // an undefined value is sent as the DeviceInfo
-              updateHandler(undefined);
+              updateHandler(TopologyEventType.GONE, {
+                deviceId: removedDevice.deviceId,
+              });
             }
           }
         } else {
