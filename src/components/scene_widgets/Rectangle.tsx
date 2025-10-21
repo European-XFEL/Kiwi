@@ -29,7 +29,7 @@ const Rectangle: React.FC<RectangleElementProps> = (props) => {
 
   return (
     <div
-      className="absolute border-solid"
+      className="absolute"
       style={{
         width: props.width,
         height: props.height,

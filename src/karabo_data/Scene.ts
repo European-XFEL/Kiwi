@@ -3,6 +3,7 @@ import DisplayLabel from "../components/scene_widgets/DisplayLabel";
 import DisplayStateColor from "../components/scene_widgets/displayStateColor/DisplayStateColor";
 import Label from "../components/scene_widgets/Label";
 import Rectangle from "../components/scene_widgets/Rectangle";
+import ArrowPolygon from "@/components/scene_widgets/polygonShapes/ArrowPolygon";
 import DisplayTrendGraph from "@/components/scene_widgets/plots/displayTrendGraph/DisplayTrendGraph";
 import { css_textAlign_for_KrbAlignh } from "../components/scene_widgets/shared/helpers/KrbAlignh";
 import { QtFontDescriptor } from "../components/scene_widgets/shared/helpers/QtFontDescriptor";
@@ -16,9 +17,13 @@ import {
   SceneElement,
   SceneElementProps,
   WidgetElement,
-  DisplayCommandElementProps,
+  ArrowPolygonElement,
   DisplayTrendGraphElement,
+  LineElement,
+  PolygonElement,
 } from "./SceneElements";
+import Line from "@/components/scene_widgets/Line";
+import Polygon from "@/components/scene_widgets/Polygon";
 
 export class Scene {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -29,7 +34,6 @@ export class Scene {
 
   constructor(sceneJson: string) {
     this.#_sceneObj = JSON.parse(sceneJson);
-    // console.log(sceneJson);
     this.#_width = parseInt(this.#_sceneObj["@_width"] as string);
     this.#_height = parseInt(this.#_sceneObj["@_height"] as string);
     this.#_buildSceneElements(this.#_sceneObj);
@@ -54,14 +58,127 @@ export class Scene {
       if (prop === "svg:g") {
         this.#_buildSceneElementsFromGroup(value as object);
       } else if (prop === "svg:rect") {
+        //handle standalone rect elements
         if (value instanceof Array) {
-          // Found a rect that is a container for other elements
-          this.#_buildSceneElementsFromRect(value as object);
+          (value as any[]).forEach((rectObj: any) => {
+            this.#_processRect(rectObj);
+          });
         } else {
-          // Found a rect that hosts a single element
-          this.#_buildSceneElementInRect(value as object);
+          this.#_processRect(value as object);
+        }
+      } else if (prop === "svg:line") {
+        // Handle standalone line elements
+        if (value instanceof Array) {
+          (value as any[]).forEach((lineObj: any) => {
+            const lineElement = this.#_buildLineElement(lineObj);
+            this.#_elements.push(lineElement);
+          });
+        } else {
+          const lineElement = this.#_buildLineElement(value as object);
+          this.#_elements.push(lineElement);
+        }
+      } else if (prop === "svg:polygon") {
+        // Handle standalone polygon elements
+        if (value instanceof Array) {
+          (value as any[]).forEach((polygonObj: any) => {
+            const polygonElement = this.#_buildPolygonElement(polygonObj);
+            this.#_elements.push(polygonElement);
+          });
+        } else {
+          const polygonElement = this.#_buildPolygonElement(value as object);
+          this.#_elements.push(polygonElement);
         }
       }
+    }
+  };
+
+  #_buildPolygonElement = (polygonObj: any): PolygonElement => {
+    const polygonElement = new PolygonElement();
+    polygonElement.reactComponent = Polygon;
+
+    // Parse points
+    polygonElement.points = polygonObj["@_points"] || "";
+
+    // Parse stroke styling
+    polygonElement.strokeColor = polygonObj["@_stroke"] || "#000000";
+    polygonElement.strokeWidth = parseFloat(
+      polygonObj["@_stroke-width"] || "1.0"
+    );
+    polygonElement.strokeOpacity = parseFloat(
+      polygonObj["@_stroke-opacity"] || "1.0"
+    );
+    polygonElement.strokeLinecap = polygonObj["@_stroke-linecap"] || "butt";
+    polygonElement.strokeDasharray = polygonObj["@_stroke-dasharray"] || "";
+    polygonElement.strokeDashoffset = parseFloat(
+      polygonObj["@_stroke-dashoffset"] || "0.0"
+    );
+    polygonElement.strokeLinejoin = polygonObj["@_stroke-linejoin"] || "miter";
+    polygonElement.strokeMiterlimit = parseFloat(
+      polygonObj["@_stroke-miterlimit"] || "4.0"
+    );
+
+    // Parse fill styling
+    polygonElement.fillColor = polygonObj["@_fill"] || "#000000";
+    polygonElement.fillOpacity = parseFloat(
+      polygonObj["@_fill-opacity"] || "1.0"
+    );
+
+    return polygonElement;
+  };
+
+  #_buildLineElement = (lineObj: any): LineElement => {
+    const lineElement = new LineElement();
+    lineElement.reactComponent = Line;
+
+    // Parse coordinates
+    lineElement.x1 = parseInt(lineObj["@_x1"]);
+    lineElement.y1 = parseInt(lineObj["@_y1"]);
+    lineElement.x2 = parseInt(lineObj["@_x2"]);
+    lineElement.y2 = parseInt(lineObj["@_y2"]);
+
+    // Parse stroke styling
+    lineElement.strokeColor = lineObj["@_stroke"] || "#000000";
+    lineElement.strokeWidth = parseFloat(lineObj["@_stroke-width"] || "1.0");
+    lineElement.strokeOpacity = parseFloat(
+      lineObj["@_stroke-opacity"] || "1.0"
+    );
+    lineElement.strokeLinecap = lineObj["@_stroke-linecap"] || "butt";
+    lineElement.strokeDasharray = lineObj["@_stroke-dasharray"] || "";
+    lineElement.strokeDashoffset = parseFloat(
+      lineObj["@_stroke-dashoffset"] || "0.0"
+    );
+    lineElement.strokeLinejoin = lineObj["@_stroke-linejoin"] || "miter";
+    lineElement.strokeMiterlimit = parseFloat(
+      lineObj["@_stroke-miterlimit"] || "4.0"
+    );
+    lineElement.fillColor = lineObj["@_fill"] || "none";
+    lineElement.fillOpacity = parseFloat(lineObj["@_fill-opacity"] || "1.0");
+
+    return lineElement;
+  };
+
+  #_processRect = (rectObj: any): void => {
+    const hasKrbClass = "@_krb:class" in rectObj;
+    const hasChildren = "svg:rect" in rectObj;
+    const hasSvgAttrs = "@_stroke" in rectObj || "@_fill" in rectObj;
+
+    // Decision tree:
+
+    if (hasChildren) {
+      // CASE 1: Container (with or without krb:class)
+      // Could be:
+      // - Pure SVG shape with widget children (Scenario 2)
+      // - Widget container (normal case)
+      this.#_buildSceneElementsFromRect(rectObj);
+    } else if (hasKrbClass) {
+      // CASE 2: Single widget (Label, DisplayComponent, etc.)
+      this.#_buildSceneElementInRect(rectObj);
+    } else if (hasSvgAttrs) {
+      // CASE 3: Pure SVG shape (no children, no widget)
+      this.#_buildSceneElementInRect(rectObj);
+    } else {
+      // CASE 4: Unknown/empty rect - skip or warn
+      console.warn("Unknown rect type:", rectObj);
     }
   };
 
@@ -75,9 +192,20 @@ export class Scene {
     }
   };
 
-  #_processGroupChild = (groupChild: object): void => {
+  #_processGroupChild = (groupChild: any): void => {
+    // PRIORITY CHECK: Is this an ArrowPolygonModel?
+    const krbClass = groupChild["@_krb:class"];
+
+    if (krbClass === "ArrowPolygonModel") {
+      // Standalone arrow shape - add directly to scene
+      const arrowElement = this.#_buildArrowPolygonElement(groupChild);
+      this.#_elements.push(arrowElement);
+      return; // Done! No further processing
+    }
+
+    // Otherwise, process as widget container (existing logic)
     if (Object.prototype.hasOwnProperty.call(groupChild, "svg:rect")) {
-      const svgRect = (groupChild as { "svg:rect"?: unknown })["svg:rect"];
+      const svgRect = groupChild["svg:rect"];
       if (Array.isArray(svgRect)) {
         this.#_buildSceneElementsFromRect(groupChild);
       } else {
@@ -86,6 +214,83 @@ export class Scene {
     } else if (Object.prototype.hasOwnProperty.call(groupChild, "svg:g")) {
       this.#_buildSceneElements(groupChild);
     }
+  };
+  /**
+   * Builds an ArrowPolygonElement from a parsed SVG group
+   *
+   * Expected structure:
+   * {
+   *   "@_krb:class": "ArrowPolygonModel",
+   *   "svg:line": { x1, y1, x2, y2, stroke attrs... },
+   *   "svg:polygon": { points, fill attrs... }
+   * }
+   */
+  #_buildArrowPolygonElement = (groupObj: any): ArrowPolygonElement => {
+    const arrowElement = new ArrowPolygonElement();
+    arrowElement.reactComponent = ArrowPolygon;
+
+    const lineObj = groupObj["svg:line"];
+    const polygonObj = groupObj["svg:polygon"];
+
+    // ---- Parse Line Component ----
+    arrowElement.line.x1 = parseInt(lineObj["@_x1"]);
+    arrowElement.line.y1 = parseInt(lineObj["@_y1"]);
+    arrowElement.line.x2 = parseInt(lineObj["@_x2"]);
+    arrowElement.line.y2 = parseInt(lineObj["@_y2"]);
+
+    // Line stroke styling
+    arrowElement.line.strokeColor = lineObj["@_stroke"] || "#000000";
+    arrowElement.line.strokeWidth = parseFloat(
+      lineObj["@_stroke-width"] || "1.0"
+    );
+    arrowElement.line.strokeOpacity = parseFloat(
+      lineObj["@_stroke-opacity"] || "1.0"
+    );
+    arrowElement.line.strokeLinecap = lineObj["@_stroke-linecap"] || "butt";
+    arrowElement.line.strokeDasharray = lineObj["@_stroke-dasharray"] || "";
+    arrowElement.line.strokeDashoffset = parseFloat(
+      lineObj["@_stroke-dashoffset"] || "0.0"
+    );
+    arrowElement.line.strokeLinejoin = lineObj["@_stroke-linejoin"] || "miter";
+    arrowElement.line.strokeMiterlimit = parseFloat(
+      lineObj["@_stroke-miterlimit"] || "4.0"
+    );
+    arrowElement.line.fillColor = lineObj["@_fill"] || "none";
+    arrowElement.line.fillOpacity = parseFloat(
+      lineObj["@_fill-opacity"] || "1.0"
+    );
+
+    // ---- Parse Polygon Component (Arrowhead) ----
+    arrowElement.polygon.points = polygonObj["@_points"];
+
+    // Polygon stroke styling
+    arrowElement.polygon.strokeColor = polygonObj["@_stroke"] || "#000000";
+    arrowElement.polygon.strokeWidth = parseFloat(
+      polygonObj["@_stroke-width"] || "1.0"
+    );
+    arrowElement.polygon.strokeOpacity = parseFloat(
+      polygonObj["@_stroke-opacity"] || "1.0"
+    );
+    arrowElement.polygon.strokeLinecap =
+      polygonObj["@_stroke-linecap"] || "butt";
+    arrowElement.polygon.strokeDasharray =
+      polygonObj["@_stroke-dasharray"] || "";
+    arrowElement.polygon.strokeDashoffset = parseFloat(
+      polygonObj["@_stroke-dashoffset"] || "0.0"
+    );
+    arrowElement.polygon.strokeLinejoin =
+      polygonObj["@_stroke-linejoin"] || "miter";
+    arrowElement.polygon.strokeMiterlimit = parseFloat(
+      polygonObj["@_stroke-miterlimit"] || "4.0"
+    );
+
+    // Polygon fill styling (this colors the arrowhead interior)
+    arrowElement.polygon.fillColor = polygonObj["@_fill"] || "#000000";
+    arrowElement.polygon.fillOpacity = parseFloat(
+      polygonObj["@_fill-opacity"] || "1.0"
+    );
+
+    return arrowElement;
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -190,11 +395,13 @@ export class Scene {
     const arrayRoot = Object.prototype.hasOwnProperty.call(rectObj, "svg:rect")
       ? rectObj["svg:rect"]
       : rectObj;
+
+    // Normalize to array so we can safely iterate
+    const rectChildren = Array.isArray(arrayRoot) ? arrayRoot : [arrayRoot];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (arrayRoot as object[]).forEach((rectChild: any) => {
+    rectChildren.forEach((rectChild: any) => {
       if (Object.prototype.hasOwnProperty.call(rectChild, "@_krb:class")) {
-        let widgetElement: WidgetElement<SceneElementProps> | undefined =
-          undefined;
+        let widgetElement: WidgetElement<SceneElementProps> | undefined;
         const krbClass = rectChild["@_krb:class"] as string;
         if (krbClass.toLowerCase() === "label") {
           widgetElement = this.#_buildLabelElement(
