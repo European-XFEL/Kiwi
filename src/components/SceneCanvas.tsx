@@ -68,7 +68,7 @@ const SceneCanvas: React.FC = () => {
               height: Math.ceil(scene.height * scale),
             }}
           >
-            {/* Scaled canvas */}
+            {/* Container for both layers */}
             <div
               className="relative bg-[#eeeeee] shadow-lg rounded-md overflow-clip"
               style={{
@@ -78,14 +78,54 @@ const SceneCanvas: React.FC = () => {
                 transformOrigin: "top left",
               }}
             >
+              {/* Layer 1: SVG layer for shapes (arrows, lines, polygons) */}
+              <svg
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  width: scene.width,
+                  height: scene.height,
+                }}
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                {scene.sceneElements.map((el: SceneElement, idx: number) => {
+                  if (el instanceof WidgetElement) {
+                    const widget = el as WidgetElement<SceneElementProps>;
+                    // Check if this is an SVG shape (ArrowPolygon, Line, etc.)
+                    const componentName = widget.reactComponent?.name || "";
+                    const isSvgShape = [
+                      "ArrowPolygon",
+                      "Line",
+                      "Polygon",
+                    ].includes(componentName);
+
+                    if (isSvgShape && widget.reactComponent) {
+                      const { key, ...restProps } = widget.props as any;
+                      return React.createElement(widget.reactComponent, {
+                        key: `svg_${idx}`,
+                        ...restProps,
+                      });
+                    }
+                  }
+                  return null;
+                })}
+              </svg>
+
+              {/*Layer 2: HTML layer for widgets (labels, buttons, etc.) */}
               {scene.sceneElements.map((el: SceneElement, idx: number) => {
                 if (el instanceof WidgetElement) {
                   const widget = el as WidgetElement<SceneElementProps>;
-                  if (widget.reactComponent) {
-                    // Filter out 'key' from props if it exists, then add our own
+                  const componentName = widget.reactComponent?.name || "";
+                  const isSvgShape = [
+                    "ArrowPolygon",
+                    "Line",
+                    "Polygon",
+                  ].includes(componentName);
+
+                  // Render HTML widgets (not SVG shapes)
+                  if (!isSvgShape && widget.reactComponent) {
                     const { key, ...restProps } = widget.props as any;
                     return React.createElement(widget.reactComponent, {
-                      key: `w_${idx}`,
+                      key: `html_${idx}`,
                       ...restProps,
                     });
                   }
