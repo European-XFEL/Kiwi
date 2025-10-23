@@ -5,11 +5,13 @@ import Label from "../components/scene_widgets/Label";
 import Rectangle from "../components/scene_widgets/Rectangle";
 import ArrowPolygon from "@/components/scene_widgets/polygonShapes/ArrowPolygon";
 import DisplayTrendGraph from "@/components/scene_widgets/plots/displayTrendGraph/DisplayTrendGraph";
+import DisplayStatefulWidgetIcon from "@/components/scene_widgets/DisplayStatefulWidgetIcon";
 import { css_textAlign_for_KrbAlignh } from "../components/scene_widgets/shared/helpers/KrbAlignh";
 import { QtFontDescriptor } from "../components/scene_widgets/shared/helpers/QtFontDescriptor";
 import {
   DisplayCommandElement,
   DisplayStateColorElement,
+  DisplayStatefulWidgetIconElement,
   DynamicWidgetElement,
   DynamicElementProps,
   LabelElement,
@@ -54,6 +56,7 @@ export class Scene {
   // #region Internal buildScene helpers
 
   #_buildSceneElements = (startObj: object): void => {
+    console.log(startObj);
     for (const [prop, value] of Object.entries(startObj)) {
       if (prop === "svg:g") {
         this.#_buildSceneElementsFromGroup(value as object);
@@ -333,6 +336,11 @@ export class Scene {
               rectObj,
               rect
             ) as WidgetElement<SceneElementProps>;
+          } else if (krbWidget.toLocaleLowerCase() === "statefuliconwidget") {
+            widgetElement = this.#_buildDisplayStatefulWidgetIconElement(
+              rectObj,
+              rect
+            ) as WidgetElement<SceneElementProps>;
           } else if (krbWidget.toLowerCase() == "displaystatecolor") {
             widgetElement = this.#_buildDisplayStateColorElement(
               rectObj,
@@ -427,6 +435,11 @@ export class Scene {
             ) as WidgetElement<SceneElementProps>;
           } else if (krbWidget.toLowerCase() === "displaytrendgraph") {
             widgetElement = this.#_buildDisplayTrendGraphElement(
+              rectChild,
+              rect
+            ) as WidgetElement<SceneElementProps>;
+          } else if (krbWidget.toLowerCase() === "statefuliconwidget") {
+            widgetElement = this.#_buildDisplayStatefulWidgetIconElement(
               rectChild,
               rect
             ) as WidgetElement<SceneElementProps>;
@@ -586,6 +599,68 @@ export class Scene {
           : false;
     }
     return displayStateColorElement;
+  };
+  #_buildDisplayStatefulWidgetIconElement = (
+    dispStatefulIconObj: any,
+    rect: RectangleElement
+  ): DisplayStatefulWidgetIconElement => {
+    const displayStatefulIconElement = new DisplayStatefulWidgetIconElement();
+    displayStatefulIconElement.reactComponent = DisplayStatefulWidgetIcon;
+
+    // Position and size
+    displayStatefulIconElement.x =
+      parseInt(dispStatefulIconObj["@_x"] as string) - rect.x;
+    displayStatefulIconElement.y =
+      parseInt(dispStatefulIconObj["@_y"] as string) - rect.y;
+    displayStatefulIconElement.width = parseInt(
+      dispStatefulIconObj["@_width"] as string
+    );
+    displayStatefulIconElement.height = parseInt(
+      dispStatefulIconObj["@_height"] as string
+    );
+
+    // Karabo keys (required)
+    displayStatefulIconElement.karaboKeys = dispStatefulIconObj[
+      "@_krb:keys"
+    ] as string;
+
+    // Icon name (required for StatefulIconWidget)
+    if (
+      Object.prototype.hasOwnProperty.call(
+        dispStatefulIconObj,
+        "@_krb:icon_name"
+      )
+    ) {
+      displayStatefulIconElement.iconName = dispStatefulIconObj[
+        "@_krb:icon_name"
+      ] as string;
+    }
+
+    // Optional fontSize
+    if (
+      Object.prototype.hasOwnProperty.call(
+        dispStatefulIconObj,
+        "@_krb:fontSize"
+      )
+    ) {
+      displayStatefulIconElement.fontSize = parseInt(
+        dispStatefulIconObj["@_krb:fontSize"] as string
+      );
+    }
+
+    // Optional fontWeight
+    if (
+      Object.prototype.hasOwnProperty.call(
+        dispStatefulIconObj,
+        "@_krb:font_weight"
+      )
+    ) {
+      displayStatefulIconElement.fontWeight = (
+        dispStatefulIconObj["@_krb:font_weight"] as string
+      ).toUpperCase() as "BOLD" | "NORMAL";
+    }
+
+    return displayStatefulIconElement;
   };
 
   #_buildPlaceholderElement = (
