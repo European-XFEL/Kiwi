@@ -420,3 +420,15 @@ export class ArrowPolygonElement extends WidgetElement<ArrowPolygonElementProps>
     };
   }
 }
+
+export interface DisplayStatefulWidgetIconProps extends DynamicElementProps {
+  iconName: string;
+}
+
+export class DisplayStatefulWidgetIconElement extends DynamicWidgetElement<DisplayStatefulWidgetIconProps> {
+  iconName = "no_icon";
+
+  get prop(): DisplayStatefulWidgetIconProps {
+    return { ...(this as unknown as DisplayStatefulWidgetIconProps) };
+  }
+}
