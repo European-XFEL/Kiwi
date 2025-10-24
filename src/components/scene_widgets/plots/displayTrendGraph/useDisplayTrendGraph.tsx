@@ -3,6 +3,9 @@ import { throttle } from "lodash";
 import { useKaraboPropertyInfo } from "../../shared/hooks/useKaraboProperty";
 import type { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
 import { Timestamp } from "@/shared/helpers/timestamps";
+import { splitKaraboKeys } from "../../shared/helpers/splitKaraboKeys";
+import { TopologyConnector } from "@/karabo_connectors/TopologyConnector";
+import { DeviceInfo, TopologyEventType } from "@/karabo_data/TopologyInfo";
 
 interface TrendDataPoint {
   timestamp: number; // epoch ms
@@ -23,13 +26,14 @@ const DEFAULT_CONFIG: Required<TrendConfig> = {
 
 /**
  * React hook for visualizing a Karabo property as a time series.
- *
+ *Also uses the topology connector to check the status of the device
  * It leverages the `Timestamp` class to obtain precise timestamps
  * from Karabo's attosecond-resolution property attributes (`sec` + `frac`).
  *
  * Internally, all time values are handled in attoseconds for accuracy,
  * but converted to milliseconds for efficient JavaScript processing and plotting.
  */
+
 export const useDisplayTrendGraph = (
   karaboKeys: string,
   config: TrendConfig = {}
@@ -37,7 +41,16 @@ export const useDisplayTrendGraph = (
   const finalConfig = { ...DEFAULT_CONFIG, ...config };
   const { property } = useKaraboPropertyInfo(karaboKeys);
 
+  // figure out the device we should watch in topology
+  const { deviceId } = useMemo(() => splitKaraboKeys(karaboKeys), [karaboKeys]);
+
   const [trendData, setTrendData] = useState<TrendDataPoint[]>([]);
+  const [isOffline, setIsOffline] = useState<boolean>(
+    !TopologyConnector.inst.isDeviceOnline(deviceId)
+  );
+
+  // keep last appended timestamp to avoid duplicates/out-of-order spam
+  const lastTsRef = useRef<number>(-Infinity);
 
   /** Convert PropertyInfo -> { timestamp(ms), value(number) } */
   const normalizeToTimeSeries = useCallback(
@@ -47,8 +60,15 @@ export const useDisplayTrendGraph = (
       const num = typeof p.value === "number" ? p.value : Number(p.value);
       if (!Number.isFinite(num)) return null;
 
-      const ms = Timestamp.fromPropertyAttrs(p.timeAttrs).toMilliseconds();
-
+      let ms: number;
+      try {
+        // guard: some properties may not have timeAttrs populated yet
+        ms = p.timeAttrs
+          ? Timestamp.fromPropertyAttrs(p.timeAttrs).toMilliseconds()
+          : Date.now();
+      } catch {
+        ms = Date.now();
+      }
       return { timestamp: ms, value: num };
     },
     []
@@ -67,13 +87,12 @@ export const useDisplayTrendGraph = (
       if (pruned.length > finalConfig.maxDataPoints) {
         pruned = pruned.slice(-finalConfig.maxDataPoints);
       }
-
       return pruned;
     },
     [finalConfig.maxDataPoints, finalConfig.timeWindowMs]
   );
 
-  /** Keep stable ref for throttled updates */
+  /** Stable ref for the appender to cooperate with throttle */
   const updateTrendDataRef = useRef((point: TrendDataPoint) => {
     setTrendData((prev) => pruneData([...prev, point]));
   });
@@ -95,11 +114,18 @@ export const useDisplayTrendGraph = (
     [finalConfig.throttleDelayMs]
   );
 
-  /** React to incoming property updates */
+  /** React to incoming property updates (only when online) */
   useEffect(() => {
+    if (isOffline) return;
     const point = normalizeToTimeSeries(property);
-    if (point) throttledUpdate(point);
-  }, [property, normalizeToTimeSeries, throttledUpdate]);
+    if (!point) return;
+
+    // discard duplicates or time going backwards
+    if (point.timestamp <= lastTsRef.current) return;
+    lastTsRef.current = point.timestamp;
+
+    throttledUpdate(point);
+  }, [property, isOffline, normalizeToTimeSeries, throttledUpdate]);
 
   /** Cleanup throttle on unmount */
   useEffect(() => () => throttledUpdate.cancel(), [throttledUpdate]);
@@ -107,7 +133,42 @@ export const useDisplayTrendGraph = (
   /** Reset when data source changes */
   useEffect(() => {
     setTrendData([]);
+    lastTsRef.current = -Infinity;
   }, [karaboKeys]);
+
+  /** Subscribe to topology for online/offline transitions */
+  const onDeviceInfoUpdate = useCallback(
+    (eventType: TopologyEventType, info: DeviceInfo) => {
+      if (info.deviceId !== deviceId) {
+        console.error(
+          `Topology routing error: expected ${deviceId}, got ${info.deviceId}`
+        );
+        return;
+      }
+      const offline = eventType === TopologyEventType.GONE;
+      setIsOffline(offline);
+
+      // If device just went offline, clear the graph so UI reflects state quickly
+      if (offline) {
+        setTrendData([]);
+        lastTsRef.current = -Infinity;
+      }
+    },
+    [deviceId]
+  );
+
+  useEffect(() => {
+    TopologyConnector.inst.registerDeviceInfoMonitor(
+      deviceId,
+      onDeviceInfoUpdate
+    );
+    return () => {
+      TopologyConnector.inst.unregisterDeviceInfoMonitor(
+        deviceId,
+        onDeviceInfoUpdate
+      );
+    };
+  }, [deviceId, onDeviceInfoUpdate]);
 
   /** Periodic pruning for long sessions */
   useEffect(() => {
@@ -122,5 +183,6 @@ export const useDisplayTrendGraph = (
     values: trendData.map((d) => d.value),
     dataPoints: trendData.length,
     graphType: "line" as const,
+    isOffline,
   };
 };

@@ -341,6 +341,11 @@ export class Scene {
               rectObj,
               rect
             ) as WidgetElement<SceneElementProps>;
+          } else if (krbWidget.toLowerCase() == "displaytrendgraph") {
+            widgetElement = this.#_buildDisplayTrendGraphElement(
+              rectObj,
+              rect
+            ) as WidgetElement<SceneElementProps>;
           } else if (krbWidget.toLowerCase() == "displaystatecolor") {
             widgetElement = this.#_buildDisplayStateColorElement(
               rectObj,
