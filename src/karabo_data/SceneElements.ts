@@ -1,7 +1,7 @@
 import {
   FONT_BASE_SIZE,
   FONT_FAMILY_DEFAULT,
-} from "../components/scene_widgets/shared/helpers/QtFontDescriptor";
+} from "../components/widgets/shared/helpers/QtFontDescriptor";
 
 export interface SceneElementProps {
   x: number;
@@ -430,5 +430,16 @@ export class DisplayStatefulWidgetIconElement extends DynamicWidgetElement<Displ
 
   get prop(): DisplayStatefulWidgetIconProps {
     return { ...(this as unknown as DisplayStatefulWidgetIconProps) };
+  }
+}
+
+export interface DisplayCheckBoxElementProps extends DynamicElementProps {
+  // CheckBox has minimal props - just the base DynamicElementProps
+  // No additional properties needed
+}
+
+export class DisplayCheckBoxElement extends DynamicWidgetElement<DisplayCheckBoxElementProps> {
+  get props(): DisplayCheckBoxElementProps {
+    return { ...(this as unknown as DisplayCheckBoxElementProps) };
   }
 }

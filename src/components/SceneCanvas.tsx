@@ -84,6 +84,7 @@ const SceneCanvas: React.FC = () => {
                 style={{
                   width: scene.width,
                   height: scene.height,
+                  zIndex: 0,
                 }}
                 xmlns="http://www.w3.org/2000/svg"
               >
@@ -111,27 +112,29 @@ const SceneCanvas: React.FC = () => {
               </svg>
 
               {/*Layer 2: HTML layer for widgets (labels, buttons, etc.) */}
-              {scene.sceneElements.map((el: SceneElement, idx: number) => {
-                if (el instanceof WidgetElement) {
-                  const widget = el as WidgetElement<SceneElementProps>;
-                  const componentName = widget.reactComponent?.name || "";
-                  const isSvgShape = [
-                    "ArrowPolygon",
-                    "Line",
-                    "Polygon",
-                  ].includes(componentName);
+              <div className="relative" style={{ zIndex: 10 }}>
+                {scene.sceneElements.map((el: SceneElement, idx: number) => {
+                  if (el instanceof WidgetElement) {
+                    const widget = el as WidgetElement<SceneElementProps>;
+                    const componentName = widget.reactComponent?.name || "";
+                    const isSvgShape = [
+                      "ArrowPolygon",
+                      "Line",
+                      "Polygon",
+                    ].includes(componentName);
 
-                  // Render HTML widgets (not SVG shapes)
-                  if (!isSvgShape && widget.reactComponent) {
-                    const { key, ...restProps } = widget.props as any;
-                    return React.createElement(widget.reactComponent, {
-                      key: `html_${idx}`,
-                      ...restProps,
-                    });
+                    // Render HTML widgets (not SVG shapes)
+                    if (!isSvgShape && widget.reactComponent) {
+                      const { key, ...restProps } = widget.props as any;
+                      return React.createElement(widget.reactComponent, {
+                        key: `html_${idx}`,
+                        ...restProps,
+                      });
+                    }
                   }
-                }
-                return null;
-              })}
+                  return null;
+                })}
+              </div>
             </div>
           </div>
         </div>
