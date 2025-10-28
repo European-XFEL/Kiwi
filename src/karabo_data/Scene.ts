@@ -1,17 +1,21 @@
-import DisplayCommand from "../components/scene_widgets/DisplayCommand";
-import DisplayLabel from "../components/scene_widgets/DisplayLabel";
-import DisplayStateColor from "../components/scene_widgets/displayStateColor/DisplayStateColor";
-import Label from "../components/scene_widgets/Label";
-import Rectangle from "../components/scene_widgets/Rectangle";
-import ArrowPolygon from "@/components/scene_widgets/polygonShapes/ArrowPolygon";
-import DisplayTrendGraph from "@/components/scene_widgets/plots/displayTrendGraph/DisplayTrendGraph";
-import DisplayStatefulWidgetIcon from "@/components/scene_widgets/DisplayStatefulWidgetIcon";
-import { css_textAlign_for_KrbAlignh } from "../components/scene_widgets/shared/helpers/KrbAlignh";
-import { QtFontDescriptor } from "../components/scene_widgets/shared/helpers/QtFontDescriptor";
+import DisplayCommand from "../components/widgets/display/DisplayCommand";
+import DisplayLabel from "../components/widgets/display/DisplayLabel";
+import DisplayStateColor from "../components/widgets/display/DisplayStateColor";
+import Label from "@/components/widgets/simple/Label";
+import Rectangle from "../components/widgets/shapes/Rectangle";
+import ArrowPolygon from "@/components/widgets/shapes/ArrowPolygon";
+import Line from "@/components/widgets/shapes/Line";
+import Polygon from "@/components/widgets/shapes/Polygon";
+import DisplayTrendGraph from "@/components/widgets/plots/DisplayTrendGraph";
+import DisplayStatefulWidgetIcon from "@/components/widgets/display/DisplayStatefulWidgetIcon";
+import { DisplayCheckbox } from "@/components/widgets/display/DisplayCheckbox";
+import { css_textAlign_for_KrbAlignh } from "../components/widgets/shared/helpers/KrbAlignh";
+import { QtFontDescriptor } from "../components/widgets/shared/helpers/QtFontDescriptor";
 import {
   DisplayCommandElement,
   DisplayStateColorElement,
   DisplayStatefulWidgetIconElement,
+  DisplayCheckBoxElement,
   DynamicWidgetElement,
   DynamicElementProps,
   LabelElement,
@@ -24,8 +28,6 @@ import {
   LineElement,
   PolygonElement,
 } from "./SceneElements";
-import Line from "@/components/scene_widgets/Line";
-import Polygon from "@/components/scene_widgets/Polygon";
 
 export class Scene {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -351,6 +353,11 @@ export class Scene {
               rectObj,
               rect
             ) as WidgetElement<SceneElementProps>;
+          } else if (krbWidget.toLowerCase() == "displaycheckbox") {
+            widgetElement = this.#_buildDisplayCheckBoxElement(
+              rectObj,
+              rect
+            ) as WidgetElement<SceneElementProps>;
           } else {
             // An unknown DisplayComponent widget - as a fallback render as a
             // static label.
@@ -445,6 +452,11 @@ export class Scene {
             ) as WidgetElement<SceneElementProps>;
           } else if (krbWidget.toLowerCase() === "statefuliconwidget") {
             widgetElement = this.#_buildDisplayStatefulWidgetIconElement(
+              rectChild,
+              rect
+            ) as WidgetElement<SceneElementProps>;
+          } else if (krbWidget.toLowerCase() === "displaycheckbox") {
+            widgetElement = this.#_buildDisplayCheckBoxElement(
               rectChild,
               rect
             ) as WidgetElement<SceneElementProps>;
@@ -668,6 +680,41 @@ export class Scene {
     return displayStatefulIconElement;
   };
 
+  #_buildDisplayCheckBoxElement = (
+    checkBoxObj: any,
+    rect: RectangleElement
+  ): DisplayCheckBoxElement => {
+    const displayCheckBoxElement = new DisplayCheckBoxElement();
+    displayCheckBoxElement.reactComponent = DisplayCheckbox;
+
+    // Position and size
+    displayCheckBoxElement.x = parseInt(checkBoxObj["@_x"] as string) - rect.x;
+    displayCheckBoxElement.y = parseInt(checkBoxObj["@_y"] as string) - rect.y;
+    displayCheckBoxElement.width = parseInt(checkBoxObj["@_width"] as string);
+    displayCheckBoxElement.height = parseInt(checkBoxObj["@_height"] as string);
+
+    // Karabo keys (required for data binding)
+    displayCheckBoxElement.karaboKeys = checkBoxObj["@_krb:keys"] as string;
+
+    // Optional fontSize
+    if (Object.prototype.hasOwnProperty.call(checkBoxObj, "@_krb:fontSize")) {
+      displayCheckBoxElement.fontSize = parseInt(
+        checkBoxObj["@_krb:fontSize"] as string
+      );
+    }
+
+    // Optional fontWeight
+    if (
+      Object.prototype.hasOwnProperty.call(checkBoxObj, "@_krb:font_weight")
+    ) {
+      displayCheckBoxElement.fontWeight = (
+        checkBoxObj["@_krb:font_weight"] as string
+      ).toUpperCase() as "BOLD" | "NORMAL";
+    }
+
+    return displayCheckBoxElement;
+  };
+
   #_buildPlaceholderElement = (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     unhandledObj: any,
@@ -680,7 +727,7 @@ export class Scene {
     placeHolder.width = parseInt(unhandledObj["@_width"] as string);
     placeHolder.height = parseInt(unhandledObj["@_height"] as string);
     placeHolder.text = "??";
-    placeHolder.alignment = "CENTER";
+    placeHolder.alignment = "center";
     placeHolder.foregroundColor = "#FF0000";
     placeHolder.frameWidth = 1;
     placeHolder.reactComponent = Label;

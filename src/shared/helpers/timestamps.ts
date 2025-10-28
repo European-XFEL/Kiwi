@@ -8,7 +8,7 @@ import { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
  *
  * - Internal representation: **attoseconds since Unix epoch (1970-01-01T00:00:00Z)**.
  * - Can be constructed from various time sources:
- *   - Karabo `PropertyInfo["propertyAttrs"]` (sec + frac fields)
+ *   - Karabo `PropertyInfo["timeAttrs"]` (sec + frac fields)
  *   - JavaScript `Date` objects
  *   - Epoch times in seconds, milliseconds, nanoseconds, or attoseconds
  * - Provides safe conversion to lower-precision units (ns, µs, ms, s)
@@ -20,7 +20,7 @@ import { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
  * console.log(t1.toSeconds());        // → seconds since epoch
  * console.log(t1.toISOString());      // → ISO 8601 string
  *
- * const t2 = Timestamp.fromPropertyAttrs(attrs);
+ * const t2 = Timestamp.fromtimeAttrs(attrs);
  * console.log(t2.diffMs(t1));         // → difference in milliseconds
  * ```
  */
@@ -40,9 +40,9 @@ export class Timestamp {
    *  - bigint (attoseconds since epoch)
    *  - Date (epoch milliseconds)
    *  - number (epoch milliseconds) — use static fromSeconds/fromMilliseconds to be explicit
-   *  - PropertyInfo["propertyAttrs"] (Karabo sec+frac)
+   *  - PropertyInfo["timeAttrs"] (Karabo sec+frac)
    */
-  constructor(source: bigint | PropertyInfo["propertyAttrs"] | Date | number) {
+  constructor(source: bigint | PropertyInfo["timeAttrs"] | Date | number) {
     if (typeof source === "bigint") {
       this.attoseconds = source;
     } else if (source instanceof Date) {
@@ -52,7 +52,7 @@ export class Timestamp {
       this.attoseconds = BigInt(Math.floor(source)) * Timestamp.AS_PER_MS;
     } else {
       // Karabo property attributes
-      this.attoseconds = Timestamp.attosecondsFromPropertyAttrs(source);
+      this.attoseconds = Timestamp.attosecondsFromTimeAttrs(source);
     }
 
     this.validate();
@@ -61,8 +61,8 @@ export class Timestamp {
   // ---------- Static factories (explicit & self-documenting) ----------
 
   /** From Karabo property attributes (sec in s, frac in attoseconds). */
-  static fromPropertyAttrs(attrs: PropertyInfo["propertyAttrs"]): Timestamp {
-    return new Timestamp(this.attosecondsFromPropertyAttrs(attrs));
+  static fromTimeAttrs(attrs: PropertyInfo["timeAttrs"]): Timestamp {
+    return new Timestamp(this.attosecondsFromTimeAttrs(attrs));
   }
 
   /** From epoch seconds (number). */
@@ -182,13 +182,13 @@ export class Timestamp {
 
   // ---------- Internals ----------
 
-  private static attosecondsFromPropertyAttrs(
-    attrs: PropertyInfo["propertyAttrs"]
+  private static attosecondsFromTimeAttrs(
+    attrs: PropertyInfo["timeAttrs"]
   ): bigint {
-    if (!attrs) throw new Error("propertyAttrs must be provided");
+    if (!attrs) throw new Error("timeAttrs must be provided");
     const { sec, frac } = attrs;
     if (!sec || !frac) {
-      throw new Error("propertyAttrs must contain 'sec' and 'frac' fields");
+      throw new Error("timeAttrs must contain 'sec' and 'frac' fields");
     }
     const secValue = this.toBigInt(sec["value_"]);
     const fracValue = this.toBigInt(frac["value_"]);
