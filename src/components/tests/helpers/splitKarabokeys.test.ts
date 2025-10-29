@@ -1,4 +1,4 @@
-import { splitKaraboKeys } from "../../shared/helpers/splitKaraboKeys";
+import { splitKaraboKeys } from "@/components/shared/helpers/splitKaraboKeys";
 
 describe("splitKaraboKeys (uses last dot)", () => {
   it.each([

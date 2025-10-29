@@ -2,11 +2,11 @@ import { render, screen, waitFor } from "@testing-library/react";
 import type { DisplayStatefulWidgetIconProps } from "@/karabo_data/SceneElements";
 import { TopologyConnector } from "@/karabo_connectors/TopologyConnector";
 import type { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
-import { FONT_BASE_SIZE } from "../../shared/helpers/QtFontDescriptor";
+import { FONT_BASE_SIZE } from "../../../shared/helpers/QtFontDescriptor";
 
 // --- Mock useKaraboPropertyInfo ---
 const mockUseKaraboPropertyInfo = jest.fn();
-jest.mock("../../shared/hooks/useKaraboProperty", () => ({
+jest.mock("@/components/shared/hooks/useKaraboProperty", () => ({
   useKaraboPropertyInfo: (...args: any[]) => mockUseKaraboPropertyInfo(...args),
 }));
 
@@ -20,12 +20,12 @@ jest.mock("@/shared/helpers/getIconPath", () => ({
 
 // --- Mock loadAndRecolorSvg ---
 const mockLoadAndRecolorSvg = jest.fn();
-jest.mock("../../shared/helpers/loadAndRecolor", () => ({
+jest.mock("@/components/shared/helpers/loadAndRecolor", () => ({
   loadAndRecolorSvg: (...args: any[]) => mockLoadAndRecolorSvg(...args),
 }));
 
 // --- Import component AFTER mocks ---
-import DisplayStatefulWidgetIcon from "../../display/DisplayStatefulWidgetIcon";
+import DisplayStatefulWidgetIcon from "../../../controllers/display/DisplayStatefulWidgetIcon";
 
 function makeProps(
   overrides: Partial<DisplayStatefulWidgetIconProps> = {}

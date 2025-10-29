@@ -1,7 +1,7 @@
 import * as React from "react";
 import { DeviceSchemaConnector } from "@/karabo_connectors/DeviceSchemaConnector";
 import { DeviceSchemaInfo } from "@/karabo_data/DeviceSchemaInfo";
-import { splitKaraboKeys } from "@/components/widgets/shared/helpers/splitKaraboKeys";
+import { splitKaraboKeys } from "@/components/shared/helpers/splitKaraboKeys";
 
 /**
  * Hook that subscribes to schema updates for a given Karabo key.

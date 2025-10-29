@@ -1,21 +1,23 @@
-import DisplayCommand from "../components/widgets/display/DisplayCommand";
-import DisplayLabel from "../components/widgets/display/DisplayLabel";
-import DisplayStateColor from "../components/widgets/display/DisplayStateColor";
-import Label from "@/components/widgets/simple/Label";
-import Rectangle from "../components/widgets/shapes/Rectangle";
-import ArrowPolygon from "@/components/widgets/shapes/ArrowPolygon";
-import Line from "@/components/widgets/shapes/Line";
-import Polygon from "@/components/widgets/shapes/Polygon";
-import DisplayTrendGraph from "@/components/widgets/plots/DisplayTrendGraph";
-import DisplayStatefulWidgetIcon from "@/components/widgets/display/DisplayStatefulWidgetIcon";
-import { DisplayCheckbox } from "@/components/widgets/display/DisplayCheckbox";
-import { css_textAlign_for_KrbAlignh } from "../components/widgets/shared/helpers/KrbAlignh";
-import { QtFontDescriptor } from "../components/widgets/shared/helpers/QtFontDescriptor";
+import DisplayCommand from "../components/controllers/display/DisplayCommand";
+import DisplayLabel from "../components/controllers/display/DisplayLabel";
+import DisplayStateColor from "../components/controllers/display/DisplayStateColor";
+import Label from "@/components/widgets/Label";
+import Rectangle from "../components/shapes/Rectangle";
+import ArrowPolygon from "@/components/shapes/ArrowPolygon";
+import Line from "@/components/shapes/Line";
+import Polygon from "@/components/shapes/Polygon";
+import DisplayTrendGraph from "@/components/controllers/display/DisplayTrendGraph";
+import DisplayStatefulWidgetIcon from "@/components/controllers/display/DisplayStatefulWidgetIcon";
+import { DisplayCheckbox } from "@/components/controllers/display/DisplayCheckbox";
+import EditableComboBox from "@/components/controllers/editable/EditableComboBox";
+import { css_textAlign_for_KrbAlignh } from "../components/shared/helpers/KrbAlignh";
+import { QtFontDescriptor } from "../components/shared/helpers/QtFontDescriptor";
 import {
   DisplayCommandElement,
   DisplayStateColorElement,
   DisplayStatefulWidgetIconElement,
   DisplayCheckBoxElement,
+  EditableComboBoxElement,
   DynamicWidgetElement,
   DynamicElementProps,
   LabelElement,
@@ -366,6 +368,20 @@ export class Scene {
               rect
             ) as WidgetElement<SceneElementProps>;
           }
+        } else if (krbClass.toLowerCase() === "editableapplylatercomponent") {
+          const krbWidget = rectObj["@_krb:widget"] as string;
+          if (krbWidget.toLowerCase() === "editablecombobox") {
+            widgetElement = this.#_buildEditableComboBoxElement(
+              rectObj,
+              rect
+            ) as WidgetElement<SceneElementProps>;
+          } else {
+            // An unknown EditableApplyLaterComponent widget - fallback to placeholder
+            widgetElement = this.#_buildPlaceholderElement(
+              rectObj,
+              rect
+            ) as WidgetElement<SceneElementProps>;
+          }
         } else {
           // An unknown KrbClass type - as a fallback render as a label
           widgetElement = this.#_buildPlaceholderElement(
@@ -463,6 +479,20 @@ export class Scene {
           } else {
             // An unknown DisplayComponent widget - as a fallback render as a
             // static label.
+            widgetElement = this.#_buildPlaceholderElement(
+              rectChild,
+              rect
+            ) as WidgetElement<SceneElementProps>;
+          }
+        } else if (krbClass.toLowerCase() === "editableapplylatercomponent") {
+          const krbWidget = rectChild["@_krb:widget"] as string;
+          if (krbWidget.toLowerCase() === "editablecombobox") {
+            widgetElement = this.#_buildEditableComboBoxElement(
+              rectChild,
+              rect
+            ) as WidgetElement<SceneElementProps>;
+          } else {
+            // An unknown EditableApplyLaterComponent widget - fallback to placeholder
             widgetElement = this.#_buildPlaceholderElement(
               rectChild,
               rect
@@ -713,6 +743,41 @@ export class Scene {
     }
 
     return displayCheckBoxElement;
+  };
+
+  #_buildEditableComboBoxElement = (
+    comboBoxObj: any,
+    rect: RectangleElement
+  ): EditableComboBoxElement => {
+    const editableComboBoxElement = new EditableComboBoxElement();
+    editableComboBoxElement.reactComponent = EditableComboBox;
+
+    // Position and size
+    editableComboBoxElement.x = parseInt(comboBoxObj["@_x"] as string) - rect.x;
+    editableComboBoxElement.y = parseInt(comboBoxObj["@_y"] as string) - rect.y;
+    editableComboBoxElement.width = parseInt(comboBoxObj["@_width"] as string);
+    editableComboBoxElement.height = parseInt(comboBoxObj["@_height"] as string);
+
+    // Karabo keys (required for data binding)
+    editableComboBoxElement.karaboKeys = comboBoxObj["@_krb:keys"] as string;
+
+    // Optional fontSize
+    if (Object.prototype.hasOwnProperty.call(comboBoxObj, "@_krb:fontSize")) {
+      editableComboBoxElement.fontSize = parseInt(
+        comboBoxObj["@_krb:fontSize"] as string
+      );
+    }
+
+    // Optional fontWeight
+    if (
+      Object.prototype.hasOwnProperty.call(comboBoxObj, "@_krb:font_weight")
+    ) {
+      editableComboBoxElement.fontWeight = (
+        comboBoxObj["@_krb:font_weight"] as string
+      ).toUpperCase() as "BOLD" | "NORMAL";
+    }
+
+    return editableComboBoxElement;
   };
 
   #_buildPlaceholderElement = (
