@@ -5,7 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { DynamicElementProps } from "../../../karabo_data/SceneElements";
+import { DynamicElementProps } from "../karabo_data/SceneElements";
 
 const DeviceOfflineOverlay: React.FC<DynamicElementProps> = (props) => {
   const deviceId = props.karaboKeys.slice(0, props.karaboKeys.indexOf("."));

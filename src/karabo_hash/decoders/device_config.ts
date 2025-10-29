@@ -1,7 +1,7 @@
 import { DeviceConfigInfo } from "../../karabo_data/DeviceConfigInfo";
 import { Hash, HashValue } from "karabo-ts";
 import { flattenHash } from "../hash_utils";
-import { splitKaraboKeys } from "../../components/widgets/shared/helpers/splitKaraboKeys";
+import { splitKaraboKeys } from "../../components/shared/helpers/splitKaraboKeys";
 
 export const devicesConfigsFromHash = (hash: Hash): DeviceConfigInfo[] => {
   const devicesConfigsInfo: DeviceConfigInfo[] = [];

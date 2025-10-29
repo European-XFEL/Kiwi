@@ -3,7 +3,7 @@ import {
   RectangleElementProps,
   SceneElementProps,
   WidgetElement,
-} from "../../../karabo_data/SceneElements";
+} from "../../karabo_data/SceneElements";
 
 const Rectangle: React.FC<RectangleElementProps> = (props) => {
   const renderInternalWidgets = (

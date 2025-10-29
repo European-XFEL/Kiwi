@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import Plot from "react-plotly.js";
 import type { Layout, Data } from "plotly.js";
 import { DisplayTrendGraphElementProps } from "@/karabo_data/SceneElements";
-import { useDisplayTrendGraph } from "../shared/hooks/useDisplayTrendGraph";
+import { useDisplayTrendGraph } from "@/components/shared/hooks/useDisplayTrendGraph";
 import { TraceFactory, ChartType } from "@/karabo_plots/traceFactory";
 import { buildTimeValueHeatmap } from "@/karabo_plots/heatmapBining";
 

@@ -1,6 +1,6 @@
 import * as React from "react";
 import { DevicePropertyConnector } from "@/karabo_connectors/DevicePropertyConnector";
-import { splitKaraboKeys } from "@/components/widgets/shared/helpers/splitKaraboKeys";
+import { splitKaraboKeys } from "@/components/shared/helpers/splitKaraboKeys";
 import type { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
 
 export function useKaraboPropertyInfo(karaboKeys: string) {

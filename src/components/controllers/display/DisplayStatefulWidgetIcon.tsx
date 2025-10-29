@@ -1,11 +1,11 @@
 import React from "react";
 import { DisplayStatefulWidgetIconProps } from "@/karabo_data/SceneElements";
-import { useKaraboPropertyInfo } from "../shared/hooks/useKaraboProperty";
-import { useGuiStateColor } from "../shared/hooks/useGuiStateColor";
-import { useDeviceOnlineStatus } from "../shared/hooks/useDeviceOnlineStatus";
-import DeviceOfflineOverlay from "../simple/DeviceOfflineOverlay";
+import { useKaraboPropertyInfo } from "../../shared/hooks/useKaraboProperty";
+import { useGuiStateColor } from "../../shared/hooks/useGuiStateColor";
+import { useDeviceOnlineStatus } from "../../shared/hooks/useDeviceOnlineStatus";
+import DeviceOfflineOverlay from "../../DeviceOfflineOverlay";
 import { getIconPaths, getPrimaryIconPath } from "@/shared/helpers/getIconPath";
-import { loadAndRecolorSvg } from "../shared/helpers/loadAndRecolor";
+import { loadAndRecolorSvg } from "../../shared/helpers/loadAndRecolor";
 
 const DisplayStatefulWidgetIcon: React.FC<DisplayStatefulWidgetIconProps> = (
   props

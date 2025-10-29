@@ -1,10 +1,10 @@
 import React from "react";
 import { DynamicElementProps } from "@/karabo_data/SceneElements";
-import DeviceOfflineOverlay from "@/components/widgets/simple/DeviceOfflineOverlay";
-import { FONT_FAMILY_DEFAULT } from "../shared/helpers/QtFontDescriptor";
+import DeviceOfflineOverlay from "@/components/DeviceOfflineOverlay";
+import { FONT_FAMILY_DEFAULT } from "../../shared/helpers/QtFontDescriptor";
 import { HashTypes } from "karabo-ts";
-import { useDeviceOnlineStatus } from "../shared/hooks/useDeviceOnlineStatus";
-import { useKaraboPropertyInfo } from "../shared/hooks/useKaraboProperty";
+import { useDeviceOnlineStatus } from "../../shared/hooks/useDeviceOnlineStatus";
+import { useKaraboPropertyInfo } from "../../shared/hooks/useKaraboProperty";
 
 const DisplayLabel: React.FC<DynamicElementProps> = (props) => {
   //hooks

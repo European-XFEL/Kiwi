@@ -8,7 +8,7 @@ import {
   measureComputation,
   measureRendering,
   type PerformanceMetrics,
-} from "../../../../shared/helpers/performance";
+} from "../../../shared/helpers/performance";
 
 const recolorCache = new Map<string, string>();
 const MAX_CACHE_SIZE = 100;
@@ -82,10 +82,7 @@ function docHasTransforms(svgDoc: Document): boolean {
 }
 
 /** Mount a cloned <svg> offscreen and measure its *transformed* content box. */
-function mountAndMeasureBBox(
-  svgDoc: Document,
-  perfTracking = false
-): DOMRect {
+function mountAndMeasureBBox(svgDoc: Document, perfTracking = false): DOMRect {
   return measureRendering(
     "Mount and measure BBox",
     () => {
@@ -536,4 +533,8 @@ export async function loadAndRecolor(
 }
 
 // Re-export performance utilities for convenience
-export { measureComputation, measureRendering, createPerformanceTracker } from "../../../../shared/helpers/performance";
+export {
+  measureComputation,
+  measureRendering,
+  createPerformanceTracker,
+} from "../../../shared/helpers/performance";

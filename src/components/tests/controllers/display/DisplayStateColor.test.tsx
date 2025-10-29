@@ -5,12 +5,12 @@ import { TopologyConnector } from "@/karabo_connectors/TopologyConnector";
 
 // --- Mock useKaraboPropertyInfo ---
 const mockUseKaraboPropertyInfo = jest.fn();
-jest.mock("../../shared/hooks/useKaraboProperty", () => ({
+jest.mock("@/components/shared/hooks/useKaraboProperty", () => ({
   useKaraboPropertyInfo: (...args: any[]) => mockUseKaraboPropertyInfo(...args),
 }));
 
 // --- Import component AFTER mocks ---
-import DisplayStateColor from "../../display/DisplayStateColor";
+import DisplayStateColor from "../../../controllers/display/DisplayStateColor";
 import type { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
 
 function makeProps(

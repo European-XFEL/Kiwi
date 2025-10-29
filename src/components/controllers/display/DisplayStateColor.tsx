@@ -1,10 +1,10 @@
 import * as React from "react";
 import { DisplayStateColorElementProps } from "../../../karabo_data/SceneElements";
-import DeviceOfflineOverlay from "../simple/DeviceOfflineOverlay";
-import { useKaraboPropertyInfo } from "../shared/hooks/useKaraboProperty";
-import { useGuiStateColor } from "../shared/hooks/useGuiStateColor";
-import { useDeviceOnlineStatus } from "../shared/hooks/useDeviceOnlineStatus";
-import { splitKaraboKeys } from "../shared/helpers/splitKaraboKeys";
+import DeviceOfflineOverlay from "../../DeviceOfflineOverlay";
+import { useKaraboPropertyInfo } from "../../shared/hooks/useKaraboProperty";
+import { useGuiStateColor } from "../../shared/hooks/useGuiStateColor";
+import { useDeviceOnlineStatus } from "../../shared/hooks/useDeviceOnlineStatus";
+import { splitKaraboKeys } from "../../shared/helpers/splitKaraboKeys";
 
 const DisplayStateColor: React.FC<DisplayStateColorElementProps> = React.memo(
   (props) => {
