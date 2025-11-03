@@ -1,5 +1,5 @@
 import { Menu } from "lucide-react";
-import Header from "../layout/Header";
+import Header from "../layouts/Header";
 import NavigationMenu from "./NavMenu";
 import { NavItem } from "./NavItem";
 import NavToggle from "./NavToggle";

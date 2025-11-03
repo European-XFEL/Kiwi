@@ -1,47 +1,50 @@
 import React from "react";
-import {
-  RectangleElementProps,
-  SceneElementProps,
-  WidgetElement,
-} from "../../karabo_data/SceneElements";
+import { RectangleProps } from "@/scene/scene_types/shapes";
 
-const Rectangle: React.FC<RectangleElementProps> = (props) => {
-  const renderInternalWidgets = (
-    widgets: WidgetElement<SceneElementProps>[]
-  ) => {
-    return (
-      <React.Fragment>
-        {widgets.map(
-          (widget: WidgetElement<SceneElementProps>, idx: number) => {
-            if (widget.reactComponent !== undefined) {
-              const { key, ...restProps } = widget.props as any;
-              return React.createElement(widget.reactComponent!, {
-                key: `rect_widget_${idx}`,
-                ...restProps,
-              });
-            }
-            return null;
-          }
-        )}
-      </React.Fragment>
-    );
-  };
+/**
+ * Rectangle Component - Renders a pure SVG rectangle element.
+ * Uses props directly from RectangleModel (no internal widgets).
+ */
+const Rectangle: React.FC<RectangleProps> = (props) => {
+  const {
+    x,
+    y,
+    width,
+    height,
+    stroke,
+    stroke_width,
+    stroke_opacity,
+    stroke_linecap,
+    stroke_dasharray,
+    stroke_dashoffset,
+    stroke_linejoin,
+    stroke_miterlimit,
+    fill,
+    fill_opacity,
+  } = props;
+
+  // Ensure stroke-dasharray is a valid string
+  const dashArray = Array.isArray(stroke_dasharray)
+    ? stroke_dasharray.join(" ")
+    : stroke_dasharray;
 
   return (
-    <div
-      className="absolute"
-      style={{
-        width: props.width,
-        height: props.height,
-        left: `${props.x}px`,
-        top: `${props.y}px`,
-        borderWidth: props.strokeWidth,
-        borderColor: props.strokeColor,
-        backgroundColor: props.fillColor,
-      }}
-    >
-      {renderInternalWidgets(props.widgets)}
-    </div>
+    <rect
+      x={x}
+      y={y}
+      width={width}
+      height={height}
+      stroke={stroke}
+      strokeWidth={stroke_width}
+      strokeOpacity={stroke_opacity}
+      strokeLinecap={stroke_linecap}
+      strokeDasharray={dashArray}
+      strokeDashoffset={stroke_dashoffset}
+      strokeLinejoin={stroke_linejoin}
+      strokeMiterlimit={stroke_miterlimit}
+      fill={fill}
+      fillOpacity={fill_opacity}
+    />
   );
 };
 

@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import type { DisplayStateColorElementProps } from "../../../../karabo_data/SceneElements";
+import type { DisplayStateColorProps } from "@/scene/scene_types/controllers";
 import { guiStateColors } from "../../../../karabo_data/Indicators";
 import { TopologyConnector } from "@/karabo_connectors/TopologyConnector";
 
@@ -14,23 +14,25 @@ import DisplayStateColor from "../../../controllers/display/DisplayStateColor";
 import type { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
 
 function makeProps(
-  overrides: Partial<DisplayStateColorElementProps> = {}
-): DisplayStateColorElementProps {
+  overrides: Partial<DisplayStateColorProps> = {}
+): DisplayStateColorProps {
   return {
-    key: "test-key",
+    element_type: "widget",
+    widget_type: "DisplayStateColor",
+    parent_component: "DisplayComponent",
     x: 0,
     y: 0,
     width: 30,
     height: 20,
-    karaboKeys: "DEVICE_X.state",
-    fontSize: 10,
-    fontWeight: "NORMAL",
-    showString: false,
+    keys: ["DEVICE_X.state"],
+    font_size: 10,
+    font_weight: "normal",
+    show_string: false,
     ...overrides,
   };
 }
 
-function renderWithKey(p: DisplayStateColorElementProps) {
+function renderWithKey(p: DisplayStateColorProps & { key?: string }) {
   const { key, ...rest } = p;
   return render(<DisplayStateColor key={key} {...rest} />);
 }
@@ -62,18 +64,18 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe("DisplayStateColor - showString behavior", () => {
-  it("renders text when showString=true and device is online", () => {
+describe("DisplayStateColor - show_string behavior", () => {
+  it("renders text when show_string=true and device is online", () => {
     jest.spyOn(TopologyConnector.inst, "isDeviceOnline").mockReturnValue(true);
-    const { container } = renderWithKey(makeProps({ showString: true }));
+    const { container } = renderWithKey(makeProps({ show_string: true }));
     expect(screen.getByText("ERROR")).toBeInTheDocument();
     expect(container.firstChild as HTMLElement).toHaveStyle(
       `background-color: ${guiStateColors.errorColor}`
     );
   });
 
-  it("does not render text when showString=false (color only)", () => {
-    const { container } = renderWithKey(makeProps({ showString: false }));
+  it("does not render text when show_string=false (color only)", () => {
+    const { container } = renderWithKey(makeProps({ show_string: false }));
     expect(screen.queryByText("ERROR")).not.toBeInTheDocument();
     expect(container.firstChild as HTMLElement).toHaveStyle(
       `background-color: ${guiStateColors.errorColor}`
@@ -82,12 +84,13 @@ describe("DisplayStateColor - showString behavior", () => {
 
   it("renders offline overlay and hides text when device is offline", () => {
     jest.spyOn(TopologyConnector.inst, "isDeviceOnline").mockReturnValue(false);
-    const { container } = renderWithKey(makeProps({ showString: true }));
+    const { container } = renderWithKey(makeProps({ show_string: true }));
     expect(screen.queryByText("ERROR")).not.toBeInTheDocument();
     expect(container.querySelector("svg")).toBeInTheDocument();
   });
 
   it("uses unknownColor for unmapped states", () => {
+    jest.spyOn(TopologyConnector.inst, "isDeviceOnline").mockReturnValue(true);
     const mockProperty: PropertyInfo = {
       key: "state",
       value: "not-a-known-state",

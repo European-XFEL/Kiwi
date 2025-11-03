@@ -1,6 +1,6 @@
-import Body from "../layout/Body";
-import KiwiFooter from "../layout/KiwiFooter";
-import Layout from "../layout/Layout";
+import Body from "../layouts/Body";
+import KiwiFooter from "../layouts/KiwiFooter";
+import Layout from "../layouts/Layout";
 import KiwiNavBar from "../navigation/KiwiNavBar";
 
 const LoggedInState = () => (

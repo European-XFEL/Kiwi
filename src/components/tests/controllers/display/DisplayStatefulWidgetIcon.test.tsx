@@ -1,5 +1,5 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import type { DisplayStatefulWidgetIconProps } from "@/karabo_data/SceneElements";
+import type { DisplayStatefulIconProps } from "@/scene/scene_types/controllers";
 import { TopologyConnector } from "@/karabo_connectors/TopologyConnector";
 import type { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
 import { FONT_BASE_SIZE } from "../../../shared/helpers/QtFontDescriptor";
@@ -28,23 +28,25 @@ jest.mock("@/components/shared/helpers/loadAndRecolor", () => ({
 import DisplayStatefulWidgetIcon from "../../../controllers/display/DisplayStatefulWidgetIcon";
 
 function makeProps(
-  overrides: Partial<DisplayStatefulWidgetIconProps> = {}
-): DisplayStatefulWidgetIconProps {
+  overrides: Partial<DisplayStatefulIconProps> = {}
+): DisplayStatefulIconProps {
   return {
-    key: "test-key",
+    element_type: "widget",
+    widget_type: "DisplayStatefulIcon",
+    parent_component: "DisplayComponent",
     x: 10,
     y: 20,
     width: 40,
     height: 40,
-    karaboKeys: "DEVICE_X.state",
-    iconName: "icon_bs_det_beampos",
-    fontSize: FONT_BASE_SIZE,
-    fontWeight: "NORMAL",
+    keys: ["DEVICE_X.state"],
+    icon_name: "icon_bs_det_beampos",
+    font_size: FONT_BASE_SIZE,
+    font_weight: "normal",
     ...overrides,
   };
 }
 
-function renderWithKey(p: DisplayStatefulWidgetIconProps) {
+function renderWithKey(p: DisplayStatefulIconProps & { key?: string }) {
   const { key, ...rest } = p;
   return render(<DisplayStatefulWidgetIcon key={key} {...rest} />);
 }
@@ -111,7 +113,7 @@ describe("DisplayStatefulWidgetIcon - Basic Tests", () => {
   });
 
   it("loads and injects recolored SVG for icon_bs_det_beampos", async () => {
-    renderWithKey(makeProps({ iconName: "icon_bs_det_beampos" }));
+    renderWithKey(makeProps({ icon_name: "icon_bs_det_beampos" }));
 
     // Should call loadAndRecolorSvg
     await waitFor(() =>
@@ -138,7 +140,7 @@ describe("DisplayStatefulWidgetIcon - Basic Tests", () => {
       "/icons/stateful/icon_nitrogen_supply.png",
     ]);
 
-    renderWithKey(makeProps({ iconName: "icon_nitrogen_supply" }));
+    renderWithKey(makeProps({ icon_name: "icon_nitrogen_supply" }));
 
     await waitFor(() =>
       expect(mockLoadAndRecolorSvg).toHaveBeenCalledWith(
@@ -161,7 +163,7 @@ describe("DisplayStatefulWidgetIcon - Basic Tests", () => {
       "/icons/stateful/icon_massflow.png",
     ]);
 
-    renderWithKey(makeProps({ iconName: "icon_massflow" }));
+    renderWithKey(makeProps({ icon_name: "icon_massflow" }));
 
     await waitFor(() =>
       expect(mockLoadAndRecolorSvg).toHaveBeenCalledWith(
@@ -187,7 +189,7 @@ describe("DisplayStatefulWidgetIcon - Basic Tests", () => {
       "/icons/stateful/icon_bdump.png",
     ]);
 
-    renderWithKey(makeProps({ iconName: "icon_bdump" }));
+    renderWithKey(makeProps({ icon_name: "icon_bdump" }));
 
     await waitFor(() => {
       const img = screen.getByAltText(
@@ -210,7 +212,7 @@ describe("DisplayStatefulWidgetIcon - Basic Tests", () => {
     mockLoadAndRecolorSvg.mockReset();
     mockLoadAndRecolorSvg.mockRejectedValue(new Error("All failed"));
 
-    renderWithKey(makeProps({ iconName: "unknown" }));
+    renderWithKey(makeProps({ icon_name: "unknown" }));
 
     await waitFor(() => {
       const img = screen.getByAltText(/unknown - ERROR/i) as HTMLImageElement;
@@ -247,8 +249,7 @@ describe("DisplayStatefulWidgetIcon - Basic Tests", () => {
     mockUseKaraboPropertyInfo.mockReturnValue({ property: mockPropertyActive });
 
     const props = makeProps();
-    const { key, ...propsWithoutKey } = props;
-    rerender(<DisplayStatefulWidgetIcon key={key} {...propsWithoutKey} />);
+    rerender(<DisplayStatefulWidgetIcon key="test-key" {...props} />);
 
     await waitFor(() =>
       expect(screen.getByRole("img", { name: /ACTIVE/i })).toBeInTheDocument()
@@ -279,7 +280,7 @@ describe("DisplayStatefulWidgetIcon - Basic Tests", () => {
         `/icons/stateful/${iconName}.png`,
       ]);
 
-      const props = makeProps({ iconName });
+      const props = makeProps({ icon_name: iconName });
       const { unmount } = renderWithKey({ ...props, key: `test-${iconName}` });
 
       await waitFor(() =>

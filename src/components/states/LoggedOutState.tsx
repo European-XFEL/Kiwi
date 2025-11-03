@@ -1,5 +1,5 @@
 import { Separator } from "@/components/ui/separator";
-import Header from "../layout/Header";
+import Header from "../layouts/Header";
 import LoginPanel from "../auth/LoginPanel";
 
 const LoggedOutState = () => (
