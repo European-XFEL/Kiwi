@@ -1,14 +1,16 @@
 import React from "react";
-import { DynamicElementProps } from "@/karabo_data/SceneElements";
+import type { DisplayLabelProps } from "../../../scene/scene_types/controllers/display";
 import DeviceOfflineOverlay from "@/components/DeviceOfflineOverlay";
 import { FONT_FAMILY_DEFAULT } from "../../shared/helpers/QtFontDescriptor";
 import { HashTypes } from "karabo-ts";
 import { useDeviceOnlineStatus } from "../../shared/hooks/useDeviceOnlineStatus";
 import { useKaraboPropertyInfo } from "../../shared/hooks/useKaraboProperty";
+import { useKaraboKeysString } from "../../shared/hooks/useKaraboKeysString";
 
-const DisplayLabel: React.FC<DynamicElementProps> = (props) => {
+const DisplayLabel: React.FC<DisplayLabelProps> = (props) => {
   //hooks
-  const { deviceId, property } = useKaraboPropertyInfo(props.karaboKeys);
+  const keysStr = useKaraboKeysString(props.keys);
+  const { deviceId, property } = useKaraboPropertyInfo(keysStr);
   const isOffline = useDeviceOnlineStatus(deviceId);
 
   //value and unit
@@ -41,11 +43,21 @@ const DisplayLabel: React.FC<DynamicElementProps> = (props) => {
         left: props.x,
         top: props.y,
         fontFamily: FONT_FAMILY_DEFAULT,
-        fontSize: props.fontSize,
-        fontWeight: props.fontWeight.toLowerCase(),
+        fontSize: props.font_size,
+        fontWeight: props.font_weight.toLowerCase(),
       }}
     >
-      {isOffline ? <DeviceOfflineOverlay {...props} /> : `${labelValue}`}
+      {isOffline ? (
+        <DeviceOfflineOverlay
+          keys={props.keys}
+          x={props.x}
+          y={props.y}
+          width={props.width}
+          height={props.height}
+        />
+      ) : (
+        `${labelValue}`
+      )}
     </div>
   );
 };

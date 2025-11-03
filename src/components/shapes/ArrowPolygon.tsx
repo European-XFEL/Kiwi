@@ -1,24 +1,71 @@
 import React from "react";
-import { ArrowPolygonElementProps } from "@/karabo_data/SceneElements";
-import Line from "./Line";
-import Polygon from "./Polygon";
+import type { ArrowPolygonProps } from "@/scene/scene_types/shapes";
 
 /**
- * ArrowPolygon Component - Renders an arrow with a polygon arrowhead
+ * ArrowPolygon Component - Renders a line with a polygon arrowhead.
+ * Uses the primitive fields defined in ArrowPolygonProps.
  */
-const ArrowPolygon: React.FC<ArrowPolygonElementProps> = (props) => {
-  // Extract and strip key props before spreading
-  const { line, polygon } = props;
-  const { key: lineKey, ...lineProps } = line;
-  const { key: polygonKey, ...polygonProps } = polygon;
+const ArrowPolygon: React.FC<ArrowPolygonProps> = (props) => {
+  const {
+    x1,
+    y1,
+    x2,
+    y2,
+    hx1,
+    hy1,
+    hx2,
+    hy2,
+    stroke,
+    stroke_width,
+    stroke_opacity,
+    stroke_linecap,
+    stroke_dasharray,
+    stroke_dashoffset,
+    stroke_linejoin,
+    stroke_miterlimit,
+    fill,
+    fill_opacity,
+  } = props;
+
+  // Convert stroke_dasharray (if number[]) to valid string
+  const dashArray = Array.isArray(stroke_dasharray)
+    ? stroke_dasharray.join(" ")
+    : stroke_dasharray;
 
   return (
     <g>
       {/* Line shaft */}
-      <Line key={lineKey} {...lineProps} />
+      <line
+        x1={x1}
+        y1={y1}
+        x2={x2}
+        y2={y2}
+        stroke={stroke}
+        strokeWidth={stroke_width}
+        strokeOpacity={stroke_opacity}
+        strokeLinecap={stroke_linecap}
+        strokeDasharray={dashArray}
+        strokeDashoffset={stroke_dashoffset}
+        strokeLinejoin={stroke_linejoin}
+        strokeMiterlimit={stroke_miterlimit}
+        fill={fill}
+        fillOpacity={fill_opacity}
+      />
 
-      {/* Polygon arrowhead */}
-      <Polygon key={polygonKey} {...polygonProps} />
+      {/* Arrowhead Polygon */}
+      <polygon
+        points={`${x2},${y2} ${hx1},${hy1} ${hx2},${hy2}`}
+        stroke={stroke}
+        strokeWidth={stroke_width}
+        strokeOpacity={stroke_opacity}
+        strokeLinecap={stroke_linecap}
+        strokeDasharray={dashArray}
+        strokeDashoffset={stroke_dashoffset}
+        strokeLinejoin={stroke_linejoin}
+        strokeMiterlimit={stroke_miterlimit}
+        fill={fill}
+        fillOpacity={fill_opacity}
+      />
     </g>
   );
 };

@@ -1,24 +1,26 @@
 import React from "react";
-import { LabelElementProps } from "../../karabo_data/SceneElements";
+import type { LabelProps } from "../../scene/scene_types/staticWidgets";
 
-const Label: React.FC<LabelElementProps> = (props) => {
+const Label: React.FC<LabelProps> = (props) => {
   return (
     <div
       className="absolute overflow-hidden text-ellipsis whitespace-nowrap border-solid p-0.5"
+      role="text"
+      aria-label={props.text}
       style={{
         width: `${props.width}px`,
         height: `${props.height}px`,
         left: `${props.x}px`,
         top: `${props.y}px`,
-        borderWidth: props.frameWidth,
-        borderColor: props.foregroundColor,
-        color: props.foregroundColor,
-        backgroundColor: props.backgroundColor,
-        fontFamily: props.fontFamily,
-        fontSize: props.fontSize,
-        fontWeight: props.fontWeight,
-        fontStyle: props.fontStyle,
-        textDecoration: props.textDecoration,
+        borderWidth: props.frame_width,
+        borderColor: props.foreground,
+        color: props.foreground,
+        backgroundColor: props.background,
+        fontFamily: props.font_family,
+        fontSize: props.font_size,
+        fontWeight: props.font_weight,
+        fontStyle: props.font_style,
+        textDecoration: props.text_decoration,
         textAlign:
           props.alignment.toLowerCase() as React.CSSProperties["textAlign"],
       }}

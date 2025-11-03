@@ -1,5 +1,5 @@
 import { Separator } from "@/components/ui/separator";
-import Header from "../layout/Header";
+import Header from "../layouts/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle } from "lucide-react";
 

@@ -51,6 +51,7 @@ export const loadProjectItemsResultFromHash = (
   } else {
     const items: DbItemInfo[] = [];
     const itemHashes = hash.getValue("reply.items") as unknown as HashValue[];
+    //console.log(itemHashes);
     for (let i = 0; i < itemHashes.length; i++) {
       const item = new Hash(itemHashes[i]);
       const domain = item.getValue("domain") as string;
@@ -61,6 +62,7 @@ export const loadProjectItemsResultFromHash = (
         attributeNamePrefix: "@_",
         allowBooleanAttributes: true,
       });
+      //console.log(xml);
       const xmlObj = parser.parse(xml);
       const itemType = xmlObj.xml["@_item_type"];
       if (itemType === "project") {
@@ -123,6 +125,7 @@ export const loadProjectItemsResultFromHash = (
               : JSON.stringify(xmlObj.xml["svg"]),
           item_type: itemType,
         };
+        //console.log(item);
         items.push(item);
       }
     }
