@@ -4,7 +4,7 @@ import type { LabelProps } from "../../scene/scene_types/staticWidgets";
 const Label: React.FC<LabelProps> = (props) => {
   return (
     <div
-      className="absolute overflow-hidden text-ellipsis whitespace-nowrap border-solid p-0.5"
+      className="absolute flex items-center overflow-hidden text-ellipsis whitespace-nowrap border-solid p-0.5"
       role="text"
       aria-label={props.text}
       style={{
