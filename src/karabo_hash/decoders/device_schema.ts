@@ -6,6 +6,7 @@ import {
 
 import { MetricPrefix, Unit } from "@/karabo_data/SchemaEnums";
 import { flattenHash } from "@/karabo_hash/hash_utils";
+import { VectorElementType } from "../HashValueType";
 
 export const deviceSchemaFromHash = (hash: Hash): DeviceSchemaInfo => {
   const deviceId = hash.getValue("deviceId");
@@ -36,6 +37,9 @@ export const deviceSchemaFromHash = (hash: Hash): DeviceSchemaInfo => {
               break;
             case "displayedName":
               propAttrs.displayedName = karaboVal.value_ as string;
+              break;
+            case "options":
+              propAttrs.options = karaboVal.value_ as VectorElementType[];
               break;
             case "unitSymbol":
               if (Object.values(Unit).includes(karaboVal.value_ as Unit)) {

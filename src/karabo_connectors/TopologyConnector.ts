@@ -4,6 +4,7 @@ import {
   DeviceServerInfo,
   SystemTopologyInfo,
   SystemTopologyUpdateInfo,
+  MacroInfo,
 } from "@/karabo_data/TopologyInfo";
 
 export type DeviceInfoUpdateHandler = (
@@ -29,6 +30,7 @@ export class TopologyConnector {
   private _systemTopology: SystemTopologyInfo = {
     devices: [],
     servers: [],
+    macros: [],
   };
 
   get systemTopology() {
@@ -48,11 +50,23 @@ export class TopologyConnector {
           );
         }
       } else {
-        // Monitored device is offline
-        for (const updateHandler of updateHandlers) {
-          updateHandler(TopologyEventType.GONE, {
-            deviceId: deviceId,
-          });
+        // Macros are considered "devices" for topology matters
+        const macroIdx = this._getMacroIdx(deviceId);
+        if (macroIdx >= 0) {
+          // Monitored "macro device" is online
+          for (const updateHandler of updateHandlers) {
+            updateHandler(
+              TopologyEventType.NEW,
+              this._systemTopology.macros[macroIdx]
+            );
+          }
+        } else {
+          // Monitored device (or macro) is offline
+          for (const updateHandler of updateHandlers) {
+            updateHandler(TopologyEventType.GONE, {
+              deviceId: deviceId,
+            });
+          }
         }
       }
     }
@@ -70,8 +84,24 @@ export class TopologyConnector {
     return deviceIdx;
   };
 
+  /**
+   * Returns the index of the MacroInfo record for a given macroId in the topology
+   * */
+  _getMacroIdx = (macroId: string): number => {
+    const macroIdx = this._systemTopology.macros.findIndex(
+      (value: MacroInfo) => {
+        return value.deviceId === macroId;
+      }
+    );
+    return macroIdx;
+  };
+
   isDeviceOnline = (deviceId: string): boolean => {
-    const deviceIdx = this._getDeviceIdx(deviceId);
+    let deviceIdx = this._getDeviceIdx(deviceId);
+    if (deviceIdx < 0) {
+      // Maybe the deviceId refers to a macro
+      deviceIdx = this._getMacroIdx(deviceId);
+    }
     return deviceIdx >= 0;
   };
 
@@ -82,14 +112,26 @@ export class TopologyConnector {
       gone: goneInstances,
     } = updates;
 
-    const { devices: newDevices, servers: newServers } = newInstances;
-    const { devices: updatedDevices, servers: updatedServers } =
-      updatedInstances;
-    const { devices: goneDevices, servers: goneServers } = goneInstances;
+    const {
+      devices: newDevices,
+      servers: newServers,
+      macros: newMacros,
+    } = newInstances;
+    const {
+      devices: updatedDevices,
+      servers: updatedServers,
+      macros: updatedMacros,
+    } = updatedInstances;
+    const {
+      devices: goneDevices,
+      servers: goneServers,
+      macros: goneMacros,
+    } = goneInstances;
 
     try {
       const currentDevices = this.systemTopology.devices;
       const currentServers = this.systemTopology.servers;
+      const currentMacros = this.systemTopology.macros;
 
       // ===== HANDLE DEVICE ADDITIONS =====
       for (const newDevice of newDevices) {
@@ -112,6 +154,31 @@ export class TopologyConnector {
         } else {
           console.warn(
             `Inconsistent topology update: new device, ${newDevice.deviceId}, is already in the topology!`
+          );
+        }
+      }
+
+      // ===== HANDLE MACRO ADDITIONS =====
+      for (const newMacro of newMacros) {
+        const existingMacroIndex = currentMacros.findIndex(
+          (currentMacro: MacroInfo) =>
+            currentMacro.deviceId === newMacro.deviceId
+        );
+
+        if (existingMacroIndex === -1) {
+          // Macro doesn't exist, add it
+          currentMacros.push(newMacro);
+          if (this._deviceInfoMonitors.has(newMacro.deviceId)) {
+            // Sends updates to all known monitors for the macro
+            for (const updateHandler of this._deviceInfoMonitors.get(
+              newMacro.deviceId
+            )!) {
+              updateHandler(TopologyEventType.NEW, newMacro);
+            }
+          }
+        } else {
+          console.warn(
+            `Inconsistent topology update: new macro, ${newMacro.deviceId}, is already in the topology!`
           );
         }
       }
@@ -158,6 +225,31 @@ export class TopologyConnector {
         }
       }
 
+      // ===== HANDLE MACRO MODIFICATIONS =====
+      for (const modifiedMacro of updatedMacros) {
+        const currentMacroIndex = currentMacros.findIndex(
+          (currentMacro: MacroInfo) =>
+            currentMacro.deviceId === modifiedMacro.deviceId
+        );
+
+        if (currentMacroIndex >= 0) {
+          // Macro exists, update it
+          currentMacros[currentMacroIndex] = modifiedMacro;
+          if (this._deviceInfoMonitors.has(modifiedMacro.deviceId)) {
+            // Sends updates to all known monitors for the device
+            for (const updateHandler of this._deviceInfoMonitors.get(
+              modifiedMacro.deviceId
+            )!) {
+              updateHandler(TopologyEventType.UPDATE, modifiedMacro);
+            }
+          }
+        } else {
+          console.warn(
+            `Inconsistent topology update: updated macro, ${modifiedMacro.deviceId}, is not in the topology!`
+          );
+        }
+      }
+
       // ===== HANDLE SERVER MODIFICATIONS =====
       for (const modifiedServer of updatedServers) {
         const currentServerIndex = currentServers.findIndex(
@@ -200,6 +292,35 @@ export class TopologyConnector {
         } else {
           console.warn(
             `Inconsistent topology update: device to be removed, ${removedDevice.deviceId}, is not in the topology!`
+          );
+        }
+      }
+
+      // ===== HANDLE MACRO REMOVALS =====
+      for (const removedMacro of goneMacros) {
+        const currentMacroIndex = currentMacros.findIndex(
+          (currentMacro: MacroInfo) =>
+            currentMacro.deviceId === removedMacro.deviceId
+        );
+
+        if (currentMacroIndex >= 0) {
+          // Macro exists, remove it
+          currentMacros.splice(currentMacroIndex, 1);
+          if (this._deviceInfoMonitors.has(removedMacro.deviceId)) {
+            // Sends updates to all known monitors for the device
+            for (const updateHandler of this._deviceInfoMonitors.get(
+              removedMacro.deviceId
+            )!) {
+              // To signal that the macro has been removed from the topology,
+              // an undefined value is sent as the DeviceInfo
+              updateHandler(TopologyEventType.GONE, {
+                deviceId: removedMacro.deviceId,
+              });
+            }
+          }
+        } else {
+          console.warn(
+            `Inconsistent topology update: macro to be removed, ${removedMacro.deviceId}, is not in the topology!`
           );
         }
       }

@@ -3,6 +3,7 @@ import {
   DeviceInfo,
   DeviceServerInfo,
   SystemTopologyUpdateInfo,
+  MacroInfo,
 } from "../../karabo_data/TopologyInfo";
 import { Hash, HashValue } from "karabo-ts";
 
@@ -18,13 +19,9 @@ function extractDeviceInstanceInfos(devicesHashValue: HashValue): DeviceInfo[] {
       karaboVersion: attrs["karaboVersion"] as string,
       classId: attrs["classId"] as string,
       serverId: attrs["serverId"] as string,
-      visibility: attrs["visibility"] as number,
       host: attrs["host"] as string,
       status: attrs["status"] as string,
       capabilities: attrs["capabilities"] as number,
-      frac: attrs["frac"] ? (attrs["frac"] as number) : undefined,
-      sec: attrs["sec"] ? (attrs["sec"] as number) : undefined,
-      tid: attrs["tid"] ? (attrs["tid"] as number) : undefined,
     });
   }
   return deviceInstInfos;
@@ -43,7 +40,6 @@ function extractServerInstanceInfos(
       heartbeatInterval: attrs["heartbeatInterval"] as number,
       karaboVersion: attrs["karaboVersion"] as string,
       version: attrs["version"] as string,
-      visibility: attrs["visibility"] as number,
       host: attrs["host"] as string,
       lang: attrs["lang"] as string,
       log: attrs["log"] as string,
@@ -62,6 +58,28 @@ function extractServerInstanceInfos(
   return serverInstInfos;
 }
 
+function extractMacroInfos(macrosHashValue: HashValue): MacroInfo[] {
+  const macroInfos: MacroInfo[] = [];
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  for (const [macroId, _, attrs] of new Hash(macrosHashValue).iterall()) {
+    macroInfos.push({
+      deviceId: macroId,
+      heartbeatInterval: attrs["heartbeatInterval"] as number,
+      karaboVersion: attrs["karaboVersion"] as string,
+      classId: attrs["classId"] as string,
+      serverId: attrs["serverId"] as string,
+      host: attrs["host"] as string,
+      status: attrs["status"] as string,
+      capabilities: attrs["capabilities"] as number,
+      module: attrs["module"] as string,
+      project: attrs["project"] as string,
+    });
+  }
+
+  return macroInfos;
+}
+
 export const sysTopologyInfoFromHash = (hash: Hash): SystemTopologyInfo => {
   // Gather info on devices
   const devices = extractDeviceInstanceInfos(
@@ -71,9 +89,14 @@ export const sysTopologyInfoFromHash = (hash: Hash): SystemTopologyInfo => {
   const servers = extractServerInstanceInfos(
     hash.getValue("systemTopology.server") as HashValue
   );
+  const macros = extractMacroInfos(
+    hash.getValue("systemTopology.macro") as HashValue
+  );
+  // Gather info on macros
   return {
     devices: devices,
     servers: servers,
+    macros: macros,
   };
 };
 
@@ -82,6 +105,7 @@ export const sysTopologyUpdateInfoFromHash = (
 ): SystemTopologyUpdateInfo => {
   const newHashDevices = hash.getValue("changes.new.device") as HashValue;
   const newHashServers = hash.getValue("changes.new.server") as HashValue;
+  const newHashMacros = hash.getValue("changes.new.macro") as HashValue;
   const newDevices =
     newHashDevices !== undefined
       ? extractDeviceInstanceInfos(newHashDevices)
@@ -90,6 +114,8 @@ export const sysTopologyUpdateInfoFromHash = (
     newHashServers !== undefined
       ? extractServerInstanceInfos(newHashServers)
       : [];
+  const newMacros =
+    newHashMacros !== undefined ? extractMacroInfos(newHashMacros) : [];
 
   const updatedHashDevices = hash.getValue(
     "changes.update.device"
@@ -97,6 +123,7 @@ export const sysTopologyUpdateInfoFromHash = (
   const updatedHashServers = hash.getValue(
     "changes.update.server"
   ) as HashValue;
+  const updatedHashMacros = hash.getValue("changes.update.macro") as HashValue;
   const updatedDevices =
     updatedHashDevices !== undefined
       ? extractDeviceInstanceInfos(updatedHashDevices)
@@ -105,9 +132,12 @@ export const sysTopologyUpdateInfoFromHash = (
     updatedHashServers !== undefined
       ? extractServerInstanceInfos(updatedHashServers)
       : [];
+  const updatedMacros =
+    updatedHashMacros !== undefined ? extractMacroInfos(updatedHashMacros) : [];
 
   const goneHashDevices = hash.getValue("changes.gone.device") as HashValue;
   const goneHashServers = hash.getValue("changes.gone.server") as HashValue;
+  const goneHashMacros = hash.getValue("changes.gone.macro") as HashValue;
   const goneDevices =
     goneHashDevices !== undefined
       ? extractDeviceInstanceInfos(goneHashDevices)
@@ -116,19 +146,24 @@ export const sysTopologyUpdateInfoFromHash = (
     goneHashServers !== undefined
       ? extractServerInstanceInfos(goneHashServers)
       : [];
+  const goneMacros =
+    goneHashMacros !== undefined ? extractMacroInfos(goneHashMacros) : [];
 
   return {
     new: {
       devices: newDevices,
       servers: newServers,
+      macros: newMacros,
     },
     update: {
       devices: updatedDevices,
       servers: updatedServers,
+      macros: updatedMacros,
     },
     gone: {
       devices: goneDevices,
       servers: goneServers,
+      macros: goneMacros,
     },
   };
 };

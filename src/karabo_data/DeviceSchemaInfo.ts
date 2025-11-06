@@ -1,5 +1,5 @@
 import { HashTypes } from "karabo-ts";
-import { HashValueType } from "@/karabo_hash/HashValueType";
+import { HashValueType, VectorElementType } from "@/karabo_hash/HashValueType";
 import {
   AccessLevel,
   AccessMode,
@@ -28,4 +28,5 @@ export interface PropertySchemaAttributes {
   unitSymbol?: string;
   metricPrefixSymbol?: string;
   nodeType: NodeType;
+  options?: VectorElementType[];
 }
