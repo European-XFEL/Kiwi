@@ -221,7 +221,6 @@ export class DisplayStatefulIconElementModel extends BaseControllerWidgetModel<D
       font_size: this.font_size,
       font_weight: this.font_weight,
       icon_name: this.icon_name,
-      layout_data: this.layout_data,
     };
   }
 }

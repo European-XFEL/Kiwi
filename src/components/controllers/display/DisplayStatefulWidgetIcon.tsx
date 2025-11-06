@@ -1,114 +1,57 @@
-import React from "react";
+import React, { useMemo } from "react";
 import type { DisplayStatefulIconProps } from "@/scene/scene_types/controllers";
 import { useKaraboPropertyInfo } from "../../shared/hooks/useKaraboProperty";
-import { useGuiStateColor } from "../../shared/hooks/useGuiStateColor";
-import { useDeviceOnlineStatus } from "../../shared/hooks/useDeviceOnlineStatus";
 import { useKaraboKeysString } from "../../shared/hooks/useKaraboKeysString";
+import { useDeviceOnlineStatus } from "@/components/shared/hooks/useDeviceOnlineStatus";
+import { useGuiStateColor } from "../../shared/hooks/useGuiStateColor";
 import DeviceOfflineOverlay from "../../DeviceOfflineOverlay";
-import { getIconPaths, getPrimaryIconPath } from "@/shared/helpers/getIconPath";
-import { loadAndRecolorSvg } from "../../shared/helpers/loadAndRecolor";
+import { statefulIconTextById } from "@/components/shared/helpers/statefulIcons";
+import {
+  recolorPreloadedSvg,
+  getPreloadedCacheKey,
+} from "@/components/shared/helpers/loadAndRecolor";
 
-/**
- * DisplayStatefulIcon - Displays a dynamic icon that changes color/state
- * based on a device property value. Uses the new model-based architecture.
- */
 const DisplayStatefulIcon: React.FC<DisplayStatefulIconProps> = (props) => {
   const { keys, x, y, width, height, icon_name } = props;
 
-  // Join keys array for hook compatibility
   const joinedKeys = useKaraboKeysString(keys);
   const { deviceId, property } = useKaraboPropertyInfo(joinedKeys);
-  const isOffline = useDeviceOnlineStatus(deviceId);
-
-  // Local state
-  const [svgContent, setSvgContent] = React.useState("");
-  const [currentIconIndex, setCurrentIconIndex] = React.useState(0);
-  const [hasError, setHasError] = React.useState(false);
-
-  // Extract and convert device state
   const rawState = property ? String(property.value) : "UNKNOWN";
+
+  const isOffline = useDeviceOnlineStatus(deviceId);
   const { colorValue } = useGuiStateColor(rawState);
 
-  // Get potential icon paths
-  const iconPaths = React.useMemo(
-    () =>
-      getIconPaths({
-        krbClass: "DisplayComponent",
-        widget: "StatefulIconWidget",
-        iconName: icon_name,
-      }),
-    [icon_name]
-  );
+  //  if the module wasn’t mocked correctly
+  const svgXML = statefulIconTextById?.[icon_name] ?? null;
 
-  const currentIconPath = hasError
-    ? getPrimaryIconPath({
-        krbClass: "DisplayComponent",
-        widget: "StatefulIconWidget",
-        iconName: "no_icon",
-      })
-    : iconPaths[currentIconIndex];
+  const recoloredSvg = useMemo(() => {
+    if (!svgXML) return "";
 
-  // Load and recolor SVG dynamically
-  React.useEffect(() => {
-    if (!currentIconPath.endsWith(".svg")) {
-      setSvgContent("");
-      return;
-    }
+    const cacheKey = getPreloadedCacheKey(icon_name, colorValue, {
+      stroke: true,
+      fit: "contain",
+      nonScalingStroke: false,
+    });
 
-    const controller = new AbortController();
+    const recolorResult = recolorPreloadedSvg(svgXML, colorValue, cacheKey, {
+      stroke: true,
+      fit: "contain",
+      nonScalingStroke: false,
+      enablePerfTracking: true,
+    });
 
-    loadAndRecolorSvg(
-      currentIconPath,
-      colorValue,
-      {
-        stroke: false,
-        fit: "contain",
-        nonScalingStroke: false,
-        enablePerfTracking: true,
-      },
-      controller.signal
-    )
-      .then((result) => {
-        if (!controller.signal.aborted) {
-          setSvgContent(result.svg);
+    console.log(
+      `[DisplayStatefulIcon] ${icon_name} | ${
+        recolorResult.metrics?.fromCache ? "CACHE HIT " : "CACHE MISS "
+      }`
+    );
 
-          if (result.metrics && process.env.NODE_ENV === "development") {
-            const { computationTime, renderingTime } = result.metrics;
-            const total = (computationTime ?? 0) + (renderingTime ?? 0);
-            if (total > 50) {
-              console.warn(
-                `[SVG Performance Warning] ${icon_name} took ${total.toFixed(
-                  2
-                )}ms`,
-                result.metrics
-              );
-            }
-          }
-        }
-      })
-      .catch((err) => {
-        if (controller.signal.aborted) return;
-        console.warn(`Failed to load SVG: ${currentIconPath}`, err);
-        if (currentIconIndex < iconPaths.length - 1) {
-          setCurrentIconIndex((i) => i + 1);
-        } else {
-          console.error(`All icon formats failed for: ${icon_name}`);
-          setHasError(true);
-        }
-      });
-
-    return () => controller.abort();
-  }, [currentIconPath, colorValue, currentIconIndex, iconPaths, icon_name]);
-
-  // Reset state on icon change
-  React.useEffect(() => {
-    setCurrentIconIndex(0);
-    setHasError(false);
-  }, [icon_name]);
+    return recolorResult.svg;
+  }, [svgXML, colorValue, icon_name]);
 
   return (
-    <figure
-      className="absolute m-0 overflow-hidden"
+    <div
+      className="absolute"
       style={{
         left: x,
         top: y,
@@ -118,8 +61,6 @@ const DisplayStatefulIcon: React.FC<DisplayStatefulIconProps> = (props) => {
         alignItems: "center",
         justifyContent: "center",
       }}
-      role="img"
-      aria-label={`${icon_name} - ${rawState}`}
     >
       {isOffline ? (
         <DeviceOfflineOverlay
@@ -130,19 +71,20 @@ const DisplayStatefulIcon: React.FC<DisplayStatefulIconProps> = (props) => {
           height={height}
           key={`overlay-${joinedKeys}`}
         />
-      ) : svgContent ? (
+      ) : recoloredSvg ? (
         <div
-          dangerouslySetInnerHTML={{ __html: svgContent }}
-          style={{ width: "100%", height: "100%", lineHeight: 0 }}
+          style={{ width: "100%", height: "100%" }}
+          dangerouslySetInnerHTML={{ __html: recoloredSvg }}
         />
       ) : (
-        <img
-          src={currentIconPath}
-          alt={`${icon_name} - ${rawState}`}
-          style={{ width: "100%", height: "100%", objectFit: "contain" }}
-        />
+        // fallback only runs if svgXML was missing
+        <svg width="100%" height="100%" viewBox="0 0 120 30">
+          <text x="0" y="20" fontSize="10">
+            {icon_name}
+          </text>
+        </svg>
       )}
-    </figure>
+    </div>
   );
 };
 

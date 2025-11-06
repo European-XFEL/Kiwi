@@ -1,8 +1,3 @@
-// ============================================================================
-// SVG Recoloring Utility
-// Efficiently recolors and normalizes SVG icons for stateful widgets
-// ============================================================================
-
 import {
   createPerformanceTracker,
   measureComputation,
@@ -10,45 +5,31 @@ import {
   type PerformanceMetrics,
 } from "../../../shared/helpers/performance";
 
+// In-memory LRU-ish cache for recolored SVGs
 const recolorCache = new Map<string, string>();
-const MAX_CACHE_SIZE = 100;
-
-// ============================================================================
-// Types
-// ============================================================================
+const MAX_CACHE_SIZE = 200;
 
 export interface RecolorOptions {
-  /** Replace strokes in addition to fills (defaults to true) */
   stroke?: boolean;
-  /** How to fit the SVG in its container */
   fit?: "contain" | "cover" | "fill";
-  /** Keep stroke widths constant when scaling */
   nonScalingStroke?: boolean;
-  /** If a file contains multiple <svg> blocks, prefer the one containing this id */
   preferSvgId?: string;
-  /** Extra outer margin (as fraction of max(width,height)) to mimic Qt look; default ~6% */
   extraPadPercent?: number;
-  /** Enable performance tracking and logging */
   enablePerfTracking?: boolean;
 }
 
 export interface RecolorResult {
-  /** The recolored SVG string */
   svg: string;
-  /** Performance metrics if tracking was enabled */
   metrics?: PerformanceMetrics;
 }
 
-// ============================================================================
-// Utilities
-// ============================================================================
-
-/** Extract a clean single <svg>…</svg> (handles BOM, prologs/doctype, comments, multi-root) */
+/**
+ * Take a raw string and extract a single clean <svg>...</svg> block.
+ * If multiple SVGs exist, optionally pick one by id.
+ * Also strips XML/doctype/comments.
+ */
 function sanitizeSvgText(input: string, preferId?: string): string {
-  // Remove BOM
   let s = input.replace(/^\uFEFF/, "");
-
-  // Extract all <svg>…</svg> blocks (if any)
   const allSvgs = s.match(/<svg[\s\S]*?<\/svg>/gi);
   if (allSvgs && allSvgs.length > 0) {
     if (preferId) {
@@ -60,13 +41,13 @@ function sanitizeSvgText(input: string, preferId?: string): string {
       s = allSvgs[0];
     }
   } else {
-    // Fallback: slice between the first <svg and the last </svg>
+    // fallback: try to slice first/last <svg>
     const start = s.search(/<svg[\s>]/i);
     const end = s.toLowerCase().lastIndexOf("</svg>");
     if (start >= 0 && end >= 0) s = s.slice(start, end + 6);
   }
 
-  // Remove XML prologs / DOCTYPE / leading comments
+  // remove xml/doctype/comments
   s = s
     .replace(/<\?xml[\s\S]*?\?>/gi, "")
     .replace(/<!doctype[\s\S]*?>/gi, "")
@@ -76,12 +57,18 @@ function sanitizeSvgText(input: string, preferId?: string): string {
   return s;
 }
 
-/** Do we see any transforms in the doc? */
+/**
+ * Quick check: does this SVG use any transform attributes?
+ * If yes, we often need to measure actual rendered bounds.
+ */
 function docHasTransforms(svgDoc: Document): boolean {
   return !!svgDoc.querySelector("[transform]");
 }
 
-/** Mount a cloned <svg> offscreen and measure its *transformed* content box. */
+/**
+ * Temporarily mounts the SVG in the DOM (hidden) and reads its bounding box.
+ * Falls back to computing a union of child BBoxes if getBBox fails.
+ */
 function mountAndMeasureBBox(svgDoc: Document, perfTracking = false): DOMRect {
   return measureRendering(
     "Mount and measure BBox",
@@ -91,7 +78,6 @@ function mountAndMeasureBBox(svgDoc: Document, perfTracking = false): DOMRect {
         true
       ) as unknown as SVGSVGElement;
 
-      // Make it safe to mount
       svgEl.setAttribute("width", "0");
       svgEl.setAttribute("height", "0");
       (svgEl as unknown as HTMLElement).style.position = "absolute";
@@ -103,10 +89,10 @@ function mountAndMeasureBBox(svgDoc: Document, perfTracking = false): DOMRect {
 
       let box: DOMRect;
       try {
-        // @ts-ignore includeStroke is not in all TS libdefs yet
+        // @ts-ignore includeStroke not in all lib defs
         box = svgEl.getBBox?.({ includeStroke: true }) ?? svgEl.getBBox();
       } catch {
-        // Fallback: union of individual graphics elements
+        // manual union of element BBoxes
         let x1 = Infinity,
           y1 = Infinity,
           x2 = -Infinity,
@@ -137,17 +123,21 @@ function mountAndMeasureBBox(svgDoc: Document, perfTracking = false): DOMRect {
   ).result;
 }
 
-/** Is the value white or green (colors that should be replaced)? */
+/**
+ * Decide if a fill/stroke value is one of the colors we want to replace
+ * (current code targets white and green variants).
+ */
 function shouldRecolor(value?: string | null): boolean {
   if (!value) return false;
-  // White: #fff, #ffffff, rgb(255,255,255)
-  // Green: #008000, rgb(0,128,0)
   return /(#fff(fff)?\b|#008000\b|rgb\s*\(\s*255\s*,\s*255\s*,\s*255\s*\)|rgb\s*\(\s*0\s*,\s*128\s*,\s*0\s*\))/i.test(
     value
   );
 }
 
-/** Scan the document for the largest stroke-width (attr or inline style) */
+/**
+ * Find the biggest stroke-width in the doc and add a little extra.
+ * This helps padding so strokes aren't clipped.
+ */
 function getMaxStrokeWidth(svgDoc: Document): number {
   let max = 0;
   for (const el of Array.from(svgDoc.querySelectorAll<HTMLElement>("*"))) {
@@ -165,11 +155,12 @@ function getMaxStrokeWidth(svgDoc: Document): number {
       }
     }
   }
-  // Minimum padding + tiny fudge to avoid shaving
   return (max > 0 ? max : 1) + 0.75;
 }
 
-/** LRU-ish cache setter with a simple size cap */
+/**
+ * Basic capped map insert. Oldest item is dropped when we hit max size.
+ */
 function setCache(key: string, value: string): void {
   if (recolorCache.size >= MAX_CACHE_SIZE) {
     const firstKey = recolorCache.keys().next().value;
@@ -178,13 +169,16 @@ function setCache(key: string, value: string): void {
   recolorCache.set(key, value);
 }
 
-function getCacheKey(
-  path: string,
+/**
+ * Make a stable cache key for preloaded SVGs.
+ */
+export function getPreloadedCacheKey(
+  iconName: string,
   color: string,
-  opts: RecolorOptions
+  opts: RecolorOptions = {}
 ): string {
   return [
-    path,
+    `preloaded:${iconName}`,
     color,
     opts.stroke ? 1 : 0,
     opts.fit ?? "contain",
@@ -194,11 +188,10 @@ function getCacheKey(
   ].join("|");
 }
 
-// ============================================================================
-// Core transforms
-// ============================================================================
-
-/** Recolor fills (and optionally strokes) + gradient stops */
+/**
+ * Walk the SVG document and replace fills/strokes/gradient stops that match our
+ * "recolorable" pattern with the target color.
+ */
 function recolorSvgDocument(
   svgDoc: Document,
   color: string,
@@ -211,13 +204,11 @@ function recolorSvgDocument(
       const elements = Array.from(svgDoc.querySelectorAll<HTMLElement>("*"));
 
       for (const el of elements) {
-        // fill attribute
         const fill = el.getAttribute("fill");
         if (fill && shouldRecolor(fill)) {
           el.setAttribute("fill", color);
         }
 
-        // stroke attribute
         if (includeStrokes) {
           const stroke = el.getAttribute("stroke");
           if (stroke && shouldRecolor(stroke)) {
@@ -225,16 +216,14 @@ function recolorSvgDocument(
           }
         }
 
-        // inline style
+        // inline styles
         const style = el.getAttribute("style");
         if (style) {
           let modified = style
-            // Replace white fills
             .replace(
               /fill\s*:\s*(#fff(?:fff)?|rgb\s*\(\s*255\s*,\s*255\s*,\s*255\s*\))/gi,
               `fill:${color}`
             )
-            // Replace green fills
             .replace(
               /fill\s*:\s*(#008000|rgb\s*\(\s*0\s*,\s*128\s*,\s*0\s*\))/gi,
               `fill:${color}`
@@ -242,12 +231,10 @@ function recolorSvgDocument(
 
           if (includeStrokes) {
             modified = modified
-              // Replace white strokes
               .replace(
                 /stroke\s*:\s*(#fff(?:fff)?|rgb\s*\(\s*255\s*,\s*255\s*,\s*255\s*\))/gi,
                 `stroke:${color}`
               )
-              // Replace green strokes
               .replace(
                 /stroke\s*:\s*(#008000|rgb\s*\(\s*0\s*,\s*128\s*,\s*0\s*\))/gi,
                 `stroke:${color}`
@@ -260,7 +247,7 @@ function recolorSvgDocument(
         }
       }
 
-      // gradient stops
+      // gradients
       for (const stop of Array.from(
         svgDoc.querySelectorAll<SVGStopElement>("stop")
       )) {
@@ -292,14 +279,17 @@ function recolorSvgDocument(
 }
 
 /**
- * Normalize root to behave like <img> with object-fit, and prevent stroke clipping.
- * Uses real transformed bounds when needed, then pads by stroke width and a small percent.
+ * Normalize the root <svg> so it renders nicely:
+ * - ensure viewBox exists (and padded)
+ * - set width/height to 100%
+ * - set preserveAspectRatio based on fit
+ * - optionally apply non-scaling stroke
  */
 function normalizeSvgRoot(
   svgDoc: Document,
   fit: "contain" | "cover" | "fill",
   nonScalingStroke: boolean,
-  extraPadPercent = 0.06, // ~6% outer margin to match Qt look
+  extraPadPercent = 0.06,
   perfTracking = false
 ): void {
   measureRendering(
@@ -307,15 +297,15 @@ function normalizeSvgRoot(
     () => {
       const root = svgDoc.documentElement as unknown as SVGSVGElement;
 
-      // 1) Decide how to compute bounds
       const hasVb = root.hasAttribute("viewBox");
       const mustMeasure = docHasTransforms(svgDoc) || !hasVb;
 
-      // 2) Compute a base box
       let x = 0,
         y = 0,
         w = 0,
         h = 0;
+
+      // figure out bounds
       if (mustMeasure) {
         const b = mountAndMeasureBBox(svgDoc, perfTracking);
         x = b.x;
@@ -332,7 +322,7 @@ function normalizeSvgRoot(
         h = Math.max(1e-6, vh);
       }
 
-      // 3) Padding
+      // add padding so strokes / shadows don't get clipped
       const strokePad = getMaxStrokeWidth(svgDoc);
       const percentPad = Math.max(w, h) * (extraPadPercent ?? 0.06);
       const pad = strokePad + percentPad;
@@ -342,10 +332,9 @@ function normalizeSvgRoot(
       w += 2 * pad;
       h += 2 * pad;
 
-      // 4) Apply viewBox
       root.setAttribute("viewBox", `${x} ${y} ${w} ${h}`);
 
-      // 5) Fill container and map "fit" to preserveAspectRatio
+      // responsive sizing
       root.setAttribute("width", "100%");
       root.setAttribute("height", "100%");
       const style = root.getAttribute("style");
@@ -354,6 +343,7 @@ function normalizeSvgRoot(
         style ? `${style};display:block` : "display:block"
       );
 
+      // map fit to preserveAspectRatio
       const par =
         fit === "cover"
           ? "xMidYMid slice"
@@ -362,7 +352,7 @@ function normalizeSvgRoot(
           : "xMidYMid meet";
       root.setAttribute("preserveAspectRatio", par);
 
-      // 6) Keep stroke width constant if requested
+      // keep stroke width constant if requested
       if (nonScalingStroke) {
         for (const el of Array.from(
           svgDoc.querySelectorAll<SVGGraphicsElement>(
@@ -381,7 +371,10 @@ function normalizeSvgRoot(
 // Pipeline
 // ============================================================================
 
-/** Full recolor pipeline */
+/**
+ * Full "string svg -> recolored, normalized svg" pipeline.
+ * Returns serialized SVG plus timing info.
+ */
 function recolorSvg(
   svgText: string,
   color: string,
@@ -391,7 +384,7 @@ function recolorSvg(
   let computationTime = 0;
   let renderingTime = 0;
 
-  // Sanitize and parse (computation)
+  // 1) clean incoming text
   const { result: cleaned, time: sanitizeTime } = measureComputation(
     "Sanitize SVG text",
     () => sanitizeSvgText(svgText, opts.preferSvgId),
@@ -399,6 +392,7 @@ function recolorSvg(
   );
   computationTime += sanitizeTime;
 
+  // 2) parse into DOM
   const { result: svgDoc, time: parseTime } = measureComputation(
     "Parse SVG document",
     () => {
@@ -415,7 +409,7 @@ function recolorSvg(
     return { svg: svgText, computationTime, renderingTime };
   }
 
-  // Recolor (computation)
+  // 3) recolor elements
   const { time: recolorTime } = measureComputation(
     "Recolor SVG document",
     () => {
@@ -425,7 +419,7 @@ function recolorSvg(
   );
   computationTime += recolorTime;
 
-  // Normalize (rendering)
+  // 4) normalize root
   const { time: normalizeTime } = measureRendering(
     "Normalize SVG root",
     () => {
@@ -441,7 +435,7 @@ function recolorSvg(
   );
   renderingTime += normalizeTime;
 
-  // Serialize (computation)
+  // 5) serialize back to string
   const { result: serialized, time: serializeTime } = measureComputation(
     "Serialize SVG",
     () => new XMLSerializer().serializeToString(svgDoc),
@@ -456,19 +450,22 @@ function recolorSvg(
 // Public API
 // ============================================================================
 
-export async function loadAndRecolorSvg(
-  path: string,
+/**
+ * Recolors a preloaded SVG string.
+ * Tries cache first; if miss, runs pipeline and stores result.
+ */
+export function recolorPreloadedSvg(
+  svgText: string,
   color: string,
-  opts: RecolorOptions = {},
-  signal?: AbortSignal
-): Promise<RecolorResult> {
+  cacheKey: string,
+  opts: RecolorOptions = {}
+): RecolorResult {
   const perfTracker = opts.enablePerfTracking
-    ? createPerformanceTracker("SVG Load & Recolor")
+    ? createPerformanceTracker("SVG Recolor (Preloaded)")
     : null;
 
-  const cacheKey = getCacheKey(path, color, opts);
+  // cache check
   const cached = recolorCache.get(cacheKey);
-
   if (cached) {
     if (perfTracker) {
       perfTracker.mark("cache-hit");
@@ -476,30 +473,19 @@ export async function loadAndRecolorSvg(
       metrics.fromCache = true;
       return { svg: cached, metrics };
     }
-    return { svg: cached };
+    return { svg: cached, metrics: { fromCache: true } };
   }
 
-  // Fetch the SVG file
-  perfTracker?.mark("fetch-start");
-  const res = await fetch(path, { signal });
-  if (!res.ok) {
-    throw new Error(`Failed to load SVG: ${path} (${res.status})`);
-  }
-
-  const svgText = await res.text();
-  const fetchTime = perfTracker?.mark("fetch-complete") ?? 0;
-
-  // Recolor the SVG
+  // cache miss -> recolor
   perfTracker?.mark("recolor-start");
   const recolorResult = recolorSvg(svgText, color, opts);
   perfTracker?.mark("recolor-complete");
 
-  // Cache only the SVG string
+  // store
   setCache(cacheKey, recolorResult.svg);
 
   if (perfTracker) {
     const metrics = perfTracker.getMetrics();
-    metrics.fetchTime = fetchTime;
     metrics.computationTime = recolorResult.computationTime;
     metrics.renderingTime = recolorResult.renderingTime;
     metrics.fromCache = false;
@@ -514,22 +500,18 @@ export async function loadAndRecolorSvg(
   return { svg: recolorResult.svg };
 }
 
+/**
+ * Clear all recolored SVGs from memory.
+ */
 export function clearRecolorCache(): void {
   recolorCache.clear();
 }
 
 /**
- * Backward-compatible alias that returns just the SVG string
- * @deprecated Use loadAndRecolorSvg for full metrics support
+ * Get number of items currently in the recolor cache.
  */
-export async function loadAndRecolor(
-  path: string,
-  color: string,
-  opts: RecolorOptions = {},
-  signal?: AbortSignal
-): Promise<string> {
-  const result = await loadAndRecolorSvg(path, color, opts, signal);
-  return result.svg;
+export function getRecolorCacheSize(): number {
+  return recolorCache.size;
 }
 
 // Re-export performance utilities for convenience

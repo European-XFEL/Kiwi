@@ -316,6 +316,9 @@ export function buildDisplayStatefulIcon(
 ): DisplayStatefulIconElementModel {
   const w = new DisplayStatefulIconElementModel();
   w.reactComponent = DisplayStatefulWidgetIcon;
+
+  const icon_name = json.icon_name ?? json["@_krb:icon_name"] ?? "no_icon";
+
   Object.assign(w, {
     x: json.x ?? 0,
     y: json.y ?? 0,
@@ -324,8 +327,9 @@ export function buildDisplayStatefulIcon(
     keys: json.keys ?? [],
     font_size: json.font_size ?? 10,
     font_weight: json.font_weight ?? "normal",
-    icon_name: json.icon_name ?? json["@_krb:icon_name"] ?? "no_icon",
+    icon_name,
   });
+
   return w;
 }
 
