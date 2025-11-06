@@ -1,5 +1,3 @@
-import { AccessLevel } from "@/karabo_data/SchemaEnums";
-
 export enum TopologyEventType {
   NEW,
   UPDATE,
@@ -23,7 +21,6 @@ export interface DeviceServerInfo {
   karaboVersion: string;
   version: string;
   host: string;
-  visibility: AccessLevel;
   lang: string; // "cpp" || "python"
   log: string; // "fatal" || "error" || "warning" || "info" || "debug"
   serverFlags?: number;
@@ -33,9 +30,16 @@ export interface DeviceServerInfo {
   tid?: number;
 }
 
+/** Macros are a "special" kind of devices from the Topology point-of-view */
+export interface MacroInfo extends DeviceInfo {
+  module: string;
+  project: string;
+}
+
 export interface SystemTopologyInfo {
   devices: DeviceInfo[];
   servers: DeviceServerInfo[];
+  macros: MacroInfo[];
 }
 
 export interface SystemTopologyUpdateInfo {

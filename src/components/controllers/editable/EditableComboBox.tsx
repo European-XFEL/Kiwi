@@ -5,6 +5,7 @@ import { useKaraboPropertyInfo } from "@/components/shared/hooks/useKaraboProper
 import { useDeviceOnlineStatus } from "@/components/shared/hooks/useDeviceOnlineStatus";
 import { useKaraboKeysString } from "@/components/shared/hooks/useKaraboKeysString";
 import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/QtFontDescriptor";
+import { VectorElementType } from "@/karabo_hash/HashValueType";
 
 /**
  * EditableComboBox - Dropdown input widget for selecting a value from a set.
@@ -18,11 +19,12 @@ const EditableComboBox: React.FC<EditableComboBoxProps> = (props) => {
   const { deviceId, property } = useKaraboPropertyInfo(joinedKeys);
   const offline = useDeviceOnlineStatus(deviceId);
 
-  const placeholderOptions = ["a", "b", "c", "d", "e"];
   const [value, setValue] = React.useState<string | undefined>(undefined);
 
-  // TODO: Replace placeholder options with websocket-provided ones later
-  const options = React.useMemo(() => placeholderOptions, [property]);
+  const options = React.useMemo((): VectorElementType[] => {
+    const options = property?.schemaAttrs?.options ?? [];
+    return options as VectorElementType[];
+  }, [property]);
 
   // Sync with property changes
   React.useEffect(() => {
@@ -33,7 +35,13 @@ const EditableComboBox: React.FC<EditableComboBoxProps> = (props) => {
     const incoming = String(
       property.value ?? property.schemaAttrs?.defaultValue ?? ""
     );
-    setValue(options.includes(incoming) ? incoming : undefined);
+    setValue(
+      options.findIndex(
+        (option: VectorElementType) => option.toString() == incoming
+      ) >= 0
+        ? incoming
+        : undefined
+    );
   }, [property, options]);
 
   // Show offline overlay when device is not connected
@@ -73,8 +81,8 @@ const EditableComboBox: React.FC<EditableComboBoxProps> = (props) => {
         Select an option
       </option>
       {options.map((opt) => (
-        <option key={opt} value={opt}>
-          {opt}
+        <option key={opt.toString()} value={opt.toString()}>
+          {opt.toString()}
         </option>
       ))}
     </select>
