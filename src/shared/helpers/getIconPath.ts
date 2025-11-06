@@ -1,4 +1,6 @@
-//config
+// src/shared/helpers/getIconPath.ts
+
+// public base (only for icons that are still in public/)
 const ICON_BASE = "/icons";
 
 const DEFAULTS = {
@@ -25,7 +27,7 @@ type IconProps = {
   alarmCondition?: string; // From DevicePropertyConnector value
 };
 
-//helper
+// helper
 function sanitizeFileName(name?: string, fallback = DEFAULTS.FALLBACK): string {
   if (!name?.trim()) return fallback;
 
@@ -38,28 +40,41 @@ function sanitizeFileName(name?: string, fallback = DEFAULTS.FALLBACK): string {
   return clean === "icon_default" ? DEFAULTS.FALLBACK : clean;
 }
 
-// MAIN ICON PATH HELPER
-
-export function getIconPaths(props: IconProps): string[] {
+/**
+ * NEW: we return a descriptor so components can:
+ * - use `key` to look up preloaded React SVGs (stateful, now in src/)
+ * - use `paths` to fall back to public files (general, still in /public)
+ */
+export function getIconDescriptor(props: IconProps): {
+  key: string; // canonical name, e.g. "icon_massflow_controller"
+  category: "stateful" | "general";
+  paths: string[]; // public URLs, may be [] for stateful now in src
+} {
   let fileName: string;
   let category: "stateful" | "general";
 
-  //StatefulIconWidget → icons/stateful/*
+  // StatefulIconWidget → was in public/icons/stateful/*, now moved to src/stateful_icons/*
   if (
     props.krbClass === "DisplayComponent" &&
     props.widget === "StatefulIconWidget"
   ) {
     fileName = sanitizeFileName(props.iconName, DEFAULTS.STATEFUL);
     category = "stateful";
+
+    // since stateful icons are now in src/, we don’t have public URLs for them anymore
+    return {
+      key: fileName,
+      category,
+      paths: [], // component will try preloaded React icons first
+    };
   }
 
-  //PopupButtonWidget → icons/general/*
-  else if (props.krbClass === "PopupButtonWidget") {
+  // PopupButtonWidget → still served from public/icons/general/*
+  if (props.krbClass === "PopupButtonWidget") {
     fileName = sanitizeFileName(props.infoType, DEFAULTS.FALLBACK);
     category = "general";
   }
-
-  //GlobalAlarm → icons/general/* based on property value
+  // GlobalAlarm → public/icons/general/* based on property value
   else if (
     props.krbClass === "DisplayComponent" &&
     props.widget === "GlobalAlarm"
@@ -68,22 +83,35 @@ export function getIconPaths(props: IconProps): string[] {
     fileName = ALARM_ICONS[condition] || ALARM_ICONS.none;
     category = "general";
   }
-
-  //Fallback
+  // fallback → treat as general
   else {
     fileName = sanitizeFileName(props.iconName, DEFAULTS.FALLBACK);
     category = "general";
   }
 
-  // Return all possible file extensions
-  return IMAGE_EXTENSIONS.map(
+  // for general we still build public URLs like before
+  const paths = IMAGE_EXTENSIONS.map(
     (ext) => `${ICON_BASE}/${category}/${fileName}.${ext}`
   );
+
+  return { key: fileName, category, paths };
 }
 
-// Get first preferred (usually .svg)
+/**
+ * BACKWARD-COMPAT:
+ * your old function can now just call the new one
+ */
+export function getIconPaths(props: IconProps): string[] {
+  return getIconDescriptor(props).paths;
+}
+
+/**
+ * BACKWARD-COMPAT:
+ * first path (usually .svg)
+ */
 export function getPrimaryIconPath(props: IconProps): string {
-  return getIconPaths(props)[0];
+  const { paths } = getIconDescriptor(props);
+  return paths[0] ?? ""; // stateful might return ""
 }
 
 export default getIconPaths;
