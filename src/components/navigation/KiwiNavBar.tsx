@@ -33,7 +33,7 @@ export default function KiwiNavBar() {
     <Header className="border-b">
       <NavigationMenu className="justify-between px-2 py-2 w-full">
         {/* Mobile/Tablet Layout */}
-        <div className="flex items-center justify-between w-full lg:hidden gap-2">
+        <div className="flex items-center justify-between w-full xl:hidden gap-2">
           <NavToggle
             trigger={
               <Button variant="ghost" size="icon" aria-label="Open menu">
@@ -66,14 +66,15 @@ export default function KiwiNavBar() {
           </NavToggle>
 
           {/* Breadcrumb or Logo based on scene state */}
-          <div className="flex-1 min-w-0 flex justify-center">
+          <div className="flex-1 min-w-0 overflow-hidden flex justify-center items-center">
             {sceneInfo ? (
-              <SceneBreadcrumb
-                domain={sceneInfo.domain}
-                projectName={sceneInfo.projectName}
-                sceneName={sceneInfo.name}
-                className="max-w-full"
-              />
+              <div className="max-w-full min-w-0 overflow-hidden">
+                <SceneBreadcrumb
+                  domain={sceneInfo.domain}
+                  projectName={sceneInfo.projectName}
+                  sceneName={sceneInfo.name}
+                />
+              </div>
             ) : (
               <Logo
                 imageUrl="logo192.png"
@@ -90,7 +91,7 @@ export default function KiwiNavBar() {
         </div>
 
         {/* Desktop Navigation */}
-        <div className="hidden lg:flex lg:items-center lg:gap-4 lg:w-full">
+        <div className="hidden xl:flex xl:items-center xl:gap-4 xl:w-full">
           <NavItem>
             <Logo
               imageUrl="logo192.png"
@@ -110,8 +111,8 @@ export default function KiwiNavBar() {
 
           <Separator orientation="vertical" className="h-8 mx-2" />
 
-          <NavItem className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 overflow-hidden">
+          <NavItem className="flex-1 min-w-0 overflow-hidden">
+            <div className="flex items-center gap-2 overflow-hidden w-full">
               <div className="hidden xl:flex shrink-0">
                 <SceneStatus variant="compact" />
               </div>
@@ -122,7 +123,7 @@ export default function KiwiNavBar() {
                     orientation="vertical"
                     className="hidden xl:block h-6 w-px bg-border shrink-0"
                   />
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 overflow-hidden">
                     <SceneBreadcrumb
                       domain={sceneInfo.domain}
                       projectName={sceneInfo.projectName}

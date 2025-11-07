@@ -54,12 +54,6 @@ export abstract class BaseWidgetElementModel<
   keys?: string[]; //data connector
   parent_component?: BaseControllerKind;
 
-  /**
-   * React component linked to this widget.
-   * Its props are strictly typed to match the model's prop structure.
-   */
-  declare reactComponent?: React.FC<PropsType>;
-
   abstract get props(): PropsType;
 }
 
@@ -85,12 +79,6 @@ export abstract class BaseShapeElementModel<
   fill = "none";
   fill_opacity = 1.0;
 
-  /**
-   * React component linked to this shape.
-   * Its props are strictly typed to match the shape's prop structure.
-   */
-  declare reactComponent?: React.FC<PropsType>;
-
   abstract get props(): PropsType;
 }
 
@@ -110,12 +98,6 @@ export abstract class BaseLayoutElementModel<
   width = 0;
   height = 0;
   children: BaseSceneElementModel[] = [];
-
-  /**
-   * React component linked to this layout.
-   * Its props are strictly typed to match the layout's prop structure.
-   */
-  declare reactComponent?: React.FC<PropsType>;
 
   abstract get props(): PropsType;
 
@@ -161,7 +143,7 @@ export abstract class BaseControllerWidgetModel<
   keys: string[] = [];
 
   /** Common text styling for display/edit widgets. */
-  font_size = 10;
+  font_size: number | string = 10;
   font_weight: "normal" | "bold" = "normal";
 
   /**

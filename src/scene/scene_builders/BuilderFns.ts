@@ -7,6 +7,9 @@
 // Base
 import { BaseSceneElementModel } from "../scene_models/BaseModels";
 
+// Helpers
+import { css_textAlign_for_KrbAlignh } from "@/components/shared/helpers/KrbAlignh";
+
 // Layouts
 import {
   BoxLayoutModel,
@@ -196,6 +199,8 @@ export function buildWidget(json: any): BaseSceneElementModel | null {
 export function buildLabel(json: any): LabelModel {
   const w = new LabelModel();
   w.reactComponent = Label;
+
+  // Basic properties
   Object.assign(w, {
     x: json.x ?? 0,
     y: json.y ?? 0,
@@ -204,14 +209,31 @@ export function buildLabel(json: any): LabelModel {
     text: json.text ?? "",
     foreground: json.foreground ?? "#000",
     background: json.background ?? "transparent",
-    font_family: json.font_family ?? "Source Sans Pro",
-    font_size: json.font_size ?? 10,
-    font_weight: json.font_weight ?? "normal",
-    font_style: json.font_style ?? "normal",
-    text_decoration: json.text_decoration ?? "none",
     frame_width: json.frame_width ?? 0,
-    alignment: json.alignment ?? "left",
   });
+
+  // Alignment handling: Support both numeric alignh (XML) and string alignment (JSON)
+  if (json.alignh !== undefined) {
+    // Convert numeric Qt alignment (1=left, 2=right, 4=center)
+    w.alignment = css_textAlign_for_KrbAlignh(json.alignh);
+  } else {
+    // Use string alignment directly (or default to "left")
+    w.alignment = json.alignment ?? "left";
+  }
+
+  // Font handling: Check for Qt font descriptor first, then fall back to individual properties
+  if (json.font_descriptor) {
+    // Parse Qt font descriptor string (e.g., "Source Sans Pro,10,-1,5,50,0,0,0,0,0")
+    w.applyFontDescriptor(json.font_descriptor);
+  } else {
+    // Use individual font properties (from new JSON format or defaults)
+    w.font_family = json.font_family ?? "Source Sans Pro";
+    w.font_size = json.font_size ?? 10;
+    w.font_weight = json.font_weight ?? "normal";
+    w.font_style = json.font_style ?? "normal";
+    w.text_decoration = json.text_decoration ?? "none";
+  }
+
   return w;
 }
 

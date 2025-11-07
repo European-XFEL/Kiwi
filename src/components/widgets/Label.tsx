@@ -2,13 +2,26 @@ import React from "react";
 import type { LabelProps } from "../../scene/scene_types/staticWidgets";
 
 const Label: React.FC<LabelProps> = (props) => {
+  // Map alignment to flexbox justify classes
+  const justifyClass =
+    props.alignment === "center"
+      ? "justify-center"
+      : props.alignment === "right"
+      ? "justify-end"
+      : "justify-start";
+
+  // Add extra width to account for browser rendering differences
+  // Even with Source Sans Pro font, browser rendering (anti-aliasing, kerning)
+  // differs from Qt's rendering engine, requiring additional space
+  const adjustedWidth = props.width + 6;
+
   return (
     <div
-      className="absolute flex items-center overflow-hidden text-ellipsis whitespace-nowrap border-solid p-0.5"
+      className={`absolute flex items-center border-solid ${justifyClass}`}
       role="text"
       aria-label={props.text}
       style={{
-        width: `${props.width}px`,
+        width: `${adjustedWidth}px`,
         height: `${props.height}px`,
         left: `${props.x}px`,
         top: `${props.y}px`,
@@ -21,8 +34,10 @@ const Label: React.FC<LabelProps> = (props) => {
         fontWeight: props.font_weight,
         fontStyle: props.font_style,
         textDecoration: props.text_decoration,
-        textAlign:
-          props.alignment.toLowerCase() as React.CSSProperties["textAlign"],
+        overflow: "hidden",
+        whiteSpace: "nowrap",
+        paddingLeft: "4px",
+        paddingRight: "4px",
       }}
     >
       {props.text}

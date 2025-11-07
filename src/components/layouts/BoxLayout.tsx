@@ -15,13 +15,14 @@ interface BoxLayoutProps {
 const BoxLayout: React.FC<BoxLayoutProps> = (props) => {
   return (
     <div
-      className="absolute border border-gray-300"
+      className="absolute"
       style={{
         left: props.x,
         top: props.y,
         width: props.width,
         height: props.height,
         boxSizing: "border-box",
+        border: "1px solid transparent",
       }}
     />
   );

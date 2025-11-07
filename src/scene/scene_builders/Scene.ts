@@ -35,6 +35,7 @@ export class Scene {
 
     // Parse and build element tree
     const parsed = parseSceneChildren(rawSvg);
+
     if (Array.isArray(parsed)) {
       for (const childJson of parsed) {
         const built = this.buildElement(childJson);

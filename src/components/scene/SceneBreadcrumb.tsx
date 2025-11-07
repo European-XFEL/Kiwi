@@ -106,23 +106,23 @@ export default function SceneBreadcrumb({
   };
 
   return (
-    <Breadcrumb className={cn("min-w-0", className)}>
-      <BreadcrumbList className="flex-nowrap min-w-0">
+    <Breadcrumb className={cn("min-w-0 max-w-full", className)}>
+      <BreadcrumbList className="flex-nowrap min-w-0 overflow-hidden">
         {/* Domain */}
-        <BreadcrumbItem className="shrink-0">
-          <BreadcrumbPage className="font-medium">{domain}</BreadcrumbPage>
+        <BreadcrumbItem className="shrink-0 max-w-[20%]">
+          <BreadcrumbPage className="font-medium truncate">{domain}</BreadcrumbPage>
         </BreadcrumbItem>
 
         <BreadcrumbSeparator className="shrink-0" />
 
         {/* Project (dropdown) */}
-        <BreadcrumbItem className="min-w-0">
+        <BreadcrumbItem className="min-w-0 max-w-[40%]">
           <DropdownMenu
             onOpenChange={(open) => open && handleProjectDropdownOpen()}
           >
             <DropdownMenuTrigger asChild>
               <BreadcrumbLink
-                className="cursor-pointer font-semibold block truncate"
+                className="cursor-pointer font-semibold block truncate max-w-full"
                 title={projectName}
               >
                 {projectName}
@@ -151,13 +151,13 @@ export default function SceneBreadcrumb({
         <BreadcrumbSeparator className="shrink-0" />
 
         {/* Scene (dropdown) */}
-        <BreadcrumbItem className="min-w-0">
+        <BreadcrumbItem className="min-w-0 max-w-[40%]">
           <DropdownMenu
             onOpenChange={(open) => open && handleSceneDropdownOpen()}
           >
             <DropdownMenuTrigger asChild>
               <BreadcrumbLink
-                className="cursor-pointer font-semibold block truncate"
+                className="cursor-pointer font-semibold block truncate max-w-full"
                 title={sceneName}
               >
                 {sceneName}

@@ -1,8 +1,6 @@
 // Dynamically parses svg:* nodes → normalized scene JSON.
 // Works with registry builders (no hardcoded widget list).
 
-import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/QtFontDescriptor";
-
 // -----------------------------------------------------------------------------
 // Helpers
 // -----------------------------------------------------------------------------
@@ -118,10 +116,8 @@ export function parseElement(elem: any, tag: string): any | null {
   if (tag === "svg:rect") {
     // Static label
     if (krbClass === "Label" && !krbWidget) {
-      const fontRaw = elem["@_krb:font"];
-      const [family, sizeStr] = fontRaw
-        ? fontRaw.split(",", 2)
-        : [FONT_FAMILY_DEFAULT, "10"];
+      const fontDescriptor = elem["@_krb:font"];
+
       return {
         element_type: "widget",
         widget_type: "Label",
@@ -132,12 +128,11 @@ export function parseElement(elem: any, tag: string): any | null {
         text: elem["@_krb:text"] || "",
         foreground: elem["@_krb:foreground"] || "#000000",
         background: elem["@_krb:background"] || "transparent",
-        font_family: family,
-        font_size: parseFloat(sizeStr),
         frame_width: toNum(elem["@_krb:frameWidth"]),
-        font_weight: String(
-          elem["@_krb:font_weight"] || "normal"
-        ).toLowerCase(),
+        // Pass full Qt font descriptor if present (will be parsed by builder)
+        font_descriptor: fontDescriptor,
+        // Also support numeric alignment from XML
+        alignh: elem["@_krb:alignh"] ? parseInt(elem["@_krb:alignh"]) : undefined,
       };
     }
 
