@@ -1,9 +1,9 @@
 export const FONT_BASE_SIZE = 12;
-export const FONT_FAMILY_DEFAULT = "Arial, Helvetica, Sans-Serif";
+export const FONT_FAMILY_DEFAULT = '"Source Sans Pro", Arial, Helvetica, Sans-Serif';
 export const FONT_FAMILY_MONOSPACED =
-  "SF Mono, Consolas, Ubuntu Mono, Courier New, monospace";
+  '"Source Code Pro", SF Mono, Consolas, Ubuntu Mono, Courier New, monospace';
 export const FONT_FAMILY_SERIF =
-  "Roboto Serif, Lora, Georgia, Times New Roman, serif";
+  '"Source Serif Pro", Roboto Serif, Lora, Georgia, Times New Roman, serif';
 
 /**
  * A Qt Font Descriptor is a single string with comma separated values for

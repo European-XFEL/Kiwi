@@ -123,10 +123,10 @@ export class SceneElementRegistry {
   }
 
   debug(): void {
-    console.group("SceneElementRegistry");
-    console.log(`Total registered: ${this.size}`);
-    for (const e of this.map.values()) console.log(`  ${e.parsed.fullKey}`);
-    console.groupEnd();
+    //console.group("SceneElementRegistry");
+    //console.log(`Total registered: ${this.size}`);
+    // for (const e of this.map.values()) console.log(`  ${e.parsed.fullKey}`);
+    //console.groupEnd();
   }
 }
 

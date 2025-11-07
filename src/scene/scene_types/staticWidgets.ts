@@ -34,7 +34,7 @@ export interface LabelProps extends BaseWidgetProps {
 
   /** Font */
   font_family: string; // e.g. "Source Sans Pro"
-  font_size: number; // e.g. 10
+  font_size: number | string; // e.g. 10 (px) or "10pt" or "12px"
   font_weight: string; // "normal" | "bold"
   font_style: string; // "normal" | "italic"
   text_decoration: string; // "none" | "underline"

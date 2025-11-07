@@ -14,7 +14,7 @@ import { BaseWidgetProps, BaseDisplayEditableWidgetProps } from "../base";
  */
 export interface BaseLabelProps extends BaseWidgetProps {
   parent_component: "DisplayComponent";
-  font_size: number;
+  font_size: number | string; // Supports numeric (px) or CSS strings ("10pt", "12px")
   font_weight: "normal" | "bold";
 }
 
@@ -75,7 +75,7 @@ export interface DisplayCheckBoxProps extends BaseDisplayEditableWidgetProps {
   widget_type: "DisplayCheckBox";
   parent_component: "DisplayComponent";
   keys: string[];
-  font_size: number;
+  font_size: number | string;
   font_weight: "normal" | "bold";
 }
 
@@ -94,12 +94,12 @@ export interface DisplayLineEditProps extends BaseDisplayEditableWidgetProps {
  * Display Command
  * ────────────────────────────────────────────────────────────────────────── */
 
-/** Command button widget (e.g., “Start” / “Stop”). */
+/** Command button widget (e.g., "Start" / "Stop"). */
 export interface DisplayCommandProps extends BaseWidgetProps {
   widget_type: "DisplayCommand";
   parent_component: "DisplayComponent";
   keys: string[];
-  font_size: number;
+  font_size: number | string;
   font_weight: "normal" | "bold";
   requires_confirmation: boolean;
 }
@@ -113,7 +113,7 @@ export interface DisplayStateColorProps extends BaseWidgetProps {
   widget_type: "DisplayStateColor";
   parent_component: "DisplayComponent";
   keys: string[];
-  font_size: number;
+  font_size: number | string;
   font_weight: "normal" | "bold";
   show_string: boolean;
 }
@@ -127,7 +127,7 @@ export interface DisplayStatefulIconProps extends BaseWidgetProps {
   widget_type: "DisplayStatefulIcon";
   parent_component: "DisplayComponent";
   keys: string[];
-  font_size: number;
+  font_size: number | string;
   font_weight: "normal" | "bold";
   icon_name: string;
 }
@@ -141,7 +141,7 @@ export interface DisplayTrendGraphProps extends BaseWidgetProps {
   widget_type: "DisplayTrendGraph";
   parent_component: "DisplayComponent";
   keys: string[];
-  font_size: number;
+  font_size: number | string;
   font_weight: "normal" | "bold";
 
   x_label: string;

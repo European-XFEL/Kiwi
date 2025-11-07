@@ -20,7 +20,7 @@ import { BaseEditWidgetProps } from "./../base";
 export interface EditableComboBoxProps extends BaseEditWidgetProps {
   widget_type: "EditableComboBox";
   keys: string[];
-  font_size: number;
+  font_size: number | string;
   font_weight: "normal" | "bold";
 }
 
@@ -32,7 +32,7 @@ export interface EditableComboBoxProps extends BaseEditWidgetProps {
 export interface EditableListProps extends BaseEditWidgetProps {
   widget_type: "EditableList";
   keys: string[];
-  font_size: number;
+  font_size: number | string;
   font_weight: "normal" | "bold";
 }
 
@@ -44,7 +44,7 @@ export interface EditableListProps extends BaseEditWidgetProps {
 export interface EditableLineEditProps extends BaseEditWidgetProps {
   widget_type: "EditableLineEdit";
   keys: string[];
-  font_size: number;
+  font_size: number | string;
   font_weight: "normal" | "bold";
 }
 
@@ -56,7 +56,7 @@ export interface EditableLineEditProps extends BaseEditWidgetProps {
 export interface EditableSpinBoxProps extends BaseEditWidgetProps {
   widget_type: "EditableSpinBox";
   keys: string[];
-  font_size: number;
+  font_size: number | string;
   font_weight: "normal" | "bold";
 }
 
