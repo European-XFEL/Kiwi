@@ -10,18 +10,13 @@ const Label: React.FC<LabelProps> = (props) => {
       ? "justify-end"
       : "justify-start";
 
-  // Add extra width to account for browser rendering differences
-  // Even with Source Sans Pro font, browser rendering (anti-aliasing, kerning)
-  // differs from Qt's rendering engine, requiring additional space
-  const adjustedWidth = props.width + 6;
-
   return (
     <div
       className={`absolute flex items-center border-solid ${justifyClass}`}
       role="text"
       aria-label={props.text}
       style={{
-        width: `${adjustedWidth}px`,
+        width: `${props.width}px`,
         height: `${props.height}px`,
         left: `${props.x}px`,
         top: `${props.y}px`,
@@ -36,8 +31,7 @@ const Label: React.FC<LabelProps> = (props) => {
         textDecoration: props.text_decoration,
         overflow: "hidden",
         whiteSpace: "nowrap",
-        paddingLeft: "4px",
-        paddingRight: "4px",
+        textOverflow: "ellipsis",
       }}
     >
       {props.text}
