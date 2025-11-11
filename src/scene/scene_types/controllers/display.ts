@@ -166,6 +166,7 @@ export interface DisplayTrendGraphProps extends BaseWidgetProps {
 
   title: string;
   background: string;
+  plot_engine?: "plotly" | "echarts";
 }
 
 /* ──────────────────────────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 import type { Data } from "plotly.js";
 
-export type ChartType = "line" | "points" | "area" | "heatmap";
+export type ChartType = "line" | "points" | "area" | "bar" | "heatmap";
 
 export interface XYSeries {
   x: (number | string | Date)[];
@@ -49,6 +49,15 @@ export const buildArea = (
   name: input.name ?? "Series",
 });
 
+export const buildBar = (
+  input: Extract<TraceInput, { kind: "xy" }>
+): Data => ({
+  x: input.series.x,
+  y: input.series.y,
+  type: "bar",
+  name: input.name ?? "Series",
+});
+
 export const buildHeatmap = (
   input: Extract<TraceInput, { kind: "heatmap" }>
 ): Data => ({
@@ -64,5 +73,6 @@ export const TraceFactory: Record<ChartType, (input: TraceInput) => Data> = {
   line: (i) => (i.kind === "xy" ? buildLine(i) : buildHeatmap(i as any)),
   points: (i) => (i.kind === "xy" ? buildPoints(i) : buildHeatmap(i as any)),
   area: (i) => (i.kind === "xy" ? buildArea(i) : buildHeatmap(i as any)),
+  bar: (i) => (i.kind === "xy" ? buildBar(i) : buildHeatmap(i as any)),
   heatmap: (i) => buildHeatmap(i as any),
 };
