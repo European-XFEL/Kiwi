@@ -41,7 +41,10 @@ import {
   DisplayStateColorElementModel,
 } from "../scene_models/controller/display";
 //edit
-import { EditableComboBoxElementModel } from "../scene_models/controller/editable";
+import {
+  EditableComboBoxElementModel,
+  DoubleLineEditElement,
+} from "../scene_models/controller/editable";
 
 // React Components
 import Label from "@/components/widgets/Label";
@@ -56,6 +59,7 @@ import DisplayCheckbox from "@/components/controllers/display/DisplayCheckbox";
 import DisplayStatefulWidgetIcon from "@/components/controllers/display/DisplayStatefulWidgetIcon";
 import DisplayTrendGraph from "@/components/controllers/display/DisplayTrendGraph";
 import EditableComboBox from "@/components/controllers/editable/EditableComboBox";
+import DoubleLineEdit from "@/components/controllers/editable/DoubleLineEdit";
 import FixedLayout from "@/components/layouts/FixedLayout";
 import BoxLayout from "@/components/layouts/BoxLayout";
 import GridLayout from "@/components/layouts/GridLayout";
@@ -188,7 +192,12 @@ export function buildWidget(json: any): BaseSceneElementModel | null {
   }
 
   if (parent_component === "EditableApplyLaterComponent") {
-    if (widget_type === "EditableComboBox") return buildEditableComboBox(json);
+    switch (widget_type) {
+      case "EditableComboBox":
+        return buildEditableComboBox(json);
+      case "DoubleLineEdit":
+        return buildDoubleLineEdit(json);
+    }
   }
 
   console.warn("Unknown widget_type:", widget_type, parent_component);
@@ -400,6 +409,22 @@ export function buildEditableComboBox(json: any): EditableComboBoxElementModel {
     width: json.width ?? 0,
     height: json.height ?? 0,
     keys: json.keys ?? [],
+    font_size: json.font_size ?? 10,
+    font_weight: json.font_weight ?? "normal",
+  });
+  return w;
+}
+
+export function buildDoubleLineEdit(json: any): DoubleLineEditElement {
+  const w = new DoubleLineEditElement();
+  w.reactComponent = DoubleLineEdit;
+  Object.assign(w, {
+    x: json.x ?? 0,
+    y: json.y ?? 0,
+    width: json.width ?? 0,
+    height: json.height ?? 0,
+    keys: json.keys ?? [],
+    decimals: json.decimals ?? -1,
     font_size: json.font_size ?? 10,
     font_weight: json.font_weight ?? "normal",
   });

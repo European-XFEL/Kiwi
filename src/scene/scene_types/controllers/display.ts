@@ -170,6 +170,27 @@ export interface DisplayTrendGraphProps extends BaseWidgetProps {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
+ * Evaluator
+ * ────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Evaluates and displays a property value using a custom expression.
+ * Allows Python-like expressions to format/transform values.
+ *
+ * Example:
+ * <svg:rect krb:class="DisplayComponent"
+ *           krb:widget="Evaluator"
+ *           krb:keys="MID_EXP_DES/GAUGE/PG1.value"
+ *           x="1810" y="553" width="83" height="23"
+ *           expression="&quot;{:.2e}&quot;.format(x)" />
+ */
+export interface EvaluatorProps extends BaseLabelProps {
+  widget_type: "Evaluator";
+  keys: string[];
+  expression: string; // Python-like expression, e.g., "{:.2e}".format(x)
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
  * Union Type
  * ────────────────────────────────────────────────────────────────────────── */
 
@@ -184,4 +205,5 @@ export type DisplayControllerProps =
   | DisplayCommandProps
   | DisplayStateColorProps
   | DisplayStatefulIconProps
-  | DisplayTrendGraphProps;
+  | DisplayTrendGraphProps
+  | EvaluatorProps;

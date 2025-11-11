@@ -12,6 +12,7 @@ import {
   buildDisplayStatefulIcon,
   buildDisplayTrendGraph,
   buildEditableComboBox,
+  buildDoubleLineEdit,
   buildBoxLayout,
   buildFixedLayout,
   buildGridLayout,
@@ -49,10 +50,9 @@ export function registerAllBuilders() {
   ].forEach((k) => defaultRegistry.register(k, buildPlaceholder));
 
   // Editable controllers
-  defaultRegistry.register(
-    "controller:editable:editablecombobox",
-    buildEditableComboBox
-  );
+  defaultRegistry
+    .register("controller:editable:editablecombobox", buildEditableComboBox)
+    .register("controller:editable:doublelineedit", buildDoubleLineEdit);
 
   // Layouts
   defaultRegistry

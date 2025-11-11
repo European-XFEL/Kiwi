@@ -132,7 +132,9 @@ export function parseElement(elem: any, tag: string): any | null {
         // Pass full Qt font descriptor if present (will be parsed by builder)
         font_descriptor: fontDescriptor,
         // Also support numeric alignment from XML
-        alignh: elem["@_krb:alignh"] ? parseInt(elem["@_krb:alignh"]) : undefined,
+        alignh: elem["@_krb:alignh"]
+          ? parseInt(elem["@_krb:alignh"])
+          : undefined,
       };
     }
 
@@ -159,6 +161,15 @@ export function parseElement(elem: any, tag: string): any | null {
         requires_confirmation: toBool(elem["@_krb:requires_confirmation"]),
         show_string: toBool(elem["@_krb:show_string"]),
         icon_name: elem["@_krb:icon_name"],
+
+        // DoubleLineEdit extras
+        decimals:
+          elem["@_krb:decimals"] != null
+            ? toNum(elem["@_krb:decimals"])
+            : undefined,
+
+        // Evaluator
+        expression: elem["@_expression"],
 
         // TrendGraph extras
         x_label: elem["@_krb:x_label"],
