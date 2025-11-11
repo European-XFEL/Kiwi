@@ -1,16 +1,24 @@
 import React, { useMemo, useState } from "react";
 import Plot from "react-plotly.js";
+import ReactECharts from "echarts-for-react";
 import type { Layout, Data } from "plotly.js";
 import type { DisplayTrendGraphProps } from "@/scene/scene_types/controllers";
 import { useDisplayTrendGraph } from "@/components/shared/hooks/useDisplayTrendGraph";
 import { useKaraboKeysString } from "@/components/shared/hooks/useKaraboKeysString";
 import { TraceFactory, ChartType } from "@/karabo_plots/traceFactory";
 import { buildTimeValueHeatmap } from "@/karabo_plots/heatmapBining";
+import { buildEChartsOptions, EChartType } from "@/karabo_plots/echartsOptions";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-/**
- * DisplayTrendGraph - Displays time-series or heatmap plots based on
- * device property values over time. Uses the new DisplayTrendGraphModel.
- */
+// engine-agnostic chart types
+type CanonicalChartType = "line" | "scatter" | "area" | "heatmap" | "bar";
+
 const DisplayTrendGraph: React.FC<DisplayTrendGraphProps> = React.memo(
   (props) => {
     const {
@@ -24,14 +32,20 @@ const DisplayTrendGraph: React.FC<DisplayTrendGraphProps> = React.memo(
       y_label,
       x_grid,
       y_grid,
+      // this is the initial engine from the scene
+      plot_engine = "echarts",
     } = props;
 
-    const [chartType, setChartType] = useState<ChartType>("line");
+    // 1) chart type (line, scatter, ...)
+    const [chartType, setChartType] = useState<CanonicalChartType>("line");
 
-    // Join keys for hook compatibility
+    // 2) engine toggle (plotly / echarts)
+    const [engine, setEngine] = useState<"plotly" | "echarts">(plot_engine);
+
+    // keys
     const keysStr = useKaraboKeysString(keys);
 
-    // Fetch property values from backend (reactive updates)
+    // data
     const { timestamps, values, isOffline } = useDisplayTrendGraph(keysStr, {
       maxDataPoints: 1000,
       timeWindowMs: Infinity,
@@ -40,8 +54,17 @@ const DisplayTrendGraph: React.FC<DisplayTrendGraphProps> = React.memo(
 
     const formattedTimestamps = useMemo(() => timestamps, [timestamps]);
 
+    // map canonical -> plotly types
+    const plotlyChartType: ChartType = (() => {
+      if (chartType === "scatter") return "points";
+      if (chartType === "heatmap") return "heatmap";
+      if (chartType === "area") return "area";
+      if (chartType === "bar") return "bar";
+      return "line";
+    })();
+
     const traceInput =
-      chartType === "heatmap"
+      plotlyChartType === "heatmap"
         ? ({
             kind: "heatmap",
             series: buildTimeValueHeatmap(timestamps, values, {
@@ -56,8 +79,38 @@ const DisplayTrendGraph: React.FC<DisplayTrendGraphProps> = React.memo(
             name: "Series",
           } as const);
 
-    const data: Data[] = [TraceFactory[chartType](traceInput)];
+    const data: Data[] =
+      engine === "plotly" ? [TraceFactory[plotlyChartType](traceInput)] : [];
 
+    // ECharts options
+    const echartsOption = useMemo(
+      () =>
+        engine === "echarts"
+          ? buildEChartsOptions({
+              timestamps,
+              values,
+              chartType: (chartType as EChartType) || "line",
+              xLabel: x_label,
+              yLabel: y_label,
+              xGrid: x_grid ?? true,
+              yGrid: y_grid ?? true,
+              background: background || "transparent",
+            })
+          : null,
+      [
+        engine,
+        timestamps,
+        values,
+        chartType,
+        x_label,
+        y_label,
+        x_grid,
+        y_grid,
+        background,
+      ]
+    );
+
+    // Plotly layout
     const layout: Partial<Layout> = {
       autosize: true,
       margin: { t: 36, r: 12, b: 36, l: 44 },
@@ -108,7 +161,7 @@ const DisplayTrendGraph: React.FC<DisplayTrendGraphProps> = React.memo(
         aria-busy={isOffline ? true : undefined}
         aria-live="polite"
       >
-        {/* Offline badge */}
+        {/* offline badge */}
         {isOffline && (
           <div
             className="absolute top-2 left-2 z-10 text-xs px-2 py-1 rounded bg-red-100 text-red-700 shadow-sm select-none"
@@ -118,43 +171,76 @@ const DisplayTrendGraph: React.FC<DisplayTrendGraphProps> = React.memo(
           </div>
         )}
 
-        {/* Chart type selector */}
+        {/* top-right controls: engine + chart type */}
         <div
-          className="absolute top-2 right-2 z-10"
+          className="absolute -top-7 right-2 z-10 flex gap-2"
           style={{ pointerEvents: "auto" }}
         >
-          <select
-            value={chartType}
-            onChange={(e) => setChartType(e.target.value as ChartType)}
-            className="text-xs border border-gray-300 rounded px-2 py-1 bg-white shadow-sm hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:opacity-60"
+          {/* engine selector */}
+          <Select
+            value={engine}
+            onValueChange={(val) => setEngine(val as "plotly" | "echarts")}
             disabled={isOffline}
-            aria-disabled={isOffline}
-            title={isOffline ? "Device offline" : "Select chart type"}
           >
-            <option value="line">Line</option>
-            <option value="points">Scatter</option>
-            <option value="area">Area</option>
-            <option value="heatmap">Heatmap</option>
-          </select>
+            <SelectTrigger className="w-[110px] h-8 text-xs bg-slate-200">
+              <SelectValue placeholder="Engine" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="plotly">Plotly</SelectItem>
+              <SelectItem value="echarts">ECharts</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* chart type selector */}
+          <Select
+            value={chartType}
+            onValueChange={(value) => setChartType(value as CanonicalChartType)}
+            disabled={isOffline}
+          >
+            <SelectTrigger className="w-[110px] h-8 text-xs bg-red-200">
+              <SelectValue placeholder="Chart type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="line">Line</SelectItem>
+              <SelectItem value="scatter">Scatter</SelectItem>
+              <SelectItem value="area">Area</SelectItem>
+              <SelectItem value="bar">Bar</SelectItem>
+              <SelectItem value="heatmap">Heatmap</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* Main chart */}
-        <Plot
-          data={data}
-          layout={layout}
-          config={{
-            displayModeBar: false,
-            responsive: true,
-            scrollZoom: !isOffline,
-          }}
-          useResizeHandler
-          style={{
-            width: "100%",
-            height: "100%",
-            opacity: isOffline ? 0.45 : 1,
-            transition: "opacity 150ms ease",
-          }}
-        />
+        {/* chart area */}
+        {engine === "plotly" ? (
+          <Plot
+            data={data}
+            layout={layout}
+            config={{
+              displayModeBar: false,
+              responsive: true,
+              scrollZoom: !isOffline,
+            }}
+            useResizeHandler
+            style={{
+              width: "100%",
+              height: "100%",
+              opacity: isOffline ? 0.45 : 1,
+              transition: "opacity 150ms ease",
+            }}
+          />
+        ) : (
+          <ReactECharts
+            option={echartsOption!}
+            style={{
+              width: "100%",
+              height: "100%",
+              opacity: isOffline ? 0.45 : 1,
+              transition: "opacity 150ms ease",
+            }}
+            notMerge={true}
+            lazyUpdate={true}
+          />
+        )}
       </div>
     );
   }
