@@ -5,6 +5,7 @@
  * Each derived model provides its own `props` getter for React rendering.
  */
 
+import { FONT_BASE_SIZE } from "@/components/shared/helpers/fontDefaults";
 import type {
   BaseSceneObjectProps,
   BaseWidgetProps,
@@ -143,7 +144,7 @@ export abstract class BaseControllerWidgetModel<
   keys: string[] = [];
 
   /** Common text styling for display/edit widgets. */
-  font_size: number | string = 10;
+  font_size: number | string = FONT_BASE_SIZE;
   font_weight: "normal" | "bold" = "normal";
 
   /**

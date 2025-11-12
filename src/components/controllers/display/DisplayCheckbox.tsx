@@ -5,7 +5,7 @@ import { useDeviceOnlineStatus } from "../../shared/hooks/useDeviceOnlineStatus"
 import { useKaraboKeysString } from "../../shared/hooks/useKaraboKeysString";
 import { Checkbox } from "../../ui/checkbox";
 import DeviceOfflineOverlay from "../../DeviceOfflineOverlay";
-import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/QtFontDescriptor";
+import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
 
 /**
  * DisplayCheckbox (read-only)

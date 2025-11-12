@@ -1,7 +1,7 @@
 import React from "react";
 import type { DisplayLabelProps } from "../../../scene/scene_types/controllers/display";
 import DeviceOfflineOverlay from "@/components/DeviceOfflineOverlay";
-import { FONT_FAMILY_DEFAULT } from "../../shared/helpers/QtFontDescriptor";
+import { FONT_FAMILY_DEFAULT } from "../../shared/helpers/fontDefaults";
 import { HashTypes } from "karabo-ts";
 import { useDeviceOnlineStatus } from "../../shared/hooks/useDeviceOnlineStatus";
 import { useKaraboPropertyInfo } from "../../shared/hooks/useKaraboProperty";

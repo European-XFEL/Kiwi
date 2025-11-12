@@ -1,7 +1,7 @@
 import {
   FONT_BASE_SIZE,
   FONT_FAMILY_DEFAULT,
-} from "../components/shared/helpers/QtFontDescriptor";
+} from "../components/shared/helpers/fontDefaults";
 
 export interface SceneElementProps {
   x: number;
