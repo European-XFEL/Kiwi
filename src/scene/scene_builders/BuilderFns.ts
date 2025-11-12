@@ -45,11 +45,13 @@ import {
 import {
   EditableComboBoxElementModel,
   DoubleLineEditElement,
+  EditableListElementModel,
 } from "../scene_models/controller/editable";
 
 // React Components
 import Label from "@/components/widgets/Label";
 import DisplayLabel from "@/components/controllers/display/DisplayLabel";
+import DisplayList from "@/components/controllers/display/DisplayList";
 import DisplayCommand from "@/components/controllers/display/DisplayCommand";
 import Line from "@/components/shapes/Line";
 import Rectangle from "@/components/shapes/Rectangle";
@@ -61,6 +63,7 @@ import DisplayStatefulWidgetIcon from "@/components/controllers/display/DisplayS
 import DisplayTrendGraph from "@/components/controllers/display/DisplayTrendGraph";
 import EditableComboBox from "@/components/controllers/editable/EditableComboBox";
 import DoubleLineEdit from "@/components/controllers/editable/DoubleLineEdit";
+import EditableList from "@/components/controllers/editable/EditableList";
 import FixedLayout from "@/components/layouts/FixedLayout";
 import BoxLayout from "@/components/layouts/BoxLayout";
 import GridLayout from "@/components/layouts/GridLayout";
@@ -198,6 +201,8 @@ export function buildWidget(json: any): BaseSceneElementModel | null {
         return buildEditableComboBox(json);
       case "DoubleLineEdit":
         return buildDoubleLineEdit(json);
+      case "EditableList":
+        return buildEditableList(json);
     }
   }
 
@@ -282,6 +287,7 @@ export function buildDisplayLabel(json: any): DisplayLabelElementModel {
 
 export function buildDisplayList(json: any): DisplayListElementModel {
   const w = new DisplayListElementModel();
+  w.reactComponent = DisplayList;
   Object.assign(w, {
     x: json.x ?? 0,
     y: json.y ?? 0,
@@ -426,7 +432,22 @@ export function buildDoubleLineEdit(json: any): DoubleLineEditElement {
     height: json.height ?? 0,
     keys: json.keys ?? [],
     decimals: json.decimals ?? -1,
-    font_size: json.font_size ?? 10,
+    font_size: json.font_size ?? FONT_BASE_SIZE,
+    font_weight: json.font_weight ?? "normal",
+  });
+  return w;
+}
+
+export function buildEditableList(json: any): EditableListElementModel {
+  const w = new EditableListElementModel();
+  w.reactComponent = EditableList;
+  Object.assign(w, {
+    x: json.x ?? 0,
+    y: json.y ?? 0,
+    width: json.width ?? 0,
+    height: json.height ?? 0,
+    keys: json.keys ?? [],
+    font_size: json.font_size ?? FONT_BASE_SIZE,
     font_weight: json.font_weight ?? "normal",
   });
   return w;

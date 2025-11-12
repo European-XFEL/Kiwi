@@ -149,3 +149,27 @@ export class DoubleLineEditElement extends BaseControllerWidgetModel<DoubleLineE
     };
   }
 }
+
+/**
+ * EditableListElement - List editor for VectorBinding properties
+ * Note: This updates the existing EditableListElement to use the new naming
+ */
+export class EditableListElementModel extends BaseControllerWidgetModel<EditableListProps> {
+  parent_component = "EditableApplyLaterComponent" as const;
+
+  get props(): EditableListProps {
+    return {
+      element_type: "widget",
+      widget_type: "EditableList",
+      parent_component: this.parent_component,
+      x: this.x,
+      y: this.y,
+      width: this.width,
+      height: this.height,
+      keys: this.keys ?? [],
+      font_size: this.font_size,
+      font_weight: this.font_weight,
+      layout_data: this.layout_data,
+    };
+  }
+}
