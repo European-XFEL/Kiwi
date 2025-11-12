@@ -9,6 +9,7 @@ import { BaseSceneElementModel } from "../scene_models/BaseModels";
 
 // Helpers
 import { css_textAlign_for_KrbAlignh } from "@/components/shared/helpers/KrbAlignh";
+import { FONT_BASE_SIZE } from "@/components/shared/helpers/fontDefaults";
 
 // Layouts
 import {
@@ -228,7 +229,7 @@ export function buildLabel(json: any): LabelModel {
   } else {
     // Use individual font properties (from new JSON format or defaults)
     w.font_family = json.font_family ?? "Source Sans Pro";
-    w.font_size = json.font_size ?? 10;
+    w.font_size = json.font_size ?? FONT_BASE_SIZE;
     w.font_weight = json.font_weight ?? "normal";
     w.font_style = json.font_style ?? "normal";
     w.text_decoration = json.text_decoration ?? "none";
@@ -264,7 +265,7 @@ export function buildDisplayLabel(json: any): DisplayLabelElementModel {
     width: json.width ?? 0,
     height: json.height ?? 0,
     keys: json.keys ?? [],
-    font_size: json.font_size ?? 10,
+    font_size: json.font_size ?? FONT_BASE_SIZE,
     font_weight: json.font_weight ?? "normal",
   });
   return w;
@@ -278,7 +279,7 @@ export function buildDisplayList(json: any): DisplayListElementModel {
     width: json.width ?? 0,
     height: json.height ?? 0,
     keys: json.keys ?? [],
-    font_size: json.font_size ?? 10,
+    font_size: json.font_size ?? FONT_BASE_SIZE,
     font_weight: json.font_weight ?? "normal",
   });
   return w;
@@ -293,7 +294,7 @@ export function buildDisplayCommand(json: any): DisplayCommandElementModel {
     width: json.width ?? 0,
     height: json.height ?? 0,
     keys: json.keys ?? [],
-    font_size: json.font_size ?? 10,
+    font_size: json.font_size ?? FONT_BASE_SIZE,
     font_weight: json.font_weight ?? "normal",
     requires_confirmation: !!json.requires_confirmation,
   });
@@ -311,7 +312,7 @@ export function buildDisplayStateColor(
     width: json.width ?? 0,
     height: json.height ?? 0,
     keys: json.keys ?? [],
-    font_size: json.font_size ?? 10,
+    font_size: json.font_size ?? FONT_BASE_SIZE,
     font_weight: json.font_weight ?? "normal",
     show_string: !!json.show_string,
   });
@@ -327,7 +328,7 @@ export function buildDisplayCheckBox(json: any): DisplayCheckBoxElementModel {
     width: json.width ?? 0,
     height: json.height ?? 0,
     keys: json.keys ?? [],
-    font_size: json.font_size ?? 10,
+    font_size: json.font_size ?? FONT_BASE_SIZE,
     font_weight: json.font_weight ?? "normal",
   });
   return w;
@@ -347,7 +348,7 @@ export function buildDisplayStatefulIcon(
     width: json.width ?? 0,
     height: json.height ?? 0,
     keys: json.keys ?? [],
-    font_size: json.font_size ?? 10,
+    font_size: json.font_size ?? FONT_BASE_SIZE,
     font_weight: json.font_weight ?? "normal",
     icon_name,
   });
@@ -366,7 +367,7 @@ export function buildDisplayTrendGraph(
     width: json.width ?? 0,
     height: json.height ?? 0,
     keys: json.keys ?? [],
-    font_size: json.font_size ?? 10,
+    font_size: json.font_size ?? FONT_BASE_SIZE,
     font_weight: json.font_weight ?? "normal",
     x_label: json.x_label ?? "",
     y_label: json.y_label ?? "",
@@ -400,7 +401,7 @@ export function buildEditableComboBox(json: any): EditableComboBoxElementModel {
     width: json.width ?? 0,
     height: json.height ?? 0,
     keys: json.keys ?? [],
-    font_size: json.font_size ?? 10,
+    font_size: json.font_size ?? FONT_BASE_SIZE,
     font_weight: json.font_weight ?? "normal",
   });
   return w;

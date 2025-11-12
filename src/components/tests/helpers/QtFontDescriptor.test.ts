@@ -1,8 +1,8 @@
+import { QtFontDescriptor } from "@/components/shared/helpers/QtFontDescriptor";
 import {
-  QtFontDescriptor,
   FONT_FAMILY_MONOSPACED,
   FONT_FAMILY_SERIF,
-} from "../../shared/helpers/QtFontDescriptor";
+} from "@/components/shared/helpers/fontDefaults";
 
 describe("QtFontDescriptor constructor", () => {
   const tooFewFields = [
