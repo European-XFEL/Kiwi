@@ -4,7 +4,7 @@ import DeviceOfflineOverlay from "@/components/DeviceOfflineOverlay";
 import { useKaraboPropertyInfo } from "@/components/shared/hooks/useKaraboProperty";
 import { useDeviceOnlineStatus } from "@/components/shared/hooks/useDeviceOnlineStatus";
 import { useKaraboKeysString } from "@/components/shared/hooks/useKaraboKeysString";
-import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/QtFontDescriptor";
+import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
 
 /**
  * DoubleLineEdit - Float input field with configurable decimal precision.
