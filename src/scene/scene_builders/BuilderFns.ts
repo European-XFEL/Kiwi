@@ -40,6 +40,7 @@ import {
   DisplayStatefulIconElementModel,
   DisplayCommandElementModel,
   DisplayStateColorElementModel,
+  EvaluatorElementModel,
 } from "../scene_models/controller/display";
 //edit
 import {
@@ -54,6 +55,7 @@ import Label from "@/components/widgets/Label";
 import DisplayLabel from "@/components/controllers/display/DisplayLabel";
 import DisplayList from "@/components/controllers/display/DisplayList";
 import DisplayCommand from "@/components/controllers/display/DisplayCommand";
+import Evaluator from "@/components/controllers/display/DisplayEvaluator";
 import Line from "@/components/shapes/Line";
 import Rectangle from "@/components/shapes/Rectangle";
 import Polygon from "@/components/shapes/Polygon";
@@ -194,6 +196,8 @@ export function buildWidget(json: any): BaseSceneElementModel | null {
         return buildDisplayStatefulIcon(json);
       case "DisplayTrendGraph":
         return buildDisplayTrendGraph(json);
+      case "Evaluator":
+        return buildEvaluator(json);
     }
   }
 
@@ -406,6 +410,22 @@ export function buildDisplayTrendGraph(
     y_autorange: json.y_autorange ?? true,
     title: json.title ?? "",
     background: json.background ?? "transparent",
+  });
+  return w;
+}
+
+export function buildEvaluator(json: any): EvaluatorElementModel {
+  const w = new EvaluatorElementModel();
+  w.reactComponent = Evaluator;
+  Object.assign(w, {
+    x: json.x ?? 0,
+    y: json.y ?? 0,
+    width: json.width ?? 0,
+    height: json.height ?? 0,
+    keys: json.keys ?? [],
+    font_size: json.font_size ?? 10,
+    font_weight: json.font_weight ?? "normal",
+    expression: json.expression ?? "",
   });
   return w;
 }

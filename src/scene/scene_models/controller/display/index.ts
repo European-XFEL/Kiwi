@@ -15,6 +15,7 @@ import type {
   DisplayStateColorProps,
   DisplayStatefulIconProps,
   DisplayTrendGraphProps,
+  EvaluatorProps,
 } from "@/scene/scene_types/controllers";
 
 import { BaseControllerWidgetModel } from "../../BaseModels";
@@ -276,6 +277,28 @@ export class DisplayTrendGraphElementModel extends BaseControllerWidgetModel<Dis
       y_autorange: this.y_autorange,
       title: this.title,
       background: this.background,
+      layout_data: this.layout_data,
+    };
+  }
+}
+
+export class EvaluatorElementModel extends BaseControllerWidgetModel<EvaluatorProps> {
+  parent_component = "DisplayComponent" as const;
+  expression = "";
+
+  get props(): EvaluatorProps {
+    return {
+      element_type: "widget",
+      widget_type: "Evaluator",
+      parent_component: this.parent_component,
+      x: this.x,
+      y: this.y,
+      width: this.width,
+      height: this.height,
+      keys: this.keys ?? [],
+      font_size: this.font_size,
+      font_weight: this.font_weight,
+      expression: this.expression,
       layout_data: this.layout_data,
     };
   }
