@@ -173,3 +173,26 @@ export class EditableListElementModel extends BaseControllerWidgetModel<Editable
     };
   }
 }
+
+/**
+ * IntLineEdit - Integer input field with validation
+ */
+export class IntLineEditElement extends BaseControllerWidgetModel<IntLineEditProps> {
+  parent_component = "EditableApplyLaterComponent" as const;
+
+  get props(): IntLineEditProps {
+    return {
+      element_type: "widget",
+      widget_type: "IntLineEdit",
+      parent_component: this.parent_component,
+      x: this.x,
+      y: this.y,
+      width: this.width,
+      height: this.height,
+      keys: this.keys ?? [],
+      font_size: this.font_size,
+      font_weight: this.font_weight,
+      layout_data: this.layout_data,
+    };
+  }
+}

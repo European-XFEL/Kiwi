@@ -7,10 +7,6 @@ import { Checkbox } from "../../ui/checkbox";
 import DeviceOfflineOverlay from "../../DeviceOfflineOverlay";
 import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
 
-/**
- * DisplayCheckbox (read-only)
- * Renders a disabled checkbox reflecting the bound property value.
- */
 const DisplayCheckbox: React.FC<DisplayCheckBoxProps> = ({
   keys,
   x,
@@ -20,13 +16,10 @@ const DisplayCheckbox: React.FC<DisplayCheckBoxProps> = ({
   font_size,
   font_weight,
 }) => {
-  // Combine keys into a comma-separated string for Karabo hooks
   const keysStr = useKaraboKeysString(keys);
-
   const { deviceId, property } = useKaraboPropertyInfo(keysStr);
   const isOffline = useDeviceOnlineStatus(deviceId);
 
-  // Normalize property value → boolean
   const isChecked = React.useMemo(() => {
     const value = property?.value;
     if (typeof value === "boolean") return value;
@@ -48,13 +41,11 @@ const DisplayCheckbox: React.FC<DisplayCheckBoxProps> = ({
     );
   }
 
+  const boxSize = Math.min(width, height, 18);
+
   return (
-    <Checkbox
-      checked={isChecked}
-      disabled
-      aria-label={`Display checkbox for ${keys.join(", ")}`}
-      aria-readonly="true"
-      className="absolute border-2 border-gray-700 data-[state=checked]:bg-white data-[state=checked]:text-black data-[state=checked]:border-black"
+    <div
+      className="absolute flex items-center justify-center"
       style={{
         left: x,
         top: y,
@@ -64,7 +55,26 @@ const DisplayCheckbox: React.FC<DisplayCheckBoxProps> = ({
         fontSize: font_size,
         fontWeight: font_weight,
       }}
-    />
+    >
+      <Checkbox
+        checked={isChecked}
+        disabled
+        aria-label={`Display checkbox for ${keys.join(", ")}`}
+        aria-readonly="true"
+        className="
+          border
+          border-gray-700
+          rounded-none
+          data-[state=checked]:bg-white
+          data-[state=checked]:text-black
+          data-[state=checked]:border-black
+        "
+        style={{
+          width: boxSize,
+          height: boxSize,
+        }}
+      />
+    </div>
   );
 };
 

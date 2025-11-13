@@ -14,6 +14,7 @@ import {
   buildEditableComboBox,
   buildDoubleLineEdit,
   buildEditableList,
+  buildIntLineEdit,
   buildBoxLayout,
   buildFixedLayout,
   buildGridLayout,
@@ -54,7 +55,8 @@ export function registerAllBuilders() {
   defaultRegistry
     .register("controller:editable:editablecombobox", buildEditableComboBox)
     .register("controller:editable:doublelineedit", buildDoubleLineEdit)
-    .register("controller:editable:editablelist", buildEditableList);
+    .register("controller:editable:editablelist", buildEditableList)
+    .register("controller:editable:intlineedit", buildIntLineEdit);
 
   // Layouts
   defaultRegistry
