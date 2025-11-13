@@ -29,4 +29,5 @@ export interface PropertySchemaAttributes {
   metricPrefixSymbol?: string;
   nodeType: NodeType;
   options?: VectorElementType[];
+  allowedStates?: string[];
 }

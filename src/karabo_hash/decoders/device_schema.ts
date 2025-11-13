@@ -61,6 +61,9 @@ export const deviceSchemaFromHash = (hash: Hash): DeviceSchemaInfo => {
             case "nodeType":
               propAttrs.nodeType = karaboVal.value_ as number;
               break;
+            case "allowedStates":
+              propAttrs.allowedStates = karaboVal.value_ as string[];
+              break;
             // TODO: handle remaining property attributes
           }
         }
