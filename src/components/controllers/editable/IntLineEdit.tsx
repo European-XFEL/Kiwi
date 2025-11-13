@@ -1,5 +1,5 @@
 import * as React from "react";
-import type { DoubleLineEditProps } from "@/scene/scene_types/controllers";
+import type { IntLineEditProps } from "@/scene/scene_types/controllers";
 import DeviceOfflineOverlay from "@/components/DeviceOfflineOverlay";
 import { useKaraboPropertyInfo } from "@/components/shared/hooks/useKaraboProperty";
 import { useDeviceOnlineStatus } from "@/components/shared/hooks/useDeviceOnlineStatus";
@@ -7,12 +7,12 @@ import { useKaraboKeysString } from "@/components/shared/hooks/useKaraboKeysStri
 import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
 
 /**
- * DoubleLineEdit - Float input field with configurable decimal precision.
- * Supports decimal values with precision control (-1 for auto, 0-12 for fixed).
+ * IntLineEdit - Integer input field with validation.
+ * Only accepts integer values.
  */
-const DoubleLineEdit: React.FC<DoubleLineEditProps> = (props) => {
-  const { keys, x, y, width, height, decimals, font_size, font_weight } = props;
-  //console.log(props);
+const IntLineEdit: React.FC<IntLineEditProps> = (props) => {
+  const { keys, x, y, width, height, font_size, font_weight } = props;
+
   // Join keys for compatibility with hooks
   const joinedKeys = useKaraboKeysString(keys);
   const { deviceId, property } = useKaraboPropertyInfo(joinedKeys);
@@ -28,20 +28,6 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = (props) => {
     return `${prefix}${symbol}`.trim();
   }, [property]);
 
-  // Format number based on decimals setting
-  const formatValue = React.useCallback(
-    (val: number): string => {
-      if (decimals === -1) {
-        // Auto mode - use default number formatting
-        return String(val);
-      } else {
-        // Fixed precision
-        return val.toFixed(decimals);
-      }
-    },
-    [decimals]
-  );
-
   // Sync with property changes
   React.useEffect(() => {
     if (!property) {
@@ -49,12 +35,12 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = (props) => {
       return;
     }
     const incoming = property.value ?? property.schemaAttrs?.defaultValue ?? 0;
-    const numValue =
-      typeof incoming === "number" ? incoming : parseFloat(String(incoming));
-    if (!isNaN(numValue)) {
-      setValue(formatValue(numValue));
+    const intValue =
+      typeof incoming === "number" ? incoming : parseInt(String(incoming), 10);
+    if (!isNaN(intValue)) {
+      setValue(String(intValue));
     }
-  }, [property, formatValue]);
+  }, [property]);
 
   // Show offline overlay when device is not connected
   if (offline) {
@@ -72,7 +58,7 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = (props) => {
 
   return (
     <div
-      className="absolute flex items-center ml-1"
+      className="absolute flex items-center"
       style={{
         width: `${width}px`,
         height: `${height}px`,
@@ -87,9 +73,9 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = (props) => {
           setValue(e.target.value);
         }}
         onBlur={(e) => {
-          const numValue = parseFloat(e.target.value);
-          if (!isNaN(numValue)) {
-            setValue(formatValue(numValue));
+          const intValue = parseInt(e.target.value, 10);
+          if (!isNaN(intValue)) {
+            setValue(String(intValue));
             // TODO: push value to backend or GUI server via WebSocket
           }
         }}
@@ -100,7 +86,7 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = (props) => {
           fontWeight: font_weight.toLowerCase(),
           minWidth: 0,
         }}
-        placeholder="0.0"
+        placeholder="0"
       />
       {unit && (
         <span
@@ -118,4 +104,4 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = (props) => {
   );
 };
 
-export default DoubleLineEdit;
+export default IntLineEdit;

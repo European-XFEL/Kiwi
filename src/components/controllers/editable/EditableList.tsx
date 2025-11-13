@@ -5,7 +5,7 @@ import { useKaraboPropertyInfo } from "@/components/shared/hooks/useKaraboProper
 import { useDeviceOnlineStatus } from "@/components/shared/hooks/useDeviceOnlineStatus";
 import { useKaraboKeysString } from "@/components/shared/hooks/useKaraboKeysString";
 import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
-import { Pencil } from "lucide-react";
+import { SquarePen } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -61,7 +61,7 @@ const EditableList: React.FC<EditableListProps> = (props) => {
 
   return (
     <div
-      className="absolute flex items-center gap-1"
+      className="absolute flex items-center gap-1 ml-1"
       style={{
         width: `${width}px`,
         height: `${height}px`,
@@ -99,9 +99,9 @@ const EditableList: React.FC<EditableListProps> = (props) => {
           <Button
             variant="outline"
             size="icon"
-            className="h-5 w-5 p-0 border border-black hover:bg-orange-50"
+            className="h-5 w-5 p-0 hover:bg-orange-50 border-none cursor-pointer"
           >
-            <Pencil className="h-3 w-3 text-orange-500" />
+            <SquarePen className="h-3 w-3 " />
           </Button>
         </DialogTrigger>
         <DialogContent>

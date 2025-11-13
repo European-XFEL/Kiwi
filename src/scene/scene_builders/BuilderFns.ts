@@ -46,6 +46,7 @@ import {
   EditableComboBoxElementModel,
   DoubleLineEditElement,
   EditableListElementModel,
+  IntLineEditElement,
 } from "../scene_models/controller/editable";
 
 // React Components
@@ -64,6 +65,7 @@ import DisplayTrendGraph from "@/components/controllers/display/DisplayTrendGrap
 import EditableComboBox from "@/components/controllers/editable/EditableComboBox";
 import DoubleLineEdit from "@/components/controllers/editable/DoubleLineEdit";
 import EditableList from "@/components/controllers/editable/EditableList";
+import IntLineEdit from "@/components/controllers/editable/IntLineEdit";
 import FixedLayout from "@/components/layouts/FixedLayout";
 import BoxLayout from "@/components/layouts/BoxLayout";
 import GridLayout from "@/components/layouts/GridLayout";
@@ -203,6 +205,8 @@ export function buildWidget(json: any): BaseSceneElementModel | null {
         return buildDoubleLineEdit(json);
       case "EditableList":
         return buildEditableList(json);
+      case "IntLineEdit":
+        return buildIntLineEdit(json);
     }
   }
 
@@ -441,6 +445,21 @@ export function buildDoubleLineEdit(json: any): DoubleLineEditElement {
 export function buildEditableList(json: any): EditableListElementModel {
   const w = new EditableListElementModel();
   w.reactComponent = EditableList;
+  Object.assign(w, {
+    x: json.x ?? 0,
+    y: json.y ?? 0,
+    width: json.width ?? 0,
+    height: json.height ?? 0,
+    keys: json.keys ?? [],
+    font_size: json.font_size ?? FONT_BASE_SIZE,
+    font_weight: json.font_weight ?? "normal",
+  });
+  return w;
+}
+
+export function buildIntLineEdit(json: any): IntLineEditElement {
+  const w = new IntLineEditElement();
+  w.reactComponent = IntLineEdit;
   Object.assign(w, {
     x: json.x ?? 0,
     y: json.y ?? 0,
