@@ -61,20 +61,28 @@ function extractServerInstanceInfos(
 function extractMacroInfos(macrosHashValue: HashValue): MacroInfo[] {
   const macroInfos: MacroInfo[] = [];
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  for (const [macroId, _, attrs] of new Hash(macrosHashValue).iterall()) {
-    macroInfos.push({
-      deviceId: macroId,
-      heartbeatInterval: attrs["heartbeatInterval"] as number,
-      karaboVersion: attrs["karaboVersion"] as string,
-      classId: attrs["classId"] as string,
-      serverId: attrs["serverId"] as string,
-      host: attrs["host"] as string,
-      status: attrs["status"] as string,
-      capabilities: attrs["capabilities"] as number,
-      module: attrs["module"] as string,
-      project: attrs["project"] as string,
-    });
+  const macrosHash = new Hash(macrosHashValue);
+  // TODO: karabo-ts iterall generator can throw if macroHash has no items -
+  //       it tries to do an Object.entries(this.value_) when this.value_ is
+  //       undefined (line 77). Protect the iterall generator.
+  if (macrosHash.items.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    for (const [macroId, _, attrs] of macrosHash.iterall()) {
+      console.log(`macroId = ${macroId}`);
+      console.log(`attrs = ${attrs}`);
+      macroInfos.push({
+        deviceId: macroId,
+        heartbeatInterval: attrs["heartbeatInterval"] as number,
+        karaboVersion: attrs["karaboVersion"] as string,
+        classId: attrs["classId"] as string,
+        serverId: attrs["serverId"] as string,
+        host: attrs["host"] as string,
+        status: attrs["status"] as string,
+        capabilities: attrs["capabilities"] as number,
+        module: attrs["module"] as string,
+        project: attrs["project"] as string,
+      });
+    }
   }
 
   return macroInfos;
