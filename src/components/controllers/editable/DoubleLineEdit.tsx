@@ -13,6 +13,7 @@ import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
 const DoubleLineEdit: React.FC<DoubleLineEditProps> = (props) => {
   const { keys, x, y, width, height, decimals, font_size, font_weight } = props;
   //console.log(props);
+
   // Join keys for compatibility with hooks
   const joinedKeys = useKaraboKeysString(keys);
   const { deviceId, property } = useKaraboPropertyInfo(joinedKeys);

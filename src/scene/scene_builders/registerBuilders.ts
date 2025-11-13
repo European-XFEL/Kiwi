@@ -11,6 +11,7 @@ import {
   buildDisplayCheckBox,
   buildDisplayStatefulIcon,
   buildDisplayTrendGraph,
+  buildEvaluator,
   buildEditableComboBox,
   buildDoubleLineEdit,
   buildEditableList,
@@ -38,11 +39,11 @@ export function registerAllBuilders() {
     .register("controller:display:displaystatecolor", buildDisplayStateColor)
     .register("controller:display:displaycheckbox", buildDisplayCheckBox)
     .register("controller:display:statefuliconwidget", buildDisplayStatefulIcon)
-    .register("controller:display:displaytrendgraph", buildDisplayTrendGraph);
+    .register("controller:display:displaytrendgraph", buildDisplayTrendGraph)
+    .register("controller:display:evaluator", buildEvaluator);
 
   // Known but not yet implemented
   [
-    "controller:display:evaluator",
     "controller:display:displayfloat",
     "controller:display:imagegraph",
     "controller:display:displaylineedit",
