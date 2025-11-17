@@ -191,6 +191,17 @@ export interface EvaluatorProps extends BaseLabelProps {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
+ * Display Table Element
+ * ────────────────────────────────────────────────────────────────────────── */
+
+/** Displays a table from a property. */
+export interface DisplayTableElementProps extends BaseLabelProps {
+  widget_type: "DisplayTableElement";
+  keys: string[];
+  resizeToContents?: boolean;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
  * Union Type
  * ────────────────────────────────────────────────────────────────────────── */
 
@@ -206,4 +217,5 @@ export type DisplayControllerProps =
   | DisplayStateColorProps
   | DisplayStatefulIconProps
   | DisplayTrendGraphProps
-  | EvaluatorProps;
+  | EvaluatorProps
+  | DisplayTableElementProps;

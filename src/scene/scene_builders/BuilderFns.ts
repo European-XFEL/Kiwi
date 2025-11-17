@@ -41,6 +41,7 @@ import {
   DisplayCommandElementModel,
   DisplayStateColorElementModel,
   EvaluatorElementModel,
+  DisplayTableElementModel,
 } from "../scene_models/controller/display";
 //edit
 import {
@@ -56,6 +57,7 @@ import DisplayLabel from "@/components/controllers/display/DisplayLabel";
 import DisplayList from "@/components/controllers/display/DisplayList";
 import DisplayCommand from "@/components/controllers/display/DisplayCommand";
 import Evaluator from "@/components/controllers/display/DisplayEvaluator";
+import DisplayTableElement from "@/components/controllers/display/DisplayTableElement";
 import Line from "@/components/shapes/Line";
 import Rectangle from "@/components/shapes/Rectangle";
 import Polygon from "@/components/shapes/Polygon";
@@ -198,6 +200,8 @@ export function buildWidget(json: any): BaseSceneElementModel | null {
         return buildDisplayTrendGraph(json);
       case "Evaluator":
         return buildEvaluator(json);
+      case "DisplayTableElement":
+        return buildDisplayTableElement(json);
     }
   }
 
@@ -426,6 +430,22 @@ export function buildEvaluator(json: any): EvaluatorElementModel {
     font_size: json.font_size ?? 10,
     font_weight: json.font_weight ?? "normal",
     expression: json.expression ?? "",
+  });
+  return w;
+}
+
+export function buildDisplayTableElement(json: any): DisplayTableElementModel {
+  const w = new DisplayTableElementModel();
+  w.reactComponent = DisplayTableElement;
+  Object.assign(w, {
+    x: json.x ?? 0,
+    y: json.y ?? 0,
+    width: json.width ?? 0,
+    height: json.height ?? 0,
+    keys: json.keys ?? [],
+    font_size: json.font_size ?? FONT_BASE_SIZE,
+    font_weight: json.font_weight ?? "normal",
+    resizeToContents: json.resizeToContents ?? false,
   });
   return w;
 }

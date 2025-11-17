@@ -171,6 +171,9 @@ export function parseElement(elem: any, tag: string): any | null {
         // Evaluator
         expression: elem["@_expression"],
 
+        // DisplayTableElement extras
+        resizeToContents: toBool(elem["@_krb:resizeToContents"]),
+
         // TrendGraph extras
         x_label: elem["@_krb:x_label"],
         y_label: elem["@_krb:y_label"],
