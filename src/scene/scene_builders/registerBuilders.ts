@@ -12,6 +12,7 @@ import {
   buildDisplayStatefulIcon,
   buildDisplayTrendGraph,
   buildEvaluator,
+  buildDisplayTableElement,
   buildEditableComboBox,
   buildDoubleLineEdit,
   buildEditableList,
@@ -40,7 +41,8 @@ export function registerAllBuilders() {
     .register("controller:display:displaycheckbox", buildDisplayCheckBox)
     .register("controller:display:statefuliconwidget", buildDisplayStatefulIcon)
     .register("controller:display:displaytrendgraph", buildDisplayTrendGraph)
-    .register("controller:display:evaluator", buildEvaluator);
+    .register("controller:display:evaluator", buildEvaluator)
+    .register("controller:display:displaytableelement", buildDisplayTableElement);
 
   // Known but not yet implemented
   [
@@ -48,7 +50,6 @@ export function registerAllBuilders() {
     "controller:display:imagegraph",
     "controller:display:displaylineedit",
     "controller:display:globalalarm",
-    "controller:display:displaytableelement",
     "controller:display:displayalarmfloat",
   ].forEach((k) => defaultRegistry.register(k, buildPlaceholder));
 

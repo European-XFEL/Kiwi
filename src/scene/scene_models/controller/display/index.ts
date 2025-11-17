@@ -16,6 +16,7 @@ import type {
   DisplayStatefulIconProps,
   DisplayTrendGraphProps,
   EvaluatorProps,
+  DisplayTableElementProps,
 } from "@/scene/scene_types/controllers";
 
 import { BaseControllerWidgetModel } from "../../BaseModels";
@@ -299,6 +300,28 @@ export class EvaluatorElementModel extends BaseControllerWidgetModel<EvaluatorPr
       font_size: this.font_size,
       font_weight: this.font_weight,
       expression: this.expression,
+      layout_data: this.layout_data,
+    };
+  }
+}
+
+export class DisplayTableElementModel extends BaseControllerWidgetModel<DisplayTableElementProps> {
+  parent_component = "DisplayComponent" as const;
+  resizeToContents = false;
+
+  get props(): DisplayTableElementProps {
+    return {
+      element_type: "widget",
+      widget_type: "DisplayTableElement",
+      parent_component: this.parent_component,
+      x: this.x,
+      y: this.y,
+      width: this.width,
+      height: this.height,
+      keys: this.keys ?? [],
+      font_size: this.font_size,
+      font_weight: this.font_weight,
+      resizeToContents: this.resizeToContents,
       layout_data: this.layout_data,
     };
   }
