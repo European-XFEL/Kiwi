@@ -1,12 +1,48 @@
-import { Hash, HashTypes, SchemaValue } from "karabo-ts";
+import { Hash, HashTypes, KaraboType, SchemaValue } from "karabo-ts";
 import {
   DeviceSchemaInfo,
   PropertySchemaAttributes,
+  TableColumnInfo,
 } from "@/karabo_data/DeviceSchemaInfo";
 
 import { MetricPrefix, Unit } from "@/karabo_data/SchemaEnums";
 import { flattenHash } from "@/karabo_hash/hash_utils";
 import { VectorElementType } from "../HashValueType";
+
+/// Decodes the rowSchema attribute of a Table property into a list of
+/// TableColumnInfo records. The value of the rowSchema attribute is an
+/// schema itself.
+const decodeRowSchema = (karaboVal: KaraboType): TableColumnInfo[] => {
+  const tableColumns: TableColumnInfo[] = [];
+  const rowSchemaHash = karaboVal.value_ as object;
+  if ("hash" in rowSchemaHash) {
+    // The value of a rowSchema is not mapped in the types.d.ts of
+    // karabo-ts at the moment. It is an object with an empty "name"
+    // and a Hash in its "hash" property. That's the reason for
+    // the 'as object' cast and the '"hash" in' condition above.
+    const columnsInfoHash = rowSchemaHash["hash"] as Hash;
+    const columns = flattenHash(columnsInfoHash);
+
+    for (const column of columns) {
+      const columnName = column.path;
+      const columnAttrs: PropertySchemaAttributes = {
+        valueType: column.type,
+        defaultValue: column.attrs["defaultValue"]?.value_,
+        displayedName: column.attrs["displayedName"]?.value_ as string,
+        requiredAccessLevel: column.attrs["requiredAccessLevel"]
+          ?.value_ as number,
+        accessMode: column.attrs["accessMode"]?.value_ as number,
+        nodeType: column.attrs["nodeType"]?.value_ as number,
+      };
+      const tableColumn = {
+        columnName: columnName,
+        columnAttributes: columnAttrs,
+      };
+      tableColumns.push(tableColumn);
+    }
+  }
+  return tableColumns;
+};
 
 export const deviceSchemaFromHash = (hash: Hash): DeviceSchemaInfo => {
   const deviceId = hash.getValue("deviceId");
@@ -26,7 +62,6 @@ export const deviceSchemaFromHash = (hash: Hash): DeviceSchemaInfo => {
               propAttrs.valueType = karaboVal.value_ as HashTypes;
               break;
             case "defaultValue":
-              // TODO: The defaultValue should be typed accordingly to valueType
               propAttrs.defaultValue = karaboVal.value_;
               break;
             case "requiredAccessLevel":
@@ -64,10 +99,12 @@ export const deviceSchemaFromHash = (hash: Hash): DeviceSchemaInfo => {
             case "allowedStates":
               propAttrs.allowedStates = karaboVal.value_ as string[];
               break;
+            case "rowSchema":
+              propAttrs.rowSchema = decodeRowSchema(karaboVal);
+              break;
             // TODO: handle remaining property attributes
           }
         }
-        // Type assertion to PropertyAttributes before adding to the map
         schemaInfo.propertyDescriptors.set(
           path,
           propAttrs as PropertySchemaAttributes
