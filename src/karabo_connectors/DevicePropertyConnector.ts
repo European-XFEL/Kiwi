@@ -1,4 +1,4 @@
-import { Hash } from "karabo-ts";
+import { Hash, HashTypes, HashValue } from "karabo-ts";
 import { GuiServerConnector } from "./GuiServerConnector";
 import {
   buildStartMonitoringHash,
@@ -10,15 +10,21 @@ import { TopologyConnector } from "./TopologyConnector";
 import { DeviceSchemaConnector } from "./DeviceSchemaConnector";
 import { DeviceInfo, TopologyEventType } from "@/karabo_data/TopologyInfo";
 import { DeviceSchemaInfo } from "@/karabo_data/DeviceSchemaInfo";
+import { VectorElementType } from "@/karabo_hash/HashValueType";
 
-type PropertyUpdateHandler = (updatedProperty: PropertyInfo) => void;
+// VectorElementType[][] is the type used for the value of a table property.
+// Each VectorElementType is the value of a table cell with the row being
+// the first index and the column being the second index.
+type PropertyUpdateHandler = (
+  updatedProperty: PropertyInfo | VectorElementType[][]
+) => void;
 
 export class DevicePropertyConnector {
   // #region Singleton
   private constructor() {
     GuiServerConnector.inst.registerHashHandler(
       "deviceConfigurations",
-      this.#_onDeviceConfigurations
+      this._onDeviceConfigurations
     );
   }
 
@@ -281,12 +287,12 @@ export class DevicePropertyConnector {
    * Updates stored configurations of monitored devices and dispatches updates
    * to registered property monitors.
    */
-  #_onDeviceConfigurations = (hash: Hash): void => {
+  private _onDeviceConfigurations = (hash: Hash): void => {
     const devicesConfigs = devicesConfigsFromHash(hash);
     for (const deviceConfig of devicesConfigs) {
       const deviceId = deviceConfig.deviceId;
       if (this._propertyMonitors.has(deviceId)) {
-        // There's at least of property update handler registered for the device
+        // There's at least one property update handler registered for the device
         this._mergeConfiguration(deviceId, deviceConfig.properties);
         for (const propInfo of deviceConfig.properties) {
           if (this._propertyMonitors.get(deviceId)?.has(propInfo.key)) {
@@ -295,13 +301,46 @@ export class DevicePropertyConnector {
               .get(deviceId)
               ?.get(propInfo.key);
             if (propUpdateHandlers !== undefined) {
-              for (const propUpdateHandler of propUpdateHandlers) {
-                this._dispatchPropUpdate(deviceId, propUpdateHandler, propInfo);
+              if (propInfo.type === HashTypes.VectorHash) {
+                const tableCells = this._extractCellValues(propInfo);
+                for (const propUpdateHandler of propUpdateHandlers) {
+                  propUpdateHandler(tableCells);
+                }
+              } else {
+                for (const propUpdateHandler of propUpdateHandlers) {
+                  this._dispatchPropUpdate(
+                    deviceId,
+                    propUpdateHandler,
+                    propInfo
+                  );
+                }
               }
             }
           }
         }
       }
     }
+  };
+
+  /**
+   * Extract cell values for a table property from its PropertyInfo record.
+   *
+   * @param propInfo table PropertyInfo with table cell values, types and attrs
+   * @returns a bidimensional array containing the values of the table cells
+   */
+  private _extractCellValues = (
+    propInfo: PropertyInfo
+  ): VectorElementType[][] => {
+    const tableCells: VectorElementType[][] = [];
+    const hashVector = propInfo.value as HashValue[];
+    for (let row = 0; row < hashVector.length; row++) {
+      const rowCells: VectorElementType[] = [];
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      for (const [_, hashNode] of Object.entries(hashVector[row])) {
+        rowCells.push(hashNode.value.value_ as VectorElementType);
+      }
+      tableCells.push(rowCells);
+    }
+    return tableCells;
   };
 }
