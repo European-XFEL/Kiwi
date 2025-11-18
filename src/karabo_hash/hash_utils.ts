@@ -5,7 +5,7 @@ import {
   HashTypes,
   HashValue,
 } from "karabo-ts";
-import { HashValueType } from "./HashValueType";
+import { HashValueType, VectorElementType } from "./HashValueType";
 
 /**
  * Parses a Blob, the type of WebSocketEvent.data, supposed to contain a
@@ -60,7 +60,10 @@ export interface HashLeafNode {
   attrs: Attributes;
 }
 
-export const flattenHash = (hash: Hash): HashLeafNode[] => {
+export const flattenHash = (
+  hash: Hash,
+  flattenVectorHash: boolean = false
+): HashLeafNode[] => {
   function doFlattenHash(
     hash: Hash,
     hashLeaves: HashLeafNode[],
@@ -93,7 +96,10 @@ export const flattenHash = (hash: Hash): HashLeafNode[] => {
               currentKey
             );
           }
-        } else if (hashNode.value.type_ === HashTypes.VectorHash) {
+        } else if (
+          flattenVectorHash &&
+          hashNode.value.type_ === HashTypes.VectorHash
+        ) {
           const hashVector = hashNode.value.value_ as HashValue[];
           for (let i = 0; i < hashVector.length; i++) {
             doFlattenHash(
@@ -110,7 +116,7 @@ export const flattenHash = (hash: Hash): HashLeafNode[] => {
             attrs: hashNode.attrs,
           });
         }
-      }
+      } // if (typeof HashNode !== "undefined")
     }
   }
 
