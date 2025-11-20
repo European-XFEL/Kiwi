@@ -7,13 +7,13 @@
 - [x] Evaluate (and possibly replace) `React-Redux` with `zustand` as the application state management support library (https://git.xfel.eu/karaboweb/kiwi/-/issues/17)
 - [x] Evaluate (and possibly replace) `mui` with `shadcn ui` as the application component library (https://git.xfel.eu/karaboweb/kiwi/-/issues/6)
 - [x] Add the missing infra-structure to support property types and schema updates - the equivalents of the Karabo GUI `PropertyProxy` and `Controller` types (https://git.xfel.eu/karaboweb/kiwi/-/issues/20)
-- [ ] Support scaling of scenes (Zoom-In, Zoom-Out, Full-Screen) with rescaling of all the scene elements (https://git.xfel.eu/karaboweb/kiwi/-/issues/7)
+- [x] Support scaling of scenes (Zoom-In, Zoom-Out, Full-Screen) with rescaling of all the scene elements (https://git.xfel.eu/karaboweb/kiwi/-/issues/7)
 - [x] Fix the lay-out and functional issues detected in the reference scene from issue https://git.xfel.eu/karaboweb/kiwi/-/issues/19
-- [ ] Align the Kiwi Fonts with the karaboGui
-- [ ] Implement Shapes: Line, Label, Rectangle
-- [ ] Implement StatefulIcon Widget
-- [ ] Implement Evaluator Widget
-- [ ] Implement CheckBox widget
+- [x] Align the Kiwi Fonts with the karaboGui
+- [x] Implement Shapes: Line, Label, Rectangle
+- [x] Implement StatefulIcon Widget
+- [x] Implement Evaluator Widget
+- [x] Implement CheckBox widget
 - [x] Support the `DisplayTrendGraph` widget (MVP-mode: most important features; not necessarily all) (https://git.xfel.eu/karaboweb/kiwi/-/issues/11)
 
 
@@ -22,7 +22,7 @@
 - [ ] Improve the ergonomy of the `Karabo-TS` package (https://git.xfel.eu/karaboweb/kiwi/-/issues/10)
 - [ ] Support the `WebCamGraph` widget (MVP-mode: most important features; not necessarily all) (https://git.xfel.eu/karaboweb/kiwi/-/issues/14)
 - [ ] Evaluate with Schema if Property is available
-- [ ] Support the `DisplayTableElement` (MVP-mode: most important features; not necessarily all) widget (https://git.xfel.eu/karaboweb/kiwi/-/issues/21)
+- [x] Support the `DisplayTableElement` (MVP-mode: most important features; not necessarily all) widget (https://git.xfel.eu/karaboweb/kiwi/-/issues/21)
 - [ ] Instrument Burrow to be able to monitor its performance metrics (https://git.xfel.eu/karaboweb/kiwi/-/issues/16)
 - [ ] Implement some performance tests for Kiwi - scenes with muliple `WebCamGraph` and `DisplayTrendGraph` and also tests with multiple simultaneous Kiwi connections to Burrow (https://git.xfel.eu/karaboweb/kiwi/-/issues/15)
 - [ ] Extend the set of widgets supported by Kiwi (TODO: define the set of widgets to be implemented; base on the use frequency obtained from a sweep of the ProjectDB)
