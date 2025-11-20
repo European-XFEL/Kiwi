@@ -13,40 +13,30 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { TablePagination } from "@/components/shared/TablePagination";
+import {
+  formatTableCell,
+  isNumericType,
+} from "@/components/shared/helpers/formatTableCell";
 
 /**
  * DisplayTableElement - Displays table data from a property.
  * Styled to resemble the Qt table (full grid borders, compact rows).
- * Pagination is always enabled for testing.
+ * Formats cells based on their data type.
  */
 const DisplayTableElement: React.FC<DisplayTableElementProps> = (props) => {
   const keysStr = useKaraboKeysString(props.keys);
 
   // Get table data with pagination always enabled for testing
-  const {
-    deviceId,
-    tableData,
-    paginatedTableData,
-    pagination,
-    // cells,
-    columns,
-    // totalRows,
-  } = useKaraboTableProperty(keysStr, {
-    enablePagination: true, // Always enable for now
-    initialPageSize: 10,
-  });
+  const { deviceId, tableData, paginatedTableData, pagination } =
+    useKaraboTableProperty(keysStr, {
+      enablePagination: true,
+      initialPageSize: 10,
+    });
 
   const isOffline = useDeviceOnlineStatus(deviceId);
 
   // Use paginated data if available, otherwise use regular data
   const displayData = paginatedTableData ?? tableData;
-
-  // Debug logging
-  // React.useEffect(() => {
-  //   console.log("[DisplayTableElement] totalRows:", totalRows);
-  //   console.log("[DisplayTableElement] paginatedTableData:", paginatedTableData);
-  //   console.log("[DisplayTableElement] pagination:", pagination);
-  // }, [totalRows, paginatedTableData, pagination]);
 
   return (
     <div
@@ -77,7 +67,7 @@ const DisplayTableElement: React.FC<DisplayTableElementProps> = (props) => {
                     <TableRow className="border-b border-gray-300">
                       {displayData.columns.map((col, idx) => (
                         <TableHead
-                          key={idx}
+                          key={`col-${idx}-${col.columnName}`}
                           className="border border-gray-300 px-2 py-1 text-left align-middle font-semibold text-gray-800 text-[11px] whitespace-nowrap"
                         >
                           {col.columnAttributes.displayedName ?? col.columnName}
@@ -88,17 +78,27 @@ const DisplayTableElement: React.FC<DisplayTableElementProps> = (props) => {
                   <TableBody>
                     {displayData.cells.map((row, rowIdx) => (
                       <TableRow
-                        key={rowIdx}
+                        key={`row-${rowIdx}`}
                         className="hover:bg-gray-50 transition-colors duration-150"
                       >
-                        {row.map((cell, cellIdx) => (
-                          <TableCell
-                            key={cellIdx}
-                            className="border border-gray-300 px-2 py-1 text-[11px] leading-tight text-gray-900 align-middle whitespace-nowrap"
-                          >
-                            {String(cell)}
-                          </TableCell>
-                        ))}
+                        {row.map((cell, cellIdx) => {
+                          const column = displayData.columns[cellIdx];
+                          const formattedValue = formatTableCell(cell, column);
+                          const isNumeric = isNumericType(
+                            column.columnAttributes.valueType
+                          );
+
+                          return (
+                            <TableCell
+                              key={`cell-${cellIdx}-${column.columnName}`}
+                              className={`border border-gray-300 px-2 py-1 text-[11px] leading-tight text-gray-900 align-middle whitespace-nowrap ${
+                                isNumeric ? "text-right" : "text-left"
+                              }`}
+                            >
+                              {formattedValue}
+                            </TableCell>
+                          );
+                        })}
                       </TableRow>
                     ))}
                   </TableBody>
@@ -120,9 +120,6 @@ const DisplayTableElement: React.FC<DisplayTableElementProps> = (props) => {
                   No table data available yet.
                 </p>
                 <p className="text-xs text-gray-400 mt-1">Keys: {keysStr}</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  Columns: {columns.length > 0 ? columns.length : "loading..."}
-                </p>
               </div>
             </div>
           )}

@@ -6,10 +6,16 @@ import { useDeviceOnlineStatus } from "@/components/shared/hooks/useDeviceOnline
 import { useKaraboKeysString } from "@/components/shared/hooks/useKaraboKeysString";
 import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
 import { VectorElementType } from "@/karabo_hash/HashValueType";
+import type { PropertyInfoOptional } from "@/karabo_data/DeviceConfigInfo";
+import { usePropertyPermissions } from "@/components/shared/hooks/usePropertyPermission";
 
 /**
  * EditableComboBox - Dropdown input widget for selecting a value from a set.
- * Derived from the new EditableComboBoxModel type.
+ *
+ * Editability rules:
+ * - Device must be online
+ * - User access level must satisfy property.schemaAttrs.requiredAccessLevel
+ * - Property accessMode must allow editing (ReadOnly / InitOnly / Reconfigurable)
  */
 const EditableComboBox: React.FC<EditableComboBoxProps> = (props) => {
   const { keys, x, y, width, height, font_size, font_weight } = props;
@@ -19,30 +25,37 @@ const EditableComboBox: React.FC<EditableComboBoxProps> = (props) => {
   const { deviceId, property } = useKaraboPropertyInfo(joinedKeys);
   const offline = useDeviceOnlineStatus(deviceId);
 
+  // Narrow property to the scalar PropertyInfo type this widget expects
+  const typedProperty = property as PropertyInfoOptional;
+
+  // Centralized permission logic
+  const { canEdit, disabledReason } = usePropertyPermissions(typedProperty);
+
   const [value, setValue] = React.useState<string | undefined>(undefined);
 
   const options = React.useMemo((): VectorElementType[] => {
-    const options = property?.schemaAttrs?.options ?? [];
-    return options as VectorElementType[];
-  }, [property]);
+    const schemaOptions = typedProperty?.schemaAttrs?.options ?? [];
+    return schemaOptions as VectorElementType[];
+  }, [typedProperty]);
 
   // Sync with property changes
   React.useEffect(() => {
-    if (!property) {
+    if (!typedProperty) {
       setValue(undefined);
       return;
     }
+
     const incoming = String(
-      property.value ?? property.schemaAttrs?.defaultValue ?? ""
+      typedProperty.value ?? typedProperty.schemaAttrs?.defaultValue ?? ""
     );
-    setValue(
+
+    const matchExists =
       options.findIndex(
-        (option: VectorElementType) => option.toString() == incoming
-      ) >= 0
-        ? incoming
-        : undefined
-    );
-  }, [property, options]);
+        (option: VectorElementType) => option.toString() === incoming
+      ) >= 0;
+
+    setValue(matchExists ? incoming : undefined);
+  }, [typedProperty, options]);
 
   // Show offline overlay when device is not connected
   if (offline) {
@@ -58,6 +71,8 @@ const EditableComboBox: React.FC<EditableComboBoxProps> = (props) => {
     );
   }
 
+  const finalCanEdit = canEdit;
+
   return (
     <select
       value={value ?? ""}
@@ -66,7 +81,13 @@ const EditableComboBox: React.FC<EditableComboBoxProps> = (props) => {
         setValue(v);
         // TODO: push value to backend or GUI server via WebSocket
       }}
-      className="absolute border border-solid text-black rounded"
+      disabled={!finalCanEdit}
+      title={!finalCanEdit ? disabledReason : ""}
+      className={`absolute border border-solid rounded ${
+        finalCanEdit
+          ? "text-black bg-white cursor-pointer"
+          : "text-gray-500 bg-gray-100 cursor-not-allowed"
+      }`}
       style={{
         width: `${width}px`,
         height: `${height}px`,
@@ -78,13 +99,16 @@ const EditableComboBox: React.FC<EditableComboBoxProps> = (props) => {
       }}
     >
       <option value="" disabled>
-        Select an option
+        {finalCanEdit ? "Select an option" : "Read-only"}
       </option>
-      {options.map((opt) => (
-        <option key={opt.toString()} value={opt.toString()}>
-          {opt.toString()}
-        </option>
-      ))}
+      {options.map((opt) => {
+        const str = opt.toString();
+        return (
+          <option key={str} value={str}>
+            {str}
+          </option>
+        );
+      })}
     </select>
   );
 };

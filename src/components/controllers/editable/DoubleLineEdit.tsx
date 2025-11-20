@@ -5,39 +5,45 @@ import { useKaraboPropertyInfo } from "@/components/shared/hooks/useKaraboProper
 import { useDeviceOnlineStatus } from "@/components/shared/hooks/useDeviceOnlineStatus";
 import { useKaraboKeysString } from "@/components/shared/hooks/useKaraboKeysString";
 import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
+import type { PropertyInfoOptional } from "@/karabo_data/DeviceConfigInfo";
+import { usePropertyPermissions } from "@/components/shared/hooks/usePropertyPermission";
 
 /**
  * DoubleLineEdit - Float input field with configurable decimal precision.
- * Supports decimal values with precision control (-1 for auto, 0-12 for fixed).
+ *
+ * Editability rules:
+ * - Device must be online
+ * - Property.accessMode must be Reconfigurable (InitOnly/ReadOnly are never editable)
+ * - User access level must satisfy property.schemaAttrs.requiredAccessLevel
  */
 const DoubleLineEdit: React.FC<DoubleLineEditProps> = (props) => {
   const { keys, x, y, width, height, decimals, font_size, font_weight } = props;
-  //console.log(props);
 
-  // Join keys for compatibility with hooks
   const joinedKeys = useKaraboKeysString(keys);
   const { deviceId, property } = useKaraboPropertyInfo(joinedKeys);
   const offline = useDeviceOnlineStatus(deviceId);
+
+  const typedProperty = property as PropertyInfoOptional;
+
+  const { canEdit, disabledReason } = usePropertyPermissions(typedProperty);
 
   const [value, setValue] = React.useState<string>("");
 
   // Get unit from property schema
   const unit = React.useMemo(() => {
-    if (!property) return "";
-    const prefix = property.schemaAttrs?.metricPrefixSymbol ?? "";
-    const symbol = property.schemaAttrs?.unitSymbol ?? "";
+    if (!typedProperty || !typedProperty.schemaAttrs) return "";
+    const prefix = typedProperty.schemaAttrs.metricPrefixSymbol ?? "";
+    const symbol = typedProperty.schemaAttrs.unitSymbol ?? "";
     return `${prefix}${symbol}`.trim();
-  }, [property]);
+  }, [typedProperty]);
 
   // Format number based on decimals setting
   const formatValue = React.useCallback(
     (val: number): string => {
       if (decimals === -1) {
-        // Auto mode - use default number formatting
-        return String(val);
+        return String(val); // auto mode
       } else {
-        // Fixed precision
-        return val.toFixed(decimals);
+        return val.toFixed(decimals); // fixed precision
       }
     },
     [decimals]
@@ -45,19 +51,25 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = (props) => {
 
   // Sync with property changes
   React.useEffect(() => {
-    if (!property) {
+    if (!typedProperty) {
       setValue("");
       return;
     }
-    const incoming = property.value ?? property.schemaAttrs?.defaultValue ?? 0;
+
+    const incoming =
+      typedProperty.value ?? typedProperty.schemaAttrs?.defaultValue ?? 0;
+
     const numValue =
       typeof incoming === "number" ? incoming : parseFloat(String(incoming));
+
     if (!isNaN(numValue)) {
       setValue(formatValue(numValue));
+    } else {
+      setValue("");
     }
-  }, [property, formatValue]);
+  }, [typedProperty, formatValue]);
 
-  // Show offline overlay when device is not connected
+  // If device is offline, show overlay instead of input
   if (offline) {
     return (
       <DeviceOfflineOverlay
@@ -70,6 +82,8 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = (props) => {
       />
     );
   }
+
+  const finalCanEdit = canEdit;
 
   return (
     <div
@@ -94,14 +108,20 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = (props) => {
             // TODO: push value to backend or GUI server via WebSocket
           }
         }}
-        className="border border-solid text-black rounded px-1 flex-1"
+        disabled={!finalCanEdit}
+        title={!finalCanEdit ? disabledReason : ""}
+        className={`border border-solid rounded px-1 flex-1 ${
+          finalCanEdit
+            ? "text-black bg-white cursor-text"
+            : "text-gray-500 bg-gray-100 cursor-not-allowed"
+        }`}
         style={{
           fontFamily: FONT_FAMILY_DEFAULT,
           fontSize: font_size,
           fontWeight: font_weight.toLowerCase(),
           minWidth: 0,
         }}
-        placeholder="0.0"
+        placeholder={finalCanEdit ? "0.0" : "Read-only"}
       />
       {unit && (
         <span

@@ -14,10 +14,16 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { usePropertyPermissions } from "@/components/shared/hooks/usePropertyPermission";
+import type { PropertyInfoOptional } from "@/karabo_data/DeviceConfigInfo";
 
 /**
  * EditableList - List editor for VectorBinding properties.
- * Displays array values as comma-separated text input with a dialog editor.
+ *
+ * Editability rules:
+ * - Device must be online
+ * - User access level must satisfy property.schemaAttrs.requiredAccessLevel
+ * - Property accessMode must allow editing (ReadOnly / InitOnly / Reconfigurable)
  */
 const EditableList: React.FC<EditableListProps> = (props) => {
   const { keys, x, y, width, height, font_size, font_weight } = props;
@@ -27,23 +33,34 @@ const EditableList: React.FC<EditableListProps> = (props) => {
   const { deviceId, property } = useKaraboPropertyInfo(joinedKeys);
   const offline = useDeviceOnlineStatus(deviceId);
 
+  // Narrow to our “maybe PropertyInfo, maybe null/undefined” type
+  const propertyOptional = property as PropertyInfoOptional;
+
+  // Centralized permission logic
+  const { canEdit, disabledReason } = usePropertyPermissions(propertyOptional);
+
   const [value, setValue] = React.useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
 
   // Sync with property changes
   React.useEffect(() => {
-    if (!property) {
+    if (!propertyOptional) {
       setValue("");
       return;
     }
-    const incoming = property.value ?? property.schemaAttrs?.defaultValue ?? [];
+
+    const incoming =
+      propertyOptional.value ??
+      propertyOptional.schemaAttrs?.defaultValue ??
+      [];
+
     if (Array.isArray(incoming)) {
       // Convert array to comma-separated string
       setValue(incoming.join(", "));
     } else {
       setValue(String(incoming));
     }
-  }, [property]);
+  }, [propertyOptional]);
 
   // Show offline overlay when device is not connected
   if (offline) {
@@ -58,6 +75,8 @@ const EditableList: React.FC<EditableListProps> = (props) => {
       />
     );
   }
+
+  const finalCanEdit = canEdit;
 
   return (
     <div
@@ -84,14 +103,20 @@ const EditableList: React.FC<EditableListProps> = (props) => {
           setValue(items.join(", "));
           // TODO: push array value to backend or GUI server via WebSocket
         }}
-        className="border border-solid text-black rounded px-1 flex-1"
+        disabled={!finalCanEdit}
+        title={!finalCanEdit ? disabledReason : ""}
+        className={`border border-solid rounded px-1 flex-1 ${
+          finalCanEdit
+            ? "text-black bg-white cursor-text"
+            : "text-gray-500 bg-gray-100 cursor-not-allowed"
+        }`}
         style={{
           fontFamily: FONT_FAMILY_DEFAULT,
           fontSize: font_size,
           fontWeight: font_weight.toLowerCase(),
           minWidth: 0,
         }}
-        placeholder="item1, item2, item3"
+        placeholder={finalCanEdit ? "item1, item2, item3" : "Read-only"}
       />
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -99,9 +124,15 @@ const EditableList: React.FC<EditableListProps> = (props) => {
           <Button
             variant="outline"
             size="icon"
-            className="h-5 w-5 p-0 hover:bg-orange-50 border-none cursor-pointer"
+            disabled={!finalCanEdit}
+            title={!finalCanEdit ? disabledReason : "Edit list"}
+            className={`h-5 w-5 p-0 border-none ${
+              finalCanEdit
+                ? "hover:bg-orange-50 cursor-pointer"
+                : "opacity-50 cursor-not-allowed"
+            }`}
           >
-            <SquarePen className="h-3 w-3 " />
+            <SquarePen className="h-3 w-3" />
           </Button>
         </DialogTrigger>
         <DialogContent>

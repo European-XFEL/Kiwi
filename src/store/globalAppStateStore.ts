@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { SceneModel } from "../view_models/SceneModel";
+import { AccessLevel } from "@/karabo_data/SchemaEnums";
 
 /** App status tag */
 // UNRECOVERABLE_ERROR -> Advice to reload the page (takes full page view port). Goes back to INIT
@@ -47,6 +48,7 @@ export interface GlobalActions {
   setLoggedOut: () => void;
   setLoadedScene: (scene?: SceneModel) => void;
   reset: () => void;
+  updateAccessLevel: (level: AccessLevel) => void;
 }
 
 /** Store = state + actions */
@@ -105,4 +107,16 @@ export const useGlobalStore = create<GlobalStore>((set) => ({
     }),
 
   reset: () => set(() => ({ ...initialState })),
+
+  updateAccessLevel: (level) =>
+    set((state) => {
+      if (!state.sessionInfo) return state; // nothing to update
+      return {
+        ...state,
+        sessionInfo: {
+          ...state.sessionInfo,
+          accessLevel: level,
+        },
+      };
+    }),
 }));

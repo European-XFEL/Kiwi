@@ -6,57 +6,64 @@ import { HashTypes } from "karabo-ts";
 import { useDeviceOnlineStatus } from "../../shared/hooks/useDeviceOnlineStatus";
 import { useKaraboPropertyInfo } from "../../shared/hooks/useKaraboProperty";
 import { useKaraboKeysString } from "../../shared/hooks/useKaraboKeysString";
+import type { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
 
 const DisplayLabel: React.FC<DisplayLabelProps> = (props) => {
-  //hooks
-  const keysStr = useKaraboKeysString(props.keys);
+  const { keys, x, y, width, height, font_size, font_weight } = props;
+
+  const keysStr = useKaraboKeysString(keys);
   const { deviceId, property } = useKaraboPropertyInfo(keysStr);
   const isOffline = useDeviceOnlineStatus(deviceId);
 
-  //value and unit
-  const labelValue = React.useMemo(() => {
-    if (!property) return "";
-    const prefix = property.schemaAttrs?.metricPrefixSymbol ?? "";
-    const symbol = property.schemaAttrs?.unitSymbol ?? "";
-    const displayUnit = `${prefix}${symbol}`;
-    const propType = property.type;
+  // Narrow to the scalar PropertyInfo type this widget expects
+  const typedProperty = property as PropertyInfo | null;
 
+  const labelValue = React.useMemo(() => {
+    if (!typedProperty) return "";
+
+    const prefix = typedProperty.schemaAttrs?.metricPrefixSymbol ?? "";
+    const symbol = typedProperty.schemaAttrs?.unitSymbol ?? "";
+    const displayUnit = `${prefix}${symbol}`.trim();
+    const propType = typedProperty.type;
+
+    // Float types: format nicely with limited precision
     if (propType === HashTypes.Float32 || propType === HashTypes.Float64) {
-      const num = Number(property.value);
+      const num = Number(typedProperty.value);
       const displayValue = Number.isNaN(num)
-        ? String(property.value)
+        ? String(typedProperty.value)
         : parseFloat(num.toPrecision(8)).toString();
 
-      return `${displayValue} ${displayUnit}`;
+      return displayUnit ? `${displayValue} ${displayUnit}` : displayValue;
     }
 
-    // For all non-float types, show the string representation directly
-    return `${String(property.value)} ${displayUnit}`;
-  }, [property]);
+    // Non-float types: just show string representation
+    const raw = String(typedProperty.value);
+    return displayUnit ? `${raw} ${displayUnit}` : raw;
+  }, [typedProperty]);
 
   return (
     <div
       className="absolute overflow-clip flex items-center justify-center border border-solid p-px"
       style={{
-        width: props.width,
-        height: props.height,
-        left: props.x,
-        top: props.y,
+        width,
+        height,
+        left: x,
+        top: y,
         fontFamily: FONT_FAMILY_DEFAULT,
-        fontSize: props.font_size,
-        fontWeight: props.font_weight.toLowerCase(),
+        fontSize: font_size,
+        fontWeight: font_weight.toLowerCase(),
       }}
     >
       {isOffline ? (
         <DeviceOfflineOverlay
-          keys={props.keys}
-          x={props.x}
-          y={props.y}
-          width={props.width}
-          height={props.height}
+          keys={keys}
+          x={x}
+          y={y}
+          width={width}
+          height={height}
         />
       ) : (
-        `${labelValue}`
+        labelValue
       )}
     </div>
   );

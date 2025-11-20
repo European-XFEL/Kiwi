@@ -5,6 +5,7 @@ import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
 import { useDeviceOnlineStatus } from "@/components/shared/hooks/useDeviceOnlineStatus";
 import { useKaraboPropertyInfo } from "@/components/shared/hooks/useKaraboProperty";
 import { useKaraboKeysString } from "@/components/shared/hooks/useKaraboKeysString";
+import { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
 
 /**
  * ---- helpers to mimic the Python evaluator from the Qt GUI ----
@@ -191,9 +192,11 @@ const Evaluator: React.FC<EvaluatorProps> = (props) => {
 
   const displayValue = React.useMemo(() => {
     if (!property) return "";
-
     // what the device actually reports
-    const rawValue = property.value ?? property.schemaAttrs?.defaultValue ?? 0;
+    const rawValue =
+      (property as PropertyInfo).value ??
+      (property as PropertyInfo).schemaAttrs?.defaultValue ??
+      0;
 
     const expr = props.expression || "";
 

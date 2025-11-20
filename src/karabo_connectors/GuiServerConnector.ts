@@ -1,4 +1,6 @@
 import { buildLoginHash } from "../karabo_hash/builders/gui_session";
+import { AccessControlManager } from "@/shared/helpers/AccessLevel";
+
 import {
   sysTopologyInfoFromHash,
   sysTopologyUpdateInfoFromHash,
@@ -563,6 +565,13 @@ export class GuiServerConnector {
         this.#_session!.accessLevel!
       );
 
+      //initialize access control
+      AccessControlManager.instance.initFromLogin({
+        accessLevel: this.#_session!.accessLevel!,
+        isAuthenticated: false,
+        userId: this.#_session!.userId!,
+      });
+
       // A non authenticated login is immediately followed by the sending of the systemTopology;
       // there's no reply for the login. So we immediately call the non-Auth handler.
       this.#_session!.userLogged = true;
@@ -589,12 +598,14 @@ export class GuiServerConnector {
     //       loginInfoHash
     //     )}\n this.#_session=${JSON.stringify(this.#_session)}`
     //   );
+
     GuiSessionStore.inst.saveAuthGuiSession(
       this.#_session!.host,
       this.#_session!.port,
       this.#_session!.userId!,
       this.#_session!.refreshToken!
     );
+
     this.#_session?.startHandler!(
       loginInfoHash.accessLevel,
       this.#_session!.host,
@@ -608,6 +619,12 @@ export class GuiServerConnector {
       this.#_session!.serverVersion!
     );
     this.#_session!.userLogged = true;
+
+    AccessControlManager.instance.initFromLogin({
+      accessLevel: loginInfoHash.accessLevel,
+      isAuthenticated: true,
+      userId: this.#_session!.userId,
+    });
   };
 
   #_handleNotification = (hash: Hash): void => {

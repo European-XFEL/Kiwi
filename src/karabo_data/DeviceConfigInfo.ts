@@ -14,3 +14,5 @@ export interface PropertyInfo {
   timeAttrs: Attributes;
   schemaAttrs?: PropertySchemaAttributes;
 }
+
+export type PropertyInfoOptional = PropertyInfo | null | undefined;

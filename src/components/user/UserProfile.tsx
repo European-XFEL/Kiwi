@@ -14,6 +14,7 @@ import { useGlobalStore } from "@/store/globalAppStateStore";
 import { getInitials } from "@/shared/helpers/getInitials";
 import { getAccessLevelDisplay } from "@/shared/helpers/getAccessLevelDisplay";
 import type { UserInfoProps } from "@/shared/types";
+import AccessLevelSelector from "./AccessLevelSelector";
 
 export default function UserInfo({ showAccessLevel = true }: UserInfoProps) {
   const { sessionInfo, setLoggedOut } = useGlobalStore();
@@ -42,7 +43,7 @@ export default function UserInfo({ showAccessLevel = true }: UserInfoProps) {
         >
           {/* Avatar */}
           <div
-            className="w-8 h-8 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center shadow-sm"
+            className="w-8 h-8 bg-linear-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center shadow-sm"
             aria-hidden="true"
           >
             <span className="text-white text-sm font-semibold">{initials}</span>
@@ -74,6 +75,16 @@ export default function UserInfo({ showAccessLevel = true }: UserInfoProps) {
             )}
           </div>
         </DropdownMenuLabel>
+
+        <DropdownMenuSeparator />
+
+        {/* Access Level Selector */}
+        <div className="px-2 py-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">Access Level</span>
+            <AccessLevelSelector compact={true} />
+          </div>
+        </div>
 
         <DropdownMenuSeparator />
 

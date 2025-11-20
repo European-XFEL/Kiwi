@@ -6,6 +6,7 @@ import { useKaraboKeysString } from "../../shared/hooks/useKaraboKeysString";
 import { Checkbox } from "../../ui/checkbox";
 import DeviceOfflineOverlay from "../../DeviceOfflineOverlay";
 import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
+import { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
 
 const DisplayCheckbox: React.FC<DisplayCheckBoxProps> = ({
   keys,
@@ -21,13 +22,13 @@ const DisplayCheckbox: React.FC<DisplayCheckBoxProps> = ({
   const isOffline = useDeviceOnlineStatus(deviceId);
 
   const isChecked = React.useMemo(() => {
-    const value = property?.value;
+    const value = (property as PropertyInfo)?.value;
     if (typeof value === "boolean") return value;
     if (typeof value === "string")
       return value.toLowerCase() === "true" || value === "1";
     if (typeof value === "number") return value !== 0;
     return false;
-  }, [property?.value]);
+  }, [(property as PropertyInfo)?.value]);
 
   if (isOffline) {
     return (

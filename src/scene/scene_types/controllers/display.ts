@@ -102,6 +102,12 @@ export interface DisplayCommandProps extends BaseWidgetProps {
   font_size: number | string;
   font_weight: "normal" | "bold";
   requires_confirmation: boolean;
+  /**
+   * Optional: Array of device states in which this command is allowed to execute.
+   * If undefined or empty, the command is enabled regardless of device state.
+   * Examples: ["ACTIVE", "ON"], ["RUNNING", "ACQUIRING"]
+   */
+  allowedStates?: string[];
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
