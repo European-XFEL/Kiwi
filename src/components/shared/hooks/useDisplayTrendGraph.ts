@@ -117,7 +117,7 @@ export const useDisplayTrendGraph = (
   /** React to incoming property updates (only when online) */
   useEffect(() => {
     if (isOffline) return;
-    const point = normalizeToTimeSeries(property);
+    const point = normalizeToTimeSeries(property as PropertyInfo | null);
     if (!point) return;
 
     // discard duplicates or time going backwards

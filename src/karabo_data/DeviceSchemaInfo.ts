@@ -36,4 +36,7 @@ export interface PropertySchemaAttributes {
   options?: VectorElementType[];
   allowedStates?: string[];
   rowSchema?: TableColumnInfo[];
+
+  // for decimal precision control
+  decimalPlaces?: number; // Number of decimal places for floating-point display
 }

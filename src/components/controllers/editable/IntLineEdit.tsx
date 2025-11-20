@@ -5,10 +5,17 @@ import { useKaraboPropertyInfo } from "@/components/shared/hooks/useKaraboProper
 import { useDeviceOnlineStatus } from "@/components/shared/hooks/useDeviceOnlineStatus";
 import { useKaraboKeysString } from "@/components/shared/hooks/useKaraboKeysString";
 import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
+import type { PropertyInfoOptional } from "@/karabo_data/DeviceConfigInfo";
+import { usePropertyPermissions } from "@/components/shared/hooks/usePropertyPermission";
 
 /**
  * IntLineEdit - Integer input field with validation.
- * Only accepts integer values.
+ *
+ * Editability rules:
+ * - Device must be online
+ * - User access level must satisfy property.schemaAttrs.requiredAccessLevel
+ * - Property accessMode must allow editing (ReadOnly / InitOnly / Reconfigurable)
+ * - Only accepts integer values (parsed on blur)
  */
 const IntLineEdit: React.FC<IntLineEditProps> = (props) => {
   const { keys, x, y, width, height, font_size, font_weight } = props;
@@ -18,29 +25,42 @@ const IntLineEdit: React.FC<IntLineEditProps> = (props) => {
   const { deviceId, property } = useKaraboPropertyInfo(joinedKeys);
   const offline = useDeviceOnlineStatus(deviceId);
 
+  // Narrow property to PropertyInfo
+  const typedProperty = property as PropertyInfoOptional;
+
+  // Centralized permission logic
+
+  const { canEdit, disabledReason } = usePropertyPermissions(typedProperty);
+
   const [value, setValue] = React.useState<string>("");
 
   // Get unit from property schema
   const unit = React.useMemo(() => {
-    if (!property) return "";
-    const prefix = property.schemaAttrs?.metricPrefixSymbol ?? "";
-    const symbol = property.schemaAttrs?.unitSymbol ?? "";
+    if (!typedProperty || !typedProperty.schemaAttrs) return "";
+    const prefix = typedProperty.schemaAttrs.metricPrefixSymbol ?? "";
+    const symbol = typedProperty.schemaAttrs.unitSymbol ?? "";
     return `${prefix}${symbol}`.trim();
-  }, [property]);
+  }, [typedProperty]);
 
   // Sync with property changes
   React.useEffect(() => {
-    if (!property) {
+    if (!typedProperty) {
       setValue("");
       return;
     }
-    const incoming = property.value ?? property.schemaAttrs?.defaultValue ?? 0;
+
+    const incoming =
+      typedProperty.value ?? typedProperty.schemaAttrs?.defaultValue ?? 0;
+
     const intValue =
       typeof incoming === "number" ? incoming : parseInt(String(incoming), 10);
+
     if (!isNaN(intValue)) {
       setValue(String(intValue));
+    } else {
+      setValue("");
     }
-  }, [property]);
+  }, [typedProperty]);
 
   // Show offline overlay when device is not connected
   if (offline) {
@@ -55,6 +75,8 @@ const IntLineEdit: React.FC<IntLineEditProps> = (props) => {
       />
     );
   }
+
+  const finalCanEdit = canEdit;
 
   return (
     <div
@@ -79,14 +101,20 @@ const IntLineEdit: React.FC<IntLineEditProps> = (props) => {
             // TODO: push value to backend or GUI server via WebSocket
           }
         }}
-        className="border border-solid text-black rounded px-1 flex-1"
+        disabled={!finalCanEdit}
+        title={!finalCanEdit ? disabledReason : ""}
+        className={`border border-solid rounded px-1 flex-1 ${
+          finalCanEdit
+            ? "text-black bg-white cursor-text"
+            : "text-gray-500 bg-gray-100 cursor-not-allowed"
+        }`}
         style={{
           fontFamily: FONT_FAMILY_DEFAULT,
           fontSize: font_size,
           fontWeight: font_weight.toLowerCase(),
           minWidth: 0,
         }}
-        placeholder="0"
+        placeholder={finalCanEdit ? "0" : "Read-only"}
       />
       {unit && (
         <span

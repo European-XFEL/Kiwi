@@ -5,6 +5,7 @@ import { useKaraboPropertyInfo } from "../../shared/hooks/useKaraboProperty";
 import { useGuiStateColor } from "../../shared/hooks/useGuiStateColor";
 import { useDeviceOnlineStatus } from "../../shared/hooks/useDeviceOnlineStatus";
 import { useKaraboKeysString } from "../../shared/hooks/useKaraboKeysString";
+import { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
 
 /**
  * DisplayStateColor (read-only)
@@ -12,7 +13,6 @@ import { useKaraboKeysString } from "../../shared/hooks/useKaraboKeysString";
  */
 const DisplayStateColor: React.FC<DisplayStateColorProps> = React.memo(
   ({ keys, x, y, width, height, font_size, font_weight, show_string }) => {
-    // Join keys for Karabo hook
     const keysStr = useKaraboKeysString(keys);
 
     const { deviceId, property } = useKaraboPropertyInfo(keysStr);
@@ -20,12 +20,11 @@ const DisplayStateColor: React.FC<DisplayStateColorProps> = React.memo(
 
     // Normalize property value to string and derive GUI color
     const rawState = React.useMemo(
-      () => String(property?.value ?? "UNKNOWN"),
-      [property?.value]
+      () => String((property as PropertyInfo)?.value ?? "UNKNOWN"),
+      [(property as PropertyInfo)?.value]
     );
     const { colorValue } = useGuiStateColor(rawState);
 
-    // Render offline overlay when disconnected
     if (isOffline) {
       return (
         <DeviceOfflineOverlay

@@ -2,6 +2,7 @@ import * as React from "react";
 import { DevicePropertyConnector } from "@/karabo_connectors/DevicePropertyConnector";
 import { splitKaraboKeys } from "@/components/shared/helpers/splitKaraboKeys";
 import type { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
+import { VectorElementType } from "@/karabo_hash/HashValueType";
 
 export function useKaraboPropertyInfo(karaboKeys: string) {
   const { deviceId, propertyId } = React.useMemo(
@@ -9,11 +10,16 @@ export function useKaraboPropertyInfo(karaboKeys: string) {
     [karaboKeys]
   );
 
-  const [property, setProperty] = React.useState<PropertyInfo | null>(null);
+  const [property, setProperty] = React.useState<
+    PropertyInfo | VectorElementType[][] | null
+  >(null);
 
-  const onUpdate = React.useCallback((p: PropertyInfo) => {
-    setProperty(p);
-  }, []);
+  const onUpdate = React.useCallback(
+    (p: PropertyInfo | VectorElementType[][]) => {
+      setProperty(p);
+    },
+    []
+  );
 
   React.useEffect(() => {
     DevicePropertyConnector.inst.registerPropertyMonitor(

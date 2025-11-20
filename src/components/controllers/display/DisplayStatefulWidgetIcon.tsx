@@ -10,13 +10,16 @@ import {
   recolorPreloadedSvg,
   getPreloadedCacheKey,
 } from "@/components/shared/helpers/loadAndRecolor";
+import { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
 
 const DisplayStatefulIcon: React.FC<DisplayStatefulIconProps> = (props) => {
   const { keys, x, y, width, height, icon_name } = props;
 
   const joinedKeys = useKaraboKeysString(keys);
   const { deviceId, property } = useKaraboPropertyInfo(joinedKeys);
-  const rawState = property ? String(property.value) : "UNKNOWN";
+  const rawState = property
+    ? String((property as PropertyInfo).value)
+    : "UNKNOWN";
 
   const isOffline = useDeviceOnlineStatus(deviceId);
   const { colorValue } = useGuiStateColor(rawState);
