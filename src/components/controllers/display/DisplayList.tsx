@@ -1,8 +1,7 @@
 import React from "react";
 import type { DisplayListProps } from "@/scene/scene_types/controllers/display";
-import DeviceOfflineOverlay from "@/components/DeviceOfflineOverlay";
+import { ControllerContainer } from "@/components/sceneView/ControllerContainer";
 import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
-import { useDeviceOnlineStatus } from "@/components/shared/hooks/useDeviceOnlineStatus";
 import { useKaraboPropertyInfo } from "@/components/shared/hooks/useKaraboProperty";
 import { useKaraboKeysString } from "@/components/shared/hooks/useKaraboKeysString";
 import type { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
@@ -15,8 +14,7 @@ const DisplayList: React.FC<DisplayListProps> = (props) => {
   const { keys, x, y, width, height, font_size, font_weight } = props;
 
   const keysStr = useKaraboKeysString(keys);
-  const { deviceId, property } = useKaraboPropertyInfo(keysStr);
-  const isOffline = useDeviceOnlineStatus(deviceId);
+  const { property } = useKaraboPropertyInfo(keysStr);
 
   // Narrow to the scalar PropertyInfo type this widget expects
   const typedProperty = property as PropertyInfo | null;
@@ -36,40 +34,30 @@ const DisplayList: React.FC<DisplayListProps> = (props) => {
   }, [typedProperty]);
 
   return (
-    <div
-      className="absolute overflow-clip flex items-center border border-solid px-1"
-      style={{
-        width,
-        height,
-        left: x,
-        top: y,
-        fontFamily: FONT_FAMILY_DEFAULT,
-        fontSize: font_size,
-        fontWeight: font_weight.toLowerCase(),
-      }}
+    <ControllerContainer
+      keys={keys}
+      x={x}
+      y={y}
+      width={width}
+      height={height}
+      className="overflow-clip flex items-center border border-solid px-1"
+      showPropertyOverlay
     >
-      {isOffline ? (
-        <DeviceOfflineOverlay
-          keys={keys}
-          x={x}
-          y={y}
-          width={width}
-          height={height}
-        />
-      ) : (
-        <span
-          style={{
-            width: "100%",
-            overflow: "hidden",
-            whiteSpace: "nowrap",
-            textOverflow: "ellipsis",
-            display: "block",
-          }}
-        >
-          {displayValue}
-        </span>
-      )}
-    </div>
+      <span
+        style={{
+          width: "100%",
+          overflow: "hidden",
+          whiteSpace: "nowrap",
+          textOverflow: "ellipsis",
+          display: "block",
+          fontFamily: FONT_FAMILY_DEFAULT,
+          fontSize: font_size,
+          fontWeight: font_weight.toLowerCase(),
+        }}
+      >
+        {displayValue}
+      </span>
+    </ControllerContainer>
   );
 };
 

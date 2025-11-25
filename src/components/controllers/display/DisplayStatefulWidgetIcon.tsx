@@ -1,10 +1,9 @@
 import React, { useMemo } from "react";
 import type { DisplayStatefulIconProps } from "@/scene/scene_types/controllers";
+import { ControllerContainer } from "@/components/sceneView/ControllerContainer";
 import { useKaraboPropertyInfo } from "../../shared/hooks/useKaraboProperty";
 import { useKaraboKeysString } from "../../shared/hooks/useKaraboKeysString";
-import { useDeviceOnlineStatus } from "@/components/shared/hooks/useDeviceOnlineStatus";
 import { useGuiStateColor } from "../../shared/hooks/useGuiStateColor";
-import DeviceOfflineOverlay from "../../DeviceOfflineOverlay";
 import { statefulIconTextById } from "@/components/shared/helpers/statefulIcons";
 import {
   recolorPreloadedSvg,
@@ -16,15 +15,14 @@ const DisplayStatefulIcon: React.FC<DisplayStatefulIconProps> = (props) => {
   const { keys, x, y, width, height, icon_name } = props;
 
   const joinedKeys = useKaraboKeysString(keys);
-  const { deviceId, property } = useKaraboPropertyInfo(joinedKeys);
+  const { property } = useKaraboPropertyInfo(joinedKeys);
   const rawState = property
     ? String((property as PropertyInfo).value)
     : "UNKNOWN";
 
-  const isOffline = useDeviceOnlineStatus(deviceId);
   const { colorValue } = useGuiStateColor(rawState);
 
-  //  if the module wasn’t mocked correctly
+  //  if the module wasn't mocked correctly
   const svgXML = statefulIconTextById?.[icon_name] ?? null;
 
   const recoloredSvg = useMemo(() => {
@@ -53,28 +51,16 @@ const DisplayStatefulIcon: React.FC<DisplayStatefulIconProps> = (props) => {
   }, [svgXML, colorValue, icon_name]);
 
   return (
-    <div
-      className="absolute"
-      style={{
-        left: x,
-        top: y,
-        width,
-        height,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
+    <ControllerContainer
+      keys={keys}
+      x={x}
+      y={y}
+      width={width}
+      height={height}
+      showPropertyOverlay
+      className="flex items-center justify-center"
     >
-      {isOffline ? (
-        <DeviceOfflineOverlay
-          keys={keys}
-          x={x}
-          y={y}
-          width={width}
-          height={height}
-          key={`overlay-${joinedKeys}`}
-        />
-      ) : recoloredSvg ? (
+      {recoloredSvg ? (
         <div
           style={{ width: "100%", height: "100%" }}
           dangerouslySetInnerHTML={{ __html: recoloredSvg }}
@@ -87,7 +73,7 @@ const DisplayStatefulIcon: React.FC<DisplayStatefulIconProps> = (props) => {
           </text>
         </svg>
       )}
-    </div>
+    </ControllerContainer>
   );
 };
 

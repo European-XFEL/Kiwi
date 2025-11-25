@@ -1,12 +1,11 @@
 import React from "react";
 import type { DisplayCheckBoxProps } from "@/scene/scene_types/controllers";
 import { useKaraboPropertyInfo } from "../../shared/hooks/useKaraboProperty";
-import { useDeviceOnlineStatus } from "../../shared/hooks/useDeviceOnlineStatus";
 import { useKaraboKeysString } from "../../shared/hooks/useKaraboKeysString";
 import { Checkbox } from "../../ui/checkbox";
-import DeviceOfflineOverlay from "../../DeviceOfflineOverlay";
+import { ControllerContainer } from "@/components/sceneView/ControllerContainer";
 import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
-import { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
+import type { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
 
 const DisplayCheckbox: React.FC<DisplayCheckBoxProps> = ({
   keys,
@@ -18,8 +17,7 @@ const DisplayCheckbox: React.FC<DisplayCheckBoxProps> = ({
   font_weight,
 }) => {
   const keysStr = useKaraboKeysString(keys);
-  const { deviceId, property } = useKaraboPropertyInfo(keysStr);
-  const isOffline = useDeviceOnlineStatus(deviceId);
+  const { property } = useKaraboPropertyInfo(keysStr);
 
   const isChecked = React.useMemo(() => {
     const value = (property as PropertyInfo)?.value;
@@ -30,32 +28,18 @@ const DisplayCheckbox: React.FC<DisplayCheckBoxProps> = ({
     return false;
   }, [(property as PropertyInfo)?.value]);
 
-  if (isOffline) {
-    return (
-      <DeviceOfflineOverlay
-        keys={keys}
-        x={x}
-        y={y}
-        width={width}
-        height={height}
-      />
-    );
-  }
-
   const boxSize = Math.min(width, height, 18);
 
   return (
-    <div
-      className="absolute flex items-center justify-center"
-      style={{
-        left: x,
-        top: y,
-        width,
-        height,
-        fontFamily: FONT_FAMILY_DEFAULT,
-        fontSize: font_size,
-        fontWeight: font_weight,
-      }}
+    <ControllerContainer
+      keys={keys}
+      x={x}
+      y={y}
+      width={width}
+      height={height}
+      checkPermissions={false}
+      showPropertyOverlay
+      className="flex items-center justify-center"
     >
       <Checkbox
         checked={isChecked}
@@ -73,9 +57,12 @@ const DisplayCheckbox: React.FC<DisplayCheckBoxProps> = ({
         style={{
           width: boxSize,
           height: boxSize,
+          fontFamily: FONT_FAMILY_DEFAULT,
+          fontSize: font_size,
+          fontWeight: font_weight,
         }}
       />
-    </div>
+    </ControllerContainer>
   );
 };
 

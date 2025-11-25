@@ -12,6 +12,8 @@ import { Button } from "./ui/button";
 import { Spinner } from "./ui/spinner";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { AlertTriangle } from "lucide-react";
+import { deviceStatusPipeline } from "@/overlay_indicator/overlay_indicator_connector";
+import { splitKaraboKeys } from "@/components/shared/helpers/splitKaraboKeys";
 
 const SVG_SHAPES = new Set(["ArrowPolygon", "Line", "Polygon", "Rectangle"]);
 
@@ -97,6 +99,41 @@ const SceneCanvas: React.FC = () => {
       }
     );
   }, [location.search, loggedUser, setLoadedScene, setRecentScene]);
+
+  // Attach device overlay pipeline when scene loads
+  React.useEffect(() => {
+    if (!scene) return;
+
+    // Discover all unique deviceIds in the scene
+    const deviceIds = new Set<string>();
+    for (const element of scene.sceneElements) {
+      const keys = (element as any).keys;
+      if (!keys || !Array.isArray(keys)) continue;
+
+      const karaboKeys = keys.join(",");
+      const { deviceId } = splitKaraboKeys(karaboKeys);
+      if (deviceId) {
+        deviceIds.add(deviceId);
+      }
+    }
+
+    console.log(
+      "[SceneCanvas] Attaching status pipeline for devices:",
+      Array.from(deviceIds)
+    );
+
+    const cleanups: Array<() => void> = [];
+
+    for (const deviceId of deviceIds) {
+      const cleanup = deviceStatusPipeline.attachDevice(deviceId);
+      cleanups.push(cleanup);
+    }
+
+    return () => {
+      console.log("[SceneCanvas] Cleaning up device status pipeline");
+      cleanups.forEach((fn) => fn());
+    };
+  }, [scene]);
 
   const renderScene = () => {
     if (!scene) {

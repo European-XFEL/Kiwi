@@ -1,26 +1,26 @@
 import React from "react";
 import type { DisplayCommandProps } from "@/scene/scene_types/controllers";
 import { useKaraboPropertyInfo } from "../../shared/hooks/useKaraboProperty";
-import { useDeviceOnlineStatus } from "../../shared/hooks/useDeviceOnlineStatus";
 import { useKaraboKeysString } from "../../shared/hooks/useKaraboKeysString";
 import { useAccessLevel } from "../../shared/hooks/useAccessLevel";
 import { useDeviceState } from "../../shared/hooks/useDeviceState";
 import { Button } from "@/components/ui/button";
-import DeviceOfflineOverlay from "../../DeviceOfflineOverlay";
+import {
+  ControllerContainer,
+  useControllerPermissions,
+} from "@/components/sceneView/ControllerContainer";
 import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
 import type { PropertyInfoOptional } from "@/karabo_data/DeviceConfigInfo";
 import { AccessLevel } from "@/karabo_data/SchemaEnums";
-import { usePropertyPermissions } from "@/components/shared/hooks/usePropertyPermission";
 
 /**
- * DisplayCommand
+ * DisplayCommand - Command button widget for executing device commands.
  *
- * Enabled when ALL are true:
- * 1. Device is online
- * 2. User has permission:
- *    - If property exists → use property.requiredAccessLevel + accessMode
- *    - If NO property → require Operator or higher
- * 3. Device state is in allowedStates (if specified)
+ * Permission logic (handled by ControllerContainer + command-specific checks):
+ * - Device must be online (ControllerContainer)
+ * - Property permissions checked (ControllerContainer)
+ * - Access level must be at least Operator (command-specific)
+ * - Device state must allow command execution (command-specific)
  */
 const DisplayCommand: React.FC<DisplayCommandProps> = ({
   keys,
@@ -35,111 +35,91 @@ const DisplayCommand: React.FC<DisplayCommandProps> = ({
 }) => {
   const keysStr = useKaraboKeysString(keys);
   const { deviceId, propertyId, property } = useKaraboPropertyInfo(keysStr);
-  const isOffline = useDeviceOnlineStatus(deviceId);
+
+  // Get basic permission state from ControllerContainer
+  const { canEdit: propertyCanEdit, disabledReason: propertyDisabledReason } =
+    useControllerPermissions();
 
   const { accessLevel } = useAccessLevel();
   const { isInState } = useDeviceState(deviceId);
 
-  // Property (if any) – commands often have no schema
   const typedProperty = property as PropertyInfoOptional;
 
-  // Property-based permissions (requiredAccessLevel + accessMode)
-  const { canEdit: propertyCanEdit, disabledReason: propertyDisabledReason } =
-    usePropertyPermissions(typedProperty);
-
-  // Fallback rule when there is NO property/schema:
-  // Only Operator and Expert can execute commands.
+  // Commands require Operator level or higher
   const hasBasicCommandPermission = accessLevel >= AccessLevel.Operator;
 
-  // Effective "can execute" permission:
-  // - If we have a property → use property-based perms
-  // - If no property → fall back to basic Operator/Expert rule
+  // If property exists, use property permissions; otherwise use access level
   const canExecute = typedProperty
     ? propertyCanEdit
     : hasBasicCommandPermission;
 
-  // Device-state constraint (allowedStates from scene)
+  // Check if device state allows this command
   const stateAllowsCommand = isInState(allowedStates);
 
-  // Resolve button label from property schema or fallback to propertyId
   const buttonCaption = React.useMemo(() => {
     const name = typedProperty?.schemaAttrs?.displayedName;
     return name || propertyId;
   }, [typedProperty, propertyId]);
 
-  // Final enabled flag
-  const isEnabled = !isOffline && canExecute && stateAllowsCommand;
+  // Final enabled state: must pass property/access check AND state check
+  const isEnabled = canExecute && stateAllowsCommand;
 
-  // Build tooltip/aria-label explaining why button is disabled
   const finalDisabledReason = React.useMemo(() => {
-    if (isOffline) {
-      return "Device is offline";
+    // If property-based permission failed, use that reason
+    if (typedProperty && !propertyCanEdit && propertyDisabledReason) {
+      return propertyDisabledReason;
     }
 
-    if (!canExecute) {
-      // Property-based case: reuse hook's explanation
-      if (typedProperty && propertyDisabledReason) {
-        return propertyDisabledReason;
-      }
-
-      // No property: we know we require at least Operator
-      if (!hasBasicCommandPermission) {
-        return `Requires access level ${AccessLevel[AccessLevel.Operator]}`;
-      }
-
-      return "Insufficient permissions to execute this command";
+    // If no property and access level is insufficient
+    if (!typedProperty && !hasBasicCommandPermission) {
+      return `Requires access level ${AccessLevel[AccessLevel.Operator]}`;
     }
 
+    // If state doesn't allow command
     if (!stateAllowsCommand) {
       return "Command not allowed in current device state";
     }
 
     return undefined;
   }, [
-    isOffline,
     canExecute,
     typedProperty,
+    propertyCanEdit,
     propertyDisabledReason,
     hasBasicCommandPermission,
     stateAllowsCommand,
   ]);
 
-  // Render offline overlay if device is disconnected
-  if (isOffline) {
-    return (
-      <DeviceOfflineOverlay
-        keys={keys}
-        x={x}
-        y={y}
-        width={width}
-        height={height}
-      />
-    );
-  }
-
   return (
-    <Button
-      size="sm"
-      disabled={!isEnabled}
-      aria-label={finalDisabledReason || `Command: ${buttonCaption}`}
-      title={finalDisabledReason}
-      className={`absolute border-2 px-2 ${
-        isEnabled
-          ? "border-primary bg-primary hover:bg-primary/90 cursor-pointer"
-          : "border-gray-300 bg-gray-400 cursor-not-allowed opacity-60"
-      }`}
-      style={{
-        left: x,
-        top: y,
-        width,
-        height,
-        fontFamily: FONT_FAMILY_DEFAULT,
-        fontSize: font_size,
-        fontWeight: font_weight,
-      }}
+    <ControllerContainer
+      keys={keys}
+      x={x}
+      y={y}
+      width={width}
+      height={height}
+      className="absolute"
+      checkPermissions
+      showPropertyOverlay
     >
-      {requires_confirmation ? `${buttonCaption} (Confirm)` : buttonCaption}
-    </Button>
+      <Button
+        size="sm"
+        disabled={!isEnabled}
+        aria-label={finalDisabledReason || `Command: ${buttonCaption}`}
+        title={finalDisabledReason}
+        className={`w-full h-full border-2 px-2 ${
+          isEnabled
+            ? "border-primary bg-primary hover:bg-primary/90 cursor-pointer"
+            : "border-gray-300 bg-gray-400 cursor-not-allowed opacity-60"
+        }`}
+        style={{
+          fontFamily: FONT_FAMILY_DEFAULT,
+          fontSize: font_size,
+          fontWeight: font_weight,
+        }}
+      >
+        {requires_confirmation ? `${buttonCaption} (Confirm)` : buttonCaption}
+      </Button>
+    </ControllerContainer>
   );
 };
 
