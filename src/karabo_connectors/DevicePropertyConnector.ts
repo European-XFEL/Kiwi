@@ -11,6 +11,7 @@ import { DeviceSchemaConnector } from "./DeviceSchemaConnector";
 import { DeviceInfo, TopologyEventType } from "@/karabo_data/TopologyInfo";
 import { DeviceSchemaInfo } from "@/karabo_data/DeviceSchemaInfo";
 import { VectorElementType } from "@/karabo_hash/HashValueType";
+import { useDeviceStatusStore } from "@/store/useDeviceStatusStore";
 
 // VectorElementType[][] is the type used for the value of a table property.
 // Each VectorElementType is the value of a table cell with the row being
@@ -141,6 +142,7 @@ export class DevicePropertyConnector {
       this._onDeviceSchemaUpdate
     );
     DeviceSchemaConnector.inst.requestDeviceSchema(deviceId);
+    useDeviceStatusStore.getState().markSchemaRequested(deviceId);
     const hash = buildStartMonitoringHash(deviceId);
     GuiServerConnector.inst.sendHash(hash);
   };

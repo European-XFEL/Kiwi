@@ -1,63 +1,59 @@
 import React from "react";
 import type { DisplayStateColorProps } from "@/scene/scene_types/controllers";
-import DeviceOfflineOverlay from "../../DeviceOfflineOverlay";
+import { ControllerContainer } from "@/components/sceneView/ControllerContainer";
 import { useKaraboPropertyInfo } from "../../shared/hooks/useKaraboProperty";
 import { useGuiStateColor } from "../../shared/hooks/useGuiStateColor";
-import { useDeviceOnlineStatus } from "../../shared/hooks/useDeviceOnlineStatus";
 import { useKaraboKeysString } from "../../shared/hooks/useKaraboKeysString";
 import { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
+import { TopologyConnector } from "@/karabo_connectors/TopologyConnector";
 
-/**
- * DisplayStateColor (read-only)
- * Renders a colored box reflecting the device state, optionally showing text.
- */
 const DisplayStateColor: React.FC<DisplayStateColorProps> = React.memo(
   ({ keys, x, y, width, height, font_size, font_weight, show_string }) => {
     const keysStr = useKaraboKeysString(keys);
+    const { property } = useKaraboPropertyInfo(keysStr);
 
-    const { deviceId, property } = useKaraboPropertyInfo(keysStr);
-    const isOffline = useDeviceOnlineStatus(deviceId);
-
-    // Normalize property value to string and derive GUI color
     const rawState = React.useMemo(
       () => String((property as PropertyInfo)?.value ?? "UNKNOWN"),
       [(property as PropertyInfo)?.value]
     );
+
     const { colorValue } = useGuiStateColor(rawState);
 
-    if (isOffline) {
-      return (
-        <DeviceOfflineOverlay
-          keys={keys}
-          x={x}
-          y={y}
-          width={width}
-          height={height}
-        />
-      );
-    }
+    //Important: detect device online/offline
+    const deviceId = keys[0].split(".")[0];
+    const isOnline = TopologyConnector.inst.isDeviceOnline(deviceId);
 
     return (
-      <div
-        className="absolute flex items-center justify-center border border-solid overflow-hidden p-0.5"
-        style={{
-          left: x,
-          top: y,
-          width,
-          height,
-          fontFamily: "Arial, Helvetica, sans-serif",
-          fontSize: font_size,
-          fontWeight: font_weight,
-          backgroundColor: colorValue,
-        }}
-        aria-label={`Display state color for ${keys.join(", ")}`}
+      <ControllerContainer
+        keys={keys}
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        showPropertyOverlay
+        className="flex items-center justify-center border border-solid overflow-hidden p-0.5"
       >
-        {show_string && (
-          <span className="text-xs" aria-live="polite">
-            {rawState}
-          </span>
-        )}
-      </div>
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontFamily: "Arial",
+            fontSize: font_size,
+            fontWeight: font_weight,
+            backgroundColor: colorValue,
+          }}
+        >
+          {/*Hide text when offline */}
+          {show_string && isOnline && (
+            <span className="text-xs" aria-live="polite">
+              {rawState}
+            </span>
+          )}
+        </div>
+      </ControllerContainer>
     );
   }
 );

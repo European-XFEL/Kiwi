@@ -1,17 +1,18 @@
 import * as React from "react";
 import type { DoubleLineEditProps } from "@/scene/scene_types/controllers";
-import DeviceOfflineOverlay from "@/components/DeviceOfflineOverlay";
+import {
+  ControllerContainer,
+  useControllerPermissions,
+} from "@/components/sceneView/ControllerContainer";
 import { useKaraboPropertyInfo } from "@/components/shared/hooks/useKaraboProperty";
-import { useDeviceOnlineStatus } from "@/components/shared/hooks/useDeviceOnlineStatus";
 import { useKaraboKeysString } from "@/components/shared/hooks/useKaraboKeysString";
 import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
 import type { PropertyInfoOptional } from "@/karabo_data/DeviceConfigInfo";
-import { usePropertyPermissions } from "@/components/shared/hooks/usePropertyPermission";
 
 /**
  * DoubleLineEdit - Float input field with configurable decimal precision.
  *
- * Editability rules:
+ * Editability rules (handled by ControllerContainer):
  * - Device must be online
  * - Property.accessMode must be Reconfigurable (InitOnly/ReadOnly are never editable)
  * - User access level must satisfy property.schemaAttrs.requiredAccessLevel
@@ -20,12 +21,12 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = (props) => {
   const { keys, x, y, width, height, decimals, font_size, font_weight } = props;
 
   const joinedKeys = useKaraboKeysString(keys);
-  const { deviceId, property } = useKaraboPropertyInfo(joinedKeys);
-  const offline = useDeviceOnlineStatus(deviceId);
+  const { property } = useKaraboPropertyInfo(joinedKeys);
 
   const typedProperty = property as PropertyInfoOptional;
 
-  const { canEdit, disabledReason } = usePropertyPermissions(typedProperty);
+  // Get permission state from ControllerContainer
+  const { canEdit, disabledReason } = useControllerPermissions();
 
   const [value, setValue] = React.useState<string>("");
 
@@ -69,31 +70,16 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = (props) => {
     }
   }, [typedProperty, formatValue]);
 
-  // If device is offline, show overlay instead of input
-  if (offline) {
-    return (
-      <DeviceOfflineOverlay
-        keys={keys}
-        x={x}
-        y={y}
-        width={width}
-        height={height}
-        key={`overlay-${joinedKeys}`}
-      />
-    );
-  }
-
-  const finalCanEdit = canEdit;
-
   return (
-    <div
-      className="absolute flex items-center ml-1"
-      style={{
-        width: `${width}px`,
-        height: `${height}px`,
-        left: `${x}px`,
-        top: `${y}px`,
-      }}
+    <ControllerContainer
+      keys={keys}
+      x={x}
+      y={y}
+      width={width}
+      height={height}
+      className="flex items-center ml-1"
+      checkPermissions
+      showPropertyOverlay
     >
       <input
         type="text"
@@ -108,10 +94,10 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = (props) => {
             // TODO: push value to backend or GUI server via WebSocket
           }
         }}
-        disabled={!finalCanEdit}
-        title={!finalCanEdit ? disabledReason : ""}
-        className={`border border-solid rounded px-1 flex-1 ${
-          finalCanEdit
+        disabled={!canEdit}
+        title={!canEdit ? disabledReason : ""}
+        className={`border border-solid rounded px-1 flex-1 w-full ${
+          canEdit
             ? "text-black bg-white cursor-text"
             : "text-gray-500 bg-gray-100 cursor-not-allowed"
         }`}
@@ -121,7 +107,7 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = (props) => {
           fontWeight: font_weight.toLowerCase(),
           minWidth: 0,
         }}
-        placeholder={finalCanEdit ? "0.0" : "Read-only"}
+        placeholder={canEdit ? "0.0" : "Read-only"}
       />
       {unit && (
         <span
@@ -135,7 +121,7 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = (props) => {
           {unit}
         </span>
       )}
-    </div>
+    </ControllerContainer>
   );
 };
 

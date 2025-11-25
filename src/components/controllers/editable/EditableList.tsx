@@ -1,8 +1,10 @@
 import * as React from "react";
 import type { EditableListProps } from "@/scene/scene_types/controllers";
-import DeviceOfflineOverlay from "@/components/DeviceOfflineOverlay";
+import {
+  ControllerContainer,
+  useControllerPermissions,
+} from "@/components/sceneView/ControllerContainer";
 import { useKaraboPropertyInfo } from "@/components/shared/hooks/useKaraboProperty";
-import { useDeviceOnlineStatus } from "@/components/shared/hooks/useDeviceOnlineStatus";
 import { useKaraboKeysString } from "@/components/shared/hooks/useKaraboKeysString";
 import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
 import { SquarePen } from "lucide-react";
@@ -14,13 +16,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { usePropertyPermissions } from "@/components/shared/hooks/usePropertyPermission";
 import type { PropertyInfoOptional } from "@/karabo_data/DeviceConfigInfo";
 
 /**
  * EditableList - List editor for VectorBinding properties.
  *
- * Editability rules:
+ * Editability rules (handled by ControllerContainer):
  * - Device must be online
  * - User access level must satisfy property.schemaAttrs.requiredAccessLevel
  * - Property accessMode must allow editing (ReadOnly / InitOnly / Reconfigurable)
@@ -30,14 +31,13 @@ const EditableList: React.FC<EditableListProps> = (props) => {
 
   // Join keys for compatibility with hooks
   const joinedKeys = useKaraboKeysString(keys);
-  const { deviceId, property } = useKaraboPropertyInfo(joinedKeys);
-  const offline = useDeviceOnlineStatus(deviceId);
+  const { property } = useKaraboPropertyInfo(joinedKeys);
 
-  // Narrow to our “maybe PropertyInfo, maybe null/undefined” type
+  // Narrow to our "maybe PropertyInfo, maybe null/undefined" type
   const propertyOptional = property as PropertyInfoOptional;
 
-  // Centralized permission logic
-  const { canEdit, disabledReason } = usePropertyPermissions(propertyOptional);
+  // Get permission state from ControllerContainer
+  const { canEdit, disabledReason } = useControllerPermissions();
 
   const [value, setValue] = React.useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
@@ -62,31 +62,16 @@ const EditableList: React.FC<EditableListProps> = (props) => {
     }
   }, [propertyOptional]);
 
-  // Show offline overlay when device is not connected
-  if (offline) {
-    return (
-      <DeviceOfflineOverlay
-        keys={keys}
-        x={x}
-        y={y}
-        width={width}
-        height={height}
-        key={`overlay-${joinedKeys}`}
-      />
-    );
-  }
-
-  const finalCanEdit = canEdit;
-
   return (
-    <div
-      className="absolute flex items-center gap-1 ml-1"
-      style={{
-        width: `${width}px`,
-        height: `${height}px`,
-        left: `${x}px`,
-        top: `${y}px`,
-      }}
+    <ControllerContainer
+      keys={keys}
+      x={x}
+      y={y}
+      width={width}
+      height={height}
+      className="flex items-center gap-1 ml-1"
+      checkPermissions
+      showPropertyOverlay
     >
       <input
         type="text"
@@ -103,10 +88,10 @@ const EditableList: React.FC<EditableListProps> = (props) => {
           setValue(items.join(", "));
           // TODO: push array value to backend or GUI server via WebSocket
         }}
-        disabled={!finalCanEdit}
-        title={!finalCanEdit ? disabledReason : ""}
-        className={`border border-solid rounded px-1 flex-1 ${
-          finalCanEdit
+        disabled={!canEdit}
+        title={!canEdit ? disabledReason : ""}
+        className={`border border-solid rounded px-1 flex-1 w-full ${
+          canEdit
             ? "text-black bg-white cursor-text"
             : "text-gray-500 bg-gray-100 cursor-not-allowed"
         }`}
@@ -116,7 +101,7 @@ const EditableList: React.FC<EditableListProps> = (props) => {
           fontWeight: font_weight.toLowerCase(),
           minWidth: 0,
         }}
-        placeholder={finalCanEdit ? "item1, item2, item3" : "Read-only"}
+        placeholder={canEdit ? "item1, item2, item3" : "Read-only"}
       />
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -124,10 +109,10 @@ const EditableList: React.FC<EditableListProps> = (props) => {
           <Button
             variant="outline"
             size="icon"
-            disabled={!finalCanEdit}
-            title={!finalCanEdit ? disabledReason : "Edit list"}
+            disabled={!canEdit}
+            title={!canEdit ? disabledReason : "Edit list"}
             className={`h-5 w-5 p-0 border-none ${
-              finalCanEdit
+              canEdit
                 ? "hover:bg-orange-50 cursor-pointer"
                 : "opacity-50 cursor-not-allowed"
             }`}
@@ -145,7 +130,7 @@ const EditableList: React.FC<EditableListProps> = (props) => {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </ControllerContainer>
   );
 };
 

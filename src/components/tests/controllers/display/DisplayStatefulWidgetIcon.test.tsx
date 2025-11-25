@@ -2,7 +2,7 @@ import { render, waitFor } from "@testing-library/react";
 import type { DisplayStatefulIconProps } from "@/scene/scene_types/controllers";
 import { TopologyConnector } from "@/karabo_connectors/TopologyConnector";
 import type { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
-import { FONT_BASE_SIZE } from "../../../shared/helpers/QtFontDescriptor";
+import { FONT_BASE_SIZE } from "@/components/shared/helpers/fontDefaults";
 
 jest.mock("@/components/shared/helpers/statefulIcons", () => ({
   __esModule: true,
