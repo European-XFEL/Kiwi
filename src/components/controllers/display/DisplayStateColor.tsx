@@ -30,7 +30,7 @@ const DisplayStateColor: React.FC<DisplayStateColorProps> = React.memo(
         y={y}
         width={width}
         height={height}
-        showPropertyOverlay
+        showMissingPropertyOverlay
         className="flex items-center justify-center border border-solid overflow-hidden p-0.5"
       >
         <div

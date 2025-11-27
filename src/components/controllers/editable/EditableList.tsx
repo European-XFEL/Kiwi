@@ -1,9 +1,7 @@
 import * as React from "react";
 import type { EditableListProps } from "@/scene/scene_types/controllers";
-import {
-  ControllerContainer,
-  useControllerPermissions,
-} from "@/components/sceneView/ControllerContainer";
+import { ControllerContainer } from "@/components/sceneView/ControllerContainer";
+import { useControllerPermissions } from "@/components/shared/hooks/useControllerPermissions";
 import { useKaraboPropertyInfo } from "@/components/shared/hooks/useKaraboProperty";
 import { useKaraboKeysString } from "@/components/shared/hooks/useKaraboKeysString";
 import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
@@ -19,24 +17,14 @@ import { Button } from "@/components/ui/button";
 import type { PropertyInfoOptional } from "@/karabo_data/DeviceConfigInfo";
 
 /**
- * EditableList - List editor for VectorBinding properties.
- *
- * Editability rules (handled by ControllerContainer):
- * - Device must be online
- * - User access level must satisfy property.schemaAttrs.requiredAccessLevel
- * - Property accessMode must allow editing (ReadOnly / InitOnly / Reconfigurable)
+ * Inner component: actually renders the input and uses permissions context.
+ * This is rendered *inside* ControllerContainer, so the context is available.
  */
-const EditableList: React.FC<EditableListProps> = (props) => {
-  const { keys, x, y, width, height, font_size, font_weight } = props;
-
-  // Join keys for compatibility with hooks
-  const joinedKeys = useKaraboKeysString(keys);
-  const { property } = useKaraboPropertyInfo(joinedKeys);
-
-  // Narrow to our "maybe PropertyInfo, maybe null/undefined" type
-  const propertyOptional = property as PropertyInfoOptional;
-
-  // Get permission state from ControllerContainer
+const EditableListInner: React.FC<{
+  propertyOptional: PropertyInfoOptional;
+  font_size?: number;
+  font_weight: string;
+}> = ({ propertyOptional, font_size, font_weight }) => {
   const { canEdit, disabledReason } = useControllerPermissions();
 
   const [value, setValue] = React.useState<string>("");
@@ -55,7 +43,6 @@ const EditableList: React.FC<EditableListProps> = (props) => {
       [];
 
     if (Array.isArray(incoming)) {
-      // Convert array to comma-separated string
       setValue(incoming.join(", "));
     } else {
       setValue(String(incoming));
@@ -63,30 +50,24 @@ const EditableList: React.FC<EditableListProps> = (props) => {
   }, [propertyOptional]);
 
   return (
-    <ControllerContainer
-      keys={keys}
-      x={x}
-      y={y}
-      width={width}
-      height={height}
-      className="flex items-center gap-1 ml-1"
-      checkPermissions
-      showPropertyOverlay
-    >
+    <>
       <input
         type="text"
         value={value}
         onChange={(e) => {
+          if (!canEdit) return; // extra safety
           setValue(e.target.value);
         }}
         onBlur={(e) => {
-          // Parse comma-separated values
+          if (!canEdit) return;
+
           const items = e.target.value
             .split(",")
             .map((item) => item.trim())
             .filter((item) => item.length > 0);
+
           setValue(items.join(", "));
-          // TODO: push array value to backend or GUI server via WebSocket
+          // TODO: push array value to backend / GUI server
         }}
         disabled={!canEdit}
         title={!canEdit ? disabledReason : ""}
@@ -124,12 +105,41 @@ const EditableList: React.FC<EditableListProps> = (props) => {
           <DialogHeader>
             <DialogTitle>Edit List</DialogTitle>
           </DialogHeader>
-          {/* Dialog content will be implemented later */}
           <div className="p-4 text-gray-500">
             List editor dialog (to be implemented)
           </div>
         </DialogContent>
       </Dialog>
+    </>
+  );
+};
+
+/**
+ * Outer component: wires keys → ControllerContainer and passes property down.
+ * ControllerContainer handles overlays + calculates permissions via usePropertyPermissions.
+ */
+const EditableList: React.FC<EditableListProps> = (props) => {
+  const { keys, x, y, width, height, font_size, font_weight } = props;
+
+  const joinedKeys = useKaraboKeysString(keys);
+  const { property } = useKaraboPropertyInfo(joinedKeys);
+  const propertyOptional = property as PropertyInfoOptional;
+
+  return (
+    <ControllerContainer
+      keys={keys}
+      x={x}
+      y={y}
+      width={width}
+      height={height}
+      className="flex items-center gap-1 ml-1"
+      showMissingPropertyOverlay
+    >
+      <EditableListInner
+        propertyOptional={propertyOptional}
+        font_size={font_size as number}
+        font_weight={font_weight}
+      />
     </ControllerContainer>
   );
 };

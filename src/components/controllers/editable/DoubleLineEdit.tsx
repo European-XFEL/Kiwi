@@ -1,42 +1,32 @@
 import * as React from "react";
 import type { DoubleLineEditProps } from "@/scene/scene_types/controllers";
-import {
-  ControllerContainer,
-  useControllerPermissions,
-} from "@/components/sceneView/ControllerContainer";
+import { ControllerContainer } from "@/components/sceneView/ControllerContainer";
+import { useControllerPermissions } from "@/components/shared/hooks/useControllerPermissions";
 import { useKaraboPropertyInfo } from "@/components/shared/hooks/useKaraboProperty";
 import { useKaraboKeysString } from "@/components/shared/hooks/useKaraboKeysString";
 import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
 import type { PropertyInfoOptional } from "@/karabo_data/DeviceConfigInfo";
 
 /**
- * DoubleLineEdit - Float input field with configurable decimal precision.
- *
- * Editability rules (handled by ControllerContainer):
- * - Device must be online
- * - Property.accessMode must be Reconfigurable (InitOnly/ReadOnly are never editable)
- * - User access level must satisfy property.schemaAttrs.requiredAccessLevel
+ * Inner component: consumes permissions + renders the actual <input>.
  */
-const DoubleLineEdit: React.FC<DoubleLineEditProps> = (props) => {
-  const { keys, x, y, width, height, decimals, font_size, font_weight } = props;
-
-  const joinedKeys = useKaraboKeysString(keys);
-  const { property } = useKaraboPropertyInfo(joinedKeys);
-
-  const typedProperty = property as PropertyInfoOptional;
-
-  // Get permission state from ControllerContainer
+const DoubleLineEditInner: React.FC<{
+  property: PropertyInfoOptional;
+  decimals: number;
+  font_size: number;
+  font_weight: string;
+}> = ({ property, decimals, font_size, font_weight }) => {
   const { canEdit, disabledReason } = useControllerPermissions();
 
   const [value, setValue] = React.useState<string>("");
 
   // Get unit from property schema
   const unit = React.useMemo(() => {
-    if (!typedProperty || !typedProperty.schemaAttrs) return "";
-    const prefix = typedProperty.schemaAttrs.metricPrefixSymbol ?? "";
-    const symbol = typedProperty.schemaAttrs.unitSymbol ?? "";
+    if (!property || !property.schemaAttrs) return "";
+    const prefix = property.schemaAttrs.metricPrefixSymbol ?? "";
+    const symbol = property.schemaAttrs.unitSymbol ?? "";
     return `${prefix}${symbol}`.trim();
-  }, [typedProperty]);
+  }, [property]);
 
   // Format number based on decimals setting
   const formatValue = React.useCallback(
@@ -52,13 +42,12 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = (props) => {
 
   // Sync with property changes
   React.useEffect(() => {
-    if (!typedProperty) {
+    if (!property) {
       setValue("");
       return;
     }
 
-    const incoming =
-      typedProperty.value ?? typedProperty.schemaAttrs?.defaultValue ?? 0;
+    const incoming = property.value ?? property.schemaAttrs?.defaultValue ?? 0;
 
     const numValue =
       typeof incoming === "number" ? incoming : parseFloat(String(incoming));
@@ -68,19 +57,10 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = (props) => {
     } else {
       setValue("");
     }
-  }, [typedProperty, formatValue]);
+  }, [property, formatValue]);
 
   return (
-    <ControllerContainer
-      keys={keys}
-      x={x}
-      y={y}
-      width={width}
-      height={height}
-      className="flex items-center ml-1"
-      checkPermissions
-      showPropertyOverlay
-    >
+    <>
       <input
         type="text"
         value={value}
@@ -121,6 +101,40 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = (props) => {
           {unit}
         </span>
       )}
+    </>
+  );
+};
+
+/**
+ * Outer component: wiring (keys → property → ControllerContainer).
+ * ControllerContainer handles:
+ *  - device overlays
+ *  - property overlays
+ *  - permission computation
+ */
+const DoubleLineEdit: React.FC<DoubleLineEditProps> = (props) => {
+  const { keys, x, y, width, height, decimals, font_size, font_weight } = props;
+
+  const joinedKeys = useKaraboKeysString(keys);
+  const { property } = useKaraboPropertyInfo(joinedKeys);
+  const typedProperty = property as PropertyInfoOptional;
+
+  return (
+    <ControllerContainer
+      keys={keys}
+      x={x}
+      y={y}
+      width={width}
+      height={height}
+      className="flex items-center ml-1"
+      showMissingPropertyOverlay
+    >
+      <DoubleLineEditInner
+        property={typedProperty}
+        decimals={decimals}
+        font_size={font_size as number}
+        font_weight={font_weight}
+      />
     </ControllerContainer>
   );
 };

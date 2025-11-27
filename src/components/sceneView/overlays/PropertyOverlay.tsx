@@ -30,39 +30,43 @@ const PropertyMonitorOverlay: React.FC<PropertyMonitorOverlayProps> = ({
 
   const { indicator, label } = propertyIndicator;
 
+  const wrapperStyle: React.CSSProperties = {
+    left: x,
+    top: y,
+    width,
+    height,
+    zIndex: 30,
+  };
+
   return (
     <TooltipProvider>
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          left: x,
-          top: y,
-          width,
-          height,
-          zIndex: 30,
-        }}
-      >
-        {/* Centered badge */}
-        <div className="flex items-center justify-center w-full h-full">
+      <div className="absolute pointer-events-none" style={wrapperStyle}>
+        {/* Subtle technical-looking frame */}
+        <div className="absolute inset-0 rounded border border-amber-400/80 bg-amber-50/20" />
+
+        {/* Centered diagnostic badge */}
+        <div className="relative flex h-full w-full items-center justify-center">
           <Tooltip>
             <TooltipTrigger asChild>
               <span
                 className="
                   pointer-events-auto
                   inline-flex items-center justify-center
-                  h-7 min-w-7 px-2
-                  rounded-full border border-amber-500/70
-                  bg-amber-50 text-amber-900
-                  text-xs font-semibold tracking-wide
-                  shadow-sm
+                  h-6 min-w-8 px-2
+                  rounded-sm
+                  bg-amber-50
+                  border border-amber-500
+                  text-[11px] font-mono font-semibold
+                  text-amber-900
                   cursor-help
                 "
                 role="status"
                 aria-label={label}
               >
-                <span className="font-mono text-sm mr-0.5">{indicator}</span>
+                {indicator}
               </span>
             </TooltipTrigger>
+
             <TooltipContent side="top" className="font-sans max-w-xs">
               <p className="text-xs text-amber-900">{label}</p>
             </TooltipContent>

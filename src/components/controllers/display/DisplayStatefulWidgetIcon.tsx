@@ -57,7 +57,7 @@ const DisplayStatefulIcon: React.FC<DisplayStatefulIconProps> = (props) => {
       y={y}
       width={width}
       height={height}
-      showPropertyOverlay
+      showMissingPropertyOverlay
       className="flex items-center justify-center"
     >
       {recoloredSvg ? (

@@ -6,11 +6,9 @@ import {
   TooltipProvider,
 } from "@/components/ui/tooltip";
 
-import {
-  DeviceProxy,
-  DeviceIndicatorDescriptor,
-} from "@/overlay_indicator/types";
-import { DEVICE_INDICATORS } from "@/overlay_indicator/overlay_indicator_constants";
+import { DeviceIndicatorDescriptor } from "@/device_proxy/types";
+import { ProxyStatus } from "@/device_proxy/enum";
+import { DEVICE_INDICATORS } from "@/device_proxy/overlay_indicator_constants";
 
 import { useDeviceLevelIndicator } from "@/components/shared/hooks/useDeviceLevelIndicator";
 import { splitKaraboKeys } from "@/components/shared/helpers/splitKaraboKeys";
@@ -26,9 +24,9 @@ export interface DeviceMonitoringOverlayProps {
 
 // Visual phases we want to show once the device becomes "online-ish"
 const PHASE_STATUSES = [
-  DeviceProxy.SCHEMA_REQUESTED,
-  DeviceProxy.SCHEMA_RECEIVED,
-  DeviceProxy.MONITORING,
+  ProxyStatus.SCHEMA_REQUESTED,
+  ProxyStatus.SCHEMA_RECEIVED,
+  ProxyStatus.MONITORING,
 ] as const;
 
 // Map those statuses to the shared DEVICE_INDICATORS config
@@ -57,8 +55,7 @@ function useDeviceMonitoringPhase(karaboKeys: string) {
 
   React.useEffect(() => {
     const isOnlineLike =
-      descriptor !== null &&
-      descriptor.status !== DeviceProxy.OFFLINE;
+      descriptor !== null && descriptor.status !== ProxyStatus.OFFLINE;
 
     // If device is offline or unknown → reset animation
     if (!isOnlineLike) {
@@ -133,7 +130,7 @@ const DeviceMonitoringOverlay: React.FC<DeviceMonitoringOverlayProps> = ({
   };
 
   // OFFLINE → red glass overlay using descriptor
-  if (descriptor.status === DeviceProxy.OFFLINE) {
+  if (descriptor.status === ProxyStatus.OFFLINE) {
     const OfflineIcon = descriptor.icon;
     const offlineLabel = descriptor.label ?? "Device offline";
 

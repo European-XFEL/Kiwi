@@ -37,8 +37,7 @@ const DisplayCheckbox: React.FC<DisplayCheckBoxProps> = ({
       y={y}
       width={width}
       height={height}
-      checkPermissions={false}
-      showPropertyOverlay
+      showMissingPropertyOverlay
       className="flex items-center justify-center"
     >
       <Checkbox

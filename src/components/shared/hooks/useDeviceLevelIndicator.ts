@@ -1,8 +1,7 @@
 import React from "react";
 import { splitKaraboKeys } from "@/components/shared/helpers/splitKaraboKeys";
-import { useDeviceStatus } from "@/store/useDeviceStatusStore";
-import { DeviceOverlayIndicator } from "@/overlay_indicator/device_overlay_indicator";
-import type { DeviceIndicatorDescriptor } from "@/overlay_indicator/types";
+import { useDeviceProxy } from "@/store/useDeviceProxyStore";
+import type { DeviceIndicatorDescriptor } from "@/device_proxy/types";
 
 export function useDeviceLevelIndicator(
   karaboKeys: string
@@ -12,8 +11,9 @@ export function useDeviceLevelIndicator(
     [karaboKeys]
   );
 
-  const deviceStatus = useDeviceStatus(deviceId);
-  if (!deviceStatus) return null;
+  const proxy = useDeviceProxy(deviceId);
 
-  return DeviceOverlayIndicator.compute_device_overlay_indicator(deviceStatus);
+  if (!proxy) return null;
+
+  return proxy.getIndicatorDescriptor();
 }

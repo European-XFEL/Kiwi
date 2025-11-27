@@ -6,6 +6,7 @@ import {
   SystemTopologyUpdateInfo,
   MacroInfo,
 } from "@/karabo_data/TopologyInfo";
+import { useDeviceProxyStore } from "@/store/useDeviceProxyStore";
 
 export type DeviceInfoUpdateHandler = (
   infoType: TopologyEventType,
@@ -36,13 +37,23 @@ export class TopologyConnector {
   get systemTopology() {
     return this._systemTopology;
   }
+
   set systemTopology(topology: SystemTopologyInfo) {
     this._systemTopology = topology;
 
+    // Whenever we receive the full topology snapshot, update:
+    //  - all registered deviceInfo monitors
+    //  - the DeviceProxyStore (online/offline per device)
+    const applyDeviceTopologyEvent =
+      useDeviceProxyStore.getState().applyDeviceTopologyEvent;
+
     for (const [deviceId, updateHandlers] of this._deviceInfoMonitors) {
       const deviceIdx = this._getDeviceIdx(deviceId);
+
       if (deviceIdx >= 0) {
         // Monitored device is online
+        applyDeviceTopologyEvent(deviceId, TopologyEventType.NEW);
+
         for (const updateHandler of updateHandlers) {
           updateHandler(
             TopologyEventType.NEW,
@@ -54,6 +65,8 @@ export class TopologyConnector {
         const macroIdx = this._getMacroIdx(deviceId);
         if (macroIdx >= 0) {
           // Monitored "macro device" is online
+          applyDeviceTopologyEvent(deviceId, TopologyEventType.NEW);
+
           for (const updateHandler of updateHandlers) {
             updateHandler(
               TopologyEventType.NEW,
@@ -62,10 +75,12 @@ export class TopologyConnector {
           }
         } else {
           // Monitored device (or macro) is offline
+          applyDeviceTopologyEvent(deviceId, TopologyEventType.GONE);
+
           for (const updateHandler of updateHandlers) {
             updateHandler(TopologyEventType.GONE, {
-              deviceId: deviceId,
-            });
+              deviceId,
+            } as DeviceInfo);
           }
         }
       }
@@ -74,24 +89,20 @@ export class TopologyConnector {
 
   /**
    * Returns the index of the DeviceInfo record for a given deviceId in the topology
-   * */
-  _getDeviceIdx = (deviceId: string): number => {
+   */
+  private _getDeviceIdx = (deviceId: string): number => {
     const deviceIdx = this._systemTopology.devices.findIndex(
-      (value: DeviceInfo) => {
-        return value.deviceId === deviceId;
-      }
+      (value: DeviceInfo) => value.deviceId === deviceId
     );
     return deviceIdx;
   };
 
   /**
    * Returns the index of the MacroInfo record for a given macroId in the topology
-   * */
-  _getMacroIdx = (macroId: string): number => {
+   */
+  private _getMacroIdx = (macroId: string): number => {
     const macroIdx = this._systemTopology.macros.findIndex(
-      (value: MacroInfo) => {
-        return value.deviceId === macroId;
-      }
+      (value: MacroInfo) => value.deviceId === macroId
     );
     return macroIdx;
   };
@@ -128,6 +139,9 @@ export class TopologyConnector {
       macros: goneMacros,
     } = goneInstances;
 
+    const applyDeviceTopologyEvent =
+      useDeviceProxyStore.getState().applyDeviceTopologyEvent;
+
     try {
       const currentDevices = this.systemTopology.devices;
       const currentServers = this.systemTopology.servers;
@@ -143,6 +157,10 @@ export class TopologyConnector {
         if (existingDeviceIndex === -1) {
           // Device doesn't exist, add it
           currentDevices.push(newDevice);
+
+          // Update proxy store (device became visible in topology)
+          applyDeviceTopologyEvent(newDevice.deviceId, TopologyEventType.NEW);
+
           if (this._deviceInfoMonitors.has(newDevice.deviceId)) {
             // Sends updates to all known monitors for the device
             for (const updateHandler of this._deviceInfoMonitors.get(
@@ -168,6 +186,9 @@ export class TopologyConnector {
         if (existingMacroIndex === -1) {
           // Macro doesn't exist, add it
           currentMacros.push(newMacro);
+
+          applyDeviceTopologyEvent(newMacro.deviceId, TopologyEventType.NEW);
+
           if (this._deviceInfoMonitors.has(newMacro.deviceId)) {
             // Sends updates to all known monitors for the macro
             for (const updateHandler of this._deviceInfoMonitors.get(
@@ -210,8 +231,10 @@ export class TopologyConnector {
         if (currentDeviceIndex >= 0) {
           // Device exists, update it
           currentDevices[currentDeviceIndex] = modifiedDevice;
+
+          applyDeviceTopologyEvent(modifiedDevice.deviceId, TopologyEventType.UPDATE);
+
           if (this._deviceInfoMonitors.has(modifiedDevice.deviceId)) {
-            // Sends updates to all known monitors for the device
             for (const updateHandler of this._deviceInfoMonitors.get(
               modifiedDevice.deviceId
             )!) {
@@ -235,8 +258,10 @@ export class TopologyConnector {
         if (currentMacroIndex >= 0) {
           // Macro exists, update it
           currentMacros[currentMacroIndex] = modifiedMacro;
+
+          applyDeviceTopologyEvent(modifiedMacro.deviceId, TopologyEventType.UPDATE);
+
           if (this._deviceInfoMonitors.has(modifiedMacro.deviceId)) {
-            // Sends updates to all known monitors for the device
             for (const updateHandler of this._deviceInfoMonitors.get(
               modifiedMacro.deviceId
             )!) {
@@ -277,16 +302,16 @@ export class TopologyConnector {
         if (currentDeviceIndex >= 0) {
           // Device exists, remove it
           currentDevices.splice(currentDeviceIndex, 1);
+
+          applyDeviceTopologyEvent(removedDevice.deviceId, TopologyEventType.GONE);
+
           if (this._deviceInfoMonitors.has(removedDevice.deviceId)) {
-            // Sends updates to all known monitors for the device
             for (const updateHandler of this._deviceInfoMonitors.get(
               removedDevice.deviceId
             )!) {
-              // To signal that the device has been removed from the topology,
-              // an undefined value is sent as the DeviceInfo
               updateHandler(TopologyEventType.GONE, {
                 deviceId: removedDevice.deviceId,
-              });
+              } as DeviceInfo);
             }
           }
         } else {
@@ -306,16 +331,16 @@ export class TopologyConnector {
         if (currentMacroIndex >= 0) {
           // Macro exists, remove it
           currentMacros.splice(currentMacroIndex, 1);
+
+          applyDeviceTopologyEvent(removedMacro.deviceId, TopologyEventType.GONE);
+
           if (this._deviceInfoMonitors.has(removedMacro.deviceId)) {
-            // Sends updates to all known monitors for the device
             for (const updateHandler of this._deviceInfoMonitors.get(
               removedMacro.deviceId
             )!) {
-              // To signal that the macro has been removed from the topology,
-              // an undefined value is sent as the DeviceInfo
               updateHandler(TopologyEventType.GONE, {
                 deviceId: removedMacro.deviceId,
-              });
+              } as DeviceInfo);
             }
           }
         } else {
@@ -357,15 +382,45 @@ export class TopologyConnector {
     deviceInfoUpdateHandler: DeviceInfoUpdateHandler
   ): void => {
     if (!this._deviceInfoMonitors.has(deviceId)) {
-      // This is the first property being monitored for the device.
-
-      // Creates the map of device info update handlers for the device
+      // first monitor for this device
       this._deviceInfoMonitors.set(
         deviceId,
         new Array<DeviceInfoUpdateHandler>()
       );
     }
-    this._deviceInfoMonitors.get(deviceId)?.push(deviceInfoUpdateHandler);
+    this._deviceInfoMonitors.get(deviceId)!.push(deviceInfoUpdateHandler);
+
+    // ───────────────────────────────────────────────
+    // NEW: seed current state from systemTopology
+    //      so refresh doesn't start "offline"
+    // ───────────────────────────────────────────────
+    const applyDeviceTopologyEvent =
+      useDeviceProxyStore.getState().applyDeviceTopologyEvent;
+
+    const deviceIdx = this._getDeviceIdx(deviceId);
+    if (deviceIdx >= 0) {
+      const info = this._systemTopology.devices[deviceIdx];
+
+      // Mark online in proxy + notify handler
+      applyDeviceTopologyEvent(deviceId, TopologyEventType.NEW);
+      deviceInfoUpdateHandler(TopologyEventType.NEW, info);
+      return;
+    }
+
+    const macroIdx = this._getMacroIdx(deviceId);
+    if (macroIdx >= 0) {
+      const info = this._systemTopology.macros[macroIdx];
+
+      applyDeviceTopologyEvent(deviceId, TopologyEventType.NEW);
+      deviceInfoUpdateHandler(TopologyEventType.NEW, info);
+      return;
+    }
+
+    // Not in topology at all → treat as offline
+    applyDeviceTopologyEvent(deviceId, TopologyEventType.GONE);
+    deviceInfoUpdateHandler(TopologyEventType.GONE, {
+      deviceId,
+    } as DeviceInfo);
   };
 
   unregisterDeviceInfoMonitor = (

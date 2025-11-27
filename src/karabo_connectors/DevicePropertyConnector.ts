@@ -11,7 +11,7 @@ import { DeviceSchemaConnector } from "./DeviceSchemaConnector";
 import { DeviceInfo, TopologyEventType } from "@/karabo_data/TopologyInfo";
 import { DeviceSchemaInfo } from "@/karabo_data/DeviceSchemaInfo";
 import { VectorElementType } from "@/karabo_hash/HashValueType";
-import { useDeviceStatusStore } from "@/store/useDeviceStatusStore";
+import { useDeviceProxyStore } from "@/store/useDeviceProxyStore";
 
 // VectorElementType[][] is the type used for the value of a table property.
 // Each VectorElementType is the value of a table cell with the row being
@@ -77,11 +77,8 @@ export class DevicePropertyConnector {
     } else {
       // The device already has at least one registered property monitor
       if (!this._pendingMonitorStarts.has(deviceId)) {
-        // The device and its already being monitored. As a startMonitoring request
+        // The device is already being monitored. As a startMonitoring request
         // will not be sent to the GUI Server, send a property update immediately.
-        // If there's still no configuration available for the device, it
-        // can be assumed that it will come soon as there's no pendency to start monitoring
-        // the device.
         const propertyInfo = this._getDeviceProperty(deviceId, propertyId);
         if (propertyInfo) {
           this._dispatchPropUpdate(
@@ -92,6 +89,7 @@ export class DevicePropertyConnector {
         }
       }
     }
+
     const devicePropertyMonitors = this._propertyMonitors.get(deviceId);
     if (!devicePropertyMonitors?.has(propertyId)) {
       // There's still no update handler registered for the specific property
@@ -136,13 +134,23 @@ export class DevicePropertyConnector {
     }
   }
 
+  /**
+   * Start monitoring a device:
+   *  - register schema monitor
+   *  - mark schema as requested in proxy store
+   *  - ask GUI server to start monitoring
+   */
   private _startMonitoringDevice = (deviceId: string): void => {
     DeviceSchemaConnector.inst.registerSchemaMonitor(
       deviceId,
       this._onDeviceSchemaUpdate
     );
+
+    // Mark "schema requested" in proxy/state machine
+    useDeviceProxyStore.getState().markDeviceSchemaRequested(deviceId);
+
+    // Ask GUI server for schema + config stream
     DeviceSchemaConnector.inst.requestDeviceSchema(deviceId);
-    useDeviceStatusStore.getState().markSchemaRequested(deviceId);
     const hash = buildStartMonitoringHash(deviceId);
     GuiServerConnector.inst.sendHash(hash);
   };
@@ -156,13 +164,32 @@ export class DevicePropertyConnector {
     );
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private _onDeviceSchemaUpdate = (_deviceSchema: DeviceSchemaInfo) => {
-    // TODO: for all the subscribed slots and other special nodes types, generate
-    //       a property update event with the PropertyInfo updated with the
-    //       current schema values. This will allow scene widgets to just monitor
-    //       slots and other special node types without having to monitor the whole
-    //       device schema.
+  /**
+   * Called whenever DeviceSchemaConnector receives a schema update
+   * for a device we are monitoring.
+   */
+  private _onDeviceSchemaUpdate = (deviceSchema: DeviceSchemaInfo): void => {
+    // Inform proxy/store that schema has been received
+    useDeviceProxyStore.getState().markDeviceSchemaReceived(deviceSchema.deviceId);
+
+    // Re-dispatch existing properties with schema attributes attached
+    // This ensures permission checks (requiredAccessLevel, accessMode, allowedStates) work correctly
+    const deviceId = deviceSchema.deviceId;
+    const existingProperties = this._deviceConfigurations.get(deviceId);
+
+    if (existingProperties) {
+      for (const propInfo of existingProperties) {
+        const propUpdateHandlers = this._propertyMonitors
+          .get(deviceId)
+          ?.get(propInfo.key);
+
+        if (propUpdateHandlers) {
+          for (const propUpdateHandler of propUpdateHandlers) {
+            this._dispatchPropUpdate(deviceId, propUpdateHandler, propInfo);
+          }
+        }
+      }
+    }
   };
 
   // #endregion
@@ -187,9 +214,7 @@ export class DevicePropertyConnector {
       this._propertyMonitors.has(deviceInfo.deviceId)
     ) {
       // A device being monitored became offline - keep track of it as a
-      // device with a pending start monitoring. It will either start monitoring
-      // when the device becomes online or have its pending monitoring status
-      // cleared if all the registered monitors unregister
+      // device with a pending start monitoring.
       this._pendingMonitorStarts.add(deviceInfo.deviceId);
       // NOTE: no need to send a stop monitoring request to the GUI Server as it
       //       automatically removes the monitoring subscription when it detects
@@ -295,13 +320,20 @@ export class DevicePropertyConnector {
       const deviceId = deviceConfig.deviceId;
       if (this._propertyMonitors.has(deviceId)) {
         // There's at least one property update handler registered for the device
+
+        // 1) Merge into local cache
         this._mergeConfiguration(deviceId, deviceConfig.properties);
+
+        // 2) Tell proxy that we have config (idempotent)
+        useDeviceProxyStore.getState().markDeviceConfigReceived(deviceId);
+
+        // 3) Dispatch updates to all property monitors
         for (const propInfo of deviceConfig.properties) {
           if (this._propertyMonitors.get(deviceId)?.has(propInfo.key)) {
-            // Multiple update handlers for the same property of the same device can exist
             const propUpdateHandlers = this._propertyMonitors
               .get(deviceId)
               ?.get(propInfo.key);
+
             if (propUpdateHandlers !== undefined) {
               if (propInfo.type === HashTypes.VectorHash) {
                 const tableCells = this._extractCellValues(propInfo);
