@@ -219,7 +219,7 @@ const Evaluator: React.FC<EvaluatorProps> = (props) => {
       y={props.y}
       width={props.width}
       height={props.height}
-      showPropertyOverlay
+      showMissingPropertyOverlay
       className="overflow-clip flex items-center justify-center border border-solid px-1"
     >
       <span

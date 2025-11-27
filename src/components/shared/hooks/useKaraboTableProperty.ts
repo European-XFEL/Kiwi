@@ -26,19 +26,6 @@ export interface PaginationControls {
   canGoPrev: boolean;
 }
 
-/**
- * Custom hook for monitoring table properties (VectorHash type).
- *
- * Table properties are handled differently by DevicePropertyConnector:
- * - Regular properties receive PropertyInfo objects
- * - Table properties receive VectorElementType[][] (raw cell values)
- *
- * This hook properly handles the VectorElementType[][] type and combines it
- * with the rowSchema from the property descriptor to provide complete table data.
- *
- * @param karaboKeys - The Karabo keys for the table property
- * @param options - Optional pagination configuration
- */
 export function useKaraboTableProperty(
   karaboKeys: string,
   options?: { enablePagination?: boolean; initialPageSize?: number }
@@ -50,7 +37,6 @@ export function useKaraboTableProperty(
     [karaboKeys]
   );
 
-  // Get schema to access rowSchema for column definitions
   const { propertyDescriptor } = useKaraboSchema(karaboKeys);
 
   const [tableCells, setTableCells] = React.useState<
@@ -59,18 +45,29 @@ export function useKaraboTableProperty(
   const [currentPage, setCurrentPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(initialPageSize);
 
-  // The handler receives VectorElementType[][] for table properties
-  const onUpdate = React.useCallback((cells: VectorElementType[][]) => {
-    setTableCells(cells);
-    // Reset to first page when data updates
-    setCurrentPage(1);
+  // 🔐 Robust handler – make sure we really have VectorElementType[][]
+  const onUpdate = React.useCallback((raw: unknown) => {
+    if (Array.isArray(raw) && (raw.length === 0 || Array.isArray(raw[0]))) {
+      const cells = raw as VectorElementType[][];
+      setTableCells(cells);
+      setCurrentPage(1);
+    } else {
+      console.warn(
+        "[useKaraboTableProperty] Expected VectorElementType[][] but got:",
+        raw
+      );
+      // Optionally clear instead of crashing
+      setTableCells(null);
+    }
   }, []);
 
   React.useEffect(() => {
+    if (!deviceId || !propertyId) return;
+
     DevicePropertyConnector.inst.registerPropertyMonitor(
       deviceId,
       propertyId,
-      onUpdate as any // Type cast needed because PropertyUpdateHandler can receive either PropertyInfo or VectorElementType[][]
+      onUpdate as any
     );
     return () => {
       DevicePropertyConnector.inst.unregisterPropertyMonitor(
@@ -81,22 +78,23 @@ export function useKaraboTableProperty(
     };
   }, [deviceId, propertyId, onUpdate]);
 
-  // Pagination calculations
+  // Pagination calculations (defensive)
   const paginationInfo = React.useMemo(() => {
-    if (!tableCells || !enablePagination) {
+    if (!enablePagination || !Array.isArray(tableCells)) {
       return null;
     }
 
     const totalRows = tableCells.length;
-    const totalPages = Math.ceil(totalRows / pageSize);
-    const startIndex = (currentPage - 1) * pageSize;
+    const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
+    const safeCurrentPage = Math.min(Math.max(currentPage, 1), totalPages);
+    const startIndex = (safeCurrentPage - 1) * pageSize;
     const endIndex = Math.min(startIndex + pageSize, totalRows);
     const paginatedCells = tableCells.slice(startIndex, endIndex);
 
     return {
       totalRows,
       totalPages,
-      currentPage,
+      currentPage: safeCurrentPage,
       pageSize,
       startIndex,
       endIndex,
@@ -104,9 +102,10 @@ export function useKaraboTableProperty(
     };
   }, [tableCells, currentPage, pageSize, enablePagination]);
 
-  // Pagination controls
-  const paginationControls: PaginationControls = React.useMemo(() => {
-    const totalPages = paginationInfo?.totalPages ?? 1;
+  const paginationControls: PaginationControls | null = React.useMemo(() => {
+    if (!enablePagination || !paginationInfo) return null;
+
+    const totalPages = paginationInfo.totalPages;
 
     return {
       goToPage: (page: number) => {
@@ -121,16 +120,15 @@ export function useKaraboTableProperty(
       },
       setPageSize: (size: number) => {
         setPageSize(size);
-        setCurrentPage(1); // Reset to first page when page size changes
+        setCurrentPage(1);
       },
-      canGoNext: currentPage < totalPages,
-      canGoPrev: currentPage > 1,
+      canGoNext: paginationInfo.currentPage < totalPages,
+      canGoPrev: paginationInfo.currentPage > 1,
     };
-  }, [currentPage, paginationInfo?.totalPages]);
+  }, [enablePagination, paginationInfo]);
 
-  // Combine cells with column schema
   const tableData: TablePropertyData | null = React.useMemo(() => {
-    if (!tableCells || !propertyDescriptor?.rowSchema) {
+    if (!Array.isArray(tableCells) || !propertyDescriptor?.rowSchema) {
       return null;
     }
 
@@ -150,11 +148,8 @@ export function useKaraboTableProperty(
     paginationInfo,
   ]);
 
-  // Paginated table data with metadata
   const paginatedTableData: PaginatedTableData | null = React.useMemo(() => {
-    if (!tableData || !paginationInfo) {
-      return null;
-    }
+    if (!tableData || !paginationInfo) return null;
 
     return {
       ...tableData,
@@ -171,8 +166,8 @@ export function useKaraboTableProperty(
     tableData,
     paginatedTableData: enablePagination ? paginatedTableData : null,
     pagination: enablePagination ? paginationControls : null,
-    cells: tableCells,
+    cells: Array.isArray(tableCells) ? tableCells : null,
     columns: propertyDescriptor?.rowSchema ?? [],
-    totalRows: tableCells?.length ?? 0,
+    totalRows: Array.isArray(tableCells) ? tableCells.length : 0,
   };
 }

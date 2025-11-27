@@ -1,88 +1,61 @@
 import * as React from "react";
 import type { IntLineEditProps } from "@/scene/scene_types/controllers";
-import {
-  ControllerContainer,
-  useControllerPermissions,
-} from "@/components/sceneView/ControllerContainer";
+import { ControllerContainer } from "@/components/sceneView/ControllerContainer";
+import { useControllerPermissions } from "@/components/shared/hooks/useControllerPermissions";
 import { useKaraboPropertyInfo } from "@/components/shared/hooks/useKaraboProperty";
 import { useKaraboKeysString } from "@/components/shared/hooks/useKaraboKeysString";
 import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
 import type { PropertyInfoOptional } from "@/karabo_data/DeviceConfigInfo";
 
 /**
- * IntLineEdit - Integer input field with validation.
- *
- * Editability rules (handled by ControllerContainer):
- * - Device must be online
- * - User access level must satisfy property.schemaAttrs.requiredAccessLevel
- * - Property accessMode must allow editing (ReadOnly / InitOnly / Reconfigurable)
- * - Only accepts integer values (parsed on blur)
+ * Inner part: actually renders the input and consumes permissions context.
  */
-const IntLineEdit: React.FC<IntLineEditProps> = (props) => {
-  const { keys, x, y, width, height, font_size, font_weight } = props;
-
-  // Join keys for compatibility with hooks
-  const joinedKeys = useKaraboKeysString(keys);
-  const { property } = useKaraboPropertyInfo(joinedKeys);
-
-  // Narrow property to PropertyInfo
-  const typedProperty = property as PropertyInfoOptional;
-
-  // Get permission state from ControllerContainer
+const IntLineEditInner: React.FC<{
+  property: PropertyInfoOptional;
+  font_size?: number;
+  font_weight: string;
+}> = ({ property, font_size, font_weight }) => {
   const { canEdit, disabledReason } = useControllerPermissions();
-
   const [value, setValue] = React.useState<string>("");
 
-  // Get unit from property schema
+  // Unit from schema
   const unit = React.useMemo(() => {
-    if (!typedProperty || !typedProperty.schemaAttrs) return "";
-    const prefix = typedProperty.schemaAttrs.metricPrefixSymbol ?? "";
-    const symbol = typedProperty.schemaAttrs.unitSymbol ?? "";
+    if (!property || !property.schemaAttrs) return "";
+    const prefix = property.schemaAttrs.metricPrefixSymbol ?? "";
+    const symbol = property.schemaAttrs.unitSymbol ?? "";
     return `${prefix}${symbol}`.trim();
-  }, [typedProperty]);
+  }, [property]);
 
-  // Sync with property changes
+  // Sync with property/value
   React.useEffect(() => {
-    if (!typedProperty) {
+    if (!property) {
       setValue("");
       return;
     }
 
-    const incoming =
-      typedProperty.value ?? typedProperty.schemaAttrs?.defaultValue ?? 0;
+    const incoming = property.value ?? property.schemaAttrs?.defaultValue ?? 0;
 
     const intValue =
       typeof incoming === "number" ? incoming : parseInt(String(incoming), 10);
 
-    if (!isNaN(intValue)) {
-      setValue(String(intValue));
-    } else {
-      setValue("");
-    }
-  }, [typedProperty]);
+    setValue(!isNaN(intValue) ? String(intValue) : "");
+  }, [property]);
 
   return (
-    <ControllerContainer
-      keys={keys}
-      x={x}
-      y={y}
-      width={width}
-      height={height}
-      className="flex items-center"
-      checkPermissions
-      showPropertyOverlay
-    >
+    <>
       <input
         type="text"
         value={value}
         onChange={(e) => {
+          if (!canEdit) return; // extra safety
           setValue(e.target.value);
         }}
         onBlur={(e) => {
+          if (!canEdit) return;
           const intValue = parseInt(e.target.value, 10);
           if (!isNaN(intValue)) {
             setValue(String(intValue));
-            // TODO: push value to backend or GUI server via WebSocket
+            // TODO: push value to backend / GUI server
           }
         }}
         disabled={!canEdit}
@@ -100,6 +73,7 @@ const IntLineEdit: React.FC<IntLineEditProps> = (props) => {
         }}
         placeholder={canEdit ? "0" : "Read-only"}
       />
+
       {unit && (
         <span
           className="ml-1 text-black"
@@ -112,6 +86,36 @@ const IntLineEdit: React.FC<IntLineEditProps> = (props) => {
           {unit}
         </span>
       )}
+    </>
+  );
+};
+
+/**
+ * Outer wrapper: wires keys → ControllerContainer.
+ * ControllerContainer computes permissions & overlays, inner uses the context.
+ */
+const IntLineEdit: React.FC<IntLineEditProps> = (props) => {
+  const { keys, x, y, width, height, font_size, font_weight } = props;
+
+  const joinedKeys = useKaraboKeysString(keys);
+  const { property } = useKaraboPropertyInfo(joinedKeys);
+  const typedProperty = property as PropertyInfoOptional;
+
+  return (
+    <ControllerContainer
+      keys={keys}
+      x={x}
+      y={y}
+      width={width}
+      height={height}
+      className="flex items-center"
+      showMissingPropertyOverlay
+    >
+      <IntLineEditInner
+        property={typedProperty}
+        font_size={font_size as number}
+        font_weight={font_weight}
+      />
     </ControllerContainer>
   );
 };

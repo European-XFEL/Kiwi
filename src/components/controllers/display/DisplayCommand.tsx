@@ -5,22 +5,114 @@ import { useKaraboKeysString } from "../../shared/hooks/useKaraboKeysString";
 import { useAccessLevel } from "../../shared/hooks/useAccessLevel";
 import { useDeviceState } from "../../shared/hooks/useDeviceState";
 import { Button } from "@/components/ui/button";
-import {
-  ControllerContainer,
-  useControllerPermissions,
-} from "@/components/sceneView/ControllerContainer";
+import { ControllerContainer } from "@/components/sceneView/ControllerContainer";
+import { useControllerPermissions } from "@/components/shared/hooks/useControllerPermissions";
 import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
 import type { PropertyInfoOptional } from "@/karabo_data/DeviceConfigInfo";
 import { AccessLevel } from "@/karabo_data/SchemaEnums";
 
 /**
- * DisplayCommand - Command button widget for executing device commands.
- *
- * Permission logic (handled by ControllerContainer + command-specific checks):
- * - Device must be online (ControllerContainer)
- * - Property permissions checked (ControllerContainer)
- * - Access level must be at least Operator (command-specific)
- * - Device state must allow command execution (command-specific)
+ * Inner component: consumes permissions + access level + device state
+ * and renders the actual button.
+ */
+const DisplayCommandInner: React.FC<{
+  deviceId: string | undefined;
+  propertyId: string | undefined;
+  property: PropertyInfoOptional;
+  font_size: number | string;
+  font_weight: string;
+  requires_confirmation: boolean;
+  allowedStates?: string[];
+}> = ({
+  deviceId,
+  propertyId,
+  property,
+  font_size,
+  font_weight,
+  requires_confirmation,
+  allowedStates,
+}) => {
+  const { canEdit: propertyCanEdit, disabledReason: propertyDisabledReason } =
+    useControllerPermissions();
+
+  const { accessLevel } = useAccessLevel();
+
+  // ✅ Safe string for the hook (hooks can't be conditional)
+  const safeDeviceId = deviceId ?? "";
+  const { isInState } = useDeviceState(safeDeviceId);
+
+  const typedProperty = property as PropertyInfoOptional;
+
+  // Commands require Operator level or higher
+  const hasBasicCommandPermission = accessLevel >= AccessLevel.Operator;
+
+  // If property exists, use property permissions; otherwise use access level
+  const canExecute = typedProperty
+    ? propertyCanEdit
+    : hasBasicCommandPermission;
+
+  // If no deviceId, we treat state as NOT allowing the command
+  const stateAllowsCommand =
+    !!deviceId && allowedStates ? isInState(allowedStates) : !!deviceId;
+
+  const buttonCaption = React.useMemo(() => {
+    const name = typedProperty?.schemaAttrs?.displayedName;
+    return name || propertyId;
+  }, [typedProperty, propertyId]);
+
+  const isEnabled = canExecute && stateAllowsCommand;
+
+  const finalDisabledReason = React.useMemo(() => {
+    if (!deviceId) {
+      return "No device selected for this command";
+    }
+
+    if (typedProperty && !propertyCanEdit && propertyDisabledReason) {
+      return propertyDisabledReason;
+    }
+
+    if (!typedProperty && !hasBasicCommandPermission) {
+      return `Requires access level ${AccessLevel[AccessLevel.Operator]}`;
+    }
+
+    if (!stateAllowsCommand) {
+      return "Command not allowed in current device state";
+    }
+
+    return undefined;
+  }, [
+    deviceId,
+    typedProperty,
+    propertyCanEdit,
+    propertyDisabledReason,
+    hasBasicCommandPermission,
+    stateAllowsCommand,
+  ]);
+
+  return (
+    <Button
+      size="sm"
+      disabled={!isEnabled}
+      aria-label={finalDisabledReason || `Command: ${buttonCaption}`}
+      title={finalDisabledReason}
+      className={`w-full h-full border-2 px-2 ${
+        isEnabled
+          ? "border-primary bg-primary hover:bg-primary/90 cursor-pointer"
+          : "border-gray-300 bg-gray-400 cursor-not-allowed opacity-60"
+      }`}
+      style={{
+        fontFamily: FONT_FAMILY_DEFAULT,
+        fontSize: font_size,
+        fontWeight: font_weight,
+      }}
+    >
+      {requires_confirmation ? `${buttonCaption} (Confirm)` : buttonCaption}
+    </Button>
+  );
+};
+
+/**
+ * Outer component: resolves keys → device/property and wraps with ControllerContainer.
  */
 const DisplayCommand: React.FC<DisplayCommandProps> = ({
   keys,
@@ -36,59 +128,7 @@ const DisplayCommand: React.FC<DisplayCommandProps> = ({
   const keysStr = useKaraboKeysString(keys);
   const { deviceId, propertyId, property } = useKaraboPropertyInfo(keysStr);
 
-  // Get basic permission state from ControllerContainer
-  const { canEdit: propertyCanEdit, disabledReason: propertyDisabledReason } =
-    useControllerPermissions();
-
-  const { accessLevel } = useAccessLevel();
-  const { isInState } = useDeviceState(deviceId);
-
   const typedProperty = property as PropertyInfoOptional;
-
-  // Commands require Operator level or higher
-  const hasBasicCommandPermission = accessLevel >= AccessLevel.Operator;
-
-  // If property exists, use property permissions; otherwise use access level
-  const canExecute = typedProperty
-    ? propertyCanEdit
-    : hasBasicCommandPermission;
-
-  // Check if device state allows this command
-  const stateAllowsCommand = isInState(allowedStates);
-
-  const buttonCaption = React.useMemo(() => {
-    const name = typedProperty?.schemaAttrs?.displayedName;
-    return name || propertyId;
-  }, [typedProperty, propertyId]);
-
-  // Final enabled state: must pass property/access check AND state check
-  const isEnabled = canExecute && stateAllowsCommand;
-
-  const finalDisabledReason = React.useMemo(() => {
-    // If property-based permission failed, use that reason
-    if (typedProperty && !propertyCanEdit && propertyDisabledReason) {
-      return propertyDisabledReason;
-    }
-
-    // If no property and access level is insufficient
-    if (!typedProperty && !hasBasicCommandPermission) {
-      return `Requires access level ${AccessLevel[AccessLevel.Operator]}`;
-    }
-
-    // If state doesn't allow command
-    if (!stateAllowsCommand) {
-      return "Command not allowed in current device state";
-    }
-
-    return undefined;
-  }, [
-    canExecute,
-    typedProperty,
-    propertyCanEdit,
-    propertyDisabledReason,
-    hasBasicCommandPermission,
-    stateAllowsCommand,
-  ]);
 
   return (
     <ControllerContainer
@@ -98,27 +138,17 @@ const DisplayCommand: React.FC<DisplayCommandProps> = ({
       width={width}
       height={height}
       className="absolute"
-      checkPermissions
-      showPropertyOverlay
+      showMissingPropertyOverlay
     >
-      <Button
-        size="sm"
-        disabled={!isEnabled}
-        aria-label={finalDisabledReason || `Command: ${buttonCaption}`}
-        title={finalDisabledReason}
-        className={`w-full h-full border-2 px-2 ${
-          isEnabled
-            ? "border-primary bg-primary hover:bg-primary/90 cursor-pointer"
-            : "border-gray-300 bg-gray-400 cursor-not-allowed opacity-60"
-        }`}
-        style={{
-          fontFamily: FONT_FAMILY_DEFAULT,
-          fontSize: font_size,
-          fontWeight: font_weight,
-        }}
-      >
-        {requires_confirmation ? `${buttonCaption} (Confirm)` : buttonCaption}
-      </Button>
+      <DisplayCommandInner
+        deviceId={deviceId}
+        propertyId={propertyId}
+        property={typedProperty}
+        font_size={font_size}
+        font_weight={font_weight}
+        requires_confirmation={requires_confirmation}
+        allowedStates={allowedStates}
+      />
     </ControllerContainer>
   );
 };

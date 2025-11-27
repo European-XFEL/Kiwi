@@ -46,7 +46,7 @@ const DisplayLabel: React.FC<DisplayLabelProps> = (props) => {
       y={y}
       width={width}
       height={height}
-      showPropertyOverlay
+      showMissingPropertyOverlay
     >
       <div
         className="overflow-clip flex items-center justify-center border border-solid p-px w-full h-full"

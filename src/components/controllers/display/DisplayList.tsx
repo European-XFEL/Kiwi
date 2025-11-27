@@ -41,7 +41,7 @@ const DisplayList: React.FC<DisplayListProps> = (props) => {
       width={width}
       height={height}
       className="overflow-clip flex items-center border border-solid px-1"
-      showPropertyOverlay
+      showMissingPropertyOverlay
     >
       <span
         style={{

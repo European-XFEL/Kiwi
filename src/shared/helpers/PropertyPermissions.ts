@@ -43,6 +43,22 @@ export class PropertyPermissions {
     const accessMode =
       property.schemaAttrs?.accessMode ?? AccessMode.Reconfigurable;
 
+    // DEBUG: Check if schema attrs are missing
+    if (!property.schemaAttrs) {
+      console.warn(
+        `[PropertyPermissions] Property "${property.key}" has NO schemaAttrs! ` +
+        `Defaulting to requiredAccessLevel=Observer, accessMode=Reconfigurable`
+      );
+    } else {
+      console.log(
+        `[PropertyPermissions] Property "${property.key}":`,
+        `requiredAccessLevel=${AccessLevel[requiredAccessLevel]},`,
+        `accessMode=${AccessMode[accessMode]},`,
+        `currentLevel=${AccessLevel[currentLevel]},`,
+        `canEdit=${currentLevel >= requiredAccessLevel && accessMode === AccessMode.Reconfigurable}`
+      );
+    }
+
     // 1) Mode-based eligibility
     let canEditByMode = false;
     let deniedByMode = false;

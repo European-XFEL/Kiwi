@@ -44,7 +44,7 @@ const DisplayTableElement: React.FC<DisplayTableElementProps> = (props) => {
       y={props.y}
       width={props.width}
       height={props.height}
-      showPropertyOverlay
+      showMissingPropertyOverlay
       className="border border-gray-300 bg-white overflow-hidden flex flex-col"
     >
       {displayData ? (

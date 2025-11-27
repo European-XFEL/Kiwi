@@ -3,23 +3,21 @@ import { DeviceSchemaConnector } from "@/karabo_connectors/DeviceSchemaConnector
 import type { DeviceSchemaInfo } from "@/karabo_data/DeviceSchemaInfo";
 
 import { splitKaraboKeys } from "@/components/shared/helpers/splitKaraboKeys";
-import { useDeviceStatus } from "@/store/useDeviceStatusStore";
+import { useDeviceProxy } from "@/store/useDeviceProxyStore";
 
-import {
-  ProxyStatus,
-  PropertyLevelIndicator,
-} from "@/overlay_indicator/types";
+import { PropertyStatus } from "@/device_proxy/enum";
+import type { PropertyIndicatorDescriptor } from "@/device_proxy/types";
+import { getPropertyIndicator } from "@/device_proxy/helpers";
 
-import { computePropertyOverlayStatus } from "@/overlay_indicator/property_overlay_indicator";
-import { DeviceOverlayIndicator } from "@/overlay_indicator/device_overlay_indicator";
-
-export function usePropertyLevelIndicator(karaboKeys: string) {
+export function usePropertyLevelIndicator(
+  karaboKeys: string
+): PropertyIndicatorDescriptor | null {
   const { deviceId, propertyId } = React.useMemo(
     () => splitKaraboKeys(karaboKeys),
     [karaboKeys]
   );
 
-  const deviceStatus = useDeviceStatus(deviceId);
+  const proxy = useDeviceProxy(deviceId);
 
   const [schema, setSchema] = React.useState<DeviceSchemaInfo | null>(null);
 
@@ -44,25 +42,26 @@ export function usePropertyLevelIndicator(karaboKeys: string) {
     };
   }, [deviceId]);
 
-  if (!deviceId || !propertyId || !deviceStatus) {
+  if (!deviceId || !propertyId || !proxy) {
     return null;
   }
 
-  // **Key point**: this now only returns MISSING when schema says so
-  const overlay_status: ProxyStatus =
-    computePropertyOverlayStatus(deviceStatus, schema, propertyId);
+  // Compute property status based on schema
+  let propertyStatus: PropertyStatus = PropertyStatus.NONE;
 
-  if (overlay_status === ProxyStatus.NONE) {
+  // If we have schema, check if property exists
+  if (schema && schema.propertyDescriptors) {
+    const propertyExists = schema.propertyDescriptors.has(propertyId);
+    propertyStatus = propertyExists
+      ? PropertyStatus.NONE
+      : PropertyStatus.MISSING;
+  }
+
+  // If NONE status, no overlay needed
+  if (propertyStatus === PropertyStatus.NONE) {
     return null;
   }
 
-  const propertyLevel: PropertyLevelIndicator = {
-    device_id: deviceId,
-    property_id: propertyId,
-    overlay_status,
-  };
-
-  return DeviceOverlayIndicator.compute_property_overlay_indicator(
-    propertyLevel
-  );
+  // Return the property indicator descriptor
+  return getPropertyIndicator(propertyStatus);
 }
