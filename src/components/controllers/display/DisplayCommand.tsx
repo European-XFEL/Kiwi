@@ -37,7 +37,7 @@ const DisplayCommandInner: React.FC<{
 
   const { accessLevel } = useAccessLevel();
 
-  // ✅ Safe string for the hook (hooks can't be conditional)
+  //Safe string for the hook (hooks can't be conditional)
   const safeDeviceId = deviceId ?? "";
   const { isInState } = useDeviceState(safeDeviceId);
 
