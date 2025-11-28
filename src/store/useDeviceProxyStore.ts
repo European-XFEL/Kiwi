@@ -15,10 +15,15 @@ export interface DeviceProxyStore {
   getProxy: (deviceId: string) => DeviceProxy;
 
   // Store-level methods (take deviceId, get proxy, call proxy methods)
-  applyDeviceTopologyEvent: (deviceId: string, eventType: TopologyEventType) => void;
+  applyDeviceTopologyEvent: (
+    deviceId: string,
+    eventType: TopologyEventType
+  ) => void;
   markDeviceSchemaRequested: (deviceId: string) => void;
   markDeviceSchemaReceived: (deviceId: string) => void;
   markDeviceConfigReceived: (deviceId: string) => void;
+  beginMonitoringDeviceProperties: (deviceId: string) => void;
+  endMonitoringDeviceProperties: (deviceId: string) => void;
 
   getProxyStatus: (deviceId: string) => ProxyStatus | undefined;
   isDeviceOnline: (deviceId: string) => boolean;
@@ -92,6 +97,17 @@ export const useDeviceProxyStore = create<DeviceProxyStore>((set, get) => {
       const proxy = get().getProxy(deviceId);
       proxy.markConfigReceived();
       // emits "config_changed" → bump via listener
+    },
+
+    // NEW:
+    beginMonitoringDeviceProperties: (deviceId) => {
+      const proxy = get().getProxy(deviceId);
+      proxy.registerProperty();
+    },
+
+    endMonitoringDeviceProperties: (deviceId) => {
+      const proxy = get().getProxy(deviceId);
+      proxy.unregisterProperty();
     },
 
     getProxyStatus: (deviceId) => {

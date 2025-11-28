@@ -48,13 +48,20 @@ export class DevicePropertyConnector {
    * - The second-level map maps a `propertyId` (string) to an array of `PropertyUpdateHandler` functions.
    *
    */
-  _propertyMonitors = new Map<string, Map<string, PropertyUpdateHandler[]>>();
+  private _propertyMonitors = new Map<
+    string,
+    Map<string, PropertyUpdateHandler[]>
+  >();
 
   registerPropertyMonitor(
     deviceId: string,
     propertyId: string,
     propertyUpdateHandler: PropertyUpdateHandler
   ): void {
+    const store = useDeviceProxyStore.getState();
+    // Ensure proxy exists for this device (creates on-demand)
+    store.getProxy(deviceId);
+
     if (!this._propertyMonitors.has(deviceId)) {
       // This is the first property being monitored for the device.
       TopologyConnector.inst.registerDeviceInfoMonitor(
@@ -65,11 +72,11 @@ export class DevicePropertyConnector {
       if (TopologyConnector.inst.isDeviceOnline(deviceId)) {
         this._startMonitoringDevice(deviceId);
       } else {
-        // For offline devices, registers the pending start monitoring
+        // For offline devices, register the pending start monitoring
         this._pendingMonitorStarts.add(deviceId);
       }
 
-      // Creates the map of property update handlers for the device
+      // Create the map of property update handlers for the device
       this._propertyMonitors.set(
         deviceId,
         new Map<string, PropertyUpdateHandler[]>()
@@ -90,47 +97,68 @@ export class DevicePropertyConnector {
       }
     }
 
-    const devicePropertyMonitors = this._propertyMonitors.get(deviceId);
-    if (!devicePropertyMonitors?.has(propertyId)) {
-      // There's still no update handler registered for the specific property
-      // of the device. Creates the list to store the device property handlers.
-      devicePropertyMonitors?.set(
-        propertyId,
-        new Array<PropertyUpdateHandler>()
-      );
+    // Now register the handler for this specific property
+    const devicePropertyMonitors = this._propertyMonitors.get(deviceId)!;
+
+    let handlers = devicePropertyMonitors.get(propertyId);
+    const wasEmpty = !handlers || handlers.length === 0;
+
+    if (!handlers) {
+      handlers = [];
+      devicePropertyMonitors.set(propertyId, handlers);
     }
-    devicePropertyMonitors?.get(propertyId)?.push(propertyUpdateHandler);
+
+    handlers.push(propertyUpdateHandler);
+
+    // FIRST subscription for this (deviceId, propertyId) → tell proxy via store
+    if (wasEmpty) {
+      store.beginMonitoringDeviceProperties(deviceId);
+    }
   }
 
   unregisterPropertyMonitor(
     deviceId: string,
     propertyId: string,
-    propertyUpdatehandler: PropertyUpdateHandler
+    propertyUpdateHandler: PropertyUpdateHandler
   ): void {
-    const propertyMonitors = this._propertyMonitors
-      .get(deviceId)
-      ?.get(propertyId);
-    const handlerIdx = propertyMonitors?.findIndex(
-      (handler) => handler === propertyUpdatehandler
-    );
-    if (handlerIdx !== undefined && handlerIdx >= 0) {
-      propertyMonitors?.splice(handlerIdx, 1);
+    const devicePropertyMonitors = this._propertyMonitors.get(deviceId);
+    if (!devicePropertyMonitors) {
+      return;
     }
-    if (propertyMonitors?.length === 0) {
-      // Removed the last update handler for the device property - clear
-      // also the second-level map entry for the property.
-      this._propertyMonitors.get(deviceId)?.delete(propertyId);
-      if (this._propertyMonitors.get(deviceId)?.keys.length === 0) {
-        // Removed the last update handler for any property of the device
-        TopologyConnector.inst.unregisterDeviceInfoMonitor(
-          deviceId,
-          this._onDeviceInfoUpdate
-        );
-        this._stopMonitoringDevice(deviceId);
-        this._propertyMonitors.delete(deviceId);
-        this._deviceConfigurations.delete(deviceId);
-        this._pendingMonitorStarts.delete(deviceId);
-      }
+
+    const handlers = devicePropertyMonitors.get(propertyId);
+    if (!handlers) {
+      return;
+    }
+
+    const handlerIdx = handlers.findIndex(
+      (handler) => handler === propertyUpdateHandler
+    );
+
+    if (handlerIdx !== undefined && handlerIdx >= 0) {
+      handlers.splice(handlerIdx, 1);
+    }
+
+    const store = useDeviceProxyStore.getState();
+
+    if (handlers.length === 0) {
+      // Removed the last update handler for this device property
+      devicePropertyMonitors.delete(propertyId);
+
+      // Mirror that in the DeviceProxy: this property is no longer monitored
+      store.endMonitoringDeviceProperties(deviceId);
+    }
+
+    if (devicePropertyMonitors.size === 0) {
+      // Removed the last update handler for any property of the device
+      TopologyConnector.inst.unregisterDeviceInfoMonitor(
+        deviceId,
+        this._onDeviceInfoUpdate
+      );
+      this._stopMonitoringDevice(deviceId);
+      this._propertyMonitors.delete(deviceId);
+      this._deviceConfigurations.delete(deviceId);
+      this._pendingMonitorStarts.delete(deviceId);
     }
   }
 
@@ -170,7 +198,9 @@ export class DevicePropertyConnector {
    */
   private _onDeviceSchemaUpdate = (deviceSchema: DeviceSchemaInfo): void => {
     // Inform proxy/store that schema has been received
-    useDeviceProxyStore.getState().markDeviceSchemaReceived(deviceSchema.deviceId);
+    useDeviceProxyStore
+      .getState()
+      .markDeviceSchemaReceived(deviceSchema.deviceId);
 
     // Re-dispatch existing properties with schema attributes attached
     // This ensures permission checks (requiredAccessLevel, accessMode, allowedStates) work correctly
