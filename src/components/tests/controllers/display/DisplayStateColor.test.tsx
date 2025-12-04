@@ -20,16 +20,23 @@ jest.mock("@/components/sceneView/ControllerContainer", () => ({
 }));
 
 // ---------------------------------------------------
-// MOCK: useKaraboPropertyInfo
+// MOCK: useDeviceProperty
 // ---------------------------------------------------
-const mockUseKaraboPropertyInfo = jest.fn();
-jest.mock("@/components/shared/hooks/useKaraboProperty", () => ({
-  useKaraboPropertyInfo: (...args: any[]) => mockUseKaraboPropertyInfo(...args),
+const mockUseDeviceProperty = jest.fn();
+jest.mock("@/components/shared/hooks/useDeviceProperty", () => ({
+  useDeviceProperty: (...args: any[]) => mockUseDeviceProperty(...args),
+}));
+
+// ---------------------------------------------------
+// MOCK: useGuiStateColor
+// ---------------------------------------------------
+const mockUseGuiStateColor = jest.fn();
+jest.mock("@/components/shared/hooks/useGuiStateColor", () => ({
+  useGuiStateColor: (...args: any[]) => mockUseGuiStateColor(...args),
 }));
 
 // Import AFTER mocks
 import DisplayStateColor from "../../../controllers/display/DisplayStateColor";
-import type { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
 
 function makeProps(
   overrides: Partial<DisplayStateColorProps> = {}
@@ -67,14 +74,32 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
-  const mockProperty: PropertyInfo = {
-    key: "state",
+  // Mock useDeviceProperty to return ERROR state
+  mockUseDeviceProperty.mockReturnValue({
+    deviceState: "ERROR",
+    isOnlineLike: true,
+    isReady: true,
     value: "ERROR",
-    type: 0,
-    timeAttrs: {} as any,
-  };
-  mockUseKaraboPropertyInfo.mockReturnValue({
-    property: mockProperty,
+    model: undefined,
+    timeAttrs: undefined,
+    deviceId: "DEVICE_X",
+    propertyPath: "state",
+    stateColor: undefined,
+    descriptor: undefined,
+    isEditable: false,
+    schemaAttrs: undefined,
+    proxyStatus: 0,
+    proxyIndicator: undefined,
+    propertyStatus: 0,
+    propertyIndicator: undefined,
+    isOffline: false,
+    isAlive: false,
+    isMonitoring: false,
+  });
+
+  // Mock useGuiStateColor to return error color
+  mockUseGuiStateColor.mockReturnValue({
+    colorValue: guiStateColors.errorColor,
   });
 });
 
@@ -106,23 +131,68 @@ describe("DisplayStateColor - show_string behavior", () => {
 
   it("renders offline overlay and hides text when device is offline", () => {
     jest.spyOn(TopologyConnector.inst, "isDeviceOnline").mockReturnValue(false);
+
+    // Mock useDeviceProperty to return offline state
+    mockUseDeviceProperty.mockReturnValue({
+      deviceState: "ERROR",
+      isOnlineLike: false, // Device is offline
+      isReady: true,
+      value: "ERROR",
+      model: undefined,
+      timeAttrs: undefined,
+      deviceId: "DEVICE_X",
+      propertyPath: "state",
+      stateColor: undefined,
+      descriptor: undefined,
+      isEditable: false,
+      schemaAttrs: undefined,
+      proxyStatus: 0,
+      proxyIndicator: undefined,
+      propertyStatus: 0,
+      propertyIndicator: undefined,
+      isOffline: true,
+      isAlive: false,
+      isMonitoring: false,
+    });
+
     renderWithKey(makeProps({ show_string: true }));
 
     expect(screen.queryByText("ERROR")).not.toBeInTheDocument();
 
-    // 🔥 Now asserts against the mocked overlay SVG
+    //Now asserts against the mocked overlay SVG
     expect(screen.getByTestId("overlay-svg")).toBeInTheDocument();
   });
 
   it("uses unknownColor for unmapped states", () => {
     jest.spyOn(TopologyConnector.inst, "isDeviceOnline").mockReturnValue(true);
-    const mockProperty: PropertyInfo = {
-      key: "state",
+
+    // Mock useDeviceProperty to return unknown state
+    mockUseDeviceProperty.mockReturnValue({
+      deviceState: "not-a-known-state",
+      isOnlineLike: true,
+      isReady: true,
       value: "not-a-known-state",
-      type: 0,
-      timeAttrs: {} as any,
-    };
-    mockUseKaraboPropertyInfo.mockReturnValue({ property: mockProperty });
+      model: undefined,
+      timeAttrs: undefined,
+      deviceId: "DEVICE_X",
+      propertyPath: "state",
+      stateColor: undefined,
+      descriptor: undefined,
+      isEditable: false,
+      schemaAttrs: undefined,
+      proxyStatus: 0,
+      proxyIndicator: undefined,
+      propertyStatus: 0,
+      propertyIndicator: undefined,
+      isOffline: false,
+      isAlive: false,
+      isMonitoring: false,
+    });
+
+    // Mock useGuiStateColor to return unknown color
+    mockUseGuiStateColor.mockReturnValue({
+      colorValue: guiStateColors.unknownColor,
+    });
 
     const { container } = renderWithKey(makeProps());
     // ControllerContainer wrapper is firstChild, DisplayStateColor is firstChild.firstChild

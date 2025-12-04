@@ -67,3 +67,16 @@ export type SidebarProp = {
 export type UserInfoProps = {
   showAccessLevel?: boolean;
 };
+
+//event emitter
+// Union of event names, e.g. "property_changed" | "state_changed" | ...
+export type EventName<TEventName extends string = string> = TEventName;
+
+// Listener function – args kept generic for flexibility
+export type EventSubscriber = (...args: any[]) => void;
+
+// Map of eventName → listeners[]
+export type Events<TEventName extends string = string> = Map<
+  EventName<TEventName>,
+  EventSubscriber[]
+>;

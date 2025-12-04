@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { TopologyConnector } from "@/karabo_connectors/TopologyConnector";
-import {
-  DeviceInfo,
-  TopologyEventType,
-} from "@/karabo_data/TopologyInfo";
+import { DeviceInfo, TopologyEventType } from "@/karabo_data/TopologyInfo";
 
 /**
  * Hook to monitor device online/offline status

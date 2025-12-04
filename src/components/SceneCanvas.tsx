@@ -126,7 +126,7 @@ const SceneCanvas: React.FC = () => {
     const width = scene.width;
     const height = scene.height;
 
-    // 👉 Use the FLAT list, already layout-resolved by Scene
+    //Use the FLAT list, already layout-resolved by Scene
     const flat = scene.sceneElements;
 
     // Split into SVG primitives vs HTML widgets

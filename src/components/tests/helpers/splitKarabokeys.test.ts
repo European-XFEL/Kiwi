@@ -2,24 +2,24 @@ import { splitKaraboKeys } from "@/components/shared/helpers/splitKaraboKeys";
 
 describe("splitKaraboKeys (uses last dot)", () => {
   it.each([
-    ["DEVICE_X.state", { deviceId: "DEVICE_X", propertyId: "state" }],
+    ["DEVICE_X.state", { deviceId: "DEVICE_X", propertyPath: "state" }],
     [
       "DETLAB_LAB_AGIPD1M1/CTRL/MC1.aux",
-      { deviceId: "DETLAB_LAB_AGIPD1M1/CTRL/MC1", propertyId: "aux" },
+      { deviceId: "DETLAB_LAB_AGIPD1M1/CTRL/MC1", propertyPath: "aux" },
     ],
 
-    ["A.B.C.prop.name", { deviceId: "A", propertyId: "B.C.prop.name" }],
+    ["A.B.C.prop.name", { deviceId: "A", propertyPath: "B.C.prop.name" }],
 
-    [".state", { deviceId: "", propertyId: "state" }],
+    [".state", { deviceId: "", propertyPath: "state" }],
 
-    ["DEV.ID", { deviceId: "DEV", propertyId: "ID" }],
+    ["DEV.ID", { deviceId: "DEV", propertyPath: "ID" }],
   ])('splits "%s"', (input, expected) => {
     expect(splitKaraboKeys(input)).toEqual(expected);
   });
 
   describe("edge cases", () => {
     it('empty string → device: "", property: ""', () => {
-      expect(splitKaraboKeys("")).toEqual({ deviceId: "", propertyId: "" });
+      expect(splitKaraboKeys("")).toEqual({ deviceId: "", propertyPath: "" });
     });
   });
 });

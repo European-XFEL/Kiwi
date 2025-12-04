@@ -3,41 +3,37 @@ import type { DisplayLabelProps } from "../../../scene/scene_types/controllers/d
 import { ControllerContainer } from "@/components/sceneView/ControllerContainer";
 import { FONT_FAMILY_DEFAULT } from "../../shared/helpers/fontDefaults";
 import { HashTypes } from "karabo-ts";
-import { useKaraboPropertyInfo } from "../../shared/hooks/useKaraboProperty";
-import { useKaraboKeysString } from "../../shared/hooks/useKaraboKeysString";
-import type { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
+import { useDeviceProperty } from "../../shared/hooks/useDeviceProperty";
 
 const DisplayLabel: React.FC<DisplayLabelProps> = (props) => {
   const { keys, x, y, width, height, font_size, font_weight } = props;
 
-  const keysStr = useKaraboKeysString(keys);
-  const { property } = useKaraboPropertyInfo(keysStr);
-
-  // Narrow to the scalar PropertyInfo type this widget expects
-  const typedProperty = property as PropertyInfo | null;
+  const primaryKey = keys[0] ?? "";
+  const { value, model } = useDeviceProperty(primaryKey);
 
   const labelValue = React.useMemo(() => {
-    if (!typedProperty) return "";
+    if (value === undefined) return "";
 
-    const prefix = typedProperty.schemaAttrs?.metricPrefixSymbol ?? "";
-    const symbol = typedProperty.schemaAttrs?.unitSymbol ?? "";
+    const schemaAttrs = model?.property_schema?.schemaAttrs;
+    const prefix = schemaAttrs?.metricPrefixSymbol ?? "";
+    const symbol = schemaAttrs?.unitSymbol ?? "";
     const displayUnit = `${prefix}${symbol}`.trim();
-    const propType = typedProperty.type;
+    const propType = model?.property_schema?.schemaAttrs?.valueType;
 
     // Float types: format nicely with limited precision
     if (propType === HashTypes.Float32 || propType === HashTypes.Float64) {
-      const num = Number(typedProperty.value);
+      const num = Number(value);
       const displayValue = Number.isNaN(num)
-        ? String(typedProperty.value)
+        ? String(value)
         : parseFloat(num.toPrecision(8)).toString();
 
       return displayUnit ? `${displayValue} ${displayUnit}` : displayValue;
     }
 
     // Non-float types: just show string representation
-    const raw = String(typedProperty.value);
+    const raw = String(value);
     return displayUnit ? `${raw} ${displayUnit}` : raw;
-  }, [typedProperty]);
+  }, [value, model]);
 
   return (
     <ControllerContainer

@@ -2,9 +2,7 @@ import React from "react";
 import type { DisplayListProps } from "@/scene/scene_types/controllers/display";
 import { ControllerContainer } from "@/components/sceneView/ControllerContainer";
 import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
-import { useKaraboPropertyInfo } from "@/components/shared/hooks/useKaraboProperty";
-import { useKaraboKeysString } from "@/components/shared/hooks/useKaraboKeysString";
-import type { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
+import { useDeviceProperty } from "@/components/shared/hooks/useDeviceProperty";
 
 /**
  * DisplayList - Read-only display of array/list values.
@@ -13,25 +11,20 @@ import type { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
 const DisplayList: React.FC<DisplayListProps> = (props) => {
   const { keys, x, y, width, height, font_size, font_weight } = props;
 
-  const keysStr = useKaraboKeysString(keys);
-  const { property } = useKaraboPropertyInfo(keysStr);
-
-  // Narrow to the scalar PropertyInfo type this widget expects
-  const typedProperty = property as PropertyInfo | null;
+  const primaryKey = keys[0] ?? "";
+  const { value, model } = useDeviceProperty(primaryKey);
 
   // Format array value as comma-separated string
   const displayValue = React.useMemo(() => {
-    if (!typedProperty) return "";
+    const actualValue =
+      value ?? model?.property_schema?.schemaAttrs?.defaultValue ?? [];
 
-    const value =
-      typedProperty.value ?? typedProperty.schemaAttrs?.defaultValue ?? [];
-
-    if (Array.isArray(value)) {
-      return value.join(", ");
+    if (Array.isArray(actualValue)) {
+      return actualValue.join(", ");
     }
 
-    return String(value);
-  }, [typedProperty]);
+    return String(actualValue);
+  }, [value, model]);
 
   return (
     <ControllerContainer

@@ -1,17 +1,20 @@
-import { Hash, HashTypes, HashValue } from "karabo-ts";
+import { Attributes, Hash, HashTypes, HashValue } from "karabo-ts";
 import { GuiServerConnector } from "./GuiServerConnector";
 import {
   buildStartMonitoringHash,
   buildStopMonitoringHash,
 } from "../karabo_hash/builders/monitoring_device";
 import { devicesConfigsFromHash } from "../karabo_hash/decoders/device_config";
-import { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
+import type { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
 import { TopologyConnector } from "./TopologyConnector";
 import { DeviceSchemaConnector } from "./DeviceSchemaConnector";
 import { DeviceInfo, TopologyEventType } from "@/karabo_data/TopologyInfo";
-import { DeviceSchemaInfo } from "@/karabo_data/DeviceSchemaInfo";
-import { VectorElementType } from "@/karabo_hash/HashValueType";
-import { useDeviceProxyStore } from "@/store/useDeviceProxyStore";
+import type { DeviceSchemaInfo } from "@/karabo_data/DeviceSchemaInfo";
+import type {
+  HashValueType,
+  VectorElementType,
+} from "@/karabo_hash/HashValueType";
+import { deviceManager } from "@/device/DeviceManager";
 
 // VectorElementType[][] is the type used for the value of a table property.
 // Each VectorElementType is the value of a table cell with the row being
@@ -45,8 +48,7 @@ export class DevicePropertyConnector {
    *
    * The map is structured as a two-level mapping:
    * - The first level maps a `deviceId` (string) to a second-level map.
-   * - The second-level map maps a `propertyId` (string) to an array of `PropertyUpdateHandler` functions.
-   *
+   * - The second level maps a `propertyId` (string) to an array of `PropertyUpdateHandler` functions.
    */
   private _propertyMonitors = new Map<
     string,
@@ -58,11 +60,13 @@ export class DevicePropertyConnector {
     propertyId: string,
     propertyUpdateHandler: PropertyUpdateHandler
   ): void {
-    const store = useDeviceProxyStore.getState();
     // Ensure proxy exists for this device (creates on-demand)
-    store.getProxy(deviceId);
+    deviceManager.getDevice(deviceId);
 
-    if (!this._propertyMonitors.has(deviceId)) {
+    // Get or create the property map for this device
+    let devicePropertyMonitors = this._propertyMonitors.get(deviceId);
+
+    if (!devicePropertyMonitors) {
       // This is the first property being monitored for the device.
       TopologyConnector.inst.registerDeviceInfoMonitor(
         deviceId,
@@ -76,11 +80,8 @@ export class DevicePropertyConnector {
         this._pendingMonitorStarts.add(deviceId);
       }
 
-      // Create the map of property update handlers for the device
-      this._propertyMonitors.set(
-        deviceId,
-        new Map<string, PropertyUpdateHandler[]>()
-      );
+      devicePropertyMonitors = new Map<string, PropertyUpdateHandler[]>();
+      this._propertyMonitors.set(deviceId, devicePropertyMonitors);
     } else {
       // The device already has at least one registered property monitor
       if (!this._pendingMonitorStarts.has(deviceId)) {
@@ -98,21 +99,20 @@ export class DevicePropertyConnector {
     }
 
     // Now register the handler for this specific property
-    const devicePropertyMonitors = this._propertyMonitors.get(deviceId)!;
+    // At this point, devicePropertyMonitors is guaranteed to be defined
+    const existingHandlers = devicePropertyMonitors.get(propertyId);
+    const handlers = existingHandlers ?? [];
+    const wasEmpty = !existingHandlers || existingHandlers.length === 0;
 
-    let handlers = devicePropertyMonitors.get(propertyId);
-    const wasEmpty = !handlers || handlers.length === 0;
-
-    if (!handlers) {
-      handlers = [];
+    if (!existingHandlers) {
       devicePropertyMonitors.set(propertyId, handlers);
     }
 
     handlers.push(propertyUpdateHandler);
 
-    // FIRST subscription for this (deviceId, propertyId) → tell proxy via store
+    // FIRST subscription for this (deviceId, propertyId) → increment subscriber count in DeviceManager/DeviceProxy
     if (wasEmpty) {
-      store.beginMonitoringDeviceProperties(deviceId);
+      deviceManager.incrementPropertySubscriber(deviceId, propertyId);
     }
   }
 
@@ -135,18 +135,16 @@ export class DevicePropertyConnector {
       (handler) => handler === propertyUpdateHandler
     );
 
-    if (handlerIdx !== undefined && handlerIdx >= 0) {
+    if (handlerIdx >= 0) {
       handlers.splice(handlerIdx, 1);
     }
-
-    const store = useDeviceProxyStore.getState();
 
     if (handlers.length === 0) {
       // Removed the last update handler for this device property
       devicePropertyMonitors.delete(propertyId);
 
-      // Mirror that in the DeviceProxy: this property is no longer monitored
-      store.endMonitoringDeviceProperties(deviceId);
+      // Mirror that in the DeviceProxy via DeviceManager
+      deviceManager.decrementPropertySubscriber(deviceId, propertyId);
     }
 
     if (devicePropertyMonitors.size === 0) {
@@ -165,7 +163,7 @@ export class DevicePropertyConnector {
   /**
    * Start monitoring a device:
    *  - register schema monitor
-   *  - mark schema as requested in proxy store
+   *  - DeviceSchemaConnector will internally mark schemaRequested and later schemaLoaded via DeviceManager
    *  - ask GUI server to start monitoring
    */
   private _startMonitoringDevice = (deviceId: string): void => {
@@ -174,11 +172,10 @@ export class DevicePropertyConnector {
       this._onDeviceSchemaUpdate
     );
 
-    // Mark "schema requested" in proxy/state machine
-    useDeviceProxyStore.getState().markDeviceSchemaRequested(deviceId);
-
     // Ask GUI server for schema + config stream
+    // Note: requestDeviceSchema should call DeviceManager.markSchemaRequested internally
     DeviceSchemaConnector.inst.requestDeviceSchema(deviceId);
+
     const hash = buildStartMonitoringHash(deviceId);
     GuiServerConnector.inst.sendHash(hash);
   };
@@ -197,10 +194,7 @@ export class DevicePropertyConnector {
    * for a device we are monitoring.
    */
   private _onDeviceSchemaUpdate = (deviceSchema: DeviceSchemaInfo): void => {
-    // Inform proxy/store that schema has been received
-    useDeviceProxyStore
-      .getState()
-      .markDeviceSchemaReceived(deviceSchema.deviceId);
+    // Note: DeviceSchemaConnector should call DeviceManager.markSchemaLoaded(deviceId)
 
     // Re-dispatch existing properties with schema attributes attached
     // This ensures permission checks (requiredAccessLevel, accessMode, allowedStates) work correctly
@@ -262,19 +256,10 @@ export class DevicePropertyConnector {
     deviceId: string,
     propertyId: string
   ): PropertyInfo | undefined => {
-    let propertyInfo: PropertyInfo | undefined = undefined;
-    if (this._deviceConfigurations.has(deviceId)) {
-      const propertyInfoIdx = this._deviceConfigurations
-        .get(deviceId)!
-        .findIndex(
-          (propertyInfo: PropertyInfo) => propertyInfo.key === propertyId
-        );
-      if (propertyInfoIdx >= 0) {
-        propertyInfo =
-          this._deviceConfigurations.get(deviceId)![propertyInfoIdx];
-      }
-    }
-    return propertyInfo;
+    const list = this._deviceConfigurations.get(deviceId);
+    if (!list) return undefined;
+
+    return list.find((p) => p.key === propertyId);
   };
 
   /**
@@ -290,40 +275,49 @@ export class DevicePropertyConnector {
   ): void => {
     const schema = DeviceSchemaConnector.inst.getDeviceSchema(deviceId);
     const currentProperties = this._deviceConfigurations.get(deviceId) ?? [];
-    if (schema === undefined) {
+
+    if (!schema) {
       console.warn(
         `Merging configuration for device "${deviceId}" whose schema is not yet known!`
       );
+
       const newPropertiesKeys = new Set(properties.map((p) => p.key));
       const propertiesToKeep = currentProperties.filter(
         (p) => !newPropertiesKeys.has(p.key)
       );
+
       this._deviceConfigurations.set(deviceId, [
         ...propertiesToKeep,
         ...properties,
       ]);
-    } else {
-      // Device schema is known
-      const mergedProperties: PropertyInfo[] = [];
-      for (const propertyKey of schema.propertyDescriptors.keys()) {
-        const propertyIndex = properties.findIndex(
-          (propertyInfo: PropertyInfo) => propertyInfo.key === propertyKey
-        );
-        if (propertyIndex >= 0) {
-          // Schema property found in the new set of properties; use it
-          mergedProperties.push(properties[propertyIndex]);
-          continue;
-        }
-        const existingPropertyIndex = currentProperties.findIndex(
-          (propertyInfo: PropertyInfo) => propertyInfo.key === propertyKey
-        );
-        if (existingPropertyIndex >= 0) {
-          // Schema property found in the current set of properties; use it
-          mergedProperties.push(currentProperties[existingPropertyIndex]);
-        }
-      }
-      this._deviceConfigurations.set(deviceId, mergedProperties);
+      return;
     }
+
+    // Device schema is known
+    const mergedProperties: PropertyInfo[] = [];
+
+    for (const propertyKey of schema.propertyDescriptors.keys()) {
+      const propertyIndex = properties.findIndex(
+        (propertyInfo: PropertyInfo) => propertyInfo.key === propertyKey
+      );
+
+      if (propertyIndex >= 0) {
+        // Schema property found in the new set of properties; use it
+        mergedProperties.push(properties[propertyIndex]);
+        continue;
+      }
+
+      const existingPropertyIndex = currentProperties.findIndex(
+        (propertyInfo: PropertyInfo) => propertyInfo.key === propertyKey
+      );
+
+      if (existingPropertyIndex >= 0) {
+        // Schema property found in the current set of properties; use it
+        mergedProperties.push(currentProperties[existingPropertyIndex]);
+      }
+    }
+
+    this._deviceConfigurations.set(deviceId, mergedProperties);
   };
 
   // #endregion
@@ -346,40 +340,65 @@ export class DevicePropertyConnector {
    */
   private _onDeviceConfigurations = (hash: Hash): void => {
     const devicesConfigs = devicesConfigsFromHash(hash);
+
     for (const deviceConfig of devicesConfigs) {
       const deviceId = deviceConfig.deviceId;
-      if (this._propertyMonitors.has(deviceId)) {
-        // There's at least one property update handler registered for the device
 
-        // 1) Merge into local cache
-        this._mergeConfiguration(deviceId, deviceConfig.properties);
+      if (!this._propertyMonitors.has(deviceId)) {
+        // No one is watching this device's properties → just ignore
+        continue;
+      }
 
-        // 2) Tell proxy that we have config (idempotent)
-        useDeviceProxyStore.getState().markDeviceConfigReceived(deviceId);
+      // 1) Merge into local cache for initial updates
+      this._mergeConfiguration(deviceId, deviceConfig.properties);
 
-        // 3) Dispatch updates to all property monitors
-        for (const propInfo of deviceConfig.properties) {
-          if (this._propertyMonitors.get(deviceId)?.has(propInfo.key)) {
-            const propUpdateHandlers = this._propertyMonitors
-              .get(deviceId)
-              ?.get(propInfo.key);
+      // 2) Tell DeviceManager that we have config (idempotent)
+      deviceManager.setHasConfig(deviceId, true);
 
-            if (propUpdateHandlers !== undefined) {
-              if (propInfo.type === HashTypes.VectorHash) {
-                const tableCells = this._extractCellValues(propInfo);
-                for (const propUpdateHandler of propUpdateHandlers) {
-                  propUpdateHandler(tableCells);
-                }
-              } else {
-                for (const propUpdateHandler of propUpdateHandlers) {
-                  this._dispatchPropUpdate(
-                    deviceId,
-                    propUpdateHandler,
-                    propInfo
-                  );
-                }
-              }
-            }
+      // 3) Dispatch updates to all property monitors + report into DeviceProxy via DeviceManager
+      for (const propInfo of deviceConfig.properties) {
+        const propMonitors = this._propertyMonitors.get(deviceId);
+        if (!propMonitors || !propMonitors.has(propInfo.key)) {
+          // Still report the value to DeviceManager even if not monitored,
+          // so proxy.state gets updated for "state" property
+          if (propInfo.key === "state") {
+            deviceManager.reportPropertyValue(
+              deviceId,
+              propInfo.key,
+              propInfo.value as HashValueType,
+              propInfo.timeAttrs as Attributes | undefined
+            );
+          }
+          continue;
+        }
+
+        const propUpdateHandlers = propMonitors.get(propInfo.key);
+        if (!propUpdateHandlers || propUpdateHandlers.length === 0) continue;
+
+        // inside _onDeviceConfigurations, in the VectorHash branch
+        if (propInfo.type === HashTypes.VectorHash) {
+          const tableCells = this._extractCellValues(propInfo);
+
+          deviceManager.reportPropertyValue(
+            deviceId,
+            propInfo.key,
+            tableCells,
+            propInfo.timeAttrs as Attributes | undefined
+          );
+
+          for (const propUpdateHandler of propUpdateHandlers) {
+            propUpdateHandler(tableCells);
+          }
+        } else {
+          deviceManager.reportPropertyValue(
+            deviceId,
+            propInfo.key,
+            propInfo.value as HashValueType,
+            propInfo.timeAttrs as Attributes | undefined
+          );
+
+          for (const propUpdateHandler of propUpdateHandlers) {
+            this._dispatchPropUpdate(deviceId, propUpdateHandler, propInfo);
           }
         }
       }
@@ -397,14 +416,38 @@ export class DevicePropertyConnector {
   ): VectorElementType[][] => {
     const tableCells: VectorElementType[][] = [];
     const hashVector = propInfo.value as HashValue[];
+
     for (let row = 0; row < hashVector.length; row++) {
       const rowCells: VectorElementType[] = [];
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      for (const [_, hashNode] of Object.entries(hashVector[row])) {
+      for (const [, hashNode] of Object.entries(hashVector[row])) {
         rowCells.push(hashNode.value.value_ as VectorElementType);
       }
       tableCells.push(rowCells);
     }
+
     return tableCells;
   };
+
+  /**
+   * Public convenience API for widgets/hooks:
+   *
+   * Ensures that the device is being monitored on the GUI server
+   * as long as at least one "logical subscription" exists for
+   * (deviceId, propertyId).
+   *
+   * Returns a cleanup function that decrements the logical subscription count.
+   */
+  ensurePropertyMonitored(deviceId: string, propertyId: string): () => void {
+    const noOpHandler: PropertyUpdateHandler = () => {
+      // We don't use the handler in the new world; DeviceManager
+      // is updated through reportPropertyValue instead.
+    };
+
+    this.registerPropertyMonitor(deviceId, propertyId, noOpHandler);
+
+    return () => {
+      this.unregisterPropertyMonitor(deviceId, propertyId, noOpHandler);
+    };
+  }
 }

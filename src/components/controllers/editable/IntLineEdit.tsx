@@ -2,44 +2,46 @@ import * as React from "react";
 import type { IntLineEditProps } from "@/scene/scene_types/controllers";
 import { ControllerContainer } from "@/components/sceneView/ControllerContainer";
 import { useControllerPermissions } from "@/components/shared/hooks/useControllerPermissions";
-import { useKaraboPropertyInfo } from "@/components/shared/hooks/useKaraboProperty";
-import { useKaraboKeysString } from "@/components/shared/hooks/useKaraboKeysString";
+import { useDeviceProperty } from "@/components/shared/hooks/useDeviceProperty";
 import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
-import type { PropertyInfoOptional } from "@/karabo_data/DeviceConfigInfo";
 
 /**
  * Inner part: actually renders the input and consumes permissions context.
  */
 const IntLineEditInner: React.FC<{
-  property: PropertyInfoOptional;
+  propertyValue: number | undefined;
+  defaultValue: number | undefined;
+  metricPrefixSymbol: string | undefined;
+  unitSymbol: string | undefined;
   font_size?: number;
   font_weight: string;
-}> = ({ property, font_size, font_weight }) => {
+}> = ({
+  propertyValue,
+  defaultValue,
+  metricPrefixSymbol,
+  unitSymbol,
+  font_size,
+  font_weight,
+}) => {
   const { canEdit, disabledReason } = useControllerPermissions();
   const [value, setValue] = React.useState<string>("");
 
   // Unit from schema
   const unit = React.useMemo(() => {
-    if (!property || !property.schemaAttrs) return "";
-    const prefix = property.schemaAttrs.metricPrefixSymbol ?? "";
-    const symbol = property.schemaAttrs.unitSymbol ?? "";
+    const prefix = metricPrefixSymbol ?? "";
+    const symbol = unitSymbol ?? "";
     return `${prefix}${symbol}`.trim();
-  }, [property]);
+  }, [metricPrefixSymbol, unitSymbol]);
 
   // Sync with property/value
   React.useEffect(() => {
-    if (!property) {
-      setValue("");
-      return;
-    }
-
-    const incoming = property.value ?? property.schemaAttrs?.defaultValue ?? 0;
+    const incoming = propertyValue ?? defaultValue ?? 0;
 
     const intValue =
       typeof incoming === "number" ? incoming : parseInt(String(incoming), 10);
 
     setValue(!isNaN(intValue) ? String(intValue) : "");
-  }, [property]);
+  }, [propertyValue, defaultValue]);
 
   return (
     <>
@@ -97,9 +99,16 @@ const IntLineEditInner: React.FC<{
 const IntLineEdit: React.FC<IntLineEditProps> = (props) => {
   const { keys, x, y, width, height, font_size, font_weight } = props;
 
-  const joinedKeys = useKaraboKeysString(keys);
-  const { property } = useKaraboPropertyInfo(joinedKeys);
-  const typedProperty = property as PropertyInfoOptional;
+  const primaryKey = keys[0] ?? "";
+  const { value, schemaAttrs } = useDeviceProperty(primaryKey);
+
+  const propertyValue = typeof value === "number" ? value : undefined;
+  const defaultValue =
+    typeof schemaAttrs?.defaultValue === "number"
+      ? schemaAttrs.defaultValue
+      : undefined;
+  const metricPrefixSymbol = schemaAttrs?.metricPrefixSymbol;
+  const unitSymbol = schemaAttrs?.unitSymbol;
 
   return (
     <ControllerContainer
@@ -112,7 +121,10 @@ const IntLineEdit: React.FC<IntLineEditProps> = (props) => {
       showMissingPropertyOverlay
     >
       <IntLineEditInner
-        property={typedProperty}
+        propertyValue={propertyValue}
+        defaultValue={defaultValue}
+        metricPrefixSymbol={metricPrefixSymbol}
+        unitSymbol={unitSymbol}
         font_size={font_size as number}
         font_weight={font_weight}
       />

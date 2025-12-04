@@ -8,7 +8,7 @@ import { splitKaraboKeys } from "@/components/shared/helpers/splitKaraboKeys";
  * Returns the current DeviceSchemaInfo (or null until available).
  */
 export function useKaraboSchema(karaboKeys: string) {
-  const { deviceId, propertyId } = React.useMemo(
+  const { deviceId, propertyPath } = React.useMemo(
     () => splitKaraboKeys(karaboKeys),
     [karaboKeys]
   );
@@ -41,8 +41,8 @@ export function useKaraboSchema(karaboKeys: string) {
   return {
     schema,
     deviceId,
-    propertyId,
+    propertyPath,
     propertyDescriptor:
-      schema?.propertyDescriptors.get(propertyId) ?? undefined,
+      schema?.propertyDescriptors.get(propertyPath) ?? undefined,
   };
 }

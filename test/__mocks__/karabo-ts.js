@@ -36,3 +36,8 @@ export const HashTypes = {
   None: 35,
   ByteArray: 37
 };
+
+// Mock makeHash function
+export const makeHash = (obj) => {
+  return obj; // Simple mock that returns the object as-is
+};

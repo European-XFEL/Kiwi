@@ -1,25 +1,22 @@
 import React, { useMemo } from "react";
 import type { DisplayStatefulIconProps } from "@/scene/scene_types/controllers";
 import { ControllerContainer } from "@/components/sceneView/ControllerContainer";
-import { useKaraboPropertyInfo } from "../../shared/hooks/useKaraboProperty";
-import { useKaraboKeysString } from "../../shared/hooks/useKaraboKeysString";
+import { useDeviceProperty } from "../../shared/hooks/useDeviceProperty";
 import { useGuiStateColor } from "../../shared/hooks/useGuiStateColor";
 import { statefulIconTextById } from "@/components/shared/helpers/statefulIcons";
 import {
   recolorPreloadedSvg,
   getPreloadedCacheKey,
 } from "@/components/shared/helpers/loadAndRecolor";
-import { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
 
 const DisplayStatefulIcon: React.FC<DisplayStatefulIconProps> = (props) => {
   const { keys, x, y, width, height, icon_name } = props;
 
-  const joinedKeys = useKaraboKeysString(keys);
-  const { property } = useKaraboPropertyInfo(joinedKeys);
-  const rawState = property
-    ? String((property as PropertyInfo).value)
-    : "UNKNOWN";
+  const primaryKey = keys[0] ?? "";
+  const { value } = useDeviceProperty(primaryKey);
 
+  // Map the property value (e.g., "ON", "ACTIVE") to a color
+  const rawState = value ? String(value) : "UNKNOWN";
   const { colorValue } = useGuiStateColor(rawState);
 
   //  if the module wasn't mocked correctly

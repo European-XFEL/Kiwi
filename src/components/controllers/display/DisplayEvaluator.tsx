@@ -2,9 +2,7 @@ import React from "react";
 import type { EvaluatorProps } from "@/scene/scene_types/controllers/display";
 import { ControllerContainer } from "@/components/sceneView/ControllerContainer";
 import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
-import { useKaraboPropertyInfo } from "@/components/shared/hooks/useKaraboProperty";
-import { useKaraboKeysString } from "@/components/shared/hooks/useKaraboKeysString";
-import { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
+import { useDeviceProperty } from "@/components/shared/hooks/useDeviceProperty";
 
 /**
  * ---- helpers to mimic the Python evaluator from the Qt GUI ----
@@ -185,16 +183,13 @@ function evaluatePythonishExpression(expr: string, x: any): string {
  * ---- React component ----
  */
 const Evaluator: React.FC<EvaluatorProps> = (props) => {
-  const keysStr = useKaraboKeysString(props.keys);
-  const { property } = useKaraboPropertyInfo(keysStr);
+  const primaryKey = props.keys[0] ?? "";
+  const { value, model } = useDeviceProperty(primaryKey);
 
   const displayValue = React.useMemo(() => {
-    if (!property) return "";
     // what the device actually reports
     const rawValue =
-      (property as PropertyInfo).value ??
-      (property as PropertyInfo).schemaAttrs?.defaultValue ??
-      0;
+      value ?? model?.property_schema?.schemaAttrs?.defaultValue ?? 0;
 
     const expr = props.expression || "";
 
@@ -210,7 +205,7 @@ const Evaluator: React.FC<EvaluatorProps> = (props) => {
       console.warn("Evaluator expression error:", err);
       return String(rawValue);
     }
-  }, [property, props.expression]);
+  }, [value, model, props.expression]);
 
   return (
     <ControllerContainer

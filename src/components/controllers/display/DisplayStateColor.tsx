@@ -1,27 +1,24 @@
 import React from "react";
 import type { DisplayStateColorProps } from "@/scene/scene_types/controllers";
 import { ControllerContainer } from "@/components/sceneView/ControllerContainer";
-import { useKaraboPropertyInfo } from "../../shared/hooks/useKaraboProperty";
-import { useGuiStateColor } from "../../shared/hooks/useGuiStateColor";
-import { useKaraboKeysString } from "../../shared/hooks/useKaraboKeysString";
-import { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
-import { TopologyConnector } from "@/karabo_connectors/TopologyConnector";
+import { useDeviceProperty } from "@/components/shared/hooks/useDeviceProperty";
+import { useGuiStateColor } from "@/components/shared/hooks/useGuiStateColor";
 
 const DisplayStateColor: React.FC<DisplayStateColorProps> = React.memo(
   ({ keys, x, y, width, height, font_size, font_weight, show_string }) => {
-    const keysStr = useKaraboKeysString(keys);
-    const { property } = useKaraboPropertyInfo(keysStr);
+    const primaryKey = keys[0] ?? ""; // e.g. "Test/mdl.state"
 
-    const rawState = React.useMemo(
-      () => String((property as PropertyInfo)?.value ?? "UNKNOWN"),
-      [(property as PropertyInfo)?.value]
-    );
+    const { deviceState, isOnlineLike, isReady } =
+      useDeviceProperty(primaryKey);
 
+    const rawState = deviceState ?? "UNKNOWN";
+
+    // Map state string → CSS color
     const { colorValue } = useGuiStateColor(rawState);
+    const bgColor = colorValue ?? "#cccccc";
 
-    //Important: detect device online/offline
-    const deviceId = keys[0].split(".")[0];
-    const isOnline = TopologyConnector.inst.isDeviceOnline(deviceId);
+    // Only show text when device is online-ish and has schema+config
+    const showText = show_string && isOnlineLike && isReady;
 
     return (
       <ControllerContainer
@@ -30,7 +27,8 @@ const DisplayStateColor: React.FC<DisplayStateColorProps> = React.memo(
         y={y}
         width={width}
         height={height}
-        showMissingPropertyOverlay
+        // 'state' isn't a normal schema property, so don't show '??'
+        showMissingPropertyOverlay={false}
         className="flex items-center justify-center border border-solid overflow-hidden p-0.5"
       >
         <div
@@ -43,11 +41,10 @@ const DisplayStateColor: React.FC<DisplayStateColorProps> = React.memo(
             fontFamily: "Arial",
             fontSize: font_size,
             fontWeight: font_weight,
-            backgroundColor: colorValue,
+            backgroundColor: bgColor,
           }}
         >
-          {/*Hide text when offline */}
-          {show_string && isOnline && (
+          {showText && (
             <span className="text-xs" aria-live="polite">
               {rawState}
             </span>
