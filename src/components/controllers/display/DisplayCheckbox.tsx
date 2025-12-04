@@ -1,11 +1,9 @@
-import React from "react";
+import * as React from "react";
 import type { DisplayCheckBoxProps } from "@/scene/scene_types/controllers";
-import { useKaraboPropertyInfo } from "../../shared/hooks/useKaraboProperty";
-import { useKaraboKeysString } from "../../shared/hooks/useKaraboKeysString";
-import { Checkbox } from "../../ui/checkbox";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ControllerContainer } from "@/components/sceneView/ControllerContainer";
 import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
-import type { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
+import { useDeviceProperty } from "@/components/shared/hooks/useDeviceProperty";
 
 const DisplayCheckbox: React.FC<DisplayCheckBoxProps> = ({
   keys,
@@ -16,17 +14,18 @@ const DisplayCheckbox: React.FC<DisplayCheckBoxProps> = ({
   font_size,
   font_weight,
 }) => {
-  const keysStr = useKaraboKeysString(keys);
-  const { property } = useKaraboPropertyInfo(keysStr);
+  // For now we treat the first key as the primary binding: "DEVICE.property"
+  const primaryKey = keys[0] ?? "";
+
+  const { value } = useDeviceProperty(primaryKey);
 
   const isChecked = React.useMemo(() => {
-    const value = (property as PropertyInfo)?.value;
     if (typeof value === "boolean") return value;
     if (typeof value === "string")
       return value.toLowerCase() === "true" || value === "1";
     if (typeof value === "number") return value !== 0;
     return false;
-  }, [(property as PropertyInfo)?.value]);
+  }, [value]);
 
   const boxSize = Math.min(width, height, 18);
 
@@ -43,7 +42,7 @@ const DisplayCheckbox: React.FC<DisplayCheckBoxProps> = ({
       <Checkbox
         checked={isChecked}
         disabled
-        aria-label={`Display checkbox for ${keys.join(", ")}`}
+        aria-label={`Display checkbox for ${primaryKey}`}
         aria-readonly="true"
         className="
           border

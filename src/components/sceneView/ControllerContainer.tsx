@@ -1,14 +1,12 @@
 import React, { useMemo } from "react";
-import DeviceOverlay from "./overlays/DeviceOverlay";
-import PropertyOverlay from "./overlays/PropertyOverlay";
-
-import { useKaraboPropertyInfo } from "../shared/hooks/useKaraboProperty";
-import { useKaraboKeysString } from "../shared/hooks/useKaraboKeysString";
-import { usePropertyPermissions } from "../shared/hooks/usePropertyPermission";
+import { PropertyOverlay } from "./overlays/PropertyOverlay";
 import {
   ControllerPermissionsContext,
   type ControllerPermissionsContext as IControllerPermissionsContext,
 } from "../shared/hooks/useControllerPermissions";
+import { useDeviceProperty } from "../shared/hooks/useDeviceProperty";
+import { AccessMode } from "@/karabo_data/SchemaEnums";
+import { ProxyStatus } from "@/device/enums";
 
 export interface ControllerContainerProps {
   /** Karabo keys array for device/property identification */
@@ -30,13 +28,14 @@ export interface ControllerContainerProps {
 }
 
 /**
- * ControllerContainer
+ * ControllerContainer (v2)
  *
- * Centralized wrapper for all controller widgets. Handles:
+ * Centralized wrapper for all controller widgets. Now powered by `useDeviceProperty`.
+ * Handles:
  *  - Absolute positioning
- *  - Device-level overlays (offline, startup phases)
+ *  - Device-level overlay via proxyStatus (offline + status dot)
  *  - Property-level overlay ("??" when property missing)
- *  - Permissions (reactive to schema, access level, device state)
+ *  - Permissions (isEditable + disabledReason) via ControllerPermissionsContext
  */
 export const ControllerContainer: React.FC<ControllerContainerProps> = ({
   keys,
@@ -48,24 +47,49 @@ export const ControllerContainer: React.FC<ControllerContainerProps> = ({
   className = "",
   showMissingPropertyOverlay = false,
 }) => {
-  const joinedKeys = useKaraboKeysString(keys);
-  const { deviceId, propertyId } = useKaraboPropertyInfo(joinedKeys);
+  // Pick the primary key for this widget (usually the first)
+  const primaryKey = keys[0] ?? "";
 
-  // Get permissions from PropertyPermissionsStore (reactive!)
-  // Automatically updates when schema/access level/device state changes
-  const permissions = usePropertyPermissions(deviceId, propertyId);
+  const { deviceId, propertyPath, isEditable, schemaAttrs, proxyStatus } =
+    useDeviceProperty(primaryKey);
 
-  console.log(
-    `[ControllerContainer] Permissions for ${deviceId}/${propertyId}:`,
-    `canEdit=${permissions.canEdit}, reason="${permissions.disabledReason}"`
-  );
+  // Build a human-readable disabledReason
+  const disabledReason = useMemo(() => {
+    if (!deviceId || !propertyPath) {
+      return "No property specified";
+    }
+
+    if (proxyStatus === ProxyStatus.OFFLINE) {
+      return "Device offline";
+    }
+
+    if (!schemaAttrs) {
+      return "Property missing in device schema/config";
+    }
+
+    if (isEditable) return "";
+
+    // Basic heuristics from schema
+    if (schemaAttrs.accessMode === AccessMode.ReadOnly) {
+      return "Property is read-only and cannot be edited from the GUI";
+    }
+    if (schemaAttrs.accessMode === AccessMode.InitOnly) {
+      return "Property is InitOnly and can only be configured in the device run file";
+    }
+
+    if (schemaAttrs.requiredAccessLevel !== undefined) {
+      return `Requires access level ${schemaAttrs.requiredAccessLevel} or higher`;
+    }
+
+    return "Property is not editable in the current context";
+  }, [deviceId, propertyPath, isEditable, schemaAttrs, proxyStatus]);
 
   const permissionsValue: IControllerPermissionsContext = useMemo(
     () => ({
-      canEdit: permissions.canEdit,
-      disabledReason: permissions.disabledReason,
+      canEdit: isEditable,
+      disabledReason,
     }),
-    [permissions.canEdit, permissions.disabledReason]
+    [isEditable, disabledReason]
   );
 
   return (
@@ -82,19 +106,15 @@ export const ControllerContainer: React.FC<ControllerContainerProps> = ({
         {/* Actual widget content */}
         {children}
 
-        {/* Property-level overlay ("??") – only for property-based widgets */}
-        {showMissingPropertyOverlay && (
-          <PropertyOverlay
-            keys={keys}
-            x={0}
-            y={0}
-            width={width}
-            height={height}
-          />
-        )}
-
-        {/* Device-level overlay (offline + startup phases) */}
-        <DeviceOverlay keys={keys} x={0} y={0} width={width} height={height} />
+        {/* Unified overlay (device + property) */}
+        <PropertyOverlay
+          karaboKeys={primaryKey}
+          x={0}
+          y={0}
+          width={width}
+          height={height}
+          showMissingPropertyOverlay={showMissingPropertyOverlay}
+        />
       </div>
     </ControllerPermissionsContext.Provider>
   );

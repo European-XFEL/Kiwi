@@ -4,6 +4,7 @@ import { DeviceSchemaInfo } from "@/karabo_data/DeviceSchemaInfo";
 import { deviceSchemaFromHash } from "@/karabo_hash/decoders/device_schema";
 import { buildGetDeviceSchemaHash } from "@/karabo_hash/builders/monitoring_device";
 import { useDeviceSchemaStore } from "@/store/useDeviceSchemaStore";
+import { deviceManager } from "@/device/DeviceManager";
 
 type DeviceSchemaHandler = (deviceSchema: DeviceSchemaInfo) => void;
 
@@ -34,12 +35,20 @@ export class DeviceSchemaConnector {
     deviceId: string,
     deviceSchemaHandler: DeviceSchemaHandler
   ): void {
-    if (!this._schemaMonitors.has(deviceId)) {
+    let deviceSchemaMonitors = this._schemaMonitors.get(deviceId);
+    if (!deviceSchemaMonitors) {
       // This is the first schema updates handler for the device
-      this._schemaMonitors.set(deviceId, new Array<DeviceSchemaHandler>());
+      deviceSchemaMonitors = [];
+      this._schemaMonitors.set(deviceId, deviceSchemaMonitors);
     }
-    const deviceSchemaMonitors = this._schemaMonitors.get(deviceId);
-    deviceSchemaMonitors?.push(deviceSchemaHandler);
+
+    deviceSchemaMonitors.push(deviceSchemaHandler);
+
+    // If schema already exists in the store, immediately seed the handler
+    const existing = this.getDeviceSchema(deviceId);
+    if (existing) {
+      deviceSchemaHandler(existing);
+    }
   }
 
   unregisterSchemaMonitor(
@@ -47,16 +56,22 @@ export class DeviceSchemaConnector {
     deviceSchemaHandler: DeviceSchemaHandler
   ): void {
     const deviceSchemaMonitors = this._schemaMonitors.get(deviceId);
-    const handlerIdx = deviceSchemaMonitors?.findIndex(
+    if (!deviceSchemaMonitors) return;
+
+    const handlerIdx = deviceSchemaMonitors.findIndex(
       (handler) => handler === deviceSchemaHandler
     );
-    if (handlerIdx !== undefined && handlerIdx >= 0) {
-      deviceSchemaMonitors?.splice(handlerIdx, 1);
+
+    if (handlerIdx >= 0) {
+      deviceSchemaMonitors.splice(handlerIdx, 1);
     }
-    if (deviceSchemaMonitors?.length === 0) {
+
+    if (deviceSchemaMonitors.length === 0) {
       // The last schema update handler for the device has been removed. Remove the map entry.
       this._schemaMonitors.delete(deviceId);
+
       // Remove schema from store
+      // (If later you want "global" schema lifetime, you can drop this)
       useDeviceSchemaStore.getState().removeDeviceSchema(deviceId);
     }
   }
@@ -68,6 +83,9 @@ export class DeviceSchemaConnector {
   requestDeviceSchema = (deviceId: string): void => {
     const hash = buildGetDeviceSchemaHash(deviceId);
     GuiServerConnector.inst.sendHash(hash);
+
+    // Mark "schema requested" in DeviceManager / DeviceProxy runtime
+    deviceManager.markSchemaRequested(deviceId);
   };
 
   /**
@@ -75,7 +93,9 @@ export class DeviceSchemaConnector {
    * Returns schema with deviceId and propertyDescriptors map.
    */
   getDeviceSchema = (deviceId: string): DeviceSchemaInfo | undefined => {
-    const propertyDescriptors = useDeviceSchemaStore.getState().getDeviceSchema(deviceId);
+    const propertyDescriptors = useDeviceSchemaStore
+      .getState()
+      .getDeviceSchema(deviceId);
 
     if (!propertyDescriptors) {
       return undefined;
@@ -96,16 +116,17 @@ export class DeviceSchemaConnector {
   private _onDeviceSchema = (hash: Hash): void => {
     // Decode the hash into the appropriate SchemaInfo data structure
     const deviceSchemaInfo = deviceSchemaFromHash(hash);
-
     const deviceId = deviceSchemaInfo.deviceId;
 
-    // Dispatch the SchemaInfo to all the registered observers
-    const deviceSchemaHandlers = this._schemaMonitors.get(deviceId);
-    if (deviceSchemaHandlers !== undefined) {
-      // Store schema in DeviceSchemaStore (survives HMR!)
-      useDeviceSchemaStore.getState().setDeviceSchema(deviceId, deviceSchemaInfo);
+    // 1) Store schema in DeviceSchemaStore (survives HMR!)
+    useDeviceSchemaStore.getState().setDeviceSchema(deviceId, deviceSchemaInfo);
 
-      // Notify all registered schema monitors
+    // 2) Apply schema to DeviceManager (creates PropertyModels)
+    deviceManager.applyDeviceSchema(deviceId, deviceSchemaInfo);
+
+    // 3) Dispatch the SchemaInfo to all the registered observers (if any)
+    const deviceSchemaHandlers = this._schemaMonitors.get(deviceId);
+    if (deviceSchemaHandlers && deviceSchemaHandlers.length > 0) {
       for (const schemaHandler of deviceSchemaHandlers) {
         schemaHandler(deviceSchemaInfo);
       }

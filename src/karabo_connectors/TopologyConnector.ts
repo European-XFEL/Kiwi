@@ -6,7 +6,7 @@ import {
   SystemTopologyUpdateInfo,
   MacroInfo,
 } from "@/karabo_data/TopologyInfo";
-import { useDeviceProxyStore } from "@/store/useDeviceProxyStore";
+import { deviceManager } from "@/device/DeviceManager";
 
 export type DeviceInfoUpdateHandler = (
   infoType: TopologyEventType,
@@ -43,16 +43,13 @@ export class TopologyConnector {
 
     // Whenever we receive the full topology snapshot, update:
     //  - all registered deviceInfo monitors
-    //  - the DeviceProxyStore (online/offline per device)
-    const applyDeviceTopologyEvent =
-      useDeviceProxyStore.getState().applyDeviceTopologyEvent;
-
+    //  - the DeviceProxy (online/offline per device)
     for (const [deviceId, updateHandlers] of this._deviceInfoMonitors) {
       const deviceIdx = this._getDeviceIdx(deviceId);
 
       if (deviceIdx >= 0) {
         // Monitored device is online
-        applyDeviceTopologyEvent(deviceId, TopologyEventType.NEW);
+        this._applyTopologyEvent(deviceId, TopologyEventType.NEW);
 
         for (const updateHandler of updateHandlers) {
           updateHandler(
@@ -65,7 +62,7 @@ export class TopologyConnector {
         const macroIdx = this._getMacroIdx(deviceId);
         if (macroIdx >= 0) {
           // Monitored "macro device" is online
-          applyDeviceTopologyEvent(deviceId, TopologyEventType.NEW);
+          this._applyTopologyEvent(deviceId, TopologyEventType.NEW);
 
           for (const updateHandler of updateHandlers) {
             updateHandler(
@@ -75,7 +72,7 @@ export class TopologyConnector {
           }
         } else {
           // Monitored device (or macro) is offline
-          applyDeviceTopologyEvent(deviceId, TopologyEventType.GONE);
+          this._applyTopologyEvent(deviceId, TopologyEventType.GONE);
 
           for (const updateHandler of updateHandlers) {
             updateHandler(TopologyEventType.GONE, {
@@ -85,6 +82,19 @@ export class TopologyConnector {
         }
       }
     }
+  }
+
+  /**
+   * Apply topology event to DeviceProxy (update online/offline status)
+   */
+  private _applyTopologyEvent(
+    deviceId: string,
+    eventType: TopologyEventType
+  ): void {
+    const isOnline =
+      eventType === TopologyEventType.NEW ||
+      eventType === TopologyEventType.UPDATE;
+    deviceManager.setOnlineFlag(deviceId, isOnline);
   }
 
   /**
@@ -139,9 +149,6 @@ export class TopologyConnector {
       macros: goneMacros,
     } = goneInstances;
 
-    const applyDeviceTopologyEvent =
-      useDeviceProxyStore.getState().applyDeviceTopologyEvent;
-
     try {
       const currentDevices = this.systemTopology.devices;
       const currentServers = this.systemTopology.servers;
@@ -158,8 +165,8 @@ export class TopologyConnector {
           // Device doesn't exist, add it
           currentDevices.push(newDevice);
 
-          // Update proxy store (device became visible in topology)
-          applyDeviceTopologyEvent(newDevice.deviceId, TopologyEventType.NEW);
+          // Update proxy (device became visible in topology)
+          this._applyTopologyEvent(newDevice.deviceId, TopologyEventType.NEW);
 
           if (this._deviceInfoMonitors.has(newDevice.deviceId)) {
             // Sends updates to all known monitors for the device
@@ -187,7 +194,7 @@ export class TopologyConnector {
           // Macro doesn't exist, add it
           currentMacros.push(newMacro);
 
-          applyDeviceTopologyEvent(newMacro.deviceId, TopologyEventType.NEW);
+          this._applyTopologyEvent(newMacro.deviceId, TopologyEventType.NEW);
 
           if (this._deviceInfoMonitors.has(newMacro.deviceId)) {
             // Sends updates to all known monitors for the macro
@@ -232,7 +239,10 @@ export class TopologyConnector {
           // Device exists, update it
           currentDevices[currentDeviceIndex] = modifiedDevice;
 
-          applyDeviceTopologyEvent(modifiedDevice.deviceId, TopologyEventType.UPDATE);
+          this._applyTopologyEvent(
+            modifiedDevice.deviceId,
+            TopologyEventType.UPDATE
+          );
 
           if (this._deviceInfoMonitors.has(modifiedDevice.deviceId)) {
             for (const updateHandler of this._deviceInfoMonitors.get(
@@ -259,7 +269,10 @@ export class TopologyConnector {
           // Macro exists, update it
           currentMacros[currentMacroIndex] = modifiedMacro;
 
-          applyDeviceTopologyEvent(modifiedMacro.deviceId, TopologyEventType.UPDATE);
+          this._applyTopologyEvent(
+            modifiedMacro.deviceId,
+            TopologyEventType.UPDATE
+          );
 
           if (this._deviceInfoMonitors.has(modifiedMacro.deviceId)) {
             for (const updateHandler of this._deviceInfoMonitors.get(
@@ -303,7 +316,10 @@ export class TopologyConnector {
           // Device exists, remove it
           currentDevices.splice(currentDeviceIndex, 1);
 
-          applyDeviceTopologyEvent(removedDevice.deviceId, TopologyEventType.GONE);
+          this._applyTopologyEvent(
+            removedDevice.deviceId,
+            TopologyEventType.GONE
+          );
 
           if (this._deviceInfoMonitors.has(removedDevice.deviceId)) {
             for (const updateHandler of this._deviceInfoMonitors.get(
@@ -332,7 +348,10 @@ export class TopologyConnector {
           // Macro exists, remove it
           currentMacros.splice(currentMacroIndex, 1);
 
-          applyDeviceTopologyEvent(removedMacro.deviceId, TopologyEventType.GONE);
+          this._applyTopologyEvent(
+            removedMacro.deviceId,
+            TopologyEventType.GONE
+          );
 
           if (this._deviceInfoMonitors.has(removedMacro.deviceId)) {
             for (const updateHandler of this._deviceInfoMonitors.get(
@@ -391,18 +410,15 @@ export class TopologyConnector {
     this._deviceInfoMonitors.get(deviceId)!.push(deviceInfoUpdateHandler);
 
     // ───────────────────────────────────────────────
-    // NEW: seed current state from systemTopology
-    //      so refresh doesn't start "offline"
+    // Seed current state from systemTopology
+    // so refresh doesn't start "offline"
     // ───────────────────────────────────────────────
-    const applyDeviceTopologyEvent =
-      useDeviceProxyStore.getState().applyDeviceTopologyEvent;
-
     const deviceIdx = this._getDeviceIdx(deviceId);
     if (deviceIdx >= 0) {
       const info = this._systemTopology.devices[deviceIdx];
 
       // Mark online in proxy + notify handler
-      applyDeviceTopologyEvent(deviceId, TopologyEventType.NEW);
+      this._applyTopologyEvent(deviceId, TopologyEventType.NEW);
       deviceInfoUpdateHandler(TopologyEventType.NEW, info);
       return;
     }
@@ -411,13 +427,13 @@ export class TopologyConnector {
     if (macroIdx >= 0) {
       const info = this._systemTopology.macros[macroIdx];
 
-      applyDeviceTopologyEvent(deviceId, TopologyEventType.NEW);
+      this._applyTopologyEvent(deviceId, TopologyEventType.NEW);
       deviceInfoUpdateHandler(TopologyEventType.NEW, info);
       return;
     }
 
     // Not in topology at all → treat as offline
-    applyDeviceTopologyEvent(deviceId, TopologyEventType.GONE);
+    this._applyTopologyEvent(deviceId, TopologyEventType.GONE);
     deviceInfoUpdateHandler(TopologyEventType.GONE, {
       deviceId,
     } as DeviceInfo);

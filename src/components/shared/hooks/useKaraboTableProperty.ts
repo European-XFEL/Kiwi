@@ -32,7 +32,7 @@ export function useKaraboTableProperty(
 ) {
   const { enablePagination = false, initialPageSize = 50 } = options ?? {};
 
-  const { deviceId, propertyId } = React.useMemo(
+  const { deviceId, propertyPath } = React.useMemo(
     () => splitKaraboKeys(karaboKeys),
     [karaboKeys]
   );
@@ -62,21 +62,21 @@ export function useKaraboTableProperty(
   }, []);
 
   React.useEffect(() => {
-    if (!deviceId || !propertyId) return;
+    if (!deviceId || !propertyPath) return;
 
     DevicePropertyConnector.inst.registerPropertyMonitor(
       deviceId,
-      propertyId,
+      propertyPath,
       onUpdate as any
     );
     return () => {
       DevicePropertyConnector.inst.unregisterPropertyMonitor(
         deviceId,
-        propertyId,
+        propertyPath,
         onUpdate as any
       );
     };
-  }, [deviceId, propertyId, onUpdate]);
+  }, [deviceId, propertyPath, onUpdate]);
 
   // Pagination calculations (defensive)
   const paginationInfo = React.useMemo(() => {
@@ -162,7 +162,7 @@ export function useKaraboTableProperty(
 
   return {
     deviceId,
-    propertyId,
+    propertyPath,
     tableData,
     paginatedTableData: enablePagination ? paginatedTableData : null,
     pagination: enablePagination ? paginationControls : null,

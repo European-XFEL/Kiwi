@@ -5,9 +5,9 @@ import type { DeviceSchemaInfo } from "@/karabo_data/DeviceSchemaInfo";
 import { splitKaraboKeys } from "@/components/shared/helpers/splitKaraboKeys";
 import { useDeviceProxy } from "@/store/useDeviceProxyStore";
 
-import { PropertyStatus } from "@/device_proxy/enum";
-import type { PropertyIndicatorDescriptor } from "@/device_proxy/types";
-import { getPropertyIndicator } from "@/device_proxy/helpers";
+import { PropertyStatus } from "@/device/device-proxy/enum";
+import type { PropertyIndicatorDescriptor } from "@/device/device-proxy/types";
+import { getPropertyIndicator } from "@/device/device-proxy/helpers";
 
 export function usePropertyLevelIndicator(
   karaboKeys: string

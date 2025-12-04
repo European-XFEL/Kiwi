@@ -2,39 +2,28 @@ import * as React from "react";
 import type { EditableComboBoxProps } from "@/scene/scene_types/controllers";
 import { ControllerContainer } from "@/components/sceneView/ControllerContainer";
 import { useControllerPermissions } from "@/components/shared/hooks/useControllerPermissions";
-import { useKaraboPropertyInfo } from "@/components/shared/hooks/useKaraboProperty";
-import { useKaraboKeysString } from "@/components/shared/hooks/useKaraboKeysString";
+import { useDeviceProperty } from "@/components/shared/hooks/useDeviceProperty";
 import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
 import { VectorElementType } from "@/karabo_hash/HashValueType";
-import type { PropertyInfoOptional } from "@/karabo_data/DeviceConfigInfo";
 
 /**
  * Inner component: actually renders the <select> and consumes permissions.
  */
 const EditableComboBoxInner: React.FC<{
-  property: PropertyInfoOptional;
+  propertyKey: string | undefined;
+  propertyValue: VectorElementType | undefined;
+  defaultValue: VectorElementType | undefined;
   options: VectorElementType[];
   font_size?: number;
   font_weight: string;
-}> = ({ property, options, font_size, font_weight }) => {
+}> = ({ propertyValue, defaultValue, options, font_size, font_weight }) => {
   const { canEdit, disabledReason } = useControllerPermissions();
-
-  console.log(
-    `[EditableComboBoxInner] Permissions for ${property?.key}: canEdit=${canEdit}, reason="${disabledReason}"`
-  );
 
   const [value, setValue] = React.useState<string | undefined>(undefined);
 
   // Sync local value with property + options
   React.useEffect(() => {
-    if (!property) {
-      setValue(undefined);
-      return;
-    }
-
-    const incoming = String(
-      property.value ?? property.schemaAttrs?.defaultValue ?? ""
-    );
+    const incoming = String(propertyValue ?? defaultValue ?? "");
 
     const matchExists =
       options.findIndex(
@@ -42,7 +31,7 @@ const EditableComboBoxInner: React.FC<{
       ) >= 0;
 
     setValue(matchExists ? incoming : undefined);
-  }, [property, options]);
+  }, [propertyValue, defaultValue, options]);
 
   return (
     <select
@@ -88,16 +77,18 @@ const EditableComboBoxInner: React.FC<{
 const EditableComboBox: React.FC<EditableComboBoxProps> = (props) => {
   const { keys, x, y, width, height, font_size, font_weight } = props;
 
-  // Join keys for compatibility with hooks
-  const joinedKeys = useKaraboKeysString(keys);
-  const { property } = useKaraboPropertyInfo(joinedKeys);
-
-  const typedProperty = property as PropertyInfoOptional;
+  const primaryKey = keys[0] ?? "";
+  const { value, schemaAttrs, propertyPath } = useDeviceProperty(primaryKey);
 
   const options = React.useMemo((): VectorElementType[] => {
-    const schemaOptions = typedProperty?.schemaAttrs?.options ?? [];
+    const schemaOptions = schemaAttrs?.options ?? [];
     return schemaOptions as VectorElementType[];
-  }, [typedProperty]);
+  }, [schemaAttrs]);
+
+  const propertyValue = value as VectorElementType | undefined;
+  const defaultValue = schemaAttrs?.defaultValue as
+    | VectorElementType
+    | undefined;
 
   return (
     <ControllerContainer
@@ -109,7 +100,9 @@ const EditableComboBox: React.FC<EditableComboBoxProps> = (props) => {
       showMissingPropertyOverlay
     >
       <EditableComboBoxInner
-        property={typedProperty}
+        propertyKey={propertyPath}
+        propertyValue={propertyValue}
+        defaultValue={defaultValue}
         options={options}
         font_size={font_size as number}
         font_weight={font_weight}

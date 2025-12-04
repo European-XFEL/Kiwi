@@ -2,8 +2,8 @@ import { XCircle } from "lucide-react";
 import {
   DeviceIndicatorDescriptor,
   PropertyIndicatorDescriptor,
-} from "./types";
-import { ProxyStatus, PropertyStatus } from "./enum";
+} from "../device-proxy/types";
+import { ProxyStatus, PropertyStatus } from "../enums";
 
 // ──────────────────────────────────────────────────────────────────────
 // DEVICE INDICATORS

@@ -17,7 +17,7 @@ export const devicesConfigsFromHash = (hash: Hash): DeviceConfigInfo[] => {
   // For the flattened "configurations" hash, the path of each leaf is the
   // "full" property name, e.g. "Karabo_GuiServer_0.performanceStatistics.numOfMessages"
   for (const { path, value, type, attrs } of configHashLeaves) {
-    const { deviceId, propertyId } = splitKaraboKeys(path);
+    const { deviceId, propertyPath } = splitKaraboKeys(path);
     if (deviceId !== currentDeviceId) {
       // A "section" with properties for a device different from the previous
       // (if any) leaf devices has been found - flush the entry for the previous
@@ -33,7 +33,7 @@ export const devicesConfigsFromHash = (hash: Hash): DeviceConfigInfo[] => {
       currentDeviceId = deviceId;
     }
     deviceConfigInfo?.properties.push({
-      key: propertyId,
+      key: propertyPath,
       value: value,
       type: type,
       timeAttrs: attrs,

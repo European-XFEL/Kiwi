@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { TopologyEventType } from "@/karabo_data/TopologyInfo";
-import { ProxyStatus } from "@/device_proxy/enum";
-import { DeviceProxy } from "@/device_proxy/DeviceProxy";
+import { ProxyStatus } from "@/device/device-proxy/enum";
+import { DeviceProxy } from "@/device/DeviceProxy";
 
 // ─────────────────────────────────────────────────────────────
 // STORE INTERFACE

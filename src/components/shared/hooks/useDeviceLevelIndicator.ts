@@ -1,7 +1,7 @@
 import React from "react";
 import { splitKaraboKeys } from "@/components/shared/helpers/splitKaraboKeys";
 import { useDeviceProxy } from "@/store/useDeviceProxyStore";
-import type { DeviceIndicatorDescriptor } from "@/device_proxy/types";
+import type { DeviceIndicatorDescriptor } from "@/device/device-proxy/types";
 
 export function useDeviceLevelIndicator(
   karaboKeys: string
