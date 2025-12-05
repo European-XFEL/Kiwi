@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { ProjectSceneCache } from "../store/ProjectSceneCache";
 import { ProjectSceneInfo } from "../karabo_data/ProjectDbInfo";
 import { UserRecentSceneModel } from "../view_models/RecentScenesModel";
-import { Scene } from "../scene/Scene"; // <- new Scene with sceneElements getter
+import { Scene } from "../scene/Scene";
 import { useGlobalStore } from "../store/globalAppStateStore";
 import useRecentStore from "../store/recentScenesStore";
 import { useLoadedSceneStore } from "../store/loadedSceneStore";

@@ -7,8 +7,8 @@ import type {
   DeviceIdentity,
   DeviceRuntimeState,
 } from "../types/DeviceType";
-import type { PropertyModel } from "../types/PropertyType";
 import { ProxyStatus } from "@/device/enums";
+import { buildPropertyMap } from "./PropertyMapBuilder";
 
 function buildDeviceSchema(info: DeviceSchemaInfo): DeviceSchema {
   return {
@@ -53,35 +53,14 @@ export function buildDeviceModel(
   const identity = buildIdentity(deviceInfo);
   const runtime = buildInitialRuntimeState();
 
-  const schemaByPath = new Map(schema.properties.map((p) => [p.path, p]));
-  const properties = new Map<string, PropertyModel>();
+  // Use buildPropertyMap to create property models
+  const properties = buildPropertyMap(schema, configInfo);
 
-  // First, create models for ALL schema properties (with undefined values)
-  for (const propSchema of schema.properties) {
-    const model: PropertyModel = {
-      property_schema: propSchema,
-      value: undefined,
-      type: undefined,
-      timeAttrs: undefined,
-    };
-    properties.set(propSchema.path, model);
-  }
-
-  // Then, update models with actual config values
+  // Extract state property if present
   for (const prop of configInfo.properties) {
-    const propSchema = schemaByPath.get(prop.key);
-    if (!propSchema) continue; // schema-less props - skip
-
-    const model = properties.get(propSchema.path);
-    if (model) {
-      model.value = prop.value;
-      model.type = prop.type;
-      model.timeAttrs = prop.timeAttrs;
-    }
-
-    // If this is the "state" property, update runtime.state
     if (prop.key === "state" && typeof prop.value === "string") {
       runtime.state = prop.value;
+      break;
     }
   }
 

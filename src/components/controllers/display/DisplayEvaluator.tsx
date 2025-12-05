@@ -3,22 +3,29 @@ import type { EvaluatorProps } from "@/scene/scene_types/controllers/display";
 import { ControllerContainer } from "@/components/sceneView/ControllerContainer";
 import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
 import { useDeviceProperty } from "@/components/shared/hooks/useDeviceProperty";
+import { HashTypes } from "karabo-ts";
 
 /**
  * ---- helpers to mimic the Python evaluator from the Qt GUI ----
  */
 
 /**
- * Turn a Python-ish numeric format into JS output
- * supports things like:
- *  - ""            → plain string
+ * Format a numeric value with optional format specification.
+ * Supports format strings like:
+ *  - ""            → default precision (8 sig figs for floats)
  *  - ".2f"         → fixed(2)
  *  - ".3f"         → fixed(3)
  *  - ".1e"         → exponential(1)
  */
-function formatNumberLikePython(value: number, fmt: string): string {
+function formatNumber(value: number, fmt: string): string {
+  // No format specified - apply default precision for floats
   if (fmt === "" || fmt == null) {
-    return String(value);
+    // Default to 8 significant figures (matching GUI Client behavior)
+    const num = Number(value);
+    if (Number.isNaN(num)) {
+      return String(value);
+    }
+    return parseFloat(num.toPrecision(8)).toString();
   }
 
   // remove leading ':' or similar
@@ -71,7 +78,7 @@ function handlePythonFormatCall(expr: string, x: any): string | null {
     const val = jsArgs[argIndex++];
     const numVal = typeof val === "number" ? val : Number(val);
     if (!isNaN(numVal)) {
-      return formatNumberLikePython(numVal, fmtPart);
+      return formatNumber(numVal, fmtPart);
     }
     return String(val);
   });
@@ -193,8 +200,20 @@ const Evaluator: React.FC<EvaluatorProps> = (props) => {
 
     const expr = props.expression || "";
 
-    // if no expression, just show raw
+    // if no expression, apply default formatting for floats
     if (!expr.trim()) {
+      const propType = model?.property_schema?.schemaAttrs?.valueType;
+
+      // Float types: format with default precision (8 sig figs)
+      if (propType === HashTypes.Float32 || propType === HashTypes.Float64) {
+        const num = Number(rawValue);
+        if (Number.isNaN(num)) {
+          return String(rawValue);
+        }
+        return parseFloat(num.toPrecision(8)).toString();
+      }
+
+      // Non-float types: just show string representation
       return String(rawValue);
     }
 

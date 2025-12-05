@@ -28,7 +28,6 @@ const DisplayCommand: React.FC<DisplayCommandProps> = ({
     proxyStatus,
     deviceState,
     schemaAttrs,
-    isReady,
     isOffline,
   } = useDeviceProperty(primaryKey);
 
@@ -102,37 +101,6 @@ const DisplayCommand: React.FC<DisplayCommandProps> = ({
   // ─────────────────────────────────────────
   const isEnabled =
     hasCommandPermission && isDeviceOnline && stateAllowsCommand;
-
-  // Debug: see lifecycle of the command button
-  React.useEffect(() => {
-    console.log(`[DisplayCommand ${primaryKey}] Render state:`, {
-      proxyStatus,
-      proxyStatusLabel: ProxyStatus[proxyStatus],
-      isReady,
-      isOffline,
-      isDeviceOnline,
-      deviceState,
-      deviceId,
-      hasCommandPermission,
-      stateAllowsCommand,
-      isEnabled,
-      schemaAttrs: schemaAttrs ? "present" : "undefined",
-      userAccessLevel: AccessLevel[userAccessLevel],
-    });
-  }, [
-    primaryKey,
-    proxyStatus,
-    isReady,
-    isOffline,
-    isDeviceOnline,
-    deviceState,
-    deviceId,
-    hasCommandPermission,
-    stateAllowsCommand,
-    isEnabled,
-    schemaAttrs,
-    userAccessLevel,
-  ]);
 
   const disabledReason = React.useMemo(() => {
     if (!deviceId) return "No device selected for this command";

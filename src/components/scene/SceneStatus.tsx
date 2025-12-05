@@ -80,7 +80,7 @@ export default function SceneStatus({
                     <XCircle className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-sm break-words">
+                <TooltipContent className="max-w-sm wrap-break-word">
                   <p>Unload: {fullSceneName}</p>
                 </TooltipContent>
               </Tooltip>
@@ -131,7 +131,7 @@ export default function SceneStatus({
               <XCircle className="h-5 w-5" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent className="max-w-sm break-words">
+          <TooltipContent className="max-w-sm wrap-break-word">
             <p>{hasScene ? `Unload: ${fullSceneName}` : "No scene loaded"}</p>
           </TooltipContent>
         </Tooltip>
