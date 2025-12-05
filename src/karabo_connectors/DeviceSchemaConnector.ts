@@ -3,7 +3,6 @@ import { GuiServerConnector } from "./GuiServerConnector";
 import { DeviceSchemaInfo } from "@/karabo_data/DeviceSchemaInfo";
 import { deviceSchemaFromHash } from "@/karabo_hash/decoders/device_schema";
 import { buildGetDeviceSchemaHash } from "@/karabo_hash/builders/monitoring_device";
-import { useDeviceSchemaStore } from "@/store/useDeviceSchemaStore";
 import { deviceManager } from "@/device/DeviceManager";
 
 type DeviceSchemaHandler = (deviceSchema: DeviceSchemaInfo) => void;
@@ -30,6 +29,9 @@ export class DeviceSchemaConnector {
 
   /** Map with deviceIds as keys and handlers of device schema updates for the deviceId as values */
   private _schemaMonitors = new Map<string, DeviceSchemaHandler[]>();
+
+  /** Cache of DeviceSchemaInfo objects for seeding new monitors */
+  private _schemaCache = new Map<string, DeviceSchemaInfo>();
 
   registerSchemaMonitor(
     deviceId: string,
@@ -69,11 +71,15 @@ export class DeviceSchemaConnector {
     if (deviceSchemaMonitors.length === 0) {
       // The last schema update handler for the device has been removed. Remove the map entry.
       this._schemaMonitors.delete(deviceId);
-
-      // Remove schema from store
-      // (If later you want "global" schema lifetime, you can drop this)
-      useDeviceSchemaStore.getState().removeDeviceSchema(deviceId);
     }
+  }
+
+  /**
+   * Get cached DeviceSchemaInfo for a device.
+   * Returns undefined if schema hasn't been received yet.
+   */
+  getDeviceSchema(deviceId: string): DeviceSchemaInfo | undefined {
+    return this._schemaCache.get(deviceId);
   }
 
   // #endregion
@@ -88,38 +94,19 @@ export class DeviceSchemaConnector {
     deviceManager.markSchemaRequested(deviceId);
   };
 
-  /**
-   * Get device schema from store.
-   * Returns schema with deviceId and propertyDescriptors map.
-   */
-  getDeviceSchema = (deviceId: string): DeviceSchemaInfo | undefined => {
-    const propertyDescriptors = useDeviceSchemaStore
-      .getState()
-      .getDeviceSchema(deviceId);
-
-    if (!propertyDescriptors) {
-      return undefined;
-    }
-
-    return {
-      deviceId,
-      propertyDescriptors,
-    };
-  };
-
   // #endregion
 
   /**
    * Handler for "deviceSchema" messages received from the GUI Server.
-   * Stores schema in DeviceSchemaStore and dispatches to registered monitors.
+   * Caches schema and dispatches to registered monitors.
    */
   private _onDeviceSchema = (hash: Hash): void => {
     // Decode the hash into the appropriate SchemaInfo data structure
     const deviceSchemaInfo = deviceSchemaFromHash(hash);
     const deviceId = deviceSchemaInfo.deviceId;
 
-    // 1) Store schema in DeviceSchemaStore (survives HMR!)
-    useDeviceSchemaStore.getState().setDeviceSchema(deviceId, deviceSchemaInfo);
+    // 1) Cache the schema for seeding new monitors
+    this._schemaCache.set(deviceId, deviceSchemaInfo);
 
     // 2) Apply schema to DeviceManager (creates PropertyModels)
     deviceManager.applyDeviceSchema(deviceId, deviceSchemaInfo);
