@@ -1,23 +1,21 @@
+/**
+ * DisplayCheckbox - controller component
+ * Uses injected primary prop - no useDeviceProperty call needed
+ */
+
 import * as React from "react";
 import type { DisplayCheckBoxProps } from "@/scene/scene_types/controllers";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ControllerContainer } from "@/components/sceneView/ControllerContainer";
 import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
-import { useDeviceProperty } from "@/components/shared/hooks/useDeviceProperty";
 
 const DisplayCheckbox: React.FC<DisplayCheckBoxProps> = ({
-  keys,
-  x,
-  y,
-  width,
-  height,
   font_size,
   font_weight,
+  tooltipText,
+  disabledReason,
+  primary,
 }) => {
-  // For now we treat the first key as the primary binding: "DEVICE.property"
-  const primaryKey = keys[0] ?? "";
-
-  const { value } = useDeviceProperty(primaryKey);
+  const value = primary?.value;
 
   const isChecked = React.useMemo(() => {
     if (typeof value === "boolean") return value;
@@ -27,22 +25,15 @@ const DisplayCheckbox: React.FC<DisplayCheckBoxProps> = ({
     return false;
   }, [value]);
 
-  const boxSize = Math.min(width, height, 18);
-
   return (
-    <ControllerContainer
-      keys={keys}
-      x={x}
-      y={y}
-      width={width}
-      height={height}
-      showMissingPropertyOverlay
-      className="flex items-center justify-center"
+    <div
+      className="flex items-center justify-center w-full h-full"
+      title={tooltipText || disabledReason || primary?.propertyIndicator?.label}
     >
       <Checkbox
         checked={isChecked}
         disabled
-        aria-label={`Display checkbox for ${primaryKey}`}
+        aria-label={`Display checkbox for ${primary?.propertyIndicator?.label}`}
         aria-readonly="true"
         className="
           border
@@ -53,14 +44,14 @@ const DisplayCheckbox: React.FC<DisplayCheckBoxProps> = ({
           data-[state=checked]:border-black
         "
         style={{
-          width: boxSize,
-          height: boxSize,
+          width: 18,
+          height: 18,
           fontFamily: FONT_FAMILY_DEFAULT,
           fontSize: font_size,
           fontWeight: font_weight,
         }}
       />
-    </ControllerContainer>
+    </div>
   );
 };
 

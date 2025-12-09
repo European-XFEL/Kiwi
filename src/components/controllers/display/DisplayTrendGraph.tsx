@@ -1,13 +1,16 @@
+/**
+ * DisplayTrendGraph - controller component
+ *
+ */
 import React, { useMemo, useState } from "react";
 import Plot from "react-plotly.js";
 import ReactECharts from "echarts-for-react";
 import type { Layout, Data } from "plotly.js";
 import type { DisplayTrendGraphProps } from "@/scene/scene_types/controllers";
-import { useDisplayTrendGraph } from "@/components/shared/hooks/useDisplayTrendGraph";
-import { useKaraboKeysString } from "@/components/shared/hooks/useKaraboKeysString";
 import { TraceFactory, ChartType } from "@/karabo_plots/traceFactory";
 import { buildTimeValueHeatmap } from "@/karabo_plots/heatmapBining";
 import { buildEChartsOptions, EChartType } from "@/karabo_plots/echartsOptions";
+import { useDisplayTrendGraph } from "@/components/shared/hooks/useDisplayTrendGraph";
 import {
   Select,
   SelectContent,
@@ -16,15 +19,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// engine-agnostic chart types
 type CanonicalChartType = "line" | "scatter" | "area" | "heatmap" | "bar";
 
 const DisplayTrendGraph: React.FC<DisplayTrendGraphProps> = React.memo(
   (props) => {
     const {
-      keys,
-      x,
-      y,
+      primary,
       width,
       height,
       background,
@@ -32,29 +32,18 @@ const DisplayTrendGraph: React.FC<DisplayTrendGraphProps> = React.memo(
       y_label,
       x_grid,
       y_grid,
-      // this is the initial engine from the scene
       plot_engine = "echarts",
     } = props;
 
-    // 1) chart type (line, scatter, ...)
     const [chartType, setChartType] = useState<CanonicalChartType>("line");
-
-    // 2) engine toggle (plotly / echarts)
     const [engine, setEngine] = useState<"plotly" | "echarts">(plot_engine);
 
-    // keys
-    const keysStr = useKaraboKeysString(keys);
-
-    // data
-    const { timestamps, values, isOffline } = useDisplayTrendGraph(keysStr, {
+    const { timestamps, values, isOffline } = useDisplayTrendGraph(primary, {
       maxDataPoints: 1000,
       timeWindowMs: Infinity,
       throttleDelayMs: 500,
     });
 
-    const formattedTimestamps = useMemo(() => timestamps, [timestamps]);
-
-    // map canonical -> plotly types
     const plotlyChartType: ChartType = (() => {
       if (chartType === "scatter") return "points";
       if (chartType === "heatmap") return "heatmap";
@@ -75,14 +64,13 @@ const DisplayTrendGraph: React.FC<DisplayTrendGraphProps> = React.memo(
           } as const)
         : ({
             kind: "xy",
-            series: { x: formattedTimestamps, y: values },
+            series: { x: timestamps, y: values },
             name: "Series",
           } as const);
 
     const data: Data[] =
       engine === "plotly" ? [TraceFactory[plotlyChartType](traceInput)] : [];
 
-    // ECharts options
     const echartsOption = useMemo(
       () =>
         engine === "echarts"
@@ -110,7 +98,6 @@ const DisplayTrendGraph: React.FC<DisplayTrendGraphProps> = React.memo(
       ]
     );
 
-    // Plotly layout
     const layout: Partial<Layout> = {
       autosize: true,
       margin: { t: 36, r: 12, b: 36, l: 44 },
@@ -123,13 +110,7 @@ const DisplayTrendGraph: React.FC<DisplayTrendGraphProps> = React.memo(
         },
         automargin: true,
         showgrid: chartType !== "heatmap" && (x_grid ?? true),
-        gridcolor: "#e5e7eb",
-        showspikes: chartType !== "heatmap",
-        spikemode: "across",
-        spikesnap: "cursor",
-        spikecolor: "#6b7280",
         type: chartType === "heatmap" ? undefined : "date",
-        tickformat: "%H:%M",
       },
       yaxis: {
         title: {
@@ -138,45 +119,15 @@ const DisplayTrendGraph: React.FC<DisplayTrendGraphProps> = React.memo(
         },
         automargin: true,
         showgrid: chartType !== "heatmap" && (y_grid ?? true),
-        gridcolor: "#e5e7eb",
-        showspikes: chartType !== "heatmap",
-        spikemode: "across",
-        spikesnap: "cursor",
-        spikecolor: "#6b7280",
       },
       hovermode: chartType === "heatmap" ? "closest" : "x unified",
       showlegend: false,
     };
 
     return (
-      <div
-        className="absolute"
-        style={{
-          left: x,
-          top: y,
-          width,
-          height,
-          backgroundColor: background || "transparent",
-        }}
-        aria-busy={isOffline ? true : undefined}
-        aria-live="polite"
-      >
-        {/* offline badge */}
-        {isOffline && (
-          <div
-            className="absolute top-2 left-2 z-10 text-xs px-2 py-1 rounded bg-red-100 text-red-700 shadow-sm select-none"
-            style={{ pointerEvents: "none" }}
-          >
-            Device offline
-          </div>
-        )}
-
-        {/* top-right controls: engine + chart type */}
-        <div
-          className="absolute -top-7 right-2 z-10 flex gap-2"
-          style={{ pointerEvents: "auto" }}
-        >
-          {/* engine selector */}
+      <div className="w-full h-full" aria-busy={isOffline ? true : undefined}>
+        {/* top-right controls */}
+        <div className="absolute -top-7 right-2 z-10 flex gap-2">
           <Select
             value={engine}
             onValueChange={(val) => setEngine(val as "plotly" | "echarts")}
@@ -191,7 +142,6 @@ const DisplayTrendGraph: React.FC<DisplayTrendGraphProps> = React.memo(
             </SelectContent>
           </Select>
 
-          {/* chart type selector */}
           <Select
             value={chartType}
             onValueChange={(value) => setChartType(value as CanonicalChartType)}
@@ -215,30 +165,20 @@ const DisplayTrendGraph: React.FC<DisplayTrendGraphProps> = React.memo(
           <Plot
             data={data}
             layout={layout}
-            config={{
-              displayModeBar: false,
-              responsive: true,
-              scrollZoom: !isOffline,
-            }}
+            config={{ displayModeBar: false, responsive: true }}
             useResizeHandler
             style={{
               width: "100%",
               height: "100%",
               opacity: isOffline ? 0.45 : 1,
-              transition: "opacity 150ms ease",
             }}
           />
         ) : (
           <ReactECharts
             option={echartsOption!}
-            style={{
-              width: "100%",
-              height: "100%",
-              opacity: isOffline ? 0.45 : 1,
-              transition: "opacity 150ms ease",
-            }}
-            notMerge={true}
-            lazyUpdate={true}
+            style={{ width, height, opacity: isOffline ? 0.45 : 1 }}
+            notMerge
+            lazyUpdate
           />
         )}
       </div>

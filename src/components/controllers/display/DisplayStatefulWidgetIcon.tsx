@@ -1,7 +1,9 @@
+/**
+ * DisplayStatefulIcon - controller component
+ */
+
 import React, { useMemo } from "react";
 import type { DisplayStatefulIconProps } from "@/scene/scene_types/controllers";
-import { ControllerContainer } from "@/components/sceneView/ControllerContainer";
-import { useDeviceProperty } from "../../shared/hooks/useDeviceProperty";
 import { useGuiStateColor } from "../../shared/hooks/useGuiStateColor";
 import { statefulIconTextById } from "@/components/shared/helpers/statefulIcons";
 import {
@@ -9,11 +11,13 @@ import {
   getPreloadedCacheKey,
 } from "@/components/shared/helpers/loadAndRecolor";
 
-const DisplayStatefulIcon: React.FC<DisplayStatefulIconProps> = (props) => {
-  const { keys, x, y, width, height, icon_name } = props;
-
-  const primaryKey = keys[0] ?? "";
-  const { value } = useDeviceProperty(primaryKey);
+const DisplayStatefulIcon: React.FC<DisplayStatefulIconProps> = ({
+  icon_name,
+  tooltipText,
+  disabledReason,
+  primary,
+}) => {
+  const value = primary?.value;
 
   // Map the property value (e.g., "ON", "ACTIVE") to a color
   const rawState = value ? String(value) : "UNKNOWN";
@@ -48,14 +52,9 @@ const DisplayStatefulIcon: React.FC<DisplayStatefulIconProps> = (props) => {
   }, [svgXML, colorValue, icon_name]);
 
   return (
-    <ControllerContainer
-      keys={keys}
-      x={x}
-      y={y}
-      width={width}
-      height={height}
-      showMissingPropertyOverlay
-      className="flex items-center justify-center"
+    <div
+      className="flex items-center justify-center w-full h-full"
+      title={tooltipText || disabledReason || primary?.propertyIndicator?.label}
     >
       {recoloredSvg ? (
         <div
@@ -70,7 +69,7 @@ const DisplayStatefulIcon: React.FC<DisplayStatefulIconProps> = (props) => {
           </text>
         </svg>
       )}
-    </ControllerContainer>
+    </div>
   );
 };
 

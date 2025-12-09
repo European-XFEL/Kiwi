@@ -35,7 +35,7 @@ import {
   DisplayLabelElementModel,
   DisplayCheckBoxElementModel,
   DisplayTrendGraphElementModel,
-  //DisplayLineEditElementModel,
+  DisplayLineEditElementModel,
   DisplayListElementModel,
   DisplayStatefulIconElementModel,
   DisplayCommandElementModel,
@@ -46,27 +46,30 @@ import {
 //edit
 import {
   EditableComboBoxElementModel,
-  DoubleLineEditElement,
+  DoubleLineEditElementModel,
   EditableListElementModel,
-  IntLineEditElement,
+  EditableLineEditElementModel,
+  IntLineEditElementModel,
 } from "../scene_models/controller/editable";
 
 // React Components
 import Label from "@/components/widgets/Label";
 import DisplayLabel from "@/components/controllers/display/DisplayLabel";
+import DisplayLineEdit from "@/components/controllers/display/DisplayLineEdit";
 import DisplayList from "@/components/controllers/display/DisplayList";
 import DisplayCommand from "@/components/controllers/display/DisplayCommand";
 import Evaluator from "@/components/controllers/display/DisplayEvaluator";
 import DisplayTableElement from "@/components/controllers/display/DisplayTableElement";
-import Line from "@/components/sceneView/shapes/Line";
-import Rectangle from "@/components/sceneView/shapes/Rectangle";
-import Polygon from "@/components/sceneView/shapes/Polygon";
-import ArrowPolygon from "@/components/sceneView/shapes/ArrowPolygon";
+import Line from "@/components/scene_view/shapes/Line";
+import Rectangle from "@/components/scene_view/shapes/Rectangle";
+import Polygon from "@/components/scene_view/shapes/Polygon";
+import ArrowPolygon from "@/components/scene_view/shapes/ArrowPolygon";
 import DisplayStateColor from "@/components/controllers/display/DisplayStateColor";
 import DisplayCheckbox from "@/components/controllers/display/DisplayCheckbox";
 import DisplayStatefulWidgetIcon from "@/components/controllers/display/DisplayStatefulWidgetIcon";
 import DisplayTrendGraph from "@/components/controllers/display/DisplayTrendGraph";
 import EditableComboBox from "@/components/controllers/editable/EditableComboBox";
+import EditableLineEdit from "@/components/controllers/editable/EditableLineEdit";
 import DoubleLineEdit from "@/components/controllers/editable/DoubleLineEdit";
 import EditableList from "@/components/controllers/editable/EditableList";
 import IntLineEdit from "@/components/controllers/editable/IntLineEdit";
@@ -185,6 +188,8 @@ export function buildWidget(json: any): BaseSceneElementModel | null {
     switch (widget_type) {
       case "DisplayLabel":
         return buildDisplayLabel(json);
+      case "DisplayLineEdit":
+        return buildDisplayLineEdit(json);
       case "DisplayList":
         return buildDisplayList(json);
       case "DisplayCommand":
@@ -209,10 +214,14 @@ export function buildWidget(json: any): BaseSceneElementModel | null {
     switch (widget_type) {
       case "EditableComboBox":
         return buildEditableComboBox(json);
+      case "EditableLineEdit":
+        return buildEditableLineEdit(json);
       case "DoubleLineEdit":
         return buildDoubleLineEdit(json);
       case "EditableList":
         return buildEditableList(json);
+      case "EditableListElement":
+        return buildEditableList(json); // Alias
       case "IntLineEdit":
         return buildIntLineEdit(json);
     }
@@ -285,6 +294,21 @@ export function buildPlaceholder(json: any): LabelModel {
 export function buildDisplayLabel(json: any): DisplayLabelElementModel {
   const w = new DisplayLabelElementModel();
   w.reactComponent = DisplayLabel;
+  Object.assign(w, {
+    x: json.x ?? 0,
+    y: json.y ?? 0,
+    width: json.width ?? 0,
+    height: json.height ?? 0,
+    keys: json.keys ?? [],
+    font_size: json.font_size ?? FONT_BASE_SIZE,
+    font_weight: json.font_weight ?? "normal",
+  });
+  return w;
+}
+
+export function buildDisplayLineEdit(json: any): DisplayLineEditElementModel {
+  const w = new DisplayLineEditElementModel();
+  w.reactComponent = DisplayLineEdit;
   Object.assign(w, {
     x: json.x ?? 0,
     y: json.y ?? 0,
@@ -466,8 +490,23 @@ export function buildEditableComboBox(json: any): EditableComboBoxElementModel {
   return w;
 }
 
-export function buildDoubleLineEdit(json: any): DoubleLineEditElement {
-  const w = new DoubleLineEditElement();
+export function buildEditableLineEdit(json: any): EditableLineEditElementModel {
+  const w = new EditableLineEditElementModel();
+  w.reactComponent = EditableLineEdit;
+  Object.assign(w, {
+    x: json.x ?? 0,
+    y: json.y ?? 0,
+    width: json.width ?? 0,
+    height: json.height ?? 0,
+    keys: json.keys ?? [],
+    font_size: json.font_size ?? FONT_BASE_SIZE,
+    font_weight: json.font_weight ?? "normal",
+  });
+  return w;
+}
+
+export function buildDoubleLineEdit(json: any): DoubleLineEditElementModel {
+  const w = new DoubleLineEditElementModel();
   w.reactComponent = DoubleLineEdit;
   Object.assign(w, {
     x: json.x ?? 0,
@@ -497,8 +536,8 @@ export function buildEditableList(json: any): EditableListElementModel {
   return w;
 }
 
-export function buildIntLineEdit(json: any): IntLineEditElement {
-  const w = new IntLineEditElement();
+export function buildIntLineEdit(json: any): IntLineEditElementModel {
+  const w = new IntLineEditElementModel();
   w.reactComponent = IntLineEdit;
   Object.assign(w, {
     x: json.x ?? 0,

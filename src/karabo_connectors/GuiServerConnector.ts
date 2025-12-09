@@ -18,6 +18,7 @@ import {
 } from "../karabo_hash/hash_utils";
 
 import { useAppSettingsStore } from "../store/appSettingsStore";
+import { useGlobalActivityStore } from "../store/globalActivityStore";
 
 import { AccessLevel } from "@/karabo_data/SchemaEnums";
 import { GuiServerInfo } from "@/karabo_data/GuiServerInfo";
@@ -403,6 +404,9 @@ export class GuiServerConnector {
     this.#_session?.ws.close();
     this.#_session = undefined;
     GuiSessionStore.inst.deleteGuiSession();
+
+    // Reset activity tracking
+    useGlobalActivityStore.getState().reset();
   }
   // #endregion
 
@@ -453,7 +457,15 @@ export class GuiServerConnector {
       ws.close();
       this.#_session = undefined;
     } else {
+      // Track processing time for activity indicator
+      const startTime = performance.now();
+
       blobToHash(ev.data).then((hash: Hash) => {
+        const processingDelay = performance.now() - startTime;
+
+        // Bump activity with processing delay
+        useGlobalActivityStore.getState().bumpActivity(processingDelay);
+
         const protocolType = hashProtocolType(hash);
         if (
           protocolType === "brokerInformation" ||

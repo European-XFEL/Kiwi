@@ -1,134 +1,92 @@
+/**
+ * IntLineEdit - controller component
+ */
+
 import * as React from "react";
 import type { IntLineEditProps } from "@/scene/scene_types/controllers";
-import { ControllerContainer } from "@/components/sceneView/ControllerContainer";
-import { useControllerPermissions } from "@/components/shared/hooks/useControllerPermissions";
-import { useDeviceProperty } from "@/components/shared/hooks/useDeviceProperty";
 import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
 
-/**
- * Inner part: actually renders the input and consumes permissions context.
- */
-const IntLineEditInner: React.FC<{
-  propertyValue: number | undefined;
-  defaultValue: number | undefined;
-  metricPrefixSymbol: string | undefined;
-  unitSymbol: string | undefined;
-  font_size?: number;
-  font_weight: string;
-}> = ({
-  propertyValue,
-  defaultValue,
-  metricPrefixSymbol,
-  unitSymbol,
+const IntLineEdit: React.FC<IntLineEditProps> = ({
   font_size,
   font_weight,
+  tooltipText,
+  disabledReason,
+  isEnabled,
+  primary,
 }) => {
-  const { canEdit, disabledReason } = useControllerPermissions();
-  const [value, setValue] = React.useState<string>("");
+  const value = primary?.value;
+  const schemaAttrs = primary?.schemaAttrs;
 
-  // Unit from schema
+  const enabled = isEnabled ?? true;
+
+  const [localValue, setLocalValue] = React.useState<string>("");
+
   const unit = React.useMemo(() => {
-    const prefix = metricPrefixSymbol ?? "";
-    const symbol = unitSymbol ?? "";
+    const prefix = schemaAttrs?.metricPrefixSymbol ?? "";
+    const symbol = schemaAttrs?.unitSymbol ?? "";
     return `${prefix}${symbol}`.trim();
-  }, [metricPrefixSymbol, unitSymbol]);
+  }, [schemaAttrs?.metricPrefixSymbol, schemaAttrs?.unitSymbol]);
 
-  // Sync with property/value
   React.useEffect(() => {
-    const incoming = propertyValue ?? defaultValue ?? 0;
-
+    const incoming = value ?? schemaAttrs?.defaultValue ?? 0;
     const intValue =
       typeof incoming === "number" ? incoming : parseInt(String(incoming), 10);
 
-    setValue(!isNaN(intValue) ? String(intValue) : "");
-  }, [propertyValue, defaultValue]);
+    setLocalValue(Number.isFinite(intValue) ? String(intValue) : "");
+  }, [value, schemaAttrs]);
 
   return (
-    <>
+    <div
+      className="flex items-center gap-1 w-full h-full"
+      title={tooltipText || disabledReason || primary?.propertyIndicator?.label}
+    >
       <input
         type="text"
-        value={value}
-        onChange={(e) => {
-          if (!canEdit) return; // extra safety
-          setValue(e.target.value);
-        }}
+        inputMode="numeric"
+        value={localValue}
+        onChange={(e) => setLocalValue(e.target.value)}
         onBlur={(e) => {
-          if (!canEdit) return;
           const intValue = parseInt(e.target.value, 10);
-          if (!isNaN(intValue)) {
-            setValue(String(intValue));
-            // TODO: push value to backend / GUI server
+          if (Number.isFinite(intValue)) {
+            setLocalValue(String(intValue));
+            // TODO: push value to backend
+          } else {
+            // optional: reset to last known good value
+            const fallback = value ?? schemaAttrs?.defaultValue ?? "";
+            const fv =
+              typeof fallback === "number"
+                ? fallback
+                : parseInt(String(fallback), 10);
+            setLocalValue(Number.isFinite(fv) ? String(fv) : "");
           }
         }}
-        disabled={!canEdit}
-        title={!canEdit ? disabledReason : ""}
-        className={`border border-solid rounded px-1 flex-1 w-full ${
-          canEdit
+        disabled={!enabled}
+        className={`border border-solid rounded px-1 flex-1 min-w-0 ${
+          enabled
             ? "text-black bg-white cursor-text"
             : "text-gray-500 bg-gray-100 cursor-not-allowed"
         }`}
         style={{
           fontFamily: FONT_FAMILY_DEFAULT,
           fontSize: font_size,
-          fontWeight: font_weight.toLowerCase(),
-          minWidth: 0,
+          fontWeight: font_weight?.toLowerCase(),
         }}
-        placeholder={canEdit ? "0" : "Read-only"}
+        placeholder={enabled ? "0" : "Read-only"}
       />
 
       {unit && (
         <span
-          className="ml-1 text-black"
+          className="text-black"
           style={{
             fontFamily: FONT_FAMILY_DEFAULT,
             fontSize: font_size,
-            fontWeight: font_weight.toLowerCase(),
+            fontWeight: font_weight?.toLowerCase(),
           }}
         >
           {unit}
         </span>
       )}
-    </>
-  );
-};
-
-/**
- * Outer wrapper: wires keys → ControllerContainer.
- * ControllerContainer computes permissions & overlays, inner uses the context.
- */
-const IntLineEdit: React.FC<IntLineEditProps> = (props) => {
-  const { keys, x, y, width, height, font_size, font_weight } = props;
-
-  const primaryKey = keys[0] ?? "";
-  const { value, schemaAttrs } = useDeviceProperty(primaryKey);
-
-  const propertyValue = typeof value === "number" ? value : undefined;
-  const defaultValue =
-    typeof schemaAttrs?.defaultValue === "number"
-      ? schemaAttrs.defaultValue
-      : undefined;
-  const metricPrefixSymbol = schemaAttrs?.metricPrefixSymbol;
-  const unitSymbol = schemaAttrs?.unitSymbol;
-
-  return (
-    <ControllerContainer
-      keys={keys}
-      x={x}
-      y={y}
-      width={width}
-      height={height}
-      className="flex items-center"
-      showMissingPropertyOverlay
-    >
-      <IntLineEditInner
-        propertyValue={propertyValue}
-        defaultValue={defaultValue}
-        metricPrefixSymbol={metricPrefixSymbol}
-        unitSymbol={unitSymbol}
-        font_size={font_size as number}
-        font_weight={font_weight}
-      />
-    </ControllerContainer>
+    </div>
   );
 };
 

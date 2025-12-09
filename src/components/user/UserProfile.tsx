@@ -1,6 +1,5 @@
 import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "../ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,21 +11,17 @@ import {
 import { GuiServerConnector } from "@/karabo_connectors/GuiServerConnector";
 import { useGlobalStore } from "@/store/globalAppStateStore";
 import { getInitials } from "@/shared/helpers/getInitials";
-import { getAccessLevelDisplay } from "@/shared/helpers/getAccessLevelDisplay";
-import type { UserInfoProps } from "@/shared/types";
-import AccessLevelSelector from "./AccessLevelSelector";
 
-export default function UserInfo({ showAccessLevel = true }: UserInfoProps) {
+export default function UserInfo() {
   const { sessionInfo, setLoggedOut } = useGlobalStore();
 
   if (!sessionInfo) {
     return null;
   }
 
-  const { loggedUser, guiServerTopic, accessLevel } = sessionInfo;
+  const { loggedUser, guiServerTopic } = sessionInfo;
   const displayName = loggedUser || guiServerTopic || "Guest";
   const initials = getInitials(displayName);
-  const accessLevelInfo = getAccessLevelDisplay(accessLevel);
 
   const handleLogout = () => {
     GuiServerConnector.inst.finishSession();
@@ -52,14 +47,6 @@ export default function UserInfo({ showAccessLevel = true }: UserInfoProps) {
             <span className="text-sm font-medium text-foreground">
               {displayName}
             </span>
-            {showAccessLevel && accessLevelInfo && (
-              <Badge
-                variant="secondary"
-                className={`${accessLevelInfo.className} font-medium px-2 py-0.5 text-xs`}
-              >
-                {accessLevelInfo.label}
-              </Badge>
-            )}
           </div>
         </Button>
       </DropdownMenuTrigger>
@@ -75,16 +62,6 @@ export default function UserInfo({ showAccessLevel = true }: UserInfoProps) {
             )}
           </div>
         </DropdownMenuLabel>
-
-        <DropdownMenuSeparator />
-
-        {/* Access Level Selector */}
-        <div className="px-2 py-1.5">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Access Level</span>
-            <AccessLevelSelector compact={true} />
-          </div>
-        </div>
 
         <DropdownMenuSeparator />
 

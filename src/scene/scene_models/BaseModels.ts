@@ -22,18 +22,19 @@ import type {
  * Abstract base class for all scene elements (layouts, shapes, widgets).
  */
 export abstract class BaseSceneElementModel {
-  layout_data?: any; // typed dynamically by layout
-  key = `sceneElement_${crypto.randomUUID()}`; //unique identification of the elements
+  layout_data?: any;
+  key = `sceneElement_${crypto.randomUUID()}`;
 
-  /**
-   * React component linked to this element.
-   * Subclasses can override with more specific types.
-   */
-  reactComponent?: React.FC<any>;
+  private _reactComponent?: React.FC<any>;
 
-  /**
-   * Base props getter — implemented by subclasses.
-   */
+  get reactComponent(): React.FC<any> | undefined {
+    return this._reactComponent;
+  }
+
+  set reactComponent(c: React.FC<any> | undefined) {
+    this._reactComponent = c;
+  }
+
   abstract get props(): BaseSceneObjectProps;
 }
 

@@ -5,6 +5,7 @@
 import { defaultRegistry } from "./Registry";
 import {
   buildDisplayLabel,
+  buildDisplayLineEdit,
   buildDisplayList,
   buildDisplayCommand,
   buildDisplayStateColor,
@@ -14,6 +15,7 @@ import {
   buildEvaluator,
   buildDisplayTableElement,
   buildEditableComboBox,
+  buildEditableLineEdit,
   buildDoubleLineEdit,
   buildEditableList,
   buildIntLineEdit,
@@ -35,6 +37,7 @@ export function registerAllBuilders() {
   // Display controllers
   defaultRegistry
     .register("controller:display:displaylabel", buildDisplayLabel)
+    .register("controller:display:displaylineedit", buildDisplayLineEdit)
     .register("controller:display:displaylist", buildDisplayList)
     .register("controller:display:displaycommand", buildDisplayCommand)
     .register("controller:display:displaystatecolor", buildDisplayStateColor)
@@ -48,7 +51,6 @@ export function registerAllBuilders() {
   [
     "controller:display:displayfloat",
     "controller:display:imagegraph",
-    "controller:display:displaylineedit",
     "controller:display:globalalarm",
     "controller:display:displayalarmfloat",
   ].forEach((k) => defaultRegistry.register(k, buildPlaceholder));
@@ -56,8 +58,10 @@ export function registerAllBuilders() {
   // Editable controllers
   defaultRegistry
     .register("controller:editable:editablecombobox", buildEditableComboBox)
+    .register("controller:editable:editablelineedit", buildEditableLineEdit)
     .register("controller:editable:doublelineedit", buildDoubleLineEdit)
     .register("controller:editable:editablelist", buildEditableList)
+    .register("controller:editable:editablelistelement", buildEditableList) // Alias
     .register("controller:editable:intlineedit", buildIntLineEdit);
 
   // Layouts

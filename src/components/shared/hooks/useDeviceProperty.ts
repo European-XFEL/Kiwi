@@ -3,7 +3,7 @@ import { deviceManager } from "@/device/DeviceManager";
 import { DevicePropertyConnector } from "@/karabo_connectors/DevicePropertyConnector";
 import type { PropertyModel } from "@/device/device-model/types/PropertyType";
 import type { HashValueType } from "@/karabo_hash/HashValueType";
-import type { Attributes } from "karabo-ts";
+import type { Attributes, HashTypes } from "karabo-ts";
 import { PropertyProxy } from "@/device/device-proxy/PropertyProxy";
 import {
   buildPropertyDescriptor,
@@ -29,6 +29,21 @@ export interface UseDevicePropertyResult {
   value: HashValueType | undefined;
   model: PropertyModel | undefined;
   timeAttrs: Attributes | undefined;
+
+  /**
+   * Runtime value type reported by config/live updates.
+   */
+  type: HashTypes | undefined;
+
+  /**
+   * Declared schema type of the property.
+   */
+  valueType: HashTypes | undefined;
+
+  /**
+   * Declared schema default value.
+   */
+  defaultValue: HashValueType | undefined;
 
   // device state
   deviceState: string | undefined;
@@ -127,7 +142,6 @@ export function useDeviceProperty(
     const deviceProxy = deviceManager.getDevice(deviceId);
     const propertyProxy = new PropertyProxy(deviceProxy, propertyPath);
 
-    // Seed with current model/value if available
     const currentModel = propertyProxy.model;
     if (currentModel) {
       setModel(currentModel);
@@ -135,13 +149,11 @@ export function useDeviceProperty(
       setTimeAttrs(currentModel.timeAttrs);
     }
 
-    // Start backend monitoring for this property
     const stopMonitoring = DevicePropertyConnector.inst.ensurePropertyMonitored(
       deviceId,
       propertyPath
     );
 
-    // Property updates
     const unsubscribeProperty = propertyProxy.subscribe(
       (newValue, newTimeAttrs) => {
         setValue(newValue);
@@ -150,9 +162,20 @@ export function useDeviceProperty(
       }
     );
 
-    // Device state/status updates for derived flags
-    const stateListener = () => setDeviceStateVersion((v) => v + 1);
-    const statusListener = () => setDeviceStateVersion((v) => v + 1);
+    //schema change listener
+    const unsubscribeSchema = deviceProxy.subscribeToSchema((payload) => {
+      if (payload.allChanged.includes(propertyPath)) {
+        // Refresh model reference so DisplayLabel etc can re-read schema attrs
+        setModel(propertyProxy.model);
+      }
+    });
+
+    const stateListener = () => {
+      setDeviceStateVersion((v) => v + 1);
+    };
+    const statusListener = () => {
+      setDeviceStateVersion((v) => v + 1);
+    };
 
     deviceProxy.subscribe("state_changed", stateListener);
     deviceProxy.subscribe("status_changed", statusListener);
@@ -161,6 +184,7 @@ export function useDeviceProperty(
 
     return () => {
       unsubscribeProperty();
+      unsubscribeSchema();
       deviceProxy.unsubscribe("state_changed", stateListener);
       deviceProxy.unsubscribe("status_changed", statusListener);
       stopMonitoring();
@@ -301,12 +325,29 @@ export function useDeviceProperty(
   ]);
 
   // ─────────────────────────────────────────────
+  // Expose runtime type + schema valueType + defaultValue
+  // ─────────────────────────────────────────────
+  const runtimeType = model?.type;
+
+  const schemaValueType =
+    model?.property_schema?.schemaAttrs?.valueType ?? schemaAttrs?.valueType;
+
+  const schemaDefaultValue =
+    model?.property_schema?.schemaAttrs?.defaultValue ??
+    schemaAttrs?.defaultValue;
+
+  // ─────────────────────────────────────────────
   // Final result object
   // ─────────────────────────────────────────────
   return {
     value,
     model,
     timeAttrs,
+
+    type: runtimeType,
+    valueType: schemaValueType,
+    defaultValue: schemaDefaultValue,
+
     deviceId: deviceId || undefined,
     deviceState,
     stateColor,

@@ -1,35 +1,30 @@
+/**
+ * DisplayCommand - controller component
+ */
+
 import * as React from "react";
 import type { DisplayCommandProps } from "@/scene/scene_types/controllers";
 import { Button } from "@/components/ui/button";
-import { ControllerContainer } from "@/components/sceneView/ControllerContainer";
 import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
-import { useDeviceProperty } from "@/components/shared/hooks/useDeviceProperty";
 import { useGlobalStore } from "@/store/globalAppStateStore";
 import { AccessLevel } from "@/karabo_data/SchemaEnums";
 import { ProxyStatus } from "@/device/enums";
 
 const DisplayCommand: React.FC<DisplayCommandProps> = ({
-  keys,
-  x,
-  y,
-  width,
-  height,
   font_size,
   font_weight,
   requires_confirmation,
   allowedStates,
+  tooltipText,
+  primary,
 }) => {
-  const primaryKey = keys[0] ?? "";
-
-  const {
-    deviceId,
-    propertyPath,
-    descriptor,
-    proxyStatus,
-    deviceState,
-    schemaAttrs,
-    isOffline,
-  } = useDeviceProperty(primaryKey);
+  const deviceId = primary?.deviceId;
+  const propertyPath = primary?.propertyPath;
+  const descriptor = primary?.descriptor;
+  const proxyStatus = primary?.proxyStatus;
+  const deviceState = primary?.deviceState;
+  const schemaAttrs = primary?.schemaAttrs;
+  const isOffline = primary?.isOffline;
 
   const userAccessLevel = useGlobalStore(
     (s) => s.sessionInfo?.accessLevel ?? AccessLevel.Observer
@@ -93,8 +88,12 @@ const DisplayCommand: React.FC<DisplayCommandProps> = ({
   const buttonCaption = React.useMemo(() => {
     if (descriptor?.displayedName) return descriptor.displayedName;
     if (propertyPath) return propertyPath;
-    return primaryKey;
-  }, [descriptor?.displayedName, propertyPath, primaryKey]);
+    return primary?.propertyIndicator?.label ?? "";
+  }, [
+    descriptor?.displayedName,
+    propertyPath,
+    primary?.propertyIndicator?.label,
+  ]);
 
   // ─────────────────────────────────────────
   // Final enablement
@@ -132,34 +131,24 @@ const DisplayCommand: React.FC<DisplayCommandProps> = ({
   ]);
 
   return (
-    <ControllerContainer
-      keys={keys}
-      x={x}
-      y={y}
-      width={width}
-      height={height}
-      className="absolute"
-      showMissingPropertyOverlay={false}
+    <Button
+      size="sm"
+      disabled={!isEnabled}
+      aria-label={disabledReason || `Command: ${buttonCaption}`}
+      title={tooltipText || disabledReason}
+      className={`w-full h-full border-2 px-2 ${
+        isEnabled
+          ? "border-primary bg-primary hover:bg-primary/90 cursor-pointer"
+          : "border-gray-300 bg-gray-400 cursor-not-allowed opacity-60"
+      }`}
+      style={{
+        fontFamily: FONT_FAMILY_DEFAULT,
+        fontSize: font_size,
+        fontWeight: font_weight,
+      }}
     >
-      <Button
-        size="sm"
-        disabled={!isEnabled}
-        aria-label={disabledReason || `Command: ${buttonCaption}`}
-        title={disabledReason}
-        className={`w-full h-full border-2 px-2 ${
-          isEnabled
-            ? "border-primary bg-primary hover:bg-primary/90 cursor-pointer"
-            : "border-gray-300 bg-gray-400 cursor-not-allowed opacity-60"
-        }`}
-        style={{
-          fontFamily: FONT_FAMILY_DEFAULT,
-          fontSize: font_size,
-          fontWeight: font_weight,
-        }}
-      >
-        {requires_confirmation ? `${buttonCaption} (Confirm)` : buttonCaption}
-      </Button>
-    </ControllerContainer>
+      {requires_confirmation ? `${buttonCaption} (Confirm)` : buttonCaption}
+    </Button>
   );
 };
 

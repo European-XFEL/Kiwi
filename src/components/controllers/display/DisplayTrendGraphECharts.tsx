@@ -1,42 +1,33 @@
+/**
+ * DisplayTrendGraphECharts - controller component
+ *
+ */
+
 import React, { useMemo, useState } from "react";
 import ReactECharts from "echarts-for-react";
 import type { DisplayTrendGraphProps } from "@/scene/scene_types/controllers";
-import { useDisplayTrendGraph } from "@/components/shared/hooks/useDisplayTrendGraph";
-import { useKaraboKeysString } from "@/components/shared/hooks/useKaraboKeysString";
 import { buildEChartsOptions, EChartType } from "@/karabo_plots/echartsOptions";
+import { useDisplayTrendGraph } from "@/components/shared/hooks/useDisplayTrendGraph";
 
-/**
- * DisplayTrendGraphECharts - Displays time-series plots using ECharts
- * instead of Plotly. Uses the same useDisplayTrendGraph hook for data.
- */
 const DisplayTrendGraphECharts: React.FC<DisplayTrendGraphProps> = React.memo(
-  (props) => {
-    const {
-      keys,
-      x,
-      y,
-      width,
-      height,
-      background,
-      x_label,
-      y_label,
-      x_grid,
-      y_grid,
-    } = props;
-
+  ({
+    primary,
+    background,
+    x_label,
+    y_label,
+    x_grid,
+    y_grid,
+    tooltipText,
+    disabledReason,
+  }) => {
     const [chartType, setChartType] = useState<EChartType>("line");
 
-    // Join keys for hook compatibility
-    const keysStr = useKaraboKeysString(keys);
-
-    // Fetch property values from backend (reactive updates)
-    const { timestamps, values, isOffline } = useDisplayTrendGraph(keysStr, {
+    const { timestamps, values, isOffline } = useDisplayTrendGraph(primary, {
       maxDataPoints: 1000,
       timeWindowMs: Infinity,
       throttleDelayMs: 500,
     });
 
-    // Build ECharts options
     const option = useMemo(
       () =>
         buildEChartsOptions({
@@ -49,23 +40,26 @@ const DisplayTrendGraphECharts: React.FC<DisplayTrendGraphProps> = React.memo(
           yGrid: y_grid ?? true,
           background: background || "transparent",
         }),
-      [timestamps, values, chartType, x_label, y_label, x_grid, y_grid, background]
+      [
+        timestamps,
+        values,
+        chartType,
+        x_label,
+        y_label,
+        x_grid,
+        y_grid,
+        background,
+      ]
     );
 
     return (
       <div
-        className="absolute"
-        style={{
-          left: x,
-          top: y,
-          width,
-          height,
-          backgroundColor: background || "transparent",
-        }}
+        className="relative w-full h-full"
+        style={{ backgroundColor: background || "transparent" }}
+        title={tooltipText || disabledReason}
         aria-busy={isOffline ? true : undefined}
         aria-live="polite"
       >
-        {/* Offline badge */}
         {isOffline && (
           <div
             className="absolute top-2 left-2 z-10 text-xs px-2 py-1 rounded bg-red-100 text-red-700 shadow-sm select-none"
@@ -75,11 +69,7 @@ const DisplayTrendGraphECharts: React.FC<DisplayTrendGraphProps> = React.memo(
           </div>
         )}
 
-        {/* Chart type selector */}
-        <div
-          className="absolute top-2 right-2 z-10"
-          style={{ pointerEvents: "auto" }}
-        >
+        <div className="absolute top-2 right-2 z-10">
           <select
             value={chartType}
             onChange={(e) => setChartType(e.target.value as EChartType)}
@@ -96,7 +86,6 @@ const DisplayTrendGraphECharts: React.FC<DisplayTrendGraphProps> = React.memo(
           </select>
         </div>
 
-        {/* Main chart */}
         <ReactECharts
           option={option}
           style={{
@@ -105,8 +94,8 @@ const DisplayTrendGraphECharts: React.FC<DisplayTrendGraphProps> = React.memo(
             opacity: isOffline ? 0.45 : 1,
             transition: "opacity 150ms ease",
           }}
-          notMerge={true}
-          lazyUpdate={true}
+          notMerge
+          lazyUpdate
         />
       </div>
     );

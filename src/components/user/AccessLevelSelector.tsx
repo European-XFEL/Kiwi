@@ -8,6 +8,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useAccessLevel } from "@/components/shared/hooks/useAccessLevel";
 import { useGlobalStore } from "@/store/globalAppStateStore";
 import { AccessLevel } from "@/karabo_data/SchemaEnums";
@@ -83,8 +84,13 @@ export default function AccessLevelSelector({
         className="cursor-not-allowed opacity-60"
       >
         <Lock className="h-4 w-4" />
-        {!compact && (
-          <span className="ml-2 text-xs">{currentLevelInfo?.label}</span>
+        {!compact && currentLevelInfo && (
+          <Badge
+            variant="secondary"
+            className={`ml-2 ${currentLevelInfo.className} font-medium px-2 py-0.5 text-xs`}
+          >
+            {currentLevelInfo.label}
+          </Badge>
         )}
       </Button>
     );
@@ -101,8 +107,13 @@ export default function AccessLevelSelector({
           className="hover:bg-accent"
         >
           <LockOpen className="h-4 w-4" />
-          {!compact && (
-            <span className="ml-2 text-xs">{currentLevelInfo?.label}</span>
+          {!compact && currentLevelInfo && (
+            <Badge
+              variant="secondary"
+              className={`ml-2 ${currentLevelInfo.className} font-medium px-2 py-0.5 text-xs`}
+            >
+              {currentLevelInfo.label}
+            </Badge>
           )}
         </Button>
       </DropdownMenuTrigger>
