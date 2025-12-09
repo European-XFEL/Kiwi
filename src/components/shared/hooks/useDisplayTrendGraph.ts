@@ -1,11 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { throttle } from "lodash";
-import { useKaraboPropertyInfo } from "./useKaraboProperty";
-import type { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
+import type { UseDevicePropertyResult } from "@/components/shared/hooks/useDeviceProperty";
 import { Timestamp } from "@/shared/helpers/timestamps";
-import { splitKaraboKeys } from "../helpers/splitKaraboKeys";
-import { TopologyConnector } from "@/karabo_connectors/TopologyConnector";
-import { DeviceInfo, TopologyEventType } from "@/karabo_data/TopologyInfo";
 
 interface TrendDataPoint {
   timestamp: number; // epoch ms
@@ -25,56 +21,38 @@ const DEFAULT_CONFIG: Required<TrendConfig> = {
 };
 
 /**
- * React hook for visualizing a Karabo property as a time series.
- *Also uses the topology connector to check the status of the device
- * It leverages the `Timestamp` class to obtain precise timestamps
- * from Karabo's attosecond-resolution property attributes (`sec` + `frac`).
- *
- * Internally, all time values are handled in attoseconds for accuracy,
- * but converted to milliseconds for efficient JavaScript processing and plotting.
+ * useDisplayTrendGraph
  */
-
 export const useDisplayTrendGraph = (
-  karaboKeys: string,
+  primary: UseDevicePropertyResult | undefined,
   config: TrendConfig = {}
 ) => {
   const finalConfig = { ...DEFAULT_CONFIG, ...config };
-  const { property } = useKaraboPropertyInfo(karaboKeys);
-
-  // figure out the device we should watch in topology
-  const { deviceId } = useMemo(() => splitKaraboKeys(karaboKeys), [karaboKeys]);
 
   const [trendData, setTrendData] = useState<TrendDataPoint[]>([]);
-  const [isOffline, setIsOffline] = useState<boolean>(
-    !TopologyConnector.inst.isDeviceOnline(deviceId)
-  );
-
-  // keep last appended timestamp to avoid duplicates/out-of-order spam
   const lastTsRef = useRef<number>(-Infinity);
 
-  /** Convert PropertyInfo -> { timestamp(ms), value(number) } */
-  const normalizeToTimeSeries = useCallback(
-    (p: PropertyInfo | null): TrendDataPoint | null => {
-      if (!p) return null;
+  const isOffline = primary?.isOffline ?? false;
 
-      const num = typeof p.value === "number" ? p.value : Number(p.value);
-      if (!Number.isFinite(num)) return null;
+  const normalizeToTimeSeries = useCallback((): TrendDataPoint | null => {
+    if (!primary) return null;
 
-      let ms: number;
-      try {
-        // guard: some properties may not have timeAttrs populated yet
-        ms = p.timeAttrs
-          ? Timestamp.fromTimeAttrs(p.timeAttrs).toMilliseconds()
-          : Date.now();
-      } catch {
-        ms = Date.now();
-      }
-      return { timestamp: ms, value: num };
-    },
-    []
-  );
+    const raw = primary.value ?? primary.schemaAttrs?.defaultValue;
+    const num = typeof raw === "number" ? raw : Number(raw);
+    if (!Number.isFinite(num)) return null;
 
-  /** Limit memory usage by pruning old or excess points */
+    let ms: number;
+    try {
+      ms = primary.timeAttrs
+        ? Timestamp.fromTimeAttrs(primary.timeAttrs).toMilliseconds()
+        : Date.now();
+    } catch {
+      ms = Date.now();
+    }
+
+    return { timestamp: ms, value: num };
+  }, [primary]);
+
   const pruneData = useCallback(
     (data: TrendDataPoint[]): TrendDataPoint[] => {
       let pruned = data;
@@ -87,12 +65,12 @@ export const useDisplayTrendGraph = (
       if (pruned.length > finalConfig.maxDataPoints) {
         pruned = pruned.slice(-finalConfig.maxDataPoints);
       }
+
       return pruned;
     },
     [finalConfig.maxDataPoints, finalConfig.timeWindowMs]
   );
 
-  /** Stable ref for the appender to cooperate with throttle */
   const updateTrendDataRef = useRef((point: TrendDataPoint) => {
     setTrendData((prev) => pruneData([...prev, point]));
   });
@@ -103,7 +81,6 @@ export const useDisplayTrendGraph = (
     };
   }, [pruneData]);
 
-  /** Throttled update to reduce re-renders */
   const throttledUpdate = useMemo(
     () =>
       throttle(
@@ -114,67 +91,48 @@ export const useDisplayTrendGraph = (
     [finalConfig.throttleDelayMs]
   );
 
-  /** React to incoming property updates (only when online) */
+  // When we go offline, clear and stop trailing flush
   useEffect(() => {
-    if (isOffline) return;
-    const point = normalizeToTimeSeries(property as PropertyInfo | null);
+    if (!isOffline) return;
+
+    throttledUpdate.cancel();
+    setTrendData([]);
+    lastTsRef.current = -Infinity;
+  }, [isOffline, throttledUpdate]);
+
+  // Append points on primary.value changes
+  useEffect(() => {
+    if (!primary || isOffline) return;
+
+    const point = normalizeToTimeSeries();
     if (!point) return;
 
-    // discard duplicates or time going backwards
     if (point.timestamp <= lastTsRef.current) return;
     lastTsRef.current = point.timestamp;
 
     throttledUpdate(point);
-  }, [property, isOffline, normalizeToTimeSeries, throttledUpdate]);
+  }, [
+    primary?.value,
+    primary?.timeAttrs,
+    isOffline,
+    normalizeToTimeSeries,
+    throttledUpdate,
+  ]);
 
-  /** Cleanup throttle on unmount */
   useEffect(() => () => throttledUpdate.cancel(), [throttledUpdate]);
 
-  /** Reset when data source changes */
+  // Reset when the binding changes implicitly (new primary identity)
   useEffect(() => {
     setTrendData([]);
     lastTsRef.current = -Infinity;
-  }, [karaboKeys]);
+  }, [primary?.deviceId, primary?.propertyPath]);
 
-  /** Subscribe to topology for online/offline transitions */
-  const onDeviceInfoUpdate = useCallback(
-    (eventType: TopologyEventType, info: DeviceInfo) => {
-      if (info.deviceId !== deviceId) {
-        console.error(
-          `Topology routing error: expected ${deviceId}, got ${info.deviceId}`
-        );
-        return;
-      }
-      const offline = eventType === TopologyEventType.GONE;
-      setIsOffline(offline);
-
-      // If device just went offline, clear the graph so UI reflects state quickly
-      if (offline) {
-        setTrendData([]);
-        lastTsRef.current = -Infinity;
-      }
-    },
-    [deviceId]
-  );
-
-  useEffect(() => {
-    TopologyConnector.inst.registerDeviceInfoMonitor(
-      deviceId,
-      onDeviceInfoUpdate
-    );
-    return () => {
-      TopologyConnector.inst.unregisterDeviceInfoMonitor(
-        deviceId,
-        onDeviceInfoUpdate
-      );
-    };
-  }, [deviceId, onDeviceInfoUpdate]);
-
-  /** Periodic pruning for long sessions */
+  // Periodic pruning
   useEffect(() => {
     const id = setInterval(() => {
       setTrendData((prev) => pruneData(prev));
     }, 5000);
+
     return () => clearInterval(id);
   }, [pruneData]);
 

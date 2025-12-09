@@ -7,13 +7,11 @@ import type { DeviceSchemaInfo } from "@/karabo_data/DeviceSchemaInfo";
 import type {
   DeviceConfigInfo,
   PropertyInfo,
+  PropertyInfoOptional,
 } from "@/karabo_data/DeviceConfigInfo";
 import type { DeviceInfo } from "@/karabo_data/TopologyInfo";
 
-import type {
-  HashValueType,
-  VectorElementType,
-} from "@/karabo_hash/HashValueType";
+import type { HashValueType } from "@/karabo_hash/HashValueType";
 import type { Attributes } from "karabo-ts";
 
 import { ProxyStatus } from "@/device/enums";
@@ -26,10 +24,15 @@ import { mapGuiStateColor } from "@/components/shared/helpers/mapStateColor";
 import type { GuiStateColorKey } from "@/karabo_data/Indicators";
 import type { PropertyModel } from "../device-model/types/PropertyType";
 
-type PropertyValueUpdate = HashValueType | VectorElementType[][];
-
+export type SchemaChangedPayload = {
+  deviceId: string;
+  newProperties: string[];
+  updatedProperties: string[];
+  allChanged: string[];
+};
 export type DeviceProxyEventName =
   | "property_changed" // (path, value, timeAttrs?)
+  | "schema_changed" // (payload)
   | "state_changed" // (oldState, newState)
   | "status_changed" // (oldStatus, newStatus)
   | "property_subscriber_changed" // (totalSubscribers)
@@ -171,6 +174,8 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
       prop.value = update.value;
       prop.type = update.type;
       prop.timeAttrs = update.timeAttrs;
+      //store full snapshot
+      prop.info = update;
     }
 
     // Always keep runtime.state in sync, even if there is no PropertyModel in the map
@@ -231,40 +236,72 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
   }
 
   /**
-   * Apply schema to the device - creates PropertyModels for all schema properties.
+   * Apply schema to the device - creates/updates PropertyModels.
+   *
+   * - We emit a dedicated "schema_changed" event.
+   * - We do NOT emit "property_changed" for updated schema-only cases.
+   * - Optionally we may emit "property_changed" for *new* properties
+   *   to keep some backward compatibility.
    */
-  applySchema(schemaInfo: import("@/karabo_data/DeviceSchemaInfo").DeviceSchemaInfo): void {
-    // Build schema structure
+  applySchema(schemaInfo: DeviceSchemaInfo): void {
     this._model.schema = {
       deviceId: schemaInfo.deviceId,
       properties: Array.from(schemaInfo.propertyDescriptors.entries()).map(
-        ([path, schemaAttrs]): import("../device-model/types/SchemaType").PropertySchema => ({
+        ([path, schemaAttrs]) => ({
           path,
           schemaAttrs,
         })
       ),
     };
 
-    // Create PropertyModels for all schema properties
+    const newProperties: string[] = [];
+    const updatedProperties: string[] = [];
+
     for (const propSchema of this._model.schema.properties) {
-      // Only create if it doesn't exist yet
-      if (!this._model.properties.has(propSchema.path)) {
-        const model: import("../device-model/types/PropertyType").PropertyModel = {
+      const existingModel = this._model.properties.get(propSchema.path);
+
+      if (!existingModel) {
+        const model: PropertyModel = {
           property_schema: propSchema,
           value: undefined,
           type: undefined,
           timeAttrs: undefined,
+          info: undefined,
         };
         this._model.properties.set(propSchema.path, model);
+        newProperties.push(propSchema.path);
+      } else {
+        existingModel.property_schema = propSchema;
+        updatedProperties.push(propSchema.path);
       }
     }
 
     this.markSchemaLoaded();
+
+    const allChanged = [...newProperties, ...updatedProperties];
+
+    this.emit("schema_changed", {
+      deviceId: this.deviceId,
+      newProperties,
+      updatedProperties,
+      allChanged,
+    } satisfies SchemaChangedPayload);
+
+    // only emit property_changed for NEW properties
+    // (keeps older widgets from missing first render)
+    for (const path of newProperties) {
+      const model = this._model.properties.get(path);
+      if (model) {
+        this.emit(
+          "property_changed",
+          path,
+          model.value as HashValueType,
+          (model.timeAttrs ?? {}) as Attributes
+        );
+      }
+    }
   }
 
-  /**
-   * Mark that schema was (re)loaded.
-   */
   markSchemaLoaded(): void {
     this._schemaRequested = false;
     this._model.runtime.hasSchema = true;
@@ -272,29 +309,28 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
   }
 
   /**
-   * Low-level: report a property value change directly
-   * (e.g. table cell vector from DevicePropertyConnector).
+   * Low-level: report a property value change directly.
    *
-   * This does NOT require a full PropertyInfo object.
+   * Now expects PropertyInfoOptional for consistency.
    */
-  reportPropertyUpdate(
-    path: string,
-    value: PropertyValueUpdate,
-    timeAttrs?: Attributes
-  ): void {
-    const prop = this._model.properties.get(path);
+  reportPropertyUpdate(info: PropertyInfoOptional): void {
+    if (!info) return;
+
+    const { key, value, type, timeAttrs } = info;
+
+    const prop = this._model.properties.get(key);
 
     if (prop) {
-      prop.value = value as any; // property.value can hold scalar, vectors, or table cells
-      if (timeAttrs) {
-        prop.timeAttrs = timeAttrs;
-      }
+      prop.value = value as HashValueType;
+      prop.type = type;
+      prop.timeAttrs = timeAttrs;
+      prop.info = info;
     }
 
-    // Keep runtime.state in sync for the "state" property
-    if (path === "state" && typeof value === "string") {
+    if (key === "state" && typeof value === "string") {
       const oldState = this._model.runtime.state;
       const newState = value;
+
       if (oldState !== newState) {
         this._model.runtime.state = newState;
         this.emit("state_changed", oldState, newState);
@@ -303,23 +339,23 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
 
     this.emit(
       "property_changed",
-      path,
-      value,
+      key,
+      value as HashValueType,
       (prop?.timeAttrs ?? timeAttrs ?? {}) as Attributes
     );
   }
 
-  // ──────────────────────────────────────────────────
-  // Property subscriptions (for React components)
-  // ──────────────────────────────────────────────────
-
   /**
-   * Subscribe to live updates for a single property.
-   *
-   * - Increments monitoring count (used for MONITORING vs ALIVE)
-   * - Filters "property_changed" events for the given path
-   * - Returns an unsubscribe fn (perfect for useEffect cleanup)
+   * Subscribe to schema changes.
    */
+  subscribeToSchema(
+    callback: (payload: SchemaChangedPayload) => void
+  ): () => void {
+    const listener = (payload: SchemaChangedPayload) => callback(payload);
+    this.subscribe("schema_changed", listener);
+    return () => this.unsubscribe("schema_changed", listener);
+  }
+
   subscribeToProperty(
     propertyPath: string,
     callback: (value: HashValueType, timeAttrs: Attributes) => void
@@ -344,10 +380,6 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
     };
   }
 
-  /**
-   * Public wrappers so DeviceManager / connectors can
-   * mirror subscriber counts.
-   */
   incrementPropertySubscriber(propertyPath: string): void {
     this._incrementPropertySubscriber(propertyPath);
   }
@@ -355,10 +387,6 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
   decrementPropertySubscriber(propertyPath: string): void {
     this._decrementPropertySubscriber(propertyPath);
   }
-
-  // ──────────────────────────────────────────────────
-  // Internal: subscription counting & status
-  // ──────────────────────────────────────────────────
 
   private _incrementPropertySubscriber(propertyPath: string): void {
     const prev = this._propertySubscriptions.get(propertyPath) ?? 0;
@@ -405,17 +433,9 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
     }
   }
 
-  /**
-   * Simplified status engine, using:
-   *   - topology flags (isOnline, hasReceivedTopology)
-   *   - schema flags (_schemaRequested, hasSchema)
-   *   - config flag (hasConfig)
-   *   - subscriber count (propertySubscriberCount)
-   */
   private _computeProxyStatus(): ProxyStatus {
     const r = this._model.runtime;
 
-    // Nothing known yet
     if (
       !r.hasReceivedTopology &&
       !r.hasSchema &&
@@ -429,30 +449,22 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
       return ProxyStatus.OFFLINE;
     }
 
-    // Schema requested but not yet received
     if (this._schemaRequested && !r.hasSchema) {
       return ProxyStatus.SCHEMA_REQUESTED;
     }
 
-    // Schema loaded but no config yet
     if (r.hasSchema && !r.hasConfig) {
       return ProxyStatus.SCHEMA_RECEIVED;
     }
 
-    // Schema + config loaded ⇒ ALIVE or MONITORING
     if (r.hasSchema && r.hasConfig) {
       return r.propertySubscriberCount > 0
         ? ProxyStatus.MONITORING
         : ProxyStatus.ALIVE;
     }
 
-    // Fallback
     return ProxyStatus.ONLINE;
   }
-
-  // ──────────────────────────────────────────────────
-  // Cleanup
-  // ──────────────────────────────────────────────────
 
   destroy(): void {
     this._propertySubscriptions.clear();

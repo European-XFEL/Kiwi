@@ -1,7 +1,9 @@
 import { BaseEditWidgetProps } from "./../base";
+import { BaseControllerWidgetProps } from "../controller_base";
+
 /**
  * Editable controller widget prop definitions (user-input components).
- * These extend BaseEditWidget and belong to "EditableApplyLaterComponent".
+ * These extend BaseControllerWidgetProps to get runtime-injected props.
  */
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -10,18 +12,11 @@ import { BaseEditWidgetProps } from "./../base";
 
 /**
  * Dropdown input allowing selection from a list of options.
- *
- * Example:
- * <svg:rect krb:class="EditableApplyLaterComponent"
- *           krb:widget="EditableComboBox"
- *           krb:keys="device.property"
- *           x="354" y="280" width="64" height="25" />
+
  */
-export interface EditableComboBoxProps extends BaseEditWidgetProps {
+export interface EditableComboBoxProps extends BaseControllerWidgetProps {
   widget_type: "EditableComboBox";
-  keys: string[];
-  font_size: number | string;
-  font_weight: "normal" | "bold";
+  parent_component: "EditableApplyLaterComponent";
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -31,18 +26,10 @@ export interface EditableComboBoxProps extends BaseEditWidgetProps {
 /**
  * Editable list allowing item selection or inline editing.
  * Used for VectorBinding properties.
- *
- * Example:
- * <svg:rect krb:class="EditableApplyLaterComponent"
- *           krb:widget="EditableList"
- *           krb:keys="Test/mdl.availableScenes"
- *           x="178" y="500" width="145" height="27" />
  */
-export interface EditableListProps extends BaseEditWidgetProps {
+export interface EditableListProps extends BaseControllerWidgetProps {
   widget_type: "EditableList";
-  keys: string[];
-  font_size: number | string;
-  font_weight: "normal" | "bold";
+  parent_component: "EditableApplyLaterComponent";
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -62,11 +49,9 @@ export interface EditableRegexListProps extends BaseEditWidgetProps {
  * ────────────────────────────────────────────────────────────────────────── */
 
 /** Text input field for editing string values. */
-export interface EditableLineEditProps extends BaseEditWidgetProps {
+export interface EditableLineEditProps extends BaseControllerWidgetProps {
   widget_type: "EditableLineEdit";
-  keys: string[];
-  font_size: number | string;
-  font_weight: "normal" | "bold";
+  parent_component: "EditableApplyLaterComponent";
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -98,12 +83,10 @@ export interface EditableCheckBoxProps extends BaseEditWidgetProps {
 /**
  * Float input field with configurable decimal precision.
  */
-export interface DoubleLineEditProps extends BaseEditWidgetProps {
+export interface DoubleLineEditProps extends BaseControllerWidgetProps {
   widget_type: "DoubleLineEdit";
-  keys: string[];
+  parent_component: "EditableApplyLaterComponent";
   decimals: number; // -1 for auto, 0-12 for fixed precision
-  font_size: number | string;
-  font_weight: "normal" | "bold";
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -113,11 +96,9 @@ export interface DoubleLineEditProps extends BaseEditWidgetProps {
 /**
  * Integer input field with validation.
  */
-export interface IntLineEditProps extends BaseEditWidgetProps {
+export interface IntLineEditProps extends BaseControllerWidgetProps {
   widget_type: "IntLineEdit";
-  keys: string[];
-  font_size: number | string;
-  font_weight: "normal" | "bold";
+  parent_component: "EditableApplyLaterComponent";
 }
 
 /* ──────────────────────────────────────────────────────────────────────────

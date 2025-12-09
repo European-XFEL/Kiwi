@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useDeviceProperty } from "@/components/shared/hooks/useDeviceProperty";
 import { ProxyStatus, PropertyStatus } from "@/device/enums";
+import { XIcon } from "lucide-react";
 
 const CONNECTING_STATUSES: ProxyStatus[] = [
   ProxyStatus.SCHEMA_REQUESTED,
@@ -38,42 +39,35 @@ export const PropertyOverlay: React.FC<PropertyOverlayProps> = ({
     proxyStatus,
     propertyStatus,
     propertyIndicator,
-    isOffline,
-    isReady,
   } = useDeviceProperty(karaboKeys);
 
   if (!deviceId || !karaboKeys) return null;
 
-  const isConnectingStatus = CONNECTING_STATUSES.includes(proxyStatus);
-  const isHealthy = proxyStatus === ProxyStatus.MONITORING && isReady;
+  const isOffline = proxyStatus === ProxyStatus.OFFLINE;
+  const isConnecting = CONNECTING_STATUSES.includes(proxyStatus);
+  const isHealthy = proxyStatus === ProxyStatus.MONITORING;
 
-  // Animation state
+  // Animation: yellow → amber → green → gone
   const [phase, setPhase] = React.useState<number | null>(null);
   const hasEverConnected = React.useRef(false);
 
-  // Start animation only once — first time we reach "healthy"
   React.useEffect(() => {
     if (isHealthy && !hasEverConnected.current) {
       hasEverConnected.current = true;
       setPhase(0);
     }
-
     if (isOffline || proxyStatus === ProxyStatus.UNKNOWN) {
       hasEverConnected.current = false;
       setPhase(null);
     }
   }, [isHealthy, isOffline, proxyStatus]);
 
-  // Advance animation phases
   React.useEffect(() => {
     if (phase === null) return;
-
     if (phase >= 3) {
-      // Final fade-out
       const timer = setTimeout(() => setPhase(null), 400);
       return () => clearTimeout(timer);
     }
-
     const timer = setTimeout(
       () => setPhase((p) => (p === null ? null : p + 1)),
       PHASE_DURATION_MS
@@ -81,21 +75,13 @@ export const PropertyOverlay: React.FC<PropertyOverlayProps> = ({
     return () => clearTimeout(timer);
   }, [phase]);
 
-  // Property missing badge
   const showMissingBadge =
     showMissingPropertyOverlay &&
     !isOffline &&
-    isReady &&
     propertyStatus === PropertyStatus.MISSING &&
     propertyIndicator;
 
-  // Nothing at all to render
-  if (
-    !isOffline &&
-    !isConnectingStatus &&
-    phase === null &&
-    !showMissingBadge
-  ) {
+  if (!isOffline && !isConnecting && phase === null && !showMissingBadge) {
     return null;
   }
 
@@ -107,91 +93,105 @@ export const PropertyOverlay: React.FC<PropertyOverlayProps> = ({
     pointerEvents: "none",
   };
 
-  const breath =
-    phase !== null
-      ? {
-          x: Math.sin(phase * 4) * 0.3,
-          y: Math.cos(phase * 3.7) * 0.2,
-        }
-      : { x: 0, y: 0 };
-
-  const getPhaseColor = (p: number) => {
-    if (p === 0) return "bg-yellow-400 ring-yellow-300";
-    if (p === 1) return "bg-amber-400 ring-amber-300";
-    return "bg-emerald-500 ring-emerald-400";
-  };
-
   return (
     <TooltipProvider>
       <div className="absolute" style={wrapperStyle}>
-        {/* 1. OFFLINE — red glass panel */}
+        {/* OFFLINE — Elegant red glass with  XIcon */}
         {isOffline && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="absolute inset-0 rounded bg-red-100/90 backdrop-blur-sm flex items-center justify-center pointer-events-auto cursor-help border border-red-300">
-                <span className="text-red-700 font-bold text-xs tracking-wider">
-                  OFFLINE
-                </span>
+              <div
+                className="
+                  absolute inset-0 rounded
+                  bg-red-100/70 backdrop-blur-sm
+                  flex items-center justify-center
+                  pointer-events-auto cursor-help
+                  border border-red-300 shadow-sm
+                "
+              >
+                <XIcon
+                  size={30}
+                  strokeWidth={1.6}
+                  className="text-red-600"
+                  absoluteStrokeWidth
+                />
               </div>
             </TooltipTrigger>
-            <TooltipContent side="top">
-              <p className="font-medium">{deviceId}</p>
-              <p className="text-xs text-muted-foreground">Device is offline</p>
+            <TooltipContent
+              side="top"
+              className="bg-gray-900 text-white border-gray-800 shadow-xl"
+            >
+              <div className="text-center py-1">
+                <p className="font-semibold text-sm">{deviceId}</p>
+                <p className="text-xs opacity-90 mt-1">
+                  Device is offline — no live data
+                </p>
+              </div>
             </TooltipContent>
           </Tooltip>
         )}
 
-        {/* 2. CONNECTING + first MONITORING → pulsing dot (auto-disappears) */}
+        {/* CONNECTING ANIMATION — 3-phase pulse */}
         {phase !== null && phase < 3 && (
-          <div className="absolute top-1.5 right-1.5 pointer-events-auto">
+          <div className="absolute top-2 right-2 pointer-events-auto">
             <Tooltip>
               <TooltipTrigger asChild>
                 <div
                   className={`
-                    h-2.5 w-2.5 rounded-full shadow-sm ring-1 ring-opacity-30
-                    ${getPhaseColor(phase)}
+                    h-3 w-3 rounded-full shadow-md ring-2 ring-white/50
+                    ${
+                      phase === 0
+                        ? "bg-yellow-400"
+                        : phase === 1
+                        ? "bg-amber-500"
+                        : "bg-emerald-500"
+                    }
+                    animate-pulse
                   `}
                   style={{
-                    transform: `translate(${breath.x}px, ${breath.y}px) scale(${
-                      1 + phase * 0.04
-                    })`,
                     animation:
-                      "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+                      "pulse 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite",
                   }}
                 />
               </TooltipTrigger>
-              <TooltipContent side="left" className="text-xs">
-                <p className="font-medium">{deviceId}</p>
-                <p>
+              <TooltipContent
+                side="left"
+                className="bg-gray-900 text-white border-gray-800"
+              >
+                <p className="font-medium text-xs">{deviceId}</p>
+                <p className="text-xs opacity-90">
                   {phase === 0 && "Connecting..."}
-                  {phase === 1 && "Loading config..."}
-                  {phase === 2 && "Ready!"}
+                  {phase === 1 && "Loading configuration..."}
+                  {phase === 2 && "Ready"}
                 </p>
               </TooltipContent>
             </Tooltip>
           </div>
         )}
 
-        {/* 3. PROPERTY MISSING — amber "??" badge */}
+        {/* PROPERTY MISSING — Amber badge */}
         {showMissingBadge && propertyIndicator && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-auto z-10">
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="px-3 py-1.5 bg-amber-50 border border-amber-600 rounded shadow-sm cursor-help">
-                  <span className="text-amber-900 font-mono font-bold text-xs">
+                <div className="px-3 py-1.5 bg-amber-50/95 border border-amber-600 rounded shadow-md cursor-help backdrop-blur-sm">
+                  <span className="text-amber-900 font-mono font-bold text-xs tracking-wider">
                     {typeof propertyIndicator.indicator === "string"
                       ? propertyIndicator.indicator
                       : "??"}
                   </span>
                 </div>
               </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs">
-                <p className="text-xs">
+              <TooltipContent
+                side="top"
+                className="bg-gray-900 text-white border-gray-800 max-w-xs"
+              >
+                <p className="text-xs leading-relaxed">
                   Property{" "}
-                  <code className="font-mono px-1 bg-amber-100 rounded">
+                  <code className="font-mono bg-amber-900/30 px-1 rounded">
                     {propertyPath}
                   </code>{" "}
-                  not found in device
+                  not found in device configuration.
                 </p>
               </TooltipContent>
             </Tooltip>

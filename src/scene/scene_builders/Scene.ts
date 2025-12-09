@@ -5,7 +5,7 @@
  * Produces both a hierarchical SceneModel and a flat list for canvas rendering.
  */
 
-import { parseSceneChildren } from "../scene_parser/parser";
+import { parseSceneChildren } from "../scene_intermediate_parser";
 import { defaultRegistry } from "./Registry";
 import { resolveRegistryKey } from "./KeyResolver";
 import { registerAllBuilders } from "./registerBuilders";

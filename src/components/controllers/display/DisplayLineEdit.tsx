@@ -1,37 +1,41 @@
 /**
- * DisplayLabel - controller component
+ * DisplayLineEdit - controller component
  */
 
 import React from "react";
-import type { DisplayLabelProps } from "@/scene/scene_types/controllers/display";
+import type { DisplayLineEditProps } from "@/scene/scene_types/controllers/display";
 import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
 import { HashTypes } from "karabo-ts";
 
-const DisplayLabel: React.FC<DisplayLabelProps> = ({
+const DisplayLineEdit: React.FC<DisplayLineEditProps> = ({
   font_size,
   font_weight,
   tooltipText,
   disabledReason,
+  isEnabled,
   primary,
 }) => {
   const value = primary?.value;
   const model = primary?.model;
-  const labelValue = React.useMemo(() => {
+
+  const enabled = isEnabled ?? true;
+
+  const displayValue = React.useMemo(() => {
     if (value === undefined) return "";
 
     const schemaAttrs = model?.property_schema?.schemaAttrs;
     const prefix = schemaAttrs?.metricPrefixSymbol ?? "";
     const symbol = schemaAttrs?.unitSymbol ?? "";
     const displayUnit = `${prefix}${symbol}`.trim();
-    const propType = primary?.type;
+    const propType = schemaAttrs?.valueType;
 
     if (propType === HashTypes.Float32 || propType === HashTypes.Float64) {
       const num = Number(value);
-      const displayValue = Number.isNaN(num)
+      const formatted = Number.isNaN(num)
         ? String(value)
         : parseFloat(num.toPrecision(8)).toString();
 
-      return displayUnit ? `${displayValue} ${displayUnit}` : displayValue;
+      return displayUnit ? `${formatted} ${displayUnit}` : formatted;
     }
 
     const raw = String(value);
@@ -39,18 +43,20 @@ const DisplayLabel: React.FC<DisplayLabelProps> = ({
   }, [value, model]);
 
   return (
-    <div
-      className="overflow-clip flex items-center justify-center border border-solid p-px w-full h-full"
+    <input
+      type="text"
+      value={displayValue}
+      readOnly
+      disabled={!enabled}
+      title={tooltipText || disabledReason || primary?.propertyIndicator?.label}
+      className="border border-solid rounded px-1 w-full h-full text-gray-700 bg-gray-50 cursor-default"
       style={{
         fontFamily: FONT_FAMILY_DEFAULT,
         fontSize: font_size,
-        fontWeight: font_weight?.toLowerCase(),
+        fontWeight: font_weight?.toLowerCase() ?? "normal",
       }}
-      title={tooltipText || disabledReason || primary?.propertyIndicator?.label}
-    >
-      {labelValue}
-    </div>
+    />
   );
 };
 
-export default DisplayLabel;
+export default DisplayLineEdit;

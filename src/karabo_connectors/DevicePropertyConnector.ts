@@ -1,4 +1,4 @@
-import { Attributes, Hash, HashTypes, HashValue } from "karabo-ts";
+import { Hash, HashTypes, HashValue } from "karabo-ts";
 import { GuiServerConnector } from "./GuiServerConnector";
 import {
   buildStartMonitoringHash,
@@ -10,10 +10,7 @@ import { TopologyConnector } from "./TopologyConnector";
 import { DeviceSchemaConnector } from "./DeviceSchemaConnector";
 import { DeviceInfo, TopologyEventType } from "@/karabo_data/TopologyInfo";
 import type { DeviceSchemaInfo } from "@/karabo_data/DeviceSchemaInfo";
-import type {
-  HashValueType,
-  VectorElementType,
-} from "@/karabo_hash/HashValueType";
+import type { VectorElementType } from "@/karabo_hash/HashValueType";
 import { deviceManager } from "@/device/DeviceManager";
 
 // VectorElementType[][] is the type used for the value of a table property.
@@ -355,51 +352,43 @@ export class DevicePropertyConnector {
       // 2) Tell DeviceManager that we have config (idempotent)
       deviceManager.setHasConfig(deviceId, true);
 
-      // 3) Dispatch updates to all property monitors + report into DeviceProxy via DeviceManager
+      // 3) Dispatch updates to all property monitors
       for (const propInfo of deviceConfig.properties) {
+        // Always attach schemaAttrs before sending to handlers or proxy
+        propInfo.schemaAttrs = DeviceSchemaConnector.inst
+          .getDeviceSchema(deviceId)
+          ?.propertyDescriptors.get(propInfo.key);
+
+        //always update DeviceProxy with full PropertyInfo
+        // This is what ensures model.type is never undefined
+        deviceManager.applyPropertyUpdate(deviceId, propInfo);
+
         const propMonitors = this._propertyMonitors.get(deviceId);
+
+        // If nobody is watching this specific property,
+        // we still already updated the proxy above.
         if (!propMonitors || !propMonitors.has(propInfo.key)) {
-          // Still report the value to DeviceManager even if not monitored,
-          // so proxy.state gets updated for "state" property
-          if (propInfo.key === "state") {
-            deviceManager.reportPropertyValue(
-              deviceId,
-              propInfo.key,
-              propInfo.value as HashValueType,
-              propInfo.timeAttrs as Attributes | undefined
-            );
-          }
           continue;
         }
 
         const propUpdateHandlers = propMonitors.get(propInfo.key);
         if (!propUpdateHandlers || propUpdateHandlers.length === 0) continue;
 
-        // inside _onDeviceConfigurations, in the VectorHash branch
+        // Table property special handling for UI handlers
         if (propInfo.type === HashTypes.VectorHash) {
           const tableCells = this._extractCellValues(propInfo);
 
-          deviceManager.reportPropertyValue(
-            deviceId,
-            propInfo.key,
-            tableCells,
-            propInfo.timeAttrs as Attributes | undefined
-          );
-
+          // Handlers for table widgets still expect cells
           for (const propUpdateHandler of propUpdateHandlers) {
             propUpdateHandler(tableCells);
           }
-        } else {
-          deviceManager.reportPropertyValue(
-            deviceId,
-            propInfo.key,
-            propInfo.value as HashValueType,
-            propInfo.timeAttrs as Attributes | undefined
-          );
 
-          for (const propUpdateHandler of propUpdateHandlers) {
-            this._dispatchPropUpdate(deviceId, propUpdateHandler, propInfo);
-          }
+          continue;
+        }
+
+        // Normal scalar/vector properties
+        for (const propUpdateHandler of propUpdateHandlers) {
+          this._dispatchPropUpdate(deviceId, propUpdateHandler, propInfo);
         }
       }
     }

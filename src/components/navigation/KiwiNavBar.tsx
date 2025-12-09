@@ -8,9 +8,11 @@ import Logo from "../branding/Logo";
 import SceneStatus from "../scene/SceneStatus";
 import SceneBreadcrumb from "../scene/SceneBreadcrumb";
 import UserInfo from "../user/UserProfile";
+import AccessLevelSelector from "../user/AccessLevelSelector";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 import GuiServerDisplay from "../status/GuiServerDisplay";
+import { ActiveIndicator } from "../status/ActiveIndicator";
 import { useLocation } from "react-router-dom";
 import { ProjectSceneCache } from "@/store/ProjectSceneCache";
 import { ProjectSceneInfo } from "@/karabo_data/ProjectDbInfo";
@@ -46,7 +48,7 @@ export default function KiwiNavBar() {
             footerClassName="flex-col items-stretch gap-3"
             primaryAction={
               <div className="w-full">
-                <UserInfo showAccessLevel={true} />
+                <UserInfo />
               </div>
             }
           >
@@ -87,7 +89,10 @@ export default function KiwiNavBar() {
             )}
           </div>
 
-          <div className="w-10" />
+          <div className="flex items-center gap-2 shrink-0">
+            <ActiveIndicator />
+            <AccessLevelSelector compact={true} />
+          </div>
         </div>
 
         {/* Desktop Navigation */}
@@ -144,7 +149,19 @@ export default function KiwiNavBar() {
           <Separator orientation="vertical" className="h-8 mx-2" />
 
           <NavItem>
-            <UserInfo showAccessLevel={true} />
+            <ActiveIndicator />
+          </NavItem>
+
+          <Separator orientation="vertical" className="h-8 mx-2" />
+
+          <NavItem>
+            <AccessLevelSelector compact={false} />
+          </NavItem>
+
+          <Separator orientation="vertical" className="h-8 mx-2" />
+
+          <NavItem>
+            <UserInfo />
           </NavItem>
         </div>
       </NavigationMenu>

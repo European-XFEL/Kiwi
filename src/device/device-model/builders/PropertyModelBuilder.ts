@@ -23,5 +23,8 @@ export function buildPropertyModel(
     value: config?.value,
     type: config?.type,
     timeAttrs: config?.timeAttrs,
+
+    //store full snapshot
+    info: config,
   };
 }

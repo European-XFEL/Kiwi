@@ -1,15 +1,16 @@
+/**
+ * DisplayStateColor - controller component
+ */
+
 import React from "react";
 import type { DisplayStateColorProps } from "@/scene/scene_types/controllers";
-import { ControllerContainer } from "@/components/sceneView/ControllerContainer";
-import { useDeviceProperty } from "@/components/shared/hooks/useDeviceProperty";
 import { useGuiStateColor } from "@/components/shared/hooks/useGuiStateColor";
 
 const DisplayStateColor: React.FC<DisplayStateColorProps> = React.memo(
-  ({ keys, x, y, width, height, font_size, font_weight, show_string }) => {
-    const primaryKey = keys[0] ?? ""; // e.g. "Test/mdl.state"
-
-    const { deviceState, isOnlineLike, isReady } =
-      useDeviceProperty(primaryKey);
+  ({ font_size, font_weight, show_string, tooltipText, primary }) => {
+    const deviceState = primary?.deviceState;
+    const isOnlineLike = primary?.isOnlineLike;
+    const isReady = primary?.isReady;
 
     const rawState = deviceState ?? "UNKNOWN";
 
@@ -21,15 +22,9 @@ const DisplayStateColor: React.FC<DisplayStateColorProps> = React.memo(
     const showText = show_string && isOnlineLike && isReady;
 
     return (
-      <ControllerContainer
-        keys={keys}
-        x={x}
-        y={y}
-        width={width}
-        height={height}
-        // 'state' isn't a normal schema property, so don't show '??'
-        showMissingPropertyOverlay={false}
-        className="flex items-center justify-center border border-solid overflow-hidden p-0.5"
+      <div
+        className="flex items-center justify-center border border-solid overflow-hidden p-0.5 w-full h-full"
+        title={tooltipText || primary?.propertyIndicator?.label}
       >
         <div
           style={{
@@ -50,7 +45,7 @@ const DisplayStateColor: React.FC<DisplayStateColorProps> = React.memo(
             </span>
           )}
         </div>
-      </ControllerContainer>
+      </div>
     );
   }
 );

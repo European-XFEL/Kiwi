@@ -3,7 +3,7 @@
  * These represent UI elements bound to device properties.
  */
 
-import { BaseWidgetProps, BaseDisplayEditableWidgetProps } from "../base";
+import { BaseControllerWidgetProps } from "../controller_base";
 
 /* ──────────────────────────────────────────────────────────────────────────
  * Base Font Props (shared by display widgets)
@@ -12,7 +12,7 @@ import { BaseWidgetProps, BaseDisplayEditableWidgetProps } from "../base";
 /**
  * Common font attributes for text-based display widgets.
  */
-export interface BaseLabelProps extends BaseWidgetProps {
+export interface BaseLabelProps extends BaseControllerWidgetProps {
   parent_component: "DisplayComponent";
   font_size: number | string; // Supports numeric (px) or CSS strings ("10pt", "12px")
   font_weight: "normal" | "bold";
@@ -71,12 +71,8 @@ export interface DisplayAlarmFloatProps extends BaseLabelProps {
  * ────────────────────────────────────────────────────────────────────────── */
 
 /** Read-only checkbox used as a boolean indicator. */
-export interface DisplayCheckBoxProps extends BaseDisplayEditableWidgetProps {
+export interface DisplayCheckBoxProps extends BaseLabelProps {
   widget_type: "DisplayCheckBox";
-  parent_component: "DisplayComponent";
-  keys: string[];
-  font_size: number | string;
-  font_weight: "normal" | "bold";
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -84,9 +80,8 @@ export interface DisplayCheckBoxProps extends BaseDisplayEditableWidgetProps {
  * ────────────────────────────────────────────────────────────────────────── */
 
 /** Read-only text field displaying a value. */
-export interface DisplayLineEditProps extends BaseDisplayEditableWidgetProps {
+export interface DisplayLineEditProps extends BaseLabelProps {
   widget_type: "DisplayLineEdit";
-  parent_component: "DisplayComponent";
   keys: string[];
 }
 
@@ -95,7 +90,7 @@ export interface DisplayLineEditProps extends BaseDisplayEditableWidgetProps {
  * ────────────────────────────────────────────────────────────────────────── */
 
 /** Command button widget (e.g., "Start" / "Stop"). */
-export interface DisplayCommandProps extends BaseWidgetProps {
+export interface DisplayCommandProps extends BaseControllerWidgetProps {
   widget_type: "DisplayCommand";
   parent_component: "DisplayComponent";
   keys: string[];
@@ -115,7 +110,7 @@ export interface DisplayCommandProps extends BaseWidgetProps {
  * ────────────────────────────────────────────────────────────────────────── */
 
 /** Color indicator representing a device or process state. */
-export interface DisplayStateColorProps extends BaseWidgetProps {
+export interface DisplayStateColorProps extends BaseControllerWidgetProps {
   widget_type: "DisplayStateColor";
   parent_component: "DisplayComponent";
   keys: string[];
@@ -129,7 +124,7 @@ export interface DisplayStateColorProps extends BaseWidgetProps {
  * ────────────────────────────────────────────────────────────────────────── */
 
 /** Icon that changes appearance based on current state. */
-export interface DisplayStatefulIconProps extends BaseWidgetProps {
+export interface DisplayStatefulIconProps extends BaseControllerWidgetProps {
   widget_type: "DisplayStatefulIcon";
   parent_component: "DisplayComponent";
   keys: string[];
@@ -143,7 +138,7 @@ export interface DisplayStatefulIconProps extends BaseWidgetProps {
  * ────────────────────────────────────────────────────────────────────────── */
 
 /** Time-series chart displaying property trends over time. */
-export interface DisplayTrendGraphProps extends BaseWidgetProps {
+export interface DisplayTrendGraphProps extends BaseControllerWidgetProps {
   widget_type: "DisplayTrendGraph";
   parent_component: "DisplayComponent";
   keys: string[];
@@ -181,14 +176,6 @@ export interface DisplayTrendGraphProps extends BaseWidgetProps {
 
 /**
  * Evaluates and displays a property value using a custom expression.
- * Allows Python-like expressions to format/transform values.
- *
- * Example:
- * <svg:rect krb:class="DisplayComponent"
- *           krb:widget="Evaluator"
- *           krb:keys="MID_EXP_DES/GAUGE/PG1.value"
- *           x="1810" y="553" width="83" height="23"
- *           expression="&quot;{:.2e}&quot;.format(x)" />
  */
 export interface EvaluatorProps extends BaseLabelProps {
   widget_type: "Evaluator";

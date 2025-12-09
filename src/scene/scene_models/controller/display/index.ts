@@ -1,7 +1,16 @@
 /**
- * scene_model/controller/display
  *
- * Controller widget classes (Display* and Editable* widgets)
+ * Display controller widget model classes
+ *
+ * All display controllers extend BaseControllerContainerModel which:
+ * - Auto-wraps components with ControllerContainerWrapper
+ * - Centralizes useDeviceProperty calls (single subscription per widget)
+ * - Injects device data via `primary` prop at runtime
+ * - Eliminates duplicate hook calls in components
+ *
+ * Architecture:
+ * Model → BaseControllerContainerModel → ControllerContainerWrapper.wrap()
+ *      → ControllerContainer (data fetching) → Component (pure presentation)
  */
 
 import type {
@@ -19,13 +28,13 @@ import type {
   DisplayTableElementProps,
 } from "@/scene/scene_types/controllers";
 
-import { BaseControllerWidgetModel } from "../../BaseModels";
+import { BaseControllerContainerModel } from "@/scene/scene_view/controller/BaseControllerContainerModel";
 
 // ============================================================================
 // DISPLAY CONTROLLERS
 // ============================================================================
 
-export class DisplayLabelElementModel extends BaseControllerWidgetModel<DisplayLabelProps> {
+export class DisplayLabelElementModel extends BaseControllerContainerModel<DisplayLabelProps> {
   parent_component = "DisplayComponent" as const;
 
   get props(): DisplayLabelProps {
@@ -45,7 +54,7 @@ export class DisplayLabelElementModel extends BaseControllerWidgetModel<DisplayL
   }
 }
 
-export class DisplayListElementModel extends BaseControllerWidgetModel<DisplayListProps> {
+export class DisplayListElementModel extends BaseControllerContainerModel<DisplayListProps> {
   parent_component = "DisplayComponent" as const;
 
   get props(): DisplayListProps {
@@ -65,7 +74,7 @@ export class DisplayListElementModel extends BaseControllerWidgetModel<DisplayLi
   }
 }
 
-export class DisplayFloatElementModel extends BaseControllerWidgetModel<DisplayFloatProps> {
+export class DisplayFloatElementModel extends BaseControllerContainerModel<DisplayFloatProps> {
   parent_component = "DisplayComponent" as const;
   fmt = "g";
   decimals = "8";
@@ -89,7 +98,7 @@ export class DisplayFloatElementModel extends BaseControllerWidgetModel<DisplayF
   }
 }
 
-export class DisplayAlarmFloatElementModel extends BaseControllerWidgetModel<DisplayAlarmFloatProps> {
+export class DisplayAlarmFloatElementModel extends BaseControllerContainerModel<DisplayAlarmFloatProps> {
   parent_component = "DisplayComponent" as const;
   fmt = "g";
   decimals = "8";
@@ -121,7 +130,7 @@ export class DisplayAlarmFloatElementModel extends BaseControllerWidgetModel<Dis
   }
 }
 
-export class DisplayCheckBoxElementModel extends BaseControllerWidgetModel<DisplayCheckBoxProps> {
+export class DisplayCheckBoxElementModel extends BaseControllerContainerModel<DisplayCheckBoxProps> {
   parent_component = "DisplayComponent" as const;
 
   get props(): DisplayCheckBoxProps {
@@ -144,7 +153,7 @@ export class DisplayCheckBoxElementModel extends BaseControllerWidgetModel<Displ
 /**
  * Display LineEdit - read-only text field
  */
-export class DisplayLineEditElementModel extends BaseControllerWidgetModel<DisplayLineEditProps> {
+export class DisplayLineEditElementModel extends BaseControllerContainerModel<DisplayLineEditProps> {
   parent_component = "DisplayComponent" as const;
 
   get props(): DisplayLineEditProps {
@@ -157,12 +166,14 @@ export class DisplayLineEditElementModel extends BaseControllerWidgetModel<Displ
       width: this.width,
       height: this.height,
       keys: this.keys ?? [],
+      font_size: this.font_size,
+      font_weight: this.font_weight,
       layout_data: this.layout_data,
     };
   }
 }
 
-export class DisplayCommandElementModel extends BaseControllerWidgetModel<DisplayCommandProps> {
+export class DisplayCommandElementModel extends BaseControllerContainerModel<DisplayCommandProps> {
   parent_component = "DisplayComponent" as const;
   requires_confirmation = false;
 
@@ -184,7 +195,7 @@ export class DisplayCommandElementModel extends BaseControllerWidgetModel<Displa
   }
 }
 
-export class DisplayStateColorElementModel extends BaseControllerWidgetModel<DisplayStateColorProps> {
+export class DisplayStateColorElementModel extends BaseControllerContainerModel<DisplayStateColorProps> {
   parent_component = "DisplayComponent" as const;
   show_string = false;
 
@@ -206,7 +217,7 @@ export class DisplayStateColorElementModel extends BaseControllerWidgetModel<Dis
   }
 }
 
-export class DisplayStatefulIconElementModel extends BaseControllerWidgetModel<DisplayStatefulIconProps> {
+export class DisplayStatefulIconElementModel extends BaseControllerContainerModel<DisplayStatefulIconProps> {
   parent_component = "DisplayComponent" as const;
   icon_name = "no_icon";
 
@@ -227,7 +238,7 @@ export class DisplayStatefulIconElementModel extends BaseControllerWidgetModel<D
   }
 }
 
-export class DisplayTrendGraphElementModel extends BaseControllerWidgetModel<DisplayTrendGraphProps> {
+export class DisplayTrendGraphElementModel extends BaseControllerContainerModel<DisplayTrendGraphProps> {
   parent_component = "DisplayComponent" as const;
   x_label = "";
   y_label = "";
@@ -283,7 +294,7 @@ export class DisplayTrendGraphElementModel extends BaseControllerWidgetModel<Dis
   }
 }
 
-export class EvaluatorElementModel extends BaseControllerWidgetModel<EvaluatorProps> {
+export class EvaluatorElementModel extends BaseControllerContainerModel<EvaluatorProps> {
   parent_component = "DisplayComponent" as const;
   expression = "";
 
@@ -305,7 +316,7 @@ export class EvaluatorElementModel extends BaseControllerWidgetModel<EvaluatorPr
   }
 }
 
-export class DisplayTableElementModel extends BaseControllerWidgetModel<DisplayTableElementProps> {
+export class DisplayTableElementModel extends BaseControllerContainerModel<DisplayTableElementProps> {
   parent_component = "DisplayComponent" as const;
   resizeToContents = false;
 

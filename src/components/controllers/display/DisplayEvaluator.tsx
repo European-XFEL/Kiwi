@@ -1,53 +1,38 @@
+/**
+ * DisplayEvaluator - controller component
+ *
+ */
+
 import React from "react";
 import type { EvaluatorProps } from "@/scene/scene_types/controllers/display";
-import { ControllerContainer } from "@/components/sceneView/ControllerContainer";
 import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
-import { useDeviceProperty } from "@/components/shared/hooks/useDeviceProperty";
 import { HashTypes } from "karabo-ts";
 
 /**
- * ---- helpers to mimic the Python evaluator from the Qt GUI ----
+ * Default float formatting aligned with Karabo GUI:
+ * - 8 significant digits
  */
+const defaultFloatFormat = (val: number): string =>
+  parseFloat(val.toPrecision(8)).toString();
 
 /**
- * Format a numeric value with optional format specification.
- * Supports format strings like:
- *  - ""            → default precision (8 sig figs for floats)
- *  - ".2f"         → fixed(2)
- *  - ".3f"         → fixed(3)
- *  - ".1e"         → exponential(1)
+ * Formats a numeric value with an optional Python-ish format spec.
  */
-function formatNumber(value: number, fmt: string): string {
-  // No format specified - apply default precision for floats
-  if (fmt === "" || fmt == null) {
-    // Default to 8 significant figures (matching GUI Client behavior)
-    const num = Number(value);
-    if (Number.isNaN(num)) {
-      return String(value);
-    }
-    return parseFloat(num.toPrecision(8)).toString();
+function formatNumber(value: number, fmt?: string): string {
+  const spec = (fmt ?? "").replace(/^:/, "").trim();
+  if (!spec) return defaultFloatFormat(value);
+
+  const ef = spec.match(/^\.(\d+)([ef])$/);
+  if (ef) {
+    const decimals = Number.parseInt(ef[1], 10);
+    return ef[2] === "f"
+      ? value.toFixed(decimals)
+      : value.toExponential(decimals);
   }
 
-  // remove leading ':' or similar
-  let spec = fmt.replace(/^:/, "");
-
-  // e.g. ".2f"
-  const m = spec.match(/^\.(\d+)([ef])$/);
-  if (m) {
-    const decimals = parseInt(m[1], 10);
-    const kind = m[2];
-    if (kind === "f") {
-      return value.toFixed(decimals);
-    }
-    if (kind === "e") {
-      return value.toExponential(decimals);
-    }
-  }
-
-  // ".0f"
-  const m2 = spec.match(/^\.(\d+)$/);
-  if (m2) {
-    const decimals = parseInt(m2[1], 10);
+  const fixed = spec.match(/^\.(\d+)$/);
+  if (fixed) {
+    const decimals = Number.parseInt(fixed[1], 10);
     return value.toFixed(decimals);
   }
 
@@ -55,89 +40,20 @@ function formatNumber(value: number, fmt: string): string {
 }
 
 /**
- * Parse `"abc {:.2f} Hz ({:.1e})".format(x, x*2)`
- * – supports multiple args
- * – supports the simple numeric format codes from the scene
+ * Minimal Python-ish evaluator for tiny expressions used in scenes.
  */
-function handlePythonFormatCall(expr: string, x: any): string | null {
-  // "....".format(...)
-  const m = expr.match(/^["']([\s\S]+?)["']\.format\(([\s\S]*)\)$/);
-  if (!m) return null;
-
-  const template = m[1];
-  const argsSrc = m[2].trim();
-
-  // split args by "," (your scene only uses very simple args)
-  const argsList = argsSrc ? argsSrc.split(",").map((s) => s.trim()) : [];
-
-  // evaluate each arg (they are stuff like "x", "x * 100", "abs(x)", also "x" reused)
-  const jsArgs = argsList.map((arg) => evaluateSmallPythonExpr(arg, x));
-
-  let argIndex = 0;
-  const out = template.replace(/\{([^}]*)\}/g, (_m, fmtPart) => {
-    const val = jsArgs[argIndex++];
-    const numVal = typeof val === "number" ? val : Number(val);
-    if (!isNaN(numVal)) {
-      return formatNumber(numVal, fmtPart);
-    }
-    return String(val);
-  });
-
-  return out;
-}
-
-/**
- * handle python ternary:
- * "ON" if x else "OFF"
- * "HIGH" if x > 5 else "LOW"
- * "CRITICAL" if x > 10 else "WARN" if x > 5 else "OK"
- */
-function handlePythonTernary(expr: string, x: any): string | number | boolean {
-  // this will only handle the leftmost ternary and recurse on the right
-  const i = expr.indexOf(" if ");
-  const j = expr.indexOf(" else ");
-  if (i === -1 || j === -1 || j < i) {
-    // not actually a ternary
-    return evaluateSmallPythonExpr(expr, x);
-  }
-
-  const truePart = expr.slice(0, i).trim();
-  const conditionPart = expr.slice(i + 4, j).trim();
-  const falsePart = expr.slice(j + 6).trim();
-
-  const cond = Boolean(evaluateSmallPythonExpr(conditionPart, x));
-  if (cond) {
-    return evaluatePythonishExpression(truePart, x);
-  }
-  // false part might itself be a ternary
-  return evaluatePythonishExpression(falsePart, x);
-}
-
-/**
- * Very small subset of "python to js" to evaluate arithmetic parts
- * used inside .format(...) args and ternary conditions.
- */
-function evaluateSmallPythonExpr(src: string, x: any): any {
+function evaluateSmallPythonExpr(src: string, x: unknown): unknown {
   let s = src.trim();
 
-  // str(x)[:10]
   const sliceMatch = s.match(/^str\(x\)\[:(\d+)\]$/);
   if (sliceMatch) {
-    const len = parseInt(sliceMatch[1], 10);
+    const len = Number.parseInt(sliceMatch[1], 10);
     return String(x).slice(0, len);
   }
 
-  // str(x).upper()
-  if (s === "str(x).upper()") {
-    return String(x).toUpperCase();
-  }
+  if (s === "str(x).upper()") return String(x).toUpperCase();
+  if (s === "str(x).lower()") return String(x).toLowerCase();
 
-  // str(x).lower()
-  if (s === "str(x).lower()") {
-    return String(x).toLowerCase();
-  }
-
-  // "⚡ {:.1f} Hz" kind of literals are handled earlier, but if someone writes just "foo"
   if (
     (s.startsWith('"') && s.endsWith('"')) ||
     (s.startsWith("'") && s.endsWith("'"))
@@ -145,7 +61,6 @@ function evaluateSmallPythonExpr(src: string, x: any): any {
     return s.slice(1, -1);
   }
 
-  // replace python funcs / names with JS ones
   s = s
     .replace(/\babs\(/g, "Math.abs(")
     .replace(/\band\b/g, "&&")
@@ -153,88 +68,127 @@ function evaluateSmallPythonExpr(src: string, x: any): any {
     .replace(/\bnot\b/g, "!")
     .replace(/\bstr\(x\)/g, "String(x)");
 
-  // most of your arithmetic is valid JS already: x * 100, x / 10, x ** 2, x > 5
   // eslint-disable-next-line no-new-func
   const fn = new Function("x", `return (${s});`);
   return fn(x);
 }
 
-/**
- * Top-level evaluator
- * tries:
- *   1. python-style string .format(...)
- *   2. python ternary "... if ... else ..."
- *   3. plain small expression
- */
-function evaluatePythonishExpression(expr: string, x: any): string {
+function handlePythonFormatCall(expr: string, x: unknown): string | null {
+  const m = expr.match(/^["']([\s\S]+?)["']\.format\(([\s\S]*)\)$/);
+  if (!m) return null;
+
+  const template = m[1];
+  const argsSrc = m[2].trim();
+
+  const argsList = argsSrc ? argsSrc.split(",").map((s) => s.trim()) : [];
+  const jsArgs = argsList.map((arg) => evaluateSmallPythonExpr(arg, x));
+
+  let idx = 0;
+  const out = template.replace(/\{([^}]*)\}/g, (_m, fmtPart) => {
+    const val = jsArgs[idx++];
+    const num = typeof val === "number" ? val : Number(val);
+
+    if (!Number.isNaN(num)) {
+      return formatNumber(num, fmtPart);
+    }
+    return String(val);
+  });
+
+  return out;
+}
+
+function handlePythonTernary(expr: string, x: unknown): unknown {
+  const i = expr.indexOf(" if ");
+  const j = expr.indexOf(" else ");
+  if (i === -1 || j === -1 || j < i) {
+    return evaluateSmallPythonExpr(expr, x);
+  }
+
+  const truePart = expr.slice(0, i).trim();
+  const condPart = expr.slice(i + 4, j).trim();
+  const falsePart = expr.slice(j + 6).trim();
+
+  const cond = Boolean(evaluateSmallPythonExpr(condPart, x));
+  return cond
+    ? evaluateSmallPythonExpr(truePart, x)
+    : evaluateSmallPythonExpr(falsePart, x);
+}
+
+function evaluateExpression(
+  expr: string,
+  x: unknown
+): { evaluated: unknown; explicitFormat: boolean } {
   const trimmed = expr.trim();
 
-  // 1. format calls
-  const maybeFormat = handlePythonFormatCall(trimmed, x);
-  if (maybeFormat !== null) {
-    return String(maybeFormat);
+  const formatted = handlePythonFormatCall(trimmed, x);
+  if (formatted !== null) {
+    return { evaluated: formatted, explicitFormat: true };
   }
 
-  // 2. ternary
   if (trimmed.includes(" if ") && trimmed.includes(" else ")) {
-    const v = handlePythonTernary(trimmed, x);
-    return String(v);
+    return {
+      evaluated: handlePythonTernary(trimmed, x),
+      explicitFormat: false,
+    };
   }
 
-  // 3. plain small arithmetic / string op
-  const v = evaluateSmallPythonExpr(trimmed, x);
-  return String(v);
+  return {
+    evaluated: evaluateSmallPythonExpr(trimmed, x),
+    explicitFormat: false,
+  };
 }
 
 /**
- * ---- React component ----
+ * Evaluator - Container-first controller component
  */
-const Evaluator: React.FC<EvaluatorProps> = (props) => {
-  const primaryKey = props.keys[0] ?? "";
-  const { value, model } = useDeviceProperty(primaryKey);
+const Evaluator: React.FC<EvaluatorProps> = ({
+  expression,
+  font_size,
+  font_weight,
+  tooltipText,
+  disabledReason,
+  primary,
+}) => {
+  const value = primary?.value;
+  const model = primary?.model;
+  const schemaAttrs =
+    primary?.schemaAttrs ?? model?.property_schema?.schemaAttrs;
 
   const displayValue = React.useMemo(() => {
-    // what the device actually reports
-    const rawValue =
-      value ?? model?.property_schema?.schemaAttrs?.defaultValue ?? 0;
+    const rawValue = value ?? schemaAttrs?.defaultValue ?? 0;
 
-    const expr = props.expression || "";
+    const expr = (expression ?? "").trim();
+    const valueType = schemaAttrs?.valueType;
 
-    // if no expression, apply default formatting for floats
-    if (!expr.trim()) {
-      const propType = model?.property_schema?.schemaAttrs?.valueType;
+    const isFloatType =
+      valueType === HashTypes.Float32 || valueType === HashTypes.Float64;
 
-      // Float types: format with default precision (8 sig figs)
-      if (propType === HashTypes.Float32 || propType === HashTypes.Float64) {
-        const num = Number(rawValue);
-        if (Number.isNaN(num)) {
-          return String(rawValue);
-        }
-        return parseFloat(num.toPrecision(8)).toString();
-      }
+    const maybeFormatFloat = (v: unknown) => {
+      if (!isFloatType) return String(v);
+      const num = typeof v === "number" ? v : Number(v);
+      return Number.isNaN(num) ? String(v) : defaultFloatFormat(num);
+    };
 
-      // Non-float types: just show string representation
-      return String(rawValue);
+    if (!expr) {
+      return maybeFormatFloat(rawValue);
     }
 
     try {
-      return evaluatePythonishExpression(expr, rawValue);
+      const { evaluated, explicitFormat } = evaluateExpression(expr, rawValue);
+
+      if (explicitFormat) return String(evaluated);
+
+      return maybeFormatFloat(evaluated);
     } catch (err) {
-      // fall back to raw if something blows up
       console.warn("Evaluator expression error:", err);
       return String(rawValue);
     }
-  }, [value, model, props.expression]);
+  }, [value, schemaAttrs, expression]);
 
   return (
-    <ControllerContainer
-      keys={props.keys}
-      x={props.x}
-      y={props.y}
-      width={props.width}
-      height={props.height}
-      showMissingPropertyOverlay
-      className="overflow-clip flex items-center justify-center border border-solid px-1"
+    <div
+      className="overflow-clip flex items-center justify-center border border-solid px-1 w-full h-full"
+      title={tooltipText || disabledReason}
     >
       <span
         style={{
@@ -244,13 +198,13 @@ const Evaluator: React.FC<EvaluatorProps> = (props) => {
           textOverflow: "ellipsis",
           display: "block",
           fontFamily: FONT_FAMILY_DEFAULT,
-          fontSize: props.font_size,
-          fontWeight: props.font_weight.toLowerCase(),
+          fontSize: font_size,
+          fontWeight: font_weight?.toLowerCase(),
         }}
       >
         {displayValue}
       </span>
-    </ControllerContainer>
+    </div>
   );
 };
 
