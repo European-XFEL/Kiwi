@@ -1,11 +1,15 @@
 /**
  * DisplayLabel - controller component
+ *
+ * Reads value + schema from `primary` (single source of truth flow).
+ * Uses centralized scalar formatter to reproduce the old smooth float rounding.
  */
 
 import React from "react";
 import type { DisplayLabelProps } from "@/scene/scene_types/controllers/display";
 import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
-import { HashTypes } from "karabo-ts";
+import { formatScalarValueWithUnit } from "@/shared/helpers/validation_helpers/value_formatters";
+import type { SchemaValueType } from "@/shared/helpers/validation_helpers/schema_type_identifier";
 
 const DisplayLabel: React.FC<DisplayLabelProps> = ({
   font_size,
@@ -16,27 +20,34 @@ const DisplayLabel: React.FC<DisplayLabelProps> = ({
 }) => {
   const value = primary?.value;
   const model = primary?.model;
+
   const labelValue = React.useMemo(() => {
     if (value === undefined) return "";
 
     const schemaAttrs = model?.property_schema?.schemaAttrs;
+
     const prefix = schemaAttrs?.metricPrefixSymbol ?? "";
     const symbol = schemaAttrs?.unitSymbol ?? "";
-    const displayUnit = `${prefix}${symbol}`.trim();
-    const propType = primary?.type;
+    const unit = `${prefix}${symbol}`.trim();
 
-    if (propType === HashTypes.Float32 || propType === HashTypes.Float64) {
-      const num = Number(value);
-      const displayValue = Number.isNaN(num)
-        ? String(value)
-        : parseFloat(num.toPrecision(8)).toString();
+    /**
+     * Prefer schema-provided abstract valueType when available.
+     * Some flows may also provide primary.valueType already normalized.
+     *
+     * We intentionally do NOT force runtime `model.type` here.
+     * The helper is tolerant of mixed representations anyway.
+     */
+    const schemaValueType =
+      (primary as any)?.valueType ??
+      (schemaAttrs?.valueType as SchemaValueType | undefined);
 
-      return displayUnit ? `${displayValue} ${displayUnit}` : displayValue;
-    }
-
-    const raw = String(value);
-    return displayUnit ? `${raw} ${displayUnit}` : raw;
-  }, [value, model]);
+    return formatScalarValueWithUnit({
+      value,
+      schemaValueType,
+      unit,
+      floatPrecision: 8,
+    });
+  }, [value, model, primary]);
 
   return (
     <div

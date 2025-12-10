@@ -4,6 +4,7 @@
  */
 
 import { BaseControllerWidgetProps } from "../controller_base";
+import { BaseGraphProps } from "../controller_base";
 
 /* ──────────────────────────────────────────────────────────────────────────
  * Base Font Props (shared by display widgets)
@@ -138,36 +139,20 @@ export interface DisplayStatefulIconProps extends BaseControllerWidgetProps {
  * ────────────────────────────────────────────────────────────────────────── */
 
 /** Time-series chart displaying property trends over time. */
-export interface DisplayTrendGraphProps extends BaseControllerWidgetProps {
+export interface DisplayTrendGraphProps extends BaseGraphProps {
   widget_type: "DisplayTrendGraph";
-  parent_component: "DisplayComponent";
-  keys: string[];
-  font_size: number | string;
-  font_weight: "normal" | "bold";
+}
 
-  x_label: string;
-  y_label: string;
-  x_units: string;
-  y_units: string;
+/* ──────────────────────────────────────────────────────────────────────────
+ * Display Vector Graph
+ * ────────────────────────────────────────────────────────────────────────── */
 
-  x_grid: boolean;
-  y_grid: boolean;
-  x_log: boolean;
-  y_log: boolean;
-  x_invert: boolean;
-  y_invert: boolean;
-
-  x_min: number;
-  x_max: number;
-  y_min: number;
-  y_max: number;
-
-  x_autorange: boolean;
-  y_autorange: boolean;
-
-  title: string;
-  background: string;
-  plot_engine?: "plotly" | "echarts";
+/** Vector data visualization (line plot of array/vector properties). */
+export interface DisplayVectorGraphProps extends BaseGraphProps {
+  widget_type: "DisplayVectorGraph";
+  offset?: number;
+  step?: number;
+  roi_tool?: number;
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -210,5 +195,6 @@ export type DisplayControllerProps =
   | DisplayStateColorProps
   | DisplayStatefulIconProps
   | DisplayTrendGraphProps
+  | DisplayVectorGraphProps
   | EvaluatorProps
   | DisplayTableElementProps;
