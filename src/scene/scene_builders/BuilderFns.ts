@@ -42,6 +42,9 @@ import {
   DisplayStateColorElementModel,
   EvaluatorElementModel,
   DisplayTableElementModel,
+
+  //vector graph
+  DisplayVectorGraphElementModel,
 } from "../scene_models/controller/display";
 //edit
 import {
@@ -68,6 +71,7 @@ import DisplayStateColor from "@/components/controllers/display/DisplayStateColo
 import DisplayCheckbox from "@/components/controllers/display/DisplayCheckbox";
 import DisplayStatefulWidgetIcon from "@/components/controllers/display/DisplayStatefulWidgetIcon";
 import DisplayTrendGraph from "@/components/controllers/display/DisplayTrendGraph";
+import DisplayVectorGraph from "@/components/controllers/display/DisplayVectorGraph";
 import EditableComboBox from "@/components/controllers/editable/EditableComboBox";
 import EditableLineEdit from "@/components/controllers/editable/EditableLineEdit";
 import DoubleLineEdit from "@/components/controllers/editable/DoubleLineEdit";
@@ -203,6 +207,8 @@ export function buildWidget(json: any): BaseSceneElementModel | null {
         return buildDisplayStatefulIcon(json);
       case "DisplayTrendGraph":
         return buildDisplayTrendGraph(json);
+      case "VectorGraph":
+        return buildDisplayVectorGraph(json);
       case "Evaluator":
         return buildEvaluator(json);
       case "DisplayTableElement":
@@ -439,6 +445,55 @@ export function buildDisplayTrendGraph(
     title: json.title ?? "",
     background: json.background ?? "transparent",
   });
+  return w;
+}
+
+export function buildDisplayVectorGraph(
+  json: any
+): DisplayVectorGraphElementModel {
+  const w = new DisplayVectorGraphElementModel();
+  w.reactComponent = DisplayVectorGraph;
+
+  Object.assign(w, {
+    x: json.x ?? 0,
+    y: json.y ?? 0,
+    width: json.width ?? 0,
+    height: json.height ?? 0,
+
+    keys: json.keys ?? [],
+    font_size: json.font_size ?? FONT_BASE_SIZE,
+    font_weight: json.font_weight ?? "normal",
+
+    x_label: json.x_label ?? "",
+    y_label: json.y_label ?? "",
+    x_units: json.x_units ?? "",
+    y_units: json.y_units ?? "",
+
+    x_grid: !!json.x_grid,
+    y_grid: !!json.y_grid,
+    x_log: !!json.x_log,
+    y_log: !!json.y_log,
+    x_invert: !!json.x_invert,
+    y_invert: !!json.y_invert,
+
+    x_min: json.x_min ?? 0,
+    x_max: json.x_max ?? 0,
+    y_min: json.y_min ?? 0,
+    y_max: json.y_max ?? 0,
+
+    x_autorange: json.x_autorange ?? true,
+    y_autorange: json.y_autorange ?? true,
+
+    title: json.title ?? "",
+    background: json.background ?? "transparent",
+
+    offset: json.offset ?? 0.0,
+    step: json.step ?? 1.0,
+    roi_tool: json.roi_tool ?? 0,
+
+    layout_data: json.layout_data,
+  });
+
   return w;
 }
 

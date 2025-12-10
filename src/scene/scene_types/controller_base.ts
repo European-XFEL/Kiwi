@@ -41,3 +41,38 @@ export interface BaseControllerWidgetProps extends BaseWidgetProps {
    */
   showMissingPropertyOverlay?: boolean;
 }
+
+/**
+ * Base props for all graph-like widgets (trends, vectors, etc.).
+ * Centralizes axis configuration, ranges, and visual properties.
+ */
+export interface BaseGraphProps extends BaseControllerWidgetProps {
+  parent_component: "DisplayComponent";
+
+  // Axis labels & units
+  x_label: string;
+  y_label: string;
+  x_units: string;
+  y_units: string;
+
+  // Axis behavior
+  x_grid: boolean;
+  y_grid: boolean;
+  x_log: boolean;
+  y_log: boolean;
+  x_invert: boolean;
+  y_invert: boolean;
+
+  // Axis ranges
+  x_min: number;
+  x_max: number;
+  y_min: number;
+  y_max: number;
+  x_autorange: boolean;
+  y_autorange: boolean;
+
+  // Visual
+  title: string;
+  background: string;
+  plot_engine?: "plotly" | "echarts";
+}

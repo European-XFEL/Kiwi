@@ -325,12 +325,14 @@ export function useDeviceProperty(
   ]);
 
   // ─────────────────────────────────────────────
-  // Expose runtime type + schema valueType + defaultValue
+  // The runtime value type should alwasy be taken from the propertySchema.valueType
   // ─────────────────────────────────────────────
-  const runtimeType = model?.type;
-
+  // Declared schema type (what the schema says)
   const schemaValueType =
     model?.property_schema?.schemaAttrs?.valueType ?? schemaAttrs?.valueType;
+
+  // Runtime type (what the model/live updates say)
+  const runtimeValueType = model?.type ?? schemaAttrs?.valueType;
 
   const schemaDefaultValue =
     model?.property_schema?.schemaAttrs?.defaultValue ??
@@ -344,8 +346,8 @@ export function useDeviceProperty(
     model,
     timeAttrs,
 
-    type: runtimeType,
-    valueType: schemaValueType,
+    type: schemaValueType,
+    valueType: runtimeValueType,
     defaultValue: schemaDefaultValue,
 
     deviceId: deviceId || undefined,

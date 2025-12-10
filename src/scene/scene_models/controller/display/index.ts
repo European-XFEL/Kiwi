@@ -24,11 +24,13 @@ import type {
   DisplayStateColorProps,
   DisplayStatefulIconProps,
   DisplayTrendGraphProps,
+  DisplayVectorGraphProps,
   EvaluatorProps,
   DisplayTableElementProps,
 } from "@/scene/scene_types/controllers";
 
 import { BaseControllerContainerModel } from "@/scene/scene_view/controller/BaseControllerContainerModel";
+import { BaseGraphElementModel } from "../BaseGraphElementModel";
 
 // ============================================================================
 // DISPLAY CONTROLLERS
@@ -238,58 +240,35 @@ export class DisplayStatefulIconElementModel extends BaseControllerContainerMode
   }
 }
 
-export class DisplayTrendGraphElementModel extends BaseControllerContainerModel<DisplayTrendGraphProps> {
-  parent_component = "DisplayComponent" as const;
-  x_label = "";
-  y_label = "";
-  x_units = "";
-  y_units = "";
-  x_grid = false;
-  y_grid = false;
-  x_log = false;
-  y_log = false;
-  x_invert = false;
-  y_invert = false;
-  x_min = 0;
-  x_max = 0;
-  y_min = 0;
-  y_max = 0;
-  x_autorange = true;
-  y_autorange = true;
-  title = "";
-  background = "transparent";
-
+/**
+ * DisplayTrendGraph - Time-series chart for property trends
+ * Extends BaseGraphElementModel (DRY - all graph props centralized)
+ */
+export class DisplayTrendGraphElementModel extends BaseGraphElementModel<DisplayTrendGraphProps> {
   get props(): DisplayTrendGraphProps {
     return {
-      element_type: "widget",
+      ...this.getBaseGraphProps(),
       widget_type: "DisplayTrendGraph",
-      parent_component: this.parent_component,
-      x: this.x,
-      y: this.y,
-      width: this.width,
-      height: this.height,
-      keys: this.keys ?? [],
-      font_size: this.font_size,
-      font_weight: this.font_weight,
-      x_label: this.x_label,
-      y_label: this.y_label,
-      x_units: this.x_units,
-      y_units: this.y_units,
-      x_grid: this.x_grid,
-      y_grid: this.y_grid,
-      x_log: this.x_log,
-      y_log: this.y_log,
-      x_invert: this.x_invert,
-      y_invert: this.y_invert,
-      x_min: this.x_min,
-      x_max: this.x_max,
-      y_min: this.y_min,
-      y_max: this.y_max,
-      x_autorange: this.x_autorange,
-      y_autorange: this.y_autorange,
-      title: this.title,
-      background: this.background,
-      layout_data: this.layout_data,
+    };
+  }
+}
+
+/**
+ * VectorGraph
+ * -  offset, step, roi_tool
+ */
+export class DisplayVectorGraphElementModel extends BaseGraphElementModel<DisplayVectorGraphProps> {
+  offset = 0.0;
+  step = 1.0;
+  roi_tool = 0;
+
+  get props(): DisplayVectorGraphProps {
+    return {
+      ...this.getBaseGraphProps(),
+      widget_type: "DisplayVectorGraph",
+      offset: this.offset,
+      step: this.step,
+      roi_tool: this.roi_tool,
     };
   }
 }
