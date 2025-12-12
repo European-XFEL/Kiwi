@@ -20,9 +20,14 @@ import {
   buildEmptyDeviceModel,
 } from '@/device/device-model/builders/DeviceModelBuilder';
 
-import { mapGuiStateColor } from '@/components/shared/helpers/mapStateColor';
-import type { GuiStateColorKey } from '@/karabo_data/Indicators';
-import type { PropertyModel } from '../device-model/types/PropertyType';
+import { mapGuiStateColor } from "@/components/shared/helpers/mapStateColor";
+import type { GuiStateColorKey } from "@/karabo_data/Indicators";
+import type {
+  PropertyModel,
+  PropertyValue,
+} from "../device-model/types/PropertyType";
+import { PropertyBinding } from "../device-model/PropertyBinding";
+import { Timestamp } from "@/shared/helpers/timestamps";
 
 export type SchemaChangedPayload = {
   deviceId: string;
@@ -30,6 +35,7 @@ export type SchemaChangedPayload = {
   updatedProperties: string[];
   allChanged: string[];
 };
+
 export type DeviceProxyEventName =
   | 'property_changed' // (path, value, timeAttrs?)
   | 'schema_changed' // (payload)
@@ -150,7 +156,9 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
   }
 
   getPropertyValue(path: string): HashValueType | undefined {
-    return this._model.properties.get(path)?.value;
+    return this._model.properties.get(path)?.binding.value as
+      | HashValueType
+      | undefined;
   }
 
   // Overlay indicators
@@ -171,11 +179,18 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
     const prop = this._model.properties.get(update.key);
 
     if (prop) {
-      prop.value = update.value;
-      prop.type = update.type;
-      prop.timeAttrs = update.timeAttrs;
-      //store full snapshot
-      prop.info = update;
+      // Convert timeAttrs to Timestamp if available
+      const timestamp = update.timeAttrs
+        ? Timestamp.fromTimeAttrs(update.timeAttrs)
+        : Timestamp.now();
+
+      // Update value via binding
+      prop.binding.setValue(update.value as PropertyValue, { timestamp });
+
+      // Keep timeAttrs for backward compatibility
+      prop.binding.timeAttrs = update.timeAttrs as
+        | Record<string, unknown>
+        | undefined;
     }
 
     // Always keep runtime.state in sync, even if there is no PropertyModel in the map
@@ -193,7 +208,7 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
       'property_changed',
       update.key,
       update.value as HashValueType,
-      (prop?.timeAttrs ?? update.timeAttrs ?? {}) as Attributes
+      (prop?.binding.timeAttrs ?? update.timeAttrs ?? {}) as Attributes
     );
   }
 
@@ -262,16 +277,17 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
 
       if (!existingModel) {
         const model: PropertyModel = {
-          property_schema: propSchema,
-          value: undefined,
-          type: undefined,
-          timeAttrs: undefined,
-          info: undefined,
+          schema: propSchema,
+          binding: new PropertyBinding({
+            value: undefined,
+            type: undefined,
+            timeAttrs: undefined,
+          }),
         };
         this._model.properties.set(propSchema.path, model);
         newProperties.push(propSchema.path);
       } else {
-        existingModel.property_schema = propSchema;
+        existingModel.schema = propSchema;
         updatedProperties.push(propSchema.path);
       }
     }
@@ -295,8 +311,8 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
         this.emit(
           'property_changed',
           path,
-          model.value as HashValueType,
-          (model.timeAttrs ?? {}) as Attributes
+          model.binding.value as HashValueType,
+          (model.binding.timeAttrs ?? {}) as Attributes
         );
       }
     }
@@ -321,10 +337,19 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
     const prop = this._model.properties.get(key);
 
     if (prop) {
-      prop.value = value as HashValueType;
-      prop.type = type;
-      prop.timeAttrs = timeAttrs;
-      prop.info = info;
+      // Convert timeAttrs to Timestamp if available
+      const timestamp = timeAttrs
+        ? Timestamp.fromTimeAttrs(timeAttrs)
+        : Timestamp.now();
+
+      // Update value via binding
+      prop.binding.setValue(value as PropertyValue, { timestamp });
+
+      // Update type directly
+      prop.binding.type = type;
+
+      // Keep timeAttrs for backward compatibility
+      prop.binding.timeAttrs = timeAttrs as Record<string, unknown> | undefined;
     }
 
     if (key === 'state' && typeof value === 'string') {
@@ -341,7 +366,7 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
       'property_changed',
       key,
       value as HashValueType,
-      (prop?.timeAttrs ?? timeAttrs ?? {}) as Attributes
+      (prop?.binding.timeAttrs ?? timeAttrs ?? {}) as Attributes
     );
   }
 

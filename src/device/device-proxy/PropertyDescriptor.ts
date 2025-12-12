@@ -35,8 +35,8 @@ export function buildPropertyDescriptor(
   model: PropertyModel,
   ctx: EditContext
 ): PropertyDescriptor {
-  const { property_schema } = model;
-  const schemaAttrs = property_schema.schemaAttrs;
+  const { schema } = model;
+  const schemaAttrs = schema.schemaAttrs;
 
   const { displayedName, description, unitSymbol, metricPrefixSymbol } =
     schemaAttrs;
@@ -47,8 +47,8 @@ export function buildPropertyDescriptor(
   const isEditableFlag = isPropertyEditable(schemaAttrs, ctx);
 
   return {
-    path: property_schema.path,
-    displayedName: displayedName || property_schema.path,
+    path: schema.path,
+    displayedName: displayedName || schema.path,
     description,
     unitLabel,
     schemaAttrs,

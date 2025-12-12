@@ -23,9 +23,9 @@ const DisplayLineEdit: React.FC<DisplayLineEditProps> = ({
   const displayValue = React.useMemo(() => {
     if (value === undefined) return '';
 
-    const schemaAttrs = model?.property_schema?.schemaAttrs;
-    const prefix = schemaAttrs?.metricPrefixSymbol ?? '';
-    const symbol = schemaAttrs?.unitSymbol ?? '';
+    const schemaAttrs = model?.schema.schemaAttrs;
+    const prefix = schemaAttrs?.metricPrefixSymbol ?? "";
+    const symbol = schemaAttrs?.unitSymbol ?? "";
     const displayUnit = `${prefix}${symbol}`.trim();
     const propType = schemaAttrs?.valueType;
 
