@@ -31,7 +31,8 @@ export interface UseDevicePropertyResult {
   timeAttrs: Attributes | undefined;
 
   /**
-   * Runtime value type reported by config/live updates.
+   * Runtime value type reported by config/live updates
+   * (binding.type with fallback to schema.valueType).
    */
   type: HashTypes | undefined;
 
@@ -105,8 +106,10 @@ export function useDeviceProperty(
 
     return {
       model,
-      value: model?.value,
-      timeAttrs: model?.timeAttrs,
+      value: (model?.binding.value ?? undefined) as HashValueType | undefined,
+      timeAttrs: (model?.binding.timeAttrs ?? undefined) as
+        | Attributes
+        | undefined,
     };
   }, [deviceId, propertyPath]);
 
@@ -145,8 +148,12 @@ export function useDeviceProperty(
     const currentModel = propertyProxy.model;
     if (currentModel) {
       setModel(currentModel);
-      setValue(currentModel.value);
-      setTimeAttrs(currentModel.timeAttrs);
+      setValue(
+        (currentModel.binding.value ?? undefined) as HashValueType | undefined
+      );
+      setTimeAttrs(
+        (currentModel.binding.timeAttrs ?? undefined) as Attributes | undefined
+      );
     }
 
     const stopMonitoring = DevicePropertyConnector.inst.ensurePropertyMonitored(
@@ -162,10 +169,10 @@ export function useDeviceProperty(
       }
     );
 
-    //schema change listener
+    // schema change listener
     const unsubscribeSchema = deviceProxy.subscribeToSchema((payload) => {
       if (payload.allChanged.includes(propertyPath)) {
-        // Refresh model reference so DisplayLabel etc can re-read schema attrs
+        // Refresh model reference so widgets can re-read schema attrs
         setModel(propertyProxy.model);
       }
     });
@@ -257,8 +264,8 @@ export function useDeviceProperty(
     //  - if this hook is bound to "state", prefer the live model value
     //  - otherwise use cached runtime state from the proxy
     let deviceState: string | undefined;
-    if (propertyPath === 'state' && model?.value) {
-      deviceState = String(model.value);
+    if (propertyPath === "state" && model?.binding.value != null) {
+      deviceState = String(model.binding.value);
     } else {
       deviceState = proxy.state;
     }
@@ -325,18 +332,21 @@ export function useDeviceProperty(
   ]);
 
   // ─────────────────────────────────────────────
-  // The runtime value type should alwasy be taken from the propertySchema.valueType
+  // Schema vs runtime types & defaults
   // ─────────────────────────────────────────────
+
   // Declared schema type (what the schema says)
   const schemaValueType =
-    model?.property_schema?.schemaAttrs?.valueType ?? schemaAttrs?.valueType;
+    (model?.schema.schemaAttrs.valueType as HashTypes | undefined) ??
+    (schemaAttrs?.valueType as HashTypes | undefined);
 
-  // Runtime type (what the model/live updates say)
-  const runtimeValueType = model?.type ?? schemaAttrs?.valueType;
+  // Runtime type (what live updates say, with fallback to schema)
+  const runtimeValueType =
+    (model?.binding.type as HashTypes | undefined) ?? schemaValueType;
 
   const schemaDefaultValue =
-    model?.property_schema?.schemaAttrs?.defaultValue ??
-    schemaAttrs?.defaultValue;
+    (model?.schema.schemaAttrs.defaultValue as HashValueType | undefined) ??
+    (schemaAttrs?.defaultValue as HashValueType | undefined);
 
   // ─────────────────────────────────────────────
   // Final result object
@@ -346,8 +356,9 @@ export function useDeviceProperty(
     model,
     timeAttrs,
 
-    type: schemaValueType,
-    valueType: runtimeValueType,
+    //runtime vs schema split
+    type: runtimeValueType,
+    valueType: schemaValueType,
     defaultValue: schemaDefaultValue,
 
     deviceId: deviceId || undefined,

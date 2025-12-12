@@ -1,6 +1,7 @@
-import type { PropertySchema } from '../types/SchemaType';
-import type { PropertyModel } from '../types/PropertyType';
-import type { PropertyInfo } from '@/karabo_data/DeviceConfigInfo';
+import type { PropertySchema } from "../types/SchemaType";
+import type { PropertyModel } from "../types/PropertyType";
+import type { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
+import { PropertyBinding } from "../PropertyBinding";
 
 /**
  * Build a PropertyModel from:
@@ -19,12 +20,11 @@ export function buildPropertyModel(
   // }
 
   return {
-    property_schema: schema,
-    value: config?.value,
-    type: config?.type,
-    timeAttrs: config?.timeAttrs,
-
-    //store full snapshot
-    info: config,
+    schema,
+    binding: new PropertyBinding({
+      value: config?.value,
+      type: config?.type,
+      timeAttrs: config?.timeAttrs,
+    }),
   };
 }

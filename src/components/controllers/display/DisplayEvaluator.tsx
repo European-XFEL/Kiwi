@@ -152,7 +152,7 @@ const Evaluator: React.FC<EvaluatorProps> = ({
   const value = primary?.value;
   const model = primary?.model;
   const schemaAttrs =
-    primary?.schemaAttrs ?? model?.property_schema?.schemaAttrs;
+    primary?.schemaAttrs ?? model?.schema.schemaAttrs;
 
   const displayValue = React.useMemo(() => {
     const rawValue = value ?? schemaAttrs?.defaultValue ?? 0;

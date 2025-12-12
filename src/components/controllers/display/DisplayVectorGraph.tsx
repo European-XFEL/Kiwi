@@ -39,11 +39,11 @@ const getSchemaValueType = (
   // Priority:
   // 1) primary.valueType (if your container exposes it)
   // 2) primary.schemaAttrs.valueType
-  // 3) model.property_schema.schemaAttrs.valueType (deep fallback)
+  // 3) model.schema.schemaAttrs.valueType (deep fallback)
   return (
     (primary as any)?.valueType ??
     primary?.schemaAttrs?.valueType ??
-    primary?.model?.property_schema?.schemaAttrs?.valueType
+    primary?.model?.schema.schemaAttrs.valueType
   );
 };
 
