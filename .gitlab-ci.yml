@@ -5,32 +5,57 @@ workflow:
     - if: $CI_COMMIT_BRANCH
 
 stages:
+  - lint
   - test
 
 variables:
   NODE_ENV: test
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  PRE_COMMIT_HOME: "$CI_PROJECT_DIR/.cache/pre-commit"
 
-# Global cache config: keyed by lockfile contents so changes invalidate cache.
+.default_node_image: &node_image
+  image: node:20
+
+# Node/Yarn cache (global)
 cache:
   key:
     files:
       - yarn.lock
+  policy: pull-push
   paths:
+    - .yarn/cache/
+    - .yarn/unplugged/
+    - .yarn/build-state.yml
+    - .yarn/install-state.gz
+    - .pnp.cjs
+    - .pnp.loader.mjs
     - node_modules/
-    - .yarn
-  policy: pull
 
-.default_node_image: &node_image
-  image: node:20
+project-lint:
+  stage: lint
+  image: python:3.12
+
+  # pip + pre-commit cache (RW)
+  cache:
+    key: common-ci-cache
+    policy: pull-push
+    paths:
+      - .cache/pip
+      - .cache/pre-commit
+
+  script:
+    - python -m pip install --upgrade pip
+    - python -m pip install --cache-dir "$PIP_CACHE_DIR" pre-commit
+    - pre-commit run --all-files
 
 test:
   <<: *node_image
   stage: test
   before_script:
     - corepack enable
-  script:
     - node -v
     - npm -v
     - yarn -v
+  script:
     - yarn install --immutable
     - yarn cov --watchAll=false
