@@ -1,5 +1,5 @@
-import { AccessLevel } from "@/karabo_data/SchemaEnums";
-import { useGlobalStore } from "@/store/globalAppStateStore";
+import { AccessLevel } from '@/karabo_data/SchemaEnums';
+import { useGlobalStore } from '@/store/globalAppStateStore';
 
 export class AccessControlManager {
   private static _instance?: AccessControlManager;

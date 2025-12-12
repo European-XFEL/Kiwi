@@ -1,4 +1,4 @@
-import { useGlobalStore } from "@/store/globalAppStateStore";
+import { useGlobalStore } from '@/store/globalAppStateStore';
 
 export type TopicDisplayProps = {
   className?: string;
@@ -12,7 +12,7 @@ export default function TopicDisplay({ className }: TopicDisplayProps) {
   return (
     <div className={className}>
       <span className="text-sm text-muted-foreground">
-        Topic:{" "}
+        Topic:{' '}
         <span className="font-semibold text-foreground">
           {sessionInfo.guiServerTopic}
         </span>

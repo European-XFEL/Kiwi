@@ -2,9 +2,9 @@
  * DisplayList - controller component
  */
 
-import React from "react";
-import type { DisplayListProps } from "@/scene/scene_types/controllers/display";
-import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
+import React from 'react';
+import type { DisplayListProps } from '@/scene/scene_types/controllers/display';
+import { FONT_FAMILY_DEFAULT } from '@/components/shared/helpers/fontDefaults';
 
 const DisplayList: React.FC<DisplayListProps> = ({
   font_size,
@@ -22,7 +22,7 @@ const DisplayList: React.FC<DisplayListProps> = ({
       value ?? model?.property_schema?.schemaAttrs?.defaultValue ?? [];
 
     if (Array.isArray(actualValue)) {
-      return actualValue.join(", ");
+      return actualValue.join(', ');
     }
 
     return String(actualValue);
@@ -35,11 +35,11 @@ const DisplayList: React.FC<DisplayListProps> = ({
     >
       <span
         style={{
-          width: "100%",
-          overflow: "hidden",
-          whiteSpace: "nowrap",
-          textOverflow: "ellipsis",
-          display: "block",
+          width: '100%',
+          overflow: 'hidden',
+          whiteSpace: 'nowrap',
+          textOverflow: 'ellipsis',
+          display: 'block',
           fontFamily: FONT_FAMILY_DEFAULT,
           fontSize: font_size,
           fontWeight: font_weight?.toLowerCase(),

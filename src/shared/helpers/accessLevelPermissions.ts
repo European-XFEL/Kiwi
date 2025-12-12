@@ -1,4 +1,4 @@
-import { AccessLevel } from "@/karabo_data/SchemaEnums";
+import { AccessLevel } from '@/karabo_data/SchemaEnums';
 
 /**
  * CRUD-based permission capabilities per access level

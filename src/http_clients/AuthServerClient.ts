@@ -1,11 +1,11 @@
-import APIInfo from "../http_data/APIInfo";
-import AuthenticationCredentials from "../http_data/AuthenticationCredentials";
-import AuthenticationResult from "../http_data/AuthenticationResult";
-import AuthenticationAccessCodeResult from "../http_data/AuthenticationAccessCodeResult";
-import UserTokensResult from "../http_data/UserTokensResult";
-import UserTokensParams from "../http_data/UserTokensParams";
-import RefreshTokensParams from "../http_data/RefreshTokensParams";
-import BaseHttpClient from "./BaseHttpClient";
+import APIInfo from '../http_data/APIInfo';
+import AuthenticationCredentials from '../http_data/AuthenticationCredentials';
+import AuthenticationResult from '../http_data/AuthenticationResult';
+import AuthenticationAccessCodeResult from '../http_data/AuthenticationAccessCodeResult';
+import UserTokensResult from '../http_data/UserTokensResult';
+import UserTokensParams from '../http_data/UserTokensParams';
+import RefreshTokensParams from '../http_data/RefreshTokensParams';
+import BaseHttpClient from './BaseHttpClient';
 
 /**
  * Provides an HTTP client for interacting with an instance of the  Karabo Authentication Server.
@@ -15,20 +15,20 @@ import BaseHttpClient from "./BaseHttpClient";
  *
  */
 class AuthServerClient extends BaseHttpClient {
-  static CLIENT_HOSTNAME = "localhost";
+  static CLIENT_HOSTNAME = 'localhost';
 
   public constructor(baseURL: string) {
     super(baseURL);
   }
 
-  getAPIInfo = () => this.inst.get<APIInfo>("/");
+  getAPIInfo = () => this.inst.get<APIInfo>('/');
 
   async authenticateUser(
     cred: AuthenticationCredentials
   ): Promise<AuthenticationResult> {
     try {
       const res = await this.inst.post<AuthenticationAccessCodeResult>(
-        "/auth_access_code",
+        '/auth_access_code',
         cred
       );
       if (!res.success) {
@@ -49,7 +49,7 @@ class AuthServerClient extends BaseHttpClient {
         remember_login: true,
       };
       const tokens = await this.inst.post<UserTokensResult>(
-        "/user_tokens",
+        '/user_tokens',
         userTokensParams
       );
       return {
@@ -82,7 +82,7 @@ class AuthServerClient extends BaseHttpClient {
         client_hostname: AuthServerClient.CLIENT_HOSTNAME,
       };
       const res = await this.inst.post<UserTokensResult>(
-        "/refresh_tokens",
+        '/refresh_tokens',
         refreshTokenParams
       );
       if (!res.success) {

@@ -1,9 +1,9 @@
-import { Hash } from "karabo-ts";
-import { GuiServerConnector } from "./GuiServerConnector";
-import { DeviceSchemaInfo } from "@/karabo_data/DeviceSchemaInfo";
-import { deviceSchemaFromHash } from "@/karabo_hash/decoders/device_schema";
-import { buildGetDeviceSchemaHash } from "@/karabo_hash/builders/monitoring_device";
-import { deviceManager } from "@/device/DeviceManager";
+import { Hash } from 'karabo-ts';
+import { GuiServerConnector } from './GuiServerConnector';
+import { DeviceSchemaInfo } from '@/karabo_data/DeviceSchemaInfo';
+import { deviceSchemaFromHash } from '@/karabo_hash/decoders/device_schema';
+import { buildGetDeviceSchemaHash } from '@/karabo_hash/builders/monitoring_device';
+import { deviceManager } from '@/device/DeviceManager';
 
 type DeviceSchemaHandler = (deviceSchema: DeviceSchemaInfo) => void;
 
@@ -11,7 +11,7 @@ export class DeviceSchemaConnector {
   // #region Singleton
   private constructor() {
     GuiServerConnector.inst.registerHashHandler(
-      "deviceSchema",
+      'deviceSchema',
       this._onDeviceSchema
     );
   }

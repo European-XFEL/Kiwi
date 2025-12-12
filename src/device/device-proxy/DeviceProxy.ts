@@ -1,28 +1,28 @@
-import { EventEmitter } from "@/shared/helpers/EventEmitter";
-import type { DeviceModel } from "../device-model/types/DeviceType";
-import type { DeviceIndicatorDescriptor } from "@/device/device-proxy/types";
-import { DEVICE_INDICATORS } from "@/device/constants/overlay_indicator_constants";
+import { EventEmitter } from '@/shared/helpers/EventEmitter';
+import type { DeviceModel } from '../device-model/types/DeviceType';
+import type { DeviceIndicatorDescriptor } from '@/device/device-proxy/types';
+import { DEVICE_INDICATORS } from '@/device/constants/overlay_indicator_constants';
 
-import type { DeviceSchemaInfo } from "@/karabo_data/DeviceSchemaInfo";
+import type { DeviceSchemaInfo } from '@/karabo_data/DeviceSchemaInfo';
 import type {
   DeviceConfigInfo,
   PropertyInfo,
   PropertyInfoOptional,
-} from "@/karabo_data/DeviceConfigInfo";
-import type { DeviceInfo } from "@/karabo_data/TopologyInfo";
+} from '@/karabo_data/DeviceConfigInfo';
+import type { DeviceInfo } from '@/karabo_data/TopologyInfo';
 
-import type { HashValueType } from "@/karabo_hash/HashValueType";
-import type { Attributes } from "karabo-ts";
+import type { HashValueType } from '@/karabo_hash/HashValueType';
+import type { Attributes } from 'karabo-ts';
 
-import { ProxyStatus } from "@/device/enums";
+import { ProxyStatus } from '@/device/enums';
 import {
   buildDeviceModel,
   buildEmptyDeviceModel,
-} from "@/device/device-model/builders/DeviceModelBuilder";
+} from '@/device/device-model/builders/DeviceModelBuilder';
 
-import { mapGuiStateColor } from "@/components/shared/helpers/mapStateColor";
-import type { GuiStateColorKey } from "@/karabo_data/Indicators";
-import type { PropertyModel } from "../device-model/types/PropertyType";
+import { mapGuiStateColor } from '@/components/shared/helpers/mapStateColor';
+import type { GuiStateColorKey } from '@/karabo_data/Indicators';
+import type { PropertyModel } from '../device-model/types/PropertyType';
 
 export type SchemaChangedPayload = {
   deviceId: string;
@@ -31,12 +31,12 @@ export type SchemaChangedPayload = {
   allChanged: string[];
 };
 export type DeviceProxyEventName =
-  | "property_changed" // (path, value, timeAttrs?)
-  | "schema_changed" // (payload)
-  | "state_changed" // (oldState, newState)
-  | "status_changed" // (oldStatus, newStatus)
-  | "property_subscriber_changed" // (totalSubscribers)
-  | "destroyed";
+  | 'property_changed' // (path, value, timeAttrs?)
+  | 'schema_changed' // (payload)
+  | 'state_changed' // (oldState, newState)
+  | 'status_changed' // (oldStatus, newStatus)
+  | 'property_subscriber_changed' // (totalSubscribers)
+  | 'destroyed';
 
 /**
  * High-level proxy for a single device.
@@ -179,18 +179,18 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
     }
 
     // Always keep runtime.state in sync, even if there is no PropertyModel in the map
-    if (update.key === "state" && typeof update.value === "string") {
+    if (update.key === 'state' && typeof update.value === 'string') {
       const oldState = this._model.runtime.state;
       const newState = update.value;
       if (oldState !== newState) {
         this._model.runtime.state = newState;
-        this.emit("state_changed", oldState, newState);
+        this.emit('state_changed', oldState, newState);
       }
     }
 
     // Still notify subscribers (e.g. widgets bound to "DEVICE.state")
     this.emit(
-      "property_changed",
+      'property_changed',
       update.key,
       update.value as HashValueType,
       (prop?.timeAttrs ?? update.timeAttrs ?? {}) as Attributes
@@ -280,7 +280,7 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
 
     const allChanged = [...newProperties, ...updatedProperties];
 
-    this.emit("schema_changed", {
+    this.emit('schema_changed', {
       deviceId: this.deviceId,
       newProperties,
       updatedProperties,
@@ -293,7 +293,7 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
       const model = this._model.properties.get(path);
       if (model) {
         this.emit(
-          "property_changed",
+          'property_changed',
           path,
           model.value as HashValueType,
           (model.timeAttrs ?? {}) as Attributes
@@ -327,18 +327,18 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
       prop.info = info;
     }
 
-    if (key === "state" && typeof value === "string") {
+    if (key === 'state' && typeof value === 'string') {
       const oldState = this._model.runtime.state;
       const newState = value;
 
       if (oldState !== newState) {
         this._model.runtime.state = newState;
-        this.emit("state_changed", oldState, newState);
+        this.emit('state_changed', oldState, newState);
       }
     }
 
     this.emit(
-      "property_changed",
+      'property_changed',
       key,
       value as HashValueType,
       (prop?.timeAttrs ?? timeAttrs ?? {}) as Attributes
@@ -352,8 +352,8 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
     callback: (payload: SchemaChangedPayload) => void
   ): () => void {
     const listener = (payload: SchemaChangedPayload) => callback(payload);
-    this.subscribe("schema_changed", listener);
-    return () => this.unsubscribe("schema_changed", listener);
+    this.subscribe('schema_changed', listener);
+    return () => this.unsubscribe('schema_changed', listener);
   }
 
   subscribeToProperty(
@@ -372,10 +372,10 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
       }
     };
 
-    this.subscribe("property_changed", listener);
+    this.subscribe('property_changed', listener);
 
     return () => {
-      this.unsubscribe("property_changed", listener);
+      this.unsubscribe('property_changed', listener);
       this._decrementPropertySubscriber(propertyPath);
     };
   }
@@ -394,7 +394,7 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
 
     this._model.runtime.propertySubscriberCount++;
     this.emit(
-      "property_subscriber_changed",
+      'property_subscriber_changed',
       this._model.runtime.propertySubscriberCount
     );
 
@@ -416,7 +416,7 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
       0
     );
     this.emit(
-      "property_subscriber_changed",
+      'property_subscriber_changed',
       this._model.runtime.propertySubscriberCount
     );
 
@@ -429,7 +429,7 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
 
     if (oldStatus !== newStatus) {
       this._model.runtime.proxyStatus = newStatus;
-      this.emit("status_changed", oldStatus, newStatus);
+      this.emit('status_changed', oldStatus, newStatus);
     }
   }
 
@@ -469,7 +469,7 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
   destroy(): void {
     this._propertySubscriptions.clear();
     this._model.runtime.propertySubscriberCount = 0;
-    this.emit("destroyed");
+    this.emit('destroyed');
     this.removeAllListeners();
   }
 }

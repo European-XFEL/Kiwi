@@ -1,7 +1,7 @@
-const modules = import.meta.glob<string>("@/stateful_icons/iconset/*.svg", {
+const modules = import.meta.glob<string>('@/stateful_icons/iconset/*.svg', {
   eager: true,
-  query: "?raw",
-  import: "default",
+  query: '?raw',
+  import: 'default',
 });
 
 const statefulIconTextById: Record<string, string> = {};
@@ -20,8 +20,8 @@ for (const path in modules) {
     // if this ever happens, it means someone added an SVG without an id
     // we could log it to help debugging
     console.warn(
-      "[statefulIcons] SVG has no icon_ id:",
-      path.slice(path.lastIndexOf("/") + 1)
+      '[statefulIcons] SVG has no icon_ id:',
+      path.slice(path.lastIndexOf('/') + 1)
     );
   }
 }

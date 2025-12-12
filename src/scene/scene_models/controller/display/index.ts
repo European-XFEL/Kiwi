@@ -27,22 +27,22 @@ import type {
   DisplayVectorGraphProps,
   EvaluatorProps,
   DisplayTableElementProps,
-} from "@/scene/scene_types/controllers";
+} from '@/scene/scene_types/controllers';
 
-import { BaseControllerContainerModel } from "@/scene/scene_view/controller/BaseControllerContainerModel";
-import { BaseGraphElementModel } from "../BaseGraphElementModel";
+import { BaseControllerContainerModel } from '@/scene/scene_view/controller/BaseControllerContainerModel';
+import { BaseGraphElementModel } from '../BaseGraphElementModel';
 
 // ============================================================================
 // DISPLAY CONTROLLERS
 // ============================================================================
 
 export class DisplayLabelElementModel extends BaseControllerContainerModel<DisplayLabelProps> {
-  parent_component = "DisplayComponent" as const;
+  parent_component = 'DisplayComponent' as const;
 
   get props(): DisplayLabelProps {
     return {
-      element_type: "widget",
-      widget_type: "DisplayLabel",
+      element_type: 'widget',
+      widget_type: 'DisplayLabel',
       parent_component: this.parent_component,
       x: this.x,
       y: this.y,
@@ -57,12 +57,12 @@ export class DisplayLabelElementModel extends BaseControllerContainerModel<Displ
 }
 
 export class DisplayListElementModel extends BaseControllerContainerModel<DisplayListProps> {
-  parent_component = "DisplayComponent" as const;
+  parent_component = 'DisplayComponent' as const;
 
   get props(): DisplayListProps {
     return {
-      element_type: "widget",
-      widget_type: "DisplayList",
+      element_type: 'widget',
+      widget_type: 'DisplayList',
       parent_component: this.parent_component,
       x: this.x,
       y: this.y,
@@ -77,14 +77,14 @@ export class DisplayListElementModel extends BaseControllerContainerModel<Displa
 }
 
 export class DisplayFloatElementModel extends BaseControllerContainerModel<DisplayFloatProps> {
-  parent_component = "DisplayComponent" as const;
-  fmt = "g";
-  decimals = "8";
+  parent_component = 'DisplayComponent' as const;
+  fmt = 'g';
+  decimals = '8';
 
   get props(): DisplayFloatProps {
     return {
-      element_type: "widget",
-      widget_type: "DisplayFloat",
+      element_type: 'widget',
+      widget_type: 'DisplayFloat',
       parent_component: this.parent_component,
       x: this.x,
       y: this.y,
@@ -101,9 +101,9 @@ export class DisplayFloatElementModel extends BaseControllerContainerModel<Displ
 }
 
 export class DisplayAlarmFloatElementModel extends BaseControllerContainerModel<DisplayAlarmFloatProps> {
-  parent_component = "DisplayComponent" as const;
-  fmt = "g";
-  decimals = "8";
+  parent_component = 'DisplayComponent' as const;
+  fmt = 'g';
+  decimals = '8';
   alarm_high?: number;
   alarm_low?: number;
   warn_high?: number;
@@ -111,8 +111,8 @@ export class DisplayAlarmFloatElementModel extends BaseControllerContainerModel<
 
   get props(): DisplayAlarmFloatProps {
     return {
-      element_type: "widget",
-      widget_type: "DisplayAlarmFloat",
+      element_type: 'widget',
+      widget_type: 'DisplayAlarmFloat',
       parent_component: this.parent_component,
       x: this.x,
       y: this.y,
@@ -133,12 +133,12 @@ export class DisplayAlarmFloatElementModel extends BaseControllerContainerModel<
 }
 
 export class DisplayCheckBoxElementModel extends BaseControllerContainerModel<DisplayCheckBoxProps> {
-  parent_component = "DisplayComponent" as const;
+  parent_component = 'DisplayComponent' as const;
 
   get props(): DisplayCheckBoxProps {
     return {
-      element_type: "widget",
-      widget_type: "DisplayCheckBox",
+      element_type: 'widget',
+      widget_type: 'DisplayCheckBox',
       parent_component: this.parent_component,
       x: this.x,
       y: this.y,
@@ -156,12 +156,12 @@ export class DisplayCheckBoxElementModel extends BaseControllerContainerModel<Di
  * Display LineEdit - read-only text field
  */
 export class DisplayLineEditElementModel extends BaseControllerContainerModel<DisplayLineEditProps> {
-  parent_component = "DisplayComponent" as const;
+  parent_component = 'DisplayComponent' as const;
 
   get props(): DisplayLineEditProps {
     return {
-      element_type: "widget",
-      widget_type: "DisplayLineEdit",
+      element_type: 'widget',
+      widget_type: 'DisplayLineEdit',
       parent_component: this.parent_component,
       x: this.x,
       y: this.y,
@@ -176,13 +176,13 @@ export class DisplayLineEditElementModel extends BaseControllerContainerModel<Di
 }
 
 export class DisplayCommandElementModel extends BaseControllerContainerModel<DisplayCommandProps> {
-  parent_component = "DisplayComponent" as const;
+  parent_component = 'DisplayComponent' as const;
   requires_confirmation = false;
 
   get props(): DisplayCommandProps {
     return {
-      element_type: "widget",
-      widget_type: "DisplayCommand",
+      element_type: 'widget',
+      widget_type: 'DisplayCommand',
       parent_component: this.parent_component,
       x: this.x,
       y: this.y,
@@ -198,13 +198,13 @@ export class DisplayCommandElementModel extends BaseControllerContainerModel<Dis
 }
 
 export class DisplayStateColorElementModel extends BaseControllerContainerModel<DisplayStateColorProps> {
-  parent_component = "DisplayComponent" as const;
+  parent_component = 'DisplayComponent' as const;
   show_string = false;
 
   get props(): DisplayStateColorProps {
     return {
-      element_type: "widget",
-      widget_type: "DisplayStateColor",
+      element_type: 'widget',
+      widget_type: 'DisplayStateColor',
       parent_component: this.parent_component,
       x: this.x,
       y: this.y,
@@ -220,13 +220,13 @@ export class DisplayStateColorElementModel extends BaseControllerContainerModel<
 }
 
 export class DisplayStatefulIconElementModel extends BaseControllerContainerModel<DisplayStatefulIconProps> {
-  parent_component = "DisplayComponent" as const;
-  icon_name = "no_icon";
+  parent_component = 'DisplayComponent' as const;
+  icon_name = 'no_icon';
 
   get props(): DisplayStatefulIconProps {
     return {
-      element_type: "widget",
-      widget_type: "DisplayStatefulIcon",
+      element_type: 'widget',
+      widget_type: 'DisplayStatefulIcon',
       parent_component: this.parent_component,
       x: this.x,
       y: this.y,
@@ -248,7 +248,7 @@ export class DisplayTrendGraphElementModel extends BaseGraphElementModel<Display
   get props(): DisplayTrendGraphProps {
     return {
       ...this.getBaseGraphProps(),
-      widget_type: "DisplayTrendGraph",
+      widget_type: 'DisplayTrendGraph',
     };
   }
 }
@@ -265,7 +265,7 @@ export class DisplayVectorGraphElementModel extends BaseGraphElementModel<Displa
   get props(): DisplayVectorGraphProps {
     return {
       ...this.getBaseGraphProps(),
-      widget_type: "DisplayVectorGraph",
+      widget_type: 'DisplayVectorGraph',
       offset: this.offset,
       step: this.step,
       roi_tool: this.roi_tool,
@@ -274,13 +274,13 @@ export class DisplayVectorGraphElementModel extends BaseGraphElementModel<Displa
 }
 
 export class EvaluatorElementModel extends BaseControllerContainerModel<EvaluatorProps> {
-  parent_component = "DisplayComponent" as const;
-  expression = "";
+  parent_component = 'DisplayComponent' as const;
+  expression = '';
 
   get props(): EvaluatorProps {
     return {
-      element_type: "widget",
-      widget_type: "Evaluator",
+      element_type: 'widget',
+      widget_type: 'Evaluator',
       parent_component: this.parent_component,
       x: this.x,
       y: this.y,
@@ -296,13 +296,13 @@ export class EvaluatorElementModel extends BaseControllerContainerModel<Evaluato
 }
 
 export class DisplayTableElementModel extends BaseControllerContainerModel<DisplayTableElementProps> {
-  parent_component = "DisplayComponent" as const;
+  parent_component = 'DisplayComponent' as const;
   resizeToContents = false;
 
   get props(): DisplayTableElementProps {
     return {
-      element_type: "widget",
-      widget_type: "DisplayTableElement",
+      element_type: 'widget',
+      widget_type: 'DisplayTableElement',
       parent_component: this.parent_component,
       x: this.x,
       y: this.y,

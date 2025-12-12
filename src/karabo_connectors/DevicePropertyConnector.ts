@@ -1,17 +1,17 @@
-import { Hash, HashTypes, HashValue } from "karabo-ts";
-import { GuiServerConnector } from "./GuiServerConnector";
+import { Hash, HashTypes, HashValue } from 'karabo-ts';
+import { GuiServerConnector } from './GuiServerConnector';
 import {
   buildStartMonitoringHash,
   buildStopMonitoringHash,
-} from "../karabo_hash/builders/monitoring_device";
-import { devicesConfigsFromHash } from "../karabo_hash/decoders/device_config";
-import type { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
-import { TopologyConnector } from "./TopologyConnector";
-import { DeviceSchemaConnector } from "./DeviceSchemaConnector";
-import { DeviceInfo, TopologyEventType } from "@/karabo_data/TopologyInfo";
-import type { DeviceSchemaInfo } from "@/karabo_data/DeviceSchemaInfo";
-import type { VectorElementType } from "@/karabo_hash/HashValueType";
-import { deviceManager } from "@/device/DeviceManager";
+} from '../karabo_hash/builders/monitoring_device';
+import { devicesConfigsFromHash } from '../karabo_hash/decoders/device_config';
+import type { PropertyInfo } from '@/karabo_data/DeviceConfigInfo';
+import { TopologyConnector } from './TopologyConnector';
+import { DeviceSchemaConnector } from './DeviceSchemaConnector';
+import { DeviceInfo, TopologyEventType } from '@/karabo_data/TopologyInfo';
+import type { DeviceSchemaInfo } from '@/karabo_data/DeviceSchemaInfo';
+import type { VectorElementType } from '@/karabo_hash/HashValueType';
+import { deviceManager } from '@/device/DeviceManager';
 
 // VectorElementType[][] is the type used for the value of a table property.
 // Each VectorElementType is the value of a table cell with the row being
@@ -24,7 +24,7 @@ export class DevicePropertyConnector {
   // #region Singleton
   private constructor() {
     GuiServerConnector.inst.registerHashHandler(
-      "deviceConfigurations",
+      'deviceConfigurations',
       this._onDeviceConfigurations
     );
   }

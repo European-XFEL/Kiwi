@@ -1,7 +1,7 @@
-import { Attributes } from "karabo-ts";
-import { Timestamp } from "../helpers/timestamps";
+import { Attributes } from 'karabo-ts';
+import { Timestamp } from '../helpers/timestamps';
 
-type PlotEngine = "PLOTLY" | "ECHART";
+type PlotEngine = 'PLOTLY' | 'ECHART';
 
 interface PlotDataPoint {
   timestamp: number | bigint | Attributes | Date | Timestamp;
@@ -17,7 +17,7 @@ interface PlotConfig {
 export class PlotData {
   private dataPoints: PlotDataPoint[];
   private plot_config: PlotConfig;
-  plot_engine: PlotEngine = "ECHART";
+  plot_engine: PlotEngine = 'ECHART';
 
   constructor(
     dataPoints: PlotDataPoint[],

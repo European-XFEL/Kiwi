@@ -1,17 +1,17 @@
-import React, { useEffect } from "react";
-import { initAppSettings } from "./AppSettings";
-import { useAppSettingsStore } from "./store/appSettingsStore";
-import { useGlobalStore } from "./store/globalAppStateStore";
-import { AccessLevel } from "@/karabo_data/SchemaEnums";
-import { GuiServerConnector } from "./karabo_connectors/GuiServerConnector";
-import AuthServerClient from "./http_clients/AuthServerClient";
-import { BrowserRouter } from "react-router-dom";
-import AppRouter from "./components/router/AppRouter";
-import { appRoutes } from "./routes";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import React, { useEffect } from 'react';
+import { initAppSettings } from './AppSettings';
+import { useAppSettingsStore } from './store/appSettingsStore';
+import { useGlobalStore } from './store/globalAppStateStore';
+import { AccessLevel } from '@/karabo_data/SchemaEnums';
+import { GuiServerConnector } from './karabo_connectors/GuiServerConnector';
+import AuthServerClient from './http_clients/AuthServerClient';
+import { BrowserRouter } from 'react-router-dom';
+import AppRouter from './components/router/AppRouter';
+import { appRoutes } from './routes';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 const App: React.FC = () => {
-  const executedOnceRef = React.useRef("");
+  const executedOnceRef = React.useRef('');
   const { setWsProxyUrl, setAuthServerUrl } = useAppSettingsStore();
   const { setError, setLoggedIn, setLoggedOut } = useGlobalStore();
 
@@ -21,7 +21,7 @@ const App: React.FC = () => {
     setAuthServerUrl(appSettings.authServerURL);
 
     if (!executedOnceRef.current) {
-      executedOnceRef.current = "true";
+      executedOnceRef.current = 'true';
 
       GuiServerConnector.inst.onSessionDropped = (err_msg: string) => {
         setError(err_msg);

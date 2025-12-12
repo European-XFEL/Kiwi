@@ -1,4 +1,4 @@
-import { Hash, makeHash } from "karabo-ts";
+import { Hash, makeHash } from 'karabo-ts';
 
 export const buildLoginHash = (
   clientId: string,
@@ -7,10 +7,10 @@ export const buildLoginHash = (
   clientUserId?: string
 ): Hash => {
   return makeHash({
-    type: "login",
+    type: 'login',
     clientId: clientId,
     version: version,
     ...(oneTimeToken && { oneTimeToken: oneTimeToken }),
     ...(clientUserId && { clientUserId: clientUserId }),
   });
-}
+};

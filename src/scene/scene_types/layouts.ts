@@ -4,7 +4,7 @@
  * All layouts extend BaseLayoutProps and can contain children.
  */
 
-import { BaseLayoutProps, BaseSceneObjectProps } from "./base";
+import { BaseLayoutProps, BaseSceneObjectProps } from './base';
 
 /* ──────────────────────────────────────────────────────────────────────────
  * BoxLayout
@@ -17,7 +17,7 @@ import { BaseLayoutProps, BaseSceneObjectProps } from "./base";
  * 0 = LeftToRight, 1 = RightToLeft, 2 = TopToBottom, 3 = BottomToTop
  */
 export interface BoxLayoutProps extends BaseLayoutProps {
-  layout_type: "BoxLayout";
+  layout_type: 'BoxLayout';
   direction: 0 | 1 | 2 | 3;
 }
 
@@ -31,7 +31,7 @@ export interface BoxLayoutProps extends BaseLayoutProps {
  * The optional `entire` property can represent a full scene grouping.
  */
 export interface FixedLayoutProps extends BaseLayoutProps {
-  layout_type: "FixedLayout";
+  layout_type: 'FixedLayout';
   entire?: BaseSceneObjectProps;
 }
 
@@ -46,7 +46,7 @@ export interface FixedLayoutProps extends BaseLayoutProps {
  * ({ row, col, rowspan, colspan }).
  */
 export interface GridLayoutProps extends BaseLayoutProps {
-  layout_type: "GridLayout";
+  layout_type: 'GridLayout';
 }
 
 // ============================================================================

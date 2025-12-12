@@ -5,15 +5,15 @@
  * Produces both a hierarchical SceneModel and a flat list for canvas rendering.
  */
 
-import { parseSceneChildren } from "../scene_intermediate_parser";
-import { defaultRegistry } from "./Registry";
-import { resolveRegistryKey } from "./KeyResolver";
-import { registerAllBuilders } from "./registerBuilders";
-import { SceneModel } from "../scene_models/SceneModel";
+import { parseSceneChildren } from '../scene_intermediate_parser';
+import { defaultRegistry } from './Registry';
+import { resolveRegistryKey } from './KeyResolver';
+import { registerAllBuilders } from './registerBuilders';
+import { SceneModel } from '../scene_models/SceneModel';
 import {
   BaseSceneElementModel,
   BaseLayoutElementModel,
-} from "../scene_models/BaseModels";
+} from '../scene_models/BaseModels';
 
 export class Scene {
   private _sceneModel: SceneModel;
@@ -27,10 +27,10 @@ export class Scene {
 
     // Scene metadata
     const sceneModel = new SceneModel({
-      file_format_version: parseInt(rawSvg["@_krb:version"] || "1", 10),
-      uuid: rawSvg["@_krb:uuid"],
-      width: parseFloat(rawSvg["@_width"] || "1024"),
-      height: parseFloat(rawSvg["@_height"] || "768"),
+      file_format_version: parseInt(rawSvg['@_krb:version'] || '1', 10),
+      uuid: rawSvg['@_krb:uuid'],
+      width: parseFloat(rawSvg['@_width'] || '1024'),
+      height: parseFloat(rawSvg['@_height'] || '768'),
     });
 
     // Parse and build element tree
@@ -85,7 +85,7 @@ export class Scene {
   private buildElement(jsonElement: any): BaseSceneElementModel | null {
     const key = resolveRegistryKey(jsonElement);
     if (!key) {
-      console.warn("Unable to resolve registry key:", jsonElement);
+      console.warn('Unable to resolve registry key:', jsonElement);
       return null;
     }
 
@@ -137,11 +137,11 @@ export class Scene {
     dy: number
   ): T {
     const hasX =
-      Object.prototype.hasOwnProperty.call(el, "x") &&
-      typeof (el as any).x === "number";
+      Object.prototype.hasOwnProperty.call(el, 'x') &&
+      typeof (el as any).x === 'number';
     const hasY =
-      Object.prototype.hasOwnProperty.call(el, "y") &&
-      typeof (el as any).y === "number";
+      Object.prototype.hasOwnProperty.call(el, 'y') &&
+      typeof (el as any).y === 'number';
     if (!hasX && !hasY) return el;
 
     const clone = Object.create(Object.getPrototypeOf(el)) as T;

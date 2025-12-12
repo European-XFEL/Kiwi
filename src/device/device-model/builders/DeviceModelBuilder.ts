@@ -1,14 +1,14 @@
-import type { DeviceSchemaInfo } from "@/karabo_data/DeviceSchemaInfo";
-import type { DeviceConfigInfo } from "@/karabo_data/DeviceConfigInfo";
-import type { DeviceInfo } from "@/karabo_data/TopologyInfo";
-import type { DeviceSchema, PropertySchema } from "../types/SchemaType";
+import type { DeviceSchemaInfo } from '@/karabo_data/DeviceSchemaInfo';
+import type { DeviceConfigInfo } from '@/karabo_data/DeviceConfigInfo';
+import type { DeviceInfo } from '@/karabo_data/TopologyInfo';
+import type { DeviceSchema, PropertySchema } from '../types/SchemaType';
 import type {
   DeviceModel,
   DeviceIdentity,
   DeviceRuntimeState,
-} from "../types/DeviceType";
-import { ProxyStatus } from "@/device/enums";
-import { buildPropertyMap } from "./PropertyMapBuilder";
+} from '../types/DeviceType';
+import { ProxyStatus } from '@/device/enums';
+import { buildPropertyMap } from './PropertyMapBuilder';
 
 function buildDeviceSchema(info: DeviceSchemaInfo): DeviceSchema {
   return {
@@ -58,7 +58,7 @@ export function buildDeviceModel(
 
   // Extract state property if present
   for (const prop of configInfo.properties) {
-    if (prop.key === "state" && typeof prop.value === "string") {
+    if (prop.key === 'state' && typeof prop.value === 'string') {
       runtime.state = prop.value;
       break;
     }

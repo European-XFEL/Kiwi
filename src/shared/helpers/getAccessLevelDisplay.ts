@@ -1,4 +1,4 @@
-import { AccessLevel } from "@/karabo_data/SchemaEnums";
+import { AccessLevel } from '@/karabo_data/SchemaEnums';
 
 export const getAccessLevelDisplay = (accessLevel?: number) => {
   if (accessLevel === undefined) return null;
@@ -10,9 +10,9 @@ export const getAccessLevelDisplay = (accessLevel?: number) => {
   const levelKey = levelName?.toUpperCase();
 
   const variants: Record<string, { className: string }> = {
-    EXPERT: { className: "bg-blue-100 text-blue-700 hover:bg-blue-100" },
-    OPERATOR: { className: "bg-green-100 text-green-700 hover:bg-green-100" },
-    OBSERVER: { className: "bg-gray-100 text-gray-700 hover:bg-gray-100" },
+    EXPERT: { className: 'bg-blue-100 text-blue-700 hover:bg-blue-100' },
+    OPERATOR: { className: 'bg-green-100 text-green-700 hover:bg-green-100' },
+    OBSERVER: { className: 'bg-gray-100 text-gray-700 hover:bg-gray-100' },
   };
 
   return {

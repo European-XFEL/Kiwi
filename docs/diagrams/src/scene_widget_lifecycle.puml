@@ -1,6 +1,6 @@
 @startuml scene_widget_lifecycle
-title 
-Lifecycle of a Scene Widget 
+title
+Lifecycle of a Scene Widget
 (based on the simpler DisplayLabel Widget - no children)
 end title
 hide footbox
@@ -16,18 +16,18 @@ participant "karabo_hash/builders/monitoring_device" as HashBuilder << module fi
 group Component Mounting
     React -> DisplayLabel: onMount
     note right
-    There's no method **onMount** 
-    on the component. React 
-    calls the first callable 
+    There's no method **onMount**
+    on the component. React
+    calls the first callable
     provided to React.useEffect()
     end note
     DisplayLabel -> DevicePropertyConnector: registryPropertyMonitor(deviceId, propertyId, onPropertyUpdateCallback)
     DevicePropertyConnector -> HashBuilder : buildStartMonitoringHash(deviceId)
-    DevicePropertyConnector -> GuiServerConnector: sendHash(startMonitoringHash) 
+    DevicePropertyConnector -> GuiServerConnector: sendHash(startMonitoringHash)
     DevicePropertyConnector -> DevicePropertyConnector: devicePropertyMonitors.add(deviceId, propertyId, onPropertyUpdateCallback)
     note right
-    devicePropertyMonitors is a map 
-    of property to property update 
+    devicePropertyMonitors is a map
+    of property to property update
     handlers internal to the property
     connector singleton. The **add**
     method doesn't exist in the code,
@@ -45,7 +45,7 @@ GuiServerConnector -> HashDecoder: blobToHash(wsMessagePayload)
 HashDecoder -> GuiServerConnector: deviceConfigsHash
 GuiServerConnector -> DevicePropertyConnector: onDeviceConfigurationsCallback(deviceConfigsHash)
 note right
-onDeviceConfigurationsCallback is a handler 
+onDeviceConfigurationsCallback is a handler
 for device configuration updates that
 the DevicePropertyConnector had already set
 as part of its initialization by calling
@@ -55,7 +55,7 @@ end note
 DevicePropertyConnector -> DisplayLabel: onPropertyUpdateCallback
 DisplayLabel -> DisplayLabel: setLabelValue(updatedValue)
 note right
-**labelValue** is part of the 
+**labelValue** is part of the
 DisplayLabel component state,
 so its update triggers a
 render-cycle of the label
@@ -70,15 +70,15 @@ group Component Unmounting
     React -> DisplayLabel: onUnmount
     note right
     There's no method **onUnmount**
-    on the component. React 
-    calls the second callable 
+    on the component. React
+    calls the second callable
     provided to React.useEffect()
     end note
     DisplayLabel -> DevicePropertyConnector: unregisterPropertyMonitor(deviceId, propertyId, onPropertyUpdateCallback)
     DevicePropertyConnector -> DevicePropertyConnector: devicePropertyMonitors.remove(deviceId, propertyId, onPropertyUpdateCallback)
     note right
-    devicePropertyMonitors is a map 
-    of property to property update 
+    devicePropertyMonitors is a map
+    of property to property update
     handlers internal to the property
     connector singleton. The **remove**
     method doesn't exist in the code,

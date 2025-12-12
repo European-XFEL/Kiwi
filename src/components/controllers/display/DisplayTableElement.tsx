@@ -3,8 +3,8 @@
  *
  */
 
-import React from "react";
-import type { DisplayTableElementProps } from "@/scene/scene_types/controllers/display";
+import React from 'react';
+import type { DisplayTableElementProps } from '@/scene/scene_types/controllers/display';
 
 import {
   Table,
@@ -13,18 +13,18 @@ import {
   TableHead,
   TableRow,
   TableCell,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 
-import { TablePagination } from "@/components/shared/TablePagination";
+import { TablePagination } from '@/components/shared/TablePagination';
 
 import {
   formatTableCell,
   isNumericType,
-} from "@/components/shared/helpers/formatTableCell";
+} from '@/components/shared/helpers/formatTableCell';
 
-import type { VectorElementType } from "@/karabo_hash/HashValueType";
+import type { VectorElementType } from '@/karabo_hash/HashValueType';
 
-import type { TableColumnInfo } from "@/karabo_data/DeviceSchemaInfo";
+import type { TableColumnInfo } from '@/karabo_data/DeviceSchemaInfo';
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -43,7 +43,7 @@ function normalizeTableCells(raw: unknown): VectorElementType[][] {
   }
 
   // Shape B: legacy row-object shape
-  if (raw[0] && typeof raw[0] === "object") {
+  if (raw[0] && typeof raw[0] === 'object') {
     try {
       const rows = raw as Record<string, unknown>[];
 
@@ -73,7 +73,7 @@ function normalizeTableCells(raw: unknown): VectorElementType[][] {
  * Typed return prevents implicit-any in render loops.
  */
 function extractColumnsFromPrimary(
-  primary: DisplayTableElementProps["primary"]
+  primary: DisplayTableElementProps['primary']
 ): TableColumnInfo[] {
   const fromSchemaAttrs = (primary?.schemaAttrs as any)?.rowSchema as
     | TableColumnInfo[]
@@ -197,7 +197,7 @@ const DisplayTableElement: React.FC<DisplayTableElementProps> = ({
                           <TableCell
                             key={`cell-${cellIdx}-${column.columnName}`}
                             className={`border border-gray-300 px-2 py-1 text-[11px] leading-tight text-gray-900 align-middle whitespace-nowrap ${
-                              isNumeric ? "text-right" : "text-left"
+                              isNumeric ? 'text-right' : 'text-left'
                             }`}
                           >
                             {formattedValue}

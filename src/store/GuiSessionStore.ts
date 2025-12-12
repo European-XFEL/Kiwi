@@ -1,5 +1,5 @@
-import DeepVault from "deepvault";
-import { AccessLevel } from "@/karabo_data/SchemaEnums";
+import DeepVault from 'deepvault';
+import { AccessLevel } from '@/karabo_data/SchemaEnums';
 
 /**  Subset of GuiSessionInfo needed to resume a GUI Session when the app starts. */
 export interface GuiSessionData {
@@ -19,7 +19,7 @@ export class GuiSessionStore {
   static get inst(): GuiSessionStore {
     if (GuiSessionStore.#_inst == undefined) {
       GuiSessionStore.#_inst = new GuiSessionStore();
-      GuiSessionStore.#_inst.#_vault = new DeepVault("gui_session_data");
+      GuiSessionStore.#_inst.#_vault = new DeepVault('gui_session_data');
     }
     return GuiSessionStore.#_inst;
   }

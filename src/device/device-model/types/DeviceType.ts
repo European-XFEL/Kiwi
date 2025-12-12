@@ -1,11 +1,11 @@
-import type { DeviceSchema } from "./SchemaType";
-import { ProxyStatus } from "@/device/enums";
-import { DeviceInfo } from "@/karabo_data/TopologyInfo";
-import { PropertyModel } from "./PropertyType";
+import type { DeviceSchema } from './SchemaType';
+import { ProxyStatus } from '@/device/enums';
+import { DeviceInfo } from '@/karabo_data/TopologyInfo';
+import { PropertyModel } from './PropertyType';
 
 export type DeviceIdentity = Pick<
   DeviceInfo,
-  "deviceId" | "classId" | "serverId" | "host" | "karaboVersion"
+  'deviceId' | 'classId' | 'serverId' | 'host' | 'karaboVersion'
 >;
 
 export interface DeviceRuntimeState {

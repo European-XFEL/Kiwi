@@ -1,4 +1,4 @@
-import { Lock, LockOpen } from "lucide-react";
+import { Lock, LockOpen } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -6,14 +6,14 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { useAccessLevel } from "@/components/shared/hooks/useAccessLevel";
-import { useGlobalStore } from "@/store/globalAppStateStore";
-import { AccessLevel } from "@/karabo_data/SchemaEnums";
-import { getAccessLevelDisplay } from "@/shared/helpers/getAccessLevelDisplay";
-import { GuiSessionStore } from "@/store/GuiSessionStore";
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useAccessLevel } from '@/components/shared/hooks/useAccessLevel';
+import { useGlobalStore } from '@/store/globalAppStateStore';
+import { AccessLevel } from '@/karabo_data/SchemaEnums';
+import { getAccessLevelDisplay } from '@/shared/helpers/getAccessLevelDisplay';
+import { GuiSessionStore } from '@/store/GuiSessionStore';
 
 export interface AccessLevelSelectorProps {
   compact?: boolean;
@@ -65,11 +65,11 @@ export default function AccessLevelSelector({
         );
       } else if (storedSession?.refreshToken) {
         console.warn(
-          "Access level change not persisted: Auth sessions are controlled by backend"
+          'Access level change not persisted: Auth sessions are controlled by backend'
         );
       }
     } catch (error) {
-      console.error("Failed to persist access level change:", error);
+      console.error('Failed to persist access level change:', error);
     }
   };
 
@@ -78,7 +78,7 @@ export default function AccessLevelSelector({
     return (
       <Button
         variant="ghost"
-        size={compact ? "icon" : "sm"}
+        size={compact ? 'icon' : 'sm'}
         disabled
         aria-label="Access level locked (Observer)"
         className="cursor-not-allowed opacity-60"
@@ -102,7 +102,7 @@ export default function AccessLevelSelector({
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          size={compact ? "icon" : "sm"}
+          size={compact ? 'icon' : 'sm'}
           aria-label="Change access level"
           className="hover:bg-accent"
         >
@@ -136,13 +136,13 @@ export default function AccessLevelSelector({
                 onClick={() => handleAccessLevelChange(level)}
                 disabled={isDisabled}
                 className={`cursor-pointer ${
-                  isCurrentLevel ? "bg-accent" : ""
-                } ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
+                  isCurrentLevel ? 'bg-accent' : ''
+                } ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <div className="flex items-center gap-2 w-full">
                   <div
                     className={`w-2 h-2 rounded-full ${
-                      isCurrentLevel ? levelInfo?.className : "bg-gray-300"
+                      isCurrentLevel ? levelInfo?.className : 'bg-gray-300'
                     }`}
                   />
                   <span className="flex-1">{levelInfo?.label}</span>

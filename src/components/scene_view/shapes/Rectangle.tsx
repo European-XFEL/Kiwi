@@ -1,5 +1,5 @@
-import React from "react";
-import { RectangleProps } from "@/scene/scene_types/shapes";
+import React from 'react';
+import { RectangleProps } from '@/scene/scene_types/shapes';
 
 /**
  * Rectangle Component - Renders a pure SVG rectangle element.
@@ -25,7 +25,7 @@ const Rectangle: React.FC<RectangleProps> = (props) => {
 
   // Ensure stroke-dasharray is a valid string
   const dashArray = Array.isArray(stroke_dasharray)
-    ? stroke_dasharray.join(" ")
+    ? stroke_dasharray.join(' ')
     : stroke_dasharray;
 
   return (

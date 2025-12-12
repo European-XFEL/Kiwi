@@ -1,18 +1,18 @@
-import React, { useEffect, useRef, useState } from "react";
-import { GuiServerConnector } from "@/karabo_connectors/GuiServerConnector";
-import { AccessLevel } from "@/karabo_data/SchemaEnums";
-import { GuiServerInfo } from "@/karabo_data/GuiServerInfo";
-import AuthServerClient from "@/http_clients/AuthServerClient";
-import AuthenticationResult from "@/http_data/AuthenticationResult";
-import { useAppSettingsStore } from "@/store/appSettingsStore";
-import { useGlobalStore } from "@/store/globalAppStateStore";
-import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardFooter } from "../ui/card";
-import { Button } from "../ui/button";
-import ServerProbeForm from "./ServerProbeForm";
-import AuthenticationForm from "./AuthenticationForm";
-import AccessLevelForm from "./AccesslevelForm";
-import LoginStatus from "./LoginStatus";
+import React, { useEffect, useRef, useState } from 'react';
+import { GuiServerConnector } from '@/karabo_connectors/GuiServerConnector';
+import { AccessLevel } from '@/karabo_data/SchemaEnums';
+import { GuiServerInfo } from '@/karabo_data/GuiServerInfo';
+import AuthServerClient from '@/http_clients/AuthServerClient';
+import AuthenticationResult from '@/http_data/AuthenticationResult';
+import { useAppSettingsStore } from '@/store/appSettingsStore';
+import { useGlobalStore } from '@/store/globalAppStateStore';
+import { useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardFooter } from '../ui/card';
+import { Button } from '../ui/button';
+import ServerProbeForm from './ServerProbeForm';
+import AuthenticationForm from './AuthenticationForm';
+import AccessLevelForm from './AccesslevelForm';
+import LoginStatus from './LoginStatus';
 
 enum ActivityStatus {
   NO_ACTIVITY,
@@ -28,26 +28,26 @@ const LoginPanel: React.FC = () => {
   const [activityStatus, setActivityStatus] = useState<ActivityStatus>(
     ActivityStatus.NO_ACTIVITY
   );
-  const [errorMsg, setErrorMessage] = useState("");
+  const [errorMsg, setErrorMessage] = useState('');
   const [probedServerInfo, setProbedServerInfo] =
     useState<GuiServerInfo | null>(null);
 
-  const [userName, setUserName] = useState("");
-  const [passwd, setPasswd] = useState("");
+  const [userName, setUserName] = useState('');
+  const [passwd, setPasswd] = useState('');
   const [accessLevel, setAccessLevel] = useState(0);
 
   // Keep inputs as controlled strings to avoid NaN while typing
-  const [host, setHost] = useState<string>("localhost");
-  const [port, setPort] = useState<string>("44444");
+  const [host, setHost] = useState<string>('localhost');
+  const [port, setPort] = useState<string>('44444');
 
   const { authServerURL } = useAppSettingsStore();
-  const authServerURLRef = useRef("");
+  const authServerURLRef = useRef('');
   const didInitialProbeRef = useRef(false);
   const debounceMs = 2000;
 
   const onProbeSuccess = (serverInfo: GuiServerInfo) => {
     setProbedServerInfo(serverInfo);
-    setErrorMessage("");
+    setErrorMessage('');
     setActivityStatus(ActivityStatus.NO_ACTIVITY);
   };
 
@@ -73,8 +73,8 @@ const LoginPanel: React.FC = () => {
     if (!authServerURLRef.current) authServerURLRef.current = authServerURL;
 
     if (!didInitialProbeRef.current) {
-      const savedHost = localStorage.getItem("lastHost") || "localhost";
-      const savedPort = localStorage.getItem("lastPort") || "44444";
+      const savedHost = localStorage.getItem('lastHost') || 'localhost';
+      const savedPort = localStorage.getItem('lastPort') || '44444';
       setHost(savedHost);
       setPort(savedPort);
 
@@ -111,8 +111,8 @@ const LoginPanel: React.FC = () => {
     topic: string,
     serverVersion: string
   ) => {
-    localStorage.setItem("lastHost", host);
-    localStorage.setItem("lastPort", `${port}`);
+    localStorage.setItem('lastHost', host);
+    localStorage.setItem('lastPort', `${port}`);
     setActivityStatus(ActivityStatus.NO_ACTIVITY);
 
     setLoggedIn({
@@ -125,7 +125,7 @@ const LoginPanel: React.FC = () => {
       sessionStartEpoc: Date.now(),
     });
 
-    navigate("no_scene");
+    navigate('no_scene');
   };
 
   const onSessionStartFailure = (errMsg: string) => {
@@ -177,13 +177,13 @@ const LoginPanel: React.FC = () => {
   const getStatusText = () => {
     switch (activityStatus) {
       case ActivityStatus.AUTH_USER:
-        return "Authenticating user...";
+        return 'Authenticating user...';
       case ActivityStatus.CONNECTING_SERVER:
-        return "Connecting to GUI Server...";
+        return 'Connecting to GUI Server...';
       case ActivityStatus.PROBING_SERVER:
-        return "Probing GUI Server...";
+        return 'Probing GUI Server...';
       default:
-        return "";
+        return '';
     }
   };
 
@@ -219,11 +219,11 @@ const LoginPanel: React.FC = () => {
           <AuthenticationForm
             onUserNameChange={(name) => {
               setUserName(name);
-              if (errorMsg) setErrorMessage("");
+              if (errorMsg) setErrorMessage('');
             }}
             onPasswordChange={(pwd) => {
               setPasswd(pwd);
-              if (errorMsg) setErrorMessage("");
+              if (errorMsg) setErrorMessage('');
             }}
             onSubmit={doLogin}
             disabled={activityStatus !== ActivityStatus.NO_ACTIVITY}
@@ -233,7 +233,7 @@ const LoginPanel: React.FC = () => {
             <AccessLevelForm
               onUserNameChange={(name) => {
                 setUserName(name);
-                if (errorMsg) setErrorMessage("");
+                if (errorMsg) setErrorMessage('');
               }}
               onAccessLevelChange={setAccessLevel}
               disabled={activityStatus !== ActivityStatus.NO_ACTIVITY}

@@ -1,18 +1,18 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import { RecentSceneModel } from "../view_models/RecentScenesModel";
-import { useGlobalStore } from "../store/globalAppStateStore";
-import useRecentStore from "../store/recentScenesStore";
-import RecentScenesList from "./scene/RecentScenesList";
-import BookmarkInfo from "./info/BookmarkInfo";
-import { Separator } from "./ui/separator";
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { RecentSceneModel } from '../view_models/RecentScenesModel';
+import { useGlobalStore } from '../store/globalAppStateStore';
+import useRecentStore from '../store/recentScenesStore';
+import RecentScenesList from './scene/RecentScenesList';
+import BookmarkInfo from './info/BookmarkInfo';
+import { Separator } from './ui/separator';
 
 const NoScenePanel: React.FC = () => {
   const { sessionInfo } = useGlobalStore();
   const { getRecentScenesForUser, removeRecentScene } = useRecentStore();
   const navigate = useNavigate();
 
-  document.title = "Kiwi";
+  document.title = 'Kiwi';
 
   const loggedUser = sessionInfo?.loggedUser ?? null;
   const userScenes: RecentSceneModel[] = loggedUser

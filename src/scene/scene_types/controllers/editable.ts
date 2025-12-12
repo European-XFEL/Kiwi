@@ -1,5 +1,5 @@
-import { BaseEditWidgetProps } from "./../base";
-import { BaseControllerWidgetProps } from "../controller_base";
+import { BaseEditWidgetProps } from './../base';
+import { BaseControllerWidgetProps } from '../controller_base';
 
 /**
  * Editable controller widget prop definitions (user-input components).
@@ -15,8 +15,8 @@ import { BaseControllerWidgetProps } from "../controller_base";
 
  */
 export interface EditableComboBoxProps extends BaseControllerWidgetProps {
-  widget_type: "EditableComboBox";
-  parent_component: "EditableApplyLaterComponent";
+  widget_type: 'EditableComboBox';
+  parent_component: 'EditableApplyLaterComponent';
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -28,8 +28,8 @@ export interface EditableComboBoxProps extends BaseControllerWidgetProps {
  * Used for VectorBinding properties.
  */
 export interface EditableListProps extends BaseControllerWidgetProps {
-  widget_type: "EditableList";
-  parent_component: "EditableApplyLaterComponent";
+  widget_type: 'EditableList';
+  parent_component: 'EditableApplyLaterComponent';
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -38,10 +38,10 @@ export interface EditableListProps extends BaseControllerWidgetProps {
 
 /** List editor with regex validation per item. */
 export interface EditableRegexListProps extends BaseEditWidgetProps {
-  widget_type: "EditableRegexList";
+  widget_type: 'EditableRegexList';
   keys: string[];
   font_size: number | string;
-  font_weight: "normal" | "bold";
+  font_weight: 'normal' | 'bold';
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -50,8 +50,8 @@ export interface EditableRegexListProps extends BaseEditWidgetProps {
 
 /** Text input field for editing string values. */
 export interface EditableLineEditProps extends BaseControllerWidgetProps {
-  widget_type: "EditableLineEdit";
-  parent_component: "EditableApplyLaterComponent";
+  widget_type: 'EditableLineEdit';
+  parent_component: 'EditableApplyLaterComponent';
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -60,10 +60,10 @@ export interface EditableLineEditProps extends BaseControllerWidgetProps {
 
 /** Numeric input with increment/decrement controls. */
 export interface EditableSpinBoxProps extends BaseEditWidgetProps {
-  widget_type: "EditableSpinBox";
+  widget_type: 'EditableSpinBox';
   keys: string[];
   font_size: number | string;
-  font_weight: "normal" | "bold";
+  font_weight: 'normal' | 'bold';
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -72,7 +72,7 @@ export interface EditableSpinBoxProps extends BaseEditWidgetProps {
 
 /** Boolean input represented as a checkbox. */
 export interface EditableCheckBoxProps extends BaseEditWidgetProps {
-  widget_type: "EditableCheckBox";
+  widget_type: 'EditableCheckBox';
   keys: string[];
 }
 
@@ -84,8 +84,8 @@ export interface EditableCheckBoxProps extends BaseEditWidgetProps {
  * Float input field with configurable decimal precision.
  */
 export interface DoubleLineEditProps extends BaseControllerWidgetProps {
-  widget_type: "DoubleLineEdit";
-  parent_component: "EditableApplyLaterComponent";
+  widget_type: 'DoubleLineEdit';
+  parent_component: 'EditableApplyLaterComponent';
   decimals: number; // -1 for auto, 0-12 for fixed precision
 }
 
@@ -97,8 +97,8 @@ export interface DoubleLineEditProps extends BaseControllerWidgetProps {
  * Integer input field with validation.
  */
 export interface IntLineEditProps extends BaseControllerWidgetProps {
-  widget_type: "IntLineEdit";
-  parent_component: "EditableApplyLaterComponent";
+  widget_type: 'IntLineEdit';
+  parent_component: 'EditableApplyLaterComponent';
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -107,10 +107,10 @@ export interface IntLineEditProps extends BaseControllerWidgetProps {
 
 /** Hexadecimal integer input field. */
 export interface HexadecimalProps extends BaseEditWidgetProps {
-  widget_type: "Hexadecimal";
+  widget_type: 'Hexadecimal';
   keys: string[];
   font_size: number | string;
-  font_weight: "normal" | "bold";
+  font_weight: 'normal' | 'bold';
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -119,10 +119,10 @@ export interface HexadecimalProps extends BaseEditWidgetProps {
 
 /** String input field with regex validation. */
 export interface EditableRegexProps extends BaseEditWidgetProps {
-  widget_type: "RegexEdit";
+  widget_type: 'RegexEdit';
   keys: string[];
   font_size: number | string;
-  font_weight: "normal" | "bold";
+  font_weight: 'normal' | 'bold';
 }
 
 /* ──────────────────────────────────────────────────────────────────────────

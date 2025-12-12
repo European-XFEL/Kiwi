@@ -1,29 +1,29 @@
-import * as React from "react";
-import { deviceManager } from "@/device/DeviceManager";
-import { DevicePropertyConnector } from "@/karabo_connectors/DevicePropertyConnector";
-import type { PropertyModel } from "@/device/device-model/types/PropertyType";
-import type { HashValueType } from "@/karabo_hash/HashValueType";
-import type { Attributes, HashTypes } from "karabo-ts";
-import { PropertyProxy } from "@/device/device-proxy/PropertyProxy";
+import * as React from 'react';
+import { deviceManager } from '@/device/DeviceManager';
+import { DevicePropertyConnector } from '@/karabo_connectors/DevicePropertyConnector';
+import type { PropertyModel } from '@/device/device-model/types/PropertyType';
+import type { HashValueType } from '@/karabo_hash/HashValueType';
+import type { Attributes, HashTypes } from 'karabo-ts';
+import { PropertyProxy } from '@/device/device-proxy/PropertyProxy';
 import {
   buildPropertyDescriptor,
   type PropertyDescriptor,
-} from "@/device/device-proxy/PropertyDescriptor";
-import { useGlobalStore } from "@/store/globalAppStateStore";
-import { AccessLevel } from "@/karabo_data/SchemaEnums";
-import type { EditContext } from "@/device/device-model/editability";
-import { splitKaraboKeys } from "@/components/shared/helpers/splitKaraboKeys";
-import { ProxyStatus, PropertyStatus } from "@/device/enums";
+} from '@/device/device-proxy/PropertyDescriptor';
+import { useGlobalStore } from '@/store/globalAppStateStore';
+import { AccessLevel } from '@/karabo_data/SchemaEnums';
+import type { EditContext } from '@/device/device-model/editability';
+import { splitKaraboKeys } from '@/components/shared/helpers/splitKaraboKeys';
+import { ProxyStatus, PropertyStatus } from '@/device/enums';
 import {
   DEVICE_INDICATORS,
   PROPERTY_INDICATORS,
-} from "@/device/constants/overlay_indicator_constants";
+} from '@/device/constants/overlay_indicator_constants';
 import type {
   DeviceIndicatorDescriptor,
   PropertyIndicatorDescriptor,
-} from "@/device/device-proxy/types";
-import type { GuiStateColorKey } from "@/karabo_data/Indicators";
-import { mapGuiStateColor } from "@/components/shared/helpers/mapStateColor";
+} from '@/device/device-proxy/types';
+import type { GuiStateColorKey } from '@/karabo_data/Indicators';
+import { mapGuiStateColor } from '@/components/shared/helpers/mapStateColor';
 
 export interface UseDevicePropertyResult {
   value: HashValueType | undefined;
@@ -56,7 +56,7 @@ export interface UseDevicePropertyResult {
   // schema / editability
   descriptor: PropertyDescriptor | undefined;
   isEditable: boolean;
-  schemaAttrs: PropertyDescriptor["schemaAttrs"] | undefined;
+  schemaAttrs: PropertyDescriptor['schemaAttrs'] | undefined;
 
   // device lifecycle
   proxyStatus: ProxyStatus;
@@ -81,8 +81,8 @@ export function useDeviceProperty(
   // Parse "DEVICE.prop" → deviceId + propertyPath
   // ─────────────────────────────────────────────
   const { deviceId, propertyPath } = React.useMemo(() => {
-    if (!karaboKeys || !karaboKeys.includes(".")) {
-      return { deviceId: "", propertyPath: "" };
+    if (!karaboKeys || !karaboKeys.includes('.')) {
+      return { deviceId: '', propertyPath: '' };
     }
     return splitKaraboKeys(karaboKeys);
   }, [karaboKeys]);
@@ -177,16 +177,16 @@ export function useDeviceProperty(
       setDeviceStateVersion((v) => v + 1);
     };
 
-    deviceProxy.subscribe("state_changed", stateListener);
-    deviceProxy.subscribe("status_changed", statusListener);
+    deviceProxy.subscribe('state_changed', stateListener);
+    deviceProxy.subscribe('status_changed', statusListener);
 
     setIsInitialized(true);
 
     return () => {
       unsubscribeProperty();
       unsubscribeSchema();
-      deviceProxy.unsubscribe("state_changed", stateListener);
-      deviceProxy.unsubscribe("status_changed", statusListener);
+      deviceProxy.unsubscribe('state_changed', stateListener);
+      deviceProxy.unsubscribe('status_changed', statusListener);
       stopMonitoring();
     };
   }, [deviceId, propertyPath]);
@@ -221,7 +221,7 @@ export function useDeviceProperty(
       return {
         descriptor: undefined as PropertyDescriptor | undefined,
         isEditable: false,
-        schemaAttrs: undefined as PropertyDescriptor["schemaAttrs"] | undefined,
+        schemaAttrs: undefined as PropertyDescriptor['schemaAttrs'] | undefined,
         deviceState: undefined as string | undefined,
         stateColor: undefined as GuiStateColorKey | undefined,
         proxyStatus: ProxyStatus.UNKNOWN,
@@ -257,7 +257,7 @@ export function useDeviceProperty(
     //  - if this hook is bound to "state", prefer the live model value
     //  - otherwise use cached runtime state from the proxy
     let deviceState: string | undefined;
-    if (propertyPath === "state" && model?.value) {
+    if (propertyPath === 'state' && model?.value) {
       deviceState = String(model.value);
     } else {
       deviceState = proxy.state;
@@ -268,7 +268,7 @@ export function useDeviceProperty(
     // Descriptor + editability
     let descriptor: PropertyDescriptor | undefined;
     let isEditable = false;
-    let schemaAttrs: PropertyDescriptor["schemaAttrs"] | undefined;
+    let schemaAttrs: PropertyDescriptor['schemaAttrs'] | undefined;
 
     if (model) {
       const ctx: EditContext = {
@@ -288,7 +288,7 @@ export function useDeviceProperty(
     let propertyStatus: PropertyStatus = PropertyStatus.NONE;
 
     if (
-      propertyPath !== "state" &&
+      propertyPath !== 'state' &&
       isStableAndReady &&
       isInitialized &&
       !model

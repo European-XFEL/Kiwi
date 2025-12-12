@@ -2,10 +2,10 @@
  * EditableComboBox - controller component
  */
 
-import * as React from "react";
-import type { EditableComboBoxProps } from "@/scene/scene_types/controllers";
-import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
-import { VectorElementType } from "@/karabo_hash/HashValueType";
+import * as React from 'react';
+import type { EditableComboBoxProps } from '@/scene/scene_types/controllers';
+import { FONT_FAMILY_DEFAULT } from '@/components/shared/helpers/fontDefaults';
+import { VectorElementType } from '@/karabo_hash/HashValueType';
 
 const EditableComboBox: React.FC<EditableComboBoxProps> = ({
   font_size,
@@ -28,7 +28,7 @@ const EditableComboBox: React.FC<EditableComboBoxProps> = ({
   }, [schemaAttrs]);
 
   React.useEffect(() => {
-    const incoming = String(value ?? schemaAttrs?.defaultValue ?? "");
+    const incoming = String(value ?? schemaAttrs?.defaultValue ?? '');
     const matchExists =
       options.findIndex((option) => option.toString() === incoming) >= 0;
     setLocalValue(matchExists ? incoming : undefined);
@@ -40,7 +40,7 @@ const EditableComboBox: React.FC<EditableComboBoxProps> = ({
       title={tooltipText || disabledReason || primary?.propertyIndicator?.label}
     >
       <select
-        value={localValue ?? ""}
+        value={localValue ?? ''}
         onChange={(e) => {
           const v = e.target.value || undefined;
           setLocalValue(v);
@@ -49,8 +49,8 @@ const EditableComboBox: React.FC<EditableComboBoxProps> = ({
         disabled={!isEnabled}
         className={`w-full h-full border border-solid rounded ${
           isEnabled
-            ? "text-black bg-white cursor-pointer"
-            : "text-gray-500 bg-gray-100 cursor-not-allowed"
+            ? 'text-black bg-white cursor-pointer'
+            : 'text-gray-500 bg-gray-100 cursor-not-allowed'
         }`}
         style={{
           fontFamily: FONT_FAMILY_DEFAULT,
@@ -59,7 +59,7 @@ const EditableComboBox: React.FC<EditableComboBoxProps> = ({
         }}
       >
         <option value="" disabled>
-          {isEnabled ? "Select an option" : "Read-only"}
+          {isEnabled ? 'Select an option' : 'Read-only'}
         </option>
         {options.map((opt) => {
           const str = opt.toString();

@@ -2,13 +2,13 @@
  * DisplayCommand - controller component
  */
 
-import * as React from "react";
-import type { DisplayCommandProps } from "@/scene/scene_types/controllers";
-import { Button } from "@/components/ui/button";
-import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
-import { useGlobalStore } from "@/store/globalAppStateStore";
-import { AccessLevel } from "@/karabo_data/SchemaEnums";
-import { ProxyStatus } from "@/device/enums";
+import * as React from 'react';
+import type { DisplayCommandProps } from '@/scene/scene_types/controllers';
+import { Button } from '@/components/ui/button';
+import { FONT_FAMILY_DEFAULT } from '@/components/shared/helpers/fontDefaults';
+import { useGlobalStore } from '@/store/globalAppStateStore';
+import { AccessLevel } from '@/karabo_data/SchemaEnums';
+import { ProxyStatus } from '@/device/enums';
 
 const DisplayCommand: React.FC<DisplayCommandProps> = ({
   font_size,
@@ -88,7 +88,7 @@ const DisplayCommand: React.FC<DisplayCommandProps> = ({
   const buttonCaption = React.useMemo(() => {
     if (descriptor?.displayedName) return descriptor.displayedName;
     if (propertyPath) return propertyPath;
-    return primary?.propertyIndicator?.label ?? "";
+    return primary?.propertyIndicator?.label ?? '';
   }, [
     descriptor?.displayedName,
     propertyPath,
@@ -102,13 +102,13 @@ const DisplayCommand: React.FC<DisplayCommandProps> = ({
     hasCommandPermission && isDeviceOnline && stateAllowsCommand;
 
   const disabledReason = React.useMemo(() => {
-    if (!deviceId) return "No device selected for this command";
+    if (!deviceId) return 'No device selected for this command';
 
     if (!isDeviceOnline) {
       if (proxyStatus === ProxyStatus.UNKNOWN) {
-        return "Device status is still initializing";
+        return 'Device status is still initializing';
       }
-      return "Device offline – command cannot be executed";
+      return 'Device offline – command cannot be executed';
     }
 
     if (!hasCommandPermission) {
@@ -117,7 +117,7 @@ const DisplayCommand: React.FC<DisplayCommandProps> = ({
     }
 
     if (!stateAllowsCommand) {
-      return "Command not allowed in current device state";
+      return 'Command not allowed in current device state';
     }
 
     return undefined;
@@ -138,8 +138,8 @@ const DisplayCommand: React.FC<DisplayCommandProps> = ({
       title={tooltipText || disabledReason}
       className={`w-full h-full border-2 px-2 ${
         isEnabled
-          ? "border-primary bg-primary hover:bg-primary/90 cursor-pointer"
-          : "border-gray-300 bg-gray-400 cursor-not-allowed opacity-60"
+          ? 'border-primary bg-primary hover:bg-primary/90 cursor-pointer'
+          : 'border-gray-300 bg-gray-400 cursor-not-allowed opacity-60'
       }`}
       style={{
         fontFamily: FONT_FAMILY_DEFAULT,

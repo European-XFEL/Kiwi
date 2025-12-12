@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 interface BoxLayoutProps {
   x: number;
@@ -21,8 +21,8 @@ const BoxLayout: React.FC<BoxLayoutProps> = (props) => {
         top: props.y,
         width: props.width,
         height: props.height,
-        boxSizing: "border-box",
-        border: "1px solid transparent",
+        boxSizing: 'border-box',
+        border: '1px solid transparent',
       }}
     />
   );

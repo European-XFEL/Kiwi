@@ -3,9 +3,9 @@
  * Root scene model class - represents the entire SVG canvas.
  */
 
-import { BaseSceneElementModel } from "./BaseModels";
-import type { SceneProps, SceneElementProps } from "../scene_types/scene";
-import { buildElement } from "../scene_builders/BuilderFns";
+import { BaseSceneElementModel } from './BaseModels';
+import type { SceneProps, SceneElementProps } from '../scene_types/scene';
+import { buildElement } from '../scene_builders/BuilderFns';
 
 /**
  * The root scene model - represents the entire <svg:svg> element.
@@ -119,7 +119,7 @@ export class SceneModel {
   ): void {
     const walk = (element: BaseSceneElementModel, depth: number) => {
       visitor(element, depth);
-      if ("children" in element && Array.isArray(element.children)) {
+      if ('children' in element && Array.isArray(element.children)) {
         (element.children as BaseSceneElementModel[]).forEach((child) =>
           walk(child, depth + 1)
         );

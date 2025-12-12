@@ -2,24 +2,24 @@
  * DisplayTrendGraph - controller component
  *
  */
-import React, { useMemo, useState } from "react";
-import Plot from "react-plotly.js";
-import ReactECharts from "echarts-for-react";
-import type { Layout, Data } from "plotly.js";
-import type { DisplayTrendGraphProps } from "@/scene/scene_types/controllers";
-import { TraceFactory, ChartType } from "@/karabo_plots/traceFactory";
-import { buildTimeValueHeatmap } from "@/karabo_plots/heatmapBining";
-import { buildEChartsOptions, EChartType } from "@/karabo_plots/echartsOptions";
-import { useDisplayTrendGraph } from "@/components/shared/hooks/useDisplayTrendGraph";
+import React, { useMemo, useState } from 'react';
+import Plot from 'react-plotly.js';
+import ReactECharts from 'echarts-for-react';
+import type { Layout, Data } from 'plotly.js';
+import type { DisplayTrendGraphProps } from '@/scene/scene_types/controllers';
+import { TraceFactory, ChartType } from '@/karabo_plots/traceFactory';
+import { buildTimeValueHeatmap } from '@/karabo_plots/heatmapBining';
+import { buildEChartsOptions, EChartType } from '@/karabo_plots/echartsOptions';
+import { useDisplayTrendGraph } from '@/components/shared/hooks/useDisplayTrendGraph';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 
-type CanonicalChartType = "line" | "scatter" | "area" | "heatmap" | "bar";
+type CanonicalChartType = 'line' | 'scatter' | 'area' | 'heatmap' | 'bar';
 
 const DisplayTrendGraph: React.FC<DisplayTrendGraphProps> = React.memo(
   (props) => {
@@ -32,11 +32,11 @@ const DisplayTrendGraph: React.FC<DisplayTrendGraphProps> = React.memo(
       y_label,
       x_grid,
       y_grid,
-      plot_engine = "echarts",
+      plot_engine = 'echarts',
     } = props;
 
-    const [chartType, setChartType] = useState<CanonicalChartType>("line");
-    const [engine, setEngine] = useState<"plotly" | "echarts">(plot_engine);
+    const [chartType, setChartType] = useState<CanonicalChartType>('line');
+    const [engine, setEngine] = useState<'plotly' | 'echarts'>(plot_engine);
 
     const { timestamps, values, isOffline } = useDisplayTrendGraph(primary, {
       maxDataPoints: 1000,
@@ -45,44 +45,44 @@ const DisplayTrendGraph: React.FC<DisplayTrendGraphProps> = React.memo(
     });
 
     const plotlyChartType: ChartType = (() => {
-      if (chartType === "scatter") return "points";
-      if (chartType === "heatmap") return "heatmap";
-      if (chartType === "area") return "area";
-      if (chartType === "bar") return "bar";
-      return "line";
+      if (chartType === 'scatter') return 'points';
+      if (chartType === 'heatmap') return 'heatmap';
+      if (chartType === 'area') return 'area';
+      if (chartType === 'bar') return 'bar';
+      return 'line';
     })();
 
     const traceInput =
-      plotlyChartType === "heatmap"
+      plotlyChartType === 'heatmap'
         ? ({
-            kind: "heatmap",
+            kind: 'heatmap',
             series: buildTimeValueHeatmap(timestamps, values, {
               timeBins: 24,
               valueBins: 10,
             }),
-            name: "Density",
+            name: 'Density',
           } as const)
         : ({
-            kind: "xy",
+            kind: 'xy',
             series: { x: timestamps, y: values },
-            name: "Series",
+            name: 'Series',
           } as const);
 
     const data: Data[] =
-      engine === "plotly" ? [TraceFactory[plotlyChartType](traceInput)] : [];
+      engine === 'plotly' ? [TraceFactory[plotlyChartType](traceInput)] : [];
 
     const echartsOption = useMemo(
       () =>
-        engine === "echarts"
+        engine === 'echarts'
           ? buildEChartsOptions({
               timestamps,
               values,
-              chartType: (chartType as EChartType) || "line",
+              chartType: (chartType as EChartType) || 'line',
               xLabel: x_label,
               yLabel: y_label,
               xGrid: x_grid ?? true,
               yGrid: y_grid ?? true,
-              background: background || "transparent",
+              background: background || 'transparent',
             })
           : null,
       [
@@ -101,26 +101,26 @@ const DisplayTrendGraph: React.FC<DisplayTrendGraphProps> = React.memo(
     const layout: Partial<Layout> = {
       autosize: true,
       margin: { t: 36, r: 12, b: 36, l: 44 },
-      paper_bgcolor: background || "transparent",
-      plot_bgcolor: background || "rgba(0,0,0,0)",
+      paper_bgcolor: background || 'transparent',
+      plot_bgcolor: background || 'rgba(0,0,0,0)',
       xaxis: {
         title: {
-          text: chartType === "heatmap" ? "Time bins" : x_label || "Time",
+          text: chartType === 'heatmap' ? 'Time bins' : x_label || 'Time',
           standoff: 8,
         },
         automargin: true,
-        showgrid: chartType !== "heatmap" && (x_grid ?? true),
-        type: chartType === "heatmap" ? undefined : "date",
+        showgrid: chartType !== 'heatmap' && (x_grid ?? true),
+        type: chartType === 'heatmap' ? undefined : 'date',
       },
       yaxis: {
         title: {
-          text: chartType === "heatmap" ? "Value bins" : y_label || "Value",
+          text: chartType === 'heatmap' ? 'Value bins' : y_label || 'Value',
           standoff: 8,
         },
         automargin: true,
-        showgrid: chartType !== "heatmap" && (y_grid ?? true),
+        showgrid: chartType !== 'heatmap' && (y_grid ?? true),
       },
-      hovermode: chartType === "heatmap" ? "closest" : "x unified",
+      hovermode: chartType === 'heatmap' ? 'closest' : 'x unified',
       showlegend: false,
     };
 
@@ -130,7 +130,7 @@ const DisplayTrendGraph: React.FC<DisplayTrendGraphProps> = React.memo(
         <div className="absolute -top-7 right-2 z-10 flex gap-2">
           <Select
             value={engine}
-            onValueChange={(val) => setEngine(val as "plotly" | "echarts")}
+            onValueChange={(val) => setEngine(val as 'plotly' | 'echarts')}
             disabled={isOffline}
           >
             <SelectTrigger className="w-[110px] h-8 text-xs bg-slate-200">
@@ -161,15 +161,15 @@ const DisplayTrendGraph: React.FC<DisplayTrendGraphProps> = React.memo(
         </div>
 
         {/* chart area */}
-        {engine === "plotly" ? (
+        {engine === 'plotly' ? (
           <Plot
             data={data}
             layout={layout}
             config={{ displayModeBar: false, responsive: true }}
             useResizeHandler
             style={{
-              width: "100%",
-              height: "100%",
+              width: '100%',
+              height: '100%',
               opacity: isOffline ? 0.45 : 1,
             }}
           />

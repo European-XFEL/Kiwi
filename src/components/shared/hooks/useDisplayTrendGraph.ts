@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { throttle } from "lodash";
-import type { UseDevicePropertyResult } from "@/components/shared/hooks/useDeviceProperty";
-import { Timestamp } from "@/shared/helpers/timestamps";
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { throttle } from 'lodash';
+import type { UseDevicePropertyResult } from '@/components/shared/hooks/useDeviceProperty';
+import { Timestamp } from '@/shared/helpers/timestamps';
 
 interface TrendDataPoint {
   timestamp: number; // epoch ms
@@ -38,7 +38,7 @@ export const useDisplayTrendGraph = (
     if (!primary) return null;
 
     const raw = primary.value ?? primary.schemaAttrs?.defaultValue;
-    const num = typeof raw === "number" ? raw : Number(raw);
+    const num = typeof raw === 'number' ? raw : Number(raw);
     if (!Number.isFinite(num)) return null;
 
     let ms: number;
@@ -140,7 +140,7 @@ export const useDisplayTrendGraph = (
     timestamps: trendData.map((d) => d.timestamp),
     values: trendData.map((d) => d.value),
     dataPoints: trendData.length,
-    graphType: "line" as const,
+    graphType: 'line' as const,
     isOffline,
   };
 };

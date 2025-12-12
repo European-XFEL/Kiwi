@@ -1,4 +1,4 @@
-import "@testing-library/jest-dom";
+import '@testing-library/jest-dom';
 
 // Suppress React 18 act() warnings for async state updates
 // These warnings occur when components update state asynchronously (e.g., after promise resolution)
@@ -7,9 +7,9 @@ const originalError = console.error;
 beforeAll(() => {
   console.error = (...args: any[]) => {
     if (
-      typeof args[0] === "string" &&
-      args[0].includes("An update to") &&
-      args[0].includes("inside a test was not wrapped in act")
+      typeof args[0] === 'string' &&
+      args[0].includes('An update to') &&
+      args[0].includes('inside a test was not wrapped in act')
     ) {
       return;
     }

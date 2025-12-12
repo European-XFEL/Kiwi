@@ -1,19 +1,19 @@
-import AppBody from "@/components/AppBody";
-import NoScenePanel from "@/components/NoScenePanel";
-import SceneCanvas from "@/components/SceneCanvas";
-import { RouteProp } from "@/shared/types";
+import AppBody from '@/components/AppBody';
+import NoScenePanel from '@/components/NoScenePanel';
+import SceneCanvas from '@/components/SceneCanvas';
+import { RouteProp } from '@/shared/types';
 
 export const appRoutes: RouteProp[] = [
   {
-    path: "/",
+    path: '/',
     element: <AppBody />,
     children: [
       {
-        path: "scene",
+        path: 'scene',
         element: <SceneCanvas />,
       },
       {
-        path: "no_scene",
+        path: 'no_scene',
         element: <NoScenePanel />,
       },
     ],

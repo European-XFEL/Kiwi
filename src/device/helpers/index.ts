@@ -1,16 +1,16 @@
 import {
   DEVICE_INDICATORS,
   PROPERTY_INDICATORS,
-} from "../constants/overlay_indicator_constants";
+} from '../constants/overlay_indicator_constants';
 import {
   DeviceIndicatorDescriptor,
   PropertyIndicatorDescriptor,
-} from "../device-proxy/types";
-import { PropertyStatus, ProxyStatus } from "../enums";
+} from '../device-proxy/types';
+import { PropertyStatus, ProxyStatus } from '../enums';
 
-import { PropertySchemaAttributes } from "@/karabo_data/DeviceSchemaInfo";
+import { PropertySchemaAttributes } from '@/karabo_data/DeviceSchemaInfo';
 
-import { NodeType } from "@/karabo_data/SchemaEnums";
+import { NodeType } from '@/karabo_data/SchemaEnums';
 
 export function getDeviceIndicator(
   status: ProxyStatus
@@ -25,8 +25,8 @@ export function getPropertyIndicator(
 }
 
 export function getUnitLabel(attrs: PropertySchemaAttributes): string {
-  const prefix = attrs.metricPrefixSymbol ?? "";
-  const unit = attrs.unitSymbol ?? "";
+  const prefix = attrs.metricPrefixSymbol ?? '';
+  const unit = attrs.unitSymbol ?? '';
   return `${prefix}${unit}`;
 }
 

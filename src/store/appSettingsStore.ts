@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import { create } from 'zustand';
 
 export interface AppSettingsState {
   wsProxyURL: string;
@@ -12,8 +12,8 @@ export interface AppSettingsStateStoreProp extends AppSettingsState {
 
 export const useAppSettingsStore = create<AppSettingsStateStoreProp>((set) => ({
   //initial state
-  wsProxyURL: "",
-  authServerURL: "",
+  wsProxyURL: '',
+  authServerURL: '',
 
   //actions
   setWsProxyUrl: (websocketProxyUrl) => set({ wsProxyURL: websocketProxyUrl }),

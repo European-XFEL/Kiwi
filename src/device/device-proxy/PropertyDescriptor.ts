@@ -1,11 +1,11 @@
-import type { PropertyModel } from "@/device/device-model/types/PropertyType";
-import type { PropertySchemaAttributes } from "@/karabo_data/DeviceSchemaInfo";
-import { AccessLevel } from "@/karabo_data/SchemaEnums";
-import { useGlobalStore } from "@/store/globalAppStateStore";
+import type { PropertyModel } from '@/device/device-model/types/PropertyType';
+import type { PropertySchemaAttributes } from '@/karabo_data/DeviceSchemaInfo';
+import { AccessLevel } from '@/karabo_data/SchemaEnums';
+import { useGlobalStore } from '@/store/globalAppStateStore';
 import {
   isPropertyEditable,
   type EditContext,
-} from "@/device/device-model/editability";
+} from '@/device/device-model/editability';
 
 export interface PropertyDescriptor {
   /** Full property path, e.g. "name", "frequency", "channels" */
@@ -42,7 +42,7 @@ export function buildPropertyDescriptor(
     schemaAttrs;
 
   const unitLabel =
-    `${metricPrefixSymbol ?? ""}${unitSymbol ?? ""}`.trim() || undefined;
+    `${metricPrefixSymbol ?? ''}${unitSymbol ?? ''}`.trim() || undefined;
 
   const isEditableFlag = isPropertyEditable(schemaAttrs, ctx);
 
@@ -69,7 +69,7 @@ export function buildDescriptorWithGlobalContext(
 
   const ctx: EditContext = {
     userAccessLevel,
-    deviceState: deviceState ?? "UNKNOWN",
+    deviceState: deviceState ?? 'UNKNOWN',
   };
 
   return buildPropertyDescriptor(model, ctx);

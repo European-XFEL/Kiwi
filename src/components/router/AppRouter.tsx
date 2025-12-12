@@ -1,5 +1,5 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import { RouteProp, RouterProp } from "@/shared/types";
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { RouteProp, RouterProp } from '@/shared/types';
 
 export default function AppRouter({
   routes,

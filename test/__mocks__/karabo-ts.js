@@ -34,7 +34,7 @@ export const HashTypes = {
   VectorHash: 31,
   Schema: 32,
   None: 35,
-  ByteArray: 37
+  ByteArray: 37,
 };
 
 // Mock makeHash function

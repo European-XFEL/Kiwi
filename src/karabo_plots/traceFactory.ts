@@ -1,6 +1,6 @@
-import type { Data } from "plotly.js";
+import type { Data } from 'plotly.js';
 
-export type ChartType = "line" | "points" | "area" | "bar" | "heatmap";
+export type ChartType = 'line' | 'points' | 'area' | 'bar' | 'heatmap';
 
 export interface XYSeries {
   x: (number | string | Date)[];
@@ -14,65 +14,63 @@ export interface HeatmapSeries {
 }
 
 export type TraceInput =
-  | { kind: "xy"; series: XYSeries; name?: string }
-  | { kind: "heatmap"; series: HeatmapSeries; name?: string };
+  | { kind: 'xy'; series: XYSeries; name?: string }
+  | { kind: 'heatmap'; series: HeatmapSeries; name?: string };
 
 export const buildLine = (
-  input: Extract<TraceInput, { kind: "xy" }>
+  input: Extract<TraceInput, { kind: 'xy' }>
 ): Data => ({
   x: input.series.x,
   y: input.series.y,
-  type: "scatter",
-  mode: "lines+markers",
-  name: input.name ?? "Series",
+  type: 'scatter',
+  mode: 'lines+markers',
+  name: input.name ?? 'Series',
 });
 
 export const buildPoints = (
-  input: Extract<TraceInput, { kind: "xy" }>
+  input: Extract<TraceInput, { kind: 'xy' }>
 ): Data => ({
   x: input.series.x,
   y: input.series.y,
-  type: "scatter",
-  mode: "markers",
-  name: input.name ?? "Series",
+  type: 'scatter',
+  mode: 'markers',
+  name: input.name ?? 'Series',
   marker: { size: 5 },
 });
 
 export const buildArea = (
-  input: Extract<TraceInput, { kind: "xy" }>
+  input: Extract<TraceInput, { kind: 'xy' }>
 ): Data => ({
   x: input.series.x,
   y: input.series.y,
-  type: "scatter",
-  mode: "lines",
-  fill: "tozeroy", // area to y=0
-  name: input.name ?? "Series",
+  type: 'scatter',
+  mode: 'lines',
+  fill: 'tozeroy', // area to y=0
+  name: input.name ?? 'Series',
 });
 
-export const buildBar = (
-  input: Extract<TraceInput, { kind: "xy" }>
-): Data => ({
+export const buildBar = (input: Extract<TraceInput, { kind: 'xy' }>): Data => ({
   x: input.series.x,
   y: input.series.y,
-  type: "bar",
-  name: input.name ?? "Series",
+  type: 'bar',
+  name: input.name ?? 'Series',
 });
 
 export const buildHeatmap = (
-  input: Extract<TraceInput, { kind: "heatmap" }>
+  input: Extract<TraceInput, { kind: 'heatmap' }>
 ): Data => ({
   x: input.series.xLabels,
   y: input.series.yLabels,
   z: input.series.z,
-  type: "heatmap",
+  type: 'heatmap',
   hoverongaps: false,
-  name: input.name ?? "Density",
+  name: input.name ?? 'Density',
 });
 
 export const TraceFactory: Record<ChartType, (input: TraceInput) => Data> = {
-  line: (i) => (i.kind === "xy" ? buildLine(i) : buildHeatmap(i as any)),
-  points: (i) => (i.kind === "xy" ? buildPoints(i) : buildHeatmap(i as any)),
-  area: (i) => (i.kind === "xy" ? buildArea(i) : buildHeatmap(i as any)),
-  bar: (i) => (i.kind === "xy" ? buildBar(i) : buildHeatmap(i as any)),
+  line: (i) => (i.kind === 'xy' ? buildLine(i) : buildHeatmap(i as any)),
+  points: (i) => (i.kind === 'xy' ? buildPoints(i) : buildHeatmap(i as any)),
+  area: (i) => (i.kind === 'xy' ? buildArea(i) : buildHeatmap(i as any)),
+  bar: (i) => (i.kind === 'xy' ? buildBar(i) : buildHeatmap(i as any)),
   heatmap: (i) => buildHeatmap(i as any),
 };

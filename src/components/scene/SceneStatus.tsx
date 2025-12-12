@@ -1,27 +1,27 @@
-import { XCircle, Dot, FileText } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { XCircle, Dot, FileText } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { useGlobalStore } from "@/store/globalAppStateStore";
-import { useNavigate, useLocation } from "react-router-dom";
-import { ProjectSceneCache } from "@/store/ProjectSceneCache";
-import { ProjectSceneInfo } from "@/karabo_data/ProjectDbInfo";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { cn } from "@/shared/helpers/cn";
+} from '@/components/ui/tooltip';
+import { useGlobalStore } from '@/store/globalAppStateStore';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { ProjectSceneCache } from '@/store/ProjectSceneCache';
+import { ProjectSceneInfo } from '@/karabo_data/ProjectDbInfo';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { cn } from '@/shared/helpers/cn';
 
 export type SceneStatusProps = {
   className?: string;
-  variant?: "full" | "compact";
+  variant?: 'full' | 'compact';
 };
 
 export default function SceneStatus({
   className,
-  variant = "full",
+  variant = 'full',
 }: SceneStatusProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -38,7 +38,7 @@ export default function SceneStatus({
     if (!hasScene) return;
     setLoadedScene(undefined);
     setSceneInfo(null);
-    navigate("/no_scene");
+    navigate('/no_scene');
   }, [hasScene, navigate, setLoadedScene]);
 
   useEffect(() => {
@@ -60,12 +60,12 @@ export default function SceneStatus({
 
   const fullSceneName = sceneInfo
     ? `${sceneInfo.domain} :: ${sceneInfo.projectName} :: ${sceneInfo.name}`
-    : "";
+    : '';
 
-  if (variant === "compact") {
+  if (variant === 'compact') {
     return (
       <TooltipProvider>
-        <div className={cn("flex items-center gap-2", className)}>
+        <div className={cn('flex items-center gap-2', className)}>
           {hasScene && sceneInfo && (
             <>
               <Tooltip>
@@ -114,7 +114,7 @@ export default function SceneStatus({
   // Full variant
   return (
     <TooltipProvider>
-      <div className={cn("flex items-center gap-3", className)}>
+      <div className={cn('flex items-center gap-3', className)}>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -122,17 +122,17 @@ export default function SceneStatus({
               size="icon"
               onClick={handleUnloadScene}
               disabled={!hasScene}
-              aria-label={hasScene ? "Unload scene" : "No scene to unload"}
+              aria-label={hasScene ? 'Unload scene' : 'No scene to unload'}
               className={cn(
-                "hover:text-destructive hover:bg-destructive/10",
-                !hasScene && "opacity-50 cursor-not-allowed"
+                'hover:text-destructive hover:bg-destructive/10',
+                !hasScene && 'opacity-50 cursor-not-allowed'
               )}
             >
               <XCircle className="h-5 w-5" />
             </Button>
           </TooltipTrigger>
           <TooltipContent className="max-w-sm wrap-break-word">
-            <p>{hasScene ? `Unload: ${fullSceneName}` : "No scene loaded"}</p>
+            <p>{hasScene ? `Unload: ${fullSceneName}` : 'No scene loaded'}</p>
           </TooltipContent>
         </Tooltip>
 

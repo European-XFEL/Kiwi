@@ -3,11 +3,11 @@
  *
  */
 
-import React, { useMemo, useState } from "react";
-import ReactECharts from "echarts-for-react";
-import type { DisplayTrendGraphProps } from "@/scene/scene_types/controllers";
-import { buildEChartsOptions, EChartType } from "@/karabo_plots/echartsOptions";
-import { useDisplayTrendGraph } from "@/components/shared/hooks/useDisplayTrendGraph";
+import React, { useMemo, useState } from 'react';
+import ReactECharts from 'echarts-for-react';
+import type { DisplayTrendGraphProps } from '@/scene/scene_types/controllers';
+import { buildEChartsOptions, EChartType } from '@/karabo_plots/echartsOptions';
+import { useDisplayTrendGraph } from '@/components/shared/hooks/useDisplayTrendGraph';
 
 const DisplayTrendGraphECharts: React.FC<DisplayTrendGraphProps> = React.memo(
   ({
@@ -20,7 +20,7 @@ const DisplayTrendGraphECharts: React.FC<DisplayTrendGraphProps> = React.memo(
     tooltipText,
     disabledReason,
   }) => {
-    const [chartType, setChartType] = useState<EChartType>("line");
+    const [chartType, setChartType] = useState<EChartType>('line');
 
     const { timestamps, values, isOffline } = useDisplayTrendGraph(primary, {
       maxDataPoints: 1000,
@@ -38,7 +38,7 @@ const DisplayTrendGraphECharts: React.FC<DisplayTrendGraphProps> = React.memo(
           yLabel: y_label,
           xGrid: x_grid ?? true,
           yGrid: y_grid ?? true,
-          background: background || "transparent",
+          background: background || 'transparent',
         }),
       [
         timestamps,
@@ -55,7 +55,7 @@ const DisplayTrendGraphECharts: React.FC<DisplayTrendGraphProps> = React.memo(
     return (
       <div
         className="relative w-full h-full"
-        style={{ backgroundColor: background || "transparent" }}
+        style={{ backgroundColor: background || 'transparent' }}
         title={tooltipText || disabledReason}
         aria-busy={isOffline ? true : undefined}
         aria-live="polite"
@@ -63,7 +63,7 @@ const DisplayTrendGraphECharts: React.FC<DisplayTrendGraphProps> = React.memo(
         {isOffline && (
           <div
             className="absolute top-2 left-2 z-10 text-xs px-2 py-1 rounded bg-red-100 text-red-700 shadow-sm select-none"
-            style={{ pointerEvents: "none" }}
+            style={{ pointerEvents: 'none' }}
           >
             Device offline
           </div>
@@ -76,7 +76,7 @@ const DisplayTrendGraphECharts: React.FC<DisplayTrendGraphProps> = React.memo(
             className="text-xs border border-gray-300 rounded px-2 py-1 bg-white shadow-sm hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:opacity-60"
             disabled={isOffline}
             aria-disabled={isOffline}
-            title={isOffline ? "Device offline" : "Select chart type"}
+            title={isOffline ? 'Device offline' : 'Select chart type'}
           >
             <option value="line">Line</option>
             <option value="scatter">Scatter</option>
@@ -89,10 +89,10 @@ const DisplayTrendGraphECharts: React.FC<DisplayTrendGraphProps> = React.memo(
         <ReactECharts
           option={option}
           style={{
-            width: "100%",
-            height: "100%",
+            width: '100%',
+            height: '100%',
             opacity: isOffline ? 0.45 : 1,
-            transition: "opacity 150ms ease",
+            transition: 'opacity 150ms ease',
           }}
           notMerge
           lazyUpdate

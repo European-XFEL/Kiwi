@@ -1,4 +1,4 @@
-import { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
+import { PropertyInfo } from '@/karabo_data/DeviceConfigInfo';
 
 /**
  * Represents a high-precision timestamp used in Karabo data systems.
@@ -42,12 +42,12 @@ export class Timestamp {
    *  - number (epoch milliseconds) — use static fromSeconds/fromMilliseconds to be explicit
    *  - PropertyInfo["timeAttrs"] (Karabo sec+frac)
    */
-  constructor(source: bigint | PropertyInfo["timeAttrs"] | Date | number) {
-    if (typeof source === "bigint") {
+  constructor(source: bigint | PropertyInfo['timeAttrs'] | Date | number) {
+    if (typeof source === 'bigint') {
       this.attoseconds = source;
     } else if (source instanceof Date) {
       this.attoseconds = BigInt(source.getTime()) * Timestamp.AS_PER_MS;
-    } else if (typeof source === "number") {
+    } else if (typeof source === 'number') {
       // Interpret numbers as epoch milliseconds to match JS Date conventions.
       this.attoseconds = BigInt(Math.floor(source)) * Timestamp.AS_PER_MS;
     } else {
@@ -61,7 +61,7 @@ export class Timestamp {
   // ---------- Static factories (explicit & self-documenting) ----------
 
   /** From Karabo property attributes (sec in s, frac in attoseconds). */
-  static fromTimeAttrs(attrs: PropertyInfo["timeAttrs"]): Timestamp {
+  static fromTimeAttrs(attrs: PropertyInfo['timeAttrs']): Timestamp {
     return new Timestamp(this.attosecondsFromTimeAttrs(attrs));
   }
 
@@ -79,7 +79,7 @@ export class Timestamp {
 
   /** From epoch nanoseconds (number | bigint). */
   static fromNanoseconds(ns: number | bigint): Timestamp {
-    const nsBig = typeof ns === "bigint" ? ns : BigInt(Math.floor(ns));
+    const nsBig = typeof ns === 'bigint' ? ns : BigInt(Math.floor(ns));
     const as = nsBig * this.AS_PER_NS;
     return new Timestamp(as);
   }
@@ -183,24 +183,24 @@ export class Timestamp {
   // ---------- Internals ----------
 
   private static attosecondsFromTimeAttrs(
-    attrs: PropertyInfo["timeAttrs"]
+    attrs: PropertyInfo['timeAttrs']
   ): bigint {
-    if (!attrs) throw new Error("timeAttrs must be provided");
+    if (!attrs) throw new Error('timeAttrs must be provided');
     const { sec, frac } = attrs;
     if (!sec || !frac) {
       throw new Error("timeAttrs must contain 'sec' and 'frac' fields");
     }
-    const secValue = this.toBigInt(sec["value_"]);
-    const fracValue = this.toBigInt(frac["value_"]);
+    const secValue = this.toBigInt(sec['value_']);
+    const fracValue = this.toBigInt(frac['value_']);
     return secValue * this.AS_PER_SEC + fracValue;
   }
 
   private static toBigInt(value: unknown): bigint {
-    if (typeof value === "bigint") {
+    if (typeof value === 'bigint') {
       return value;
     }
 
-    if (typeof value === "number") {
+    if (typeof value === 'number') {
       //Reject floats
       if (!Number.isInteger(value)) {
         throw new Error(
@@ -214,7 +214,7 @@ export class Timestamp {
       return BigInt(value);
     }
 
-    if (typeof value === "string") {
+    if (typeof value === 'string') {
       const trimmed = value.trim();
 
       //REGEX: Allow + or - prefix
@@ -240,7 +240,7 @@ export class Timestamp {
       }
     }
 
-    if (typeof value === "boolean") {
+    if (typeof value === 'boolean') {
       return value ? 1n : 0n;
     }
 

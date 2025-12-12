@@ -1,6 +1,6 @@
 @startuml scene_construction_sequence
 hide footbox
-title Scene Construction Sequence 
+title Scene Construction Sequence
 autonumber
 participant SceneCanvas << React Component >>
 participant Scene << Class >>
@@ -10,7 +10,7 @@ participant LoadedSceneSlice << StateStoreSlice >>
 participant React << Framework >>
 SceneCanvas -> ProjectSceneCache: getSceneInfoFromQueryParams(queryParams, onProjectSceneInfoCallback)
 note right
-Upon mounting, the SceneCanvas requests the scene 
+Upon mounting, the SceneCanvas requests the scene
 referenced by the current URL query parameters
 end note
 ProjectSceneCache -> ProjectSceneCache: getSceneInfo(domain, project, uuid, onGetSceneInfoCallback)
@@ -23,12 +23,12 @@ ProjectSceneCache -> ProjectSceneCache: onGetSceneInfoCallback(sceneInfo)
 ProjectSceneCache -> SceneCanvas : onProjectSceneInfoCallback(projectSceneInfo)
 create Scene
 SceneCanvas -> Scene: constructor(projectSceneInfo)
-loop 
+loop
     Scene -> Scene: buildSceneElements(jsonObjectFromSceneSVG)
     note right
     **buildSceneElements** builds the various
     **SceneElement** instances from the
-    JSON object built from the parsing of the 
+    JSON object built from the parsing of the
     scene's SVG. The SceneElement instances aggregate
     references to the React Component that will
     render them on the screen and the properties
@@ -46,7 +46,7 @@ end note
 SceneCanvas -> SceneCanvas: setScene
 note right
 setScene modifies the internal
-state of SceneCanvas triggering 
+state of SceneCanvas triggering
 the rendering of the component
 end note
 SceneCanvas -> SceneCanvas: renderScene()
@@ -54,8 +54,8 @@ loop
 SceneCanvas -> React: createElement(widget.reactComponent, widget.props)
 note right
 **SceneElement** is the base class for all
-the widgets visible on the scene. Widgets 
-that have a corresponding React component 
+the widgets visible on the scene. Widgets
+that have a corresponding React component
 to render them descend from **WidgetElement**
 and those that also display some Karabo
 property descend from **DynamicWidgetElement**.

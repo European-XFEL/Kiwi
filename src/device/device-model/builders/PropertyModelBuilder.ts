@@ -1,6 +1,6 @@
-import type { PropertySchema } from "../types/SchemaType";
-import type { PropertyModel } from "../types/PropertyType";
-import type { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
+import type { PropertySchema } from '../types/SchemaType';
+import type { PropertyModel } from '../types/PropertyType';
+import type { PropertyInfo } from '@/karabo_data/DeviceConfigInfo';
 
 /**
  * Build a PropertyModel from:

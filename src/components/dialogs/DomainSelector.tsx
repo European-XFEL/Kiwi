@@ -4,8 +4,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 export type DomainSelectorProps = {
   domains: string[];

@@ -1,15 +1,15 @@
-import React, { useMemo } from "react";
-import { GlobalState, useGlobalStore } from "../store/globalAppStateStore";
-import InitializingState from "./states/InitializingState";
-import LoggedInState from "./states/LoggedInState";
-import LoggedOutState from "./states/LoggedOutState";
-import ErrorState from "./states/ErrorState";
+import React, { useMemo } from 'react';
+import { GlobalState, useGlobalStore } from '../store/globalAppStateStore';
+import InitializingState from './states/InitializingState';
+import LoggedInState from './states/LoggedInState';
+import LoggedOutState from './states/LoggedOutState';
+import ErrorState from './states/ErrorState';
 
 const AppBody: React.FC = () => {
   const globalState = useGlobalStore((s) => s.globalState);
   const lastError = useGlobalStore((s) => s.lastError);
 
-  const isInitializing = globalState === "INIT";
+  const isInitializing = globalState === 'INIT';
 
   const stateComponents = useMemo<Record<GlobalState, React.ReactNode>>(
     () => ({

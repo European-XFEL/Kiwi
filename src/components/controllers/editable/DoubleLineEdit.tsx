@@ -1,11 +1,11 @@
 /**
  * DoubleLineEdit - controller component
  */
-import * as React from "react";
-import type { DoubleLineEditProps } from "@/scene/scene_types/controllers";
-import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
+import * as React from 'react';
+import type { DoubleLineEditProps } from '@/scene/scene_types/controllers';
+import { FONT_FAMILY_DEFAULT } from '@/components/shared/helpers/fontDefaults';
 
-import { formatScalarValueWithUnit } from "@/shared/helpers/validation_helpers/value_formatters";
+import { formatScalarValueWithUnit } from '@/shared/helpers/validation_helpers/value_formatters';
 
 import {
   schemaSaysFloat,
@@ -14,22 +14,22 @@ import {
   schemaSaysBool,
   schemaSaysString,
   type SchemaValueType,
-} from "@/shared/helpers/validation_helpers/schema_type_identifier";
+} from '@/shared/helpers/validation_helpers/schema_type_identifier';
 
 function normalizeFontWeight(input?: string) {
   if (!input) return undefined;
 
-  const v = input.toLowerCase().replace(/\s|_/g, "");
+  const v = input.toLowerCase().replace(/\s|_/g, '');
 
-  if (v === "thin") return 100;
-  if (v === "extralight" || v === "ultralight") return 200;
-  if (v === "light") return 300;
-  if (v === "regular" || v === "normal") return 400;
-  if (v === "medium") return 500;
-  if (v === "semibold" || v === "demibold") return 600;
-  if (v === "bold") return 700;
-  if (v === "extrabold" || v === "ultrabold") return 800;
-  if (v === "black" || v === "heavy") return 900;
+  if (v === 'thin') return 100;
+  if (v === 'extralight' || v === 'ultralight') return 200;
+  if (v === 'light') return 300;
+  if (v === 'regular' || v === 'normal') return 400;
+  if (v === 'medium') return 500;
+  if (v === 'semibold' || v === 'demibold') return 600;
+  if (v === 'bold') return 700;
+  if (v === 'extrabold' || v === 'ultrabold') return 800;
+  if (v === 'black' || v === 'heavy') return 900;
 
   const asNum = Number(input);
   return Number.isFinite(asNum) ? asNum : undefined;
@@ -47,7 +47,7 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = ({
   const value = primary?.value;
   const schemaAttrs = primary?.schemaAttrs;
 
-  const [localValue, setLocalValue] = React.useState<string>("");
+  const [localValue, setLocalValue] = React.useState<string>('');
 
   /**
    * Prevent the sync effect from overwriting user typing.
@@ -68,8 +68,8 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = ({
 
   // Build combined unit string
   const unit = React.useMemo(() => {
-    const prefix = schemaAttrs?.metricPrefixSymbol ?? "";
-    const symbol = schemaAttrs?.unitSymbol ?? "";
+    const prefix = schemaAttrs?.metricPrefixSymbol ?? '';
+    const symbol = schemaAttrs?.unitSymbol ?? '';
     return `${prefix}${symbol}`.trim();
   }, [schemaAttrs?.metricPrefixSymbol, schemaAttrs?.unitSymbol]);
 
@@ -96,7 +96,7 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = ({
         return formatScalarValueWithUnit({
           value: intVal,
           schemaValueType,
-          unit: "",
+          unit: '',
         });
       }
 
@@ -105,12 +105,12 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = ({
           return formatScalarValueWithUnit({
             value: num,
             schemaValueType,
-            unit: "",
+            unit: '',
             floatPrecision: 8,
           });
         }
 
-        return Number.isNaN(num) ? "" : num.toFixed(decimals);
+        return Number.isNaN(num) ? '' : num.toFixed(decimals);
       }
 
       // Unknown numeric fallback: treat like float for UI purposes
@@ -118,12 +118,12 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = ({
         return formatScalarValueWithUnit({
           value: num,
           schemaValueType,
-          unit: "",
+          unit: '',
           floatPrecision: 8,
         });
       }
 
-      return Number.isNaN(num) ? "" : num.toFixed(decimals);
+      return Number.isNaN(num) ? '' : num.toFixed(decimals);
     },
     [schemaValueType, decimals]
   );
@@ -150,15 +150,15 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = ({
       if (!primary) return;
       const anyPrimary = primary as any;
 
-      if (typeof anyPrimary.setValue === "function") {
+      if (typeof anyPrimary.setValue === 'function') {
         anyPrimary.setValue(nextValue);
         return;
       }
-      if (typeof anyPrimary.onChange === "function") {
+      if (typeof anyPrimary.onChange === 'function') {
         anyPrimary.onChange(nextValue);
         return;
       }
-      if (typeof anyPrimary.update === "function") {
+      if (typeof anyPrimary.update === 'function') {
         anyPrimary.update({ value: nextValue });
         return;
       }
@@ -211,9 +211,9 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = ({
 
     const incoming = value ?? schemaAttrs?.defaultValue ?? 0;
     const numValue =
-      typeof incoming === "number" ? incoming : parseFloat(String(incoming));
+      typeof incoming === 'number' ? incoming : parseFloat(String(incoming));
 
-    setLocalValue(!isNaN(numValue) ? formatForInput(numValue) : "");
+    setLocalValue(!isNaN(numValue) ? formatForInput(numValue) : '');
   }, [value, schemaAttrs?.defaultValue, formatForInput]);
 
   /**
@@ -246,9 +246,9 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = ({
       // Reset to last known external/default
       const incoming = value ?? schemaAttrs?.defaultValue ?? 0;
       const num =
-        typeof incoming === "number" ? incoming : parseFloat(String(incoming));
+        typeof incoming === 'number' ? incoming : parseFloat(String(incoming));
 
-      setLocalValue(!isNaN(num) ? formatForInput(num) : "");
+      setLocalValue(!isNaN(num) ? formatForInput(num) : '');
       return;
     }
 
@@ -276,15 +276,15 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = ({
         disabled={!isEnabled}
         className={`border border-solid rounded px-1 flex-1 min-w-0 ${
           isEnabled
-            ? "text-black bg-white cursor-text"
-            : "text-gray-500 bg-gray-100 cursor-not-allowed"
+            ? 'text-black bg-white cursor-text'
+            : 'text-gray-500 bg-gray-100 cursor-not-allowed'
         }`}
         style={{
           fontFamily: FONT_FAMILY_DEFAULT,
           fontSize: font_size,
           fontWeight: normalizeFontWeight(font_weight),
         }}
-        placeholder={isEnabled ? "0.0" : "Read-only"}
+        placeholder={isEnabled ? '0.0' : 'Read-only'}
       />
 
       {unit && (

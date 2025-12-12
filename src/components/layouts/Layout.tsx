@@ -1,6 +1,6 @@
-import * as React from "react";
+import * as React from 'react';
 
-import type { JSX } from "react";
+import type { JSX } from 'react';
 export type LayoutProps = {
   children?: React.ReactNode;
   className?: string;
@@ -10,12 +10,12 @@ export type LayoutProps = {
 export default function Layout({
   children,
   className,
-  as: Comp = "div",
+  as: Comp = 'div',
 }: LayoutProps) {
   return (
     <Comp
-      className={["relative w-screen h-screen", className ?? ""]
-        .join(" ")
+      className={['relative w-screen h-screen', className ?? '']
+        .join(' ')
         .trim()}
     >
       {children}

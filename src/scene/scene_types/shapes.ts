@@ -2,7 +2,7 @@
  * Shape prop definitions for SVG primitives.
  * All shapes extend BaseShapeProps and represent drawable scene elements.
  */
-import { BaseShapeProps } from "./base";
+import { BaseShapeProps } from './base';
 
 /* ──────────────────────────────────────────────────────────────────────────
  * Line
@@ -16,7 +16,7 @@ import { BaseShapeProps } from "./base";
  *           stroke="#ff0000" stroke-width="2" />
  */
 export interface LineProps extends BaseShapeProps {
-  shape_type: "Line";
+  shape_type: 'Line';
   x1: number;
   y1: number;
   x2: number;
@@ -35,7 +35,7 @@ export interface LineProps extends BaseShapeProps {
  *           fill="#cccccc" stroke="#000000" stroke-width="1" />
  */
 export interface RectangleProps extends BaseShapeProps {
-  shape_type: "Rectangle";
+  shape_type: 'Rectangle';
   x: number;
   y: number;
   width: number;
@@ -56,7 +56,7 @@ export interface RectangleProps extends BaseShapeProps {
  * </svg:g>
  */
 export interface ArrowPolygonProps extends BaseShapeProps {
-  shape_type: "ArrowPolygon";
+  shape_type: 'ArrowPolygon';
 
   /** Line coordinates */
   x1: number;
@@ -88,7 +88,7 @@ export interface ArrowPolygonProps extends BaseShapeProps {
  *              fill="#0000ff" stroke="#000000" stroke-width="1" />
  */
 export interface PolygonProps extends BaseShapeProps {
-  shape_type: "Polygon";
+  shape_type: 'Polygon';
 
   /** SVG-style points string: "x1,y1 x2,y2 x3,y3" */
   points: string;
@@ -112,7 +112,7 @@ export interface PolygonProps extends BaseShapeProps {
  *           stroke="#000000" fill="none" />
  */
 export interface PathProps extends BaseShapeProps {
-  shape_type: "Path";
+  shape_type: 'Path';
 
   /** SVG path data string (e.g. "M10 20 L100 80 Q150 100 200 80") */
   svg_data: string;

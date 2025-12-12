@@ -15,7 +15,7 @@ import {
   schemaSaysBool,
   schemaSaysVector,
   type SchemaValueType,
-} from "./schema_type_identifier";
+} from './schema_type_identifier';
 
 interface FormatScalarOptions {
   value: unknown;
@@ -38,10 +38,10 @@ interface FormatScalarOptions {
 export function formatScalarValueWithUnit({
   value,
   schemaValueType,
-  unit = "",
+  unit = '',
   floatPrecision = 8,
 }: FormatScalarOptions): string {
-  if (value === undefined || value === null) return "";
+  if (value === undefined || value === null) return '';
 
   const cleanUnit = unit.trim();
 
@@ -60,7 +60,7 @@ export function formatScalarValueWithUnit({
   // BOOL formatting
   if (schemaSaysBool(schemaValueType)) {
     const raw =
-      typeof value === "boolean" ? String(value) : String(Boolean(value));
+      typeof value === 'boolean' ? String(value) : String(Boolean(value));
     return cleanUnit ? `${raw} ${cleanUnit}` : raw;
   }
 
@@ -90,17 +90,17 @@ export function formatScalarValueWithUnit({
  * Optional helper for vector labels or debug output.
  */
 export function formatVectorSummary(value: unknown, maxPreview = 6): string {
-  if (value == null) return "";
+  if (value == null) return '';
 
   if (Array.isArray(value)) {
-    const head = value.slice(0, maxPreview).map(String).join(", ");
+    const head = value.slice(0, maxPreview).map(String).join(', ');
     return value.length > maxPreview ? `[${head}, …]` : `[${head}]`;
   }
 
   if (ArrayBuffer.isView(value) && !(value instanceof DataView)) {
     try {
       const arr = Array.from(value as any);
-      const head = arr.slice(0, maxPreview).map(String).join(", ");
+      const head = arr.slice(0, maxPreview).map(String).join(', ');
       return arr.length > maxPreview ? `[${head}, …]` : `[${head}]`;
     } catch {
       return String(value);

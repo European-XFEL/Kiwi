@@ -4,14 +4,14 @@
  * Each extends BaseShapeElementModel and provides a typed `props` getter.
  */
 
-import { BaseShapeElementModel } from "./BaseModels";
+import { BaseShapeElementModel } from './BaseModels';
 import type {
   LineProps,
   RectangleProps,
   ArrowPolygonProps,
   PolygonProps,
   PathProps,
-} from "../scene_types/shapes";
+} from '../scene_types/shapes';
 
 // ============================================================================
 // Line
@@ -49,8 +49,8 @@ export class LineModel extends BaseShapeElementModel<LineProps> {
 
   get props(): LineProps {
     return {
-      element_type: "shape",
-      shape_type: "Line",
+      element_type: 'shape',
+      shape_type: 'Line',
       x1: this.x1,
       y1: this.y1,
       x2: this.x2,
@@ -84,8 +84,8 @@ export class RectangleModel extends BaseShapeElementModel<RectangleProps> {
 
   get props(): RectangleProps {
     return {
-      element_type: "shape",
-      shape_type: "Rectangle",
+      element_type: 'shape',
+      shape_type: 'Rectangle',
       x: this.x,
       y: this.y,
       width: this.width,
@@ -112,7 +112,7 @@ export class RectangleModel extends BaseShapeElementModel<RectangleProps> {
 
 /** PolygonModel — represents a polygon defined by vertex coordinates. */
 export class PolygonModel extends BaseShapeElementModel<PolygonProps> {
-  points = "";
+  points = '';
 
   // --- Helpers ---
   #parsePoints(): Array<{ x: number; y: number }> {
@@ -121,7 +121,7 @@ export class PolygonModel extends BaseShapeElementModel<PolygonProps> {
       .trim()
       .split(/\s+/)
       .map((pair) => {
-        const [x, y] = pair.split(",").map(Number);
+        const [x, y] = pair.split(',').map(Number);
         return { x, y };
       });
   }
@@ -161,8 +161,8 @@ export class PolygonModel extends BaseShapeElementModel<PolygonProps> {
   get props(): PolygonProps {
     const { x, y, width, height } = this.#getBounds();
     return {
-      element_type: "shape",
-      shape_type: "Polygon",
+      element_type: 'shape',
+      shape_type: 'Polygon',
       points: this.points,
       x,
       y,
@@ -219,8 +219,8 @@ export class ArrowPolygonModel extends BaseShapeElementModel<ArrowPolygonProps> 
 
   get props(): ArrowPolygonProps {
     return {
-      element_type: "shape",
-      shape_type: "ArrowPolygon",
+      element_type: 'shape',
+      shape_type: 'ArrowPolygon',
       x1: this.x1,
       y1: this.y1,
       x2: this.x2,
@@ -253,12 +253,12 @@ export class ArrowPolygonModel extends BaseShapeElementModel<ArrowPolygonProps> 
 
 /** PathModel — represents an arbitrary SVG path. */
 export class PathModel extends BaseShapeElementModel<PathProps> {
-  svg_data = "";
+  svg_data = '';
 
   get props(): PathProps {
     return {
-      element_type: "shape",
-      shape_type: "Path",
+      element_type: 'shape',
+      shape_type: 'Path',
       svg_data: this.svg_data,
       stroke: this.stroke,
       stroke_opacity: this.stroke_opacity,

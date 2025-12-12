@@ -2,8 +2,8 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { useGlobalStore } from "@/store/globalAppStateStore";
+} from '@/components/ui/tooltip';
+import { useGlobalStore } from '@/store/globalAppStateStore';
 
 export type GuiServerDisplayProps = {
   className?: string;
@@ -21,7 +21,7 @@ export default function GuiServerDisplay({ className }: GuiServerDisplayProps) {
       <TooltipTrigger asChild>
         <div className={className}>
           <span className="text-sm text-muted-foreground">
-            GUI Server:{" "}
+            GUI Server:{' '}
             <span className="font-semibold text-foreground">
               {guiServerHost}:{guiServerPort}
             </span>

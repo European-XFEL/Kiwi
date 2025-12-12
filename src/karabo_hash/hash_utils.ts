@@ -4,8 +4,8 @@ import {
   Hash,
   HashTypes,
   HashValue,
-} from "karabo-ts";
-import { HashValueType, VectorElementType } from "./HashValueType";
+} from 'karabo-ts';
+import { HashValueType, VectorElementType } from './HashValueType';
 
 /**
  * Parses a Blob, the type of WebSocketEvent.data, supposed to contain a
@@ -32,7 +32,7 @@ export const blobToHash = async (blob: Blob): Promise<Hash> => {
  * @returns the value of the hash's "type" property (blank if the hash has no type property).
  */
 export const hashProtocolType = (hash: Hash): string => {
-  return (hash.getValue("type") as string) ?? "";
+  return (hash.getValue('type') as string) ?? '';
 };
 
 /**
@@ -67,13 +67,13 @@ export const flattenHash = (
   function doFlattenHash(
     hash: Hash,
     hashLeaves: HashLeafNode[],
-    currentPath: string = ""
+    currentPath: string = ''
   ) {
     for (const [itemPath] of hash.iterall()) {
       const currentKey =
         currentPath.length > 0 ? `${currentPath}.${itemPath}` : itemPath;
       const hashNode = hash.getNode(itemPath);
-      if (typeof hashNode !== "undefined") {
+      if (typeof hashNode !== 'undefined') {
         if (hashNode.value.type_ === HashTypes.Hash) {
           if (
             Object.entries(hashNode.value.value_).length === 0 &&

@@ -1,10 +1,10 @@
-import { Outlet } from "react-router-dom";
-import type { BodyProps } from "@/shared/types";
+import { Outlet } from 'react-router-dom';
+import type { BodyProps } from '@/shared/types';
 
 export default function Body({
   useOutlet,
   className,
-  id = "main",
+  id = 'main',
   children,
   ...rest
 }: BodyProps) {

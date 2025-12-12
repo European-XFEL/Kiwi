@@ -1,5 +1,5 @@
-import { create } from "zustand";
-import { SceneModel } from "../view_models/SceneModel";
+import { create } from 'zustand';
+import { SceneModel } from '../view_models/SceneModel';
 
 export interface LoadedSceneStateStoreProp {
   scene?: SceneModel;

@@ -1,21 +1,21 @@
-import { render, screen } from "@testing-library/react";
-import type { DisplayStateColorProps } from "@/scene/scene_types/controllers";
-import { guiStateColors } from "../../../../karabo_data/Indicators";
+import { render, screen } from '@testing-library/react';
+import type { DisplayStateColorProps } from '@/scene/scene_types/controllers';
+import { guiStateColors } from '../../../../karabo_data/Indicators';
 
-import type { UseDevicePropertyResult } from "@/components/shared/hooks/useDeviceProperty";
+import type { UseDevicePropertyResult } from '@/components/shared/hooks/useDeviceProperty';
 
-import { ProxyStatus, PropertyStatus } from "@/device/enums";
+import { ProxyStatus, PropertyStatus } from '@/device/enums';
 
 // ---------------------------------------------------
 // MOCK: useGuiStateColor
 // ---------------------------------------------------
 const mockUseGuiStateColor = jest.fn();
-jest.mock("@/components/shared/hooks/useGuiStateColor", () => ({
+jest.mock('@/components/shared/hooks/useGuiStateColor', () => ({
   useGuiStateColor: (...args: any[]) => mockUseGuiStateColor(...args),
 }));
 
 // Import AFTER mocks
-import DisplayStateColor from "../../../controllers/display/DisplayStateColor";
+import DisplayStateColor from '../../../controllers/display/DisplayStateColor';
 
 // ---------------------------------------------------
 // Helpers
@@ -30,12 +30,12 @@ function makePrimary(
     timeAttrs: undefined,
 
     // device state
-    deviceState: "ERROR",
+    deviceState: 'ERROR',
     stateColor: undefined,
 
     // identity
-    deviceId: "DEVICE_X",
-    propertyPath: "state",
+    deviceId: 'DEVICE_X',
+    propertyPath: 'state',
 
     // schema / editability
     descriptor: undefined,
@@ -65,16 +65,16 @@ function makeProps(
   overrides: Partial<DisplayStateColorProps> = {}
 ): DisplayStateColorProps {
   return {
-    element_type: "widget",
-    widget_type: "DisplayStateColor",
-    parent_component: "DisplayComponent",
+    element_type: 'widget',
+    widget_type: 'DisplayStateColor',
+    parent_component: 'DisplayComponent',
     x: 0,
     y: 0,
     width: 30,
     height: 20,
-    keys: ["DEVICE_X.state"], // OK to keep even if not used in component now
+    keys: ['DEVICE_X.state'], // OK to keep even if not used in component now
     font_size: 10,
-    font_weight: "normal",
+    font_weight: 'normal',
     show_string: false,
     tooltipText: undefined,
     primary: makePrimary(),
@@ -97,20 +97,20 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe("DisplayStateColor - show_string behavior (new architecture)", () => {
-  it("renders text when show_string=true and primary is online + ready", () => {
+describe('DisplayStateColor - show_string behavior (new architecture)', () => {
+  it('renders text when show_string=true and primary is online + ready', () => {
     const { container } = renderWithKey(
       makeProps({
         show_string: true,
         primary: makePrimary({
-          deviceState: "ERROR",
+          deviceState: 'ERROR',
           isOnlineLike: true,
           isReady: true,
         }),
       })
     );
 
-    expect(screen.getByText("ERROR")).toBeInTheDocument();
+    expect(screen.getByText('ERROR')).toBeInTheDocument();
 
     // New DOM structure:
     // outer wrapper -> inner colored box
@@ -121,15 +121,15 @@ describe("DisplayStateColor - show_string behavior (new architecture)", () => {
     );
   });
 
-  it("does not render text when show_string=false (color only)", () => {
+  it('does not render text when show_string=false (color only)', () => {
     const { container } = renderWithKey(
       makeProps({
         show_string: false,
-        primary: makePrimary({ deviceState: "ERROR" }),
+        primary: makePrimary({ deviceState: 'ERROR' }),
       })
     );
 
-    expect(screen.queryByText("ERROR")).not.toBeInTheDocument();
+    expect(screen.queryByText('ERROR')).not.toBeInTheDocument();
 
     const displayElement = container.firstChild?.firstChild as HTMLElement;
 
@@ -138,12 +138,12 @@ describe("DisplayStateColor - show_string behavior (new architecture)", () => {
     );
   });
 
-  it("hides text when show_string=true but primary.isOnlineLike=false", () => {
+  it('hides text when show_string=true but primary.isOnlineLike=false', () => {
     renderWithKey(
       makeProps({
         show_string: true,
         primary: makePrimary({
-          deviceState: "ERROR",
+          deviceState: 'ERROR',
           isOnlineLike: false,
           isReady: true,
           isOffline: true,
@@ -152,25 +152,25 @@ describe("DisplayStateColor - show_string behavior (new architecture)", () => {
       })
     );
 
-    expect(screen.queryByText("ERROR")).not.toBeInTheDocument();
+    expect(screen.queryByText('ERROR')).not.toBeInTheDocument();
   });
 
-  it("hides text when show_string=true but primary.isReady=false", () => {
+  it('hides text when show_string=true but primary.isReady=false', () => {
     renderWithKey(
       makeProps({
         show_string: true,
         primary: makePrimary({
-          deviceState: "ERROR",
+          deviceState: 'ERROR',
           isOnlineLike: true,
           isReady: false,
         }),
       })
     );
 
-    expect(screen.queryByText("ERROR")).not.toBeInTheDocument();
+    expect(screen.queryByText('ERROR')).not.toBeInTheDocument();
   });
 
-  it("uses unknownColor for unmapped states (via hook)", () => {
+  it('uses unknownColor for unmapped states (via hook)', () => {
     mockUseGuiStateColor.mockReturnValue({
       colorValue: guiStateColors.unknownColor,
     });
@@ -178,7 +178,7 @@ describe("DisplayStateColor - show_string behavior (new architecture)", () => {
     const { container } = renderWithKey(
       makeProps({
         primary: makePrimary({
-          deviceState: "not-a-known-state",
+          deviceState: 'not-a-known-state',
         }),
       })
     );
@@ -190,7 +190,7 @@ describe("DisplayStateColor - show_string behavior (new architecture)", () => {
     );
   });
 
-  it("falls back to default gray when hook returns no colorValue", () => {
+  it('falls back to default gray when hook returns no colorValue', () => {
     mockUseGuiStateColor.mockReturnValue({
       colorValue: undefined,
     });
@@ -198,7 +198,7 @@ describe("DisplayStateColor - show_string behavior (new architecture)", () => {
     const { container } = renderWithKey(
       makeProps({
         primary: makePrimary({
-          deviceState: "ERROR",
+          deviceState: 'ERROR',
         }),
       })
     );

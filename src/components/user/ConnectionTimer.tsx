@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from "react";
-import { useGlobalStore } from "@/store/globalAppStateStore";
+import { useEffect, useState, useCallback } from 'react';
+import { useGlobalStore } from '@/store/globalAppStateStore';
 
 export type ConnectionTimerProps = {
   className?: string;
@@ -7,13 +7,13 @@ export type ConnectionTimerProps = {
 
 export default function ConnectionTimer({ className }: ConnectionTimerProps) {
   const { sessionInfo } = useGlobalStore();
-  const [connectedFor, setConnectedFor] = useState("");
+  const [connectedFor, setConnectedFor] = useState('');
 
   const updateConnectedFor = useCallback(() => {
     const sessionStartEpoc = sessionInfo?.sessionStartEpoc;
 
     if (sessionStartEpoc === undefined) {
-      setConnectedFor("--");
+      setConnectedFor('--');
       return 1000;
     }
 
@@ -25,21 +25,21 @@ export default function ConnectionTimer({ className }: ConnectionTimerProps) {
       // Hours and minutes
       const hours = Math.floor(elapsedSecs / 3600);
       const mins = Math.floor((elapsedSecs % 3600) / 60);
-      elapsedStr = `${hours.toString().padStart(2, "0")}h ${mins
+      elapsedStr = `${hours.toString().padStart(2, '0')}h ${mins
         .toString()
-        .padStart(2, "0")}m`;
+        .padStart(2, '0')}m`;
       intervalMsecs = 60 * 1000; // Update every minute
     } else if (elapsedSecs > 59) {
       // Minutes and seconds
       const mins = Math.floor(elapsedSecs / 60);
       const secs = elapsedSecs % 60;
-      elapsedStr = `${mins.toString().padStart(2, "0")}m ${secs
+      elapsedStr = `${mins.toString().padStart(2, '0')}m ${secs
         .toString()
-        .padStart(2, "0")}s`;
+        .padStart(2, '0')}s`;
       intervalMsecs = 3000; // Update every 3 seconds
     } else {
       // Seconds only
-      elapsedStr = `${elapsedSecs.toString().padStart(2, "0")}s`;
+      elapsedStr = `${elapsedSecs.toString().padStart(2, '0')}s`;
       intervalMsecs = 1000; // Update every second
     }
 
@@ -61,7 +61,7 @@ export default function ConnectionTimer({ className }: ConnectionTimerProps) {
   return (
     <div className={className}>
       <span className="text-sm text-muted-foreground">
-        Connected for:{" "}
+        Connected for:{' '}
         <span className="font-semibold text-foreground">{connectedFor}</span>
       </span>
     </div>

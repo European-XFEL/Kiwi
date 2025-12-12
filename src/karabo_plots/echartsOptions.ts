@@ -1,7 +1,7 @@
-import type { EChartsOption } from "echarts";
-import { buildTimeValueHeatmap } from "./heatmapBining";
+import type { EChartsOption } from 'echarts';
+import { buildTimeValueHeatmap } from './heatmapBining';
 
-export type EChartType = "line" | "scatter" | "bar" | "area" | "heatmap";
+export type EChartType = 'line' | 'scatter' | 'bar' | 'area' | 'heatmap';
 
 interface BuildEChartsOptionsParams {
   timestamps: number[];
@@ -22,18 +22,18 @@ export function buildEChartsOptions({
   timestamps,
   values,
   chartType,
-  xLabel = "Time",
-  yLabel = "Value",
+  xLabel = 'Time',
+  yLabel = 'Value',
   xGrid = true,
   yGrid = true,
-  background = "transparent",
+  background = 'transparent',
 }: BuildEChartsOptionsParams): EChartsOption {
   // Format timestamps as readable dates (HH:MM format)
   const formattedTimes = timestamps.map((ts) => {
     const date = new Date(ts);
-    return date.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
       hour12: false,
     });
   });
@@ -42,11 +42,11 @@ export function buildEChartsOptions({
   const baseOption: EChartsOption = {
     backgroundColor: background,
     tooltip: {
-      trigger: "axis",
+      trigger: 'axis',
       axisPointer: {
-        type: "cross",
+        type: 'cross',
         label: {
-          backgroundColor: "#6a7985",
+          backgroundColor: '#6a7985',
         },
       },
     },
@@ -60,26 +60,26 @@ export function buildEChartsOptions({
     toolbox: {
       feature: {
         saveAsImage: {
-          title: "Save as Image",
+          title: 'Save as Image',
         },
         dataZoom: {
-          yAxisIndex: "none",
+          yAxisIndex: 'none',
           title: {
-            zoom: "Zoom",
-            back: "Reset Zoom",
+            zoom: 'Zoom',
+            back: 'Reset Zoom',
           },
         },
         restore: {
-          title: "Restore",
+          title: 'Restore',
         },
       },
     },
     xAxis: {
-      type: "category",
-      boundaryGap: chartType === "bar",
+      type: 'category',
+      boundaryGap: chartType === 'bar',
       data: formattedTimes,
       name: xLabel,
-      nameLocation: "middle",
+      nameLocation: 'middle',
       nameGap: 30,
       splitLine: {
         show: xGrid,
@@ -88,13 +88,13 @@ export function buildEChartsOptions({
         rotate: 0,
         formatter: (value: string) => value,
         hideOverlap: true,
-        interval: "auto",
+        interval: 'auto',
       },
     },
     yAxis: {
-      type: "value",
+      type: 'value',
       name: yLabel,
-      nameLocation: "middle",
+      nameLocation: 'middle',
       nameGap: 50,
       splitLine: {
         show: yGrid,
@@ -103,17 +103,17 @@ export function buildEChartsOptions({
   };
 
   // Configure series based on chart type
-  let series: EChartsOption["series"];
+  let series: EChartsOption['series'];
 
   switch (chartType) {
-    case "line":
+    case 'line':
       series = [
         {
-          name: "Value",
-          type: "line",
+          name: 'Value',
+          type: 'line',
           smooth: true,
           data: values,
-          symbol: "circle",
+          symbol: 'circle',
           symbolSize: 4,
           lineStyle: {
             width: 2,
@@ -122,32 +122,32 @@ export function buildEChartsOptions({
       ];
       break;
 
-    case "scatter":
+    case 'scatter':
       series = [
         {
-          name: "Value",
-          type: "scatter",
+          name: 'Value',
+          type: 'scatter',
           data: values,
           symbolSize: 6,
         },
       ];
       break;
 
-    case "bar":
+    case 'bar':
       series = [
         {
-          name: "Value",
-          type: "bar",
+          name: 'Value',
+          type: 'bar',
           data: values,
         },
       ];
       break;
 
-    case "area":
+    case 'area':
       series = [
         {
-          name: "Value",
-          type: "line",
+          name: 'Value',
+          type: 'line',
           smooth: true,
           data: values,
           areaStyle: {
@@ -160,7 +160,7 @@ export function buildEChartsOptions({
       ];
       break;
 
-    case "heatmap":
+    case 'heatmap':
       // For heatmap, ECharts requires visualMap component and 2D binned data
       const heatmapData = buildTimeValueHeatmap(timestamps, values, {
         timeBins: 24,
@@ -182,13 +182,13 @@ export function buildEChartsOptions({
 
       series = [
         {
-          name: "Density",
-          type: "heatmap",
+          name: 'Density',
+          type: 'heatmap',
           data: heatmapPoints,
           emphasis: {
             itemStyle: {
               shadowBlur: 10,
-              shadowColor: "rgba(0, 0, 0, 0.5)",
+              shadowColor: 'rgba(0, 0, 0, 0.5)',
             },
           },
         },
@@ -199,32 +199,32 @@ export function buildEChartsOptions({
         min: minVal,
         max: maxVal,
         calculable: true,
-        orient: "horizontal",
-        left: "center",
-        bottom: "0%",
+        orient: 'horizontal',
+        left: 'center',
+        bottom: '0%',
         inRange: {
           color: [
-            "#313695",
-            "#4575b4",
-            "#74add1",
-            "#abd9e9",
-            "#e0f3f8",
-            "#ffffbf",
-            "#fee090",
-            "#fdae61",
-            "#f46d43",
-            "#d73027",
-            "#a50026",
+            '#313695',
+            '#4575b4',
+            '#74add1',
+            '#abd9e9',
+            '#e0f3f8',
+            '#ffffbf',
+            '#fee090',
+            '#fdae61',
+            '#f46d43',
+            '#d73027',
+            '#a50026',
           ],
         },
       };
 
       // Override axis for heatmap
       baseOption.xAxis = {
-        type: "category",
+        type: 'category',
         data: heatmapData.xLabels,
-        name: "Time bins",
-        nameLocation: "middle",
+        name: 'Time bins',
+        nameLocation: 'middle',
         nameGap: 30,
         splitArea: {
           show: true,
@@ -232,10 +232,10 @@ export function buildEChartsOptions({
       };
 
       baseOption.yAxis = {
-        type: "category",
+        type: 'category',
         data: heatmapData.yLabels,
-        name: "Value bins",
-        nameLocation: "middle",
+        name: 'Value bins',
+        nameLocation: 'middle',
         nameGap: 50,
         splitArea: {
           show: true,

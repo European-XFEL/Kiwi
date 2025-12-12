@@ -1,6 +1,6 @@
-import { Separator } from "@/components/ui/separator";
-import Header from "../layouts/Header";
-import LoginPanel from "../auth/LoginPanel";
+import { Separator } from '@/components/ui/separator';
+import Header from '../layouts/Header';
+import LoginPanel from '../auth/LoginPanel';
 
 const LoggedOutState = () => (
   <main

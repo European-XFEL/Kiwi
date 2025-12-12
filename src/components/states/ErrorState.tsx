@@ -1,7 +1,7 @@
-import { Separator } from "@/components/ui/separator";
-import Header from "../layouts/Header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertTriangle } from "lucide-react";
+import { Separator } from '@/components/ui/separator';
+import Header from '../layouts/Header';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertTriangle } from 'lucide-react';
 
 const ErrorState = ({ error }: { error: string }) => (
   <div className="flex flex-col mx-auto p-2 w-full max-w-md sm:max-w-lg">

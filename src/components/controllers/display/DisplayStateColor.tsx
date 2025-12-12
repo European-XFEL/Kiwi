@@ -2,9 +2,9 @@
  * DisplayStateColor - controller component
  */
 
-import React from "react";
-import type { DisplayStateColorProps } from "@/scene/scene_types/controllers";
-import { useGuiStateColor } from "@/components/shared/hooks/useGuiStateColor";
+import React from 'react';
+import type { DisplayStateColorProps } from '@/scene/scene_types/controllers';
+import { useGuiStateColor } from '@/components/shared/hooks/useGuiStateColor';
 
 const DisplayStateColor: React.FC<DisplayStateColorProps> = React.memo(
   ({ font_size, font_weight, show_string, tooltipText, primary }) => {
@@ -12,11 +12,11 @@ const DisplayStateColor: React.FC<DisplayStateColorProps> = React.memo(
     const isOnlineLike = primary?.isOnlineLike;
     const isReady = primary?.isReady;
 
-    const rawState = deviceState ?? "UNKNOWN";
+    const rawState = deviceState ?? 'UNKNOWN';
 
     // Map state string → CSS color
     const { colorValue } = useGuiStateColor(rawState);
-    const bgColor = colorValue ?? "#cccccc";
+    const bgColor = colorValue ?? '#cccccc';
 
     // Only show text when device is online-ish and has schema+config
     const showText = show_string && isOnlineLike && isReady;
@@ -28,12 +28,12 @@ const DisplayStateColor: React.FC<DisplayStateColorProps> = React.memo(
       >
         <div
           style={{
-            width: "100%",
-            height: "100%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontFamily: "Arial",
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: 'Arial',
             fontSize: font_size,
             fontWeight: font_weight,
             backgroundColor: bgColor,

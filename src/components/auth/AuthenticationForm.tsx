@@ -1,9 +1,9 @@
-import { useRef, useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useRef, useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export type AuthenticationFormProps = {
   onUserNameChange: (username: string) => void;
@@ -47,10 +47,10 @@ export default function AuthenticationForm({
             <Input
               id="password"
               ref={passwdRef}
-              type={showPassword ? "text" : "password"}
+              type={showPassword ? 'text' : 'password'}
               onChange={(e) => onPasswordChange(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && !disabled) {
+                if (e.key === 'Enter' && !disabled) {
                   onSubmit();
                 }
               }}
