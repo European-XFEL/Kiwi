@@ -1,14 +1,14 @@
 import {
   RecentScenesByUser,
   UserRecentSceneModel,
-} from "../view_models/RecentScenesModel";
-import { create } from "zustand";
-import { subscribeWithSelector } from "zustand/middleware";
-import { RecentSceneModel } from "../view_models/RecentScenesModel";
-import { moveItemToFirstPosition } from "../shared/helpers/arrayHelpers";
+} from '../view_models/RecentScenesModel';
+import { create } from 'zustand';
+import { subscribeWithSelector } from 'zustand/middleware';
+import { RecentSceneModel } from '../view_models/RecentScenesModel';
+import { moveItemToFirstPosition } from '../shared/helpers/arrayHelpers';
 
 const MRU_SCENES_SIZE = 6;
-const MRU_SCENES_KEY = "MRU_SCENES_";
+const MRU_SCENES_KEY = 'MRU_SCENES_';
 
 // Confirm from local storage if there are recent scenes
 const loadRecentScenes = (): RecentScenesByUser[] | null => {
@@ -32,7 +32,7 @@ const loadRecentScenes = (): RecentScenesByUser[] | null => {
     }
     return recentScenes.length > 0 ? recentScenes : null;
   } catch (error) {
-    console.warn("Failed to load recent scenes from localStorage:", error);
+    console.warn('Failed to load recent scenes from localStorage:', error);
     return null;
   }
 };
@@ -45,7 +45,7 @@ const saveScenesToStorage = (
   try {
     localStorage.setItem(`${MRU_SCENES_KEY}${userId}`, JSON.stringify(scenes));
   } catch (error) {
-    console.warn("Failed to save recent scenes to localStorage:", error);
+    console.warn('Failed to save recent scenes to localStorage:', error);
   }
 };
 
@@ -179,7 +179,7 @@ const useRecentStore = create<TRecentStore>()(
           localStorage.removeItem(`${MRU_SCENES_KEY}${userId}`);
         } catch (error) {
           console.warn(
-            "Failed to clear recent scenes from localStorage:",
+            'Failed to clear recent scenes from localStorage:',
             error
           );
         }
@@ -199,7 +199,7 @@ const useRecentStore = create<TRecentStore>()(
           keysToRemove.forEach((key) => localStorage.removeItem(key));
         } catch (error) {
           console.warn(
-            "Failed to clear all recent scenes from localStorage:",
+            'Failed to clear all recent scenes from localStorage:',
             error
           );
         }

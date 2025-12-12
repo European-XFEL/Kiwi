@@ -1,11 +1,11 @@
-import { FilterIcon, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { FilterIcon, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from '@/components/ui/tooltip';
 
 export type ProjectFilterProps = {
   onFilter: () => void;
@@ -25,7 +25,7 @@ export default function ProjectFilter({
           ref={inputRef}
           placeholder="Project Name Part Filter"
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
+            if (e.key === 'Enter') {
               e.stopPropagation();
               onFilter();
             }

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -6,21 +6,21 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { ProjectDBConnector } from "../../karabo_connectors/ProjectDBConnector";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { ProjectDBConnector } from '../../karabo_connectors/ProjectDBConnector';
 import {
   ProjectItemInfo,
   ProjectSceneInfo,
-} from "../../karabo_data/ProjectDbInfo";
-import { useGlobalStore } from "../../store/globalAppStateStore";
-import DomainSelector from "./DomainSelector";
-import ProjectFilter from "./ProjectFilter";
-import ProjectsTable from "./ProjectTable";
-import ScenesTable from "./ScenesTable";
-import LoadingStatus from "../status/LoadingStatus";
+} from '../../karabo_data/ProjectDbInfo';
+import { useGlobalStore } from '../../store/globalAppStateStore';
+import DomainSelector from './DomainSelector';
+import ProjectFilter from './ProjectFilter';
+import ProjectsTable from './ProjectTable';
+import ScenesTable from './ScenesTable';
+import LoadingStatus from '../status/LoadingStatus';
 
 enum ActivityStatus {
   NO_ACTIVITY,
@@ -44,9 +44,9 @@ export default function SelectProjectSceneDialog({
   const [activityStatus, setActivityStatus] = useState(
     ActivityStatus.NO_ACTIVITY
   );
-  const [errorMsg, setErrorMessage] = useState("");
+  const [errorMsg, setErrorMessage] = useState('');
   const [domains, setDomains] = useState<string[]>([]);
-  const [selectedDomain, setSelectedDomain] = useState("");
+  const [selectedDomain, setSelectedDomain] = useState('');
   const [projects, setProjects] = useState<ProjectItemInfo[]>([]);
   const [selectedProject, setSelectedProject] = useState<
     ProjectItemInfo | undefined
@@ -56,7 +56,7 @@ export default function SelectProjectSceneDialog({
   const [selectedScene, setSelectedScene] = useState<
     ProjectSceneInfo | undefined
   >(undefined);
-  const executedOnceRef = useRef("");
+  const executedOnceRef = useRef('');
   const projectFilterRef = useRef<HTMLInputElement>(null);
 
   const updateProjects = (domain: string) => {
@@ -74,7 +74,7 @@ export default function SelectProjectSceneDialog({
         setTotalProjects(projectsFiltered.length);
 
         const projectFilter =
-          projectFilterRef.current?.value.toLowerCase() || "";
+          projectFilterRef.current?.value.toLowerCase() || '';
         if (projectFilter.length > 0) {
           projectsFiltered = projectsFiltered.filter(
             (pInf) => pInf.name.toLowerCase().indexOf(projectFilter) >= 0
@@ -140,19 +140,19 @@ export default function SelectProjectSceneDialog({
   const getStatusText = () => {
     switch (activityStatus) {
       case ActivityStatus.GETTING_DOMAINS:
-        return "Retrieving domains...";
+        return 'Retrieving domains...';
       case ActivityStatus.GETTING_PROJECTS:
-        return "Retrieving projects...";
+        return 'Retrieving projects...';
       case ActivityStatus.GETTING_SCENES:
-        return "Retrieving scenes...";
+        return 'Retrieving scenes...';
       default:
-        return "";
+        return '';
     }
   };
 
   React.useEffect(() => {
     if (!executedOnceRef.current) {
-      executedOnceRef.current = "true";
+      executedOnceRef.current = 'true';
     }
 
     if (open) {
@@ -214,7 +214,7 @@ export default function SelectProjectSceneDialog({
                     onFilter={() => updateProjects(selectedDomain)}
                     onClear={() => {
                       if (projectFilterRef.current) {
-                        projectFilterRef.current.value = "";
+                        projectFilterRef.current.value = '';
                       }
                       updateProjects(selectedDomain);
                     }}
@@ -249,7 +249,7 @@ export default function SelectProjectSceneDialog({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">
-                Scenes on Project "{selectedProject?.name ?? ""}"
+                Scenes on Project "{selectedProject?.name ?? ''}"
               </h3>
               <span className="text-xs text-muted-foreground">
                 ({scenes.length})

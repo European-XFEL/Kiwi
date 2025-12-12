@@ -23,7 +23,8 @@ cd <working_folder_root>
 npm install yarn
 yarn install
 yarn dev
-````
+```
+
 # Testing
 
 Jest is used for unit and integration testing with React Testing Library for component testing.
@@ -43,15 +44,15 @@ yarn cov
 
 ## Script Reference
 
-| Command | Description |
-|---------|-------------|
-| `test` | Runs tests in watch mode (development) |
-| `cov` | Generates coverage report for source files |
-
+| Command | Description                                |
+| ------- | ------------------------------------------ |
+| `test`  | Runs tests in watch mode (development)     |
+| `cov`   | Generates coverage report for source files |
 
 ## Test File Examples
 
 **Component Test:**
+
 ```typescript
 // MyComponent.test.tsx
 import { render, screen } from '@testing-library/react'
@@ -64,13 +65,14 @@ test('renders component correctly', () => {
 ```
 
 **Utility/Helpers Test:**
+
 ```typescript
 // utils.test.ts
-import { myHelper } from './utils'
+import { myHelper } from './utils';
 
 test('helper function works correctly', () => {
-  expect(myHelper('input')).toBe('expected output')
-})
+  expect(myHelper('input')).toBe('expected output');
+});
 ```
 
 ## Original README.md contents scaffolded by `vite`
@@ -97,7 +99,7 @@ export default tseslint.config({
       tsconfigRootDir: import.meta.dirname,
     },
   },
-})
+});
 ```
 
 - Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
@@ -106,7 +108,7 @@ export default tseslint.config({
 
 ```js
 // eslint.config.js
-import react from 'eslint-plugin-react'
+import react from 'eslint-plugin-react';
 
 export default tseslint.config({
   // Set the react version
@@ -121,5 +123,5 @@ export default tseslint.config({
     ...react.configs.recommended.rules,
     ...react.configs['jsx-runtime'].rules,
   },
-})
+});
 ```

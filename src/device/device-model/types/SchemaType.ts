@@ -1,4 +1,4 @@
-import type { PropertySchemaAttributes } from "@/karabo_data/DeviceSchemaInfo";
+import type { PropertySchemaAttributes } from '@/karabo_data/DeviceSchemaInfo';
 
 export interface PropertySchema {
   /** Full property path, e.g. "name", "frequency", "channels" */

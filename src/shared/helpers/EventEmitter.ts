@@ -1,4 +1,4 @@
-import type { Events, EventSubscriber, EventName } from "../types";
+import type { Events, EventSubscriber, EventName } from '../types';
 
 export class EventEmitter<TEventName extends string = string> {
   private events: Events<TEventName> = new Map();
@@ -45,7 +45,7 @@ export class EventEmitter<TEventName extends string = string> {
       try {
         subscriber(...args);
       } catch (err) {
-        console.error("EventEmitter: listener threw error", err);
+        console.error('EventEmitter: listener threw error', err);
       }
     });
   }

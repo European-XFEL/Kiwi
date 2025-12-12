@@ -3,7 +3,7 @@ import {
   measureComputation,
   measureRendering,
   type PerformanceMetrics,
-} from "../../../shared/helpers/performance";
+} from '../../../shared/helpers/performance';
 
 // In-memory LRU-ish cache for recolored SVGs
 const recolorCache = new Map<string, string>();
@@ -11,7 +11,7 @@ const MAX_CACHE_SIZE = 200;
 
 export interface RecolorOptions {
   stroke?: boolean;
-  fit?: "contain" | "cover" | "fill";
+  fit?: 'contain' | 'cover' | 'fill';
   nonScalingStroke?: boolean;
   preferSvgId?: string;
   extraPadPercent?: number;
@@ -29,7 +29,7 @@ export interface RecolorResult {
  * Also strips XML/doctype/comments.
  */
 function sanitizeSvgText(input: string, preferId?: string): string {
-  let s = input.replace(/^\uFEFF/, "");
+  let s = input.replace(/^\uFEFF/, '');
   const allSvgs = s.match(/<svg[\s\S]*?<\/svg>/gi);
   if (allSvgs && allSvgs.length > 0) {
     if (preferId) {
@@ -43,15 +43,15 @@ function sanitizeSvgText(input: string, preferId?: string): string {
   } else {
     // fallback: try to slice first/last <svg>
     const start = s.search(/<svg[\s>]/i);
-    const end = s.toLowerCase().lastIndexOf("</svg>");
+    const end = s.toLowerCase().lastIndexOf('</svg>');
     if (start >= 0 && end >= 0) s = s.slice(start, end + 6);
   }
 
   // remove xml/doctype/comments
   s = s
-    .replace(/<\?xml[\s\S]*?\?>/gi, "")
-    .replace(/<!doctype[\s\S]*?>/gi, "")
-    .replace(/^(\s*<!--[\s\S]*?-->)+/g, "")
+    .replace(/<\?xml[\s\S]*?\?>/gi, '')
+    .replace(/<!doctype[\s\S]*?>/gi, '')
+    .replace(/^(\s*<!--[\s\S]*?-->)+/g, '')
     .trim();
 
   return s;
@@ -62,7 +62,7 @@ function sanitizeSvgText(input: string, preferId?: string): string {
  * If yes, we often need to measure actual rendered bounds.
  */
 function docHasTransforms(svgDoc: Document): boolean {
-  return !!svgDoc.querySelector("[transform]");
+  return !!svgDoc.querySelector('[transform]');
 }
 
 /**
@@ -71,19 +71,19 @@ function docHasTransforms(svgDoc: Document): boolean {
  */
 function mountAndMeasureBBox(svgDoc: Document, perfTracking = false): DOMRect {
   return measureRendering(
-    "Mount and measure BBox",
+    'Mount and measure BBox',
     () => {
       const svgEl = document.importNode(
         svgDoc.documentElement,
         true
       ) as unknown as SVGSVGElement;
 
-      svgEl.setAttribute("width", "0");
-      svgEl.setAttribute("height", "0");
-      (svgEl as unknown as HTMLElement).style.position = "absolute";
-      (svgEl as unknown as HTMLElement).style.left = "-100000px";
-      (svgEl as unknown as HTMLElement).style.top = "-100000px";
-      (svgEl as unknown as HTMLElement).style.visibility = "hidden";
+      svgEl.setAttribute('width', '0');
+      svgEl.setAttribute('height', '0');
+      (svgEl as unknown as HTMLElement).style.position = 'absolute';
+      (svgEl as unknown as HTMLElement).style.left = '-100000px';
+      (svgEl as unknown as HTMLElement).style.top = '-100000px';
+      (svgEl as unknown as HTMLElement).style.visibility = 'hidden';
 
       document.body.appendChild(svgEl);
 
@@ -98,7 +98,7 @@ function mountAndMeasureBBox(svgDoc: Document, perfTracking = false): DOMRect {
           x2 = -Infinity,
           y2 = -Infinity;
         const nodes = svgEl.querySelectorAll<SVGGraphicsElement>(
-          "path,rect,circle,ellipse,line,polyline,polygon,text,g,use"
+          'path,rect,circle,ellipse,line,polyline,polygon,text,g,use'
         );
         nodes.forEach((n) => {
           try {
@@ -140,13 +140,13 @@ function shouldRecolor(value?: string | null): boolean {
  */
 function getMaxStrokeWidth(svgDoc: Document): number {
   let max = 0;
-  for (const el of Array.from(svgDoc.querySelectorAll<HTMLElement>("*"))) {
-    const attr = el.getAttribute("stroke-width");
+  for (const el of Array.from(svgDoc.querySelectorAll<HTMLElement>('*'))) {
+    const attr = el.getAttribute('stroke-width');
     if (attr) {
       const v = parseFloat(attr);
       if (Number.isFinite(v) && v > max) max = v;
     }
-    const style = el.getAttribute("style");
+    const style = el.getAttribute('style');
     if (style) {
       const m = style.match(/stroke-width\s*:\s*([0-9.]+)\b/i);
       if (m) {
@@ -181,11 +181,11 @@ export function getPreloadedCacheKey(
     `preloaded:${iconName}`,
     color,
     opts.stroke ? 1 : 0,
-    opts.fit ?? "contain",
+    opts.fit ?? 'contain',
     opts.nonScalingStroke ? 1 : 0,
-    opts.preferSvgId ?? "",
-    String(opts.extraPadPercent ?? ""),
-  ].join("|");
+    opts.preferSvgId ?? '',
+    String(opts.extraPadPercent ?? ''),
+  ].join('|');
 }
 
 /**
@@ -199,25 +199,25 @@ function recolorSvgDocument(
   perfTracking = false
 ): void {
   measureComputation(
-    "Recolor SVG document",
+    'Recolor SVG document',
     () => {
-      const elements = Array.from(svgDoc.querySelectorAll<HTMLElement>("*"));
+      const elements = Array.from(svgDoc.querySelectorAll<HTMLElement>('*'));
 
       for (const el of elements) {
-        const fill = el.getAttribute("fill");
+        const fill = el.getAttribute('fill');
         if (fill && shouldRecolor(fill)) {
-          el.setAttribute("fill", color);
+          el.setAttribute('fill', color);
         }
 
         if (includeStrokes) {
-          const stroke = el.getAttribute("stroke");
+          const stroke = el.getAttribute('stroke');
           if (stroke && shouldRecolor(stroke)) {
-            el.setAttribute("stroke", color);
+            el.setAttribute('stroke', color);
           }
         }
 
         // inline styles
-        const style = el.getAttribute("style");
+        const style = el.getAttribute('style');
         if (style) {
           let modified = style
             .replace(
@@ -242,21 +242,21 @@ function recolorSvgDocument(
           }
 
           if (modified !== style) {
-            el.setAttribute("style", modified);
+            el.setAttribute('style', modified);
           }
         }
       }
 
       // gradients
       for (const stop of Array.from(
-        svgDoc.querySelectorAll<SVGStopElement>("stop")
+        svgDoc.querySelectorAll<SVGStopElement>('stop')
       )) {
-        const stopColor = stop.getAttribute("stop-color");
+        const stopColor = stop.getAttribute('stop-color');
         if (stopColor && shouldRecolor(stopColor)) {
-          stop.setAttribute("stop-color", color);
+          stop.setAttribute('stop-color', color);
         }
 
-        const stopStyle = stop.getAttribute("style");
+        const stopStyle = stop.getAttribute('style');
         if (stopStyle) {
           const modified = stopStyle
             .replace(
@@ -269,7 +269,7 @@ function recolorSvgDocument(
             );
 
           if (modified !== stopStyle) {
-            stop.setAttribute("style", modified);
+            stop.setAttribute('style', modified);
           }
         }
       }
@@ -287,17 +287,17 @@ function recolorSvgDocument(
  */
 function normalizeSvgRoot(
   svgDoc: Document,
-  fit: "contain" | "cover" | "fill",
+  fit: 'contain' | 'cover' | 'fill',
   nonScalingStroke: boolean,
   extraPadPercent = 0.06,
   perfTracking = false
 ): void {
   measureRendering(
-    "Normalize SVG root",
+    'Normalize SVG root',
     () => {
       const root = svgDoc.documentElement as unknown as SVGSVGElement;
 
-      const hasVb = root.hasAttribute("viewBox");
+      const hasVb = root.hasAttribute('viewBox');
       const mustMeasure = docHasTransforms(svgDoc) || !hasVb;
 
       let x = 0,
@@ -313,7 +313,7 @@ function normalizeSvgRoot(
         w = Math.max(1e-6, b.width);
         h = Math.max(1e-6, b.height);
       } else {
-        const [vx, vy, vw, vh] = (root.getAttribute("viewBox") || "0 0 0 0")
+        const [vx, vy, vw, vh] = (root.getAttribute('viewBox') || '0 0 0 0')
           .split(/\s+/)
           .map(Number);
         x = vx;
@@ -332,34 +332,34 @@ function normalizeSvgRoot(
       w += 2 * pad;
       h += 2 * pad;
 
-      root.setAttribute("viewBox", `${x} ${y} ${w} ${h}`);
+      root.setAttribute('viewBox', `${x} ${y} ${w} ${h}`);
 
       // responsive sizing
-      root.setAttribute("width", "100%");
-      root.setAttribute("height", "100%");
-      const style = root.getAttribute("style");
+      root.setAttribute('width', '100%');
+      root.setAttribute('height', '100%');
+      const style = root.getAttribute('style');
       root.setAttribute(
-        "style",
-        style ? `${style};display:block` : "display:block"
+        'style',
+        style ? `${style};display:block` : 'display:block'
       );
 
       // map fit to preserveAspectRatio
       const par =
-        fit === "cover"
-          ? "xMidYMid slice"
-          : fit === "fill"
-          ? "none"
-          : "xMidYMid meet";
-      root.setAttribute("preserveAspectRatio", par);
+        fit === 'cover'
+          ? 'xMidYMid slice'
+          : fit === 'fill'
+            ? 'none'
+            : 'xMidYMid meet';
+      root.setAttribute('preserveAspectRatio', par);
 
       // keep stroke width constant if requested
       if (nonScalingStroke) {
         for (const el of Array.from(
           svgDoc.querySelectorAll<SVGGraphicsElement>(
-            "path, rect, circle, ellipse, line, polyline, polygon"
+            'path, rect, circle, ellipse, line, polyline, polygon'
           )
         )) {
-          el.setAttribute("vector-effect", "non-scaling-stroke");
+          el.setAttribute('vector-effect', 'non-scaling-stroke');
         }
       }
     },
@@ -386,7 +386,7 @@ function recolorSvg(
 
   // 1) clean incoming text
   const { result: cleaned, time: sanitizeTime } = measureComputation(
-    "Sanitize SVG text",
+    'Sanitize SVG text',
     () => sanitizeSvgText(svgText, opts.preferSvgId),
     perfTracking
   );
@@ -394,24 +394,24 @@ function recolorSvg(
 
   // 2) parse into DOM
   const { result: svgDoc, time: parseTime } = measureComputation(
-    "Parse SVG document",
+    'Parse SVG document',
     () => {
       const parser = new DOMParser();
-      return parser.parseFromString(cleaned, "image/svg+xml");
+      return parser.parseFromString(cleaned, 'image/svg+xml');
     },
     perfTracking
   );
   computationTime += parseTime;
 
-  const parserError = svgDoc.querySelector("parsererror");
+  const parserError = svgDoc.querySelector('parsererror');
   if (parserError) {
-    console.error("SVG parsing failed:", parserError.textContent);
+    console.error('SVG parsing failed:', parserError.textContent);
     return { svg: svgText, computationTime, renderingTime };
   }
 
   // 3) recolor elements
   const { time: recolorTime } = measureComputation(
-    "Recolor SVG document",
+    'Recolor SVG document',
     () => {
       recolorSvgDocument(svgDoc, color, opts.stroke ?? true, perfTracking);
     },
@@ -421,11 +421,11 @@ function recolorSvg(
 
   // 4) normalize root
   const { time: normalizeTime } = measureRendering(
-    "Normalize SVG root",
+    'Normalize SVG root',
     () => {
       normalizeSvgRoot(
         svgDoc,
-        opts.fit ?? "contain",
+        opts.fit ?? 'contain',
         opts.nonScalingStroke ?? false,
         opts.extraPadPercent ?? 0.06,
         perfTracking
@@ -437,7 +437,7 @@ function recolorSvg(
 
   // 5) serialize back to string
   const { result: serialized, time: serializeTime } = measureComputation(
-    "Serialize SVG",
+    'Serialize SVG',
     () => new XMLSerializer().serializeToString(svgDoc),
     perfTracking
   );
@@ -461,14 +461,14 @@ export function recolorPreloadedSvg(
   opts: RecolorOptions = {}
 ): RecolorResult {
   const perfTracker = opts.enablePerfTracking
-    ? createPerformanceTracker("SVG Recolor (Preloaded)")
+    ? createPerformanceTracker('SVG Recolor (Preloaded)')
     : null;
 
   // cache check
   const cached = recolorCache.get(cacheKey);
   if (cached) {
     if (perfTracker) {
-      perfTracker.mark("cache-hit");
+      perfTracker.mark('cache-hit');
       const metrics = perfTracker.getMetrics();
       metrics.fromCache = true;
       return { svg: cached, metrics };
@@ -477,9 +477,9 @@ export function recolorPreloadedSvg(
   }
 
   // cache miss -> recolor
-  perfTracker?.mark("recolor-start");
+  perfTracker?.mark('recolor-start');
   const recolorResult = recolorSvg(svgText, color, opts);
-  perfTracker?.mark("recolor-complete");
+  perfTracker?.mark('recolor-complete');
 
   // store
   setCache(cacheKey, recolorResult.svg);
@@ -519,4 +519,4 @@ export {
   measureComputation,
   measureRendering,
   createPerformanceTracker,
-} from "../../../shared/helpers/performance";
+} from '../../../shared/helpers/performance';

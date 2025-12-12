@@ -1,5 +1,5 @@
-import type { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
-import { AccessLevel, AccessMode } from "@/karabo_data/SchemaEnums";
+import type { PropertyInfo } from '@/karabo_data/DeviceConfigInfo';
+import { AccessLevel, AccessMode } from '@/karabo_data/SchemaEnums';
 
 export interface PropertyPermissionResult {
   canEdit: boolean;
@@ -23,7 +23,7 @@ export class PropertyPermissions {
     property: PropertyInfo | null | undefined,
     currentLevel: AccessLevel
   ): PropertyPermissionResult {
-    const debugLabel = property?.key ?? "<no-property>";
+    const debugLabel = property?.key ?? '<no-property>';
 
     // No property: cannot edit, treated as mode-denied
     if (!property) {
@@ -47,7 +47,7 @@ export class PropertyPermissions {
     if (!property.schemaAttrs) {
       console.warn(
         `[PropertyPermissions] Property "${property.key}" has NO schemaAttrs! ` +
-        `Defaulting to requiredAccessLevel=Observer, accessMode=Reconfigurable`
+          `Defaulting to requiredAccessLevel=Observer, accessMode=Reconfigurable`
       );
     } else {
       console.log(
@@ -67,7 +67,7 @@ export class PropertyPermissions {
       case AccessMode.ReadOnly:
         // Never editable from GUI
         console.debug(
-          "[PropertyPermissions] NOT editable (ReadOnly)",
+          '[PropertyPermissions] NOT editable (ReadOnly)',
           debugLabel
         );
         canEditByMode = false;
@@ -77,7 +77,7 @@ export class PropertyPermissions {
       case AccessMode.InitOnly:
         // Also never editable from GUI; only configurable via run file
         console.debug(
-          "[PropertyPermissions] NOT editable (InitOnly – run-file only)",
+          '[PropertyPermissions] NOT editable (InitOnly – run-file only)',
           debugLabel
         );
         canEditByMode = false;

@@ -3,10 +3,10 @@
  * Uses injected primary prop - no useDeviceProperty call needed
  */
 
-import * as React from "react";
-import type { DisplayCheckBoxProps } from "@/scene/scene_types/controllers";
-import { Checkbox } from "@/components/ui/checkbox";
-import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
+import * as React from 'react';
+import type { DisplayCheckBoxProps } from '@/scene/scene_types/controllers';
+import { Checkbox } from '@/components/ui/checkbox';
+import { FONT_FAMILY_DEFAULT } from '@/components/shared/helpers/fontDefaults';
 
 const DisplayCheckbox: React.FC<DisplayCheckBoxProps> = ({
   font_size,
@@ -18,10 +18,10 @@ const DisplayCheckbox: React.FC<DisplayCheckBoxProps> = ({
   const value = primary?.value;
 
   const isChecked = React.useMemo(() => {
-    if (typeof value === "boolean") return value;
-    if (typeof value === "string")
-      return value.toLowerCase() === "true" || value === "1";
-    if (typeof value === "number") return value !== 0;
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'string')
+      return value.toLowerCase() === 'true' || value === '1';
+    if (typeof value === 'number') return value !== 0;
     return false;
   }, [value]);
 

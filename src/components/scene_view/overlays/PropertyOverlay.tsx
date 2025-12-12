@@ -1,13 +1,13 @@
-import * as React from "react";
+import * as React from 'react';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
   TooltipProvider,
-} from "@/components/ui/tooltip";
-import { useDeviceProperty } from "@/components/shared/hooks/useDeviceProperty";
-import { ProxyStatus, PropertyStatus } from "@/device/enums";
-import { XIcon } from "lucide-react";
+} from '@/components/ui/tooltip';
+import { useDeviceProperty } from '@/components/shared/hooks/useDeviceProperty';
+import { ProxyStatus, PropertyStatus } from '@/device/enums';
+import { XIcon } from 'lucide-react';
 
 const CONNECTING_STATUSES: ProxyStatus[] = [
   ProxyStatus.SCHEMA_REQUESTED,
@@ -90,7 +90,7 @@ export const PropertyOverlay: React.FC<PropertyOverlayProps> = ({
     top: y,
     width,
     height,
-    pointerEvents: "none",
+    pointerEvents: 'none',
   };
 
   return (
@@ -141,16 +141,16 @@ export const PropertyOverlay: React.FC<PropertyOverlayProps> = ({
                     h-3 w-3 rounded-full shadow-md ring-2 ring-white/50
                     ${
                       phase === 0
-                        ? "bg-yellow-400"
+                        ? 'bg-yellow-400'
                         : phase === 1
-                        ? "bg-amber-500"
-                        : "bg-emerald-500"
+                          ? 'bg-amber-500'
+                          : 'bg-emerald-500'
                     }
                     animate-pulse
                   `}
                   style={{
                     animation:
-                      "pulse 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+                      'pulse 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                   }}
                 />
               </TooltipTrigger>
@@ -160,9 +160,9 @@ export const PropertyOverlay: React.FC<PropertyOverlayProps> = ({
               >
                 <p className="font-medium text-xs">{deviceId}</p>
                 <p className="text-xs opacity-90">
-                  {phase === 0 && "Connecting..."}
-                  {phase === 1 && "Loading configuration..."}
-                  {phase === 2 && "Ready"}
+                  {phase === 0 && 'Connecting...'}
+                  {phase === 1 && 'Loading configuration...'}
+                  {phase === 2 && 'Ready'}
                 </p>
               </TooltipContent>
             </Tooltip>
@@ -176,9 +176,9 @@ export const PropertyOverlay: React.FC<PropertyOverlayProps> = ({
               <TooltipTrigger asChild>
                 <div className="px-3 py-1.5 bg-amber-50/95 border border-amber-600 rounded shadow-md cursor-help backdrop-blur-sm">
                   <span className="text-amber-900 font-mono font-bold text-xs tracking-wider">
-                    {typeof propertyIndicator.indicator === "string"
+                    {typeof propertyIndicator.indicator === 'string'
                       ? propertyIndicator.indicator
-                      : "??"}
+                      : '??'}
                   </span>
                 </div>
               </TooltipTrigger>
@@ -187,10 +187,10 @@ export const PropertyOverlay: React.FC<PropertyOverlayProps> = ({
                 className="bg-gray-900 text-white border-gray-800 max-w-xs"
               >
                 <p className="text-xs leading-relaxed">
-                  Property{" "}
+                  Property{' '}
                   <code className="font-mono bg-amber-900/30 px-1 rounded">
                     {propertyPath}
-                  </code>{" "}
+                  </code>{' '}
                   not found in device configuration.
                 </p>
               </TooltipContent>

@@ -5,11 +5,11 @@
  * Uses centralized scalar formatter to reproduce the old smooth float rounding.
  */
 
-import React from "react";
-import type { DisplayLabelProps } from "@/scene/scene_types/controllers/display";
-import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
-import { formatScalarValueWithUnit } from "@/shared/helpers/validation_helpers/value_formatters";
-import type { SchemaValueType } from "@/shared/helpers/validation_helpers/schema_type_identifier";
+import React from 'react';
+import type { DisplayLabelProps } from '@/scene/scene_types/controllers/display';
+import { FONT_FAMILY_DEFAULT } from '@/components/shared/helpers/fontDefaults';
+import { formatScalarValueWithUnit } from '@/shared/helpers/validation_helpers/value_formatters';
+import type { SchemaValueType } from '@/shared/helpers/validation_helpers/schema_type_identifier';
 
 const DisplayLabel: React.FC<DisplayLabelProps> = ({
   font_size,
@@ -22,12 +22,12 @@ const DisplayLabel: React.FC<DisplayLabelProps> = ({
   const model = primary?.model;
 
   const labelValue = React.useMemo(() => {
-    if (value === undefined) return "";
+    if (value === undefined) return '';
 
     const schemaAttrs = model?.property_schema?.schemaAttrs;
 
-    const prefix = schemaAttrs?.metricPrefixSymbol ?? "";
-    const symbol = schemaAttrs?.unitSymbol ?? "";
+    const prefix = schemaAttrs?.metricPrefixSymbol ?? '';
+    const symbol = schemaAttrs?.unitSymbol ?? '';
     const unit = `${prefix}${symbol}`.trim();
 
     /**

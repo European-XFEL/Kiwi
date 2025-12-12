@@ -1,7 +1,7 @@
-import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Spinner } from "@/components/ui/spinner";
-import { cn } from "@/shared/helpers/cn";
+import React from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
+import { cn } from '@/shared/helpers/cn';
 
 type InitializingStateProps = {
   visible: boolean;
@@ -10,14 +10,14 @@ type InitializingStateProps = {
 const InitializingState: React.FC<InitializingStateProps> = ({ visible }) => (
   <section
     className={cn(
-      "fixed inset-0 z-50",
-      "flex items-center justify-center",
-      "px-4 sm:px-6 lg:px-8",
-      "bg-background",
-      "transition-opacity duration-200 ease-out",
+      'fixed inset-0 z-50',
+      'flex items-center justify-center',
+      'px-4 sm:px-6 lg:px-8',
+      'bg-background',
+      'transition-opacity duration-200 ease-out',
       visible
-        ? "opacity-100 pointer-events-auto"
-        : "opacity-0 pointer-events-none"
+        ? 'opacity-100 pointer-events-auto'
+        : 'opacity-0 pointer-events-none'
     )}
     aria-label="App loading"
     role="status"

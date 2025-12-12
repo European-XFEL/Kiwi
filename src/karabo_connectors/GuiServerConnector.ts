@@ -1,35 +1,35 @@
-import { buildLoginHash } from "../karabo_hash/builders/gui_session";
-import { AccessControlManager } from "@/shared/helpers/AccessLevel";
+import { buildLoginHash } from '../karabo_hash/builders/gui_session';
+import { AccessControlManager } from '@/shared/helpers/AccessLevel';
 
 import {
   sysTopologyInfoFromHash,
   sysTopologyUpdateInfoFromHash,
-} from "../karabo_hash/decoders/topology";
+} from '../karabo_hash/decoders/topology';
 import {
   guiServerInfoFromHash,
   loginInfoFromHash,
   notificationInfoFromHash,
-} from "../karabo_hash/decoders/gui_session";
+} from '../karabo_hash/decoders/gui_session';
 
 import {
   blobToHash,
   hashProtocolType,
   packEncodedHash,
-} from "../karabo_hash/hash_utils";
+} from '../karabo_hash/hash_utils';
 
-import { useAppSettingsStore } from "../store/appSettingsStore";
-import { useGlobalActivityStore } from "../store/globalActivityStore";
+import { useAppSettingsStore } from '../store/appSettingsStore';
+import { useGlobalActivityStore } from '../store/globalActivityStore';
 
-import { AccessLevel } from "@/karabo_data/SchemaEnums";
-import { GuiServerInfo } from "@/karabo_data/GuiServerInfo";
+import { AccessLevel } from '@/karabo_data/SchemaEnums';
+import { GuiServerInfo } from '@/karabo_data/GuiServerInfo';
 
-import { Websocket, WebsocketBuilder } from "websocket-ts";
+import { Websocket, WebsocketBuilder } from 'websocket-ts';
 
-import { BinaryEncoder, Hash } from "karabo-ts";
+import { BinaryEncoder, Hash } from 'karabo-ts';
 
-import { GuiSessionData, GuiSessionStore } from "../store/GuiSessionStore";
-import AuthServerClient from "../http_clients/AuthServerClient";
-import { TopologyConnector } from "./TopologyConnector";
+import { GuiSessionData, GuiSessionStore } from '../store/GuiSessionStore';
+import AuthServerClient from '../http_clients/AuthServerClient';
+import { TopologyConnector } from './TopologyConnector';
 
 type SessionStartedHandler = (
   accessLevel: AccessLevel,
@@ -59,7 +59,7 @@ interface GuiServerSession {
 }
 
 const SESSION_DROPPED_ERROR_MSG =
-  "GUI Server connection lost unexpectedly. More details in the browser console.";
+  'GUI Server connection lost unexpectedly. More details in the browser console.';
 
 export class GuiServerConnector {
   // #region Singleton support
@@ -83,7 +83,7 @@ export class GuiServerConnector {
   sendHash(hash: Hash): void {
     if (!this.#_session) {
       console.log(
-        "Invalid use of sendHash! No active GUI Server session exists!"
+        'Invalid use of sendHash! No active GUI Server session exists!'
       );
       return;
     }
@@ -115,7 +115,7 @@ export class GuiServerConnector {
         ws.send(JSON.stringify({ host: host, port: port }));
       })
       .onMessage((ws, ev) => {
-        if (typeof ev.data === "string") {
+        if (typeof ev.data === 'string') {
           // The only occasions when the WebSocketProxy does not send a
           // binary serialized Hash are when it communicates an error for
           // connecting to the GUI Server or when it loses the connection to
@@ -140,13 +140,13 @@ export class GuiServerConnector {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       .onError((ws, _ev) => {
         if (!ws.underlyingWebsocket) {
-          onError("Websocket client initialization error");
+          onError('Websocket client initialization error');
         } else {
           if (ws.underlyingWebsocket?.CLOSED) {
             // Connection could not be established or couldn't be opened.
-            onError("No connection to websocket server");
+            onError('No connection to websocket server');
           } else if (ws.underlyingWebsocket?.CLOSING) {
-            onError("Websocket connection being closed.");
+            onError('Websocket connection being closed.');
           } else {
             onError(`Server ${ws.underlyingWebsocket?.url} not available`);
             ws.close();
@@ -233,7 +233,7 @@ export class GuiServerConnector {
   ): void {
     if (this.#_session) {
       console.log(
-        "Invalid use of startAuthSession! An active GUI Server session already exists!"
+        'Invalid use of startAuthSession! An active GUI Server session already exists!'
       );
       return;
     }
@@ -264,7 +264,7 @@ export class GuiServerConnector {
   ): void {
     if (this.#_session) {
       console.log(
-        "Invalid use of startNonAuthSession! An active GUI Server session already exists!"
+        'Invalid use of startNonAuthSession! An active GUI Server session already exists!'
       );
       return;
     }
@@ -293,7 +293,7 @@ export class GuiServerConnector {
   ): Promise<void> {
     if (this.#_session) {
       console.log(
-        "Invalid use of resumeGuiSession! An active GUI Server session already exists!"
+        'Invalid use of resumeGuiSession! An active GUI Server session already exists!'
       );
       return;
     }
@@ -395,7 +395,7 @@ export class GuiServerConnector {
    */
   set onSessionDropped(value: ((err_msg: string) => void) | undefined) {
     if (value != undefined && this.#_onSessionDropped != undefined) {
-      throw new Error("Cannot set onSessionDropped: a handler is already set");
+      throw new Error('Cannot set onSessionDropped: a handler is already set');
     }
     this.#_onSessionDropped = value;
   }
@@ -423,7 +423,10 @@ export class GuiServerConnector {
     // A GUI Server session always starts with a message instructing the
     // WebSocketProxy to connect to a GUI Server.
     ws.send(
-      JSON.stringify({ host: this.#_session?.host, port: this.#_session?.port })
+      JSON.stringify({
+        host: this.#_session?.host,
+        port: this.#_session?.port,
+      })
     );
   };
 
@@ -436,14 +439,14 @@ export class GuiServerConnector {
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   #_onWsMessage = (ws: Websocket, ev: MessageEvent<any>): any => {
-    if (typeof ev.data === "string") {
+    if (typeof ev.data === 'string') {
       // The only occasions when the WebSocketProxy does not send a
       // binary serialized Hash are when it communicates an error for
       // connecting to the GUI Server or when it loses the connection to
       // the GUI Server. On those occasions, the message is a string in
       // the format "0|<error message>".
       const err_msg = (
-        ev.data.startsWith("0|") ? ev.data.substring(2) : ev.data
+        ev.data.startsWith('0|') ? ev.data.substring(2) : ev.data
       ).trim();
       if (this.#_session?.userLogged) {
         // If there was a user logged to the GUI Server when the connection
@@ -468,17 +471,17 @@ export class GuiServerConnector {
 
         const protocolType = hashProtocolType(hash);
         if (
-          protocolType === "brokerInformation" ||
-          protocolType === "serverInformation"
+          protocolType === 'brokerInformation' ||
+          protocolType === 'serverInformation'
         ) {
           this.#_handleBrokerInformation(ws, hash);
-        } else if (protocolType === "loginInformation") {
+        } else if (protocolType === 'loginInformation') {
           this.#_handleLoginInformation(hash);
-        } else if (protocolType === "notification") {
+        } else if (protocolType === 'notification') {
           this.#_handleNotification(hash);
-        } else if (protocolType === "systemTopology") {
+        } else if (protocolType === 'systemTopology') {
           this.#_handleSystemTopology(hash);
-        } else if (protocolType === "topologyUpdate") {
+        } else if (protocolType === 'topologyUpdate') {
           this.#_handleTopologyUpdate(hash);
         } else if (this.#_hashHandlers.has(protocolType)) {
           // There is a handler currently registered for the protocol type - call it
@@ -509,17 +512,17 @@ export class GuiServerConnector {
       // interpreted as a session start error.
       if (!ws.underlyingWebsocket) {
         this.#_session?.startErrorHandler(
-          "Websocket client initialization error"
+          'Websocket client initialization error'
         );
       } else {
         if (ws.underlyingWebsocket?.CLOSED) {
           // Connection could not be established or couldn't be opened.
           this.#_session?.startErrorHandler(
-            "No connection to websocket server"
+            'No connection to websocket server'
           );
         } else if (ws.underlyingWebsocket?.CLOSING) {
           this.#_session?.startErrorHandler(
-            "Websocket connection being closed."
+            'Websocket connection being closed.'
           );
         } else {
           this.#_session?.startErrorHandler(
@@ -548,15 +551,15 @@ export class GuiServerConnector {
     let loginHash: Hash;
     if (this.#_session?.isAuthSession) {
       loginHash = buildLoginHash(
-        "KIWI",
-        "3.0.0", // Must be >= 3.0.0rc13 - the version required by the Karabo 3 GUI Server for auth logins.
+        'KIWI',
+        '3.0.0', // Must be >= 3.0.0rc13 - the version required by the Karabo 3 GUI Server for auth logins.
         this.#_session?.oneTimeToken,
         undefined
       );
     } else {
       loginHash = buildLoginHash(
-        "KIWI",
-        "3.0.0", // Must be >= 3.0.0rc13 - the version required by the Karabo 3 GUI Server for auth logins.
+        'KIWI',
+        '3.0.0', // Must be >= 3.0.0rc13 - the version required by the Karabo 3 GUI Server for auth logins.
         undefined,
         this.#_session?.userId
       );

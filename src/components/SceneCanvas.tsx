@@ -1,26 +1,26 @@
-import React from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { ProjectSceneCache } from "../store/ProjectSceneCache";
-import { ProjectSceneInfo } from "../karabo_data/ProjectDbInfo";
-import { UserRecentSceneModel } from "../view_models/RecentScenesModel";
-import { Scene } from "../scene/Scene";
-import { useGlobalStore } from "../store/globalAppStateStore";
-import useRecentStore from "../store/recentScenesStore";
-import { useLoadedSceneStore } from "../store/loadedSceneStore";
-import { Card, CardContent } from "./ui/card";
-import { Button } from "./ui/button";
-import { Spinner } from "./ui/spinner";
-import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
-import { AlertTriangle } from "lucide-react";
+import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { ProjectSceneCache } from '../store/ProjectSceneCache';
+import { ProjectSceneInfo } from '../karabo_data/ProjectDbInfo';
+import { UserRecentSceneModel } from '../view_models/RecentScenesModel';
+import { Scene } from '../scene/Scene';
+import { useGlobalStore } from '../store/globalAppStateStore';
+import useRecentStore from '../store/recentScenesStore';
+import { useLoadedSceneStore } from '../store/loadedSceneStore';
+import { Card, CardContent } from './ui/card';
+import { Button } from './ui/button';
+import { Spinner } from './ui/spinner';
+import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { AlertTriangle } from 'lucide-react';
 
-const SVG_SHAPES = new Set(["ArrowPolygon", "Line", "Polygon", "Rectangle"]);
+const SVG_SHAPES = new Set(['ArrowPolygon', 'Line', 'Polygon', 'Rectangle']);
 
 const SceneCanvas: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
   const [scene, setScene] = React.useState<Scene | null>(null);
-  const [error, setError] = React.useState<string>("");
+  const [error, setError] = React.useState<string>('');
 
   const { sessionInfo } = useGlobalStore();
   const { setRecentScene } = useRecentStore();
@@ -66,7 +66,7 @@ const SceneCanvas: React.FC = () => {
             "Couldn't retrieve scene data.<br/>Please check Project Database availability."
           );
           setScene(null);
-          document.title = "Kiwi";
+          document.title = 'Kiwi';
           return;
         }
 
@@ -89,7 +89,7 @@ const SceneCanvas: React.FC = () => {
 
           document.title = `Kiwi [${info.domain}:${info.name}]`;
           setScene(parsed);
-          setError("");
+          setError('');
         } catch (e) {
           setError(`Couldn't parse scene data.<br/>${String(e)}`);
           setScene(null);
@@ -108,7 +108,7 @@ const SceneCanvas: React.FC = () => {
               <AlertTitle>Couldn't load scene</AlertTitle>
               <AlertDescription dangerouslySetInnerHTML={{ __html: error }} />
             </Alert>
-            <Button onClick={() => navigate("/no_scene")}>Back to Start</Button>
+            <Button onClick={() => navigate('/no_scene')}>Back to Start</Button>
           </div>
         );
       }
@@ -131,12 +131,12 @@ const SceneCanvas: React.FC = () => {
 
     // Split into SVG primitives vs HTML widgets
     const shapes = flat.filter((el) => {
-      const name = el.reactComponent?.name || "";
+      const name = el.reactComponent?.name || '';
       return SVG_SHAPES.has(name);
     });
 
     const widgets = flat.filter((el) => {
-      const name = el.reactComponent?.name || "";
+      const name = el.reactComponent?.name || '';
       return !SVG_SHAPES.has(name);
     });
 
@@ -161,7 +161,7 @@ const SceneCanvas: React.FC = () => {
               width,
               height,
               transform: `scale(${scale})`,
-              transformOrigin: "top left",
+              transformOrigin: 'top left',
             }}
           >
             {/* SVG layer */}

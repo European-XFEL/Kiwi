@@ -1,5 +1,5 @@
-import React from "react";
-import { PolygonProps } from "@/scene/scene_types/shapes";
+import React from 'react';
+import { PolygonProps } from '@/scene/scene_types/shapes';
 
 const Polygon: React.FC<PolygonProps> = (props) => {
   const { ...svgProps } = props;
@@ -13,7 +13,7 @@ const Polygon: React.FC<PolygonProps> = (props) => {
       strokeLinecap={svgProps.stroke_linecap}
       strokeDasharray={
         Array.isArray(svgProps.stroke_dasharray)
-          ? svgProps.stroke_dasharray.join(" ")
+          ? svgProps.stroke_dasharray.join(' ')
           : svgProps.stroke_dasharray
       }
       strokeDashoffset={svgProps.stroke_dashoffset}

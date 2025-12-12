@@ -1,7 +1,7 @@
-import React from "react";
-import { BaseControllerWidgetModel } from "../../scene_models/BaseModels";
-import type { BaseControllerWidgetProps } from "../../scene_types/controller_base";
-import { ControllerContainerWrapper } from "./ControllerContainerWrapper";
+import React from 'react';
+import { BaseControllerWidgetModel } from '../../scene_models/BaseModels';
+import type { BaseControllerWidgetProps } from '../../scene_types/controller_base';
+import { ControllerContainerWrapper } from './ControllerContainerWrapper';
 
 /**
  * BaseControllerContainerModel - Abstract base class for all controller widgets
@@ -22,7 +22,7 @@ import { ControllerContainerWrapper } from "./ControllerContainerWrapper";
  * - ControllerContainerWrapper.tsx → class ControllerContainerWrapper (HOC (higher-order component) utility pattern)
  */
 export abstract class BaseControllerContainerModel<
-  PropsType extends BaseControllerWidgetProps
+  PropsType extends BaseControllerWidgetProps,
 > extends BaseControllerWidgetModel<PropsType> {
   private _rawComponent?: React.ComponentType<PropsType>;
   private _wrappedComponent?: React.ComponentType<PropsType>;

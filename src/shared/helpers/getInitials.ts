@@ -1,5 +1,5 @@
 export const getInitials = (text?: string): string => {
-  if (!text) return "?";
+  if (!text) return '?';
 
   const trimmed = text.trim();
   const words = trimmed.split(/\s+/);
@@ -11,5 +11,5 @@ export const getInitials = (text?: string): string => {
   return words
     .slice(0, 2)
     .map((word) => word.charAt(0).toUpperCase())
-    .join("");
+    .join('');
 };

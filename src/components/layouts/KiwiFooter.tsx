@@ -1,9 +1,9 @@
-import { Separator } from "@/components/ui/separator";
-import TopicDisplay from "../status/TopicDisplay";
-import GuiServerDisplay from "../status/GuiServerDisplay";
-import ConnectionTimer from "../user/ConnectionTimer";
-import Footer from "./Footer";
-import SceneSizeDisplay from "../scene/SceneSizeDisplay";
+import { Separator } from '@/components/ui/separator';
+import TopicDisplay from '../status/TopicDisplay';
+import GuiServerDisplay from '../status/GuiServerDisplay';
+import ConnectionTimer from '../user/ConnectionTimer';
+import Footer from './Footer';
+import SceneSizeDisplay from '../scene/SceneSizeDisplay';
 
 export default function KiwiFooter() {
   return (

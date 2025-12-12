@@ -1,6 +1,6 @@
-import { create } from "zustand";
-import type { SceneModel } from "../view_models/SceneModel";
-import { AccessLevel } from "@/karabo_data/SchemaEnums";
+import { create } from 'zustand';
+import type { SceneModel } from '../view_models/SceneModel';
+import { AccessLevel } from '@/karabo_data/SchemaEnums';
 
 /** App status tag */
 // UNRECOVERABLE_ERROR -> Advice to reload the page (takes full page view port). Goes back to INIT
@@ -24,12 +24,12 @@ export interface GuiServerSessionInfo {
 }
 
 export type GlobalState =
-  | "INIT"
-  | "LOGGED_IN"
-  | "LOGGED_OUT"
-  | "UNRECOVERABLE_ERROR"
-  | "SCENE_OPEN_ERROR"
-  | "SCENE_DISPLAY_ERROR";
+  | 'INIT'
+  | 'LOGGED_IN'
+  | 'LOGGED_OUT'
+  | 'UNRECOVERABLE_ERROR'
+  | 'SCENE_OPEN_ERROR'
+  | 'SCENE_DISPLAY_ERROR';
 
 /** Base state shape (no actions) */
 export interface GlobalAppState {
@@ -56,8 +56,8 @@ export type GlobalStore = GlobalAppState & GlobalActions;
 
 //App initial state
 export const initialState: GlobalAppState = {
-  globalState: "INIT",
-  lastError: "",
+  globalState: 'INIT',
+  lastError: '',
   sessionInfo: undefined,
   loadedScene: undefined,
 };
@@ -68,37 +68,37 @@ export const useGlobalStore = create<GlobalStore>((set) => ({
 
   setError: (msg) =>
     set({
-      globalState: "UNRECOVERABLE_ERROR",
+      globalState: 'UNRECOVERABLE_ERROR',
       lastError: msg,
       sessionInfo: undefined,
     }),
 
   setSceneOpenError: (sceneOPenErrorMessage: string) =>
     set({
-      globalState: "SCENE_OPEN_ERROR",
+      globalState: 'SCENE_OPEN_ERROR',
       lastError: sceneOPenErrorMessage,
     }),
 
   setSceneDisplayError: (sceneDisplayErrorMessage: string) =>
     set({
-      globalState: "SCENE_DISPLAY_ERROR",
+      globalState: 'SCENE_DISPLAY_ERROR',
       lastError: sceneDisplayErrorMessage,
     }),
 
   setLoggedIn: (session) =>
     set({
-      globalState: "LOGGED_IN",
+      globalState: 'LOGGED_IN',
       sessionInfo: session,
       loadedScene: undefined,
-      lastError: "",
+      lastError: '',
     }),
 
   setLoggedOut: () =>
     set({
-      globalState: "LOGGED_OUT",
+      globalState: 'LOGGED_OUT',
       sessionInfo: undefined,
       loadedScene: undefined,
-      lastError: "",
+      lastError: '',
     }),
 
   setLoadedScene: (scene) =>

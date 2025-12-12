@@ -1,6 +1,6 @@
-import { AccessLevel } from "@/karabo_data/SchemaEnums";
-import { useGlobalStore } from "@/store/globalAppStateStore";
-import { AccessControlManager } from "@/shared/helpers/AccessLevel";
+import { AccessLevel } from '@/karabo_data/SchemaEnums';
+import { useGlobalStore } from '@/store/globalAppStateStore';
+import { AccessControlManager } from '@/shared/helpers/AccessLevel';
 
 export function useAccessLevel() {
   const accessLevelFromStore =

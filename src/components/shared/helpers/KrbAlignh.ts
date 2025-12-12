@@ -1,16 +1,16 @@
 export function css_textAlign_for_KrbAlignh(
   krbAlignh: number | undefined
-): "left" | "center" | "right" {
-  let textAlign: "left" | "center" | "right" | undefined;
+): 'left' | 'center' | 'right' {
+  let textAlign: 'left' | 'center' | 'right' | undefined;
   switch (krbAlignh) {
     case 2:
-      textAlign = "right";
+      textAlign = 'right';
       break;
     case 4:
-      textAlign = "center";
+      textAlign = 'center';
       break;
     default:
-      textAlign = "left";
+      textAlign = 'left';
   }
   return textAlign;
 }

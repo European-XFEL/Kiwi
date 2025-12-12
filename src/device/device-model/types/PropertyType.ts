@@ -1,7 +1,7 @@
-import type { HashValueType } from "@/karabo_hash/HashValueType";
-import type { Attributes, HashTypes } from "karabo-ts";
-import type { PropertySchema } from "./SchemaType";
-import { PropertyInfoOptional } from "@/karabo_data/DeviceConfigInfo";
+import type { HashValueType } from '@/karabo_hash/HashValueType';
+import type { Attributes, HashTypes } from 'karabo-ts';
+import type { PropertySchema } from './SchemaType';
+import { PropertyInfoOptional } from '@/karabo_data/DeviceConfigInfo';
 
 export interface PropertyModel {
   property_schema: PropertySchema;

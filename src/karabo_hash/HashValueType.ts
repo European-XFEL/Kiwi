@@ -1,4 +1,4 @@
-import { HashValue, SchemaValue, UInt8 } from "karabo-ts";
+import { HashValue, SchemaValue, UInt8 } from 'karabo-ts';
 
 // TODO: add and export the type below in the upstream karabo-ts package
 export type VectorElementType = bigint | number | string | UInt8;

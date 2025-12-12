@@ -1,22 +1,22 @@
-import { BaseWidgetElementModel } from "./BaseModels";
-import type { LabelProps } from "../scene_types/staticWidgets";
+import { BaseWidgetElementModel } from './BaseModels';
+import type { LabelProps } from '../scene_types/staticWidgets';
 import {
   FONT_BASE_SIZE,
   FONT_FAMILY_DEFAULT,
-} from "@/components/shared/helpers/fontDefaults";
-import { QtFontDescriptor } from "@/components/shared/helpers/QtFontDescriptor";
+} from '@/components/shared/helpers/fontDefaults';
+import { QtFontDescriptor } from '@/components/shared/helpers/QtFontDescriptor';
 
 export class LabelModel extends BaseWidgetElementModel<LabelProps> {
-  text = "";
-  background = "#FFFFFF";
-  foreground = "#000000";
+  text = '';
+  background = '#FFFFFF';
+  foreground = '#000000';
   frame_width = 0;
   font_family = FONT_FAMILY_DEFAULT;
   font_size: number | string = FONT_BASE_SIZE;
-  font_weight = "normal";
-  font_style = "normal";
-  text_decoration = "none";
-  alignment: "left" | "center" | "right" = "left";
+  font_weight = 'normal';
+  font_style = 'normal';
+  text_decoration = 'none';
+  alignment: 'left' | 'center' | 'right' = 'left';
 
   /**
    * Parse and apply a Qt font descriptor string to this label.
@@ -42,8 +42,8 @@ export class LabelModel extends BaseWidgetElementModel<LabelProps> {
 
   get props(): LabelProps {
     return {
-      element_type: "widget",
-      widget_type: "Label",
+      element_type: 'widget',
+      widget_type: 'Label',
       x: this.x,
       y: this.y,
       width: this.width,

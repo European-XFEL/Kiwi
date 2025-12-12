@@ -3,7 +3,7 @@
  * These widgets use only `krb:class` and have no `krb:widget` attribute.
  */
 
-import { BaseWidgetProps } from "./base";
+import { BaseWidgetProps } from './base';
 
 /* ──────────────────────────────────────────────────────────────────────────
  * Label
@@ -23,7 +23,7 @@ import { BaseWidgetProps } from "./base";
  *           krb:alignh="4" />
  */
 export interface LabelProps extends BaseWidgetProps {
-  widget_type: "Label";
+  widget_type: 'Label';
 
   /** Text content */
   text: string;
@@ -43,7 +43,7 @@ export interface LabelProps extends BaseWidgetProps {
   frame_width: number;
 
   /** Text alignment */
-  alignment: "left" | "center" | "right";
+  alignment: 'left' | 'center' | 'right';
 }
 
 /* ──────────────────────────────────────────────────────────────────────────

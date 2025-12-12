@@ -7,43 +7,43 @@
  *    └───────────────────────────────────────────────────────────────────┘
  */
 export enum ProxyStatus {
-  UNKNOWN = "UNKNOWN",
+  UNKNOWN = 'UNKNOWN',
   /**
    * Device is not running or not in topology
    */
-  OFFLINE = "OFFLINE",
+  OFFLINE = 'OFFLINE',
 
   /**
    * Device is in topology but no schema requested yet
    * (Occurs when device comes online but no widget is watching)
    */
-  ONLINE = "ONLINE",
+  ONLINE = 'ONLINE',
 
   /**
    * Schema has been requested from GUI server
    * Waiting for deviceSchema message
    */
-  SCHEMA_REQUESTED = "SCHEMA_REQUESTED",
+  SCHEMA_REQUESTED = 'SCHEMA_REQUESTED',
 
   /**
    * Schema received, waiting for initial configuration
    * Binding is created but no values yet
    */
-  SCHEMA_RECEIVED = "SCHEMA_RECEIVED",
+  SCHEMA_RECEIVED = 'SCHEMA_RECEIVED',
 
   /**
    * Device has schema + configuration
    * Fully functional but not actively monitored
    * (_monitorCount = 0)
    */
-  ALIVE = "ALIVE",
+  ALIVE = 'ALIVE',
 
   /**
    * Device is actively being monitored
    * Receiving real-time configuration updates
    * (_monitorCount > 0)
    */
-  MONITORING = "MONITORING",
+  MONITORING = 'MONITORING',
 
   // Optional error states (if needed):
 
@@ -73,13 +73,13 @@ export enum PropertyStatus {
    * Property exists and has a value
    * No special indicator needed
    */
-  NONE = "NONE",
+  NONE = 'NONE',
 
   /**
    * Property does not exist in device schema
    * Display "??" indicator
    */
-  MISSING = "MISSING",
+  MISSING = 'MISSING',
 
   // Optional additional states:
 

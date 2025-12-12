@@ -1,7 +1,7 @@
-import * as React from "react";
-import type { Position } from "@/shared/types";
-import { getPositionClass } from "@/shared/helpers/position";
-import { toSize } from "@/shared/helpers/to-size";
+import * as React from 'react';
+import type { Position } from '@/shared/types';
+import { getPositionClass } from '@/shared/helpers/position';
+import { toSize } from '@/shared/helpers/to-size';
 
 export type SidebarProps = React.HTMLAttributes<HTMLElement> & {
   position?: Position;
@@ -15,20 +15,20 @@ export default function Sidebar({
   position,
   width,
   height,
-  ariaLabel = "Sidebar",
+  ariaLabel = 'Sidebar',
   children,
   ...rest
 }: SidebarProps) {
   const positionClass = getPositionClass(position);
-  const computedWidth = toSize(width, "20vw");
-  const computedHeight = toSize(height, "100dvh");
+  const computedWidth = toSize(width, '20vw');
+  const computedHeight = toSize(height, '100dvh');
 
   return (
     <aside
       role="complementary"
       aria-label={ariaLabel}
       style={{ width: computedWidth, height: computedHeight }}
-      className={[positionClass, className].filter(Boolean).join(" ")}
+      className={[positionClass, className].filter(Boolean).join(' ')}
       {...rest}
     >
       {children}

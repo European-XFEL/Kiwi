@@ -1,11 +1,11 @@
-import React from "react";
-import type { LabelProps } from "../../scene/scene_types/staticWidgets";
+import React from 'react';
+import type { LabelProps } from '../../scene/scene_types/staticWidgets';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from '@/components/ui/tooltip';
 
 const Label: React.FC<LabelProps> = (props) => {
   const spanRef = React.useRef<HTMLSpanElement>(null);
@@ -20,15 +20,15 @@ const Label: React.FC<LabelProps> = (props) => {
       }
     };
     checkOverflow();
-    window.addEventListener("resize", checkOverflow);
-    return () => window.removeEventListener("resize", checkOverflow);
+    window.addEventListener('resize', checkOverflow);
+    return () => window.removeEventListener('resize', checkOverflow);
   }, [props.text, props.width]);
 
   const textNode = (
     <span
       ref={spanRef}
       style={{
-        width: "100%",
+        width: '100%',
         color: props.foreground,
         fontFamily: props.font_family,
         fontSize: props.font_size,
@@ -36,11 +36,11 @@ const Label: React.FC<LabelProps> = (props) => {
         fontStyle: props.font_style,
         textDecoration: props.text_decoration,
         textAlign: props.alignment,
-        overflow: "hidden",
-        whiteSpace: "nowrap",
-        textOverflow: "ellipsis",
-        display: "block",
-        cursor: isOverflowing ? "help" : "default",
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+        textOverflow: 'ellipsis',
+        display: 'block',
+        cursor: isOverflowing ? 'help' : 'default',
       }}
     >
       {props.text}

@@ -2,10 +2,10 @@
  * DisplayLineEdit - controller component
  */
 
-import React from "react";
-import type { DisplayLineEditProps } from "@/scene/scene_types/controllers/display";
-import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
-import { HashTypes } from "karabo-ts";
+import React from 'react';
+import type { DisplayLineEditProps } from '@/scene/scene_types/controllers/display';
+import { FONT_FAMILY_DEFAULT } from '@/components/shared/helpers/fontDefaults';
+import { HashTypes } from 'karabo-ts';
 
 const DisplayLineEdit: React.FC<DisplayLineEditProps> = ({
   font_size,
@@ -21,11 +21,11 @@ const DisplayLineEdit: React.FC<DisplayLineEditProps> = ({
   const enabled = isEnabled ?? true;
 
   const displayValue = React.useMemo(() => {
-    if (value === undefined) return "";
+    if (value === undefined) return '';
 
     const schemaAttrs = model?.property_schema?.schemaAttrs;
-    const prefix = schemaAttrs?.metricPrefixSymbol ?? "";
-    const symbol = schemaAttrs?.unitSymbol ?? "";
+    const prefix = schemaAttrs?.metricPrefixSymbol ?? '';
+    const symbol = schemaAttrs?.unitSymbol ?? '';
     const displayUnit = `${prefix}${symbol}`.trim();
     const propType = schemaAttrs?.valueType;
 
@@ -53,7 +53,7 @@ const DisplayLineEdit: React.FC<DisplayLineEditProps> = ({
       style={{
         fontFamily: FONT_FAMILY_DEFAULT,
         fontSize: font_size,
-        fontWeight: font_weight?.toLowerCase() ?? "normal",
+        fontWeight: font_weight?.toLowerCase() ?? 'normal',
       }}
     />
   );

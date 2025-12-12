@@ -4,13 +4,13 @@
  * Layout model classes (BoxLayout, FixedLayout, GridLayout)
  */
 
-import { BaseLayoutElementModel, BaseSceneElementModel } from "./BaseModels";
+import { BaseLayoutElementModel, BaseSceneElementModel } from './BaseModels';
 import type {
   BoxLayoutProps,
   FixedLayoutProps,
   GridLayoutProps,
-} from "../scene_types/layouts";
-import type { SceneElementProps } from "../scene_types/scene";
+} from '../scene_types/layouts';
+import type { SceneElementProps } from '../scene_types/scene';
 
 // ============================================================================
 // BoxLayout
@@ -26,8 +26,8 @@ export class BoxLayoutModel extends BaseLayoutElementModel<BoxLayoutProps> {
   /** Render / serialization props. */
   get props(): BoxLayoutProps {
     return {
-      element_type: "layout",
-      layout_type: "BoxLayout",
+      element_type: 'layout',
+      layout_type: 'BoxLayout',
       x: this.x,
       y: this.y,
       width: this.width,
@@ -42,7 +42,7 @@ export class BoxLayoutModel extends BaseLayoutElementModel<BoxLayoutProps> {
 
   /** Get direction as human-readable string. */
   getDirectionName(): string {
-    const names = ["LeftToRight", "RightToLeft", "TopToBottom", "BottomToTop"];
+    const names = ['LeftToRight', 'RightToLeft', 'TopToBottom', 'BottomToTop'];
     return names[this.direction];
   }
 
@@ -70,8 +70,8 @@ export class FixedLayoutModel extends BaseLayoutElementModel<FixedLayoutProps> {
 
   get props(): FixedLayoutProps {
     return {
-      element_type: "layout",
-      layout_type: "FixedLayout",
+      element_type: 'layout',
+      layout_type: 'FixedLayout',
       x: this.x,
       y: this.y,
       width: this.width,
@@ -105,8 +105,8 @@ export class FixedLayoutModel extends BaseLayoutElementModel<FixedLayoutProps> {
 export class GridLayoutModel extends BaseLayoutElementModel<GridLayoutProps> {
   get props(): GridLayoutProps {
     return {
-      element_type: "layout",
-      layout_type: "GridLayout",
+      element_type: 'layout',
+      layout_type: 'GridLayout',
       x: this.x,
       y: this.y,
       width: this.width,

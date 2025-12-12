@@ -1,4 +1,4 @@
-import * as React from "react";
+import * as React from 'react';
 
 export type LinkProps = React.AnchorHTMLAttributes<HTMLAnchorElement> & {
   href: string;
@@ -15,8 +15,8 @@ export default function Link({
   rel: relProp,
   ...rest
 }: LinkProps) {
-  const target = useNewTab ? "_blank" : targetProp;
-  const rel = useNewTab ? "noopener noreferrer" : relProp;
+  const target = useNewTab ? '_blank' : targetProp;
+  const rel = useNewTab ? 'noopener noreferrer' : relProp;
 
   return (
     <a href={href} target={target} rel={rel} {...rest}>

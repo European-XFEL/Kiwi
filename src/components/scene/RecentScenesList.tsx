@@ -1,6 +1,6 @@
-import { RecentSceneModel } from "@/view_models/RecentScenesModel";
-import RecentSceneItem from "./RecentSceneItem";
-import { Separator } from "@/components/ui/separator";
+import { RecentSceneModel } from '@/view_models/RecentScenesModel';
+import RecentSceneItem from './RecentSceneItem';
+import { Separator } from '@/components/ui/separator';
 
 export type RecentScenesListProps = {
   scenes: RecentSceneModel[];

@@ -1,8 +1,8 @@
-import { ReactElement } from "react";
+import { ReactElement } from 'react';
 
 //tailwind
-export type Position = "fixed" | "sticky" | "static";
-type Direction = "horizontal" | "vertical";
+export type Position = 'fixed' | 'sticky' | 'static';
+type Direction = 'horizontal' | 'vertical';
 
 //routes props
 export type RouteProp = {
@@ -27,7 +27,7 @@ export type RouterProp = {
 //components
 export type HeaderProp = {
   children?: React.ReactNode;
-  position?: "sticky" | "fixed" | "static";
+  position?: 'sticky' | 'fixed' | 'static';
   className?: string;
 };
 export type BodyProps = React.HTMLAttributes<HTMLElement> & {
@@ -60,7 +60,7 @@ export type SidebarProp = {
   isOpen?: Boolean;
   children?: React.ReactNode;
   className?: string;
-  position?: "sticky" | "fixed" | "static";
+  position?: 'sticky' | 'fixed' | 'static';
 };
 
 //helpers

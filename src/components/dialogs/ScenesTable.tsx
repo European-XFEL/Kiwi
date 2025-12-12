@@ -5,12 +5,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { ScrollArea } from "@/components/ui/scroll-area";
+} from '@/components/ui/table';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   ProjectSceneInfo,
   asLocalDateTimeString,
-} from "@/karabo_data/ProjectDbInfo";
+} from '@/karabo_data/ProjectDbInfo';
 
 export type ScenesTableProps = {
   scenes: ProjectSceneInfo[];
@@ -52,8 +52,8 @@ export default function ScenesTable({
                 onDoubleClick={() => onSceneDoubleClick(scene)}
                 className={`cursor-pointer ${
                   selectedScene?.uuid === scene.uuid
-                    ? "bg-accent"
-                    : "hover:bg-accent/50"
+                    ? 'bg-accent'
+                    : 'hover:bg-accent/50'
                 }`}
               >
                 <TableCell className="font-medium truncate max-w-xs">

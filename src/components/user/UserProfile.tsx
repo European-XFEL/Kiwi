@@ -1,5 +1,5 @@
-import { LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,10 +7,10 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel,
-} from "../ui/dropdown-menu";
-import { GuiServerConnector } from "@/karabo_connectors/GuiServerConnector";
-import { useGlobalStore } from "@/store/globalAppStateStore";
-import { getInitials } from "@/shared/helpers/getInitials";
+} from '../ui/dropdown-menu';
+import { GuiServerConnector } from '@/karabo_connectors/GuiServerConnector';
+import { useGlobalStore } from '@/store/globalAppStateStore';
+import { getInitials } from '@/shared/helpers/getInitials';
 
 export default function UserInfo() {
   const { sessionInfo, setLoggedOut } = useGlobalStore();
@@ -20,7 +20,7 @@ export default function UserInfo() {
   }
 
   const { loggedUser, guiServerTopic } = sessionInfo;
-  const displayName = loggedUser || guiServerTopic || "Guest";
+  const displayName = loggedUser || guiServerTopic || 'Guest';
   const initials = getInitials(displayName);
 
   const handleLogout = () => {

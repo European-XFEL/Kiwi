@@ -1,7 +1,7 @@
-import type { DeviceSchema, PropertySchema } from "../types/SchemaType";
-import type { DeviceConfigInfo } from "@/karabo_data/DeviceConfigInfo";
-import type { PropertyModel } from "../types/PropertyType";
-import { buildPropertyModel } from "./PropertyModelBuilder";
+import type { DeviceSchema, PropertySchema } from '../types/SchemaType';
+import type { DeviceConfigInfo } from '@/karabo_data/DeviceConfigInfo';
+import type { PropertyModel } from '../types/PropertyType';
+import { buildPropertyModel } from './PropertyModelBuilder';
 
 /**
  * Build a Map<string, PropertyModel> for a whole device.

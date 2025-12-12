@@ -1,6 +1,6 @@
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "./fonts.css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import './fonts.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -9,7 +9,7 @@ body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: "Neue Helvetica", "Helvetica", "arial", sans-serif;
+  font-family: 'Neue Helvetica', 'Helvetica', 'arial', sans-serif;
 }
 
 /* Map Tailwind design tokens to CSS variables */

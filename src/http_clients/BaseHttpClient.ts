@@ -1,12 +1,12 @@
-import axios, { AxiosInstance, AxiosResponse } from "axios";
+import axios, { AxiosInstance, AxiosResponse } from 'axios';
 
-declare module "axios" {
+declare module 'axios' {
   interface AxiosResponse<T = any> extends Promise<T> {}
 }
 
 const headers: Readonly<Record<string, string | boolean>> = {
-  Accept: "application/json",
-  "Content-Type": "application/json; charset=utf-8",
+  Accept: 'application/json',
+  'Content-Type': 'application/json; charset=utf-8',
 };
 
 abstract class BaseHttpClient {

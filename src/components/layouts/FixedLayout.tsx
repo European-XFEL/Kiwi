@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 interface FixedLayoutProps {
   x: number;
@@ -20,7 +20,7 @@ const FixedLayout: React.FC<FixedLayoutProps> = (props) => {
         top: props.y,
         width: props.width,
         height: props.height,
-        boxSizing: "border-box",
+        boxSizing: 'border-box',
       }}
     />
   );

@@ -1,5 +1,5 @@
-import React from "react";
-import type { ArrowPolygonProps } from "@/scene/scene_types/shapes";
+import React from 'react';
+import type { ArrowPolygonProps } from '@/scene/scene_types/shapes';
 
 /**
  * ArrowPolygon Component - Renders a line with a polygon arrowhead.
@@ -29,7 +29,7 @@ const ArrowPolygon: React.FC<ArrowPolygonProps> = (props) => {
 
   // Convert stroke_dasharray (if number[]) to valid string
   const dashArray = Array.isArray(stroke_dasharray)
-    ? stroke_dasharray.join(" ")
+    ? stroke_dasharray.join(' ')
     : stroke_dasharray;
 
   return (

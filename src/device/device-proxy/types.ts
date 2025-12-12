@@ -1,5 +1,5 @@
-import type React from "react";
-import { PropertyStatus, ProxyStatus } from "../enums";
+import type React from 'react';
+import { PropertyStatus, ProxyStatus } from '../enums';
 
 // ──────────────────────────────────────────────────────────────────────
 // STATUS SLICES

@@ -12,7 +12,7 @@
  * It only answers "what does the schema say?"
  */
 
-import { HashTypes } from "karabo-ts";
+import { HashTypes } from 'karabo-ts';
 
 /**
  * ValueType may come from:
@@ -68,11 +68,11 @@ const VECTOR_TYPES = new Set<number>([
 export function schemaSaysFloat(valueType?: SchemaValueType): boolean {
   if (valueType == null) return false;
 
-  if (typeof valueType === "string") {
-    return valueType.toUpperCase() === "FLOAT";
+  if (typeof valueType === 'string') {
+    return valueType.toUpperCase() === 'FLOAT';
   }
 
-  if (typeof valueType === "number") {
+  if (typeof valueType === 'number') {
     return FLOAT_TYPES.has(valueType);
   }
 
@@ -82,11 +82,11 @@ export function schemaSaysFloat(valueType?: SchemaValueType): boolean {
 export function schemaSaysInt(valueType?: SchemaValueType): boolean {
   if (valueType == null) return false;
 
-  if (typeof valueType === "string") {
-    return valueType.toUpperCase() === "INT";
+  if (typeof valueType === 'string') {
+    return valueType.toUpperCase() === 'INT';
   }
 
-  if (typeof valueType === "number") {
+  if (typeof valueType === 'number') {
     return INT_TYPES.has(valueType);
   }
 
@@ -96,11 +96,11 @@ export function schemaSaysInt(valueType?: SchemaValueType): boolean {
 export function schemaSaysString(valueType?: SchemaValueType): boolean {
   if (valueType == null) return false;
 
-  if (typeof valueType === "string") {
-    return valueType.toUpperCase() === "STRING";
+  if (typeof valueType === 'string') {
+    return valueType.toUpperCase() === 'STRING';
   }
 
-  if (typeof valueType === "number") {
+  if (typeof valueType === 'number') {
     return STRING_TYPES.has(valueType);
   }
 
@@ -110,11 +110,11 @@ export function schemaSaysString(valueType?: SchemaValueType): boolean {
 export function schemaSaysBool(valueType?: SchemaValueType): boolean {
   if (valueType == null) return false;
 
-  if (typeof valueType === "string") {
-    return valueType.toUpperCase() === "BOOL";
+  if (typeof valueType === 'string') {
+    return valueType.toUpperCase() === 'BOOL';
   }
 
-  if (typeof valueType === "number") {
+  if (typeof valueType === 'number') {
     return BOOL_TYPES.has(valueType);
   }
 
@@ -124,11 +124,11 @@ export function schemaSaysBool(valueType?: SchemaValueType): boolean {
 export function schemaSaysVector(valueType?: SchemaValueType): boolean {
   if (valueType == null) return false;
 
-  if (typeof valueType === "string") {
-    return valueType.toUpperCase().startsWith("VECTOR");
+  if (typeof valueType === 'string') {
+    return valueType.toUpperCase().startsWith('VECTOR');
   }
 
-  if (typeof valueType === "number") {
+  if (typeof valueType === 'number') {
     return VECTOR_TYPES.has(valueType);
   }
 

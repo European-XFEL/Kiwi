@@ -1,12 +1,12 @@
 import {
   LoadProjectSceneResult,
   ProjectSceneInfo,
-} from "../karabo_data/ProjectDbInfo";
-import { ProjectDBConnector } from "../karabo_connectors/ProjectDBConnector";
+} from '../karabo_data/ProjectDbInfo';
+import { ProjectDBConnector } from '../karabo_connectors/ProjectDBConnector';
 
 export class ProjectSceneCache {
-  static readonly ITEM_PREFIX = "prjScene";
-  static readonly SEPARATOR = ":-:-:";
+  static readonly ITEM_PREFIX = 'prjScene';
+  static readonly SEPARATOR = ':-:-:';
 
   // #region Singleton support
 

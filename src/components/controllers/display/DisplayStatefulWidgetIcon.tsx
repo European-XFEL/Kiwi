@@ -2,14 +2,14 @@
  * DisplayStatefulIcon - controller component
  */
 
-import React, { useMemo } from "react";
-import type { DisplayStatefulIconProps } from "@/scene/scene_types/controllers";
-import { useGuiStateColor } from "../../shared/hooks/useGuiStateColor";
-import { statefulIconTextById } from "@/components/shared/helpers/statefulIcons";
+import React, { useMemo } from 'react';
+import type { DisplayStatefulIconProps } from '@/scene/scene_types/controllers';
+import { useGuiStateColor } from '../../shared/hooks/useGuiStateColor';
+import { statefulIconTextById } from '@/components/shared/helpers/statefulIcons';
 import {
   recolorPreloadedSvg,
   getPreloadedCacheKey,
-} from "@/components/shared/helpers/loadAndRecolor";
+} from '@/components/shared/helpers/loadAndRecolor';
 
 const DisplayStatefulIcon: React.FC<DisplayStatefulIconProps> = ({
   icon_name,
@@ -20,31 +20,31 @@ const DisplayStatefulIcon: React.FC<DisplayStatefulIconProps> = ({
   const value = primary?.value;
 
   // Map the property value (e.g., "ON", "ACTIVE") to a color
-  const rawState = value ? String(value) : "UNKNOWN";
+  const rawState = value ? String(value) : 'UNKNOWN';
   const { colorValue } = useGuiStateColor(rawState);
 
   //  if the module wasn't mocked correctly
   const svgXML = statefulIconTextById?.[icon_name] ?? null;
 
   const recoloredSvg = useMemo(() => {
-    if (!svgXML) return "";
+    if (!svgXML) return '';
 
     const cacheKey = getPreloadedCacheKey(icon_name, colorValue, {
       stroke: true,
-      fit: "contain",
+      fit: 'contain',
       nonScalingStroke: false,
     });
 
     const recolorResult = recolorPreloadedSvg(svgXML, colorValue, cacheKey, {
       stroke: true,
-      fit: "contain",
+      fit: 'contain',
       nonScalingStroke: false,
       enablePerfTracking: true,
     });
 
     console.log(
       `[DisplayStatefulIcon] ${icon_name} | ${
-        recolorResult.metrics?.fromCache ? "CACHE HIT " : "CACHE MISS "
+        recolorResult.metrics?.fromCache ? 'CACHE HIT ' : 'CACHE MISS '
       }`
     );
 
@@ -58,7 +58,7 @@ const DisplayStatefulIcon: React.FC<DisplayStatefulIconProps> = ({
     >
       {recoloredSvg ? (
         <div
-          style={{ width: "100%", height: "100%" }}
+          style={{ width: '100%', height: '100%' }}
           dangerouslySetInnerHTML={{ __html: recoloredSvg }}
         />
       ) : (

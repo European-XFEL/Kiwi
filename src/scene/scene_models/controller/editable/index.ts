@@ -14,7 +14,7 @@
  *      → ControllerContainer (data fetching) → Component (pure presentation)
  */
 
-import { BaseControllerContainerModel } from "@/scene/scene_view/controller/BaseControllerContainerModel";
+import { BaseControllerContainerModel } from '@/scene/scene_view/controller/BaseControllerContainerModel';
 
 import type {
   EditableComboBoxProps,
@@ -24,19 +24,19 @@ import type {
   EditableCheckBoxProps,
   DoubleLineEditProps,
   IntLineEditProps,
-} from "@/scene/scene_types/controllers";
+} from '@/scene/scene_types/controllers';
 
 // ============================================================================
 // EDITABLE CONTROLLERS
 // ============================================================================
 
 export class EditableComboBoxElementModel extends BaseControllerContainerModel<EditableComboBoxProps> {
-  parent_component = "EditableApplyLaterComponent" as const;
+  parent_component = 'EditableApplyLaterComponent' as const;
 
   get props(): EditableComboBoxProps {
     return {
-      element_type: "widget",
-      widget_type: "EditableComboBox",
+      element_type: 'widget',
+      widget_type: 'EditableComboBox',
       parent_component: this.parent_component,
       x: this.x,
       y: this.y,
@@ -51,12 +51,12 @@ export class EditableComboBoxElementModel extends BaseControllerContainerModel<E
 }
 
 export class EditableListElementModel extends BaseControllerContainerModel<EditableListProps> {
-  parent_component = "EditableApplyLaterComponent" as const;
+  parent_component = 'EditableApplyLaterComponent' as const;
 
   get props(): EditableListProps {
     return {
-      element_type: "widget",
-      widget_type: "EditableList",
+      element_type: 'widget',
+      widget_type: 'EditableList',
       parent_component: this.parent_component,
       x: this.x,
       y: this.y,
@@ -71,12 +71,12 @@ export class EditableListElementModel extends BaseControllerContainerModel<Edita
 }
 
 export class EditableLineEditElementModel extends BaseControllerContainerModel<EditableLineEditProps> {
-  parent_component = "EditableApplyLaterComponent" as const;
+  parent_component = 'EditableApplyLaterComponent' as const;
 
   get props(): EditableLineEditProps {
     return {
-      element_type: "widget",
-      widget_type: "EditableLineEdit",
+      element_type: 'widget',
+      widget_type: 'EditableLineEdit',
       parent_component: this.parent_component,
       x: this.x,
       y: this.y,
@@ -91,12 +91,12 @@ export class EditableLineEditElementModel extends BaseControllerContainerModel<E
 }
 
 export class EditableSpinBoxElementModel extends BaseControllerContainerModel<EditableSpinBoxProps> {
-  parent_component = "EditableApplyLaterComponent" as const;
+  parent_component = 'EditableApplyLaterComponent' as const;
 
   get props(): EditableSpinBoxProps {
     return {
-      element_type: "widget",
-      widget_type: "EditableSpinBox",
+      element_type: 'widget',
+      widget_type: 'EditableSpinBox',
       parent_component: this.parent_component,
       x: this.x,
       y: this.y,
@@ -111,12 +111,12 @@ export class EditableSpinBoxElementModel extends BaseControllerContainerModel<Ed
 }
 
 export class EditableCheckBoxElementModel extends BaseControllerContainerModel<EditableCheckBoxProps> {
-  parent_component = "EditableApplyLaterComponent" as const;
+  parent_component = 'EditableApplyLaterComponent' as const;
 
   get props(): EditableCheckBoxProps {
     return {
-      element_type: "widget",
-      widget_type: "EditableCheckBox",
+      element_type: 'widget',
+      widget_type: 'EditableCheckBox',
       parent_component: this.parent_component,
       x: this.x,
       y: this.y,
@@ -136,14 +136,14 @@ export class EditableCheckBoxElementModel extends BaseControllerContainerModel<E
  * DoubleLineEdit - Float input field with configurable decimal precision
  */
 export class DoubleLineEditElementModel extends BaseControllerContainerModel<DoubleLineEditProps> {
-  parent_component = "EditableApplyLaterComponent" as const;
+  parent_component = 'EditableApplyLaterComponent' as const;
 
   decimals = -1; // -1 for auto, 0-12 for fixed precision
 
   get props(): DoubleLineEditProps {
     return {
-      element_type: "widget",
-      widget_type: "DoubleLineEdit",
+      element_type: 'widget',
+      widget_type: 'DoubleLineEdit',
       parent_component: this.parent_component,
       x: this.x,
       y: this.y,
@@ -162,12 +162,12 @@ export class DoubleLineEditElementModel extends BaseControllerContainerModel<Dou
  * IntLineEdit - Integer input field with validation
  */
 export class IntLineEditElementModel extends BaseControllerContainerModel<IntLineEditProps> {
-  parent_component = "EditableApplyLaterComponent" as const;
+  parent_component = 'EditableApplyLaterComponent' as const;
 
   get props(): IntLineEditProps {
     return {
-      element_type: "widget",
-      widget_type: "IntLineEdit",
+      element_type: 'widget',
+      widget_type: 'IntLineEdit',
       parent_component: this.parent_component,
       x: this.x,
       y: this.y,

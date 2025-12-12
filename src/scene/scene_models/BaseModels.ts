@@ -5,14 +5,14 @@
  * Each derived model provides its own `props` getter for React rendering.
  */
 
-import { FONT_BASE_SIZE } from "@/components/shared/helpers/fontDefaults";
+import { FONT_BASE_SIZE } from '@/components/shared/helpers/fontDefaults';
 import type {
   BaseSceneObjectProps,
   BaseWidgetProps,
   BaseShapeProps,
   BaseLayoutProps,
   BaseControllerKind,
-} from "../scene_types/base";
+} from '../scene_types/base';
 
 // ============================================================================
 // Base Scene Element
@@ -47,7 +47,7 @@ export abstract class BaseSceneElementModel {
  * Provides geometry, data binding, and optional React component.
  */
 export abstract class BaseWidgetElementModel<
-  PropsType extends BaseWidgetProps = BaseWidgetProps
+  PropsType extends BaseWidgetProps = BaseWidgetProps,
 > extends BaseSceneElementModel {
   x = 0;
   y = 0;
@@ -67,18 +67,18 @@ export abstract class BaseWidgetElementModel<
  * Base class for all shape primitives (lines, rectangles, polygons, etc.)
  */
 export abstract class BaseShapeElementModel<
-  PropsType extends BaseShapeProps = BaseShapeProps
+  PropsType extends BaseShapeProps = BaseShapeProps,
 > extends BaseSceneElementModel {
-  stroke = "none";
+  stroke = 'none';
   stroke_opacity = 1.0;
-  stroke_linecap: "butt" | "square" | "round" = "butt";
+  stroke_linecap: 'butt' | 'square' | 'round' = 'butt';
   stroke_dashoffset = 0.0;
   stroke_width = 1.0;
   stroke_dasharray: number[] = [];
   stroke_style = 1; // Qt pen style (1 = solid)
-  stroke_linejoin: "miter" | "round" | "bevel" = "miter";
+  stroke_linejoin: 'miter' | 'round' | 'bevel' = 'miter';
   stroke_miterlimit = 4.0;
-  fill = "none";
+  fill = 'none';
   fill_opacity = 1.0;
 
   abstract get props(): PropsType;
@@ -93,7 +93,7 @@ export abstract class BaseShapeElementModel<
  * Handles child management utilities.
  */
 export abstract class BaseLayoutElementModel<
-  PropsType extends BaseLayoutProps = BaseLayoutProps
+  PropsType extends BaseLayoutProps = BaseLayoutProps,
 > extends BaseSceneElementModel {
   x = 0;
   y = 0;
@@ -139,14 +139,14 @@ export abstract class BaseLayoutElementModel<
  * Provides data-binding (keys) and shared text styling.
  */
 export abstract class BaseControllerWidgetModel<
-  PropsType extends BaseWidgetProps = BaseWidgetProps
+  PropsType extends BaseWidgetProps = BaseWidgetProps,
 > extends BaseWidgetElementModel<PropsType> {
   /** Data-binding keys associated with the widget. */
   keys: string[] = [];
 
   /** Common text styling for display/edit widgets. */
   font_size: number | string = FONT_BASE_SIZE;
-  font_weight: "normal" | "bold" = "normal";
+  font_weight: 'normal' | 'bold' = 'normal';
 
   /**
    * Set one or more data-binding keys.

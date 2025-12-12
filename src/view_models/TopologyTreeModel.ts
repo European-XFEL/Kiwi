@@ -1,5 +1,5 @@
-import { AccessLevel } from "@/karabo_data/SchemaEnums";
-import { SystemTopologyInfo } from "@/karabo_data/TopologyInfo";
+import { AccessLevel } from '@/karabo_data/SchemaEnums';
+import { SystemTopologyInfo } from '@/karabo_data/TopologyInfo';
 
 class TopologyTreeModel {
   private _hosts: HostModel[];
@@ -20,7 +20,7 @@ class TopologyTreeModel {
         lang: server.lang,
         version: server.version,
         karaboVersion: server.karaboVersion,
-        status: "ok",
+        status: 'ok',
         hostedDevices: [],
       });
     });
@@ -37,7 +37,7 @@ class TopologyTreeModel {
           (server) => server.serverId === deviceServer
         );
         if (mdlServer) {
-          if (device.status !== "ok") {
+          if (device.status !== 'ok') {
             mdlServer.status = device.status;
           }
           let mdlClass = mdlServer.hostedDevices.find(

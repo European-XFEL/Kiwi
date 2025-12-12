@@ -2,9 +2,9 @@
  * EditableLineEdit - controller component
  */
 
-import * as React from "react";
-import type { EditableLineEditProps } from "@/scene/scene_types/controllers";
-import { FONT_FAMILY_DEFAULT } from "@/components/shared/helpers/fontDefaults";
+import * as React from 'react';
+import type { EditableLineEditProps } from '@/scene/scene_types/controllers';
+import { FONT_FAMILY_DEFAULT } from '@/components/shared/helpers/fontDefaults';
 
 const EditableLineEdit: React.FC<EditableLineEditProps> = ({
   font_size,
@@ -17,10 +17,10 @@ const EditableLineEdit: React.FC<EditableLineEditProps> = ({
   const value = primary?.value;
   const schemaAttrs = primary?.schemaAttrs;
 
-  const [localValue, setLocalValue] = React.useState<string>("");
+  const [localValue, setLocalValue] = React.useState<string>('');
 
   React.useEffect(() => {
-    const incoming = value ?? schemaAttrs?.defaultValue ?? "";
+    const incoming = value ?? schemaAttrs?.defaultValue ?? '';
     setLocalValue(String(incoming));
   }, [value, schemaAttrs?.defaultValue]);
 
@@ -39,15 +39,15 @@ const EditableLineEdit: React.FC<EditableLineEditProps> = ({
         disabled={!isEnabled}
         className={`border border-solid rounded px-1 w-full h-full ${
           isEnabled
-            ? "text-black bg-white cursor-text"
-            : "text-gray-500 bg-gray-100 cursor-not-allowed"
+            ? 'text-black bg-white cursor-text'
+            : 'text-gray-500 bg-gray-100 cursor-not-allowed'
         }`}
         style={{
           fontFamily: FONT_FAMILY_DEFAULT,
           fontSize: font_size,
           fontWeight: font_weight?.toLowerCase(),
         }}
-        placeholder={isEnabled ? "Enter text..." : "Read-only"}
+        placeholder={isEnabled ? 'Enter text...' : 'Read-only'}
       />
     </div>
   );

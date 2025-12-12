@@ -13,21 +13,21 @@
  * - Both DisplayTrendGraph and Vector* graphs extend this
  */
 
-import { BaseControllerContainerModel } from "@/scene/scene_view/controller/BaseControllerContainerModel";
-import type { BaseGraphProps } from "@/scene/scene_types/controller_base";
+import { BaseControllerContainerModel } from '@/scene/scene_view/controller/BaseControllerContainerModel';
+import type { BaseGraphProps } from '@/scene/scene_types/controller_base';
 
 export abstract class BaseGraphElementModel<
-  PropsType extends BaseGraphProps
+  PropsType extends BaseGraphProps,
 > extends BaseControllerContainerModel<PropsType> {
-  parent_component = "DisplayComponent" as const;
+  parent_component = 'DisplayComponent' as const;
 
   // ─────────────────────────────────
   // Axis labels + units
   // ─────────────────────────────────
-  x_label = "";
-  y_label = "";
-  x_units = "";
-  y_units = "";
+  x_label = '';
+  y_label = '';
+  x_units = '';
+  y_units = '';
 
   // ─────────────────────────────────
   // Axis behaviors
@@ -55,13 +55,13 @@ export abstract class BaseGraphElementModel<
   // ─────────────────────────────────
   // Visual properties
   // ─────────────────────────────────
-  title = "";
-  background = "transparent";
+  title = '';
+  background = 'transparent';
 
   // ─────────────────────────────────
   // Optional plot engine hint
   // ─────────────────────────────────
-  plot_engine?: "plotly" | "echarts";
+  plot_engine?: 'plotly' | 'echarts';
 
   /**
    * Build the shared props payload for all graph widgets.
@@ -69,7 +69,7 @@ export abstract class BaseGraphElementModel<
    */
   protected getBaseGraphProps() {
     return {
-      element_type: "widget" as const,
+      element_type: 'widget' as const,
       parent_component: this.parent_component,
 
       x: this.x,

@@ -1,7 +1,7 @@
-import * as React from "react";
-import type { VectorElementType } from "@/karabo_hash/HashValueType";
-import { useDeviceProperty } from "@/components/shared/hooks/useDeviceProperty";
-import type { TableColumnInfo } from "@/karabo_data/DeviceSchemaInfo";
+import * as React from 'react';
+import type { VectorElementType } from '@/karabo_hash/HashValueType';
+import { useDeviceProperty } from '@/components/shared/hooks/useDeviceProperty';
+import type { TableColumnInfo } from '@/karabo_data/DeviceSchemaInfo';
 
 export interface PaginationControls {
   goToPage: (page: number) => void;

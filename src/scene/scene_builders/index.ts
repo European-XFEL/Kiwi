@@ -5,4 +5,4 @@
  * Re-exports the Scene class which auto-registers all builder functions.
  */
 
-export { Scene } from "./Scene";
+export { Scene } from './Scene';

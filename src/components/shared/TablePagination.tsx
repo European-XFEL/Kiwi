@@ -1,11 +1,11 @@
-import React from "react";
+import React from 'react';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 import {
   Pagination,
   PaginationContent,
@@ -13,11 +13,11 @@ import {
   PaginationPrevious,
   PaginationNext,
   PaginationLink,
-} from "@/components/ui/pagination";
+} from '@/components/ui/pagination';
 import type {
   PaginationControls,
   PaginatedTableData,
-} from "./hooks/useKaraboTableProperty";
+} from './hooks/useKaraboTableProperty';
 
 interface TablePaginationProps {
   data: PaginatedTableData;
@@ -42,7 +42,7 @@ export const TablePagination: React.FC<TablePaginationProps> = ({
 
   // Generate page numbers to display (max 7 items)
   const getPageNumbers = () => {
-    const pages: (number | "ellipsis")[] = [];
+    const pages: (number | 'ellipsis')[] = [];
     const maxPages = data.totalPages;
     const current = data.currentPage;
 
@@ -54,7 +54,7 @@ export const TablePagination: React.FC<TablePaginationProps> = ({
       pages.push(1);
 
       if (current > 3) {
-        pages.push("ellipsis");
+        pages.push('ellipsis');
       }
 
       const start = Math.max(2, current - 1);
@@ -65,7 +65,7 @@ export const TablePagination: React.FC<TablePaginationProps> = ({
       }
 
       if (current < maxPages - 2) {
-        pages.push("ellipsis");
+        pages.push('ellipsis');
       }
 
       pages.push(maxPages);
@@ -115,14 +115,14 @@ export const TablePagination: React.FC<TablePaginationProps> = ({
               }}
               className={`h-6 px-2 rounded-none border border-gray-300 text-[11px] leading-none ${
                 !controls.canGoPrev
-                  ? "pointer-events-none opacity-40 bg-gray-100"
-                  : "cursor-pointer bg-white hover:bg-gray-50"
+                  ? 'pointer-events-none opacity-40 bg-gray-100'
+                  : 'cursor-pointer bg-white hover:bg-gray-50'
               }`}
             />
           </PaginationItem>
 
           {getPageNumbers().map((page, idx) =>
-            page === "ellipsis" ? (
+            page === 'ellipsis' ? (
               <PaginationItem key={`ellipsis-${idx}`}>
                 <span className="flex h-6 w-6 items-center justify-center text-[11px] text-gray-600">
                   …
@@ -138,8 +138,8 @@ export const TablePagination: React.FC<TablePaginationProps> = ({
                   isActive={page === data.currentPage}
                   className={`h-6 w-6 rounded-none border border-gray-300 text-[11px] leading-none flex items-center justify-center ${
                     page === data.currentPage
-                      ? "bg-blue-100 text-gray-900"
-                      : "bg-white hover:bg-gray-50 cursor-pointer"
+                      ? 'bg-blue-100 text-gray-900'
+                      : 'bg-white hover:bg-gray-50 cursor-pointer'
                   }`}
                 >
                   {page}
@@ -156,8 +156,8 @@ export const TablePagination: React.FC<TablePaginationProps> = ({
               }}
               className={`h-6 px-2 rounded-none border border-gray-300 text-[11px] leading-none ${
                 !controls.canGoNext
-                  ? "pointer-events-none opacity-40 bg-gray-100"
-                  : "cursor-pointer bg-white hover:bg-gray-50"
+                  ? 'pointer-events-none opacity-40 bg-gray-100'
+                  : 'cursor-pointer bg-white hover:bg-gray-50'
               }`}
             />
           </PaginationItem>

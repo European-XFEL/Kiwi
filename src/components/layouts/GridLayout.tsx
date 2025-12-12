@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 interface GridLayoutProps {
   x: number;
@@ -20,7 +20,7 @@ const GridLayout: React.FC<GridLayoutProps> = (props) => {
         top: props.y,
         width: props.width,
         height: props.height,
-        boxSizing: "border-box",
+        boxSizing: 'border-box',
       }}
     />
   );

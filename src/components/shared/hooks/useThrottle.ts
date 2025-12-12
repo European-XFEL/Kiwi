@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef } from "react";
-import { throttle, DebouncedFunc } from "lodash";
+import { useEffect, useMemo, useRef } from 'react';
+import { throttle, DebouncedFunc } from 'lodash';
 
 export const useThrottle = <T extends (...args: any[]) => any>(
   callback: T,

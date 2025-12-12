@@ -1,8 +1,8 @@
 export function moveItemToFirstPosition<T>(arr: T[], fromIndex: number): T[] {
-  if (!Array.isArray(arr)) throw new Error("arr must be an array");
+  if (!Array.isArray(arr)) throw new Error('arr must be an array');
   const len = arr.length;
   if (fromIndex < 0 || fromIndex >= len)
-    throw new Error("fromIndex out of bounds");
+    throw new Error('fromIndex out of bounds');
   if (fromIndex === 0) return [...arr];
 
   const result = arr.slice();
@@ -12,11 +12,11 @@ export function moveItemToFirstPosition<T>(arr: T[], fromIndex: number): T[] {
 }
 
 export function moveItemToLastPosition<T>(arr: T[], fromIndex: number): T[] {
-  if (!Array.isArray(arr)) throw new Error("arr must be an array");
+  if (!Array.isArray(arr)) throw new Error('arr must be an array');
   const len = arr.length;
   if (len === 0) return [];
   if (fromIndex < 0 || fromIndex >= len)
-    throw new Error("fromIndex out of bounds");
+    throw new Error('fromIndex out of bounds');
   if (fromIndex === len - 1) return arr.slice();
 
   const result = arr.slice();
@@ -30,12 +30,12 @@ export function swapItemsInAnArray<T>(
   fromIndex: number,
   toIndex: number
 ): T[] {
-  if (!Array.isArray(arr)) throw new Error("Invalid array");
+  if (!Array.isArray(arr)) throw new Error('Invalid array');
   const len = arr.length;
-  if (len === 0) throw new Error("Array cannot be empty");
+  if (len === 0) throw new Error('Array cannot be empty');
   if (fromIndex < 0 || fromIndex >= len)
-    throw new Error("fromIndex out of bounds");
-  if (toIndex < 0 || toIndex >= len) throw new Error("toIndex out of bounds");
+    throw new Error('fromIndex out of bounds');
+  if (toIndex < 0 || toIndex >= len) throw new Error('toIndex out of bounds');
   if (fromIndex === toIndex) return arr.slice();
 
   const result = arr.slice();
@@ -44,11 +44,11 @@ export function swapItemsInAnArray<T>(
 }
 
 export function moveItem<T>(arr: T[], fromIndex: number, toIndex: number): T[] {
-  if (!Array.isArray(arr)) throw new Error("arr must be an array");
+  if (!Array.isArray(arr)) throw new Error('arr must be an array');
   const len = arr.length;
   if (fromIndex < 0 || fromIndex >= len)
-    throw new Error("fromIndex out of bounds");
-  if (toIndex < 0 || toIndex >= len) throw new Error("toIndex out of bounds");
+    throw new Error('fromIndex out of bounds');
+  if (toIndex < 0 || toIndex >= len) throw new Error('toIndex out of bounds');
   if (fromIndex === toIndex) return [...arr];
 
   const result = arr.slice();

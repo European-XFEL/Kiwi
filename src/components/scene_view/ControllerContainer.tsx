@@ -1,12 +1,12 @@
-import React from "react";
-import { PropertyOverlay } from "./overlays/PropertyOverlay";
-import type { ProxyStatus } from "@/device/enums";
-import { ProxyStatus as ProxyStatusEnum, PropertyStatus } from "@/device/enums";
+import React from 'react';
+import { PropertyOverlay } from './overlays/PropertyOverlay';
+import type { ProxyStatus } from '@/device/enums';
+import { ProxyStatus as ProxyStatusEnum, PropertyStatus } from '@/device/enums';
 import {
   useDeviceProperty,
   type UseDevicePropertyResult,
-} from "../shared/hooks/useDeviceProperty";
-import { AccessMode } from "@/karabo_data/SchemaEnums";
+} from '../shared/hooks/useDeviceProperty';
+import { AccessMode } from '@/karabo_data/SchemaEnums';
 
 /**
  * Runtime context computed by the container.
@@ -61,10 +61,10 @@ export const ControllerContainer: React.FC<ControllerContainerProps> = ({
   width,
   height,
   children,
-  className = "",
+  className = '',
   showMissingPropertyOverlay = false,
 }) => {
-  const primaryKey = keys?.[0] ?? "";
+  const primaryKey = keys?.[0] ?? '';
 
   // Call once
   const primary = useDeviceProperty(primaryKey || undefined);
@@ -83,26 +83,26 @@ export const ControllerContainer: React.FC<ControllerContainerProps> = ({
   const propertyMissing = propertyStatus === PropertyStatus.MISSING;
 
   const disabledReason = React.useMemo(() => {
-    if (!primaryKey) return "No property specified";
+    if (!primaryKey) return 'No property specified';
 
     if (!deviceId || !propertyPath) {
-      return "Invalid property key";
+      return 'Invalid property key';
     }
 
     if (proxyStatus === ProxyStatusEnum.OFFLINE || isOffline) {
-      return "Device offline";
+      return 'Device offline';
     }
 
     if (propertyMissing) {
-      return "Property missing in device schema/config";
+      return 'Property missing in device schema/config';
     }
 
     if (schemaAttrs?.accessMode === AccessMode.ReadOnly) {
-      return "Property is read-only and cannot be edited from the GUI";
+      return 'Property is read-only and cannot be edited from the GUI';
     }
 
     if (schemaAttrs?.accessMode === AccessMode.InitOnly) {
-      return "Property is InitOnly and can only be configured in the device run file";
+      return 'Property is InitOnly and can only be configured in the device run file';
     }
 
     if (schemaAttrs?.requiredAccessLevel !== undefined && !isEditable) {
@@ -110,7 +110,7 @@ export const ControllerContainer: React.FC<ControllerContainerProps> = ({
     }
 
     if (!isEditable) {
-      return "Property is not editable in the current context";
+      return 'Property is not editable in the current context';
     }
 
     return undefined;
@@ -149,7 +149,7 @@ export const ControllerContainer: React.FC<ControllerContainerProps> = ({
     primary,
   };
 
-  const content = typeof children === "function" ? children(ctx) : children;
+  const content = typeof children === 'function' ? children(ctx) : children;
 
   return (
     <div

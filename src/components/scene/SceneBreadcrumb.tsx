@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -7,20 +7,20 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+} from '@/components/ui/breadcrumb';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useNavigate } from "react-router-dom";
-import { ProjectDBConnector } from "@/karabo_connectors/ProjectDBConnector";
-import { ProjectItemInfo, ProjectSceneInfo } from "@/karabo_data/ProjectDbInfo";
-import { useGlobalStore } from "@/store/globalAppStateStore";
-import { ProjectSceneCache } from "@/store/ProjectSceneCache";
-import ProjectsTable from "../dialogs/ProjectTable";
-import ScenesTable from "../dialogs/ScenesTable";
-import { cn } from "@/shared/helpers/cn";
+} from '@/components/ui/dropdown-menu';
+import { useNavigate } from 'react-router-dom';
+import { ProjectDBConnector } from '@/karabo_connectors/ProjectDBConnector';
+import { ProjectItemInfo, ProjectSceneInfo } from '@/karabo_data/ProjectDbInfo';
+import { useGlobalStore } from '@/store/globalAppStateStore';
+import { ProjectSceneCache } from '@/store/ProjectSceneCache';
+import ProjectsTable from '../dialogs/ProjectTable';
+import ScenesTable from '../dialogs/ScenesTable';
+import { cn } from '@/shared/helpers/cn';
 
 export type SceneBreadcrumbProps = {
   domain: string;
@@ -106,11 +106,13 @@ export default function SceneBreadcrumb({
   };
 
   return (
-    <Breadcrumb className={cn("min-w-0 max-w-full", className)}>
+    <Breadcrumb className={cn('min-w-0 max-w-full', className)}>
       <BreadcrumbList className="flex-nowrap min-w-0 overflow-hidden">
         {/* Domain */}
         <BreadcrumbItem className="shrink-0 max-w-[20%]">
-          <BreadcrumbPage className="font-medium truncate">{domain}</BreadcrumbPage>
+          <BreadcrumbPage className="font-medium truncate">
+            {domain}
+          </BreadcrumbPage>
         </BreadcrumbItem>
 
         <BreadcrumbSeparator className="shrink-0" />

@@ -1,28 +1,28 @@
-import { useState } from "react";
-import { FolderOpen } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import SelectProjectSceneDialog from "../dialogs/SelectProjectSceneDialog";
-import { ProjectSceneInfo } from "@/karabo_data/ProjectDbInfo";
-import { useNavigate } from "react-router-dom";
-import { useGlobalStore } from "@/store/globalAppStateStore";
-import { ProjectSceneCache } from "@/store/ProjectSceneCache";
+import { useState } from 'react';
+import { FolderOpen } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import SelectProjectSceneDialog from '../dialogs/SelectProjectSceneDialog';
+import { ProjectSceneInfo } from '@/karabo_data/ProjectDbInfo';
+import { useNavigate } from 'react-router-dom';
+import { useGlobalStore } from '@/store/globalAppStateStore';
+import { ProjectSceneCache } from '@/store/ProjectSceneCache';
 
 export type LoadProjectSceneProps = {
   className?: string;
-  size?: "default" | "sm" | "lg" | "icon";
+  size?: 'default' | 'sm' | 'lg' | 'icon';
   variant?:
-    | "default"
-    | "destructive"
-    | "outline"
-    | "secondary"
-    | "ghost"
-    | "link";
+    | 'default'
+    | 'destructive'
+    | 'outline'
+    | 'secondary'
+    | 'ghost'
+    | 'link';
 };
 
 export default function LoadProjectScene({
   className,
-  size = "sm",
-  variant = "default",
+  size = 'sm',
+  variant = 'default',
 }: LoadProjectSceneProps) {
   const navigate = useNavigate();
   const { sessionInfo } = useGlobalStore();

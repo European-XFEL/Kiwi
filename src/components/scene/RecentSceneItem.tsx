@@ -1,6 +1,6 @@
-import { Folder, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { RecentSceneModel } from "@/view_models/RecentScenesModel";
+import { Folder, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { RecentSceneModel } from '@/view_models/RecentScenesModel';
 
 export type RecentSceneItemProps = {
   scene: RecentSceneModel;

@@ -1,6 +1,6 @@
-import type { BaseWidgetProps, BaseControllerKind } from "./base";
-import type { ProxyStatus } from "@/device/enums";
-import type { UseDevicePropertyResult } from "@/components/shared/hooks/useDeviceProperty";
+import type { BaseWidgetProps, BaseControllerKind } from './base';
+import type { ProxyStatus } from '@/device/enums';
+import type { UseDevicePropertyResult } from '@/components/shared/hooks/useDeviceProperty';
 
 /**
  * Base props for all controller widgets.
@@ -16,7 +16,7 @@ export interface BaseControllerWidgetProps extends BaseWidgetProps {
   keys: string[];
 
   font_size?: number | string;
-  font_weight?: "normal" | "bold";
+  font_weight?: 'normal' | 'bold';
 
   // ─── Runtime injected (from ControllerContainer) ───
   canEdit?: boolean;
@@ -47,7 +47,7 @@ export interface BaseControllerWidgetProps extends BaseWidgetProps {
  * Centralizes axis configuration, ranges, and visual properties.
  */
 export interface BaseGraphProps extends BaseControllerWidgetProps {
-  parent_component: "DisplayComponent";
+  parent_component: 'DisplayComponent';
 
   // Axis labels & units
   x_label: string;
@@ -74,5 +74,5 @@ export interface BaseGraphProps extends BaseControllerWidgetProps {
   // Visual
   title: string;
   background: string;
-  plot_engine?: "plotly" | "echarts";
+  plot_engine?: 'plotly' | 'echarts';
 }

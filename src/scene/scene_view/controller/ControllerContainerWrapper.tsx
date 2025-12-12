@@ -1,9 +1,9 @@
-import React from "react";
+import React from 'react';
 import {
   ControllerContainer,
   type ControllerContainerContext,
-} from "@/components/scene_view/ControllerContainer";
-import type { BaseControllerWidgetProps } from "@/scene/scene_types/controller_base";
+} from '@/components/scene_view/ControllerContainer';
+import type { BaseControllerWidgetProps } from '@/scene/scene_types/controller_base';
 
 /**
  * ControllerContainerWrapper - HOC utility for wrapping controller components
@@ -73,7 +73,7 @@ export class ControllerContainerWrapper {
     };
 
     Wrapped.displayName = `WithControllerContainer(${
-      Component.displayName || Component.name || "Component"
+      Component.displayName || Component.name || 'Component'
     })`;
 
     return Wrapped;

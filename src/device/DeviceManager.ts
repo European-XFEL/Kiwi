@@ -1,12 +1,12 @@
 import type {
   DeviceConfigInfo,
   PropertyInfo,
-} from "@/karabo_data/DeviceConfigInfo";
-import { DeviceProxy } from "@/device/device-proxy/DeviceProxy";
-import type { DeviceSchemaInfo } from "@/karabo_data/DeviceSchemaInfo";
-import type { DeviceInfo } from "@/karabo_data/TopologyInfo";
-import { Attributes, HashTypes } from "karabo-ts";
-import { HashValueType, VectorElementType } from "@/karabo_hash/HashValueType";
+} from '@/karabo_data/DeviceConfigInfo';
+import { DeviceProxy } from '@/device/device-proxy/DeviceProxy';
+import type { DeviceSchemaInfo } from '@/karabo_data/DeviceSchemaInfo';
+import type { DeviceInfo } from '@/karabo_data/TopologyInfo';
+import { Attributes, HashTypes } from 'karabo-ts';
+import { HashValueType, VectorElementType } from '@/karabo_hash/HashValueType';
 
 type PropertyValueUpdate = HashValueType | VectorElementType[][];
 
@@ -153,7 +153,7 @@ class DeviceManager {
   }
 
   private mapDeviceInfoToOnline(info: DeviceInfo): boolean {
-    if (info.status === "ok" || info.status === "error") {
+    if (info.status === 'ok' || info.status === 'error') {
       return true;
     }
     return false;

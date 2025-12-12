@@ -1,5 +1,5 @@
-import { Hash } from "karabo-ts";
-import { GuiServerConnector } from "./GuiServerConnector";
+import { Hash } from 'karabo-ts';
+import { GuiServerConnector } from './GuiServerConnector';
 import {
   ListDomainsResult,
   ListProjectsResult,
@@ -10,28 +10,28 @@ import {
   DbItemInfo,
   isProjectContentsInfo,
   LoadProjectSceneResult,
-} from "../karabo_data/ProjectDbInfo";
+} from '../karabo_data/ProjectDbInfo';
 import {
   buildListDomainsHash,
   buildListProjectsHash,
   buildLoadItemsHash,
-} from "../karabo_hash/builders/project_db";
+} from '../karabo_hash/builders/project_db';
 import {
   listDomainsResultFromHash,
   listProjectsResultFromHash,
   loadProjectItemsResultFromHash,
-} from "../karabo_hash/decoders/project_db";
+} from '../karabo_hash/decoders/project_db';
 
 export class ProjectDBConnector {
   // #region Singleton
   private constructor() {
     // Registers the handlers for the hash types related to the ProjectDB
     GuiServerConnector.inst.registerHashHandler(
-      "projectListDomains",
+      'projectListDomains',
       this.#_onListDomainsHash
     );
     GuiServerConnector.inst.registerHashHandler(
-      "projectListItems",
+      'projectListItems',
       this.#_onListProjectsHash
     );
   }
@@ -84,7 +84,7 @@ export class ProjectDBConnector {
       } else {
         projectsInfo = {
           projects: [],
-          error_msg: "Error decoding the list of projects",
+          error_msg: 'Error decoding the list of projects',
         };
         console.error(`Error decoding the list of projects: ${e}`);
       }
@@ -117,7 +117,7 @@ export class ProjectDBConnector {
     // Registers the handler for handling projectLoadItems messages from the GUI Server
     // for the duration of the listScenes operation.
     GuiServerConnector.inst.registerHashHandler(
-      "projectLoadItems",
+      'projectLoadItems',
       this.#_onLoadItemsHash
     );
     this.#_onListScenesCallback = onScenes;
@@ -131,7 +131,7 @@ export class ProjectDBConnector {
     const projectItem = {
       domain: domain,
       uuid: uuidProject,
-      item_type: "project",
+      item_type: 'project',
     };
     GuiServerConnector.inst.sendHash(buildLoadItemsHash([projectItem]));
   }
@@ -142,7 +142,7 @@ export class ProjectDBConnector {
   // Internal data to keep track of the sequence of projectLoadItems operations
   // involved in a listScenes operation.
   #_pendingLoadItems: number = 0;
-  #_projectName: string = "";
+  #_projectName: string = '';
   #_collectedScenes?: ProjectSceneInfo[];
   #_loadItemsErr?: string;
 
@@ -168,7 +168,7 @@ export class ProjectDBConnector {
       if (e instanceof Error) {
         this.#_loadItemsErr = (e as Error).message;
       } else {
-        this.#_loadItemsErr = "Error loading project items";
+        this.#_loadItemsErr = 'Error loading project items';
       }
       console.error(`Error loading project items: ${e}`);
     }
@@ -183,14 +183,14 @@ export class ProjectDBConnector {
             itemsToQuery.push({
               domain: scene.domain,
               uuid: scene.uuid,
-              item_type: "scene",
+              item_type: 'scene',
             });
           }
           for (const subproject of item.subprojects) {
             itemsToQuery.push({
               domain: subproject.domain,
               uuid: subproject.uuid,
-              item_type: "project",
+              item_type: 'project',
             });
           }
           if (itemsToQuery.length > 0) {
@@ -230,7 +230,7 @@ export class ProjectDBConnector {
       // is launched.
       this.#_collectedScenes = undefined;
       // Unregister the hash handler for the duration of the listScenes operation.
-      GuiServerConnector.inst.unregisterHashHandler("projectLoadItems");
+      GuiServerConnector.inst.unregisterHashHandler('projectLoadItems');
     }
   };
 
@@ -259,13 +259,13 @@ export class ProjectDBConnector {
     // Registers the handler for handling projectLoadItems messages from the GUI Server
     // for the duration of the getScene operation.
     GuiServerConnector.inst.registerHashHandler(
-      "projectLoadItems",
+      'projectLoadItems',
       this.#_onLoadSceneHash
     );
     this.#_onGetSceneCallback = onScene;
     this.#_projectName = projectName;
     GuiServerConnector.inst.sendHash(
-      buildLoadItemsHash([{ domain: domain, uuid: uuid, item_type: "scene" }])
+      buildLoadItemsHash([{ domain: domain, uuid: uuid, item_type: 'scene' }])
     );
   }
 
@@ -285,18 +285,18 @@ export class ProjectDBConnector {
       if (e instanceof Error) {
         loadSceneErr = (e as Error).message;
       } else {
-        loadSceneErr = "Error getting project scene";
+        loadSceneErr = 'Error getting project scene';
       }
       console.error(`Error loading project scene: ${loadSceneErr}`);
     }
     if (itemsInfo === undefined) {
-      loadSceneErr = "Error loading project scene - no scene returned";
+      loadSceneErr = 'Error loading project scene - no scene returned';
     } else if (itemsInfo!.projectItems.length !== 1) {
       // An error occurred - only one item should have been returned.
-      loadSceneErr = "Error loading project scene - multiple items returned";
+      loadSceneErr = 'Error loading project scene - multiple items returned';
     } else if (!isSceneInfo(itemsInfo!.projectItems[0])) {
       // An error occurred - the returned item is not a scene.
-      loadSceneErr = "Error loading project scene - no scene returned";
+      loadSceneErr = 'Error loading project scene - no scene returned';
     }
     if (loadSceneErr !== undefined) {
       // An error occurred
@@ -321,7 +321,7 @@ export class ProjectDBConnector {
     }
     this.#_onGetSceneCallback = undefined;
     // Unregister the hash handler for the duration of the getScene operation.
-    GuiServerConnector.inst.unregisterHashHandler("projectLoadItems");
+    GuiServerConnector.inst.unregisterHashHandler('projectLoadItems');
   };
 
   // #endregion
@@ -361,7 +361,7 @@ export class ProjectDBConnector {
       } else {
         domainsInfo = {
           domains: [],
-          error_msg: "Error decoding the list of domains",
+          error_msg: 'Error decoding the list of domains',
         };
         console.error(`Error decoding the list of domains: ${e}`);
       }

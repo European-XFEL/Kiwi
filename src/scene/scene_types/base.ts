@@ -46,15 +46,15 @@ export interface BaseSceneObjectProps {
  * ────────────────────────────────────────────────────────────────────────── */
 
 export type BaseControllerKind =
-  | "DisplayComponent"
-  | "EditableApplyLaterComponent";
+  | 'DisplayComponent'
+  | 'EditableApplyLaterComponent';
 
 /* ──────────────────────────────────────────────────────────────────────────
  * Widget base
  * ────────────────────────────────────────────────────────────────────────── */
 
 export interface BaseWidgetProps extends BaseSceneObjectProps {
-  readonly element_type: "widget";
+  readonly element_type: 'widget';
 
   /** Geometry (always defined in XML for widgets) */
   x: number;
@@ -71,7 +71,7 @@ export interface BaseWidgetProps extends BaseSceneObjectProps {
 
 /** Widgets that are explicitly editable controllers */
 export interface BaseEditWidgetProps extends BaseWidgetProps {
-  parent_component: "EditableApplyLaterComponent";
+  parent_component: 'EditableApplyLaterComponent';
 }
 
 /** Widgets that can be display or editable controllers */
@@ -84,17 +84,17 @@ export interface BaseDisplayEditableWidgetProps extends BaseWidgetProps {
  * ────────────────────────────────────────────────────────────────────────── */
 
 export interface BaseShapeProps extends BaseSceneObjectProps {
-  readonly element_type: "shape";
+  readonly element_type: 'shape';
 
   // Stroke
   stroke: string;
   stroke_opacity: number;
-  stroke_linecap: "butt" | "square" | "round";
+  stroke_linecap: 'butt' | 'square' | 'round';
   stroke_dashoffset: number;
   stroke_width: number;
   stroke_dasharray: number[];
   stroke_style: number; // Qt pen style (1=solid)
-  stroke_linejoin: "miter" | "round" | "bevel";
+  stroke_linejoin: 'miter' | 'round' | 'bevel';
   stroke_miterlimit: number;
 
   // Fill
@@ -107,7 +107,7 @@ export interface BaseShapeProps extends BaseSceneObjectProps {
  * ────────────────────────────────────────────────────────────────────────── */
 
 export interface BaseLayoutProps extends BaseSceneObjectProps {
-  readonly element_type: "layout";
+  readonly element_type: 'layout';
 
   /** Geometry of the layout container itself */
   x: number;

@@ -1,5 +1,5 @@
-import type { PropertySchemaAttributes } from "@/karabo_data/DeviceSchemaInfo";
-import { AccessLevel, AccessMode } from "@/karabo_data/SchemaEnums";
+import type { PropertySchemaAttributes } from '@/karabo_data/DeviceSchemaInfo';
+import { AccessLevel, AccessMode } from '@/karabo_data/SchemaEnums';
 
 export interface EditContext {
   userAccessLevel: AccessLevel;

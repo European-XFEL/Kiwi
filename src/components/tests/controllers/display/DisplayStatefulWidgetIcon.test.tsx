@@ -1,14 +1,14 @@
-import { render, screen, waitFor } from "@testing-library/react";
-import type { DisplayStatefulIconProps } from "@/scene/scene_types/controllers";
-import { FONT_BASE_SIZE } from "@/components/shared/helpers/fontDefaults";
+import { render, screen, waitFor } from '@testing-library/react';
+import type { DisplayStatefulIconProps } from '@/scene/scene_types/controllers';
+import { FONT_BASE_SIZE } from '@/components/shared/helpers/fontDefaults';
 
-import type { UseDevicePropertyResult } from "@/components/shared/hooks/useDeviceProperty";
-import { ProxyStatus, PropertyStatus } from "@/device/enums";
+import type { UseDevicePropertyResult } from '@/components/shared/hooks/useDeviceProperty';
+import { ProxyStatus, PropertyStatus } from '@/device/enums';
 
 // ---------------------------------------------------
 // MOCK: statefulIcons map
 // ---------------------------------------------------
-jest.mock("@/components/shared/helpers/statefulIcons", () => ({
+jest.mock('@/components/shared/helpers/statefulIcons', () => ({
   __esModule: true,
   statefulIconTextById: {}, // filled in beforeEach
 }));
@@ -21,25 +21,25 @@ const mockRecolorPreloadedSvg = jest.fn((svgXML: string) => ({
   metrics: { fromCache: false },
 }));
 
-jest.mock("@/components/shared/helpers/loadAndRecolor", () => ({
+jest.mock('@/components/shared/helpers/loadAndRecolor', () => ({
   __esModule: true,
   recolorPreloadedSvg: (...args: Parameters<typeof mockRecolorPreloadedSvg>) =>
     mockRecolorPreloadedSvg(...args),
-  getPreloadedCacheKey: jest.fn(() => "mock-cache-key"),
+  getPreloadedCacheKey: jest.fn(() => 'mock-cache-key'),
 }));
 
 // ---------------------------------------------------
 // MOCK: useGuiStateColor
 // ---------------------------------------------------
 const mockUseGuiStateColor = jest.fn();
-jest.mock("@/components/shared/hooks/useGuiStateColor", () => ({
+jest.mock('@/components/shared/hooks/useGuiStateColor', () => ({
   __esModule: true,
   useGuiStateColor: (...args: any[]) => mockUseGuiStateColor(...args),
 }));
 
 // Import AFTER mocks
-import { statefulIconTextById } from "@/components/shared/helpers/statefulIcons";
-import DisplayStatefulIcon from "@/components/controllers/display/DisplayStatefulWidgetIcon";
+import { statefulIconTextById } from '@/components/shared/helpers/statefulIcons';
+import DisplayStatefulIcon from '@/components/controllers/display/DisplayStatefulWidgetIcon';
 // ^ if your new file path is different, update this import accordingly
 
 // ---------------------------------------------------
@@ -49,15 +49,15 @@ function makePrimary(
   overrides: Partial<UseDevicePropertyResult> = {}
 ): UseDevicePropertyResult {
   return {
-    value: "ERROR",
+    value: 'ERROR',
     model: undefined,
     timeAttrs: undefined,
 
-    deviceState: "ERROR",
+    deviceState: 'ERROR',
     stateColor: undefined,
 
-    deviceId: "DEVICE_X",
-    propertyPath: "state",
+    deviceId: 'DEVICE_X',
+    propertyPath: 'state',
 
     descriptor: undefined,
     isEditable: false,
@@ -83,18 +83,18 @@ function makeProps(
   overrides: Partial<DisplayStatefulIconProps> = {}
 ): DisplayStatefulIconProps {
   return {
-    element_type: "widget",
-    widget_type: "DisplayStatefulIcon",
-    parent_component: "DisplayComponent",
+    element_type: 'widget',
+    widget_type: 'DisplayStatefulIcon',
+    parent_component: 'DisplayComponent',
     x: 10,
     y: 20,
     width: 40,
     height: 40,
-    keys: ["DEVICE_X.state"],
+    keys: ['DEVICE_X.state'],
 
-    icon_name: "icon_bs_det_beampos",
+    icon_name: 'icon_bs_det_beampos',
     font_size: FONT_BASE_SIZE,
-    font_weight: "normal",
+    font_weight: 'normal',
 
     tooltipText: undefined,
     disabledReason: undefined,
@@ -127,78 +127,78 @@ beforeEach(() => {
   });
 
   // Default GUI color response
-  mockUseGuiStateColor.mockReturnValue({ colorValue: "#ff0000" });
+  mockUseGuiStateColor.mockReturnValue({ colorValue: '#ff0000' });
 });
 
-describe("DisplayStatefulIcon", () => {
-  it("renders recolored SVG for icon_bs_det_beampos", async () => {
+describe('DisplayStatefulIcon', () => {
+  it('renders recolored SVG for icon_bs_det_beampos', async () => {
     const { container } = renderWithKey(
-      makeProps({ icon_name: "icon_bs_det_beampos" })
+      makeProps({ icon_name: 'icon_bs_det_beampos' })
     );
 
     await waitFor(() => {
-      const svg = container.querySelector("svg#icon_bs_det_beampos");
+      const svg = container.querySelector('svg#icon_bs_det_beampos');
       expect(svg).toBeInTheDocument();
     });
 
     expect(mockRecolorPreloadedSvg).toHaveBeenCalled();
   });
 
-  it("renders nitrogen supply icon", async () => {
+  it('renders nitrogen supply icon', async () => {
     const { container } = renderWithKey(
-      makeProps({ icon_name: "icon_nitrogen_supply" })
+      makeProps({ icon_name: 'icon_nitrogen_supply' })
     );
 
     await waitFor(() => {
-      const svg = container.querySelector("svg#icon_nitrogen_supply");
+      const svg = container.querySelector('svg#icon_nitrogen_supply');
       expect(svg).toBeInTheDocument();
     });
   });
 
-  it("renders massflow icon", async () => {
+  it('renders massflow icon', async () => {
     const { container } = renderWithKey(
-      makeProps({ icon_name: "icon_massflow" })
+      makeProps({ icon_name: 'icon_massflow' })
     );
 
     await waitFor(() => {
-      const svg = container.querySelector("svg#icon_massflow");
+      const svg = container.querySelector('svg#icon_massflow');
       expect(svg).toBeInTheDocument();
     });
   });
 
-  it("renders attenuator icon", async () => {
+  it('renders attenuator icon', async () => {
     const { container } = renderWithKey(
-      makeProps({ icon_name: "icon_attenuator" })
+      makeProps({ icon_name: 'icon_attenuator' })
     );
 
     await waitFor(() => {
-      const svg = container.querySelector("svg#icon_attenuator");
+      const svg = container.querySelector('svg#icon_attenuator');
       expect(svg).toBeInTheDocument();
     });
   });
 
-  it("renders fallback when icon not found", () => {
-    renderWithKey(makeProps({ icon_name: "unknown_icon" }));
+  it('renders fallback when icon not found', () => {
+    renderWithKey(makeProps({ icon_name: 'unknown_icon' }));
 
     // fallback svg prints icon_name as text
-    expect(screen.getByText("unknown_icon")).toBeInTheDocument();
+    expect(screen.getByText('unknown_icon')).toBeInTheDocument();
   });
 
-  it("derives rawState from primary.value and calls useGuiStateColor", () => {
+  it('derives rawState from primary.value and calls useGuiStateColor', () => {
     renderWithKey(
       makeProps({
-        primary: makePrimary({ value: "ON" }),
+        primary: makePrimary({ value: 'ON' }),
       })
     );
 
-    expect(mockUseGuiStateColor).toHaveBeenCalledWith("ON");
+    expect(mockUseGuiStateColor).toHaveBeenCalledWith('ON');
   });
 
-  it("uses tooltipText in title when provided", () => {
+  it('uses tooltipText in title when provided', () => {
     const { container } = renderWithKey(
-      makeProps({ tooltipText: "hello-tooltip" })
+      makeProps({ tooltipText: 'hello-tooltip' })
     );
 
-    expect(container.firstChild).toHaveAttribute("title", "hello-tooltip");
+    expect(container.firstChild).toHaveAttribute('title', 'hello-tooltip');
   });
 });

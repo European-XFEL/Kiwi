@@ -1,6 +1,6 @@
 type GUIServerHostInfo = {
-    hostname: string,
-    port: number,
-}
+  hostname: string;
+  port: number;
+};
 
 export default GUIServerHostInfo;

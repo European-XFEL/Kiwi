@@ -1,12 +1,12 @@
-import { HashTypes } from "karabo-ts";
-import { HashValueType, VectorElementType } from "@/karabo_hash/HashValueType";
+import { HashTypes } from 'karabo-ts';
+import { HashValueType, VectorElementType } from '@/karabo_hash/HashValueType';
 import {
   AccessLevel,
   AccessMode,
   ArchivePolicy,
   Assignment,
   NodeType,
-} from "@/karabo_data/SchemaEnums";
+} from '@/karabo_data/SchemaEnums';
 
 export interface DeviceSchemaInfo {
   deviceId: string;

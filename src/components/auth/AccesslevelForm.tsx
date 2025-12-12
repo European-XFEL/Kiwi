@@ -1,15 +1,15 @@
-import { useRef } from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useRef } from 'react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AccessLevel } from "@/karabo_data/SchemaEnums";
+} from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AccessLevel } from '@/karabo_data/SchemaEnums';
 
 export type AccessLevelFormProps = {
   onUserNameChange: (username: string) => void;

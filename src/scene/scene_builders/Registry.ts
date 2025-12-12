@@ -4,16 +4,16 @@
  * Organizes builders by namespace (controller, widget, shape, layout).
  */
 
-import type { BaseSceneElementModel } from "../scene_models/BaseModels";
+import type { BaseSceneElementModel } from '../scene_models/BaseModels';
 
 /** Builder function signature */
 export type BuilderFunction = (json: any) => BaseSceneElementModel | null;
 
 /** Top-level builder categories */
-export type WidgetNamespace = "controller" | "widget" | "shape" | "layout";
+export type WidgetNamespace = 'controller' | 'widget' | 'shape' | 'layout';
 
 /** Controller subcategories (display, editable, etc.) */
-export type ControllerCategory = "display" | "editable" | "output" | string;
+export type ControllerCategory = 'display' | 'editable' | 'output' | string;
 
 /** Parsed key info for debugging and filtering */
 export interface ParsedRegistryKey {
@@ -33,7 +33,7 @@ export interface RegistryEntry {
 
 /** Parse a key like "controller:display:displaylabel" */
 export function parseRegistryKey(key: string): ParsedRegistryKey {
-  const parts = key.toLowerCase().split(":");
+  const parts = key.toLowerCase().split(':');
 
   if (parts.length === 3) {
     const [namespace, category, name] = parts;

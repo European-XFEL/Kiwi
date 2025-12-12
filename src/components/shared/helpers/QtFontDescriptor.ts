@@ -3,7 +3,7 @@ import {
   FONT_FAMILY_DEFAULT,
   FONT_FAMILY_MONOSPACED,
   FONT_FAMILY_SERIF,
-} from "./fontDefaults";
+} from './fontDefaults';
 
 /**
  * A Qt Font Descriptor is a single string with comma separated values for
@@ -35,7 +35,7 @@ export class QtFontDescriptor {
   rawMode: number;
 
   constructor(readonly descriptor: string) {
-    const parts = descriptor.split(",");
+    const parts = descriptor.split(',');
     if (parts.length < 10) {
       throw new Error(
         `Qt font descriptor should have at least 10 comma separated fields. '${descriptor}' has ${parts.length}.`
@@ -43,21 +43,21 @@ export class QtFontDescriptor {
     }
     this.fontFamily = parts[0];
     this.pointSize = parseInt(parts[1]);
-    throwIfNaN(this.pointSize, "pointSize", parts[1]);
+    throwIfNaN(this.pointSize, 'pointSize', parts[1]);
     this.pixelSize = parseInt(parts[2]);
-    throwIfNaN(this.pixelSize, "pixelSize", parts[2]);
+    throwIfNaN(this.pixelSize, 'pixelSize', parts[2]);
     this.weight = parseInt(parts[4]);
-    throwIfNaN(this.weight, "weight", parts[4]);
+    throwIfNaN(this.weight, 'weight', parts[4]);
     this.italic = parseInt(parts[5]);
-    throwIfNaN(this.italic, "italic", parts[5]);
+    throwIfNaN(this.italic, 'italic', parts[5]);
     this.underline = parseInt(parts[6]);
-    throwIfNaN(this.underline, "underline", parts[6]);
+    throwIfNaN(this.underline, 'underline', parts[6]);
     this.strikeOut = parseInt(parts[7]);
-    throwIfNaN(this.strikeOut, "strikeOut", parts[7]);
+    throwIfNaN(this.strikeOut, 'strikeOut', parts[7]);
     this.fixedPitch = parseInt(parts[8]);
-    throwIfNaN(this.fixedPitch, "fixedPitch", parts[8]);
+    throwIfNaN(this.fixedPitch, 'fixedPitch', parts[8]);
     this.rawMode = parseInt(parts[9]);
-    throwIfNaN(this.rawMode, "rawMode", parts[9]);
+    throwIfNaN(this.rawMode, 'rawMode', parts[9]);
 
     function throwIfNaN(
       parsedValue: number,
@@ -82,11 +82,11 @@ export class QtFontDescriptor {
 
   get css_fontFamily(): string {
     // GUI Client saves "Monospaced" as "Source Code Pro"
-    if (this.fontFamily.includes("Code")) {
+    if (this.fontFamily.includes('Code')) {
       return FONT_FAMILY_MONOSPACED;
     }
     // GUI Client saves "Serif" as "Source Serif Pro"
-    if (this.fontFamily.includes("Serif")) {
+    if (this.fontFamily.includes('Serif')) {
       return FONT_FAMILY_SERIF;
     }
     // The remaining possibility for the GUI Client is "Sans-Serif", which
@@ -95,24 +95,24 @@ export class QtFontDescriptor {
   }
 
   get css_textDecoration(): string {
-    let textDecoration = "";
+    let textDecoration = '';
     if (this.underline != 0) {
-      textDecoration = "underline";
+      textDecoration = 'underline';
     }
     if (this.strikeOut != 0) {
       textDecoration = `${textDecoration} line-through`;
     }
     if (textDecoration.length == 0) {
-      textDecoration = "none";
+      textDecoration = 'none';
     }
     return textDecoration;
   }
 
   get css_fontStyle(): string {
-    return this.italic != 0 ? "italic" : "normal";
+    return this.italic != 0 ? 'italic' : 'normal';
   }
 
   get css_fontWeight(): string {
-    return this.weight > 50 ? "bold" : "normal";
+    return this.weight > 50 ? 'bold' : 'normal';
   }
 }

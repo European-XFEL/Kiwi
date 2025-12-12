@@ -1,18 +1,18 @@
-import { DeviceConfigInfo } from "../../karabo_data/DeviceConfigInfo";
-import { Hash, HashValue } from "karabo-ts";
-import { flattenHash } from "../hash_utils";
-import { splitKaraboKeys } from "../../components/shared/helpers/splitKaraboKeys";
+import { DeviceConfigInfo } from '../../karabo_data/DeviceConfigInfo';
+import { Hash, HashValue } from 'karabo-ts';
+import { flattenHash } from '../hash_utils';
+import { splitKaraboKeys } from '../../components/shared/helpers/splitKaraboKeys';
 
 export const devicesConfigsFromHash = (hash: Hash): DeviceConfigInfo[] => {
   const devicesConfigsInfo: DeviceConfigInfo[] = [];
-  const configurations = hash.getValue("configurations") as HashValue;
+  const configurations = hash.getValue('configurations') as HashValue;
   const configsHash = new Hash(configurations);
 
   // Values of device properties are the leaves of the configuration Hash.
   // The path of each leaf has the form [deviceId].[propertyId]
   const configHashLeaves = flattenHash(configsHash);
 
-  let currentDeviceId = "";
+  let currentDeviceId = '';
   let deviceConfigInfo: DeviceConfigInfo | undefined;
   // For the flattened "configurations" hash, the path of each leaf is the
   // "full" property name, e.g. "Karabo_GuiServer_0.performanceStatistics.numOfMessages"

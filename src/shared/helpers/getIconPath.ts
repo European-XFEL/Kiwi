@@ -1,21 +1,21 @@
 // src/shared/helpers/getIconPath.ts
 
 // public base (only for icons that are still in public/)
-const ICON_BASE = "/icons";
+const ICON_BASE = '/icons';
 
 const DEFAULTS = {
-  STATEFUL: "no_icon",
-  FALLBACK: "no_icon",
+  STATEFUL: 'no_icon',
+  FALLBACK: 'no_icon',
 } as const;
 
-const IMAGE_EXTENSIONS = ["svg", "png", "jpg", "jpeg", "webp"] as const;
+const IMAGE_EXTENSIONS = ['svg', 'png', 'jpg', 'jpeg', 'webp'] as const;
 
 // Based on original Karabo GUI get_alarm_svg mapping
 const ALARM_ICONS: Record<string, string> = {
-  none: "alarm_none",
-  warn: "warning",
-  alarm: "critical",
-  interlock: "interlock",
+  none: 'alarm_none',
+  warn: 'warning',
+  alarm: 'critical',
+  interlock: 'interlock',
 };
 
 // TYPES
@@ -33,11 +33,11 @@ function sanitizeFileName(name?: string, fallback = DEFAULTS.FALLBACK): string {
 
   const clean = name
     .trim()
-    .replace(/\s+/g, "_")
-    .replace(/[^a-z0-9_-]/gi, "_")
+    .replace(/\s+/g, '_')
+    .replace(/[^a-z0-9_-]/gi, '_')
     .toLowerCase();
 
-  return clean === "icon_default" ? DEFAULTS.FALLBACK : clean;
+  return clean === 'icon_default' ? DEFAULTS.FALLBACK : clean;
 }
 
 /**
@@ -47,19 +47,19 @@ function sanitizeFileName(name?: string, fallback = DEFAULTS.FALLBACK): string {
  */
 export function getIconDescriptor(props: IconProps): {
   key: string; // canonical name, e.g. "icon_massflow_controller"
-  category: "stateful" | "general";
+  category: 'stateful' | 'general';
   paths: string[]; // public URLs, may be [] for stateful now in src
 } {
   let fileName: string;
-  let category: "stateful" | "general";
+  let category: 'stateful' | 'general';
 
   // StatefulIconWidget → was in public/icons/stateful/*, now moved to src/stateful_icons/*
   if (
-    props.krbClass === "DisplayComponent" &&
-    props.widget === "StatefulIconWidget"
+    props.krbClass === 'DisplayComponent' &&
+    props.widget === 'StatefulIconWidget'
   ) {
     fileName = sanitizeFileName(props.iconName, DEFAULTS.STATEFUL);
-    category = "stateful";
+    category = 'stateful';
 
     // since stateful icons are now in src/, we don’t have public URLs for them anymore
     return {
@@ -70,23 +70,23 @@ export function getIconDescriptor(props: IconProps): {
   }
 
   // PopupButtonWidget → still served from public/icons/general/*
-  if (props.krbClass === "PopupButtonWidget") {
+  if (props.krbClass === 'PopupButtonWidget') {
     fileName = sanitizeFileName(props.infoType, DEFAULTS.FALLBACK);
-    category = "general";
+    category = 'general';
   }
   // GlobalAlarm → public/icons/general/* based on property value
   else if (
-    props.krbClass === "DisplayComponent" &&
-    props.widget === "GlobalAlarm"
+    props.krbClass === 'DisplayComponent' &&
+    props.widget === 'GlobalAlarm'
   ) {
-    const condition = (props.alarmCondition || "none").toLowerCase();
+    const condition = (props.alarmCondition || 'none').toLowerCase();
     fileName = ALARM_ICONS[condition] || ALARM_ICONS.none;
-    category = "general";
+    category = 'general';
   }
   // fallback → treat as general
   else {
     fileName = sanitizeFileName(props.iconName, DEFAULTS.FALLBACK);
-    category = "general";
+    category = 'general';
   }
 
   // for general we still build public URLs like before
@@ -111,7 +111,7 @@ export function getIconPaths(props: IconProps): string[] {
  */
 export function getPrimaryIconPath(props: IconProps): string {
   const { paths } = getIconDescriptor(props);
-  return paths[0] ?? ""; // stateful might return ""
+  return paths[0] ?? ''; // stateful might return ""
 }
 
 export default getIconPaths;

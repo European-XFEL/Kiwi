@@ -15,8 +15,8 @@ export type IRSceneChild = IRLayout | IRWidget | IRShape;
 // -----------------------------------------------------------------------------
 
 export interface IRLayout {
-  element_type: "layout";
-  layout_type: "BoxLayout" | "FixedLayout" | "GridLayout";
+  element_type: 'layout';
+  layout_type: 'BoxLayout' | 'FixedLayout' | 'GridLayout';
   x: number;
   y: number;
   width: number;
@@ -31,9 +31,9 @@ export interface IRLayout {
 // -----------------------------------------------------------------------------
 
 export interface IRWidget {
-  element_type: "widget";
+  element_type: 'widget';
   widget_type: string; // e.g. "Label", "DisplayCheckBox"
-  parent_component?: "DisplayComponent" | "EditableApplyLaterComponent";
+  parent_component?: 'DisplayComponent' | 'EditableApplyLaterComponent';
   x: number;
   y: number;
   width: number;
@@ -50,8 +50,8 @@ export interface IRWidget {
 
 export type IRShape =
   | {
-      element_type: "shape";
-      shape_type: "Line";
+      element_type: 'shape';
+      shape_type: 'Line';
       x1: number;
       y1: number;
       x2: number;
@@ -61,8 +61,8 @@ export type IRShape =
       stroke_opacity: number;
     }
   | {
-      element_type: "shape";
-      shape_type: "Polygon";
+      element_type: 'shape';
+      shape_type: 'Polygon';
       points: string;
       stroke: string;
       fill: string;
@@ -71,8 +71,8 @@ export type IRShape =
       fill_opacity: number;
     }
   | {
-      element_type: "shape";
-      shape_type: "Rectangle";
+      element_type: 'shape';
+      shape_type: 'Rectangle';
       x: number;
       y: number;
       width: number;
@@ -83,8 +83,8 @@ export type IRShape =
       stroke_opacity: number;
     }
   | {
-      element_type: "shape";
-      shape_type: "ArrowPolygon";
+      element_type: 'shape';
+      shape_type: 'ArrowPolygon';
       x1: number;
       y1: number;
       x2: number;

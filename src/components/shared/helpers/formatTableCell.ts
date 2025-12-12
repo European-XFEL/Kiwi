@@ -1,6 +1,6 @@
-import type { TableColumnInfo } from "@/karabo_data/DeviceSchemaInfo";
-import { VectorElementType } from "@/karabo_hash/HashValueType";
-import { HashTypes, UInt8 } from "karabo-ts";
+import type { TableColumnInfo } from '@/karabo_data/DeviceSchemaInfo';
+import { VectorElementType } from '@/karabo_hash/HashValueType';
+import { HashTypes, UInt8 } from 'karabo-ts';
 
 interface FormatOptions {
   decimalPlaces?: number;
@@ -16,7 +16,7 @@ export function formatTableCell(
 ): string {
   // Handle null/undefined
   if (value === null || value === undefined) {
-    return "";
+    return '';
   }
 
   // Handle UInt8 wrapper class
@@ -53,12 +53,12 @@ export function formatTableCell(
     valueType === HashTypes.UInt64
   ) {
     // BigInt types (Int64, UInt64)
-    if (typeof value === "bigint") {
+    if (typeof value === 'bigint') {
       return value.toString();
     }
 
     // Number types
-    if (typeof value === "number") {
+    if (typeof value === 'number') {
       return value.toString();
     }
 
@@ -68,7 +68,7 @@ export function formatTableCell(
 
   // Handle boolean
   if (valueType === HashTypes.Bool) {
-    return value ? "true" : "false";
+    return value ? 'true' : 'false';
   }
 
   // Handle string and other types

@@ -2,10 +2,10 @@
  * Root scene prop definitions and union types for all scene elements.
  */
 
-import { LayoutTypeProps } from "./layouts";
-import type { ShapeProps } from "./shapes";
-import type { StaticWidgetProps } from "./staticWidgets";
-import type { ControllerTypeProps } from "./controllers";
+import { LayoutTypeProps } from './layouts';
+import type { ShapeProps } from './shapes';
+import type { StaticWidgetProps } from './staticWidgets';
+import type { ControllerTypeProps } from './controllers';
 
 /* ──────────────────────────────────────────────────────────────────────────
  * Scene Element Union

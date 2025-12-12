@@ -35,22 +35,22 @@ export interface ProjectContentsInfo extends ProjectItemInfo {
 export const isProjectItemInfo = (
   item: DbItemInfo
 ): item is ProjectItemInfo => {
-  return typeof item === "object" && item !== null && "isTrashed" in item;
+  return typeof item === 'object' && item !== null && 'isTrashed' in item;
 };
 
 export const isProjectContentsInfo = (
   item: DbItemInfo
 ): item is ProjectContentsInfo => {
   return (
-    typeof item === "object" &&
+    typeof item === 'object' &&
     item !== null &&
-    "scenes" in item &&
-    "subprojects" in item
+    'scenes' in item &&
+    'subprojects' in item
   );
 };
 
 export const isSceneInfo = (item: DbItemInfo): item is ProjectSceneInfo => {
-  return typeof item === "object" && item !== null && "svg" in item;
+  return typeof item === 'object' && item !== null && 'svg' in item;
 };
 
 // #endregion
@@ -83,16 +83,16 @@ export interface ListProjectScenesResult {
 }
 
 export const asLocalDateTimeString = (utcDateTimeString: string): string => {
-  const dateTime = utcDateTimeString.endsWith("Z")
+  const dateTime = utcDateTimeString.endsWith('Z')
     ? new Date(utcDateTimeString)
-    : new Date(utcDateTimeString + "Z");
+    : new Date(utcDateTimeString + 'Z');
 
   const year = dateTime.getFullYear();
-  const month = String(dateTime.getMonth() + 1).padStart(2, "0");
-  const day = String(dateTime.getDate()).padStart(2, "0");
-  const hour = String(dateTime.getHours()).padStart(2, "0");
-  const minute = String(dateTime.getMinutes()).padStart(2, "0");
-  const second = String(dateTime.getSeconds()).padStart(2, "0");
+  const month = String(dateTime.getMonth() + 1).padStart(2, '0');
+  const day = String(dateTime.getDate()).padStart(2, '0');
+  const hour = String(dateTime.getHours()).padStart(2, '0');
+  const minute = String(dateTime.getMinutes()).padStart(2, '0');
+  const second = String(dateTime.getSeconds()).padStart(2, '0');
 
   return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
 };

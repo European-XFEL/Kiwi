@@ -16,7 +16,6 @@
 - [x] Implement CheckBox widget
 - [x] Support the `DisplayTrendGraph` widget (MVP-mode: most important features; not necessarily all) (https://git.xfel.eu/karaboweb/kiwi/-/issues/11)
 
-
 ## Phase 2 - Widget Coverage & Performance Assessment & Karabo Infrastructure
 
 - [ ] Improve the ergonomy of the `Karabo-TS` package (https://git.xfel.eu/karaboweb/kiwi/-/issues/10)

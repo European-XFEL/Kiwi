@@ -1,5 +1,5 @@
-import * as React from "react";
-import { NavLink as RRNavLink } from "react-router-dom";
+import * as React from 'react';
+import { NavLink as RRNavLink } from 'react-router-dom';
 
 export type NavLinkProps = {
   to: string;
@@ -17,8 +17,8 @@ export const NavLink = React.forwardRef<HTMLAnchorElement, NavLinkProps>(
     {
       to,
       children,
-      className = "",
-      activeClassName = "",
+      className = '',
+      activeClassName = '',
       exact = false,
       ...rest
     },
@@ -30,7 +30,7 @@ export const NavLink = React.forwardRef<HTMLAnchorElement, NavLinkProps>(
         to={to}
         end={exact}
         className={({ isActive }) =>
-          [className, isActive ? activeClassName : ""].filter(Boolean).join(" ")
+          [className, isActive ? activeClassName : ''].filter(Boolean).join(' ')
         }
         {...rest}
       >
@@ -39,4 +39,4 @@ export const NavLink = React.forwardRef<HTMLAnchorElement, NavLinkProps>(
     );
   }
 );
-NavLink.displayName = "NavLink";
+NavLink.displayName = 'NavLink';
