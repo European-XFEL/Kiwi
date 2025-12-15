@@ -4,10 +4,10 @@
  * Separates static schema (what a property IS) from runtime binding (what it's DOING).
  */
 
-import type { HashValueType } from "@/karabo_hash/HashValueType";
-import type { HashTypes } from "karabo-ts";
-import type { PropertySchema } from "./SchemaType";
-import type { Timestamp } from "@/shared/helpers/timestamps";
+import type { HashValueType } from '@/karabo_hash/HashValueType';
+import type { HashTypes } from 'karabo-ts';
+import type { PropertySchema } from './SchemaType';
+import type { Timestamp } from '@/shared/helpers/timestamps';
 
 // Any value a property can hold.
 export type PropertyValue = HashValueType | undefined;

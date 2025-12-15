@@ -9,6 +9,8 @@ import { FONT_FAMILY_DEFAULT } from '@/components/shared/helpers/fontDefaults';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { AccessLevel } from '@/karabo_data/SchemaEnums';
 import { ProxyStatus } from '@/device/enums';
+import { buildExecuteCommandHash } from '@/karabo_hash/builders/command_execution.ts';
+import { GuiServerConnector } from '@/karabo_connectors/GuiServerConnector';
 
 const DisplayCommand: React.FC<DisplayCommandProps> = ({
   font_size,
@@ -130,6 +132,21 @@ const DisplayCommand: React.FC<DisplayCommandProps> = ({
     stateAllowsCommand,
   ]);
 
+  // ─────────────────────────────────────────
+  // Command submission
+  // ─────────────────────────────────────────
+  const onSubmitCommand = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    if (requires_confirmation) {
+      const confirmed = window.confirm(
+        `Are you sure you want to execute "${buttonCaption}"?`
+      );
+      if (!confirmed) return;
+    }
+    const executeHash = buildExecuteCommandHash(deviceId!, propertyPath!);
+    GuiServerConnector.inst.sendHash(executeHash);
+  };
+
   return (
     <Button
       size="sm"
@@ -146,6 +163,7 @@ const DisplayCommand: React.FC<DisplayCommandProps> = ({
         fontSize: font_size,
         fontWeight: font_weight,
       }}
+      onClick={onSubmitCommand}
     >
       {requires_confirmation ? `${buttonCaption} (Confirm)` : buttonCaption}
     </Button>

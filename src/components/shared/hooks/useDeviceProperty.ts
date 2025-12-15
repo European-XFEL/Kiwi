@@ -264,7 +264,7 @@ export function useDeviceProperty(
     //  - if this hook is bound to "state", prefer the live model value
     //  - otherwise use cached runtime state from the proxy
     let deviceState: string | undefined;
-    if (propertyPath === "state" && model?.binding.value != null) {
+    if (propertyPath === 'state' && model?.binding.value != null) {
       deviceState = String(model.binding.value);
     } else {
       deviceState = proxy.state;
