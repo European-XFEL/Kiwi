@@ -2,15 +2,15 @@
  * PropertyBinding - Runtime state and data for a property
  */
 
-import type { HashTypes } from "karabo-ts";
+import type { HashTypes } from 'karabo-ts';
 import type {
   PropertyBinding as IPropertyBinding,
   PropertyValue,
   HistoricSample,
   PropertyChangeHandler,
   HistoricDataHandler,
-} from "./types/PropertyType";
-import { Timestamp } from "@/shared/helpers/timestamps";
+} from './types/PropertyType';
+import { Timestamp } from '@/shared/helpers/timestamps';
 
 export class PropertyBinding implements IPropertyBinding {
   // -------------------------------------------------------------------------

@@ -20,14 +20,14 @@ import {
   buildEmptyDeviceModel,
 } from '@/device/device-model/builders/DeviceModelBuilder';
 
-import { mapGuiStateColor } from "@/components/shared/helpers/mapStateColor";
-import type { GuiStateColorKey } from "@/karabo_data/Indicators";
+import { mapGuiStateColor } from '@/components/shared/helpers/mapStateColor';
+import type { GuiStateColorKey } from '@/karabo_data/Indicators';
 import type {
   PropertyModel,
   PropertyValue,
-} from "../device-model/types/PropertyType";
-import { PropertyBinding } from "../device-model/PropertyBinding";
-import { Timestamp } from "@/shared/helpers/timestamps";
+} from '../device-model/types/PropertyType';
+import { PropertyBinding } from '../device-model/PropertyBinding';
+import { Timestamp } from '@/shared/helpers/timestamps';
 
 export type SchemaChangedPayload = {
   deviceId: string;

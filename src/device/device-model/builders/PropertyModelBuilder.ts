@@ -1,7 +1,7 @@
-import type { PropertySchema } from "../types/SchemaType";
-import type { PropertyModel } from "../types/PropertyType";
-import type { PropertyInfo } from "@/karabo_data/DeviceConfigInfo";
-import { PropertyBinding } from "../PropertyBinding";
+import type { PropertySchema } from '../types/SchemaType';
+import type { PropertyModel } from '../types/PropertyType';
+import type { PropertyInfo } from '@/karabo_data/DeviceConfigInfo';
+import { PropertyBinding } from '../PropertyBinding';
 
 /**
  * Build a PropertyModel from:
