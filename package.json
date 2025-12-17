@@ -12,6 +12,7 @@
     "cov": "jest --coverage --collectCoverageFrom='src/**/*.{js,jsx,ts,tsx}'"
   },
   "dependencies": {
+    "@datastructures-js/deque": "^1.0.8",
     "@fontsource/roboto": "^5.0.14",
     "@radix-ui/react-checkbox": "^1.3.3",
     "@radix-ui/react-dialog": "^1.1.15",

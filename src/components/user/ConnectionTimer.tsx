@@ -1,5 +1,11 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useGlobalStore } from '@/store/globalAppStateStore';
+import { useGlobalActivityStore } from '@/store/globalActivityStore';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export type ConnectionTimerProps = {
   className?: string;
@@ -8,6 +14,8 @@ export type ConnectionTimerProps = {
 export default function ConnectionTimer({ className }: ConnectionTimerProps) {
   const { sessionInfo } = useGlobalStore();
   const [connectedFor, setConnectedFor] = useState('');
+  const msgsQueued = useGlobalActivityStore((s) => s.queuedMessageCount);
+  const latestLatency = useGlobalActivityStore((s) => s.latestLatency);
 
   const updateConnectedFor = useCallback(() => {
     const sessionStartEpoc = sessionInfo?.sessionStartEpoc;
@@ -59,11 +67,21 @@ export default function ConnectionTimer({ className }: ConnectionTimerProps) {
   if (!sessionInfo) return null;
 
   return (
-    <div className={className}>
-      <span className="text-sm text-muted-foreground">
-        Connected for:{' '}
-        <span className="font-semibold text-foreground">{connectedFor}</span>
-      </span>
-    </div>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className={className}>
+          <span className="text-sm text-muted-foreground">
+            Connected for:{' '}
+            <span className="font-semibold text-foreground">
+              {connectedFor}
+            </span>
+          </span>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>Messages Queued: {msgsQueued}</p>
+        <p>Latest Latency (sec): {latestLatency}</p>
+      </TooltipContent>
+    </Tooltip>
   );
 }
