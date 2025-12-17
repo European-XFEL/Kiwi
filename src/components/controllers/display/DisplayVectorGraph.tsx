@@ -11,6 +11,7 @@ import type { EChartsOption } from 'echarts';
 import type { Layout, Data } from 'plotly.js';
 
 import type { DisplayVectorGraphProps } from '@/scene/scene_types/controllers/display';
+import { useDisplayVectorGraph } from '@/components/shared/hooks/useDisplayVectorGraph';
 
 import {
   Select,
@@ -24,104 +25,10 @@ import {
   schemaSaysVector,
   schemaSaysFloat,
   schemaSaysInt,
-  type SchemaValueType,
 } from '@/shared/helpers/validation_helpers/schema_type_identifier';
 
 type PlotEngine = 'echarts' | 'plotly';
-
-/**
- * Try to get one schema valueType signal.
- * We keep this tolerant because different layers may expose it differently.
- */
-const getSchemaValueType = (
-  primary: DisplayVectorGraphProps['primary']
-): SchemaValueType | undefined => {
-  // Priority:
-  // 1) primary.valueType (if your container exposes it)
-  // 2) primary.schemaAttrs.valueType
-  // 3) model.schema.schemaAttrs.valueType (deep fallback)
-  return (
-    (primary as any)?.valueType ??
-    primary?.schemaAttrs?.valueType ??
-    primary?.model?.schema.schemaAttrs.valueType
-  );
-};
-
-const toNumberSafe = (v: unknown): number | null => {
-  if (typeof v === 'number') return Number.isFinite(v) ? v : null;
-  if (typeof v === 'bigint') {
-    const n = Number(v);
-    return Number.isFinite(n) ? n : null;
-  }
-  if (typeof v === 'string') {
-    const n = Number(v);
-    return Number.isFinite(n) ? n : null;
-  }
-  return null;
-};
-
-/**
- * Normalize a raw vector-ish value into number[].
- *
- * Schema-first:
- * - If schema says VECTOR → parse arrays/typed arrays.
- * - If schema is missing → allow runtime shape-based fallback.
- */
-const normalizeVector = (
-  raw: unknown,
-  schemaValueType?: SchemaValueType
-): number[] => {
-  if (!raw) return [];
-
-  const schemaKnowsVector = schemaSaysVector(schemaValueType);
-
-  const isRuntimeVectorShape =
-    Array.isArray(raw) ||
-    (ArrayBuffer.isView(raw) && !(raw instanceof DataView));
-
-  // If schema explicitly says "not vector" and runtime doesn't look vector → bail
-  if (!schemaKnowsVector && !isRuntimeVectorShape) return [];
-
-  // Typed arrays (Float32Array, Int32Array, Uint8Array, etc.)
-  if (ArrayBuffer.isView(raw) && !(raw instanceof DataView)) {
-    try {
-      const arr = Array.from(raw as any);
-      return arr.map(toNumberSafe).filter((v): v is number => v != null);
-    } catch {
-      return [];
-    }
-  }
-
-  // Plain arrays
-  if (Array.isArray(raw)) {
-    return raw.map(toNumberSafe).filter((v): v is number => v != null);
-  }
-
-  return [];
-};
-
-/**
- * Apply offset + step sampling to a vector while preserving original indices.
- */
-const applyOffsetStep = (
-  data: number[],
-  offset?: number,
-  step?: number
-): { values: number[]; indices: number[] } => {
-  const safeOffset = Math.max(0, offset ?? 0);
-  const safeStep = Math.max(1, step ?? 1);
-
-  const sampled: { v: number; i: number }[] = [];
-
-  for (let i = safeOffset; i < data.length; i += safeStep) {
-    sampled.push({ v: data[i], i });
-  }
-
-  return {
-    values: sampled.map((s) => s.v),
-    indices: sampled.map((s) => s.i),
-  };
-};
+type PlotlyAxisType = 'linear' | 'log';
 
 const buildAxisLabel = (label?: string, units?: string, fallback?: string) => {
   const base = (label ?? '').trim() || fallback || '';
@@ -163,10 +70,6 @@ const DisplayVectorGraph: React.FC<DisplayVectorGraphProps> = React.memo(
       background = 'transparent',
       plot_engine = 'echarts',
 
-      offset,
-      step,
-      roi_tool,
-
       tooltipText,
       disabledReason,
     } = props as DisplayVectorGraphProps & {
@@ -178,40 +81,32 @@ const DisplayVectorGraph: React.FC<DisplayVectorGraphProps> = React.memo(
     const [selectedEngine, setSelectedEngine] =
       useState<PlotEngine>(plot_engine);
 
-    const isOffline = primary?.isOffline ?? false;
-
-    const schemaValueType = useMemo(
-      () => getSchemaValueType(primary),
-      [primary]
-    );
-
-    // Prefer runtime value; fallback to schema default value
-    const rawVector = primary?.value ?? primary?.schemaAttrs?.defaultValue;
-
-    const baseVector = useMemo(
-      () => normalizeVector(rawVector, schemaValueType),
-      [rawVector, schemaValueType]
-    );
-
-    const { values: vectorData, indices } = useMemo(
-      () => applyOffsetStep(baseVector, offset, step),
-      [baseVector, offset, step]
-    );
+    // useDisplayVectorGraph:
+    // - validates vector type
+    // - throttles updates (Hz)
+    // - downsamples to maxPoints
+    const { vectorData, indices, schemaValueType, isOffline, rawLength } =
+      useDisplayVectorGraph(primary, {
+        maxPoints: 1_000, // Chart render limit
+        maxUpdateHz: 10, // 10 Hz = 100ms throttle
+        // propertyUpdateIntervalMs can be added from GUI server config
+      });
 
     const noData = vectorData.length === 0;
+    const wasDownsampled = rawLength > vectorData.length;
 
-    const xAxisName = buildAxisLabel(x_label, x_units, 'Index');
-    const yAxisName = buildAxisLabel(y_label, y_units, 'Value');
+    const xAxisName = buildAxisLabel(x_label, x_units, 'X');
+    const yAxisName = buildAxisLabel(y_label, y_units, 'Y');
 
-    // ---------------------------------------------------------------------------
-    // ECharts options
-    // ---------------------------------------------------------------------------
+    // ────────────────────────────────────────────────────────────────
+    // ECharts options (only calculate if selected)
+    // ────────────────────────────────────────────────────────────────
     const echartsOptions = useMemo((): EChartsOption => {
-      // ECharts category axis doesn't support log meaningfully here
-      // because we are using indices as categories.
-      // We'll keep x_log ignored in ECharts for safety/consistency.
+      if (selectedEngine !== 'echarts') {
+        return {} as EChartsOption;
+      }
 
-      const safeYLog = y_log && vectorData.some((v) => v > 0) ? true : false;
+      const safeYLog = y_log && vectorData.some((v) => v > 0);
 
       return {
         backgroundColor:
@@ -237,26 +132,26 @@ const DisplayVectorGraph: React.FC<DisplayVectorGraphProps> = React.memo(
         xAxis: {
           type: 'category',
           data: indices.map(String),
-          name: xAxisName || 'Index',
+          name: xAxisName,
           nameLocation: 'middle',
           nameGap: 24,
-          inverse: !!x_invert,
+          inverse: x_invert,
           axisLine: { show: true },
           axisTick: { show: true },
-          splitLine: { show: !!x_grid },
+          splitLine: { show: x_grid },
         },
 
         yAxis: {
           type: safeYLog ? 'log' : 'value',
-          name: yAxisName || 'Value',
+          name: yAxisName,
           nameLocation: 'middle',
           nameGap: 36,
-          inverse: !!y_invert,
+          inverse: y_invert,
           min: y_autorange ? undefined : y_min,
           max: y_autorange ? undefined : y_max,
           axisLine: { show: true },
           axisTick: { show: true },
-          splitLine: { show: !!y_grid },
+          splitLine: { show: y_grid },
         },
 
         series: [
@@ -264,7 +159,7 @@ const DisplayVectorGraph: React.FC<DisplayVectorGraphProps> = React.memo(
             type: 'line',
             data: vectorData,
             smooth: true,
-            showSymbol: true,
+            showSymbol: vectorData.length < 300,
             symbol: 'circle',
             symbolSize: 4,
             lineStyle: { width: 2 },
@@ -274,9 +169,10 @@ const DisplayVectorGraph: React.FC<DisplayVectorGraphProps> = React.memo(
         tooltip: {
           trigger: 'axis',
           axisPointer: { type: 'cross' },
-          formatter: (params: any) => {
-            const param = Array.isArray(params) ? params[0] : params;
-            return `Index: ${param.name}<br/>Value: ${param.value}`;
+          formatter: (params: unknown) => {
+            const first = Array.isArray(params) ? params[0] : params;
+            const p = first as { name: string; value: number };
+            return `Index: ${p.name}<br/>Value: ${p.value}`;
           },
         },
 
@@ -291,6 +187,7 @@ const DisplayVectorGraph: React.FC<DisplayVectorGraphProps> = React.memo(
             : undefined,
       };
     }, [
+      selectedEngine,
       vectorData,
       indices,
       xAxisName,
@@ -307,28 +204,35 @@ const DisplayVectorGraph: React.FC<DisplayVectorGraphProps> = React.memo(
       background,
     ]);
 
-    // ---------------------------------------------------------------------------
-    // Plotly data
-    // ---------------------------------------------------------------------------
-    const plotlyData = useMemo<Data[]>(
-      () => [
+    // ────────────────────────────────────────────────────────────────
+    // Plotly data (only calculate if selected)
+    // ────────────────────────────────────────────────────────────────
+    const plotlyData = useMemo<Data[]>(() => {
+      if (selectedEngine !== 'plotly') {
+        return [];
+      }
+
+      return [
         {
           type: 'scatter',
-          mode: 'lines+markers',
+          mode: vectorData.length < 300 ? 'lines+markers' : 'lines',
           x: indices,
           y: vectorData,
           marker: { size: 4 },
           line: { width: 2 },
           hovertemplate: 'Index: %{x}<br>Value: %{y}<extra></extra>',
         },
-      ],
-      [vectorData, indices]
-    );
+      ];
+    }, [selectedEngine, vectorData, indices]);
 
-    // ---------------------------------------------------------------------------
-    // Plotly layout (with correct typing)
-    // ---------------------------------------------------------------------------
+    // ────────────────────────────────────────────────────────────────
+    // Plotly layout (only calculate if selected)
+    // ────────────────────────────────────────────────────────────────
     const plotlyLayout = useMemo<Partial<Layout>>(() => {
+      if (selectedEngine !== 'plotly') {
+        return {} as Partial<Layout>;
+      }
+
       const xRange =
         x_autorange || (!Number.isFinite(x_min) && !Number.isFinite(x_max))
           ? undefined
@@ -339,11 +243,8 @@ const DisplayVectorGraph: React.FC<DisplayVectorGraphProps> = React.memo(
           ? undefined
           : ([y_min, y_max] as [number, number]);
 
-      // Plotly x-axis can be numeric here because indices are numbers
-      const xType = x_log ? 'log' : 'linear';
-
-      // For log axes, Plotly expects positive values in range
-      const safeYType = y_log ? 'log' : 'linear';
+      const xType: PlotlyAxisType = x_log ? 'log' : 'linear';
+      const yType: PlotlyAxisType = y_log ? 'log' : 'linear';
 
       return {
         autosize: true,
@@ -358,22 +259,21 @@ const DisplayVectorGraph: React.FC<DisplayVectorGraphProps> = React.memo(
             ? background
             : 'rgba(0,0,0,0)',
 
-        //title is an object
         title: title ? { text: title } : undefined,
 
         xaxis: {
-          title: { text: xAxisName || 'Index' },
-          showgrid: !!x_grid,
-          type: xType as any,
-          autorange: x_autorange ? true : false,
+          title: { text: xAxisName },
+          showgrid: x_grid,
+          type: xType,
+          autorange: x_autorange,
           range: xRange,
         },
 
         yaxis: {
-          title: { text: yAxisName || 'Value' },
-          showgrid: !!y_grid,
-          type: safeYType,
-          autorange: y_autorange ? true : false,
+          title: { text: yAxisName },
+          showgrid: y_grid,
+          type: yType,
+          autorange: y_autorange,
           range: yRange,
         },
 
@@ -381,6 +281,7 @@ const DisplayVectorGraph: React.FC<DisplayVectorGraphProps> = React.memo(
         hovermode: 'x unified',
       };
     }, [
+      selectedEngine,
       xAxisName,
       yAxisName,
       x_grid,
@@ -397,9 +298,9 @@ const DisplayVectorGraph: React.FC<DisplayVectorGraphProps> = React.memo(
       background,
     ]);
 
-    // ---------------------------------------------------------------------------
-    // Empty/offline
-    // ---------------------------------------------------------------------------
+    // ────────────────────────────────────────────────────────────────
+    // Empty/offline state
+    // ────────────────────────────────────────────────────────────────
     if (isOffline || noData) {
       return (
         <div
@@ -422,18 +323,15 @@ const DisplayVectorGraph: React.FC<DisplayVectorGraphProps> = React.memo(
       );
     }
 
-    // ---------------------------------------------------------------------------
+    // ────────────────────────────────────────────────────────────────
     // Render
-    // ---------------------------------------------------------------------------
+    // ────────────────────────────────────────────────────────────────
     return (
       <div
         className="relative w-full h-full"
         style={{ backgroundColor: background || 'transparent' }}
         title={tooltipText || disabledReason}
         aria-live="polite"
-        data-offset={offset}
-        data-step={step}
-        data-roi-tool={roi_tool}
         data-schema-value-type={
           typeof schemaValueType === 'string'
             ? schemaValueType
@@ -444,9 +342,20 @@ const DisplayVectorGraph: React.FC<DisplayVectorGraphProps> = React.memo(
         data-schema-says-vector={schemaSaysVector(schemaValueType) || undefined}
         data-schema-says-float={schemaSaysFloat(schemaValueType) || undefined}
         data-schema-says-int={schemaSaysInt(schemaValueType) || undefined}
+        data-original-size={rawLength}
+        data-display-points={vectorData.length}
+        data-was-downsampled={wasDownsampled}
       >
-        {/* Engine selector */}
-        <div className="absolute -top-7 right-2 z-10">
+        {/* Engine selector + Downsampling indicator */}
+        <div className="absolute -top-7 right-2 z-10 flex items-center gap-2">
+          {wasDownsampled && (
+            <div
+              className="px-2 py-1 bg-amber-100 border border-amber-400 rounded text-[10px] font-mono text-amber-900"
+              title={`Displaying ${vectorData.length} of ${rawLength} points (downsampled for performance)`}
+            >
+              {rawLength.toLocaleString()} → {vectorData.length}
+            </div>
+          )}
           <Select
             value={selectedEngine}
             onValueChange={(v) => setSelectedEngine(v as PlotEngine)}
@@ -462,7 +371,6 @@ const DisplayVectorGraph: React.FC<DisplayVectorGraphProps> = React.memo(
           </Select>
         </div>
 
-        {/* Render selected engine */}
         {selectedEngine === 'echarts' ? (
           <ReactECharts
             option={echartsOptions}

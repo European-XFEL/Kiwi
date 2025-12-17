@@ -69,7 +69,6 @@ export const ControllerContainer: React.FC<ControllerContainerProps> = ({
   // Call once
   const primary = useDeviceProperty(primaryKey || undefined);
 
-  // Destructure from the same result
   const {
     deviceId,
     propertyPath,
@@ -159,7 +158,7 @@ export const ControllerContainer: React.FC<ControllerContainerProps> = ({
       {content}
 
       <PropertyOverlay
-        karaboKeys={primaryKey}
+        primary={primary}
         x={0}
         y={0}
         width={width}

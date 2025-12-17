@@ -1,5 +1,6 @@
 /**
  * DisplayEvaluator - controller component
+ * Evaluator is Deprecated
  *
  */
 
@@ -150,8 +151,8 @@ const Evaluator: React.FC<EvaluatorProps> = ({
   primary,
 }) => {
   const value = primary?.value;
-  const model = primary?.model;
-  const schemaAttrs = primary?.schemaAttrs ?? model?.schema.schemaAttrs;
+  const propertyModel = primary?.propertyModel;
+  const schemaAttrs = primary?.schemaAttrs ?? propertyModel?.schema.schemaAttrs;
 
   const displayValue = React.useMemo(() => {
     const rawValue = value ?? schemaAttrs?.defaultValue ?? 0;

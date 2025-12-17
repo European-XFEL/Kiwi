@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { throttle } from 'lodash';
 import type { UseDevicePropertyResult } from '@/components/shared/hooks/useDeviceProperty';
-import { Timestamp } from '@/shared/helpers/timestamps';
 
 interface TrendDataPoint {
   timestamp: number; // epoch ms
@@ -43,9 +42,7 @@ export const useDisplayTrendGraph = (
 
     let ms: number;
     try {
-      ms = primary.timeAttrs
-        ? Timestamp.fromTimeAttrs(primary.timeAttrs).toMilliseconds()
-        : Date.now();
+      ms = primary.timestamp ? primary.timestamp.toMilliseconds() : Date.now();
     } catch {
       ms = Date.now();
     }
@@ -113,7 +110,7 @@ export const useDisplayTrendGraph = (
     throttledUpdate(point);
   }, [
     primary?.value,
-    primary?.timeAttrs,
+    primary?.timestamp,
     isOffline,
     normalizeToTimeSeries,
     throttledUpdate,
