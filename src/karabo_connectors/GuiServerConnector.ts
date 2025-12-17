@@ -11,11 +11,7 @@ import {
   notificationInfoFromHash,
 } from '../karabo_hash/decoders/gui_session';
 
-import {
-  blobToHash,
-  hashProtocolType,
-  packEncodedHash,
-} from '../karabo_hash/hash_utils';
+import { decodeBinHash, hashProtocolType } from '../karabo_hash/hash_utils';
 
 import { useAppSettingsStore } from '../store/appSettingsStore';
 import { useGlobalActivityStore } from '../store/globalActivityStore';
@@ -23,13 +19,21 @@ import { useGlobalActivityStore } from '../store/globalActivityStore';
 import { AccessLevel } from '@/karabo_data/SchemaEnums';
 import { GuiServerInfo } from '@/karabo_data/GuiServerInfo';
 
-import { Websocket, WebsocketBuilder } from 'websocket-ts';
+import { WebsocketBuilder } from 'websocket-ts';
 
 import { BinaryEncoder, Hash } from 'karabo-ts';
 
 import { GuiSessionData, GuiSessionStore } from '../store/GuiSessionStore';
 import AuthServerClient from '../http_clients/AuthServerClient';
 import { TopologyConnector } from './TopologyConnector';
+import {
+  BinHashMessage,
+  GuiServerMessageStats,
+  SessionErrorMessage,
+  StartGuiServerSessionMessage,
+  WorkerMessage,
+  WorkerMessageType,
+} from './GuiServerSessionWorker';
 
 type SessionStartedHandler = (
   accessLevel: AccessLevel,
@@ -47,7 +51,6 @@ interface GuiServerSession {
   port: number;
   topic?: string; // not known at creation time; obtained from server message.
   serverVersion?: string; // not known at creation time; obtained from server message.
-  ws: Websocket;
   isAuthSession: boolean;
   userLogged: boolean;
   userId?: string; // only defined for non-auth sessions - sent by the GUI client.
@@ -58,38 +61,25 @@ interface GuiServerSession {
   startErrorHandler: SessionStartErrorHandler;
 }
 
-const SESSION_DROPPED_ERROR_MSG =
-  'GUI Server connection lost unexpectedly. More details in the browser console.';
-
 export class GuiServerConnector {
   // #region Singleton support
+
   private constructor() {}
 
-  static get #_wsProxyURL(): string {
+  private static get _wsProxyURL(): string {
     return useAppSettingsStore.getState().wsProxyURL; // using zustand store
   }
 
-  static #_inst?: GuiServerConnector;
+  private static _inst?: GuiServerConnector;
   static get inst(): GuiServerConnector {
-    if (!GuiServerConnector.#_inst) {
-      GuiServerConnector.#_inst = new GuiServerConnector();
+    if (!GuiServerConnector._inst) {
+      GuiServerConnector._inst = new GuiServerConnector();
     }
-    return GuiServerConnector.#_inst;
+    return GuiServerConnector._inst;
   }
   // #endregion
 
-  #_session?: GuiServerSession;
-
-  sendHash(hash: Hash): void {
-    if (!this.#_session) {
-      console.log(
-        'Invalid use of sendHash! No active GUI Server session exists!'
-      );
-      return;
-    }
-    const encodedHash = new BinaryEncoder().encodeHash(hash);
-    this.#_session.ws.send(packEncodedHash(encodedHash));
-  }
+  // #region GUI Server probing
 
   /**
    * Checks if there is a Karabo GUI Server listening at a
@@ -109,7 +99,7 @@ export class GuiServerConnector {
     onSuccess: (serverInfo: GuiServerInfo) => void,
     onError: (errMsg: string) => void
   ): void {
-    new WebsocketBuilder(GuiServerConnector.#_wsProxyURL)
+    new WebsocketBuilder(GuiServerConnector._wsProxyURL)
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       .onOpen((ws, _ev) => {
         ws.send(JSON.stringify({ host: host, port: port }));
@@ -130,9 +120,11 @@ export class GuiServerConnector {
           // As the probing process only sends a connection request,
           // waits for the GUI Server to send a "ServerInfo" message and then
           // disconnects, we have to be dealing with a "ServerInfo" message.
-          blobToHash(ev.data).then((hash: Hash) => {
-            const serverInfoHash = guiServerInfoFromHash(hash);
-            onSuccess(serverInfoHash);
+          const msgBlob = ev.data as Blob;
+          msgBlob.arrayBuffer().then((binHash: ArrayBuffer) => {
+            const hash = decodeBinHash(binHash);
+            const guiServerInfo = guiServerInfoFromHash(hash);
+            onSuccess(guiServerInfo);
             ws.close();
           });
         }
@@ -156,12 +148,34 @@ export class GuiServerConnector {
       .build();
   }
 
+  // #endregion
+
+  // #region Hash sending
+
+  sendHash(hash: Hash): void {
+    if (!this._sessionWorker) {
+      console.log(
+        'Invalid use of sendHash! No active GUI Server session exists!'
+      );
+      return;
+    }
+    const encodedHash = new BinaryEncoder().encodeHash(hash);
+    this._sessionWorker.postMessage({
+      type: WorkerMessageType.sendHash,
+      binHash: encodedHash,
+    });
+  }
+
+  // #endregion
+
   // #region GUI Session lifecycle methods
+
+  private _session?: GuiServerSession;
 
   /**
    * Helper method to initialize an instance of an authenticated session.
    */
-  #_buildAuthSession = (
+  private _buildAuthSession = (
     host: string,
     port: number,
     userId: string,
@@ -169,16 +183,11 @@ export class GuiServerConnector {
     refreshToken: string,
     startHandler: SessionStartedHandler,
     startErrorHandler: SessionStartErrorHandler
-  ) => {
+  ): GuiServerSession => {
     return {
       host: host,
       port: port,
       userId: userId,
-      ws: new WebsocketBuilder(GuiServerConnector.#_wsProxyURL)
-        .onOpen(this.#_onWsOpen)
-        .onMessage(this.#_onWsMessage)
-        .onError(this.#_onWsError)
-        .build(),
       isAuthSession: true,
       userLogged: false,
       oneTimeToken: oneTimeToken,
@@ -191,22 +200,17 @@ export class GuiServerConnector {
   /**
    * Helper method to initialize an instance of a non-authenticated session.
    */
-  #_buildNonAuthSession = (
+  private _buildNonAuthSession = (
     host: string,
     port: number,
     userId: string,
     accessLevel: AccessLevel,
     startHandler: SessionStartedHandler,
     startErrorHandler: SessionStartErrorHandler
-  ) => {
+  ): GuiServerSession => {
     return {
       host: host,
       port: port,
-      ws: new WebsocketBuilder(GuiServerConnector.#_wsProxyURL)
-        .onOpen(this.#_onWsOpen)
-        .onMessage(this.#_onWsMessage)
-        .onError(this.#_onWsError)
-        .build(),
       isAuthSession: false,
       userLogged: false,
       userId: userId,
@@ -231,13 +235,13 @@ export class GuiServerConnector {
     ) => void,
     onErrorHandler: (errMsg: string) => void
   ): void {
-    if (this.#_session) {
+    if (this._session) {
       console.log(
         'Invalid use of startAuthSession! An active GUI Server session already exists!'
       );
       return;
     }
-    this.#_session = this.#_buildAuthSession(
+    this._session = this._buildAuthSession(
       host,
       port,
       userId,
@@ -246,6 +250,7 @@ export class GuiServerConnector {
       onStartedHandler,
       onErrorHandler
     );
+    this._startSessionWorker(host, port);
   }
 
   startNonAuthSession(
@@ -262,13 +267,13 @@ export class GuiServerConnector {
     ) => void,
     onErrorHandler: (errMsg: string) => void
   ): void {
-    if (this.#_session) {
+    if (this._session) {
       console.log(
         'Invalid use of startNonAuthSession! An active GUI Server session already exists!'
       );
       return;
     }
-    this.#_session = this.#_buildNonAuthSession(
+    this._session = this._buildNonAuthSession(
       host,
       port,
       userId,
@@ -276,6 +281,7 @@ export class GuiServerConnector {
       onStartedHandler,
       onErrorHandler
     );
+    this._startSessionWorker(host, port);
   }
 
   async resumeGuiSession(
@@ -291,7 +297,7 @@ export class GuiServerConnector {
     onNoSessionHandler: () => void,
     onErrorHandler: (errMsg: string) => void
   ): Promise<void> {
-    if (this.#_session) {
+    if (this._session) {
       console.log(
         'Invalid use of resumeGuiSession! An active GUI Server session already exists!'
       );
@@ -325,7 +331,7 @@ export class GuiServerConnector {
             }
             if (sessionData!.refreshToken == undefined) {
               // There is a non-authenticated GUI session to be resumed
-              this.#_session = this.#_buildNonAuthSession(
+              this._session = this._buildNonAuthSession(
                 sessionData!.host,
                 sessionData!.port,
                 sessionData!.userId,
@@ -346,7 +352,7 @@ export class GuiServerConnector {
                 onErrorHandler(res.error_msg!);
                 return;
               }
-              this.#_session = this.#_buildAuthSession(
+              this._session = this._buildAuthSession(
                 sessionData!.host,
                 sessionData!.port,
                 sessionData!.userId,
@@ -363,6 +369,7 @@ export class GuiServerConnector {
                 res.refresh_token!
               );
             }
+            this._startSessionWorker(sessionData!.host, sessionData!.port);
           }, // end of probing success handler
           // Handles probing failure - abort resume
           (error_msg: string) => {
@@ -383,26 +390,26 @@ export class GuiServerConnector {
     }
   }
 
-  #_onSessionDropped?: (err_msg: string) => void;
+  private _onSessionDropped?: (err_msg: string) => void;
   /**
    * Handler for unexpected GUI Server session drops - to be injected by an interested party.
    */
   get onSessionDropped(): ((err_msg: string) => void) | undefined {
-    return this.#_onSessionDropped;
+    return this._onSessionDropped;
   }
   /**
    * Allows an external party (only one at a time) to set a handler for unexpected GUI Server session drop events.
    */
   set onSessionDropped(value: ((err_msg: string) => void) | undefined) {
-    if (value != undefined && this.#_onSessionDropped != undefined) {
+    if (value != undefined && this._onSessionDropped != undefined) {
       throw new Error('Cannot set onSessionDropped: a handler is already set');
     }
-    this.#_onSessionDropped = value;
+    this._onSessionDropped = value;
   }
 
   finishSession(): void {
-    this.#_session?.ws.close();
-    this.#_session = undefined;
+    this._session = undefined;
+    this._stopSessionWorker();
     GuiSessionStore.inst.deleteGuiSession();
 
     // Reset activity tracking
@@ -410,150 +417,122 @@ export class GuiServerConnector {
   }
   // #endregion
 
-  // #region Websocket event handlers
+  // #region GuiServerSessionWorker
 
-  /**
-   * Handler for successful connections to the WebSocketProxy.
-   *
-   * @param ws the web socket client that was successfully connected.
-   * @param _ev the connection event (not used).
-   */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
-  #_onWsOpen = (ws: Websocket, _ev: Event): any => {
-    // A GUI Server session always starts with a message instructing the
-    // WebSocketProxy to connect to a GUI Server.
-    ws.send(
-      JSON.stringify({
-        host: this.#_session?.host,
-        port: this.#_session?.port,
-      })
+  private _sessionWorker?: Worker;
+
+  private _unprocessedMsgs = 0; // # of messages received by the worker pending processing
+
+  private _startSessionWorker(host: string, port: number) {
+    this._sessionWorker = new Worker(
+      new URL('GuiServerSessionWorker.ts', import.meta.url),
+      { type: 'module' }
     );
-  };
+    this._unprocessedMsgs = 0;
+    this._sessionWorker.onmessage = this._onSessionWorkerMessage;
+    const message: StartGuiServerSessionMessage = {
+      type: WorkerMessageType.startGuiServerSession,
+      wsProxyURL: GuiServerConnector._wsProxyURL,
+      guiServerHost: host,
+      guiServerPort: port,
+    };
+    this._sessionWorker.postMessage(message);
+  }
 
-  /**
-   * Handler for websocket messages received from the WebSocketProxy during a
-   * GUI Server session.
-   *
-   * @param ws the websocket client that got the messsage.
-   * @param ev the message event - message payload in the data property.
-   */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  #_onWsMessage = (ws: Websocket, ev: MessageEvent<any>): any => {
-    if (typeof ev.data === 'string') {
-      // The only occasions when the WebSocketProxy does not send a
-      // binary serialized Hash are when it communicates an error for
-      // connecting to the GUI Server or when it loses the connection to
-      // the GUI Server. On those occasions, the message is a string in
-      // the format "0|<error message>".
-      const err_msg = (
-        ev.data.startsWith('0|') ? ev.data.substring(2) : ev.data
-      ).trim();
-      if (this.#_session?.userLogged) {
-        // If there was a user logged to the GUI Server when the connection
-        // was lost communicate the event as a session drop.
-        this.#_onSessionDropped?.(SESSION_DROPPED_ERROR_MSG);
-        console.error(`Session dropped: ${err_msg}`);
-      } else {
-        // If there was no user logged yet, consider it as a session start error.
-        this.#_session?.startErrorHandler(err_msg);
+  private _stopSessionWorker() {
+    this._sessionWorker?.terminate();
+    this._unprocessedMsgs = 0;
+    this._sessionWorker = undefined;
+  }
+
+  private _requestNextMessage() {
+    this._sessionWorker?.postMessage({
+      type: WorkerMessageType.getNextGuiServerMessage,
+    });
+  }
+
+  private _onSessionWorkerMessage = (e: MessageEvent<WorkerMessage>) => {
+    const message = e.data;
+    switch (message.type) {
+      case WorkerMessageType.nextGuiServerMessage: {
+        const binHashMsg = message as BinHashMessage;
+        this._processNextGuiServerMessage(binHashMsg.binHash);
+        break;
       }
-      ws.close();
-      this.#_session = undefined;
-    } else {
-      // Track processing time for activity indicator
-      const startTime = performance.now();
-
-      blobToHash(ev.data).then((hash: Hash) => {
-        const processingDelay = performance.now() - startTime;
-
-        // Bump activity with processing delay
-        useGlobalActivityStore.getState().bumpActivity(processingDelay);
-
-        const protocolType = hashProtocolType(hash);
-        if (
-          protocolType === 'brokerInformation' ||
-          protocolType === 'serverInformation'
-        ) {
-          this.#_handleBrokerInformation(ws, hash);
-        } else if (protocolType === 'loginInformation') {
-          this.#_handleLoginInformation(hash);
-        } else if (protocolType === 'notification') {
-          this.#_handleNotification(hash);
-        } else if (protocolType === 'systemTopology') {
-          this.#_handleSystemTopology(hash);
-        } else if (protocolType === 'topologyUpdate') {
-          this.#_handleTopologyUpdate(hash);
-        } else if (this.#_hashHandlers.has(protocolType)) {
-          // There is a handler currently registered for the protocol type - call it
-          this.#_hashHandlers.get(protocolType)!(hash);
+      case WorkerMessageType.guiServerMessageStats: {
+        const statsMsg = message as GuiServerMessageStats;
+        useGlobalActivityStore
+          .getState()
+          .updateActivity(statsMsg.queuedItemsCount, statsMsg.latestLatency);
+        this._unprocessedMsgs = statsMsg.queuedItemsCount;
+        if (this._unprocessedMsgs > 0) {
+          this._requestNextMessage();
         }
-      });
-    }
-  };
-
-  /**
-   * Handler for errors in the connection with the WebSocketProxy.
-   *
-   * @param ws the websocket client for which the error ocurred.
-   * @param ev the error event (not used).
-   */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  #_onWsError = (ws: Websocket, ev: Event): any => {
-    if (this.#_session?.userLogged) {
-      // A WebSocket error while there's a user logged to a GUI Server is
-      // interpreted as a session drop.
-      this.#_onSessionDropped?.(SESSION_DROPPED_ERROR_MSG);
-      console.error(console.error(`Session dropped: ${ev.toString()}`));
-      if (ws.underlyingWebsocket) {
-        ws.close();
+        break;
       }
-    } else {
-      // A WebSocket error before there's a user logged to a GUI Server is
-      // interpreted as a session start error.
-      if (!ws.underlyingWebsocket) {
-        this.#_session?.startErrorHandler(
-          'Websocket client initialization error'
+      case WorkerMessageType.error: {
+        const errMsg = message as SessionErrorMessage;
+        this._session?.startErrorHandler(errMsg.message);
+        this._session = undefined;
+        this._stopSessionWorker();
+        break;
+      }
+      default:
+        console.error(
+          `Unrecognized message type received from GuiServerSessionWorker: ${message.type}`
         );
+    }
+  };
+
+  private _processNextGuiServerMessage = (binHash: ArrayBuffer) => {
+    if (binHash) {
+      const hash = decodeBinHash(binHash);
+      const protocolType = hashProtocolType(hash);
+      if (
+        protocolType === 'brokerInformation' ||
+        protocolType === 'serverInformation'
+      ) {
+        this._handleBrokerInformation(hash);
+      } else if (protocolType === 'loginInformation') {
+        this._handleLoginInformation(hash);
+      } else if (protocolType === 'notification') {
+        this._handleNotification(hash);
+      } else if (protocolType === 'systemTopology') {
+        this._handleSystemTopology(hash);
+      } else if (protocolType === 'topologyUpdate') {
+        this._handleTopologyUpdate(hash);
+      } else if (this._hashHandlers.has(protocolType)) {
+        this._hashHandlers.get(protocolType)!(hash);
       } else {
-        if (ws.underlyingWebsocket?.CLOSED) {
-          // Connection could not be established or couldn't be opened.
-          this.#_session?.startErrorHandler(
-            'No connection to websocket server'
-          );
-        } else if (ws.underlyingWebsocket?.CLOSING) {
-          this.#_session?.startErrorHandler(
-            'Websocket connection being closed.'
-          );
-        } else {
-          this.#_session?.startErrorHandler(
-            `Server ${ws.underlyingWebsocket?.url} not available`
-          );
-          ws.close();
-        }
+        console.warn(
+          `Received hash with unknown type "${protocolType}" from the GUI Server`
+        );
       }
     }
-    this.#_session = undefined;
+    if (this._unprocessedMsgs > 0) {
+      this._requestNextMessage();
+    }
   };
 
   // #endregion
 
   // #region Internal Hash handlers
 
-  #_handleBrokerInformation = (ws: Websocket, hash: Hash): void => {
+  private _handleBrokerInformation = (hash: Hash): void => {
     // "brokerInformation" (or "serverInformation"; deprecated) are special
     // cases. They're sent by the GUI Server right after a connection is established
     // and must trigger the sending of a login message to the GUI Server.
     // We use the GUI Server sent message here to extract the topic and
     // version of the GUI Server being connected to.
     const serverInfo = guiServerInfoFromHash(hash);
-    this.#_session!.topic = serverInfo.topic;
-    this.#_session!.serverVersion = serverInfo.version;
+    this._session!.topic = serverInfo.topic;
+    this._session!.serverVersion = serverInfo.version;
     let loginHash: Hash;
-    if (this.#_session?.isAuthSession) {
+    if (this._session?.isAuthSession) {
       loginHash = buildLoginHash(
         'KIWI',
         '3.0.0', // Must be >= 3.0.0rc13 - the version required by the Karabo 3 GUI Server for auth logins.
-        this.#_session?.oneTimeToken,
+        this._session?.oneTimeToken,
         undefined
       );
     } else {
@@ -561,47 +540,46 @@ export class GuiServerConnector {
         'KIWI',
         '3.0.0', // Must be >= 3.0.0rc13 - the version required by the Karabo 3 GUI Server for auth logins.
         undefined,
-        this.#_session?.userId
+        this._session?.userId
       );
     }
-    const loginMsg = new BinaryEncoder().encodeHash(loginHash);
-    ws.send(packEncodedHash(loginMsg));
+    this.sendHash(loginHash);
 
-    if (!this.#_session?.isAuthSession) {
+    if (!this._session?.isAuthSession) {
       console.log(
         `Saving non-auth session data. this.#_session=${JSON.stringify(
-          this.#_session
+          this._session
         )}`
       );
       GuiSessionStore.inst.saveNonAuthGuiSession(
-        this.#_session!.host,
-        this.#_session!.port,
-        this.#_session!.userId!,
-        this.#_session!.accessLevel!
+        this._session!.host,
+        this._session!.port,
+        this._session!.userId!,
+        this._session!.accessLevel!
       );
 
       //initialize access control
       AccessControlManager.instance.initFromLogin({
-        accessLevel: this.#_session!.accessLevel!,
+        accessLevel: this._session!.accessLevel!,
         isAuthenticated: false,
-        userId: this.#_session!.userId!,
+        userId: this._session!.userId!,
       });
 
       // A non authenticated login is immediately followed by the sending of the systemTopology;
       // there's no reply for the login. So we immediately call the non-Auth handler.
-      this.#_session!.userLogged = true;
-      this.#_session!.startHandler!(
-        this.#_session!.accessLevel!,
-        this.#_session!.host,
-        this.#_session!.port,
-        this.#_session!.userId!,
-        this.#_session!.topic,
-        this.#_session!.serverVersion
+      this._session!.userLogged = true;
+      this._session!.startHandler!(
+        this._session!.accessLevel!,
+        this._session!.host,
+        this._session!.port,
+        this._session!.userId!,
+        this._session!.topic,
+        this._session!.serverVersion
       );
     }
   };
 
-  #_handleLoginInformation = (hash: Hash): void => {
+  private _handleLoginInformation = (hash: Hash): void => {
     // "loginInformation" is sent by the GUI Server in response to a successful
     // authenticated login request. We call the auth handler passing the
     // authorized Access Level. Any login error will be informed via a "notification"
@@ -615,49 +593,49 @@ export class GuiServerConnector {
     //   );
 
     GuiSessionStore.inst.saveAuthGuiSession(
-      this.#_session!.host,
-      this.#_session!.port,
-      this.#_session!.userId!,
-      this.#_session!.refreshToken!
+      this._session!.host,
+      this._session!.port,
+      this._session!.userId!,
+      this._session!.refreshToken!
     );
 
-    this.#_session?.startHandler!(
+    this._session?.startHandler!(
       loginInfoHash.accessLevel,
-      this.#_session!.host,
-      this.#_session!.port,
-      this.#_session!.userId!,
+      this._session!.host,
+      this._session!.port,
+      this._session!.userId!,
       // We can count on topic and serverVersion being defined, because they were
       // on the payload of a "brokerInformation" (or "serverInformation") message
       // that certainly has been received after the connection to the GUI server
       // was established.
-      this.#_session!.topic!,
-      this.#_session!.serverVersion!
+      this._session!.topic!,
+      this._session!.serverVersion!
     );
-    this.#_session!.userLogged = true;
+    this._session!.userLogged = true;
 
     AccessControlManager.instance.initFromLogin({
       accessLevel: loginInfoHash.accessLevel,
       isAuthenticated: true,
-      userId: this.#_session!.userId,
+      userId: this._session!.userId,
     });
   };
 
-  #_handleNotification = (hash: Hash): void => {
-    if (!this.#_session?.userLogged) {
+  private _handleNotification = (hash: Hash): void => {
+    if (!this._session?.userLogged) {
       // a "notification" message before the user is logged is interpreted
       // as a login error.
       const notificationHash = notificationInfoFromHash(hash);
-      this.#_session?.startErrorHandler(notificationHash.message);
+      this._session?.startErrorHandler(notificationHash.message);
     }
   };
 
-  #_handleSystemTopology = (hash: Hash): void => {
+  private _handleSystemTopology = (hash: Hash): void => {
     // Initial topology received - update the topology store using Zustand
     const sysTopologyInfo = sysTopologyInfoFromHash(hash);
     TopologyConnector.inst.systemTopology = sysTopologyInfo;
   };
 
-  #_handleTopologyUpdate = (hash: Hash): void => {
+  _handleTopologyUpdate = (hash: Hash): void => {
     const topologyUpdateInfo = sysTopologyUpdateInfoFromHash(hash);
     TopologyConnector.inst.updateTopology(topologyUpdateInfo);
   };
@@ -666,7 +644,7 @@ export class GuiServerConnector {
 
   // #region Dynamic Hash Handlers
 
-  #_hashHandlers = new Map<string, (hash: Hash) => void>();
+  private _hashHandlers = new Map<string, (hash: Hash) => void>();
 
   /**
    * Registers a handler for a hash type.
@@ -676,19 +654,19 @@ export class GuiServerConnector {
    * @throws Error if a handler for the hash type is already registered
    */
   registerHashHandler(hashType: string, handler: (hash: Hash) => void): void {
-    if (this.#_hashHandlers.has(hashType)) {
+    if (this._hashHandlers.has(hashType)) {
       throw new Error(`Hash handler for type ${hashType} already registered`);
     }
-    this.#_hashHandlers.set(hashType, handler);
+    this._hashHandlers.set(hashType, handler);
   }
 
   /**
-   * Unregisters a handler for a hash type. Silently ignores if no handler is registered.
+   * Un-registers a handler for a hash type. Silently ignores if no handler is registered.
    *
    * @param hashType Hash type whose handler is to be unregistered
    */
   unregisterHashHandler(hashType: string): void {
-    this.#_hashHandlers.delete(hashType);
+    this._hashHandlers.delete(hashType);
   }
 
   // #endregion

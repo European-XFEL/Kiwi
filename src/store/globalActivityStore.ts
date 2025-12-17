@@ -2,45 +2,48 @@ import { create } from 'zustand';
 
 interface GlobalActivityState {
   lastActivity: number | null;
-  processingDelay: number | null; // Track how long hash processing took
+  latestLatency: number | null; // Time, in seconds, that the latest processed message waited in the queue to be processed
+  queuedMessageCount: number; // Number of messages received from the GUI server waiting to be processed
   messageCount: number; // Total messages received this session
   activityLevel: 'idle' | 'active' | 'moderate' | 'slow';
 
   // Actions
-  bumpActivity: (delay?: number) => void;
+  updateActivity: (queuedMessageCount: number, latestLatency?: number) => void;
   reset: () => void;
 }
 
-const PROC_FINE = 2000; // < 2s = fine (in ms)
-const PROC_ALARM = 5000; // > 5s = slow (in ms)
+const PROC_FINE = 2; // < 2 = fine (in seconds)
+const PROC_ALARM = 5; // > 5 = slow (in seconds)
 
 function getActivityLevel(
-  delay?: number | null
+  latestLatency?: number | null
 ): GlobalActivityState['activityLevel'] {
-  if (!delay) return 'active';
-  if (delay < PROC_FINE) return 'active'; // Green
-  if (delay <= PROC_ALARM) return 'moderate'; // Yellow
+  if (!latestLatency) return 'active';
+  if (latestLatency < PROC_FINE) return 'active'; // Green
+  if (latestLatency <= PROC_ALARM) return 'moderate'; // Yellow
   return 'slow'; // Red
 }
 
 export const useGlobalActivityStore = create<GlobalActivityState>((set) => ({
   lastActivity: null,
-  processingDelay: null,
+  latestLatency: null,
+  queuedMessageCount: 0,
   messageCount: 0,
   activityLevel: 'idle',
 
-  bumpActivity: (delay) =>
+  updateActivity: (queuedMessageCount: number, latestLatency?: number) =>
     set((state) => ({
       lastActivity: Date.now(),
-      processingDelay: delay ?? null,
+      latestLatency: latestLatency ? latestLatency / 1_000 : null,
+      queuedMessageCount: queuedMessageCount,
       messageCount: state.messageCount + 1,
-      activityLevel: getActivityLevel(delay),
+      activityLevel: getActivityLevel(latestLatency),
     })),
 
   reset: () =>
     set({
       lastActivity: null,
-      processingDelay: null,
+      queuedMessageCount: 0,
       messageCount: 0,
       activityLevel: 'idle',
     }),

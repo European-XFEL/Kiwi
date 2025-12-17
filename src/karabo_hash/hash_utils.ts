@@ -5,20 +5,16 @@ import {
   HashTypes,
   HashValue,
 } from 'karabo-ts';
-import { HashValueType, VectorElementType } from './HashValueType';
+import { HashValueType } from './HashValueType';
 
 /**
- * Parses a Blob, the type of WebSocketEvent.data, supposed to contain a
- * binary serialized hash.
- * @param blob the Blob to be parsed
- * @returns the Hash that was binary serialized in the input Blob.
+ * Decodes a Hash from an array buffer with its binary serialized form.
+ * @param arrBuff an ArrayBuffer with the binary serialized hash.
+ * @returns the decoded hash.
  */
-export const blobToHash = async (blob: Blob): Promise<Hash> => {
-  // The Blob has to be converted to an ArrayBuffer
-  // and then to an Uint8Array to be fed to the Hash binary decoder.
+export const decodeBinHash = (arrBuff: ArrayBuffer): Hash => {
   // The first 4 bytes are the size in bytes of the Hash binary image
   // and must not be fed into the decoder.
-  const arrBuff = await blob.arrayBuffer();
   const buffData = new Uint8Array(arrBuff.slice(4));
   const hashDecoder = new BinaryDecoder(buffData);
   const hash = hashDecoder.read();
