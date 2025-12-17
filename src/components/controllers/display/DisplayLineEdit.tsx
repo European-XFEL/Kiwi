@@ -16,14 +16,14 @@ const DisplayLineEdit: React.FC<DisplayLineEditProps> = ({
   primary,
 }) => {
   const value = primary?.value;
-  const model = primary?.model;
+  const propertyModel = primary?.propertyModel;
 
   const enabled = isEnabled ?? true;
 
   const displayValue = React.useMemo(() => {
     if (value === undefined) return '';
 
-    const schemaAttrs = model?.schema.schemaAttrs;
+    const schemaAttrs = propertyModel?.schema.schemaAttrs;
     const prefix = schemaAttrs?.metricPrefixSymbol ?? '';
     const symbol = schemaAttrs?.unitSymbol ?? '';
     const displayUnit = `${prefix}${symbol}`.trim();
@@ -40,7 +40,7 @@ const DisplayLineEdit: React.FC<DisplayLineEditProps> = ({
 
     const raw = String(value);
     return displayUnit ? `${raw} ${displayUnit}` : raw;
-  }, [value, model]);
+  }, [value, propertyModel]);
 
   return (
     <input

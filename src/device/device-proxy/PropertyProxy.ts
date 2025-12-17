@@ -17,7 +17,6 @@ import { AccessLevel } from '@/karabo_data/SchemaEnums';
 
 /**
  * Convenience wrapper for a single property of a DeviceProxy.
- * Good for React hooks or widgets that deal with a single path.
  */
 export class PropertyProxy {
   constructor(

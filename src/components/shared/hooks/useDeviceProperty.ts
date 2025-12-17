@@ -3,7 +3,7 @@ import { deviceManager } from '@/device/DeviceManager';
 import { DevicePropertyConnector } from '@/karabo_connectors/DevicePropertyConnector';
 import type { PropertyModel } from '@/device/device-model/types/PropertyType';
 import type { HashValueType } from '@/karabo_hash/HashValueType';
-import type { Attributes, HashTypes } from 'karabo-ts';
+import type { HashTypes } from 'karabo-ts';
 import { PropertyProxy } from '@/device/device-proxy/PropertyProxy';
 import {
   buildPropertyDescriptor,
@@ -24,118 +24,99 @@ import type {
 } from '@/device/device-proxy/types';
 import type { GuiStateColorKey } from '@/karabo_data/Indicators';
 import { mapGuiStateColor } from '@/components/shared/helpers/mapStateColor';
+import { Timestamp } from '@/shared/helpers/timestamps';
+
+// ─────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────
 
 export interface UseDevicePropertyResult {
   value: HashValueType | undefined;
-  model: PropertyModel | undefined;
-  timeAttrs: Attributes | undefined;
+  propertyModel: PropertyModel | undefined;
+  timestamp: Timestamp | undefined;
 
-  /**
-   * Runtime value type reported by config/live updates
-   * (binding.type with fallback to schema.valueType).
-   */
+  /** Runtime value type of the property */
   type: HashTypes | undefined;
-
-  /**
-   * Declared schema type of the property.
-   */
+  /** Declared schema type of the property */
   valueType: HashTypes | undefined;
-
-  /**
-   * Declared schema default value.
-   */
+  /** Declared schema default value */
   defaultValue: HashValueType | undefined;
 
-  // device state
+  // Device state
   deviceState: string | undefined;
   stateColor: GuiStateColorKey | undefined;
 
-  // identity
+  // Identity
   deviceId: string | undefined;
   propertyPath: string | undefined;
 
-  // schema / editability
+  // Schema / editability
   descriptor: PropertyDescriptor | undefined;
   isEditable: boolean;
   schemaAttrs: PropertyDescriptor['schemaAttrs'] | undefined;
 
-  // device lifecycle
+  // Device lifecycle
   proxyStatus: ProxyStatus;
   proxyIndicator: DeviceIndicatorDescriptor | undefined;
 
-  // handy derived flags
+  // Derived flags
   isOffline: boolean;
   isAlive: boolean;
   isMonitoring: boolean;
   isOnlineLike: boolean;
-  isReady: boolean; // has schema + config
+  isReady: boolean;
 
-  // property-level status (MISSING vs NONE)
+  // Property-level status
   propertyStatus: PropertyStatus;
   propertyIndicator: PropertyIndicatorDescriptor | undefined;
 }
 
+interface PropertyData {
+  propertyModel: PropertyModel | undefined;
+  value: HashValueType | undefined;
+  timestamp: Timestamp | undefined;
+}
+
+interface DeviceRuntimeState {
+  deviceState: string | undefined;
+  proxyStatus: ProxyStatus;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Hook
+// ─────────────────────────────────────────────────────────────────
+
 export function useDeviceProperty(
   karaboKeys: string | undefined
 ): UseDevicePropertyResult {
-  // ─────────────────────────────────────────────
   // Parse "DEVICE.prop" → deviceId + propertyPath
-  // ─────────────────────────────────────────────
   const { deviceId, propertyPath } = React.useMemo(() => {
-    if (!karaboKeys || !karaboKeys.includes('.')) {
+    if (!karaboKeys?.includes('.')) {
       return { deviceId: '', propertyPath: '' };
     }
     return splitKaraboKeys(karaboKeys);
   }, [karaboKeys]);
 
-  // ─────────────────────────────────────────────
-  // Synchronous initialisation (prevents flashes)
-  // ─────────────────────────────────────────────
-  const getInitialState = React.useCallback(() => {
-    if (!deviceId || !propertyPath) {
-      return {
-        model: undefined as PropertyModel | undefined,
-        value: undefined as HashValueType | undefined,
-        timeAttrs: undefined as Attributes | undefined,
-      };
-    }
-
-    const deviceProxy = deviceManager.getDevice(deviceId);
-    const propertyProxy = new PropertyProxy(deviceProxy, propertyPath);
-    const model = propertyProxy.model;
-
-    return {
-      model,
-      value: (model?.binding.value ?? undefined) as HashValueType | undefined,
-      timeAttrs: (model?.binding.timeAttrs ?? undefined) as
-        | Attributes
-        | undefined,
-    };
-  }, [deviceId, propertyPath]);
-
-  const [model, setModel] = React.useState<PropertyModel | undefined>(
-    () => getInitialState().model
-  );
-  const [value, setValue] = React.useState<HashValueType | undefined>(
-    () => getInitialState().value
-  );
-  const [timeAttrs, setTimeAttrs] = React.useState<Attributes | undefined>(
-    () => getInitialState().timeAttrs
-  );
-
-  // Version bump when device state / proxy status changes
-  const [deviceStateVersion, setDeviceStateVersion] = React.useState(0);
-
-  // Guard to know when the effect wiring is done
-  const [isInitialized, setIsInitialized] = React.useState(false);
-
+  // Get user access level once
   const userAccessLevel = useGlobalStore(
     (s) => s.sessionInfo?.accessLevel ?? AccessLevel.Observer
   );
 
-  // ─────────────────────────────────────────────
-  // Wiring to DeviceProxy + backend monitoring
-  // ─────────────────────────────────────────────
+  //set property data state
+  const [propertyData, setPropertyData] = React.useState<PropertyData>(() =>
+    getInitialPropertyData(deviceId, propertyPath)
+  );
+
+  const [deviceRuntime, setDeviceRuntime] = React.useState<DeviceRuntimeState>(
+    () => getInitialDeviceRuntime(deviceId)
+  );
+
+  const [isInitialized, setIsInitialized] = React.useState(false);
+
+  // ─────────────────────────────────────────────────────────────────
+  // Effects: Wire up subscriptions
+  // ─────────────────────────────────────────────────────────────────
+
   React.useEffect(() => {
     if (!deviceId || !propertyPath) {
       setIsInitialized(false);
@@ -145,163 +126,131 @@ export function useDeviceProperty(
     const deviceProxy = deviceManager.getDevice(deviceId);
     const propertyProxy = new PropertyProxy(deviceProxy, propertyPath);
 
-    const currentModel = propertyProxy.model;
-    if (currentModel) {
-      setModel(currentModel);
-      setValue(
-        (currentModel.binding.value ?? undefined) as HashValueType | undefined
-      );
-      setTimeAttrs(
-        (currentModel.binding.timeAttrs ?? undefined) as Attributes | undefined
-      );
+    // Initialize with current values
+    const currentPropertyModel = propertyProxy.model;
+    if (currentPropertyModel) {
+      setPropertyData({
+        propertyModel: currentPropertyModel,
+        value: currentPropertyModel.binding.value ?? undefined,
+        timestamp: currentPropertyModel.binding.timestamp,
+      });
     }
 
+    // Initialize device runtime state
+    setDeviceRuntime({
+      deviceState: deviceProxy.state,
+      proxyStatus: deviceProxy.proxyStatus,
+    });
+
+    // Start monitoring this property
     const stopMonitoring = DevicePropertyConnector.inst.ensurePropertyMonitored(
       deviceId,
       propertyPath
     );
 
+    // Subscribe to property value changes
     const unsubscribeProperty = propertyProxy.subscribe(
       (newValue, newTimeAttrs) => {
-        setValue(newValue);
-        setTimeAttrs(newTimeAttrs);
-        setModel(propertyProxy.model);
+        // Convert timeAttrs to Timestamp
+        const timestamp = newTimeAttrs
+          ? Timestamp.fromTimeAttrs(newTimeAttrs)
+          : undefined;
+        setPropertyData({
+          propertyModel: propertyProxy.model,
+          value: newValue,
+          timestamp,
+        });
       }
     );
 
-    // schema change listener
+    // Subscribe to schema changes
     const unsubscribeSchema = deviceProxy.subscribeToSchema((payload) => {
       if (payload.allChanged.includes(propertyPath)) {
-        // Refresh model reference so widgets can re-read schema attrs
-        setModel(propertyProxy.model);
+        setPropertyData((prev) => ({
+          ...prev,
+          propertyModel: propertyProxy.model,
+        }));
       }
     });
 
-    const stateListener = () => {
-      setDeviceStateVersion((v) => v + 1);
-    };
-    const statusListener = () => {
-      setDeviceStateVersion((v) => v + 1);
+    // Subscribe to device state/status changes (OPTIMIZED: direct state instead of version counter)
+    const updateDeviceRuntime = () => {
+      setDeviceRuntime({
+        deviceState: deviceProxy.state,
+        proxyStatus: deviceProxy.proxyStatus,
+      });
     };
 
-    deviceProxy.subscribe('state_changed', stateListener);
-    deviceProxy.subscribe('status_changed', statusListener);
+    deviceProxy.subscribe('state_changed', updateDeviceRuntime);
+    deviceProxy.subscribe('status_changed', updateDeviceRuntime);
 
     setIsInitialized(true);
 
     return () => {
       unsubscribeProperty();
       unsubscribeSchema();
-      deviceProxy.unsubscribe('state_changed', stateListener);
-      deviceProxy.unsubscribe('status_changed', statusListener);
+      deviceProxy.unsubscribe('state_changed', updateDeviceRuntime);
+      deviceProxy.unsubscribe('status_changed', updateDeviceRuntime);
       stopMonitoring();
     };
   }, [deviceId, propertyPath]);
 
-  // ─────────────────────────────────────────────
-  // Derived descriptor, status flags, indicators
-  // ─────────────────────────────────────────────
-  const {
-    descriptor,
-    isEditable,
-    schemaAttrs,
-    deviceState,
-    stateColor,
-    proxyStatus,
-    proxyIndicator,
-    propertyStatus,
-    propertyIndicator,
-    isOffline,
-    isAlive,
-    isMonitoring,
-    isOnlineLike,
-    isReady,
-  } = React.useMemo(() => {
-    // tie to deviceStateVersion so we recompute when device runtime changes
-    void deviceStateVersion;
+  // ─────────────────────────────────────────────────────────────────
+  // Derived-values: Compute descriptor, flags, and indicators
+  // ─────────────────────────────────────────────────────────────────
 
+  const derivedValues = React.useMemo(() => {
     if (!deviceId || !propertyPath) {
-      const fallbackIndicator =
-        PROPERTY_INDICATORS.find((i) => i.status === PropertyStatus.MISSING) ??
-        undefined;
-
-      return {
-        descriptor: undefined as PropertyDescriptor | undefined,
-        isEditable: false,
-        schemaAttrs: undefined as PropertyDescriptor['schemaAttrs'] | undefined,
-        deviceState: undefined as string | undefined,
-        stateColor: undefined as GuiStateColorKey | undefined,
-        proxyStatus: ProxyStatus.UNKNOWN,
-        proxyIndicator: undefined as DeviceIndicatorDescriptor | undefined,
-        propertyStatus: PropertyStatus.MISSING,
-        propertyIndicator: fallbackIndicator,
-        isOffline: false,
-        isAlive: false,
-        isMonitoring: false,
-        isOnlineLike: false,
-        isReady: false,
-      };
+      return buildEmptyDerivedValues();
     }
 
     const proxy = deviceManager.getDevice(deviceId);
+    const { propertyModel } = propertyData;
+    const { deviceState: runtimeDeviceState, proxyStatus } = deviceRuntime;
 
-    const proxyStatus = proxy.proxyStatus;
+    // Device state: prefer live propertyModel value if this IS the state property
+    const deviceState =
+      propertyPath === 'state' && propertyModel?.binding.value != null
+        ? String(propertyModel.binding.value)
+        : runtimeDeviceState;
+
+    const stateColor = deviceState ? mapGuiStateColor(deviceState) : undefined;
+
+    // Proxy status flags
     const proxyIndicator =
       DEVICE_INDICATORS.find((d) => d.status === proxyStatus) ?? undefined;
 
     const isOffline = proxyStatus === ProxyStatus.OFFLINE;
     const isAlive = proxyStatus === ProxyStatus.ALIVE;
     const isMonitoring = proxyStatus === ProxyStatus.MONITORING;
-
-    // "online-ish" = anything except OFFLINE/UNKNOWN
     const isOnlineLike =
       proxyStatus !== ProxyStatus.OFFLINE &&
       proxyStatus !== ProxyStatus.UNKNOWN;
-
     const isReady = proxy.hasSchema && proxy.hasConfig;
 
-    // Device state:
-    //  - if this hook is bound to "state", prefer the live model value
-    //  - otherwise use cached runtime state from the proxy
-    let deviceState: string | undefined;
-    if (propertyPath === 'state' && model?.binding.value != null) {
-      deviceState = String(model.binding.value);
-    } else {
-      deviceState = proxy.state;
-    }
-
-    const stateColor = deviceState ? mapGuiStateColor(deviceState) : undefined;
-
-    // Descriptor + editability
+    // Build descriptor and editability
     let descriptor: PropertyDescriptor | undefined;
     let isEditable = false;
     let schemaAttrs: PropertyDescriptor['schemaAttrs'] | undefined;
 
-    if (model) {
-      const ctx: EditContext = {
-        userAccessLevel,
-        deviceState,
-      };
-
-      descriptor = buildPropertyDescriptor(model, ctx);
+    if (propertyModel) {
+      const ctx: EditContext = { userAccessLevel, deviceState };
+      descriptor = buildPropertyDescriptor(propertyModel, ctx);
       isEditable = descriptor.isEditable;
       schemaAttrs = descriptor.schemaAttrs;
     }
 
-    // Only mark property as MISSING when the proxy is stable & hook initialized
+    // Property status: only MISSING if stable & initialized but no model
     const isStableAndReady =
       (isMonitoring || isAlive) && proxy.hasSchema && proxy.hasConfig;
 
-    let propertyStatus: PropertyStatus = PropertyStatus.NONE;
-
-    if (
+    const propertyStatus =
       propertyPath !== 'state' &&
       isStableAndReady &&
       isInitialized &&
-      !model
-    ) {
-      propertyStatus = PropertyStatus.MISSING;
-    }
+      !propertyModel
+        ? PropertyStatus.MISSING
+        : PropertyStatus.NONE;
 
     const propertyIndicator =
       PROPERTY_INDICATORS.find((p) => p.status === propertyStatus) ?? undefined;
@@ -325,57 +274,114 @@ export function useDeviceProperty(
   }, [
     deviceId,
     propertyPath,
-    model,
+    propertyData,
+    deviceRuntime,
     userAccessLevel,
-    deviceStateVersion,
     isInitialized,
   ]);
 
-  // ─────────────────────────────────────────────
-  // Schema vs runtime types & defaults
-  // ─────────────────────────────────────────────
+  //memoize final result
+  const result = React.useMemo((): UseDevicePropertyResult => {
+    const { propertyModel, value, timestamp } = propertyData;
+    const { schemaAttrs } = derivedValues;
 
-  // Declared schema type (what the schema says)
-  const schemaValueType =
-    (model?.schema.schemaAttrs.valueType as HashTypes | undefined) ??
-    (schemaAttrs?.valueType as HashTypes | undefined);
+    const valueType =
+      (propertyModel?.schema.schemaAttrs.valueType as HashTypes | undefined) ??
+      (schemaAttrs?.valueType as HashTypes | undefined);
 
-  // Runtime type (what live updates say, with fallback to schema)
-  const runtimeValueType =
-    (model?.binding.type as HashTypes | undefined) ?? schemaValueType;
+    const type =
+      (propertyModel?.binding.type as HashTypes | undefined) ?? valueType;
 
-  const schemaDefaultValue =
-    (model?.schema.schemaAttrs.defaultValue as HashValueType | undefined) ??
-    (schemaAttrs?.defaultValue as HashValueType | undefined);
+    const defaultValue =
+      (propertyModel?.schema.schemaAttrs.defaultValue as
+        | HashValueType
+        | undefined) ??
+      (schemaAttrs?.defaultValue as HashValueType | undefined);
 
-  // ─────────────────────────────────────────────
-  // Final result object
-  // ─────────────────────────────────────────────
+    return {
+      // Property data
+      propertyModel,
+      value,
+      timestamp,
+
+      // Types
+      type,
+      valueType,
+      defaultValue,
+
+      // Identity
+      deviceId: deviceId || undefined,
+      propertyPath: propertyPath || undefined,
+
+      // Derived values (spread once inside useMemo)
+      ...derivedValues,
+    };
+  }, [propertyData, derivedValues, deviceId, propertyPath]);
+
+  return result;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Helper functions
+// ─────────────────────────────────────────────────────────────────
+
+function getInitialPropertyData(
+  deviceId: string,
+  propertyPath: string
+): PropertyData {
+  if (!deviceId || !propertyPath) {
+    return {
+      propertyModel: undefined,
+      value: undefined,
+      timestamp: undefined,
+    };
+  }
+
+  const deviceProxy = deviceManager.getDevice(deviceId);
+  const propertyProxy = new PropertyProxy(deviceProxy, propertyPath);
+  const propertyModel = propertyProxy.model;
+
   return {
-    value,
-    model,
-    timeAttrs,
+    propertyModel,
+    value: propertyModel?.binding.value ?? undefined,
+    timestamp: propertyModel?.binding.timestamp,
+  };
+}
 
-    //runtime vs schema split
-    type: runtimeValueType,
-    valueType: schemaValueType,
-    defaultValue: schemaDefaultValue,
+function getInitialDeviceRuntime(deviceId: string): DeviceRuntimeState {
+  if (!deviceId) {
+    return {
+      deviceState: undefined,
+      proxyStatus: ProxyStatus.UNKNOWN,
+    };
+  }
 
-    deviceId: deviceId || undefined,
-    deviceState,
-    stateColor,
-    propertyPath: propertyPath || undefined,
-    descriptor,
-    isEditable,
-    schemaAttrs,
-    proxyStatus,
-    proxyIndicator,
-    isOffline,
-    isAlive,
-    isMonitoring,
-    isOnlineLike,
-    isReady,
-    propertyStatus,
-    propertyIndicator,
+  const deviceProxy = deviceManager.getDevice(deviceId);
+  return {
+    deviceState: deviceProxy.state,
+    proxyStatus: deviceProxy.proxyStatus,
+  };
+}
+
+function buildEmptyDerivedValues() {
+  const fallbackIndicator =
+    PROPERTY_INDICATORS.find((i) => i.status === PropertyStatus.MISSING) ??
+    undefined;
+
+  return {
+    descriptor: undefined as PropertyDescriptor | undefined,
+    isEditable: false,
+    schemaAttrs: undefined as PropertyDescriptor['schemaAttrs'] | undefined,
+    deviceState: undefined as string | undefined,
+    stateColor: undefined as GuiStateColorKey | undefined,
+    proxyStatus: ProxyStatus.UNKNOWN,
+    proxyIndicator: undefined as DeviceIndicatorDescriptor | undefined,
+    propertyStatus: PropertyStatus.MISSING,
+    propertyIndicator: fallbackIndicator,
+    isOffline: false,
+    isAlive: false,
+    isMonitoring: false,
+    isOnlineLike: false,
+    isReady: false,
   };
 }

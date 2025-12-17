@@ -50,8 +50,12 @@ function makePrimary(
 ): UseDevicePropertyResult {
   return {
     value: 'ERROR',
-    model: undefined,
-    timeAttrs: undefined,
+    propertyModel: undefined,
+    timestamp: undefined,
+
+    type: undefined,
+    valueType: undefined,
+    defaultValue: undefined,
 
     deviceState: 'ERROR',
     stateColor: undefined,

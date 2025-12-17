@@ -26,8 +26,13 @@ function makePrimary(
   return {
     // core data
     value: undefined,
-    model: undefined,
-    timeAttrs: undefined,
+    propertyModel: undefined,
+    timestamp: undefined,
+
+    // types
+    type: undefined,
+    valueType: undefined,
+    defaultValue: undefined,
 
     // device state
     deviceState: 'ERROR',

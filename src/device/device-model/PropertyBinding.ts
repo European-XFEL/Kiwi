@@ -74,7 +74,7 @@ export class PropertyBinding implements IPropertyBinding {
   }
 
   // -------------------------------------------------------------------------
-  // Value mutation
+  // Value changes
   // -------------------------------------------------------------------------
 
   setValue(

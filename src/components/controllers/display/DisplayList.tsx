@@ -14,18 +14,19 @@ const DisplayList: React.FC<DisplayListProps> = ({
   primary,
 }) => {
   const value = primary?.value;
-  const model = primary?.model;
+  const propertyModel = primary?.propertyModel;
 
   // Format array value as comma-separated string
   const displayValue = React.useMemo(() => {
-    const actualValue = value ?? model?.schema.schemaAttrs.defaultValue ?? [];
+    const actualValue =
+      value ?? propertyModel?.schema.schemaAttrs.defaultValue ?? [];
 
     if (Array.isArray(actualValue)) {
       return actualValue.join(', ');
     }
 
     return String(actualValue);
-  }, [value, model]);
+  }, [value, propertyModel]);
 
   return (
     <div
