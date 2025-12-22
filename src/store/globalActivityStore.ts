@@ -31,14 +31,16 @@ export const useGlobalActivityStore = create<GlobalActivityState>((set) => ({
   messageCount: 0,
   activityLevel: 'idle',
 
-  updateActivity: (queuedMessageCount: number, latestLatency?: number) =>
+  updateActivity: (queuedMessageCount: number, latestLatency?: number) => {
+    const latency = latestLatency ? latestLatency / 1_000 : 0;
     set((state) => ({
       lastActivity: Date.now(),
-      latestLatency: latestLatency ? latestLatency / 1_000 : null,
+      latestLatency: latestLatency ? latestLatency / 1_000 : 0,
       queuedMessageCount: queuedMessageCount,
       messageCount: state.messageCount + 1,
-      activityLevel: getActivityLevel(latestLatency),
-    })),
+      activityLevel: getActivityLevel(latency),
+    }));
+  },
 
   reset: () =>
     set({

@@ -9,8 +9,8 @@ export enum WorkerMessageType {
   getNextGuiServerMessage = 'getNextGuiServerMessage',
   sendHash = 'sendHash',
   // Messages from the Worker to the main thread
+  guiServerMessageReceived = 'guiServerMessageReceived',
   nextGuiServerMessage = 'nextGuiServerMessage',
-  guiServerMessageStats = 'guiServerMessageStats',
   error = 'error',
 }
 
@@ -24,11 +24,12 @@ export interface StartGuiServerSessionMessage extends WorkerMessage {
   guiServerPort: number;
 }
 
-export interface BinHashMessage extends WorkerMessage {
+export interface SendHashMessage extends WorkerMessage {
   binHash: ArrayBuffer;
 }
 
-export interface GuiServerMessageStats extends WorkerMessage {
+export interface NextGuiServerMessage extends WorkerMessage {
+  binHash: ArrayBuffer;
   queuedItemsCount: number;
   latestLatency: number;
 }
@@ -61,7 +62,7 @@ self.onmessage = (e: MessageEvent<WorkerMessage>) => {
       _onGetNextGuiServerMessage();
       break;
     case WorkerMessageType.sendHash: {
-      const binHashMsg = message as BinHashMessage;
+      const binHashMsg = message as NextGuiServerMessage;
       _ws?.send(packEncodedHash(binHashMsg.binHash));
       break;
     }
@@ -94,9 +95,6 @@ const _onGetNextGuiServerMessage = () => {
     postMessage({
       type: WorkerMessageType.nextGuiServerMessage,
       binHash: binHash,
-    });
-    postMessage({
-      type: WorkerMessageType.guiServerMessageStats,
       queuedItemsCount: _hashDeque.itemsCount,
       latestLatency: _hashDeque.latestLatency,
     });
@@ -132,11 +130,7 @@ const _onWsMessage = (ws: Websocket, ev: MessageEvent<any>): any => {
     const msgBlob = ev.data as Blob;
     msgBlob.arrayBuffer().then((binHash: ArrayBuffer) => {
       _hashDeque.pushHash(binHash);
-      postMessage({
-        type: WorkerMessageType.guiServerMessageStats,
-        queuedItemsCount: _hashDeque.itemsCount,
-        latestLatency: _hashDeque.latestLatency,
-      });
+      postMessage({ type: WorkerMessageType.guiServerMessageReceived });
     });
   }
 };
