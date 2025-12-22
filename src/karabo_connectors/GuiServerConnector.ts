@@ -27,9 +27,9 @@ import { GuiSessionData, GuiSessionStore } from '../store/GuiSessionStore';
 import AuthServerClient from '../http_clients/AuthServerClient';
 import { TopologyConnector } from './TopologyConnector';
 import {
-  BinHashMessage,
-  GuiServerMessageStats,
+  NextGuiServerMessage,
   SessionErrorMessage,
+  SendHashMessage,
   StartGuiServerSessionMessage,
   WorkerMessage,
   WorkerMessageType,
@@ -421,14 +421,11 @@ export class GuiServerConnector {
 
   private _sessionWorker?: Worker;
 
-  private _unprocessedMsgs = 0; // # of messages received by the worker pending processing
-
   private _startSessionWorker(host: string, port: number) {
     this._sessionWorker = new Worker(
       new URL('GuiServerSessionWorker.ts', import.meta.url),
       { type: 'module' }
     );
-    this._unprocessedMsgs = 0;
     this._sessionWorker.onmessage = this._onSessionWorkerMessage;
     const message: StartGuiServerSessionMessage = {
       type: WorkerMessageType.startGuiServerSession,
@@ -441,7 +438,6 @@ export class GuiServerConnector {
 
   private _stopSessionWorker() {
     this._sessionWorker?.terminate();
-    this._unprocessedMsgs = 0;
     this._sessionWorker = undefined;
   }
 
@@ -454,20 +450,18 @@ export class GuiServerConnector {
   private _onSessionWorkerMessage = (e: MessageEvent<WorkerMessage>) => {
     const message = e.data;
     switch (message.type) {
-      case WorkerMessageType.nextGuiServerMessage: {
-        const binHashMsg = message as BinHashMessage;
-        this._processNextGuiServerMessage(binHashMsg.binHash);
+      case WorkerMessageType.guiServerMessageReceived:
+        this._requestNextMessage();
         break;
-      }
-      case WorkerMessageType.guiServerMessageStats: {
-        const statsMsg = message as GuiServerMessageStats;
+      case WorkerMessageType.nextGuiServerMessage: {
+        const serverMessage = message as NextGuiServerMessage;
         useGlobalActivityStore
           .getState()
-          .updateActivity(statsMsg.queuedItemsCount, statsMsg.latestLatency);
-        this._unprocessedMsgs = statsMsg.queuedItemsCount;
-        if (this._unprocessedMsgs > 0) {
-          this._requestNextMessage();
-        }
+          .updateActivity(
+            serverMessage.queuedItemsCount,
+            serverMessage.latestLatency
+          );
+        this._processNextGuiServerMessage(serverMessage.binHash);
         break;
       }
       case WorkerMessageType.error: {
@@ -508,9 +502,6 @@ export class GuiServerConnector {
           `Received hash with unknown type "${protocolType}" from the GUI Server`
         );
       }
-    }
-    if (this._unprocessedMsgs > 0) {
-      this._requestNextMessage();
     }
   };
 
