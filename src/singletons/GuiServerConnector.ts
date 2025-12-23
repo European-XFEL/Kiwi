@@ -10,6 +10,7 @@ import {
   loginInfoFromHash,
   notificationInfoFromHash,
 } from '../karabo_hash/decoders/gui_session';
+import { broadcast_event, KaraboEvent } from './Mediator';
 import { decodeBinHash, hashProtocolType } from '../karabo_hash/hash_utils';
 
 import { useAppSettingsStore } from '../store/appSettingsStore';
@@ -483,6 +484,10 @@ export class GuiServerConnector {
         this._handleSystemTopology(hash);
       } else if (protocolType === 'topologyUpdate') {
         this._handleTopologyUpdate(hash);
+      } else if (protocolType === 'projectListItems') {
+        this._handleProjectListItems(hash);
+      } else if (protocolType === 'projectListDomains') {
+        this._handleProjectListDomains(hash);
       } else if (this._hashHandlers.has(protocolType)) {
         this._hashHandlers.get(protocolType)!(hash);
       } else {
@@ -496,6 +501,16 @@ export class GuiServerConnector {
   // #endregion
 
   // #region Internal Hash handlers
+
+  private _handleProjectListDomains = (hash: Hash): void => {
+    console.log('Project List Domains');
+    broadcast_event(KaraboEvent.ListDomains, { data: hash });
+  };
+
+  private _handleProjectListItems = (hash: Hash): void => {
+    console.log('Project List Items');
+    broadcast_event(KaraboEvent.ListItems, { data: hash });
+  };
 
   private _handleBrokerInformation = (hash: Hash): void => {
     // "brokerInformation" (or "serverInformation"; deprecated) are special
