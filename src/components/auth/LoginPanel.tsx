@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { GuiServerConnector } from '@/karabo_connectors/GuiServerConnector';
+import { GuiServerConnector } from '@/singletons/GuiServerConnector';
 import { AccessLevel } from '@/karabo_data/SchemaEnums';
 import { GuiServerInfo } from '@/karabo_data/GuiServerInfo';
 import AuthServerClient from '@/http_clients/AuthServerClient';

@@ -3,7 +3,7 @@ import { initAppSettings } from './AppSettings';
 import { useAppSettingsStore } from './store/appSettingsStore';
 import { useGlobalStore } from './store/globalAppStateStore';
 import { AccessLevel } from '@/karabo_data/SchemaEnums';
-import { GuiServerConnector } from './karabo_connectors/GuiServerConnector';
+import { GuiServerConnector } from './singletons/GuiServerConnector';
 import AuthServerClient from './http_clients/AuthServerClient';
 import { BrowserRouter } from 'react-router-dom';
 import AppRouter from './components/router/AppRouter';

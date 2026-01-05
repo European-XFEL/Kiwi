@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ProjectDBConnector } from '../../karabo_connectors/ProjectDBConnector';
+import { ProjectDBConnector } from '../../singletons/ProjectDBConnector';
 import {
   ProjectItemInfo,
   ProjectSceneInfo,

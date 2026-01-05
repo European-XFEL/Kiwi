@@ -2,7 +2,7 @@ import {
   LoadProjectSceneResult,
   ProjectSceneInfo,
 } from '../karabo_data/ProjectDbInfo';
-import { ProjectDBConnector } from '../karabo_connectors/ProjectDBConnector';
+import { ProjectDBConnector } from '../singletons/ProjectDBConnector';
 
 export class ProjectSceneCache {
   static readonly ITEM_PREFIX = 'prjScene';
