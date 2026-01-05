@@ -29,7 +29,7 @@ import type {
   DisplayTableElementProps,
 } from '@/scene/scene_types/controllers';
 
-import { BaseControllerContainerModel } from '@/scene/scene_view/controller/BaseControllerContainerModel';
+import { BaseControllerContainerModel } from '@/scene_view/BaseControllerContainerModel';
 import { BaseGraphElementModel } from '../BaseGraphElementModel';
 
 // ============================================================================

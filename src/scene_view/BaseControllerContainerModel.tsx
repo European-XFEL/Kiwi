@@ -1,6 +1,6 @@
 import React from 'react';
-import { BaseControllerWidgetModel } from '../../scene_models/BaseModels';
-import type { BaseControllerWidgetProps } from '../../scene_types/controller_base';
+import { BaseControllerWidgetModel } from '../scene/models/BaseModels';
+import type { BaseControllerWidgetProps } from '../scene/scene_types/controller_base';
 import { ControllerContainerWrapper } from './ControllerContainerWrapper';
 
 /**

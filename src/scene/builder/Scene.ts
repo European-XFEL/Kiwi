@@ -5,15 +5,15 @@
  * Produces both a hierarchical SceneModel and a flat list for canvas rendering.
  */
 
-import { parseSceneChildren } from '../scene_intermediate_parser';
+import { parseSceneChildren } from '../parser';
 import { defaultRegistry } from './Registry';
 import { resolveRegistryKey } from './KeyResolver';
 import { registerAllBuilders } from './registerBuilders';
-import { SceneModel } from '../scene_models/SceneModel';
+import { SceneModel } from '../models/SceneModel';
 import {
   BaseSceneElementModel,
   BaseLayoutElementModel,
-} from '../scene_models/BaseModels';
+} from '../models/BaseModels';
 
 export class Scene {
   private _sceneModel: SceneModel;

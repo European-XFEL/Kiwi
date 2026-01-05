@@ -5,7 +5,7 @@
 
 import { BaseSceneElementModel } from './BaseModels';
 import type { SceneProps, SceneElementProps } from '../scene_types/scene';
-import { buildElement } from '../scene_builders/BuilderFns';
+import { buildElement } from '../builder/BuilderFns';
 
 /**
  * The root scene model - represents the entire <svg:svg> element.
