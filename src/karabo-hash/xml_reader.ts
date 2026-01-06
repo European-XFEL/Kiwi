@@ -12,11 +12,7 @@ const parseXMLBool = (data: string): boolean => {
 const parseXMLNumber = (data: string): number => Number(data);
 
 const parseXMLBigInt = (data: string): bigint => {
-  try {
-    return BigInt(data.trim());
-  } catch {
-    return BigInt(0);
-  }
+  return BigInt(data.trim());
 };
 
 const parseXMLVectorNumber = (data: string): number[] => {
@@ -37,11 +33,7 @@ const parseXMLVectorBigInt = (data: string): bigint[] => {
     .trim()
     .split(/[,\s]+/)
     .map((val) => {
-      try {
-        return BigInt(val);
-      } catch {
-        return BigInt(0);
-      }
+      return BigInt(val);
     });
 };
 
