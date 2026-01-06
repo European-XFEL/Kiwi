@@ -4,6 +4,23 @@ import * as fs from 'fs';
 import { Hash, HashList, Schema } from '../hash';
 import { encodeXML, saveToFile } from '../xml_writer';
 import { decodeXML, loadFromFile } from '../xml_reader';
+import {
+  BoolValue,
+  Float32Value,
+  Float64Value,
+  Int32Value,
+  Int64Value,
+  Int8Value,
+  StringValue,
+  UInt32Value,
+  UInt64Value,
+  VectorBoolValue,
+  VectorCharValue,
+  VectorFloat32Value,
+  VectorFloat64Value,
+  VectorInt32Value,
+  VectorStringValue,
+} from '../types';
 
 const BOUND_HASH_XML = `<?xml version="1.0"?>
 <root KRB_Artificial="" KRB_Type="HASH">
@@ -102,23 +119,63 @@ const BOUND_TABLE_SCHEMA_LEGACY_XML = `<?xml version="1.0"?>
     </root>
 `;
 
+/**
+ * Creates a Hash with a comprehensive mix of types.
+ * Combines implicit value wrapping (basic usage) and explicit KaraboValue creation (complex usage).
+ */
 function create_hash(): Hash {
   const h = new Hash();
+
+  // --- Implicit Wrapping Tests ---
+  // These should be automatically wrapped into their default Karabo Types
   h.set('int_val', 123);
   h.set('float_val', 12.34);
   h.set('string_val', 'hello');
 
+  // --- Explicit Primitive Types ---
+  h.set('bool_t', new BoolValue(true));
+  h.set('bool_f', new BoolValue(false));
+  h.set('string_complex', new StringValue('Karabo <> XML'));
+
+  // --- Integers ---
+  h.set('int8', new Int8Value(-120));
+  h.set('uint32', new UInt32Value(4000000));
+  h.set('int32', new Int32Value(-99999));
+  // Note: BigInt requires 'n' suffix or BigInt constructor
+  h.set('int64', new Int64Value(9007199254740991n));
+  h.set('uint64', new UInt64Value(18446744073709551610n));
+
+  // --- Floats ---
+  // Float32 might lose precision in roundtrip if not careful,
+  // but the XML reader reads it back as a JS number.
+  h.set('float32', new Float32Value(1.25));
+  h.set('float64', new Float64Value(Math.PI));
+
+  // --- Vectors ---
+  h.set('v_string', new VectorStringValue(['one', 'two', 'three']));
+  h.set('v_bool', new VectorBoolValue([true, false, true]));
+  h.set('v_int32', new VectorInt32Value([1, 2, 3, 4]));
+  h.set('v_float32', new VectorFloat32Value([1.1, 2.2, 3.3]));
+  h.set('v_float64', new VectorFloat64Value([1.1, 2.2, 3.3]));
+
+  // --- Byte Array (Vector Char) ---
+  const bytes = new Uint8Array([0xde, 0xad, 0xbe, 0xef]);
+  h.set('byte_array', new VectorCharValue(bytes));
+
+  // --- Nested Structures ---
   const nested = new Hash();
-  nested.set('inner', 'value');
+  nested.set('inner', 'value'); // Implicit
+  nested.set('inner_val', new Int32Value(42)); // Explicit
   h.set('nested', nested);
 
-  return h;
-}
+  // --- Vector Hash (Table) ---
+  const row1 = new Hash();
+  row1.set('id', new Int32Value(1));
+  const row2 = new Hash();
+  row2.set('id', new Int32Value(2));
+  h.set('table', new HashList([row1, row2]));
 
-function check_hash(h: Hash): void {
-  if (!h.has('int_val') || !h.has('string_val')) {
-    throw new Error('Hash integrity check failed');
-  }
+  return h;
 }
 
 // ============================================================================
@@ -212,6 +269,34 @@ describe('TestSerializers', () => {
     expect(h).toEqual(HASH);
   });
 
+  test('load_bound_vector_hash', () => {
+    /*
+     * Tests loading BOUND_VECTOR_HASH_XML which contains a Vector Hash (sequence).
+     * This xml structure usually represents a Table with rows (items).
+     */
+    const h = decodeXML(BOUND_VECTOR_HASH_XML);
+    expect(h.has('KRB_Sequence')).toBeTruthy();
+
+    const sequence = h.get('KRB_Sequence');
+    expect(sequence instanceof HashList).toBeTruthy();
+
+    const items = sequence.value_;
+    expect(items.length).toBe(1);
+
+    const item = items[0]; // The first Hash in the list
+    expect(item instanceof Hash).toBeTruthy();
+
+    // Assert values inside the item
+    // e1: ab.KRB_NEWLINE.c3 -> Should be read as string
+    expect(item.getValue('e1')).toBe('ab.KRB_NEWLINE.c3');
+    // e2: BOOL 0
+    expect(item.getValue('e2')).toBe(false);
+    // e3: INT32 36
+    expect(item.getValue('e3')).toBe(36);
+    // e4: FLOAT 2.9511
+    expect(item.getValue('e4')).toBeCloseTo(2.9511, 4);
+  });
+
   test('xml_BoundSchema_load', () => {
     /*
      * Tests that a xml for a Bound Schema with vector of hash and
@@ -220,13 +305,36 @@ describe('TestSerializers', () => {
     const sch_hash = decodeXML(BOUND_TABLE_SCHEMA_XML);
     expect(sch_hash.has('table')).toBeTruthy();
 
-    // Access nested properties via getAttribute logic
-    // Assuming Hash implementation has getAttribute(key, attrName)
+    // 1. Verify Structure (Nested objects)
     const rowSchema = sch_hash.getAttribute('table', 'rowSchema');
     const defaultValue = sch_hash.getAttribute('table', 'defaultValue');
-
     expect(rowSchema instanceof Schema).toBeTruthy();
+
     expect(defaultValue instanceof HashList).toBeTruthy();
+    const rows = defaultValue.value_;
+    expect(rows.length).toBe(2);
+
+    // 2. Verify String Attributes (especially UPPERCASE ones)
+    // These values come from the 'KRB_STRING:...' attributes in the XML
+    expect(sch_hash.getAttributeValue('table', 'valueType')).toBe(
+      'VECTOR_HASH'
+    );
+    expect(sch_hash.getAttributeValue('table', 'displayType')).toBe('Table');
+    expect(sch_hash.getAttributeValue('table', 'displayedName')).toBe(
+      'Table property'
+    );
+    expect(sch_hash.getAttributeValue('table', 'description')).toBe(
+      'Table containing one node.'
+    );
+
+    // 3. Verify Primitive Attributes
+    expect(sch_hash.getAttributeValue('table', 'accessMode')).toBe(4);
+    expect(sch_hash.getAttributeValue('table', 'nodeType')).toBe(0);
+
+    // 4. Verify Content inside Schema
+    expect(rowSchema.hash.has('e1')).toBeTruthy();
+    expect(rowSchema.hash.getValue('e4')).toBe(0); // value inside the tag
+    expect(rowSchema.hash.getAttributeValue('e4', 'defaultValue')).toBe(3.1415);
   });
 
   test('legacy_xml_BoundSchema_load', () => {
@@ -243,17 +351,84 @@ describe('TestSerializers', () => {
     expect((defaultValue.value_ as string).startsWith("'e1'")).toBeTruthy();
   });
 
-  test('xml_serialization', () => {
-    const h = create_hash();
-    check_hash(h);
+  test('xml_serialization_roundtrip', () => {
+    // 1. Create a complex hash with all types
+    const original = create_hash();
 
-    const encoded = encodeXML(h);
-    // Note: Adler32 check removed as it requires external binary dependency
+    // 2. Encode and Decode
+    const xml = encodeXML(original);
+    const decoded = decodeXML(xml);
 
-    const decoded = decodeXML(encoded);
-    check_hash(decoded);
+    // 3. Assert specific values to ensure precision/types are correct
 
-    expect(decoded).toEqual(h);
+    // Implicit types
+    expect(decoded.getValue('int_val')).toBe(123);
+    expect(decoded.getValue('float_val')).toBe(12.34);
+    expect(decoded.getValue('string_val')).toBe('hello');
+
+    // Booleans
+    expect(decoded.getValue('bool_t')).toBe(true);
+    expect(decoded.getValue('bool_f')).toBe(false);
+
+    // String
+    expect(decoded.getValue('string_complex')).toBe('Karabo <> XML');
+
+    // Integers
+    expect(decoded.getValue('int8')).toBe(-120);
+    expect(decoded.getValue('uint32')).toBe(4000000);
+    expect(decoded.getValue('int64')).toBe(9007199254740991n); // BigInt
+    expect(decoded.getValue('uint64')).toBe(18446744073709551610n); // BigInt
+
+    // Floats
+    expect(decoded.getValue('float32')).toBeCloseTo(1.25);
+    expect(decoded.getValue('float64')).toBeCloseTo(Math.PI, 8);
+
+    // Vectors
+    expect(decoded.getValue('v_string')).toEqual(['one', 'two', 'three']);
+    expect(decoded.getValue('v_bool')).toEqual([true, false, true]);
+    expect(decoded.getValue('v_int32')).toEqual([1, 2, 3, 4]);
+    expect(decoded.getValue('v_float32')).toEqual([1.1, 2.2, 3.3]);
+    expect(decoded.getValue('v_float64')).toEqual([1.1, 2.2, 3.3]);
+
+    // Byte Array (Base64 roundtrip check)
+    const originalBytes = original.getValue('byte_array');
+    const decodedBytes = decoded.getValue('byte_array');
+    expect(decodedBytes).toEqual(originalBytes); // Uint8Array comparison
+
+    // Nested
+    const nested = decoded.get('nested');
+    expect(nested.getValue('inner')).toBe('value');
+    expect(nested.getValue('inner_val')).toBe(42);
+
+    // Vector Hash (Table)
+    const table = decoded.getValue('table'); // Array of Hashes
+    expect(table.length).toBe(2);
+    expect(table[0].getValue('id')).toBe(1);
+    expect(table[1].getValue('id')).toBe(2);
+
+    // 4. Full Equality Check
+    expect(decoded).toEqual(original);
+  });
+
+  test('uppercase_parsing_robustness', () => {
+    const UPPERCASE_XML = `
+    <root KRB_Artificial="" KRB_Type="HASH">
+        <upper_bool KRB_Type="BOOL">TRUE</upper_bool>
+        <mixed_bool KRB_Type="BOOL">True</mixed_bool>
+        <upper_str KRB_Type="STRING">HELLO WORLD</upper_str>
+        <mixed_str KRB_Type="STRING">HeLLo</mixed_str>
+    </root>
+    `;
+
+    const decoded = decodeXML(UPPERCASE_XML);
+
+    // Bool parser should handle TRUE/True as true
+    expect(decoded.getValue('upper_bool')).toBe(true);
+    expect(decoded.getValue('mixed_bool')).toBe(true);
+
+    // Strings should preserve case
+    expect(decoded.getValue('upper_str')).toBe('HELLO WORLD');
+    expect(decoded.getValue('mixed_str')).toBe('HeLLo');
   });
 
   test('write_xml', () => {
