@@ -10,7 +10,7 @@ import { useGlobalStore } from '@/store/globalAppStateStore';
 import { AccessLevel } from '@/karabo_data/SchemaEnums';
 import { ProxyStatus } from '@/device/enums';
 import { buildExecuteCommandHash } from '@/karabo_hash/builders/command_execution.ts';
-import { GuiServerConnector } from '@/karabo_connectors/GuiServerConnector';
+import { GuiServerConnector } from '@/singletons/GuiServerConnector';
 
 const DisplayCommand: React.FC<DisplayCommandProps> = ({
   font_size,

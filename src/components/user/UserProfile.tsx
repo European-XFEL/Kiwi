@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from '../ui/dropdown-menu';
-import { GuiServerConnector } from '@/karabo_connectors/GuiServerConnector';
+import { GuiServerConnector } from '@/singletons/GuiServerConnector';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { getInitials } from '@/shared/helpers/getInitials';
 

@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useNavigate } from 'react-router-dom';
-import { ProjectDBConnector } from '@/karabo_connectors/ProjectDBConnector';
+import { ProjectDBConnector } from '@/singletons/ProjectDBConnector';
 import { ProjectItemInfo, ProjectSceneInfo } from '@/karabo_data/ProjectDbInfo';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { ProjectSceneCache } from '@/store/ProjectSceneCache';

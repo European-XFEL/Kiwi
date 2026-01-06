@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { deviceManager } from '@/device/DeviceManager';
-import { DevicePropertyConnector } from '@/karabo_connectors/DevicePropertyConnector';
+import { DevicePropertyConnector } from '@/singletons/DevicePropertyConnector';
 import type { PropertyModel } from '@/device/device-model/types/PropertyType';
 import type { HashValueType } from '@/karabo_hash/HashValueType';
 import type { HashTypes } from 'karabo-ts';
