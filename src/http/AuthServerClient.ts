@@ -1,10 +1,12 @@
-import APIInfo from '../http_data/APIInfo';
-import AuthenticationCredentials from '../http_data/AuthenticationCredentials';
-import AuthenticationResult from '../http_data/AuthenticationResult';
-import AuthenticationAccessCodeResult from '../http_data/AuthenticationAccessCodeResult';
-import UserTokensResult from '../http_data/UserTokensResult';
-import UserTokensParams from '../http_data/UserTokensParams';
-import RefreshTokensParams from '../http_data/RefreshTokensParams';
+import {
+  APIInfo,
+  AuthenticationCredentials,
+  AuthenticationResult,
+  AuthenticationAccessCodeResult,
+  UserTokensResult,
+  UserTokensParams,
+  RefreshTokensParams,
+} from './types';
 import BaseHttpClient from './BaseHttpClient';
 
 /**

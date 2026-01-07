@@ -24,7 +24,7 @@ import { WebsocketBuilder } from 'websocket-ts';
 import { BinaryEncoder, Hash } from 'karabo-ts';
 
 import { GuiSessionData, GuiSessionStore } from '../store/GuiSessionStore';
-import AuthServerClient from '../http_clients/AuthServerClient';
+import AuthServerClient from '../http/AuthServerClient';
 import { TopologyConnector } from './TopologyConnector';
 import {
   NextGuiServerMessage,
