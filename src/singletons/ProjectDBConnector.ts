@@ -22,17 +22,27 @@ import {
   loadProjectItemsResultFromHash,
 } from '../karabo_hash/decoders/project_db';
 
+import {
+  get_mediator,
+  KaraboEvent,
+  KaraboEventMap,
+  PayloadMap as EventPayload,
+} from './Mediator';
+
 export class ProjectDBConnector {
-  public constructor() {
-    // Registers the handlers for the hash types related to the ProjectDB
-    getNetwork().registerHashHandler(
-      'projectListDomains',
-      this.#_onListDomainsHash
-    );
-    getNetwork().registerHashHandler(
-      'projectListItems',
-      this.#_onListProjectsHash
-    );
+  private readonly eventMap: KaraboEventMap;
+
+  private constructor() {
+    this.eventMap = {
+      [KaraboEvent.ListItems]: this.#_onEventListItems,
+      [KaraboEvent.ListDomains]: this.#_onEventListDomains,
+    };
+
+    get_mediator().registerListener(this.eventMap);
+  }
+
+  dispose() {
+    get_mediator().unregisterListener(this.eventMap);
   }
 
   // #region List Projects
@@ -61,10 +71,11 @@ export class ProjectDBConnector {
   // The internal callback registered to handle projectListItems messages
   // received from the GUI Server. Responsible for dispatching the call to the
   // callback registered by the external caller of listProjects.
-  #_onListProjectsHash = (hash: Hash): void => {
+  #_onEventListItems = (hash: EventPayload): void => {
+    let data = hash['data'] as Hash;
     let projectsInfo: ListProjectsResult;
     try {
-      projectsInfo = listProjectsResultFromHash(hash);
+      projectsInfo = listProjectsResultFromHash(data);
     } catch (e) {
       if (e instanceof Error) {
         projectsInfo = {
@@ -338,10 +349,11 @@ export class ProjectDBConnector {
   // from the GUI Server. Responsible for dispatching the call to
   // #_onListDomainsCallback registered by the external caller that invoked
   // listDomains.
-  #_onListDomainsHash = (hash: Hash): void => {
+  #_onEventListDomains = (hash: EventPayload): void => {
+    let data = hash['data'] as Hash;
     let domainsInfo: ListDomainsResult;
     try {
-      domainsInfo = listDomainsResultFromHash(hash);
+      domainsInfo = listDomainsResultFromHash(data);
     } catch (e) {
       if (e instanceof Error) {
         domainsInfo = {
