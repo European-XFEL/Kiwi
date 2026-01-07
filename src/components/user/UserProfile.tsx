@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from '../ui/dropdown-menu';
-import { GuiServerConnector } from '@/singletons/GuiServerConnector';
+import { getNetwork } from '@/singletons/api';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { getInitials } from '@/shared/helpers/getInitials';
 
@@ -24,7 +24,7 @@ export default function UserInfo() {
   const initials = getInitials(displayName);
 
   const handleLogout = () => {
-    GuiServerConnector.inst.finishSession();
+    getNetwork().finishSession();
     setLoggedOut();
   };
 

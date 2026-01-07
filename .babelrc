@@ -3,5 +3,7 @@
     ["@babel/preset-env", { "targets": { "esmodules": true } }],
     ["@babel/preset-react", { "runtime": "automatic" }],
     "@babel/preset-typescript"
-  ]
+  ],
+  // We need to Mock imports with meta for Workers
+  "plugins": ["babel-plugin-transform-import-meta"]
 }

@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ProjectDBConnector } from '../../singletons/ProjectDBConnector';
+import { getDbConn } from '@/singletons/api';
 import {
   ProjectItemInfo,
   ProjectSceneInfo,
@@ -64,7 +64,7 @@ export default function SelectProjectSceneDialog({
     setScenes([]);
     setSelectedScene(undefined);
 
-    ProjectDBConnector.inst.listProjects(domain, (projectsInfo) => {
+    getDbConn().listProjects(domain, (projectsInfo) => {
       if (projectsInfo.error_msg) {
         setErrorMessage(projectsInfo.error_msg);
       } else {
@@ -98,22 +98,17 @@ export default function SelectProjectSceneDialog({
     uuidProject: string
   ) => {
     setActivityStatus(ActivityStatus.GETTING_SCENES);
-    ProjectDBConnector.inst.listScenes(
-      domain,
-      projectName,
-      uuidProject,
-      (scenesInfo) => {
-        if (scenesInfo.error_msg) {
-          setErrorMessage(scenesInfo.error_msg);
-        } else {
-          setScenes(scenesInfo.scenes);
-          if (scenesInfo.scenes.length > 0) {
-            setSelectedScene(scenesInfo.scenes[0]);
-          }
+    getDbConn().listScenes(domain, projectName, uuidProject, (scenesInfo) => {
+      if (scenesInfo.error_msg) {
+        setErrorMessage(scenesInfo.error_msg);
+      } else {
+        setScenes(scenesInfo.scenes);
+        if (scenesInfo.scenes.length > 0) {
+          setSelectedScene(scenesInfo.scenes[0]);
         }
-        setActivityStatus(ActivityStatus.NO_ACTIVITY);
       }
-    );
+      setActivityStatus(ActivityStatus.NO_ACTIVITY);
+    });
   };
 
   const handleProjectClick = (project: ProjectItemInfo) => {
@@ -157,7 +152,7 @@ export default function SelectProjectSceneDialog({
 
     if (open) {
       setActivityStatus(ActivityStatus.GETTING_DOMAINS);
-      ProjectDBConnector.inst.listDomains((domainsInfo) => {
+      getDbConn().listDomains((domainsInfo) => {
         if (domainsInfo.error_msg) {
           setErrorMessage(
             `Error reading domains: ${domainsInfo.error_msg}. Close and reopen the dialog`
