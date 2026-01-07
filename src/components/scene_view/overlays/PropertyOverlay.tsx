@@ -105,7 +105,7 @@ export const PropertyOverlay: React.FC<PropertyOverlayProps> = React.memo(
           {isOffline && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="absolute inset-0 rounded bg-red-100/70 backdrop-blur-sm flex items-center justify-center pointer-events-auto cursor-help border border-red-300 shadow-sm">
+                <div className="absolute inset-0 p-1 rounded bg-red-100/70 backdrop-blur-sm flex items-center justify-center pointer-events-auto cursor-help border border-red-300 shadow-sm">
                   <XIcon
                     size={30}
                     strokeWidth={1.6}

@@ -1,5 +1,5 @@
 import { Hash, makeHash } from 'karabo-ts';
-import { REQUEST_REPLY_TIMEOUT } from './const.js';
+import { REQUEST_REPLY_TIMEOUT } from './const';
 
 export const buildReconfigureHash = (
   deviceId: string,
