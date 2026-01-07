@@ -2,7 +2,7 @@ import {
   LoadProjectSceneResult,
   ProjectSceneInfo,
 } from '../karabo_data/ProjectDbInfo';
-import { ProjectDBConnector } from '../singletons/ProjectDBConnector';
+import { getDbConn } from '@/singletons/api';
 
 export class ProjectSceneCache {
   static readonly ITEM_PREFIX = 'prjScene';
@@ -91,7 +91,7 @@ export class ProjectSceneCache {
   ): void => {
     const infoValue = localStorage.getItem(this.#_getInfoKey(domain, uuid));
     if (infoValue === null) {
-      ProjectDBConnector.inst.getScene(
+      getDbConn().getScene(
         domain,
         projectName,
         uuid,

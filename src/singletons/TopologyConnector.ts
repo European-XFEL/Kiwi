@@ -14,17 +14,7 @@ export type DeviceInfoUpdateHandler = (
 ) => void;
 
 export class TopologyConnector {
-  // #region Singleton
-  private constructor() {}
-
-  static #_inst?: TopologyConnector;
-  static get inst(): TopologyConnector {
-    if (!TopologyConnector.#_inst) {
-      TopologyConnector.#_inst = new TopologyConnector();
-    }
-    return TopologyConnector.#_inst;
-  }
-  // #endregion
+  public constructor() {}
 
   // #region Full and partial topology updates
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { GuiServerConnector } from '@/singletons/GuiServerConnector';
+import { getNetwork } from '@/singletons/api';
 import { AccessLevel } from '@/karabo_data/SchemaEnums';
 import { GuiServerInfo } from '@/karabo_data/GuiServerInfo';
 import AuthServerClient from '@/http/AuthServerClient';
@@ -60,12 +60,7 @@ const LoginPanel: React.FC = () => {
   const doProbeServer = (h: string, pNum: number) => {
     if (!h || !Number.isFinite(pNum) || pNum <= 0 || pNum > 65535) return;
     setActivityStatus(ActivityStatus.PROBING_SERVER);
-    GuiServerConnector.inst.probeServer(
-      h,
-      pNum,
-      onProbeSuccess,
-      onProbeFailure
-    );
+    getNetwork().probeServer(h, pNum, onProbeSuccess, onProbeFailure);
   };
 
   // Initial mount: load saved host/port and probe immediately
@@ -146,7 +141,7 @@ const LoginPanel: React.FC = () => {
             setErrorMessage(`Auth error: ${authResult.error_msg!}`);
           } else {
             setActivityStatus(ActivityStatus.CONNECTING_SERVER);
-            GuiServerConnector.inst.startAuthSession(
+            getNetwork().startAuthSession(
               host.trim(),
               portNum,
               userName,
@@ -163,7 +158,7 @@ const LoginPanel: React.FC = () => {
         });
     } else {
       setActivityStatus(ActivityStatus.CONNECTING_SERVER);
-      GuiServerConnector.inst.startNonAuthSession(
+      getNetwork().startNonAuthSession(
         host.trim(),
         portNum,
         userName,

@@ -1,5 +1,5 @@
 import { Hash } from 'karabo-ts';
-import { GuiServerConnector } from './GuiServerConnector';
+import { getNetwork } from '@/singletons/api';
 import {
   ListDomainsResult,
   ListProjectsResult,
@@ -23,27 +23,17 @@ import {
 } from '../karabo_hash/decoders/project_db';
 
 export class ProjectDBConnector {
-  // #region Singleton
-  private constructor() {
+  public constructor() {
     // Registers the handlers for the hash types related to the ProjectDB
-    GuiServerConnector.inst.registerHashHandler(
+    getNetwork().registerHashHandler(
       'projectListDomains',
       this.#_onListDomainsHash
     );
-    GuiServerConnector.inst.registerHashHandler(
+    getNetwork().registerHashHandler(
       'projectListItems',
       this.#_onListProjectsHash
     );
   }
-
-  static #_inst?: ProjectDBConnector;
-  static get inst(): ProjectDBConnector {
-    if (!ProjectDBConnector.#_inst) {
-      ProjectDBConnector.#_inst = new ProjectDBConnector();
-    }
-    return ProjectDBConnector.#_inst;
-  }
-  // #endregion
 
   // #region List Projects
   listProjects(
@@ -62,7 +52,7 @@ export class ProjectDBConnector {
       return;
     }
     this.#_onListProjectsCallback = onProjects;
-    GuiServerConnector.inst.sendHash(buildListProjectsHash(domain));
+    getNetwork().sendHash(buildListProjectsHash(domain));
   }
 
   // The callback to be registered by an external caller for the listProjects operation.
@@ -116,7 +106,7 @@ export class ProjectDBConnector {
     }
     // Registers the handler for handling projectLoadItems messages from the GUI Server
     // for the duration of the listScenes operation.
-    GuiServerConnector.inst.registerHashHandler(
+    getNetwork().registerHashHandler(
       'projectLoadItems',
       this.#_onLoadItemsHash
     );
@@ -133,7 +123,7 @@ export class ProjectDBConnector {
       uuid: uuidProject,
       item_type: 'project',
     };
-    GuiServerConnector.inst.sendHash(buildLoadItemsHash([projectItem]));
+    getNetwork().sendHash(buildLoadItemsHash([projectItem]));
   }
 
   // The callback to be registered by an external caller for the listScenes operation.
@@ -195,7 +185,7 @@ export class ProjectDBConnector {
           }
           if (itemsToQuery.length > 0) {
             this.#_pendingLoadItems += 1;
-            GuiServerConnector.inst.sendHash(buildLoadItemsHash(itemsToQuery));
+            getNetwork().sendHash(buildLoadItemsHash(itemsToQuery));
           }
         } else if (isSceneInfo(item)) {
           const sceneIdx = this.#_collectedScenes?.findIndex(
@@ -230,7 +220,7 @@ export class ProjectDBConnector {
       // is launched.
       this.#_collectedScenes = undefined;
       // Unregister the hash handler for the duration of the listScenes operation.
-      GuiServerConnector.inst.unregisterHashHandler('projectLoadItems');
+      getNetwork().unregisterHashHandler('projectLoadItems');
     }
   };
 
@@ -258,13 +248,13 @@ export class ProjectDBConnector {
     }
     // Registers the handler for handling projectLoadItems messages from the GUI Server
     // for the duration of the getScene operation.
-    GuiServerConnector.inst.registerHashHandler(
+    getNetwork().registerHashHandler(
       'projectLoadItems',
       this.#_onLoadSceneHash
     );
     this.#_onGetSceneCallback = onScene;
     this.#_projectName = projectName;
-    GuiServerConnector.inst.sendHash(
+    getNetwork().sendHash(
       buildLoadItemsHash([{ domain: domain, uuid: uuid, item_type: 'scene' }])
     );
   }
@@ -321,7 +311,7 @@ export class ProjectDBConnector {
     }
     this.#_onGetSceneCallback = undefined;
     // Unregister the hash handler for the duration of the getScene operation.
-    GuiServerConnector.inst.unregisterHashHandler('projectLoadItems');
+    getNetwork().unregisterHashHandler('projectLoadItems');
   };
 
   // #endregion
@@ -340,7 +330,7 @@ export class ProjectDBConnector {
       return;
     }
     this.#_onListDomainsCallback = onDomains;
-    GuiServerConnector.inst.sendHash(buildListDomainsHash());
+    getNetwork().sendHash(buildListDomainsHash());
   }
   #_onListDomainsCallback?: (domainsInfo: ListDomainsResult) => void;
 

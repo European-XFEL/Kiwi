@@ -14,7 +14,7 @@ variables:
   PRE_COMMIT_HOME: "$CI_PROJECT_DIR/.cache/pre-commit"
 
 .default_node_image: &node_image
-  image: node:20
+  image: node:22
 
 # Node/Yarn cache (global)
 cache:

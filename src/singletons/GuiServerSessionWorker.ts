@@ -2,13 +2,11 @@ import { packEncodedHash } from '@/karabo_hash/hash_utils';
 import { HashDeque } from '@/karabo_hash/HashDeque';
 import { Websocket, WebsocketBuilder } from 'websocket-ts';
 
-// #region Messages between Worker and main thread
+// #region Messages Definitions
 export enum WorkerMessageType {
-  // Messages from main thread to the Worker
   startGuiServerSession = 'startGuiServerSession',
   getNextGuiServerMessage = 'getNextGuiServerMessage',
   sendHash = 'sendHash',
-  // Messages from the Worker to the main thread
   guiServerMessageReceived = 'guiServerMessageReceived',
   nextGuiServerMessage = 'nextGuiServerMessage',
   error = 'error',
@@ -37,122 +35,157 @@ export interface NextGuiServerMessage extends WorkerMessage {
 export interface SessionErrorMessage extends WorkerMessage {
   message: string;
 }
-
 // #endregion
 
-const _hashDeque = new HashDeque();
-let _guiServerHost: string | undefined = undefined;
-let _guiServerPort: number | undefined = undefined;
+class GuiServerSession {
+  private _hashDeque = new HashDeque();
+  private _ws: Websocket | undefined;
+  private _guiServerHost: string | undefined;
+  private _guiServerPort: number | undefined;
 
-// #region Worker message handlers
+  constructor() {
+    // Bind methods to 'this' to ensure they work when passed as callbacks
+    this.handleMessage = this.handleMessage.bind(this);
+    this._onWsOpen = this._onWsOpen.bind(this);
+    this._onWsMessage = this._onWsMessage.bind(this);
+    this._onWsError = this._onWsError.bind(this);
+  }
 
-self.onmessage = (e: MessageEvent<WorkerMessage>) => {
-  const message = e.data;
-  switch (message.type) {
-    case WorkerMessageType.startGuiServerSession: {
-      const startSessionMsg = e.data as StartGuiServerSessionMessage;
-      _onStartGuiServerSession(
-        startSessionMsg.wsProxyURL,
-        startSessionMsg.guiServerHost,
-        startSessionMsg.guiServerPort
-      );
-      break;
+  /**
+   * Main entry point: Handles messages coming from the Main Thread
+   */
+  public handleMessage(e: MessageEvent<WorkerMessage>) {
+    const message = e.data;
+    switch (message.type) {
+      case WorkerMessageType.startGuiServerSession:
+        const startSessionMsg = message as StartGuiServerSessionMessage;
+        this._startSession(
+          startSessionMsg.wsProxyURL,
+          startSessionMsg.guiServerHost,
+          startSessionMsg.guiServerPort
+        );
+        break;
+
+      case WorkerMessageType.getNextGuiServerMessage:
+        this._sendNextMessage();
+        break;
+
+      case WorkerMessageType.sendHash:
+        const binHashMsg = message as NextGuiServerMessage;
+        if (this._ws) {
+          this._ws.send(packEncodedHash(binHashMsg.binHash));
+        }
+        break;
+
+      default:
+        console.error(
+          `Unrecognized message type received from main thread: ${message.type}`
+        );
     }
-    case WorkerMessageType.getNextGuiServerMessage:
-      _onGetNextGuiServerMessage();
-      break;
-    case WorkerMessageType.sendHash: {
-      const binHashMsg = message as NextGuiServerMessage;
-      _ws?.send(packEncodedHash(binHashMsg.binHash));
-      break;
+  }
+
+  /**
+   * Internal Logic: Starts the Websocket connection
+   */
+  private _startSession(wsProxyURL: string, host: string, port: number) {
+    this._guiServerHost = host;
+    this._guiServerPort = port;
+
+    // Close existing connection if any
+    if (this._ws) {
+      this._ws.close();
     }
 
-    default:
-      console.error(
-        `Unrecognized message type received from main thread: ${message.type}`
-      );
+    this._ws = new WebsocketBuilder(wsProxyURL)
+      .onOpen(this._onWsOpen)
+      .onMessage(this._onWsMessage)
+      .onError(this._onWsError)
+      .build();
   }
-};
 
-const _onStartGuiServerSession = (
-  wsProxyURL: string,
-  guiServerHost: string,
-  guiServerPort: number
-) => {
-  _guiServerHost = guiServerHost;
-  _guiServerPort = guiServerPort;
-  _ws = new WebsocketBuilder(wsProxyURL)
-    .onOpen(_onWsOpen)
-    .onMessage(_onWsMessage)
-    .onError(_onWsError)
-    .build();
-};
+  /**
+   * Internal Logic: Pops the next hash and sends it to Main Thread
+   */
+  private _sendNextMessage() {
+    const binHash = this._hashDeque.popHash();
 
-const _onGetNextGuiServerMessage = () => {
-  const binHash = _hashDeque.popHash();
-
-  if (binHash) {
-    postMessage({
-      type: WorkerMessageType.nextGuiServerMessage,
-      binHash: binHash,
-      queuedItemsCount: _hashDeque.itemsCount,
-      latestLatency: _hashDeque.latestLatency,
-    });
+    if (binHash) {
+      postMessage({
+        type: WorkerMessageType.nextGuiServerMessage,
+        binHash: binHash,
+        queuedItemsCount: this._hashDeque.itemsCount,
+        latestLatency: this._hashDeque.latestLatency,
+      } as NextGuiServerMessage);
+    }
   }
-};
 
-// #endregion
+  // #region Websocket Event Handlers
 
-// #region Websocket and its event handlers
-
-let _ws: Websocket | undefined = undefined;
-
-const _onWsOpen = (ws: Websocket, _ev: Event): any => {
-  // A GUI Server session always starts with a message instructing the
-  // WebSocketProxy to connect to a GUI Server.
-  ws.send(JSON.stringify({ host: _guiServerHost, port: _guiServerPort }));
-};
-
-const _onWsMessage = (ws: Websocket, ev: MessageEvent<any>): any => {
-  if (typeof ev.data === 'string') {
-    // The only occasions when the WebSocketProxy does not send a
-    // binary serialized Hash are when it communicates an error for
-    // connecting to the GUI Server or when it loses the connection to
-    // the GUI Server. On those occasions, the message is a string in
-    // the format "0|<error message>".
-    const err_msg = (
-      ev.data.startsWith('0|') ? ev.data.substring(2) : ev.data
-    ).trim();
-    postMessage({ type: WorkerMessageType.error, message: err_msg });
-    ws.close();
-    close(); // Terminate the worker from within
-  } else {
-    const msgBlob = ev.data as Blob;
-    msgBlob.arrayBuffer().then((binHash: ArrayBuffer) => {
-      _hashDeque.pushHash(binHash);
-      postMessage({ type: WorkerMessageType.guiServerMessageReceived });
-    });
+  private _onWsOpen(ws: Websocket, _ev: Event) {
+    // Send the initial handshake with host/port
+    ws.send(
+      JSON.stringify({
+        host: this._guiServerHost,
+        port: this._guiServerPort,
+      })
+    );
   }
-};
 
-const _onWsError = (ws: Websocket, ev: Event): any => {
-  let message: string | undefined;
-  if (!ws.underlyingWebsocket) {
-    // Websocket connection failed to be established
-    message = 'Websocket client initialization error';
-  } else {
-    if (ws.underlyingWebsocket?.CLOSED) {
-      // Connection could not be established or couldn't be opened.
+  private _onWsMessage(ws: Websocket, ev: MessageEvent<any>) {
+    if (typeof ev.data === 'string') {
+      // Handle textual error messages (e.g. "0|Connection failed")
+      const errMsg = (
+        ev.data.startsWith('0|') ? ev.data.substring(2) : ev.data
+      ).trim();
+
+      postMessage({
+        type: WorkerMessageType.error,
+        message: errMsg,
+      } as SessionErrorMessage);
+
+      ws.close();
+      close(); // Terminate the worker
+    } else {
+      // Handle binary Hash data
+      const msgBlob = ev.data as Blob;
+      msgBlob.arrayBuffer().then((binHash: ArrayBuffer) => {
+        this._hashDeque.pushHash(binHash);
+        // Notify main thread that data is ready
+        postMessage({
+          type: WorkerMessageType.guiServerMessageReceived,
+        });
+      });
+    }
+  }
+
+  private _onWsError(ws: Websocket, ev: Event) {
+    let message: string | undefined;
+
+    if (!ws.underlyingWebsocket) {
+      message = 'Websocket client initialization error';
+    } else if (ws.underlyingWebsocket.CLOSED) {
       message = 'No connection to websocket server';
-    } else if (ws.underlyingWebsocket?.CLOSING) {
+    } else if (ws.underlyingWebsocket.CLOSING) {
       message = 'Websocket connection being closed.';
     } else {
       message = ev.toString();
       ws.close();
     }
-  }
-  postMessage({ type: WorkerMessageType.error, message: message });
-  close(); // Terminate the worker from within
-};
 
-// #endregion
+    postMessage({
+      type: WorkerMessageType.error,
+      message: message,
+    } as SessionErrorMessage);
+
+    close(); // Terminate the worker
+  }
+  // #endregion
+}
+
+// --------------------------------------------------------------------------
+// Worker Entry Point
+// --------------------------------------------------------------------------
+const session = new GuiServerSession();
+
+// Hook the class handler to the global worker event
+self.onmessage = session.handleMessage;

@@ -1,12 +1,11 @@
 import { Hash, HashTypes, HashValue } from 'karabo-ts';
-import { GuiServerConnector } from './GuiServerConnector';
+import { getNetwork, getTopology } from '@/singletons/api';
 import {
   buildStartMonitoringHash,
   buildStopMonitoringHash,
 } from '../karabo_hash/builders/monitoring_device';
 import { devicesConfigsFromHash } from '../karabo_hash/decoders/device_config';
 import type { PropertyInfo } from '@/karabo_data/DeviceConfigInfo';
-import { TopologyConnector } from './TopologyConnector';
 import { DeviceSchemaConnector } from './DeviceSchemaConnector';
 import { DeviceInfo, TopologyEventType } from '@/karabo_data/TopologyInfo';
 import type { DeviceSchemaInfo } from '@/karabo_data/DeviceSchemaInfo';
@@ -20,10 +19,11 @@ type PropertyUpdateHandler = (
   updatedProperty: PropertyInfo | VectorElementType[][]
 ) => void;
 
+// TODO: Move this fuctionality to Topology / DeviceProxy
 export class DevicePropertyConnector {
   // #region Singleton
   private constructor() {
-    GuiServerConnector.inst.registerHashHandler(
+    getNetwork().registerHashHandler(
       'deviceConfigurations',
       this._onDeviceConfigurations
     );
@@ -65,12 +65,12 @@ export class DevicePropertyConnector {
 
     if (!devicePropertyMonitors) {
       // This is the first property being monitored for the device.
-      TopologyConnector.inst.registerDeviceInfoMonitor(
+      getTopology().registerDeviceInfoMonitor(
         deviceId,
         this._onDeviceInfoUpdate
       );
 
-      if (TopologyConnector.inst.isDeviceOnline(deviceId)) {
+      if (getTopology().isDeviceOnline(deviceId)) {
         this._startMonitoringDevice(deviceId);
       } else {
         // For offline devices, register the pending start monitoring
@@ -146,7 +146,7 @@ export class DevicePropertyConnector {
 
     if (devicePropertyMonitors.size === 0) {
       // Removed the last update handler for any property of the device
-      TopologyConnector.inst.unregisterDeviceInfoMonitor(
+      getTopology().unregisterDeviceInfoMonitor(
         deviceId,
         this._onDeviceInfoUpdate
       );
@@ -174,12 +174,12 @@ export class DevicePropertyConnector {
     DeviceSchemaConnector.inst.requestDeviceSchema(deviceId);
 
     const hash = buildStartMonitoringHash(deviceId);
-    GuiServerConnector.inst.sendHash(hash);
+    getNetwork().sendHash(hash);
   };
 
   private _stopMonitoringDevice = (deviceId: string): void => {
     const hash = buildStopMonitoringHash(deviceId);
-    GuiServerConnector.inst.sendHash(hash);
+    getNetwork().sendHash(hash);
     DeviceSchemaConnector.inst.unregisterSchemaMonitor(
       deviceId,
       this._onDeviceSchemaUpdate

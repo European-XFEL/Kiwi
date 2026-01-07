@@ -10,7 +10,7 @@ import { useGlobalStore } from '@/store/globalAppStateStore';
 import { AccessLevel } from '@/karabo_data/SchemaEnums';
 import { ProxyStatus } from '@/device/enums';
 import { buildExecuteCommandHash } from '@/karabo_hash/builders/command_execution.ts';
-import { GuiServerConnector } from '@/singletons/GuiServerConnector';
+import { getNetwork } from '@/singletons/api';
 
 const DisplayCommand: React.FC<DisplayCommandProps> = ({
   font_size,
@@ -143,8 +143,9 @@ const DisplayCommand: React.FC<DisplayCommandProps> = ({
       );
       if (!confirmed) return;
     }
+    // TODO: Move to DeviceProxy
     const executeHash = buildExecuteCommandHash(deviceId!, propertyPath!);
-    GuiServerConnector.inst.sendHash(executeHash);
+    getNetwork().sendHash(executeHash);
   };
 
   return (

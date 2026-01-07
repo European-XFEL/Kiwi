@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useNavigate } from 'react-router-dom';
-import { ProjectDBConnector } from '@/singletons/ProjectDBConnector';
+import { getDbConn } from '@/singletons/api';
 import { ProjectItemInfo, ProjectSceneInfo } from '@/karabo_data/ProjectDbInfo';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { ProjectSceneCache } from '@/store/ProjectSceneCache';
@@ -47,7 +47,7 @@ export default function SceneBreadcrumb({
 
   const handleProjectDropdownOpen = () => {
     setProjectsLoading(true);
-    ProjectDBConnector.inst.listProjects(domain, (projectsInfo) => {
+    getDbConn().listProjects(domain, (projectsInfo) => {
       if (!projectsInfo.error_msg) {
         setProjects(projectsInfo.projects.filter((p) => !p.isTrashed));
       }
@@ -57,7 +57,7 @@ export default function SceneBreadcrumb({
 
   const loadScenes = (project: ProjectItemInfo) => {
     setScenesLoading(true);
-    ProjectDBConnector.inst.listScenes(
+    getDbConn().listScenes(
       project.domain,
       project.name,
       project.uuid,
@@ -71,7 +71,7 @@ export default function SceneBreadcrumb({
   const handleSceneDropdownOpen = () => {
     if (!selectedProject) {
       setProjectsLoading(true);
-      ProjectDBConnector.inst.listProjects(domain, (projectsInfo) => {
+      getDbConn().listProjects(domain, (projectsInfo) => {
         if (!projectsInfo.error_msg) {
           const current = projectsInfo.projects.find(
             (p) => p.name === projectName

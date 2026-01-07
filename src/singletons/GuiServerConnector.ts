@@ -10,7 +10,6 @@ import {
   loginInfoFromHash,
   notificationInfoFromHash,
 } from '../karabo_hash/decoders/gui_session';
-
 import { decodeBinHash, hashProtocolType } from '../karabo_hash/hash_utils';
 
 import { useAppSettingsStore } from '../store/appSettingsStore';
@@ -25,7 +24,7 @@ import { BinaryEncoder, Hash } from 'karabo-ts';
 
 import { GuiSessionData, GuiSessionStore } from '../store/GuiSessionStore';
 import AuthServerClient from '../http/AuthServerClient';
-import { TopologyConnector } from './TopologyConnector';
+import { getTopology } from '@/singletons/api';
 import {
   NextGuiServerMessage,
   SessionErrorMessage,
@@ -62,22 +61,11 @@ interface GuiServerSession {
 }
 
 export class GuiServerConnector {
-  // #region Singleton support
-
-  private constructor() {}
+  public constructor() {}
 
   private static get _wsProxyURL(): string {
     return useAppSettingsStore.getState().wsProxyURL; // using zustand store
   }
-
-  private static _inst?: GuiServerConnector;
-  static get inst(): GuiServerConnector {
-    if (!GuiServerConnector._inst) {
-      GuiServerConnector._inst = new GuiServerConnector();
-    }
-    return GuiServerConnector._inst;
-  }
-  // #endregion
 
   // #region GUI Server probing
 
@@ -621,14 +609,15 @@ export class GuiServerConnector {
   };
 
   private _handleSystemTopology = (hash: Hash): void => {
-    // Initial topology received - update the topology store using Zustand
+    // TODO: Move Hash initialize to Topology
     const sysTopologyInfo = sysTopologyInfoFromHash(hash);
-    TopologyConnector.inst.systemTopology = sysTopologyInfo;
+    getTopology().systemTopology = sysTopologyInfo;
   };
 
   _handleTopologyUpdate = (hash: Hash): void => {
+    // TODO: Move Hash merge to Topology
     const topologyUpdateInfo = sysTopologyUpdateInfoFromHash(hash);
-    TopologyConnector.inst.updateTopology(topologyUpdateInfo);
+    getTopology().updateTopology(topologyUpdateInfo);
   };
 
   // #endregion

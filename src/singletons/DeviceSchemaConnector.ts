@@ -1,5 +1,5 @@
 import { Hash } from 'karabo-ts';
-import { GuiServerConnector } from './GuiServerConnector';
+import { getNetwork } from '@/singletons/api';
 import { DeviceSchemaInfo } from '@/karabo_data/DeviceSchemaInfo';
 import { deviceSchemaFromHash } from '@/karabo_hash/decoders/device_schema';
 import { buildGetDeviceSchemaHash } from '@/karabo_hash/builders/monitoring_device';
@@ -7,13 +7,11 @@ import { deviceManager } from '@/device/DeviceManager';
 
 type DeviceSchemaHandler = (deviceSchema: DeviceSchemaInfo) => void;
 
+// TODO: MOve this to Topology / DeviceProxy
 export class DeviceSchemaConnector {
   // #region Singleton
   private constructor() {
-    GuiServerConnector.inst.registerHashHandler(
-      'deviceSchema',
-      this._onDeviceSchema
-    );
+    getNetwork().registerHashHandler('deviceSchema', this._onDeviceSchema);
   }
 
   private static _inst?: DeviceSchemaConnector;
@@ -88,7 +86,7 @@ export class DeviceSchemaConnector {
 
   requestDeviceSchema = (deviceId: string): void => {
     const hash = buildGetDeviceSchemaHash(deviceId);
-    GuiServerConnector.inst.sendHash(hash);
+    getNetwork().sendHash(hash);
 
     // Mark "schema requested" in DeviceManager / DeviceProxy runtime
     deviceManager.markSchemaRequested(deviceId);
