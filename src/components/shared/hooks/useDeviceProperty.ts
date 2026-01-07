@@ -151,10 +151,19 @@ export function useDeviceProperty(
     // Subscribe to property value changes
     const unsubscribeProperty = propertyProxy.subscribe(
       (newValue, newTimeAttrs) => {
-        // Convert timeAttrs to Timestamp
-        const timestamp = newTimeAttrs
-          ? Timestamp.fromTimeAttrs(newTimeAttrs)
-          : undefined;
+        // Convert timeAttrs to Timestamp (validate structure first)
+        let timestamp: Timestamp | undefined;
+        if (newTimeAttrs && newTimeAttrs.sec && newTimeAttrs.frac) {
+          try {
+            timestamp = Timestamp.fromTimeAttrs(newTimeAttrs);
+          } catch (err) {
+            console.warn(
+              `Failed to parse timestamp for ${deviceId}.${propertyPath}:`,
+              err
+            );
+            timestamp = undefined;
+          }
+        }
         setPropertyData({
           propertyModel: propertyProxy.model,
           value: newValue,
