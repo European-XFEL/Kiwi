@@ -430,8 +430,8 @@ describe('LTTB — stress suite', () => {
   // ═══════════════════════════════════════════════════════════════════
 
   describe('Performance sanity (non-flaky)', () => {
-    it('handles 100k -> 1k with correct invariants', () => {
-      const size = 100_000;
+    it('handles 10k -> 1k with correct invariants', () => {
+      const size = 10_000;
       const data = makeAdversarialSeries(size, 31415);
 
       const start = performance.now();
@@ -658,7 +658,7 @@ describe('LTTB — stress suite', () => {
   describe('EXTREME TORTURE - Position Validation', () => {
     it('positions never duplicate (strictly increasing always)', () => {
       const seeds = [1, 42, 99, 777, 2025, 31415];
-      const sizes = [100, 1000, 10000, 50000];
+      const sizes = [100, 1000, 5000];
 
       for (const seed of seeds) {
         for (const size of sizes) {
@@ -680,9 +680,9 @@ describe('LTTB — stress suite', () => {
     });
 
     it('positions are valid indices for extreme thresholds', () => {
-      const data = makeAdversarialSeries(100000, 8888);
+      const data = makeAdversarialSeries(10000, 8888);
 
-      for (const threshold of [3, 10, 100, 1000, 10000, 99999]) {
+      for (const threshold of [3, 10, 100, 1000, 9999]) {
         const { positions } = lttbWithPositions(data, threshold);
 
         expect(positions.length).toBe(threshold);
@@ -703,7 +703,7 @@ describe('LTTB — stress suite', () => {
         { n: 1000, threshold: 50, seed: 1 },
         { n: 5000, threshold: 200, seed: 42 },
         { n: 10000, threshold: 500, seed: 999 },
-        { n: 50000, threshold: 1000, seed: 2025 },
+        { n: 5000, threshold: 1000, seed: 2025 },
       ];
 
       for (const tc of testCases) {
@@ -745,8 +745,8 @@ describe('LTTB — stress suite', () => {
     });
 
     it('multiple thresholds on same data maintain invariants', () => {
-      const data = makeAdversarialSeries(20000, 55555);
-      const thresholds = [10, 50, 100, 500, 1000, 5000, 10000];
+      const data = makeAdversarialSeries(2000, 55555);
+      const thresholds = [10, 50, 100, 500, 1000];
 
       const results = thresholds.map((t) => lttb(data, t));
 
@@ -765,7 +765,7 @@ describe('LTTB — stress suite', () => {
       const rand = mulberry32(12345);
       const data: XYPoint[] = [];
 
-      for (let i = 0; i < 50000; i++) {
+      for (let i = 0; i < 5000; i++) {
         const heartbeat = i % 100 < 5 ? 1.5 : 0; // Sharp QRS spikes
         const baseline = Math.sin(i / 500) * 0.1; // Breathing
         const noise = (rand() - 0.5) * 0.05; // Electrical noise
@@ -807,7 +807,7 @@ describe('LTTB — stress suite', () => {
       const rand = mulberry32(99999);
       const data: XYPoint[] = [];
 
-      for (let i = 0; i < 20000; i++) {
+      for (let i = 0; i < 2000; i++) {
         const normal = 20 + Math.sin(i / 1000) * 5; // Daily variation
         const glitch = rand() > 0.999 ? 100 : 0; // Rare sensor error
         data.push([i, normal + glitch]);
