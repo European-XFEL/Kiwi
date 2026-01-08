@@ -1,3 +1,4 @@
+import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,6 +22,13 @@ export default function ServerProbeForm({
   topic,
   disabled = false,
 }: ServerProbeFormProps) {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !disabled) {
+      e.preventDefault(); // Prevents default form submission if inside a form tag
+      onCommit?.(host, port);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -35,6 +43,7 @@ export default function ServerProbeForm({
             value={host}
             onChange={(e) => onHostChange(e.target.value)}
             onBlur={() => onCommit?.(host, port)}
+            onKeyDown={handleKeyDown}
             disabled={disabled}
             inputMode="text"
             autoComplete="host"
@@ -49,6 +58,7 @@ export default function ServerProbeForm({
               value={port}
               onChange={(e) => onPortChange(e.target.value)}
               onBlur={() => onCommit?.(host, port)}
+              onKeyDown={handleKeyDown}
               disabled={disabled}
               inputMode="numeric"
               pattern="[0-9]*"
