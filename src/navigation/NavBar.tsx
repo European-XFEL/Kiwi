@@ -1,24 +1,24 @@
 import { Menu } from 'lucide-react';
-import Header from '../layouts/Header';
-import NavigationMenu from './NavMenu';
-import { NavItem } from './NavItem';
-import NavToggle from './NavToggle';
-import LoadProjectScene from '../scene/LoadProjectScene';
-import Logo from '../branding/Logo';
-import SceneStatus from '../scene/SceneStatus';
-import SceneBreadcrumb from '../scene/SceneBreadcrumb';
-import UserInfo from '../user/UserProfile';
-import AccessLevelSelector from '../user/AccessLevelSelector';
-import { Button } from '../ui/button';
-import { Separator } from '../ui/separator';
-import GuiServerDisplay from '../status/GuiServerDisplay';
-import { ActiveIndicator } from '../status/ActiveIndicator';
+import Header from '@/components/layouts/Header';
+import NavigationMenu from './components/NavMenu';
+import { NavItem } from './components/NavItem';
+import NavToggle from './components/NavToggle';
+import LoadProjectScene from '@/components/scene/LoadProjectScene';
+import Logo from '@/components/branding/Logo';
+import SceneStatus from '@/components/scene/SceneStatus';
+import SceneBreadcrumb from '@/components/scene/SceneBreadcrumb';
+import UserInfo from '@/components/user/UserProfile';
+import AccessLevelSelector from '@/components/user/AccessLevelSelector';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import GuiServerDisplay from '@/components/status/GuiServerDisplay';
+import { ActiveIndicator } from '@/components/status/ActiveIndicator';
 import { useLocation } from 'react-router-dom';
 import { ProjectSceneCache } from '@/store/ProjectSceneCache';
 import { ProjectSceneInfo } from '@/karabo_data/ProjectDbInfo';
 import { useEffect, useState } from 'react';
 
-export default function KiwiNavBar() {
+export function NavBar() {
   const location = useLocation();
   const [sceneInfo, setSceneInfo] = useState<ProjectSceneInfo | null>(null);
 

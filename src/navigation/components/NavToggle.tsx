@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button } from '../ui/button';
+import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import {
   Sheet,
@@ -10,7 +10,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from '../ui/sheet';
+} from '@/components/ui/sheet';
 
 type NavToggleProps = {
   trigger?: React.ReactNode;
@@ -65,7 +65,7 @@ export default function NavToggle({
 
           'grid grid-rows-[auto_1fr_auto] p-0',
 
-          'h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]',
+          'h-dvh pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]',
           'overflow-x-hidden',
           contentClassName,
         ]
@@ -80,7 +80,7 @@ export default function NavToggle({
         <SheetHeader
           className={[
             'px-4 py-3 border-b',
-            'sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70',
+            'sticky top-0 z-10 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/70',
             headerClassName,
           ]
             .filter(Boolean)
@@ -107,7 +107,7 @@ export default function NavToggle({
           <SheetFooter
             className={[
               'px-4 py-3 border-t',
-              'sticky bottom-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70',
+              'sticky bottom-0 z-10 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/70',
               'gap-2 sm:justify-between',
               footerClassName,
             ]

@@ -1,13 +1,13 @@
 import Body from '../layouts/Body';
 import KiwiFooter from '../layouts/KiwiFooter';
 import Layout from '../layouts/Layout';
-import KiwiNavBar from '../navigation/KiwiNavBar';
+import { NavBar } from '@/navigation';
 
 const LoggedInState = () => (
   <Layout className="min-h-dvh flex flex-col overflow-hidden">
     {/* Fixed Header */}
     <div className="fixed inset-x-0 top-0 z-50 h-14 md:h-16 lg:h-20">
-      <KiwiNavBar />
+      <NavBar />
     </div>
 
     {/* Scrollable body with padding to clear fixed header & footer */}
