@@ -5,4 +5,4 @@
  * Importing from index ensures auto-registration of all builders
  */
 
-export { Scene } from './scene_builders';
+export { Scene } from './builder';

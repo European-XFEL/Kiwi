@@ -5,7 +5,7 @@
  */
 
 // Base
-import { BaseSceneElementModel } from '../scene_models/BaseModels';
+import { BaseSceneElementModel } from '../models/BaseModels';
 
 // Helpers
 import { css_textAlign_for_KrbAlignh } from '@/components/shared/helpers/KrbAlignh';
@@ -16,7 +16,7 @@ import {
   BoxLayoutModel,
   FixedLayoutModel,
   GridLayoutModel,
-} from '../scene_models/LayoutModels';
+} from '../models/LayoutModels';
 
 // Shapes
 import {
@@ -24,10 +24,10 @@ import {
   RectangleModel,
   PolygonModel,
   ArrowPolygonModel,
-} from '../scene_models/ShapeModels';
+} from '../models/ShapeModels';
 
 // static widget
-import { LabelModel } from '../scene_models/StaticWidgetModels';
+import { LabelModel } from '../models/StaticWidgetModels';
 
 //controllers
 //display
@@ -45,7 +45,7 @@ import {
 
   //vector graph
   DisplayVectorGraphElementModel,
-} from '../scene_models/controller/display';
+} from '../models/controller/display';
 //edit
 import {
   EditableComboBoxElementModel,
@@ -53,7 +53,7 @@ import {
   EditableListElementModel,
   EditableLineEditElementModel,
   IntLineEditElementModel,
-} from '../scene_models/controller/editable';
+} from '../models/controller/editable';
 
 // React Components
 import Label from '@/components/widgets/Label';
@@ -63,10 +63,10 @@ import DisplayList from '@/components/controllers/display/DisplayList';
 import DisplayCommand from '@/components/controllers/display/DisplayCommand';
 import Evaluator from '@/components/controllers/display/DisplayEvaluator';
 import DisplayTableElement from '@/components/controllers/display/DisplayTableElement';
-import Line from '@/components/scene_view/shapes/Line';
-import Rectangle from '@/components/scene_view/shapes/Rectangle';
-import Polygon from '@/components/scene_view/shapes/Polygon';
-import ArrowPolygon from '@/components/scene_view/shapes/ArrowPolygon';
+import Line from '@/scene_view/components/shapes/Line';
+import Rectangle from '@/scene_view/components/shapes/Rectangle';
+import Polygon from '@/scene_view/components/shapes/Polygon';
+import ArrowPolygon from '@/scene_view/components/shapes/ArrowPolygon';
 import DisplayStateColor from '@/components/controllers/display/DisplayStateColor';
 import DisplayCheckbox from '@/components/controllers/display/DisplayCheckbox';
 import DisplayStatefulWidgetIcon from '@/components/controllers/display/DisplayStatefulWidgetIcon';

@@ -13,7 +13,7 @@
  * - Both DisplayTrendGraph and Vector* graphs extend this
  */
 
-import { BaseControllerContainerModel } from '@/scene/scene_view/controller/BaseControllerContainerModel';
+import { BaseControllerContainerModel } from '@/scene_view/BaseControllerContainerModel';
 import type { BaseGraphProps } from '@/scene/scene_types/controller_base';
 
 export abstract class BaseGraphElementModel<

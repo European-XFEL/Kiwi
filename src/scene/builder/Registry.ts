@@ -4,7 +4,7 @@
  * Organizes builders by namespace (controller, widget, shape, layout).
  */
 
-import type { BaseSceneElementModel } from '../scene_models/BaseModels';
+import type { BaseSceneElementModel } from '../models/BaseModels';
 
 /** Builder function signature */
 export type BuilderFunction = (json: any) => BaseSceneElementModel | null;

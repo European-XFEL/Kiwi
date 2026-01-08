@@ -2,7 +2,7 @@ import React from 'react';
 import {
   ControllerContainer,
   type ControllerContainerContext,
-} from '@/components/scene_view/ControllerContainer';
+} from '@/scene_view/ControllerContainer';
 import type { BaseControllerWidgetProps } from '@/scene/scene_types/controller_base';
 
 /**
