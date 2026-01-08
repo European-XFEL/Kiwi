@@ -1,7 +1,6 @@
 import React from 'react';
 import { PropertyOverlay } from './components/overlays/PropertyOverlay';
-import type { ProxyStatus } from '@/device/enums';
-import { ProxyStatus as ProxyStatusEnum, PropertyStatus } from '@/device/enums';
+import { ProxyStatus, PropertyStatus } from '@/binding/ProxyStatus';
 import {
   useDeviceProperty,
   type UseDevicePropertyResult,
@@ -88,7 +87,7 @@ export const ControllerContainer: React.FC<ControllerContainerProps> = ({
       return 'Invalid property key';
     }
 
-    if (proxyStatus === ProxyStatusEnum.OFFLINE || isOffline) {
+    if (proxyStatus === ProxyStatus.OFFLINE || isOffline) {
       return 'Device offline';
     }
 

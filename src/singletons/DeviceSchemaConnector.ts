@@ -3,7 +3,7 @@ import { getNetwork } from '@/singletons/api';
 import { DeviceSchemaInfo } from '@/karabo_data/DeviceSchemaInfo';
 import { deviceSchemaFromHash } from '@/karabo_hash/decoders/device_schema';
 import { buildGetDeviceSchemaHash } from '@/karabo_hash/builders/monitoring_device';
-import { deviceManager } from '@/device/DeviceManager';
+import { deviceManager } from '@/binding/DeviceManager';
 
 type DeviceSchemaHandler = (deviceSchema: DeviceSchemaInfo) => void;
 

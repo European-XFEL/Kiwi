@@ -6,7 +6,7 @@ import {
   TooltipProvider,
 } from '@/components/ui/tooltip';
 import type { UseDevicePropertyResult } from '@/components/shared/hooks/useDeviceProperty';
-import { ProxyStatus, PropertyStatus } from '@/device/enums';
+import { ProxyStatus, PropertyStatus } from '@/binding/ProxyStatus';
 import { XIcon } from 'lucide-react';
 
 const CONNECTING_STATUSES: ProxyStatus[] = [

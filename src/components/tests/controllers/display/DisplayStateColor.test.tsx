@@ -4,7 +4,7 @@ import { guiStateColors } from '../../../../karabo_data/Indicators';
 
 import type { UseDevicePropertyResult } from '@/components/shared/hooks/useDeviceProperty';
 
-import { ProxyStatus, PropertyStatus } from '@/device/enums';
+import { ProxyStatus, PropertyStatus } from '@/binding/ProxyStatus';
 
 // ---------------------------------------------------
 // MOCK: useGuiStateColor

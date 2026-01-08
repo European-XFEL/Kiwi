@@ -3,7 +3,7 @@ import type { DisplayStatefulIconProps } from '@/scene/scene_types/controllers';
 import { FONT_BASE_SIZE } from '@/components/shared/helpers/fontDefaults';
 
 import type { UseDevicePropertyResult } from '@/components/shared/hooks/useDeviceProperty';
-import { ProxyStatus, PropertyStatus } from '@/device/enums';
+import { ProxyStatus, PropertyStatus } from '@/binding/ProxyStatus';
 
 // ---------------------------------------------------
 // MOCK: statefulIcons map

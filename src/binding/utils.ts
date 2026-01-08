@@ -1,12 +1,12 @@
 import {
   DEVICE_INDICATORS,
   PROPERTY_INDICATORS,
-} from '../constants/overlay_indicator_constants';
+} from './overlay_indicator_constants';
 import {
   DeviceIndicatorDescriptor,
   PropertyIndicatorDescriptor,
-} from '../device-proxy/types';
-import { PropertyStatus, ProxyStatus } from '../enums';
+} from './proxies/types';
+import { PropertyStatus, ProxyStatus } from './ProxyStatus';
 
 import { PropertySchemaAttributes } from '@/karabo_data/DeviceSchemaInfo';
 

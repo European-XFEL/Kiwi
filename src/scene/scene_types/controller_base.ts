@@ -1,5 +1,5 @@
 import type { BaseWidgetProps, BaseControllerKind } from './base';
-import type { ProxyStatus } from '@/device/enums';
+import type { ProxyStatus } from '@/binding/ProxyStatus';
 import type { UseDevicePropertyResult } from '@/components/shared/hooks/useDeviceProperty';
 
 /**
