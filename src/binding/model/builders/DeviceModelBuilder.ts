@@ -7,7 +7,7 @@ import type {
   DeviceIdentity,
   DeviceRuntimeState,
 } from '../types/DeviceType';
-import { ProxyStatus } from '@/device/enums';
+import { ProxyStatus } from '@/binding/ProxyStatus';
 import { buildPropertyMap } from './PropertyMapBuilder';
 
 function buildDeviceSchema(info: DeviceSchemaInfo): DeviceSchema {

@@ -1,27 +1,27 @@
 import * as React from 'react';
-import { deviceManager } from '@/device/DeviceManager';
+import { deviceManager } from '@/binding/DeviceManager';
 import { DevicePropertyConnector } from '@/singletons/DevicePropertyConnector';
-import type { PropertyModel } from '@/device/device-model/types/PropertyType';
+import type { PropertyModel } from '@/binding/model/types/PropertyType';
 import type { HashValueType } from '@/karabo_hash/HashValueType';
 import type { HashTypes } from 'karabo-ts';
-import { PropertyProxy } from '@/device/device-proxy/PropertyProxy';
+import { PropertyProxy } from '@/binding/proxies/PropertyProxy';
 import {
   buildPropertyDescriptor,
   type PropertyDescriptor,
-} from '@/device/device-proxy/PropertyDescriptor';
+} from '@/binding/proxies/PropertyDescriptor';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { AccessLevel } from '@/karabo_data/SchemaEnums';
-import type { EditContext } from '@/device/device-model/editability';
+import type { EditContext } from '@/binding/model/editability';
 import { splitKaraboKeys } from '@/components/shared/helpers/splitKaraboKeys';
-import { ProxyStatus, PropertyStatus } from '@/device/enums';
+import { ProxyStatus, PropertyStatus } from '@/binding/ProxyStatus';
 import {
   DEVICE_INDICATORS,
   PROPERTY_INDICATORS,
-} from '@/device/constants/overlay_indicator_constants';
+} from '@/binding/overlay_indicator_constants';
 import type {
   DeviceIndicatorDescriptor,
   PropertyIndicatorDescriptor,
-} from '@/device/device-proxy/types';
+} from '@/binding/proxies/types';
 import type { GuiStateColorKey } from '@/karabo_data/Indicators';
 import { mapGuiStateColor } from '@/components/shared/helpers/mapStateColor';
 import { Timestamp } from '@/shared/helpers/timestamps';

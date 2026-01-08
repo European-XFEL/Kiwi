@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { FONT_FAMILY_DEFAULT } from '@/components/shared/helpers/fontDefaults';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { AccessLevel } from '@/karabo_data/SchemaEnums';
-import { ProxyStatus } from '@/device/enums';
+import { ProxyStatus } from '@/binding/ProxyStatus';
 import { buildExecuteCommandHash } from '@/karabo_hash/builders/command_execution.ts';
 import { getNetwork } from '@/singletons/api';
 

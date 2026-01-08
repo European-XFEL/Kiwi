@@ -1,7 +1,7 @@
 import { EventEmitter } from '@/shared/helpers/EventEmitter';
-import type { DeviceModel } from '../device-model/types/DeviceType';
-import type { DeviceIndicatorDescriptor } from '@/device/device-proxy/types';
-import { DEVICE_INDICATORS } from '@/device/constants/overlay_indicator_constants';
+import type { DeviceModel } from '../model/types/DeviceType';
+import type { DeviceIndicatorDescriptor } from '@/topology/device-proxy/types';
+import { DEVICE_INDICATORS } from '@/binding/overlay_indicator_constants';
 
 import type { DeviceSchemaInfo } from '@/karabo_data/DeviceSchemaInfo';
 import type {
@@ -14,19 +14,16 @@ import type { DeviceInfo } from '@/karabo_data/TopologyInfo';
 import type { HashValueType } from '@/karabo_hash/HashValueType';
 import type { Attributes } from 'karabo-ts';
 
-import { ProxyStatus } from '@/device/enums';
+import { ProxyStatus } from '@/binding/ProxyStatus';
 import {
   buildDeviceModel,
   buildEmptyDeviceModel,
-} from '@/device/device-model/builders/DeviceModelBuilder';
+} from '@/binding/model/builders/DeviceModelBuilder';
 
 import { mapGuiStateColor } from '@/components/shared/helpers/mapStateColor';
 import type { GuiStateColorKey } from '@/karabo_data/Indicators';
-import type {
-  PropertyModel,
-  PropertyValue,
-} from '../device-model/types/PropertyType';
-import { PropertyBinding } from '../device-model/PropertyBinding';
+import type { PropertyModel, PropertyValue } from '../model/types/PropertyType';
+import { PropertyBinding } from '../model/PropertyBinding';
 import { Timestamp } from '@/shared/helpers/timestamps';
 
 export type SchemaChangedPayload = {

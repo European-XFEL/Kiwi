@@ -2,7 +2,7 @@ import type {
   DeviceConfigInfo,
   PropertyInfo,
 } from '@/karabo_data/DeviceConfigInfo';
-import { DeviceProxy } from '@/device/device-proxy/DeviceProxy';
+import { DeviceProxy } from '@/binding/proxies/DeviceProxy';
 import type { DeviceSchemaInfo } from '@/karabo_data/DeviceSchemaInfo';
 import type { DeviceInfo } from '@/karabo_data/TopologyInfo';
 import { Attributes, HashTypes } from 'karabo-ts';

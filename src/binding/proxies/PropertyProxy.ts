@@ -1,8 +1,5 @@
 import type { DeviceProxy } from './DeviceProxy';
-import type {
-  PropertyModel,
-  PropertyValue,
-} from '../device-model/types/PropertyType';
+import type { PropertyModel, PropertyValue } from '../model/types/PropertyType';
 import type { HashValueType } from '@/karabo_hash/HashValueType';
 import type { Attributes } from 'karabo-ts';
 
@@ -12,7 +9,7 @@ import {
 } from './PropertyDescriptor';
 
 import { useGlobalStore } from '@/store/globalAppStateStore';
-import { EditContext } from '../device-model/editability';
+import { EditContext } from '../model/editability';
 import { AccessLevel } from '@/karabo_data/SchemaEnums';
 
 /**

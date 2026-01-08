@@ -6,7 +6,7 @@ import {
   SystemTopologyUpdateInfo,
   MacroInfo,
 } from '@/karabo_data/TopologyInfo';
-import { deviceManager } from '@/device/DeviceManager';
+import { deviceManager } from '@/binding/DeviceManager';
 
 export type DeviceInfoUpdateHandler = (
   infoType: TopologyEventType,
