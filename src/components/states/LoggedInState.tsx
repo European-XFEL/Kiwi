@@ -4,7 +4,7 @@ import Layout from '../layouts/Layout';
 import KiwiNavBar from '../navigation/KiwiNavBar';
 
 const LoggedInState = () => (
-  <Layout className="min-h-[100dvh] flex flex-col overflow-hidden">
+  <Layout className="min-h-dvh flex flex-col overflow-hidden">
     {/* Fixed Header */}
     <div className="fixed inset-x-0 top-0 z-50 h-14 md:h-16 lg:h-20">
       <KiwiNavBar />

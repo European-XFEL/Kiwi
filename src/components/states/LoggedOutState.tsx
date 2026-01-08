@@ -1,6 +1,6 @@
 import { Separator } from '@/components/ui/separator';
 import Header from '../layouts/Header';
-import LoginPanel from '../auth/LoginPanel';
+import { LoginPage } from '@/login';
 
 const LoggedOutState = () => (
   <main
@@ -20,7 +20,7 @@ const LoggedOutState = () => (
       <Separator className="mt-3" />
     </Header>
     <section className="w-full">
-      <LoginPanel />
+      <LoginPage />
     </section>
   </main>
 );

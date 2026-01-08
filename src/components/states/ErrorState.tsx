@@ -31,7 +31,7 @@ const ErrorState = ({ error }: { error: string }) => (
       </CardHeader>
 
       <CardContent className="pt-0">
-        <h3 className="scroll-m-20 text-xl sm:text-2xl font-semibold tracking-tight break-words">
+        <h3 className="scroll-m-20 text-xl sm:text-2xl font-semibold tracking-tight wrap-break-word">
           {error}
         </h3>
         <p className="leading-7 mt-2 text-white/90">
