@@ -11,7 +11,11 @@ import {
   notificationInfoFromHash,
 } from '../karabo_hash/decoders/gui_session';
 import { broadcast_event, KaraboEvent } from './Mediator';
-import { decodeBinHash, hashProtocolType } from '../karabo_hash/hash_utils';
+import {
+  decodeBinHash,
+  hashProtocolType,
+  packEncodedHash,
+} from '../karabo_hash/hash_utils';
 
 import { useAppSettingsStore } from '../store/appSettingsStore';
 import { useGlobalActivityStore } from '../store/globalActivityStore';
@@ -19,21 +23,17 @@ import { useGlobalActivityStore } from '../store/globalActivityStore';
 import { AccessLevel } from '@/karabo_data/SchemaEnums';
 import { GuiServerInfo } from '@/karabo_data/GuiServerInfo';
 
-import { WebsocketBuilder } from 'websocket-ts';
+import { Websocket, WebsocketBuilder } from 'websocket-ts';
 
 import { BinaryEncoder, Hash } from 'karabo-ts';
 
 import { GuiSessionData, GuiSessionStore } from '../store/GuiSessionStore';
 import AuthServerClient from '../http/AuthServerClient';
 import { getTopology } from '@/singletons/api';
-import {
-  NextGuiServerMessage,
-  SessionErrorMessage,
-  SendHashMessage,
-  StartGuiServerSessionMessage,
-  WorkerMessage,
-  WorkerMessageType,
-} from './GuiServerSessionWorker';
+import { HashDeque } from '../karabo_hash/HashDeque';
+
+// --- Constants ---
+const MAX_ITEM_PROCESSING = 5;
 
 type SessionStartedHandler = (
   accessLevel: AccessLevel,
@@ -142,17 +142,14 @@ export class GuiServerConnector {
   // #region Hash sending
 
   sendHash(hash: Hash): void {
-    if (!this._sessionWorker) {
+    if (!this._ws) {
       console.log(
         'Invalid use of sendHash! No active GUI Server session exists!'
       );
       return;
     }
     const encodedHash = new BinaryEncoder().encodeHash(hash);
-    this._sessionWorker.postMessage({
-      type: WorkerMessageType.sendHash,
-      binHash: encodedHash,
-    });
+    this._ws.send(packEncodedHash(encodedHash));
   }
 
   // #endregion
@@ -239,7 +236,7 @@ export class GuiServerConnector {
       onStartedHandler,
       onErrorHandler
     );
-    this._startSessionWorker(host, port);
+    this._startWebsocketSession(host, port);
   }
 
   startNonAuthSession(
@@ -270,7 +267,7 @@ export class GuiServerConnector {
       onStartedHandler,
       onErrorHandler
     );
-    this._startSessionWorker(host, port);
+    this._startWebsocketSession(host, port);
   }
 
   async resumeGuiSession(
@@ -358,7 +355,7 @@ export class GuiServerConnector {
                 res.refresh_token!
               );
             }
-            this._startSessionWorker(sessionData!.host, sessionData!.port);
+            this._startWebsocketSession(sessionData!.host, sessionData!.port);
           }, // end of probing success handler
           // Handles probing failure - abort resume
           (error_msg: string) => {
@@ -398,7 +395,7 @@ export class GuiServerConnector {
 
   finishSession(): void {
     this._session = undefined;
-    this._stopSessionWorker();
+    this._stopWebsocketSession();
     GuiSessionStore.inst.deleteGuiSession();
 
     // Reset activity tracking
@@ -406,66 +403,152 @@ export class GuiServerConnector {
   }
   // #endregion
 
-  // #region GuiServerSessionWorker
+  // #region WebSocket
 
-  private _sessionWorker?: Worker;
+  private _ws?: Websocket;
+  private _hashDeque = new HashDeque();
+  private _guiServerHost?: string;
+  private _guiServerPort?: number;
 
-  private _startSessionWorker(host: string, port: number) {
-    this._sessionWorker = new Worker(
-      new URL('GuiServerSessionWorker.ts', import.meta.url),
-      { type: 'module' }
+  // The "timer" for processing the queue
+  private _timer: ReturnType<typeof setInterval> | null = null;
+
+  private _startWebsocketSession(host: string, port: number) {
+    this._guiServerHost = host;
+    this._guiServerPort = port;
+    this._hashDeque = new HashDeque();
+
+    this._stopTimer(); // Ensure no previous timer is running
+
+    if (this._ws) {
+      this._ws.close();
+    }
+
+    this._ws = new WebsocketBuilder(GuiServerConnector._wsProxyURL)
+      .onOpen(this._onWsOpen)
+      .onMessage(this._onWsMessage)
+      .onError(this._onWsError)
+      .build();
+  }
+
+  private _stopWebsocketSession() {
+    this._stopTimer();
+    this._ws?.close();
+    this._ws = undefined;
+  }
+
+  // --- WebSocket Event Handlers ---
+
+  private _onWsOpen = (ws: Websocket, _ev: Event) => {
+    // Send the initial handshake with host/port
+    ws.send(
+      JSON.stringify({
+        host: this._guiServerHost,
+        port: this._guiServerPort,
+      })
     );
-    this._sessionWorker.onmessage = this._onSessionWorkerMessage;
-    const message: StartGuiServerSessionMessage = {
-      type: WorkerMessageType.startGuiServerSession,
-      wsProxyURL: GuiServerConnector._wsProxyURL,
-      guiServerHost: host,
-      guiServerPort: port,
-    };
-    this._sessionWorker.postMessage(message);
-  }
+  };
 
-  private _stopSessionWorker() {
-    this._sessionWorker?.terminate();
-    this._sessionWorker = undefined;
-  }
-
-  private _requestNextMessage() {
-    this._sessionWorker?.postMessage({
-      type: WorkerMessageType.getNextGuiServerMessage,
-    });
-  }
-
-  private _onSessionWorkerMessage = (e: MessageEvent<WorkerMessage>) => {
-    const message = e.data;
-    switch (message.type) {
-      case WorkerMessageType.guiServerMessageReceived:
-        this._requestNextMessage();
-        break;
-      case WorkerMessageType.nextGuiServerMessage: {
-        const serverMessage = message as NextGuiServerMessage;
-        useGlobalActivityStore
-          .getState()
-          .updateActivity(
-            serverMessage.queuedItemsCount,
-            serverMessage.latestLatency
-          );
-        this._processNextGuiServerMessage(serverMessage.binHash);
-        break;
-      }
-      case WorkerMessageType.error: {
-        const errMsg = message as SessionErrorMessage;
-        this._session?.startErrorHandler(errMsg.message);
-        this._session = undefined;
-        this._stopSessionWorker();
-        break;
-      }
-      default:
-        console.error(
-          `Unrecognized message type received from GuiServerSessionWorker: ${message.type}`
-        );
+  private _onWsMessage = (ws: Websocket, ev: MessageEvent<any>) => {
+    if (typeof ev.data === 'string') {
+      // Handle textual error messages (e.g. "0|Connection failed")
+      const errMsg = (
+        ev.data.startsWith('0|') ? ev.data.substring(2) : ev.data
+      ).trim();
+      this._handleSessionError(errMsg);
+      ws.close();
+      this._ws = undefined;
+    } else {
+      // Handle binary Hash data
+      const msgBlob = ev.data as Blob;
+      msgBlob.arrayBuffer().then((binHash: ArrayBuffer) => {
+        this._hashDeque.pushHash(binHash);
+        // Start the timer if not already running
+        this._ensureTimerRunning();
+      });
     }
   };
+
+  private _onWsError = (ws: Websocket, ev: Event) => {
+    let message: string | undefined;
+
+    if (!ws.underlyingWebsocket) {
+      message = 'Websocket client initialization error';
+    } else if (ws.underlyingWebsocket.CLOSED) {
+      message = 'No connection to websocket server';
+    } else if (ws.underlyingWebsocket.CLOSING) {
+      message = 'Websocket connection being closed.';
+    } else {
+      message = ev.toString();
+    }
+
+    ws.close();
+    this._ws = undefined;
+    if (message) {
+      this._handleSessionError(message);
+    }
+  };
+
+  // --- Background / Batch Processing Logic ---
+
+  private _ensureTimerRunning() {
+    if (this._timer === null) {
+      // Start the interval, effectively creating a loop that yields control between batches.
+      this._timer = setInterval(() => this._processQueueBatch(), 0);
+    }
+  }
+
+  private _stopTimer() {
+    if (this._timer !== null) {
+      clearInterval(this._timer);
+      this._timer = null;
+    }
+  }
+
+  /**
+   * Executes up to ``MAX_ITEM_PROCESSING`` tasks if existing.
+   */
+  private _processQueueBatch() {
+    let taskCounter = MAX_ITEM_PROCESSING;
+    // While queue has items AND we have "credits" to process
+    while (this._hashDeque.itemsCount > 0 && taskCounter > 0) {
+      const binHash = this._hashDeque.popHash();
+
+      if (binHash) {
+        // Execute the task
+        this._processNextGuiServerMessage(binHash);
+
+        // XXX: Check for Big Data in future
+      }
+      taskCounter--;
+    }
+
+    // Update global activity stats (Queue size monitoring)
+    useGlobalActivityStore
+      .getState()
+      .updateActivity(
+        this._hashDeque.itemsCount,
+        this._hashDeque.latestLatency
+      );
+
+    // If queue is empty, stop the timer
+    if (this._hashDeque.itemsCount === 0) {
+      this._stopTimer();
+    }
+  }
+
+  /**
+   * Internal logic to handle errors, originally in the onSessionWorkerMessage -> error case
+   */
+  private _handleSessionError(message: string) {
+    if (this._session) {
+      this._session.startErrorHandler(message);
+      this._session = undefined;
+    } else if (this._onSessionDropped) {
+      this._onSessionDropped(message);
+    }
+    this._stopWebsocketSession();
+  }
 
   private _processNextGuiServerMessage = (binHash: ArrayBuffer) => {
     if (binHash) {
