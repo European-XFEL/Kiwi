@@ -18,16 +18,10 @@ import { getDbConn } from '@/singletons/api';
 import { ProjectItemInfo, ProjectSceneInfo } from '@/karabo_data/ProjectDbInfo';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { ProjectSceneCache } from '@/store/ProjectSceneCache';
-import ProjectsTable from '../dialogs/ProjectTable';
-import ScenesTable from '../dialogs/ScenesTable';
+import ProjectsTable from './components/ProjectTable';
+import ScenesTable from './components/ScenesTable';
 import { cn } from '@/shared/helpers/cn';
-
-export type SceneBreadcrumbProps = {
-  domain: string;
-  projectName: string;
-  sceneName: string;
-  className?: string;
-};
+import type { SceneBreadcrumbProps } from './types/project.types';
 
 export default function SceneBreadcrumb({
   domain,

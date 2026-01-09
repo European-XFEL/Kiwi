@@ -6,13 +6,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-
-export type DomainSelectorProps = {
-  domains: string[];
-  selectedDomain: string;
-  onDomainChange: (domain: string) => void;
-  disabled?: boolean;
-};
+import type { DomainSelectorProps } from '../types/project.types';
 
 export default function DomainSelector({
   domains,
@@ -28,7 +22,7 @@ export default function DomainSelector({
         onValueChange={onDomainChange}
         disabled={disabled}
       >
-        <SelectTrigger id="domain-select" className="w-full min-w-[12rem]">
+        <SelectTrigger id="domain-select" className="w-full min-w-48">
           <SelectValue placeholder="Select domain" />
         </SelectTrigger>
         <SelectContent className="max-h-[300px]">

@@ -11,13 +11,7 @@ import {
   ProjectSceneInfo,
   asLocalDateTimeString,
 } from '@/karabo_data/ProjectDbInfo';
-
-export type ScenesTableProps = {
-  scenes: ProjectSceneInfo[];
-  selectedScene?: ProjectSceneInfo;
-  onSceneClick: (scene: ProjectSceneInfo) => void;
-  onSceneDoubleClick: (scene: ProjectSceneInfo) => void;
-};
+import type { ScenesTableProps } from '../types/project.types';
 
 export default function ScenesTable({
   scenes,

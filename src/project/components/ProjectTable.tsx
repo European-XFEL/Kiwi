@@ -11,12 +11,7 @@ import {
   ProjectItemInfo,
   asLocalDateTimeString,
 } from '@/karabo_data/ProjectDbInfo';
-
-export type ProjectsTableProps = {
-  projects: ProjectItemInfo[];
-  selectedProject?: ProjectItemInfo;
-  onProjectClick: (project: ProjectItemInfo) => void;
-};
+import type { ProjectsTableProps } from '../types/project.types';
 
 export default function ProjectsTable({
   projects,

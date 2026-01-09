@@ -6,12 +6,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-
-export type ProjectFilterProps = {
-  onFilter: () => void;
-  onClear: () => void;
-  inputRef: React.RefObject<HTMLInputElement | null>; // Allow null
-};
+import type { ProjectFilterProps } from '../types/project.types';
 
 export default function ProjectFilter({
   onFilter,
