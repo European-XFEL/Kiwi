@@ -20,7 +20,7 @@ import DomainSelector from './DomainSelector';
 import ProjectFilter from './ProjectFilter';
 import ProjectsTable from './ProjectTable';
 import ScenesTable from './ScenesTable';
-import LoadingStatus from '../status/LoadingStatus';
+import { LoadingStatus } from '@/status';
 
 enum ActivityStatus {
   NO_ACTIVITY,

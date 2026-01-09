@@ -4,10 +4,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useGlobalStore } from '@/store/globalAppStateStore';
-
-export type GuiServerDisplayProps = {
-  className?: string;
-};
+import type { GuiServerDisplayProps } from '../types/status.types';
 
 export default function GuiServerDisplay({ className }: GuiServerDisplayProps) {
   const { sessionInfo } = useGlobalStore();

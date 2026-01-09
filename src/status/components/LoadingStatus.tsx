@@ -1,11 +1,6 @@
 import { Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-
-export type LoadingStatusProps = {
-  isLoading: boolean;
-  loadingText?: string;
-  error?: string;
-};
+import type { LoadingStatusProps } from '../types/status.types';
 
 export default function LoadingStatus({
   isLoading,

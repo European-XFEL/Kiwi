@@ -1,12 +1,4 @@
-import * as React from 'react';
-
-export type LogoProps = React.HTMLAttributes<HTMLDivElement> & {
-  imageUrl?: string;
-  logoText?: string;
-  alt?: string;
-  imageClassName?: string;
-  textClassName?: string;
-};
+import type { LogoProps } from '../types/navigation.types';
 
 export default function Logo({
   className,
