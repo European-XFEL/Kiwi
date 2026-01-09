@@ -28,11 +28,12 @@ import {
   KaraboEventMap,
   PayloadMap as EventPayload,
 } from './Mediator';
+import { getManager } from '@/singletons/api';
 
 export class ProjectDBConnector {
   private readonly eventMap: KaraboEventMap;
 
-  private constructor() {
+  public constructor() {
     this.eventMap = {
       [KaraboEvent.ListItems]: this.#_onEventListItems,
       [KaraboEvent.ListDomains]: this.#_onEventListDomains,
@@ -117,7 +118,7 @@ export class ProjectDBConnector {
     }
     // Registers the handler for handling projectLoadItems messages from the GUI Server
     // for the duration of the listScenes operation.
-    getNetwork().registerHashHandler(
+    getManager().registerHashHandler(
       'projectLoadItems',
       this.#_onLoadItemsHash
     );
@@ -231,7 +232,7 @@ export class ProjectDBConnector {
       // is launched.
       this.#_collectedScenes = undefined;
       // Unregister the hash handler for the duration of the listScenes operation.
-      getNetwork().unregisterHashHandler('projectLoadItems');
+      getManager().unregisterHashHandler('projectLoadItems');
     }
   };
 
@@ -259,7 +260,7 @@ export class ProjectDBConnector {
     }
     // Registers the handler for handling projectLoadItems messages from the GUI Server
     // for the duration of the getScene operation.
-    getNetwork().registerHashHandler(
+    getManager().registerHashHandler(
       'projectLoadItems',
       this.#_onLoadSceneHash
     );
@@ -322,7 +323,7 @@ export class ProjectDBConnector {
     }
     this.#_onGetSceneCallback = undefined;
     // Unregister the hash handler for the duration of the getScene operation.
-    getNetwork().unregisterHashHandler('projectLoadItems');
+    getManager().unregisterHashHandler('projectLoadItems');
   };
 
   // #endregion

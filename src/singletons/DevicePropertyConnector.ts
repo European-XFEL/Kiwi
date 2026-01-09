@@ -1,5 +1,5 @@
 import { Hash, HashTypes, HashValue } from 'karabo-ts';
-import { getNetwork, getTopology } from '@/singletons/api';
+import { getNetwork, getManager, getTopology } from '@/singletons/api';
 import {
   buildStartMonitoringHash,
   buildStopMonitoringHash,
@@ -23,7 +23,7 @@ type PropertyUpdateHandler = (
 export class DevicePropertyConnector {
   // #region Singleton
   private constructor() {
-    getNetwork().registerHashHandler(
+    getManager().registerHashHandler(
       'deviceConfigurations',
       this._onDeviceConfigurations
     );
@@ -272,7 +272,6 @@ export class DevicePropertyConnector {
   ): void => {
     const schema = DeviceSchemaConnector.inst.getDeviceSchema(deviceId);
     const currentProperties = this._deviceConfigurations.get(deviceId) ?? [];
-
     if (!schema) {
       console.warn(
         `Merging configuration for device "${deviceId}" whose schema is not yet known!`

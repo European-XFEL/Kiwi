@@ -3,7 +3,7 @@ import { initAppSettings } from './AppSettings';
 import { useAppSettingsStore } from './store/appSettingsStore';
 import { useGlobalStore } from './store/globalAppStateStore';
 import { AccessLevel } from '@/karabo_data/SchemaEnums';
-import { getNetwork } from './singletons/api';
+import { getNetwork, getManager } from './singletons/api';
 import AuthServerClient from './http/AuthServerClient';
 import { BrowserRouter } from 'react-router-dom';
 import AppRouter from './components/router/AppRouter';
@@ -22,7 +22,8 @@ const App: React.FC = () => {
 
     if (!executedOnceRef.current) {
       executedOnceRef.current = 'true';
-
+      // Initialize the Manager singleton;
+      getManager();
       // TODO: No attachment of handlers ... use mediator
       getNetwork().onSessionDropped = (err_msg: string) => {
         setError(err_msg);
