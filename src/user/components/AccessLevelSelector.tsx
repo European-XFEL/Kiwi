@@ -13,7 +13,7 @@ import { useAccessLevel } from '@/components/shared/hooks/useAccessLevel';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { AccessLevel } from '@/karabo_data/SchemaEnums';
 import { getAccessLevelDisplay } from '@/shared/helpers/getAccessLevelDisplay';
-import { GuiSessionStore } from '@/store/GuiSessionStore';
+import { getConfig } from '@/singletons/api';
 import type { AccessLevelSelectorProps } from '../types/user.types';
 
 export default function AccessLevelSelector({
@@ -48,10 +48,10 @@ export default function AccessLevelSelector({
 
     // Persist the change to encrypted localStorage for non-auth sessions only
     try {
-      const storedSession = await GuiSessionStore.inst.loadGuiSessionData();
+      const storedSession = await getConfig().loadSession();
 
       if (storedSession && !storedSession.refreshToken) {
-        await GuiSessionStore.inst.saveNonAuthGuiSession(
+        await getConfig().saveNonAuthSession(
           sessionInfo.guiServerHost,
           sessionInfo.guiServerPort,
           sessionInfo.loggedUser,

@@ -4,6 +4,7 @@ import { ProjectDBConnector } from './ProjectDBConnector';
 import { TopologyConnector } from './TopologyConnector';
 import { Manager } from './Manager';
 import { Mediator } from './Mediator';
+import { ConfigurationStore } from './Configuration';
 
 // We use a Map for better performance and clarity than a plain object
 export const singletons = new Map<string, any>();
@@ -36,3 +37,4 @@ export const getNetwork = buildGetter('network', Network);
 export const getTopology = buildGetter('topology', TopologyConnector);
 export const getManager = buildGetter('manager', Manager);
 export const getMediator = buildGetter('mediator', Mediator);
+export const getConfig = buildGetter('config', ConfigurationStore);

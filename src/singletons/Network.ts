@@ -7,7 +7,7 @@ import { GuiServerInfo } from '@/karabo_data/GuiServerInfo';
 import { guiServerInfoFromHash } from '../karabo_hash/decoders/gui_session';
 import { HashDeque } from '../karabo_hash/HashDeque';
 import { buildLoginHash } from '../karabo_hash/builders/gui_session';
-import { GuiSessionStore, GuiSessionData } from '../store/GuiSessionStore';
+import { getConfig } from '@/singletons/api';
 import AuthServerClient from '../http/AuthServerClient';
 import { AccessLevel } from '@/karabo_data/SchemaEnums';
 
@@ -190,9 +190,8 @@ export class Network {
   ): Promise<void> {
     if (this._session) return;
 
-    let sessionData: GuiSessionData | undefined;
     try {
-      sessionData = await GuiSessionStore.inst.loadGuiSessionData();
+      let sessionData = await getConfig().loadSession();
       if (!sessionData) {
         onNoSessionHandler();
         return;
@@ -207,7 +206,7 @@ export class Network {
             sessionData!.refreshToken != undefined;
 
           if (isServerAuthenticated != sessionDataAuthenticated) {
-            GuiSessionStore.inst.deleteGuiSession();
+            getConfig().deleteSession();
             onErrorHandler(
               'Session authentication mode mismatch. Resume aborted.'
             );
@@ -234,7 +233,7 @@ export class Network {
             );
 
             if (!res.success) {
-              GuiSessionStore.inst.deleteGuiSession();
+              getConfig().deleteSession();
               onErrorHandler(res.error_msg!);
               return;
             }
@@ -251,7 +250,7 @@ export class Network {
               startErrorHandler: onErrorHandler,
             };
 
-            await GuiSessionStore.inst.saveAuthGuiSession(
+            await getConfig().saveAuthSession(
               sessionData!.host,
               sessionData!.port,
               sessionData!.userId,
@@ -261,12 +260,12 @@ export class Network {
           this._startWebsocketSession(sessionData!.host, sessionData!.port);
         },
         (error_msg: string) => {
-          GuiSessionStore.inst.deleteGuiSession();
+          getConfig().deleteSession();
           onErrorHandler(`Failed to probe server: "${error_msg}".`);
         }
       );
     } catch (error: any) {
-      GuiSessionStore.inst.deleteGuiSession();
+      getConfig().deleteSession();
       onErrorHandler(error.toString());
     }
   }
@@ -274,7 +273,7 @@ export class Network {
   public finishSession(): void {
     this._session = undefined;
     this._stopWebsocketSession();
-    GuiSessionStore.inst.deleteGuiSession();
+    getConfig().deleteSession();
     useGlobalActivityStore.getState().reset();
   }
 

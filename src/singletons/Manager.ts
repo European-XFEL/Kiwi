@@ -10,8 +10,7 @@ import {
 import { broadcast_event, KaraboEvent } from '@/events';
 import { decodeBinHash, hashProtocolType } from '../karabo_hash/hash_utils';
 import { AccessControlManager } from '@/shared/helpers/AccessLevel';
-import { GuiSessionStore } from '../store/GuiSessionStore';
-import { getTopology, getNetwork } from '@/singletons/api';
+import { getTopology, getNetwork, getConfig } from '@/singletons/api';
 import { Hash } from 'karabo-ts';
 
 export class Manager {
@@ -67,7 +66,7 @@ export class Manager {
     // Check for Non-Auth session logic
     const session = this._network.session;
     if (session && !session.isAuthSession) {
-      GuiSessionStore.inst.saveNonAuthGuiSession(
+      getConfig().saveNonAuthSession(
         session.host,
         session.port,
         session.userId!,
@@ -104,7 +103,7 @@ export class Manager {
 
     if (!session) return;
 
-    GuiSessionStore.inst.saveAuthGuiSession(
+    getConfig().saveAuthSession(
       session.host,
       session.port,
       session.userId!,
