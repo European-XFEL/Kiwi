@@ -1,7 +1,7 @@
 import { Separator } from '@/components/ui/separator';
 import TopicDisplay from '../status/TopicDisplay';
 import GuiServerDisplay from '../status/GuiServerDisplay';
-import ConnectionTimer from '../user/ConnectionTimer';
+import { ConnectionTimer } from '@/user';
 import Footer from './Footer';
 import SceneSizeDisplay from '../scene/SceneSizeDisplay';
 

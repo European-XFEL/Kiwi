@@ -7,8 +7,7 @@ import LoadProjectScene from '@/components/scene/LoadProjectScene';
 import Logo from '@/components/branding/Logo';
 import SceneStatus from '@/components/scene/SceneStatus';
 import SceneBreadcrumb from '@/components/scene/SceneBreadcrumb';
-import UserInfo from '@/components/user/UserProfile';
-import AccessLevelSelector from '@/components/user/AccessLevelSelector';
+import { UserProfile, AccessLevelSelector } from '@/user';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import GuiServerDisplay from '@/components/status/GuiServerDisplay';
@@ -48,7 +47,7 @@ export function NavBar() {
             footerClassName="flex-col items-stretch gap-3"
             primaryAction={
               <div className="w-full">
-                <UserInfo />
+                <UserProfile />
               </div>
             }
           >
@@ -161,7 +160,7 @@ export function NavBar() {
           <Separator orientation="vertical" className="h-8 mx-2" />
 
           <NavItem>
-            <UserInfo />
+            <UserProfile />
           </NavItem>
         </div>
       </NavigationMenu>
