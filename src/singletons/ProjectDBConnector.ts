@@ -23,11 +23,11 @@ import {
 } from '../karabo_hash/decoders/project_db';
 
 import {
-  get_mediator,
-  KaraboEvent,
+  register_for_broadcasts,
+  unregister_for_broadcasts,
   KaraboEventMap,
-  PayloadMap as EventPayload,
-} from './Mediator';
+  KaraboEvent,
+} from '@/events';
 import { getManager } from '@/singletons/api';
 
 export class ProjectDBConnector {
@@ -39,11 +39,11 @@ export class ProjectDBConnector {
       [KaraboEvent.ListDomains]: this.#_onEventListDomains,
     };
 
-    get_mediator().registerListener(this.eventMap);
+    register_for_broadcasts(this.eventMap);
   }
 
   dispose() {
-    get_mediator().unregisterListener(this.eventMap);
+    unregister_for_broadcasts(this.eventMap);
   }
 
   // #region List Projects
@@ -72,7 +72,7 @@ export class ProjectDBConnector {
   // The internal callback registered to handle projectListItems messages
   // received from the GUI Server. Responsible for dispatching the call to the
   // callback registered by the external caller of listProjects.
-  #_onEventListItems = (hash: EventPayload): void => {
+  #_onEventListItems = (hash: any): void => {
     let data = hash['data'] as Hash;
     let projectsInfo: ListProjectsResult;
     try {
@@ -350,7 +350,7 @@ export class ProjectDBConnector {
   // from the GUI Server. Responsible for dispatching the call to
   // #_onListDomainsCallback registered by the external caller that invoked
   // listDomains.
-  #_onEventListDomains = (hash: EventPayload): void => {
+  #_onEventListDomains = (hash: any): void => {
     let data = hash['data'] as Hash;
     let domainsInfo: ListDomainsResult;
     try {

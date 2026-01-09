@@ -40,7 +40,7 @@ export interface GuiServerSession {
   startErrorHandler: SessionStartErrorHandler;
 }
 
-export class NetworkClient {
+export class Network {
   // "Signal" for received data
   public onReceivedData?: (binHash: ArrayBuffer) => void;
 

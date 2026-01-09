@@ -1,89 +1,79 @@
-import { useEffect, useRef } from 'react';
+type BroadCastHandler = (data: any) => void;
 
-export enum KaraboEvent {
-  ListDomains = 'ListDomains',
-  ListItems = 'ListProjects',
-}
+export class Mediator {
+  private listeners = new Map<any, Set<BroadCastHandler>>();
 
-export type PayloadMap = Record<string, unknown>;
-export type BroadcastHandler = (data: PayloadMap) => void;
-type KaraboEventMap = Partial<Record<KaraboEvent, BroadcastHandler>>;
-
-class Mediator {
-  private listeners = new Map<KaraboEvent, Set<BroadcastHandler>>();
-
-  private handle(sender: KaraboEvent, data: any) {
+  postEvent(sender: any, data: any = {}) {
     const set = this.listeners.get(sender);
-    if (!set || set.size === 0) return;
+    if (!set || set.size === 0) {
+      return;
+    }
 
-    // Shallow copy for safety!
-    for (const h of Array.from(set)) {
+    for (const h of set) {
       h(data);
     }
   }
 
-  postEvent(sender: KaraboEvent, data: PayloadMap = {}) {
-    queueMicrotask(() => this.handle(sender, data));
-  }
-
-  on(sender: KaraboEvent, handler: BroadcastHandler): () => void {
+  on(sender: any, handler: BroadCastHandler): () => void {
     let set = this.listeners.get(sender);
-    if (!set) this.listeners.set(sender, (set = new Set()));
+    if (!set) {
+      set = new Set<BroadCastHandler>();
+      this.listeners.set(sender, set);
+    }
+
     set.add(handler);
 
     return () => {
       const s = this.listeners.get(sender);
-      if (!s) return;
+      if (!s) {
+        return;
+      }
+
       s.delete(handler);
-      if (s.size === 0) this.listeners.delete(sender);
+
+      if (s.size === 0) {
+        this.listeners.delete(sender);
+      }
     };
   }
 
-  registerListener(eventMap: KaraboEventMap) {
+  registerListener(eventMap: Partial<Record<any, BroadCastHandler>>) {
     for (const [k, handler] of Object.entries(eventMap) as Array<
-      [KaraboEvent, BroadcastHandler]
+      [any, BroadCastHandler | undefined]
     >) {
-      if (!handler) continue;
+      if (!handler) {
+        console.log('Not a handler registered ...');
+        continue;
+      }
+
       let set = this.listeners.get(k);
-      if (!set) this.listeners.set(k, (set = new Set()));
+      if (!set) {
+        set = new Set<BroadCastHandler>();
+        this.listeners.set(k, set);
+      }
+
       set.add(handler);
     }
   }
 
-  unregisterListener(eventMap: KaraboEventMap) {
+  unregisterListener(eventMap: Partial<Record<any, BroadCastHandler>>) {
     for (const [k, handler] of Object.entries(eventMap) as Array<
-      [KaraboEvent, BroadcastHandler]
+      [any, BroadCastHandler | undefined]
     >) {
-      if (!handler) continue;
+      if (!handler) {
+        continue;
+      }
+
       const set = this.listeners.get(k);
-      if (!set) continue;
+      if (!set) {
+        continue;
+      }
 
       set.delete(handler);
-      if (set.size === 0) this.listeners.delete(k);
+
+      if (set.size === 0) {
+        this.listeners.delete(k);
+      }
     }
   }
-}
-
-const mediator = new Mediator();
-export const get_mediator = () => mediator;
-
-export function broadcast_event(sender: KaraboEvent, data: PayloadMap = {}) {
-  mediator.postEvent(sender, data);
-}
-
-export type { KaraboEventMap };
-
-/**
- * React hook: subscribe once (per key), return unsubscribe and call only per key
- */
-export function useKaraboEvent(
-  key: KaraboEvent,
-  handler: (data: PayloadMap) => void
-) {
-  const ref = useRef(handler);
-  ref.current = handler;
-
-  useEffect(() => {
-    return mediator.on(key, (data) => ref.current(data));
-  }, [key]);
 }
