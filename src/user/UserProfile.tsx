@@ -7,7 +7,8 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel,
-} from '../ui/dropdown-menu';
+} from '@/components/ui/dropdown-menu';
+
 import { getNetwork } from '@/singletons/api';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { getInitials } from '@/shared/helpers/getInitials';
