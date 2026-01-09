@@ -1,13 +1,7 @@
 import { RecentSceneModel } from '@/view_models/RecentScenesModel';
 import RecentSceneItem from './RecentSceneItem';
 import { Separator } from '@/components/ui/separator';
-
-export type RecentScenesListProps = {
-  scenes: RecentSceneModel[];
-  onSceneOpen: (scene: RecentSceneModel) => void;
-  onSceneRemove: (scene: RecentSceneModel) => void;
-  disabled?: boolean;
-};
+import type { RecentScenesListProps } from '../types/project.types';
 
 export default function RecentScenesList({
   scenes,

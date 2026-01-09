@@ -11,28 +11,20 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { getDbConn } from '@/singletons/api';
-import {
-  ProjectItemInfo,
-  ProjectSceneInfo,
-} from '../../karabo_data/ProjectDbInfo';
-import { useGlobalStore } from '../../store/globalAppStateStore';
-import DomainSelector from './DomainSelector';
-import ProjectFilter from './ProjectFilter';
-import ProjectsTable from './ProjectTable';
-import ScenesTable from './ScenesTable';
+import { ProjectItemInfo, ProjectSceneInfo } from '@/karabo_data/ProjectDbInfo';
+import { useGlobalStore } from '@/store/globalAppStateStore';
+import DomainSelector from './components/DomainSelector';
+import ProjectFilter from './components/ProjectFilter';
+import ProjectsTable from './components/ProjectTable';
+import ScenesTable from './components/ScenesTable';
 import { LoadingStatus } from '@/status';
+import type { SelectProjectSceneDialogProps } from './types/project.types';
 
 enum ActivityStatus {
   NO_ACTIVITY,
   GETTING_DOMAINS,
   GETTING_PROJECTS,
   GETTING_SCENES,
-}
-
-export interface SelectProjectSceneDialogProps {
-  open: boolean;
-  onSceneSelected: (scene: ProjectSceneInfo) => void;
-  onCancel: () => void;
 }
 
 export default function SelectProjectSceneDialog({

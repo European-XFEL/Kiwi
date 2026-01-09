@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { RecentSceneModel } from '../view_models/RecentScenesModel';
 import { useGlobalStore } from '../store/globalAppStateStore';
 import useRecentStore from '../store/recentScenesStore';
-import RecentScenesList from './scene/RecentScenesList';
+import { RecentScenesList } from '@/project';
 import BookmarkInfo from './info/BookmarkInfo';
 import { Separator } from './ui/separator';
 

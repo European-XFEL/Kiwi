@@ -1,13 +1,7 @@
 import { Folder, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { RecentSceneModel } from '@/view_models/RecentScenesModel';
-
-export type RecentSceneItemProps = {
-  scene: RecentSceneModel;
-  onOpen: (scene: RecentSceneModel) => void;
-  onRemove: (scene: RecentSceneModel) => void;
-  disabled?: boolean;
-};
+import type { RecentSceneItemProps } from '../types/project.types';
 
 export default function RecentSceneItem({
   scene,

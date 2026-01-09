@@ -1,23 +1,12 @@
 import { useState } from 'react';
 import { FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import SelectProjectSceneDialog from '../dialogs/SelectProjectSceneDialog';
+import SelectProjectSceneDialog from './SelectProjectSceneDialog';
 import { ProjectSceneInfo } from '@/karabo_data/ProjectDbInfo';
 import { useNavigate } from 'react-router-dom';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { ProjectSceneCache } from '@/store/ProjectSceneCache';
-
-export type LoadProjectSceneProps = {
-  className?: string;
-  size?: 'default' | 'sm' | 'lg' | 'icon';
-  variant?:
-    | 'default'
-    | 'destructive'
-    | 'outline'
-    | 'secondary'
-    | 'ghost'
-    | 'link';
-};
+import type { LoadProjectSceneProps } from './types/project.types';
 
 export default function LoadProjectScene({
   className,
