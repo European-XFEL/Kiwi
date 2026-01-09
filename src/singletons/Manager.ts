@@ -7,7 +7,7 @@ import {
   loginInfoFromHash,
   notificationInfoFromHash,
 } from '../karabo_hash/decoders/gui_session';
-import { broadcast_event, KaraboEvent } from './Mediator';
+import { broadcast_event, KaraboEvent } from '@/events';
 import { decodeBinHash, hashProtocolType } from '../karabo_hash/hash_utils';
 import { AccessControlManager } from '@/shared/helpers/AccessLevel';
 import { GuiSessionStore } from '../store/GuiSessionStore';
