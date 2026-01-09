@@ -1,5 +1,5 @@
 import { Hash } from 'karabo-ts';
-import { getNetwork } from '@/singletons/api';
+import { getNetwork, getManager } from '@/singletons/api';
 import { DeviceSchemaInfo } from '@/karabo_data/DeviceSchemaInfo';
 import { deviceSchemaFromHash } from '@/karabo_hash/decoders/device_schema';
 import { buildGetDeviceSchemaHash } from '@/karabo_hash/builders/monitoring_device';
@@ -11,7 +11,7 @@ type DeviceSchemaHandler = (deviceSchema: DeviceSchemaInfo) => void;
 export class DeviceSchemaConnector {
   // #region Singleton
   private constructor() {
-    getNetwork().registerHashHandler('deviceSchema', this._onDeviceSchema);
+    getManager().registerHashHandler('deviceSchema', this._onDeviceSchema);
   }
 
   private static _inst?: DeviceSchemaConnector;
