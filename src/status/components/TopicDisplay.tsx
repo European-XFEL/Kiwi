@@ -1,8 +1,5 @@
 import { useGlobalStore } from '@/store/globalAppStateStore';
-
-export type TopicDisplayProps = {
-  className?: string;
-};
+import type { TopicDisplayProps } from '../types/status.types';
 
 export default function TopicDisplay({ className }: TopicDisplayProps) {
   const { sessionInfo } = useGlobalStore();

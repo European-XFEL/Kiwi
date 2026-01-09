@@ -11,23 +11,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-
-type NavToggleProps = {
-  trigger?: React.ReactNode;
-  title?: React.ReactNode;
-  description?: React.ReactNode;
-  side?: 'top' | 'right' | 'bottom' | 'left';
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-  closeOnContentClick?: boolean;
-  contentClassName?: string;
-  headerClassName?: string;
-  footerClassName?: string;
-  showFooter?: boolean;
-  primaryAction?: React.ReactNode;
-  triggerButtonProps?: React.ComponentProps<typeof Button>;
-  children?: React.ReactNode;
-};
+import type { NavToggleProps } from '../types/navigation.types';
 
 export default function NavToggle({
   trigger,

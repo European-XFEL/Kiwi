@@ -14,10 +14,7 @@ import { useGlobalStore } from '@/store/globalAppStateStore';
 import { AccessLevel } from '@/karabo_data/SchemaEnums';
 import { getAccessLevelDisplay } from '@/shared/helpers/getAccessLevelDisplay';
 import { GuiSessionStore } from '@/store/GuiSessionStore';
-
-export interface AccessLevelSelectorProps {
-  compact?: boolean;
-}
+import type { AccessLevelSelectorProps } from '../types/user.types';
 
 export default function AccessLevelSelector({
   compact = true,

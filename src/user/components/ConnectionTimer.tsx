@@ -6,10 +6,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-
-export type ConnectionTimerProps = {
-  className?: string;
-};
+import type { ConnectionTimerProps } from '../types/user.types';
 
 export default function ConnectionTimer({ className }: ConnectionTimerProps) {
   const { sessionInfo } = useGlobalStore();

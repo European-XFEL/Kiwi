@@ -1,6 +1,4 @@
-import * as React from 'react';
-
-export type NavItemProps = React.LiHTMLAttributes<HTMLLIElement>;
+import type { NavItemProps } from '../types/navigation.types';
 
 export function NavItem({ className, children, ...rest }: NavItemProps) {
   return (
