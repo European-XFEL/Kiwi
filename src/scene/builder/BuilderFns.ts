@@ -8,8 +8,8 @@
 import { BaseSceneElementModel } from '../models/BaseModels';
 
 // Helpers
-import { css_textAlign_for_KrbAlignh } from '@/components/shared/helpers/KrbAlignh';
-import { FONT_BASE_SIZE } from '@/components/shared/helpers/fontDefaults';
+import { css_textAlign_for_KrbAlignh } from '@/scene/utils/KrbAlignh';
+import { FONT_BASE_SIZE } from '@/controllers/utils/fontDefaults';
 
 // Layouts
 import {
@@ -57,26 +57,28 @@ import {
 
 // React Components
 import Label from '@/components/widgets/Label';
-import DisplayLabel from '@/components/controllers/display/DisplayLabel';
-import DisplayLineEdit from '@/components/controllers/display/DisplayLineEdit';
-import DisplayList from '@/components/controllers/display/DisplayList';
-import DisplayCommand from '@/components/controllers/display/DisplayCommand';
-import Evaluator from '@/components/controllers/display/DisplayEvaluator';
-import DisplayTableElement from '@/components/controllers/display/DisplayTableElement';
+import {
+  DisplayLabel,
+  DisplayLineEdit,
+  DisplayList,
+  DisplayCommand,
+  DisplayEvaluator as Evaluator,
+  DisplayTableElement,
+  DisplayStateColor,
+  DisplayCheckbox,
+  DisplayStatefulWidgetIcon,
+  DisplayTrendGraph,
+  DisplayVectorGraph,
+  EditableComboBox,
+  EditableLineEdit,
+  DoubleLineEdit,
+  EditableList,
+  IntLineEdit,
+} from '@/controllers';
 import Line from '@/scene_view/components/shapes/Line';
 import Rectangle from '@/scene_view/components/shapes/Rectangle';
 import Polygon from '@/scene_view/components/shapes/Polygon';
 import ArrowPolygon from '@/scene_view/components/shapes/ArrowPolygon';
-import DisplayStateColor from '@/components/controllers/display/DisplayStateColor';
-import DisplayCheckbox from '@/components/controllers/display/DisplayCheckbox';
-import DisplayStatefulWidgetIcon from '@/components/controllers/display/DisplayStatefulWidgetIcon';
-import DisplayTrendGraph from '@/components/controllers/display/DisplayTrendGraph';
-import DisplayVectorGraph from '@/components/controllers/display/DisplayVectorGraph';
-import EditableComboBox from '@/components/controllers/editable/EditableComboBox';
-import EditableLineEdit from '@/components/controllers/editable/EditableLineEdit';
-import DoubleLineEdit from '@/components/controllers/editable/DoubleLineEdit';
-import EditableList from '@/components/controllers/editable/EditableList';
-import IntLineEdit from '@/components/controllers/editable/IntLineEdit';
 import FixedLayout from '@/components/layouts/FixedLayout';
 import BoxLayout from '@/components/layouts/BoxLayout';
 import GridLayout from '@/components/layouts/GridLayout';

@@ -30,10 +30,10 @@ export function buildPropertyMap(
 
       const model = properties.get(propSchema.path);
       if (model) {
-        model.value = propInfo.value;
-        model.type = propInfo.type;
-        model.timeAttrs = propInfo.timeAttrs;
-        model.info = propInfo;
+        model.binding.value = propInfo.value;
+        model.binding.type = propInfo.type;
+        model.binding.timeAttrs = propInfo.timeAttrs;
+        model.binding.info = propInfo;
       }
     }
   }

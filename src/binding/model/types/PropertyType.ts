@@ -8,6 +8,7 @@ import type { HashValueType } from '@/karabo_hash/HashValueType';
 import type { HashTypes } from 'karabo-ts';
 import type { PropertySchema } from './SchemaType';
 import type { Timestamp } from '@/shared/helpers/timestamps';
+import type { PropertyInfo } from '@/karabo_data/DeviceConfigInfo';
 
 // Any value a property can hold.
 export type PropertyValue = HashValueType | undefined;
@@ -33,6 +34,7 @@ export interface PropertyBinding {
   type: HashTypes | undefined | string;
   timestamp?: Timestamp;
   timeAttrs?: Record<string, unknown>;
+  info?: PropertyInfo;
 
   // Placeholder for future data logging API.
   historicData: HistoricSample[];
@@ -45,6 +47,7 @@ export interface PropertyBinding {
     type: HashTypes | undefined | string;
     timestamp?: Timestamp;
     timeAttrs?: Record<string, unknown>;
+    info?: PropertyInfo;
     historicData: HistoricSample[];
   };
 

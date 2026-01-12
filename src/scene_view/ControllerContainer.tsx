@@ -1,10 +1,7 @@
 import React from 'react';
 import { PropertyOverlay } from './components/overlays/PropertyOverlay';
-import { ProxyStatus, PropertyStatus } from '@/binding/ProxyStatus';
-import {
-  useDeviceProperty,
-  type UseDevicePropertyResult,
-} from '../components/shared/hooks/useDeviceProperty';
+import { ProxyStatus, PropertyStatus } from '@/binding';
+import { useDeviceProperty, type UseDevicePropertyResult } from '@/binding';
 import { AccessMode } from '@/karabo_data/SchemaEnums';
 
 /**

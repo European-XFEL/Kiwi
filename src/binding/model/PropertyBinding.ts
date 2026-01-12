@@ -11,6 +11,7 @@ import type {
   HistoricDataHandler,
 } from './types/PropertyType';
 import { Timestamp } from '@/shared/helpers/timestamps';
+import type { PropertyInfo } from '@/karabo_data/DeviceConfigInfo';
 
 export class PropertyBinding implements IPropertyBinding {
   // -------------------------------------------------------------------------
@@ -21,6 +22,7 @@ export class PropertyBinding implements IPropertyBinding {
   type: HashTypes | undefined | string;
   timestamp?: Timestamp;
   timeAttrs?: Record<string, unknown>;
+  info?: PropertyInfo;
   //develop some data logging communication
   historicData: HistoricSample[] = [];
 
@@ -65,6 +67,7 @@ export class PropertyBinding implements IPropertyBinding {
       type: this.type,
       timestamp: this.timestamp,
       timeAttrs: this.timeAttrs,
+      info: this.info,
       historicData: this.historicData,
     };
   }

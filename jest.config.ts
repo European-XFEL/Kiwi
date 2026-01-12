@@ -9,6 +9,7 @@ export default {
     '^karabo-ts$': '<rootDir>/test/__mocks__/karabo-ts.ts',
     // Keep this for actual Worker imports
     '\\?worker$': '<rootDir>/test/__mocks__/WorkerMock.ts',
+    '^react-plotly.js$': '<rootDir>/test/__mocks__/plotlyMock.js',
   },
   transform: {
     '^.+\\.tsx?$': [

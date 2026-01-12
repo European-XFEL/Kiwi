@@ -1,8 +1,25 @@
 import '@testing-library/jest-dom';
 
+// -----------------------------------------------------------------------------
+// Global Mocks
+// -----------------------------------------------------------------------------
+
+// Mock modules that use import.meta.glob or other unsupported syntax
+jest.mock('@/controllers/display/utils/statefulIcons', () => ({
+  statefulIconTextById: {},
+}));
+
+// Mock the simple Vigenère cipher crypto utility for tests
+jest.mock('@/utils/crypto', () => ({
+  encryptData: jest.fn((text: string) => `encrypted_${text}`),
+  decryptData: jest.fn((text: string) => text.replace('encrypted_', '')),
+}));
+
+// -----------------------------------------------------------------------------
+// 3. Console Warning Suppression
+// -----------------------------------------------------------------------------
+
 // Suppress React 18 act() warnings for async state updates
-// These warnings occur when components update state asynchronously (e.g., after promise resolution)
-// which is expected behavior for loading data, and our tests properly wait for these updates
 const originalError = console.error;
 beforeAll(() => {
   console.error = (...args: any[]) => {
