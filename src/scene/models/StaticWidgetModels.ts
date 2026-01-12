@@ -3,8 +3,8 @@ import type { LabelProps } from '../scene_types/staticWidgets';
 import {
   FONT_BASE_SIZE,
   FONT_FAMILY_DEFAULT,
-} from '@/components/shared/helpers/fontDefaults';
-import { QtFontDescriptor } from '@/components/shared/helpers/QtFontDescriptor';
+} from '@/controllers/utils/fontDefaults';
+import { QtFontDescriptor } from '@/scene/utils/QtFontDescriptor';
 
 export class LabelModel extends BaseWidgetElementModel<LabelProps> {
   text = '';

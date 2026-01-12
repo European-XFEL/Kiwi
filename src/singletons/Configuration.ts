@@ -1,4 +1,4 @@
-import DeepVault from 'deepvault';
+import { encryptData, decryptData } from '@/utils/crypto';
 import { AccessLevel } from '@/karabo_data/SchemaEnums';
 
 /**  Subset of data needed to resume a GUI Session when the app starts. */
@@ -11,10 +11,10 @@ export interface SessionData {
 }
 
 export class ConfigurationStore {
-  readonly _vault?: DeepVault;
+  private readonly STORAGE_KEY = 'gui_session_data';
 
   public constructor() {
-    this._vault = new DeepVault('gui_session_data');
+    // No initialization needed for localStorage
   }
 
   async saveAuthSession(
@@ -46,24 +46,17 @@ export class ConfigurationStore {
   }
 
   private async saveSession(data: SessionData): Promise<void> {
-    let currentData = undefined;
-    try {
-      currentData = await this._vault?.getEncryptedData();
-    } catch (err) {
-      console.debug(err);
-    }
-    if (currentData) {
-      await this._vault?.updateData(data);
-    } else {
-      await this._vault?.encryptAndSaveData(data);
-    }
+    const jsonData = JSON.stringify(data);
+    const encryptedData = encryptData(jsonData);
+    localStorage.setItem(this.STORAGE_KEY, encryptedData);
   }
 
   async loadSession(): Promise<SessionData | undefined> {
     try {
-      const data = await this._vault?.getDecryptedData();
-      if (data) {
-        return data;
+      const encryptedData = localStorage.getItem(this.STORAGE_KEY);
+      if (encryptedData) {
+        const jsonData = decryptData(encryptedData);
+        return JSON.parse(jsonData);
       }
     } catch (err) {
       console.debug(`No session data to load: ${err}`);
@@ -71,7 +64,7 @@ export class ConfigurationStore {
     return undefined;
   }
 
-  deleteSession(): void {
-    this._vault?.deleteData();
+  async deleteSession(): Promise<void> {
+    localStorage.removeItem(this.STORAGE_KEY);
   }
 }

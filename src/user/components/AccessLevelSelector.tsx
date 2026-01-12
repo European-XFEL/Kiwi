@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useAccessLevel } from '@/components/shared/hooks/useAccessLevel';
+import { useAccessLevel } from '@/user/hooks/useAccessLevel';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { AccessLevel } from '@/karabo_data/SchemaEnums';
 import { getAccessLevelDisplay } from '@/shared/helpers/getAccessLevelDisplay';

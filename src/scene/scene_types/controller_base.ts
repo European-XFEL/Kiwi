@@ -1,6 +1,6 @@
 import type { BaseWidgetProps, BaseControllerKind } from './base';
-import type { ProxyStatus } from '@/binding/ProxyStatus';
-import type { UseDevicePropertyResult } from '@/components/shared/hooks/useDeviceProperty';
+import type { ProxyStatus } from '@/binding';
+import type { UseDevicePropertyResult } from '@/binding';
 
 /**
  * Base props for all controller widgets.

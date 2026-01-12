@@ -5,7 +5,7 @@
  * Each derived model provides its own `props` getter for React rendering.
  */
 
-import { FONT_BASE_SIZE } from '@/components/shared/helpers/fontDefaults';
+import { FONT_BASE_SIZE } from '@/controllers/utils/fontDefaults';
 import type {
   BaseSceneObjectProps,
   BaseWidgetProps,

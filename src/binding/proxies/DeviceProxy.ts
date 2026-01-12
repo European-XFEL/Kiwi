@@ -1,6 +1,6 @@
 import { EventEmitter } from '@/shared/helpers/EventEmitter';
 import type { DeviceModel } from '../model/types/DeviceType';
-import type { DeviceIndicatorDescriptor } from '@/topology/device-proxy/types';
+import type { DeviceIndicatorDescriptor } from './types';
 import { DEVICE_INDICATORS } from '@/binding/overlay_indicator_constants';
 
 import type { DeviceSchemaInfo } from '@/karabo_data/DeviceSchemaInfo';
@@ -20,7 +20,7 @@ import {
   buildEmptyDeviceModel,
 } from '@/binding/model/builders/DeviceModelBuilder';
 
-import { mapGuiStateColor } from '@/components/shared/helpers/mapStateColor';
+import { mapGuiStateColor } from '../utils/mapStateColor';
 import type { GuiStateColorKey } from '@/karabo_data/Indicators';
 import type { PropertyModel, PropertyValue } from '../model/types/PropertyType';
 import { PropertyBinding } from '../model/PropertyBinding';

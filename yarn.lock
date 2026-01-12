@@ -5704,13 +5704,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"deepvault@npm:^1.0.1":
-  version: 1.0.1
-  resolution: "deepvault@npm:1.0.1"
-  checksum: 10c0/5612426846546d276216fa548475d8a7af8096afd5328ba1beb1abafc945d2251a9c8ce81a8b88e9b27be36fbb50e89954f9a34909a7996aa84a2cd004d71463
-  languageName: node
-  linkType: hard
-
 "defined@npm:^1.0.0":
   version: 1.0.1
   resolution: "defined@npm:1.0.1"
@@ -8280,7 +8273,6 @@ __metadata:
     babel-plugin-transform-import-meta: "npm:^2.3.3"
     class-variance-authority: "npm:^0.7.1"
     clsx: "npm:^2.1.1"
-    deepvault: "npm:^1.0.1"
     echarts: "npm:^6.0.0"
     echarts-for-react: "npm:^3.0.5"
     eslint: "npm:^9.9.0"
