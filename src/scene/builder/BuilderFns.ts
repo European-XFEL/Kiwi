@@ -56,7 +56,7 @@ import {
 } from '../models/controller/editable';
 
 // React Components
-import Label from '@/components/widgets/Label';
+import { Label } from '@/scene_view/widget';
 import {
   DisplayLabel,
   DisplayLineEdit,

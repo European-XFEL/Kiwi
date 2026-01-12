@@ -1,5 +1,5 @@
 import React from 'react';
-import type { LabelProps } from '../../scene/scene_types/staticWidgets';
+import type { LabelProps } from '@/scene/scene_types/staticWidgets';
 import {
   Tooltip,
   TooltipContent,
