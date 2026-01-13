@@ -3,7 +3,7 @@ import {
   FONT_FAMILY_DEFAULT,
   FONT_FAMILY_MONOSPACED,
   FONT_FAMILY_SERIF,
-} from '@/controllers/utils/fontDefaults';
+} from '@/features/controllers/utils/fontDefaults';
 
 /**
  * A Qt Font Descriptor is a single string with comma separated values for

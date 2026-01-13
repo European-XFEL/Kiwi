@@ -2,7 +2,7 @@ import { QtFontDescriptor } from '../QtFontDescriptor';
 import {
   FONT_FAMILY_MONOSPACED,
   FONT_FAMILY_SERIF,
-} from '@/controllers/utils/fontDefaults';
+} from '@/features/controllers/utils/fontDefaults';
 
 describe('QtFontDescriptor constructor', () => {
   const tooFewFields = [

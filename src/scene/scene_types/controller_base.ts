@@ -1,6 +1,6 @@
 import type { BaseWidgetProps, BaseControllerKind } from './base';
-import type { ProxyStatus } from '@/binding';
-import type { UseDevicePropertyResult } from '@/binding';
+import type { ProxyStatus } from '@/lib/binding';
+import type { UseDevicePropertyResult } from '@/lib/binding';
 
 /**
  * Base props for all controller widgets.
@@ -74,5 +74,5 @@ export interface BaseGraphProps extends BaseControllerWidgetProps {
   // Visual
   title: string;
   background: string;
-  plot_engine?: 'plotly' | 'echarts';
+  plot_engine?: 'plotly';
 }

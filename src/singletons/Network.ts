@@ -1,14 +1,14 @@
-import { decodeBinHash, packEncodedHash } from '../karabo_hash/hash_utils';
+import { decodeBinHash, packEncodedHash } from '@/karabo_hash/hash_utils';
 import { Websocket, WebsocketBuilder } from 'websocket-ts';
 import { BinaryEncoder, Hash } from 'karabo-ts';
-import { useAppSettingsStore } from '../store/appSettingsStore';
-import { useGlobalActivityStore } from '../store/globalActivityStore';
+import { useAppSettingsStore } from '@/store/appSettingsStore';
+import { useGlobalActivityStore } from '@/store/globalActivityStore';
 import { GuiServerInfo } from '@/karabo_data/GuiServerInfo';
-import { guiServerInfoFromHash } from '../karabo_hash/decoders/gui_session';
-import { HashDeque } from '../karabo_hash/HashDeque';
-import { buildLoginHash } from '../karabo_hash/builders/gui_session';
+import { guiServerInfoFromHash } from '@/karabo_hash/decoders/gui_session';
+import { HashDeque } from '@/karabo_hash/HashDeque';
+import { buildLoginHash } from '@/karabo_hash/builders/gui_session';
 import { getConfig } from '@/singletons/api';
-import AuthServerClient from '../http/AuthServerClient';
+import AuthServerClient from '@/http/AuthServerClient';
 import { AccessLevel } from '@/karabo_data/SchemaEnums';
 
 // --- Types ---

@@ -1,6 +1,6 @@
 import { ReactElement } from 'react';
 
-//tailwind
+//tailwind dimensions props
 export type Position = 'fixed' | 'sticky' | 'static';
 type Direction = 'horizontal' | 'vertical';
 

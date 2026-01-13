@@ -9,7 +9,7 @@ import { BaseSceneElementModel } from '../models/BaseModels';
 
 // Helpers
 import { css_textAlign_for_KrbAlignh } from '@/scene/utils/KrbAlignh';
-import { FONT_BASE_SIZE } from '@/controllers/utils/fontDefaults';
+import { FONT_BASE_SIZE } from '@/features/controllers/utils/fontDefaults';
 
 // Layouts
 import {
@@ -56,7 +56,12 @@ import {
 } from '../models/controller/editable';
 
 // React Components
-import { Label } from '@/scene_view/widget';
+import {
+  Label,
+  FixedLayout,
+  BoxLayout,
+  GridLayout,
+} from '@/features/scene_view';
 import {
   DisplayLabel,
   DisplayLineEdit,
@@ -74,14 +79,11 @@ import {
   DoubleLineEdit,
   EditableList,
   IntLineEdit,
-} from '@/controllers';
-import Line from '@/scene_view/components/shapes/Line';
-import Rectangle from '@/scene_view/components/shapes/Rectangle';
-import Polygon from '@/scene_view/components/shapes/Polygon';
-import ArrowPolygon from '@/scene_view/components/shapes/ArrowPolygon';
-import FixedLayout from '@/components/layouts/FixedLayout';
-import BoxLayout from '@/components/layouts/BoxLayout';
-import GridLayout from '@/components/layouts/GridLayout';
+} from '@/features/controllers';
+import Line from '@/features/scene_view/components/shapes/Line';
+import Rectangle from '@/features/scene_view/components/shapes/Rectangle';
+import Polygon from '@/features/scene_view/components/shapes/Polygon';
+import ArrowPolygon from '@/features/scene_view/components/shapes/ArrowPolygon';
 
 // ============================================================================
 // Entry point

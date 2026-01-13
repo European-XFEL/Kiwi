@@ -13,7 +13,7 @@
  * - Both DisplayTrendGraph and Vector* graphs extend this
  */
 
-import { BaseControllerContainerModel } from '@/scene_view/BaseControllerContainerModel';
+import { BaseControllerContainerModel } from '@/features/scene_view/BaseControllerContainerModel';
 import type { BaseGraphProps } from '@/scene/scene_types/controller_base';
 
 export abstract class BaseGraphElementModel<
@@ -59,9 +59,9 @@ export abstract class BaseGraphElementModel<
   background = 'transparent';
 
   // ─────────────────────────────────
-  // Optional plot engine hint
+  // Plot engine (Plotly only)
   // ─────────────────────────────────
-  plot_engine?: 'plotly' | 'echarts';
+  plot_engine?: 'plotly';
 
   /**
    * Build the shared props payload for all graph widgets.

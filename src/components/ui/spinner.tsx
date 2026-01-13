@@ -4,7 +4,7 @@ import {
   LoaderPinwheelIcon,
   type LucideProps,
 } from 'lucide-react';
-import { cn } from '@/shared/helpers/cn';
+import { cn } from '@/shared/utils/cn';
 type SpinnerVariantProps = Omit<SpinnerProps, 'variant'>;
 const Default = ({ className, ...props }: SpinnerVariantProps) => (
   <LoaderIcon className={cn('animate-spin', className)} {...props} />

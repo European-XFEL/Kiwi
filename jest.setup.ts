@@ -5,12 +5,12 @@ import '@testing-library/jest-dom';
 // -----------------------------------------------------------------------------
 
 // Mock modules that use import.meta.glob or other unsupported syntax
-jest.mock('@/controllers/display/utils/statefulIcons', () => ({
+jest.mock('@/features/icons/utils/statefulIcons', () => ({
   statefulIconTextById: {},
 }));
 
 // Mock the simple Vigenère cipher crypto utility for tests
-jest.mock('@/utils/crypto', () => ({
+jest.mock('@/shared/utils/crypto', () => ({
   encryptData: jest.fn((text: string) => `encrypted_${text}`),
   decryptData: jest.fn((text: string) => text.replace('encrypted_', '')),
 }));

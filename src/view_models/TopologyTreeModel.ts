@@ -16,7 +16,7 @@ class TopologyTreeModel {
       }
       host.hostedServers.push({
         serverId: server.serverId,
-        visibility: server.visibility,
+        visibility: AccessLevel.Observer, // Default visibility since DeviceServerInfo doesn't have this property
         lang: server.lang,
         version: server.version,
         karaboVersion: server.karaboVersion,
@@ -38,7 +38,7 @@ class TopologyTreeModel {
         );
         if (mdlServer) {
           if (device.status !== 'ok') {
-            mdlServer.status = device.status;
+            mdlServer.status = device.status || 'unknown';
           }
           let mdlClass = mdlServer.hostedDevices.find(
             (devClass) => devClass.classId === deviceClass
@@ -46,7 +46,7 @@ class TopologyTreeModel {
           if (!mdlClass) {
             // It's the first occurrence of a device of this class in the server; adds it.
             mdlServer.hostedDevices.push({
-              classId: deviceClass,
+              classId: deviceClass || 'unknown',
               deviceInstances: [],
             });
             mdlClass =
@@ -54,9 +54,9 @@ class TopologyTreeModel {
           }
           mdlClass.deviceInstances.push({
             deviceId: device.deviceId,
-            status: device.status,
-            visibility: device.visibility,
-            karaboVersion: device.karaboVersion,
+            status: device.status || 'unknown',
+            visibility: AccessLevel.Observer, // Default visibility since DeviceInfo doesn't have this property
+            karaboVersion: device.karaboVersion || 'unknown',
           });
         }
       }

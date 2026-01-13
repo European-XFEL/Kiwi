@@ -1,4 +1,4 @@
-import { Timestamp } from '../../helpers/timestamps';
+import { Timestamp } from '@/lib/binding/utils/timestamps';
 import { HashTypes } from 'karabo-ts';
 
 describe('Timestamp', () => {

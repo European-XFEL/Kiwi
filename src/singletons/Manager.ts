@@ -1,15 +1,15 @@
 import {
   sysTopologyInfoFromHash,
   sysTopologyUpdateInfoFromHash,
-} from '../karabo_hash/decoders/topology';
+} from '@/karabo_hash/decoders/topology';
 import {
   guiServerInfoFromHash,
   loginInfoFromHash,
   notificationInfoFromHash,
-} from '../karabo_hash/decoders/gui_session';
+} from '@/karabo_hash/decoders/gui_session';
 import { broadcast_event, KaraboEvent } from '@/events';
-import { decodeBinHash, hashProtocolType } from '../karabo_hash/hash_utils';
-import { AccessControlManager } from '@/shared/helpers/AccessLevel';
+import { decodeBinHash, hashProtocolType } from '@/karabo_hash/hash_utils';
+import { AccessControlManager } from '@/features/user/utils/AccessLevel';
 import { getTopology, getNetwork, getConfig } from '@/singletons/api';
 import { Hash } from 'karabo-ts';
 
