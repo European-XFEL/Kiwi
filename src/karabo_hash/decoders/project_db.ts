@@ -1,21 +1,11 @@
 import { Hash, HashValue } from 'karabo-ts';
 import {
   DbItemInfo,
-  ListDomainsResult,
   ListProjectsResult,
   LoadProjectItemsResult,
   ProjectItemInfo,
 } from '../../karabo_data/ProjectDbInfo';
 import { XMLParser } from 'fast-xml-parser';
-
-export const listDomainsResultFromHash = (hash: Hash): ListDomainsResult => {
-  const reason = hash.getValue('reason') as string;
-  return {
-    error_msg: reason.length == 0 ? undefined : reason,
-    domains:
-      reason.length > 0 ? [] : (hash.getValue('reply.domains') as string[]),
-  };
-};
 
 export const listProjectsResultFromHash = (hash: Hash): ListProjectsResult => {
   const reason = hash.getValue('reason') as string;

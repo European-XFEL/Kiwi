@@ -57,11 +57,6 @@ export const isSceneInfo = (item: DbItemInfo): item is ProjectSceneInfo => {
 
 // #region Results for List operations for project entities
 
-export interface ListDomainsResult {
-  domains: string[];
-  error_msg?: string; // undefined if no error
-}
-
 export interface ListProjectsResult {
   projects: ProjectItemInfo[];
   error_msg?: string; // undefined if no error

@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Hash } from 'karabo-ts';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -19,7 +20,8 @@ import ProjectsTable from './components/ProjectTable';
 import ScenesTable from './components/ScenesTable';
 import { LoadingStatus } from '@/features/status';
 import type { SelectProjectSceneDialogProps } from './types/project.types';
-
+import { useKaraboEvent, KaraboEvent } from '@/events';
+import { getDomains } from './utils';
 enum ActivityStatus {
   NO_ACTIVITY,
   GETTING_DOMAINS,
@@ -144,31 +146,35 @@ export default function SelectProjectSceneDialog({
 
     if (open) {
       setActivityStatus(ActivityStatus.GETTING_DOMAINS);
-      getDbConn().listDomains((domainsInfo) => {
-        if (domainsInfo.error_msg) {
-          setErrorMessage(
-            `Error reading domains: ${domainsInfo.error_msg}. Close and reopen the dialog`
-          );
-        } else {
-          setDomains(domainsInfo.domains);
-          if (
-            selectedDomain.length === 0 ||
-            !domainsInfo.domains.includes(selectedDomain)
-          ) {
-            const currentTopic = sessionInfo?.guiServerTopic as string;
-            const startupDomain = domainsInfo.domains.includes(currentTopic)
-              ? currentTopic
-              : domainsInfo.domains[0];
-            setSelectedDomain(startupDomain);
-            updateProjects(startupDomain);
-          } else {
-            updateProjects(selectedDomain);
-          }
-        }
-        setActivityStatus(ActivityStatus.NO_ACTIVITY);
-      });
+      getDbConn().listDomains();
     }
   }, [open]);
+
+  useKaraboEvent(KaraboEvent.ListDomains, (hash: any) => {
+    let data = hash['data'] as Hash;
+    let domains;
+    try {
+      domains = getDomains(data);
+    } catch (e) {
+      setErrorMessage(
+        `Error reading domains: ${e}. Close and reopen the dialog.`
+      );
+      return;
+    }
+    domains.sort((a, b) => a.localeCompare(b));
+    setDomains(domains);
+    if (selectedDomain.length === 0 || !domains.includes(selectedDomain)) {
+      const currentTopic = sessionInfo?.guiServerTopic as string;
+      const startupDomain = domains.includes(currentTopic)
+        ? currentTopic
+        : domains[0];
+      setSelectedDomain(startupDomain);
+      updateProjects(startupDomain);
+    } else {
+      updateProjects(selectedDomain);
+    }
+    setActivityStatus(ActivityStatus.NO_ACTIVITY);
+  });
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>
