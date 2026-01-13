@@ -3,14 +3,14 @@ import { getNetwork, getManager, getTopology } from '@/singletons/api';
 import {
   buildStartMonitoringHash,
   buildStopMonitoringHash,
-} from '../karabo_hash/builders/monitoring_device';
-import { devicesConfigsFromHash } from '../karabo_hash/decoders/device_config';
+} from '@/karabo_hash/builders/monitoring_device';
+import { devicesConfigsFromHash } from '@/karabo_hash/decoders/device_config';
 import type { PropertyInfo } from '@/karabo_data/DeviceConfigInfo';
 import { DeviceSchemaConnector } from './DeviceSchemaConnector';
 import { DeviceInfo, TopologyEventType } from '@/karabo_data/TopologyInfo';
 import type { DeviceSchemaInfo } from '@/karabo_data/DeviceSchemaInfo';
 import type { VectorElementType } from '@/karabo_hash/HashValueType';
-import { deviceManager } from '@/binding/DeviceManager';
+import { deviceManager } from '@/lib/binding/DeviceManager';
 
 // VectorElementType[][] is the type used for the value of a table property.
 // Each VectorElementType is the value of a table cell with the row being

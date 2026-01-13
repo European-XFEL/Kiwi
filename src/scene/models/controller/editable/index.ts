@@ -14,7 +14,7 @@
  *      → ControllerContainer (data fetching) → Component (pure presentation)
  */
 
-import { BaseControllerContainerModel } from '@/scene_view/BaseControllerContainerModel';
+import { BaseControllerContainerModel } from '@/features/scene_view/BaseControllerContainerModel';
 
 import type {
   EditableComboBoxProps,

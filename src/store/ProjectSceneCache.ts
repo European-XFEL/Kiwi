@@ -1,7 +1,7 @@
 import {
   LoadProjectSceneResult,
   ProjectSceneInfo,
-} from '../karabo_data/ProjectDbInfo';
+} from '@/karabo_data/ProjectDbInfo';
 import { getDbConn } from '@/singletons/api';
 
 export class ProjectSceneCache {

@@ -1,11 +1,11 @@
 import {
   RecentScenesByUser,
   UserRecentSceneModel,
-} from '../view_models/RecentScenesModel';
+} from '@/view_models/RecentScenesModel';
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
-import { RecentSceneModel } from '../view_models/RecentScenesModel';
-import { moveItemToFirstPosition } from '../shared/helpers/arrayHelpers';
+import { RecentSceneModel } from '@/view_models/RecentScenesModel';
+import { moveItemToFirstPosition } from '@/shared/utils/arrayUtils';
 
 const MRU_SCENES_SIZE = 6;
 const MRU_SCENES_KEY = 'MRU_SCENES_';

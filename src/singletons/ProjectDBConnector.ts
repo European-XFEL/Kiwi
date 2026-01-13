@@ -10,17 +10,17 @@ import {
   DbItemInfo,
   isProjectContentsInfo,
   LoadProjectSceneResult,
-} from '../karabo_data/ProjectDbInfo';
+} from '@/karabo_data/ProjectDbInfo';
 import {
   buildListDomainsHash,
   buildListProjectsHash,
   buildLoadItemsHash,
-} from '../karabo_hash/builders/project_db';
+} from '@/karabo_hash/builders/project_db';
 import {
   listDomainsResultFromHash,
   listProjectsResultFromHash,
   loadProjectItemsResultFromHash,
-} from '../karabo_hash/decoders/project_db';
+} from '@/karabo_hash/decoders/project_db';
 
 import {
   register_for_broadcasts,
@@ -313,6 +313,7 @@ export class ProjectDBConnector {
           domain: sceneInfo.domain,
           projectName: this.#_projectName,
           uuid: sceneInfo.uuid,
+          item_type: sceneInfo.item_type,
           name: sceneInfo.name,
           description: sceneInfo.description,
           svg: sceneInfo.svg,
