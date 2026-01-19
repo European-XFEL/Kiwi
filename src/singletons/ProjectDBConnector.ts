@@ -1,7 +1,6 @@
 import { Hash } from 'karabo-ts';
 import { getNetwork } from '@/singletons/api';
 import {
-  ListDomainsResult,
   ListProjectsResult,
   ListProjectScenesResult,
   LoadProjectItemsResult,
@@ -17,7 +16,6 @@ import {
   buildLoadItemsHash,
 } from '@/karabo_hash/builders/project_db';
 import {
-  listDomainsResultFromHash,
   listProjectsResultFromHash,
   loadProjectItemsResultFromHash,
 } from '@/karabo_hash/decoders/project_db';
@@ -36,7 +34,6 @@ export class ProjectDBConnector {
   public constructor() {
     this.eventMap = {
       [KaraboEvent.ListItems]: this.#_onEventListItems,
-      [KaraboEvent.ListDomains]: this.#_onEventListDomains,
     };
 
     register_for_broadcasts(this.eventMap);
@@ -329,50 +326,7 @@ export class ProjectDBConnector {
 
   // #endregion
 
-  // #region List Domains
-  listDomains(onDomains: (domainsInfo: ListDomainsResult) => void): void {
-    // Stores the callback to be called when the GUI Server sends back the list of domains.
-    if (this.#_onListDomainsCallback) {
-      // There's already a pending getDomains operation. Refuse the new request.
-      const domainsInfo = {
-        domains: [],
-        error_msg:
-          "There's already a pending listDomains operation. Cannot start a new one!",
-      };
-      onDomains(domainsInfo);
-      return;
-    }
-    this.#_onListDomainsCallback = onDomains;
+  listDomains() {
     getNetwork().sendHash(buildListDomainsHash());
   }
-  #_onListDomainsCallback?: (domainsInfo: ListDomainsResult) => void;
-
-  // The internal callback for handling a projectListDomains result received
-  // from the GUI Server. Responsible for dispatching the call to
-  // #_onListDomainsCallback registered by the external caller that invoked
-  // listDomains.
-  #_onEventListDomains = (hash: any): void => {
-    let data = hash['data'] as Hash;
-    let domainsInfo: ListDomainsResult;
-    try {
-      domainsInfo = listDomainsResultFromHash(data);
-    } catch (e) {
-      if (e instanceof Error) {
-        domainsInfo = {
-          domains: [],
-          error_msg: (e as Error).message,
-        };
-      } else {
-        domainsInfo = {
-          domains: [],
-          error_msg: 'Error decoding the list of domains',
-        };
-        console.error(`Error decoding the list of domains: ${e}`);
-      }
-    }
-    domainsInfo.domains.sort((a, b) => a.localeCompare(b));
-    this.#_onListDomainsCallback?.(domainsInfo!);
-    this.#_onListDomainsCallback = undefined;
-  };
-  // #endregion
 }
