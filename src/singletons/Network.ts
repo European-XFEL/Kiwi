@@ -288,6 +288,9 @@ export class Network {
 
     this._ws = new WebsocketBuilder(this._wsProxyURL)
       .onOpen((ws) => ws.send(JSON.stringify({ host, port })))
+      .onClose((ws, ev) =>
+        this._handleWsError(ws, ev, (msg) => this._handleSessionError(msg))
+      )
       .onMessage(this._onWsMessage)
       .onError((ws, ev) =>
         this._handleWsError(ws, ev, (msg) => this._handleSessionError(msg))
