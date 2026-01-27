@@ -22,7 +22,7 @@ const SceneCanvas: React.FC = () => {
   const [scene, setScene] = React.useState<Scene | null>(null);
   const [error, setError] = React.useState<string>('');
 
-  const { sessionInfo } = useGlobalStore();
+  const { lastGlobalError, sessionInfo } = useGlobalStore();
   const { setRecentScene } = useRecentStore();
   const { setScene: setLoadedScene } = useLoadedSceneStore();
   const loggedUser = sessionInfo?.loggedUser;
@@ -120,6 +120,20 @@ const SceneCanvas: React.FC = () => {
             <div className="flex-1">Loading scene...</div>
           </CardContent>
         </Card>
+      );
+    }
+
+    if (lastGlobalError) {
+      return (
+        <div className="flex flex-col gap-4 max-w-2xl">
+          <Alert variant="destructive" className="border-destructive/50">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Unrecoverable Error</AlertTitle>
+            <AlertDescription
+              dangerouslySetInnerHTML={{ __html: lastGlobalError }}
+            />
+          </Alert>
+        </div>
       );
     }
 

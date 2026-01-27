@@ -7,7 +7,7 @@ import ErrorState from './states/ErrorState';
 
 const AppBody: React.FC = () => {
   const globalState = useGlobalStore((s) => s.globalState);
-  const lastError = useGlobalStore((s) => s.lastError);
+  const lastError = useGlobalStore((s) => s.lastGlobalError);
 
   const isInitializing = globalState === 'INIT';
 

@@ -34,7 +34,7 @@ export type GlobalState =
 /** Base state shape (no actions) */
 export interface GlobalAppState {
   globalState: GlobalState;
-  lastError: string;
+  lastGlobalError: string;
   sessionInfo?: GuiServerSessionInfo;
   loadedScene?: SceneModel;
 }
@@ -57,7 +57,7 @@ export type GlobalStore = GlobalAppState & GlobalActions;
 //App initial state
 export const initialState: GlobalAppState = {
   globalState: 'INIT',
-  lastError: '',
+  lastGlobalError: '',
   sessionInfo: undefined,
   loadedScene: undefined,
 };
@@ -69,20 +69,20 @@ export const useGlobalStore = create<GlobalStore>((set) => ({
   setError: (msg) =>
     set({
       globalState: 'UNRECOVERABLE_ERROR',
-      lastError: msg,
+      lastGlobalError: msg,
       sessionInfo: undefined,
     }),
 
   setSceneOpenError: (sceneOPenErrorMessage: string) =>
     set({
       globalState: 'SCENE_OPEN_ERROR',
-      lastError: sceneOPenErrorMessage,
+      lastGlobalError: sceneOPenErrorMessage,
     }),
 
   setSceneDisplayError: (sceneDisplayErrorMessage: string) =>
     set({
       globalState: 'SCENE_DISPLAY_ERROR',
-      lastError: sceneDisplayErrorMessage,
+      lastGlobalError: sceneDisplayErrorMessage,
     }),
 
   setLoggedIn: (session) =>
@@ -90,7 +90,7 @@ export const useGlobalStore = create<GlobalStore>((set) => ({
       globalState: 'LOGGED_IN',
       sessionInfo: session,
       loadedScene: undefined,
-      lastError: '',
+      lastGlobalError: '',
     }),
 
   setLoggedOut: () =>
@@ -98,7 +98,7 @@ export const useGlobalStore = create<GlobalStore>((set) => ({
       globalState: 'LOGGED_OUT',
       sessionInfo: undefined,
       loadedScene: undefined,
-      lastError: '',
+      lastGlobalError: '',
     }),
 
   setLoadedScene: (scene) =>
