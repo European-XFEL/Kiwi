@@ -1,6 +1,8 @@
 import * as Types from './types';
 import { Hash, Schema, HashList } from './hash';
-import { TextEncoder } from 'util';
+// cannot import from the util module as it's a node-only module; in the browser,
+// TextDecoder is a global object and should not be imported
+// import { TextEncoder } from 'util';
 
 function encodeInt8(parser: BinaryEncoder, data: number): ArrayBuffer {
   const bin = new ArrayBuffer(1);

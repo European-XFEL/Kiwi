@@ -186,12 +186,13 @@ export class Timestamp {
     attrs: PropertyInfo['timeAttrs']
   ): bigint {
     if (!attrs) throw new Error('timeAttrs must be provided');
-    const { sec, frac } = attrs;
-    if (!sec || !frac) {
+    const sec = attrs.has('sec') ? attrs.getValue('sec') : undefined;
+    const frac = attrs.has('frac') ? attrs.getValue('frac') : undefined;
+    if (typeof sec == 'undefined' || typeof frac == 'undefined') {
       throw new Error("timeAttrs must contain 'sec' and 'frac' fields");
     }
-    const secValue = this.toBigInt(sec['value_']);
-    const fracValue = this.toBigInt(frac['value_']);
+    const secValue = this.toBigInt(sec);
+    const fracValue = this.toBigInt(frac);
     return secValue * this.AS_PER_SEC + fracValue;
   }
 

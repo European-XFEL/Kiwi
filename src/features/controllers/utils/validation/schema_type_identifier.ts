@@ -12,7 +12,7 @@
  * It only answers "what does the schema say?"
  */
 
-import { HashTypes } from 'karabo-ts';
+import { HashTypes } from '@/karabo-hash/typenums';
 
 /**
  * ValueType may come from:
@@ -45,8 +45,6 @@ const BOOL_TYPES = new Set<number>([HashTypes.Bool]);
 const VECTOR_TYPES = new Set<number>([
   HashTypes.VectorBool,
   HashTypes.VectorChar,
-  HashTypes.VectorComplexDouble,
-  HashTypes.VectorComplexFloat,
   HashTypes.VectorFloat32,
   HashTypes.VectorFloat64,
   HashTypes.VectorInt8,

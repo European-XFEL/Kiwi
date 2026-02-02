@@ -1,6 +1,6 @@
 import type { TableColumnInfo } from '@/karabo_data/DeviceSchemaInfo';
-import { VectorElementType } from '@/karabo_hash/HashValueType';
-import { HashTypes, UInt8 } from 'karabo-ts';
+import { SimpleValueTypes } from '@/karabo-hash/types';
+import { HashTypes } from '@/karabo-hash/typenums';
 
 interface FormatOptions {
   decimalPlaces?: number;
@@ -10,18 +10,13 @@ interface FormatOptions {
  * Format a table cell value based on its column type
  */
 export function formatTableCell(
-  value: VectorElementType,
+  value: SimpleValueTypes,
   column: TableColumnInfo,
   options?: FormatOptions
 ): string {
   // Handle null/undefined
   if (value === null || value === undefined) {
     return '';
-  }
-
-  // Handle UInt8 wrapper class
-  if (value instanceof UInt8) {
-    return value.value_.toString();
   }
 
   const valueType = column.columnAttributes.valueType;

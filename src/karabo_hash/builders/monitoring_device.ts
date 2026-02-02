@@ -1,21 +1,21 @@
-import { Hash, makeHash } from 'karabo-ts';
+import { Hash } from '@/karabo-hash/hash';
 
 export const buildStartMonitoringHash = (deviceId: string): Hash => {
-  return makeHash({
+  return new Hash({
     type: 'startMonitoringDevice',
     deviceId: deviceId,
   });
 };
 
 export const buildStopMonitoringHash = (deviceId: string): Hash => {
-  return makeHash({
+  return new Hash({
     type: 'stopMonitoringDevice',
     deviceId: deviceId,
   });
 };
 
 export const buildGetDeviceSchemaHash = (deviceId: string): Hash => {
-  return makeHash({
+  return new Hash({
     type: 'getDeviceSchema',
     deviceId: deviceId,
   });

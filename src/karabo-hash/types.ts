@@ -1,15 +1,8 @@
 import { HashTypes } from './typenums';
 
-type ValueTypes =
-  | number
-  | number[]
-  | string
-  | string[]
-  | bigint
-  | bigint[]
-  | boolean
-  | boolean[]
-  | Uint8Array;
+export type SimpleValueTypes = number | string | bigint | boolean;
+
+export type ValueTypes = SimpleValueTypes | SimpleValueTypes[] | Uint8Array;
 
 export interface KaraboValue {
   type_: HashTypes;

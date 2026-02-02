@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { VectorElementType } from '@/karabo_hash/HashValueType';
+import type { SimpleValueTypes } from '@/karabo-hash/types';
 import { useDeviceProperty } from '@/lib/binding';
 import type { TableColumnInfo } from '@/karabo_data/DeviceSchemaInfo';
 
@@ -13,7 +13,7 @@ export interface PaginationControls {
 }
 
 export interface PaginatedTableData {
-  cells: VectorElementType[][];
+  cells: SimpleValueTypes[][];
   columns: TableColumnInfo[];
   totalRows: number;
   currentPage: number;
@@ -42,7 +42,7 @@ export function useDeviceTableProperty(
   const cells = React.useMemo(() => {
     const v = primary.value as any;
     if (Array.isArray(v) && (v.length === 0 || Array.isArray(v[0]))) {
-      return v as VectorElementType[][];
+      return v as SimpleValueTypes[][];
     }
     return null;
   }, [primary.value]);

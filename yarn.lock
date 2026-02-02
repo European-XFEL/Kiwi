@@ -8193,15 +8193,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"karabo-ts@npm:^1.1.0":
-  version: 1.1.0
-  resolution: "karabo-ts@npm:1.1.0"
-  dependencies:
-    typescript: "npm:^5.6.2"
-  checksum: 10c0/77921c6732bf24830a5963b44ce2800f324ca9d804a8e8f046396f85de0c1fe3dd21e0c58895cfdd8bc5e5d5210d4acafb46411afbc1e13b4d5a6c67dc3c648d
-  languageName: node
-  linkType: hard
-
 "karabo_kiwi@workspace:.":
   version: 0.0.0-use.local
   resolution: "karabo_kiwi@workspace:."
@@ -8248,7 +8239,6 @@ __metadata:
     identity-obj-proxy: "npm:^3.0.0"
     jest: "npm:^30.1.3"
     jest-environment-jsdom: "npm:^30.1.2"
-    karabo-ts: "npm:^1.1.0"
     lodash: "npm:^4.17.21"
     lucide-react: "npm:^0.544.0"
     plotly: "npm:^1.0.6"
@@ -10906,7 +10896,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:^5.6.2, typescript@npm:^5.9.3":
+"typescript@npm:^5.9.3":
   version: 5.9.3
   resolution: "typescript@npm:5.9.3"
   bin:
@@ -10916,7 +10906,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A^5.6.2#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A^5.9.3#optional!builtin<compat/typescript>":
+"typescript@patch:typescript@npm%3A^5.9.3#optional!builtin<compat/typescript>":
   version: 5.9.3
   resolution: "typescript@patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"
   bin:

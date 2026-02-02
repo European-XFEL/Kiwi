@@ -2,8 +2,8 @@ import * as React from 'react';
 import { deviceManager } from '@/lib/binding/DeviceManager';
 import { DevicePropertyConnector } from '@/singletons/DevicePropertyConnector';
 import type { PropertyModel } from '@/lib/binding/model/types/PropertyType';
-import type { HashValueType } from '@/karabo_hash/HashValueType';
-import type { HashTypes } from 'karabo-ts';
+import type { HashValues } from '@/karabo-hash/hash';
+import type { HashTypes } from '@/karabo-hash/typenums';
 import { PropertyProxy } from '@/lib/binding/proxies/PropertyProxy';
 import {
   buildPropertyDescriptor,
@@ -31,7 +31,7 @@ import { Timestamp } from '@/lib/binding/utils/timestamps';
 // ─────────────────────────────────────────────────────────────────
 
 export interface UseDevicePropertyResult {
-  value: HashValueType | undefined;
+  value: HashValues | undefined;
   propertyModel: PropertyModel | undefined;
   timestamp: Timestamp | undefined;
 
@@ -40,7 +40,7 @@ export interface UseDevicePropertyResult {
   /** Declared schema type of the property */
   valueType: HashTypes | undefined;
   /** Declared schema default value */
-  defaultValue: HashValueType | undefined;
+  defaultValue: HashValues | undefined;
 
   // Device state
   deviceState: string | undefined;
@@ -73,7 +73,7 @@ export interface UseDevicePropertyResult {
 
 interface PropertyData {
   propertyModel: PropertyModel | undefined;
-  value: HashValueType | undefined;
+  value: HashValues | undefined;
   timestamp: Timestamp | undefined;
 }
 
@@ -153,7 +153,14 @@ export function useDeviceProperty(
       (newValue, newTimeAttrs) => {
         // Convert timeAttrs to Timestamp (validate structure first)
         let timestamp: Timestamp | undefined;
-        if (newTimeAttrs && newTimeAttrs.sec && newTimeAttrs.frac) {
+        if (
+          newTimeAttrs &&
+          // Note: basic JS Object has to be used because occasionally this
+          // method is called with an empty object, '{}', as the newTimeAttrs
+          // argument. Cannot assume newTimeAttrs is a HashAttributes instance.
+          Object.hasOwn(newTimeAttrs, 'sec') &&
+          Object.hasOwn(newTimeAttrs, 'frac')
+        ) {
           try {
             timestamp = Timestamp.fromTimeAttrs(newTimeAttrs);
           } catch (err) {
@@ -303,9 +310,8 @@ export function useDeviceProperty(
 
     const defaultValue =
       (propertyModel?.schema.schemaAttrs.defaultValue as
-        | HashValueType
-        | undefined) ??
-      (schemaAttrs?.defaultValue as HashValueType | undefined);
+        | HashValues
+        | undefined) ?? (schemaAttrs?.defaultValue as HashValues | undefined);
 
     return {
       // Property data

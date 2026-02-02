@@ -1,4 +1,4 @@
-import { Hash } from 'karabo-ts';
+import { Hash } from '@/karabo-hash/hash';
 import { getNetwork } from '@/singletons/api';
 import {
   ListProjectsResult,
@@ -48,17 +48,6 @@ export class ProjectDBConnector {
     domain: string,
     onProjects: (projectsInfo: ListProjectsResult) => void
   ): void {
-    // Stores the callback to be called when the GUI Server sends back the list of projects.
-    if (this.#_onListProjectsCallback) {
-      // There's already a pending getProjects operation. Refuse the new request.
-      const projectsInfo = {
-        projects: [],
-        error_msg:
-          "There's already a pending listProjects operation. Cannot start a new one!",
-      };
-      onProjects(projectsInfo);
-      return;
-    }
     this.#_onListProjectsCallback = onProjects;
     getNetwork().sendHash(buildListProjectsHash(domain));
   }
@@ -70,7 +59,13 @@ export class ProjectDBConnector {
   // received from the GUI Server. Responsible for dispatching the call to the
   // callback registered by the external caller of listProjects.
   #_onEventListItems = (hash: any): void => {
-    let data = hash['data'] as Hash;
+    // Note: As the type of the hash had to be removed to comply with the more
+    //       generic type required by the event dispatching mechanism, and the
+    //       TS compiler cannot infer that hash is a Hash, the generated JS has
+    //       no way to refer to Hash specific methods like getValue. The
+    //       generated JS will throw a runtime error if an attempt is made to
+    //       use hash.getValue in the following line.
+    let data = hash['data'];
     let projectsInfo: ListProjectsResult;
     try {
       projectsInfo = listProjectsResultFromHash(data);

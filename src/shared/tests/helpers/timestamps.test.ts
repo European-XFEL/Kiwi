@@ -1,3 +1,4 @@
+import { HashAttributes } from '@/karabo-hash/hash';
 import { Timestamp } from '@/lib/binding/utils/timestamps';
 import { HashTypes } from 'karabo-ts';
 
@@ -27,27 +28,29 @@ describe('Timestamp', () => {
     });
 
     it('should construct from timeAttrs (Karabo format)', () => {
-      const attrs = {
-        sec: { type_: HashTypes.Int64, value_: 1704067200n }, // seconds
-        frac: { type_: HashTypes.Int64, value_: 500_000_000_000_000n }, // 0.5ms in attoseconds
-      };
+      const attrs = new HashAttributes(
+        new Map([
+          ['sec', { type_: HashTypes.Int64, value_: 1704067200n }],
+          ['frac', { type_: HashTypes.Int64, value_: 500_000_000_000_000n }],
+        ])
+      );
       const ts = new Timestamp(attrs);
       expect(ts.toMilliseconds()).toBe(1704067200000);
     });
 
     it('should throw error for timeAttrs without sec field', () => {
-      const attrs = {
-        frac: { value_: 0n },
-      } as any;
+      const attrs = new HashAttributes(
+        new Map([['frac', { type_: HashTypes.Int64, value_: 0n }]])
+      );
       expect(() => new Timestamp(attrs)).toThrow(
         "timeAttrs must contain 'sec' and 'frac' fields"
       );
     });
 
     it('should throw error for timeAttrs without frac field', () => {
-      const attrs = {
-        sec: { value_: 0n },
-      } as any;
+      const attrs = new HashAttributes(
+        new Map([['sec', { type_: HashTypes.Int64, value_: 0n }]])
+      );
       expect(() => new Timestamp(attrs)).toThrow(
         "timeAttrs must contain 'sec' and 'frac' fields"
       );
@@ -72,19 +75,26 @@ describe('Timestamp', () => {
   describe('Static factory methods', () => {
     describe('fromTimeAttrs', () => {
       it('should create timestamp from Karabo time attributes', () => {
-        const attrs = {
-          sec: { type_: HashTypes.Int64, value_: 1000n },
-          frac: { type_: HashTypes.UInt64, value_: 500_000_000_000_000_000n }, // 0.5 seconds
-        };
+        const attrs = new HashAttributes(
+          new Map([
+            ['sec', { type_: HashTypes.Int64, value_: 1000n }],
+            [
+              'frac',
+              { type_: HashTypes.Int64, value_: 500_000_000_000_000_000n },
+            ],
+          ])
+        );
         const ts = Timestamp.fromTimeAttrs(attrs);
         expect(ts.toSeconds()).toBe(1000.5);
       });
 
       it('should handle zero fractional part', () => {
-        const attrs = {
-          sec: { type_: HashTypes.Int64, value_: 1000n },
-          frac: { type_: HashTypes.UInt64, value_: 0n },
-        };
+        const attrs = new HashAttributes(
+          new Map([
+            ['sec', { type_: HashTypes.Int64, value_: 1000n }],
+            ['frac', { type_: HashTypes.Int64, value_: 0n }],
+          ])
+        );
         const ts = Timestamp.fromTimeAttrs(attrs);
         expect(ts.toSeconds()).toBe(1000);
       });
@@ -326,154 +336,186 @@ describe('Timestamp', () => {
 
   describe('toBigInt helper', () => {
     it('should convert bigint to bigint', () => {
-      const attrs = {
-        sec: { type_: HashTypes.Int64, value_: 1000n },
-        frac: { type_: HashTypes.UInt64, value_: 0n },
-      };
+      const attrs = new HashAttributes(
+        new Map([
+          ['sec', { type_: HashTypes.Int64, value_: 1000n }],
+          ['frac', { type_: HashTypes.UInt64, value_: 0n }],
+        ])
+      );
       const ts = Timestamp.fromTimeAttrs(attrs);
       expect(ts.toSeconds()).toBe(1000);
     });
 
     it('should convert integer number to bigint', () => {
-      const attrs = {
-        sec: { type_: HashTypes.Int64, value_: 1000 },
-        frac: { type_: HashTypes.UInt64, value_: 0 },
-      };
+      const attrs = new HashAttributes(
+        new Map([
+          ['sec', { type_: HashTypes.Int64, value_: 1000 }],
+          ['frac', { type_: HashTypes.Int64, value_: 0 }],
+        ])
+      );
       const ts = Timestamp.fromTimeAttrs(attrs);
       expect(ts.toSeconds()).toBe(1000);
     });
 
     it('should convert string to bigint', () => {
-      const attrs = {
-        sec: { type_: HashTypes.Int64, value_: '1000' },
-        frac: { type_: HashTypes.UInt64, value_: '0' },
-      };
+      const attrs = new HashAttributes(
+        new Map([
+          ['sec', { type_: HashTypes.Int64, value_: '1000' }],
+          ['frac', { type_: HashTypes.Int64, value_: '0' }],
+        ])
+      );
       const ts = Timestamp.fromTimeAttrs(attrs);
       expect(ts.toSeconds()).toBe(1000);
     });
 
     it('should convert string with leading + to bigint', () => {
-      const attrs = {
-        sec: { type_: HashTypes.Int64, value_: '+1000' },
-        frac: { type_: HashTypes.UInt64, value_: '0' },
-      };
+      const attrs = new HashAttributes(
+        new Map([
+          ['sec', { type_: HashTypes.Int64, value_: '+1000' }],
+          ['frac', { type_: HashTypes.Int64, value_: '0' }],
+        ])
+      );
       const ts = Timestamp.fromTimeAttrs(attrs);
       expect(ts.toSeconds()).toBe(1000);
     });
 
     it('should convert string with leading - to bigint', () => {
       const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
-      const attrs = {
-        sec: { type_: HashTypes.Int64, value_: '-1000' },
-        frac: { type_: HashTypes.UInt64, value_: '0' },
-      };
+      const attrs = new HashAttributes(
+        new Map([
+          ['sec', { type_: HashTypes.Int64, value_: '-1000' }],
+          ['frac', { type_: HashTypes.Int64, value_: '0' }],
+        ])
+      );
       const ts = Timestamp.fromTimeAttrs(attrs);
       expect(ts.toSeconds()).toBe(-1000);
       consoleSpy.mockRestore();
     });
 
     it('should convert boolean true to 1n', () => {
-      const attrs = {
-        sec: { type_: HashTypes.Bool, value_: true },
-        frac: { type_: HashTypes.UInt64, value_: 0 },
-      };
+      const attrs = new HashAttributes(
+        new Map([
+          ['sec', { type_: HashTypes.Bool, value_: true }],
+          ['frac', { type_: HashTypes.UInt64, value_: 0 }],
+        ])
+      );
       const ts = Timestamp.fromTimeAttrs(attrs);
       expect(ts.toSeconds()).toBe(1);
     });
 
     it('should convert boolean false to 0n', () => {
-      const attrs = {
-        sec: { type_: HashTypes.Bool, value_: false },
-        frac: { type_: HashTypes.UInt64, value_: 0 },
-      };
+      const attrs = new HashAttributes(
+        new Map([
+          ['sec', { type_: HashTypes.Bool, value_: false }],
+          ['frac', { type_: HashTypes.UInt64, value_: 0 }],
+        ])
+      );
       const ts = Timestamp.fromTimeAttrs(attrs);
       expect(ts.toSeconds()).toBe(0);
     });
 
     it('should throw error for float number', () => {
-      const attrs = {
-        sec: { type_: HashTypes.Float64, value_: 1000.5 },
-        frac: { type_: HashTypes.UInt64, value_: 0 },
-      };
+      const attrs = new HashAttributes(
+        new Map([
+          ['sec', { type_: HashTypes.Float64, value_: 1000.5 }],
+          ['frac', { type_: HashTypes.UInt64, value_: 0 }],
+        ])
+      );
       expect(() => Timestamp.fromTimeAttrs(attrs)).toThrow(
         'Cannot convert float (1000.5) to BigInt. Expected integer, got fractional value.'
       );
     });
 
     it('should throw error for Infinity', () => {
-      const attrs = {
-        sec: { type_: HashTypes.Float64, value_: Infinity },
-        frac: { type_: HashTypes.UInt64, value_: 0 },
-      };
+      const attrs = new HashAttributes(
+        new Map([
+          ['sec', { type_: HashTypes.Float64, value_: Infinity }],
+          ['frac', { type_: HashTypes.UInt64, value_: 0 }],
+        ])
+      );
       expect(() => Timestamp.fromTimeAttrs(attrs)).toThrow(
         'Cannot convert float (Infinity) to BigInt. Expected integer, got fractional value.'
       );
     });
 
     it('should throw error for NaN', () => {
-      const attrs = {
-        sec: { type_: HashTypes.Float64, value_: NaN },
-        frac: { type_: HashTypes.UInt64, value_: 0 },
-      };
+      const attrs = new HashAttributes(
+        new Map([
+          ['sec', { type_: HashTypes.Float64, value_: NaN }],
+          ['frac', { type_: HashTypes.UInt64, value_: 0 }],
+        ])
+      );
       expect(() => Timestamp.fromTimeAttrs(attrs)).toThrow(
         'Cannot convert float (NaN) to BigInt. Expected integer, got fractional value.'
       );
     });
 
     it('should throw error for string with decimals', () => {
-      const attrs = {
-        sec: { type_: HashTypes.String, value_: '1000.5' },
-        frac: { type_: HashTypes.UInt64, value_: 0 },
-      };
+      const attrs = new HashAttributes(
+        new Map([
+          ['sec', { type_: HashTypes.String, value_: '1000.5' }],
+          ['frac', { type_: HashTypes.UInt64, value_: 0 }],
+        ])
+      );
       expect(() => Timestamp.fromTimeAttrs(attrs)).toThrow(
-        'String "1000.5" is not a valid integer'
+        'String "1000.5" is not a valid integer (contains decimals, scientific notation, or invalid characters)'
       );
     });
 
     it('should throw error for string with scientific notation', () => {
-      const attrs = {
-        sec: { type_: HashTypes.String, value_: '1e3' },
-        frac: { type_: HashTypes.UInt64, value_: 0 },
-      };
+      const attrs = new HashAttributes(
+        new Map([
+          ['sec', { type_: HashTypes.String, value_: '1e3' }],
+          ['frac', { type_: HashTypes.UInt64, value_: 0 }],
+        ])
+      );
       expect(() => Timestamp.fromTimeAttrs(attrs)).toThrow(
         'String "1e3" is not a valid integer'
       );
     });
 
     it('should throw error for string with leading zeros', () => {
-      const attrs = {
-        sec: { type_: HashTypes.String, value_: '01000' },
-        frac: { type_: HashTypes.UInt64, value_: 0 },
-      };
+      const attrs = new HashAttributes(
+        new Map([
+          ['sec', { type_: HashTypes.String, value_: '01000' }],
+          ['frac', { type_: HashTypes.UInt64, value_: 0 }],
+        ])
+      );
       expect(() => Timestamp.fromTimeAttrs(attrs)).toThrow(
         'String "01000" has invalid leading zeros'
       );
     });
 
     it('should allow string with just zero', () => {
-      const attrs = {
-        sec: { type_: HashTypes.String, value_: '0' },
-        frac: { type_: HashTypes.UInt64, value_: 0 },
-      };
+      const attrs = new HashAttributes(
+        new Map([
+          ['sec', { type_: HashTypes.String, value_: '0' }],
+          ['frac', { type_: HashTypes.UInt64, value_: 0 }],
+        ])
+      );
       const ts = Timestamp.fromTimeAttrs(attrs);
       expect(ts.toSeconds()).toBe(0);
     });
 
     it('should throw error for invalid string', () => {
-      const attrs = {
-        sec: { type_: HashTypes.String, value_: 'abc' },
-        frac: { type_: HashTypes.UInt64, value_: 0 },
-      };
+      const attrs = new HashAttributes(
+        new Map([
+          ['sec', { type_: HashTypes.String, value_: 'abc' }],
+          ['frac', { type_: HashTypes.UInt64, value_: 0 }],
+        ])
+      );
       expect(() => Timestamp.fromTimeAttrs(attrs)).toThrow(
         'String "abc" is not a valid integer'
       );
     });
 
     it('should throw error for unsupported types', () => {
-      const attrs = {
-        sec: { type_: HashTypes.Hash, value_: {} },
-        frac: { type_: HashTypes.UInt64, value_: 0 },
-      };
+      const attrs = new HashAttributes(
+        new Map([
+          ['sec', { type_: HashTypes.Hash, value_: {} }],
+          ['frac', { type_: HashTypes.UInt64, value_: 0 }],
+        ])
+      );
       expect(() => Timestamp.fromTimeAttrs(attrs)).toThrow(
         'Cannot convert value to BigInt: received type object'
       );
@@ -501,19 +543,26 @@ describe('Timestamp', () => {
     });
 
     it('should handle attosecond precision for fractions', () => {
-      const attrs = {
-        sec: { type_: HashTypes.Int64, value_: 0n },
-        frac: { type_: HashTypes.UInt64, value_: 1n }, // 1 attosecond
-      };
+      const attrs = new HashAttributes(
+        new Map([
+          ['sec', { type_: HashTypes.Int64, value_: 0n }],
+          ['frac', { type_: HashTypes.UInt64, value_: 1n }], // 1 attosecond
+        ])
+      );
       const ts = Timestamp.fromTimeAttrs(attrs);
       expect(ts.toAttoseconds()).toBe(1n);
     });
 
     it('should preserve attosecond precision through conversions', () => {
-      const attrs = {
-        sec: { type_: HashTypes.Int64, value_: 1n },
-        frac: { type_: HashTypes.UInt64, value_: 500_000_000_000_000_000n }, // exactly 0.5 seconds
-      };
+      const attrs = new HashAttributes(
+        new Map([
+          ['sec', { type_: HashTypes.Int64, value_: 1n }],
+          [
+            'frac',
+            { type_: HashTypes.UInt64, value_: 500_000_000_000_000_000n },
+          ], // exactly 0.5 seconds
+        ])
+      );
       const ts = Timestamp.fromTimeAttrs(attrs);
 
       // Converting down to milliseconds and back should preserve precision
@@ -528,10 +577,12 @@ describe('Timestamp', () => {
   describe('Integration tests', () => {
     it('should handle typical Karabo workflow', () => {
       // Simulating receiving a timestamp from Karabo device
-      const karaboAttrs = {
-        sec: { type_: HashTypes.Int64, value_: '1704067200' },
-        frac: { type_: HashTypes.UInt64, value_: '500000000000000000' }, // 0.5 seconds
-      };
+      const karaboAttrs = new HashAttributes(
+        new Map([
+          ['sec', { type_: HashTypes.Int64, value_: 1704067200 }],
+          ['frac', { type_: HashTypes.UInt64, value_: '500000000000000000' }], // 0.5 seconds
+        ])
+      );
 
       const ts = Timestamp.fromTimeAttrs(karaboAttrs);
 

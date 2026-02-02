@@ -1,5 +1,5 @@
-import { HashTypes } from 'karabo-ts';
-import { HashValueType, VectorElementType } from '@/karabo_hash/HashValueType';
+import { HashTypes } from '@/karabo-hash/typenums';
+import { SimpleValueTypes, ValueTypes } from '@/karabo-hash/types';
 import {
   AccessLevel,
   AccessMode,
@@ -20,7 +20,7 @@ export interface TableColumnInfo {
 
 export interface PropertySchemaAttributes {
   valueType: HashTypes;
-  defaultValue?: HashValueType;
+  defaultValue?: ValueTypes;
   // displayType serves as a "guide" for the GUI client for displaying the
   // property. Usual values for it: "Slot", "ImageData", "NDArray", "OutputSchema"
   displayType?: string;
@@ -33,7 +33,7 @@ export interface PropertySchemaAttributes {
   unitSymbol?: string;
   metricPrefixSymbol?: string;
   nodeType?: NodeType;
-  options?: VectorElementType[];
+  options?: SimpleValueTypes[];
   allowedStates?: string[];
   rowSchema?: TableColumnInfo[];
 

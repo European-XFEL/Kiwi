@@ -8,10 +8,11 @@ import {
   notificationInfoFromHash,
 } from '@/karabo_hash/decoders/gui_session';
 import { broadcast_event, KaraboEvent } from '@/events';
-import { decodeBinHash, hashProtocolType } from '@/karabo_hash/hash_utils';
+import { unpackEncodedHash } from '@/karabo_hash/hash_utils';
+import { decodeBinary } from '@/karabo-hash/bin_reader';
 import { AccessControlManager } from '@/features/user/utils/AccessLevel';
 import { getTopology, getNetwork, getConfig } from '@/singletons/api';
-import { Hash } from 'karabo-ts';
+import { Hash } from '@/karabo-hash/hash';
 
 export class Manager {
   private _network: any;
@@ -31,8 +32,8 @@ export class Manager {
       console.log('Received an empty bin hash');
       return;
     }
-    const hash = decodeBinHash(binHash);
-    const protocolType = hashProtocolType(hash);
+    const hash = decodeBinary(unpackEncodedHash(binHash));
+    const protocolType = (hash.getValue('type') as string) ?? '';
 
     // Construct the expected method name
     const handlerName = `handle_${protocolType}`;

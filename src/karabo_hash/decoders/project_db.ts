@@ -1,4 +1,4 @@
-import { Hash, HashValue } from 'karabo-ts';
+import { Hash, HashValues } from '@/karabo-hash/hash';
 import {
   DbItemInfo,
   ListProjectsResult,
@@ -8,15 +8,15 @@ import {
 import { XMLParser } from 'fast-xml-parser';
 
 export const listProjectsResultFromHash = (hash: Hash): ListProjectsResult => {
-  const reason = hash.getValue('reason') as string;
+  const reason = hash.get('reason') as string;
   if (reason.length > 0) {
     // An error occurred
     return { error_msg: reason, projects: [] };
   } else {
-    const itemsHashes = hash.getValue('reply.items') as HashValue[];
+    const itemsHashes = hash.getValue('reply.items') as HashValues[];
     const domain = hash.getValue('request.args.domain') as string;
-    const projects: ProjectItemInfo[] = itemsHashes.map((hv: HashValue) => {
-      const item: Hash = new Hash(hv);
+    const projects: ProjectItemInfo[] = itemsHashes.map((hv: HashValues) => {
+      const item = new Hash(hv);
       return {
         domain: domain,
         uuid: item.getValue('uuid') as string,
@@ -40,7 +40,7 @@ export const loadProjectItemsResultFromHash = (
     return { error_msg: reason, projectItems: [] };
   } else {
     const items: DbItemInfo[] = [];
-    const itemHashes = hash.getValue('reply.items') as unknown as HashValue[];
+    const itemHashes = hash.getValue('reply.items') as unknown as HashValues[];
     //console.log(itemHashes);
     for (let i = 0; i < itemHashes.length; i++) {
       const item = new Hash(itemHashes[i]);

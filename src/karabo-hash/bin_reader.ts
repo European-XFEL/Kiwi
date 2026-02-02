@@ -1,6 +1,8 @@
 import * as Types from './types';
 import { Hash, Schema, HashList, HashAttributes } from './hash';
-import { TextDecoder } from 'util';
+// cannot import from the util module as it's a node-only module; in the browser,
+// TextDecoder is a global object and should not be imported
+// import { TextDecoder } from 'util';
 
 type ParserFunction = (
   parser: BinaryDecoder
@@ -237,7 +239,7 @@ class BinaryDecoder {
       let asize = readUInt32(this).value_;
 
       // Collect attributes into a Map for the new Hash
-      const attrs: HashAttributes = new Map();
+      const attrs = new Map<string, any>();
       while (asize > 0) {
         const attrKey = this.readKey();
         const attrType = readUInt32(this).value_;

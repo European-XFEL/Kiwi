@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Hash } from 'karabo-ts';
+import { Hash } from '@/karabo-hash/hash';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -151,7 +151,13 @@ export default function SelectProjectSceneDialog({
   }, [open]);
 
   useKaraboEvent(KaraboEvent.ListDomains, (hash: any) => {
-    let data = hash['data'] as Hash;
+    // Note: As the type of the hash had to be removed to comply with the more
+    //       generic type required by the event dispatching mechanism, and the
+    //       TS compiler cannot infer that hash is a Hash, the generated JS has
+    //       no way to refer to Hash specific methods like getValue. The
+    //       generated JS will throw a runtime error if an attempt is made to
+    //       use hash.getValue in the following line.
+    let data = hash['data'];
     let domains;
     try {
       domains = getDomains(data);
