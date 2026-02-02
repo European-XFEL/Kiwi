@@ -1,4 +1,6 @@
-import { Hash, HashTypes, HashValue } from 'karabo-ts';
+// import { Hash, HashValue } from 'karabo-ts';
+import { Hash } from '@/karabo-hash/hash';
+import { HashTypes } from '@/karabo-hash/typenums';
 import { getNetwork, getManager, getTopology } from '@/singletons/api';
 import {
   buildStartMonitoringHash,
@@ -9,14 +11,14 @@ import type { PropertyInfo } from '@/karabo_data/DeviceConfigInfo';
 import { DeviceSchemaConnector } from './DeviceSchemaConnector';
 import { DeviceInfo, TopologyEventType } from '@/karabo_data/TopologyInfo';
 import type { DeviceSchemaInfo } from '@/karabo_data/DeviceSchemaInfo';
-import type { VectorElementType } from '@/karabo_hash/HashValueType';
+import type { SimpleValueTypes } from '@/karabo-hash/types';
 import { deviceManager } from '@/lib/binding/DeviceManager';
 
-// VectorElementType[][] is the type used for the value of a table property.
-// Each VectorElementType is the value of a table cell with the row being
+// SimpleValueTypes[][] is the type used for the value of a table property.
+// Each SimpleValueTypes is the value of a table cell with the row being
 // the first index and the column being the second index.
 type PropertyUpdateHandler = (
-  updatedProperty: PropertyInfo | VectorElementType[][]
+  updatedProperty: PropertyInfo | SimpleValueTypes[][]
 ) => void;
 
 // TODO: Move this fuctionality to Topology / DeviceProxy
@@ -401,15 +403,15 @@ export class DevicePropertyConnector {
    */
   private _extractCellValues = (
     propInfo: PropertyInfo
-  ): VectorElementType[][] => {
-    const tableCells: VectorElementType[][] = [];
-    const hashVector = propInfo.value as HashValue[];
+  ): SimpleValueTypes[][] => {
+    const tableCells: SimpleValueTypes[][] = [];
+    const hashVector = propInfo.value as unknown as Hash[];
 
     for (let row = 0; row < hashVector.length; row++) {
-      const rowCells: VectorElementType[] = [];
+      const rowCells: SimpleValueTypes[] = [];
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      for (const [, hashNode] of Object.entries(hashVector[row])) {
-        rowCells.push(hashNode.value.value_ as VectorElementType);
+      for (const [, cellData] of hashVector[row].items()) {
+        rowCells.push(cellData.value_);
       }
       tableCells.push(rowCells);
     }

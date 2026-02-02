@@ -5,7 +5,7 @@
 import * as React from 'react';
 import type { EditableComboBoxProps } from '@/scene/scene_types/controllers';
 import { FONT_FAMILY_DEFAULT } from '../utils/fontDefaults';
-import { VectorElementType } from '@/karabo_hash/HashValueType';
+import { SimpleValueTypes } from '@/karabo-hash/types';
 
 const EditableComboBox: React.FC<EditableComboBoxProps> = ({
   font_size,
@@ -22,9 +22,9 @@ const EditableComboBox: React.FC<EditableComboBoxProps> = ({
     undefined
   );
 
-  const options = React.useMemo((): VectorElementType[] => {
+  const options = React.useMemo((): SimpleValueTypes[] => {
     const schemaOptions = schemaAttrs?.options ?? [];
-    return schemaOptions as VectorElementType[];
+    return schemaOptions as SimpleValueTypes[];
   }, [schemaAttrs]);
 
   React.useEffect(() => {

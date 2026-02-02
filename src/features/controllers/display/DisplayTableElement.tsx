@@ -14,29 +14,32 @@ import {
 } from '@/components/ui/table';
 
 import { formatTableCell, isNumericType } from './utils/formatTableCell';
-
-import type { VectorElementType } from '@/karabo_hash/HashValueType';
+import { Hash } from '@/karabo-hash/hash';
+import type { SimpleValueTypes } from '@/karabo-hash/types';
 import type { TableColumnInfo } from '@/karabo_data/DeviceSchemaInfo';
 
 /**
  * Normalize table data coming from primary.value.
  */
-function normalizeTableCells(raw: unknown): VectorElementType[][] {
+function normalizeTableCells(raw: unknown): SimpleValueTypes[][] {
   if (!Array.isArray(raw) || raw.length === 0) return [];
 
-  // Shape A: already VectorElementType[][]
-  if (Array.isArray(raw[0])) return raw as unknown as VectorElementType[][];
+  // TODO: evaluate if Shape A can really occur - didn't find it during the
+  //       migration to the new Hash.
 
-  // Shape B: legacy row-object shape
-  if (raw[0] && typeof raw[0] === 'object') {
+  // Shape A: already ValueTypes[][]
+  if (Array.isArray(raw[0])) return raw as unknown as SimpleValueTypes[][];
+
+  // Shape B: vector of Hashes
+  if (raw[0] && raw[0] instanceof Hash) {
     try {
-      const rows = raw as Record<string, unknown>[];
+      const rows = raw as Hash[];
 
-      return rows.map((rowObj) => {
-        const rowCells: VectorElementType[] = [];
+      return rows.map((rowObj: Hash) => {
+        const rowCells: SimpleValueTypes[] = [];
 
-        for (const [, node] of Object.entries(rowObj)) {
-          const cellValue = (node as any)?.value?.value_ as VectorElementType;
+        for (let [key, _] of rowObj) {
+          const cellValue = rowObj.getValue(key);
           rowCells.push(cellValue);
         }
 
@@ -79,7 +82,7 @@ const DisplayTableElement: React.FC<DisplayTableElementProps> = ({
 }) => {
   const raw = primary?.value;
 
-  const cells: VectorElementType[][] = React.useMemo(() => {
+  const cells: SimpleValueTypes[][] = React.useMemo(() => {
     return normalizeTableCells(raw);
   }, [raw]);
 

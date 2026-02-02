@@ -1,7 +1,8 @@
 import type { DeviceProxy } from './DeviceProxy';
 import type { PropertyModel, PropertyValue } from '../model/types/PropertyType';
-import type { HashValueType } from '@/karabo_hash/HashValueType';
-import type { Attributes } from 'karabo-ts';
+// import type { HashValueType } from '@/karabo_hash/HashValueType';
+// import type { Attributes } from 'karabo-ts';
+import { HashValues, HashAttributes } from '@/karabo-hash/hash';
 
 import {
   buildPropertyDescriptor,
@@ -62,14 +63,14 @@ export class PropertyProxy {
   }
 
   /** Same value but narrowed for legacy widgets that expect HashValueType */
-  get hashValue(): HashValueType | undefined {
-    return this.value as HashValueType | undefined;
+  get hashValue(): HashValues | undefined {
+    return this.value as HashValues | undefined;
   }
 
   /** Timestamp / attributes */
-  get timeAttrs(): Attributes | undefined {
+  get timeAttrs(): HashAttributes | undefined {
     // we still store raw timeAttrs on the binding
-    return this.model?.binding.timeAttrs as Attributes | undefined;
+    return this.model?.binding.timeAttrs as HashAttributes | undefined;
   }
 
   /**
@@ -79,7 +80,7 @@ export class PropertyProxy {
    * Note: still delegates to DeviceProxy’s event system.
    */
   subscribe(
-    callback: (value: HashValueType, timeAttrs: Attributes) => void
+    callback: (value: HashValues, timeAttrs: HashAttributes) => void
   ): () => void {
     return this.root.subscribeToProperty(this.path, callback);
   }

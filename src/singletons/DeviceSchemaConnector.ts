@@ -1,4 +1,4 @@
-import { Hash } from 'karabo-ts';
+import { Hash } from '@/karabo-hash/hash';
 import { getNetwork, getManager } from '@/singletons/api';
 import { DeviceSchemaInfo } from '@/karabo_data/DeviceSchemaInfo';
 import { deviceSchemaFromHash } from '@/karabo_hash/decoders/device_schema';

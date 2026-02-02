@@ -5,10 +5,11 @@ import type {
 import { DeviceProxy } from '@/lib/binding/proxies/DeviceProxy';
 import type { DeviceSchemaInfo } from '@/karabo_data/DeviceSchemaInfo';
 import type { DeviceInfo } from '@/karabo_data/TopologyInfo';
-import { Attributes, HashTypes } from 'karabo-ts';
-import { HashValueType, VectorElementType } from '@/karabo_hash/HashValueType';
+import { HashTypes } from '@/karabo-hash/typenums';
+import { HashAttributes, HashValues } from '@/karabo-hash/hash';
+import { SimpleValueTypes } from '@/karabo-hash/types';
 
-type PropertyValueUpdate = HashValueType | VectorElementType[][];
+type PropertyValueUpdate = HashValues | SimpleValueTypes[][];
 
 class DeviceManager {
   private static instance: DeviceManager;
@@ -122,7 +123,7 @@ class DeviceManager {
     deviceId: string,
     propertyKey: string,
     value: PropertyValueUpdate,
-    timeAttrs?: Attributes,
+    timeAttrs?: HashAttributes,
     type?: HashTypes
   ): void {
     const proxy = this.getOrCreate(deviceId);
@@ -131,7 +132,7 @@ class DeviceManager {
       key: propertyKey,
       value: value as any,
       type: (type ?? (undefined as any)) as HashTypes,
-      timeAttrs: (timeAttrs ?? ({} as any)) as Attributes,
+      timeAttrs: (timeAttrs ?? ({} as any)) as HashAttributes,
     };
 
     proxy.reportPropertyUpdate(info);

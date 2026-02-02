@@ -1,11 +1,12 @@
 import { DeviceConfigInfo } from '../../karabo_data/DeviceConfigInfo';
-import { Hash, HashValue } from 'karabo-ts';
+// import { Hash, HashValue } from 'karabo-ts';
+import { Hash, HashValues } from '@/karabo-hash/hash';
 import { flattenHash } from '../hash_utils';
 import { splitKaraboKeys } from '@/lib/binding/utils/splitKaraboKeys';
 
 export const devicesConfigsFromHash = (hash: Hash): DeviceConfigInfo[] => {
   const devicesConfigsInfo: DeviceConfigInfo[] = [];
-  const configurations = hash.getValue('configurations') as HashValue;
+  const configurations = hash.getValue('configurations') as HashValues;
   const configsHash = new Hash(configurations);
 
   // Values of device properties are the leaves of the configuration Hash.

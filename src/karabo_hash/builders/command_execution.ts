@@ -1,10 +1,10 @@
-import { Hash, makeHash } from 'karabo-ts';
+import { Hash } from '@/karabo-hash/hash';
 
 export const buildExecuteCommandHash = (
   deviceId: string,
   command: string
 ): Hash => {
-  return makeHash({
+  return new Hash({
     type: 'execute',
     deviceId: deviceId,
     command: command,

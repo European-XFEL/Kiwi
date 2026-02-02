@@ -28,7 +28,6 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "fast-xml-parser": "^4.5.0",
-    "karabo-ts": "^1.1.0",
     "lodash": "^4.17.21",
     "lucide-react": "^0.544.0",
     "plotly": "^1.0.6",

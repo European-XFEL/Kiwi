@@ -11,8 +11,7 @@ import type {
 } from '@/karabo_data/DeviceConfigInfo';
 import type { DeviceInfo } from '@/karabo_data/TopologyInfo';
 
-import type { HashValueType } from '@/karabo_hash/HashValueType';
-import type { Attributes } from 'karabo-ts';
+import { HashValues, HashAttributes } from '@/karabo-hash/hash';
 
 import { ProxyStatus } from '@/lib/binding/ProxyStatus';
 import {
@@ -152,9 +151,9 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
     return this._model.properties.get(path);
   }
 
-  getPropertyValue(path: string): HashValueType | undefined {
+  getPropertyValue(path: string): HashValues | undefined {
     return this._model.properties.get(path)?.binding.value as
-      | HashValueType
+      | HashValues
       | undefined;
   }
 
@@ -185,7 +184,7 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
       prop.binding.setValue(update.value as PropertyValue, { timestamp });
 
       // Keep timeAttrs for backward compatibility
-      prop.binding.timeAttrs = update.timeAttrs as
+      prop.binding.timeAttrs = update.timeAttrs as unknown as
         | Record<string, unknown>
         | undefined;
     }
@@ -204,8 +203,8 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
     this.emit(
       'property_changed',
       update.key,
-      update.value as HashValueType,
-      (prop?.binding.timeAttrs ?? update.timeAttrs ?? {}) as Attributes
+      update.value as HashValues,
+      (prop?.binding.timeAttrs ?? update.timeAttrs ?? {}) as HashAttributes
     );
   }
 
@@ -308,8 +307,8 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
         this.emit(
           'property_changed',
           path,
-          model.binding.value as HashValueType,
-          (model.binding.timeAttrs ?? {}) as Attributes
+          model.binding.value as HashValues,
+          (model.binding.timeAttrs ?? {}) as unknown as HashAttributes
         );
       }
     }
@@ -343,10 +342,14 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
       prop.binding.setValue(value as PropertyValue, { timestamp });
 
       // Update type directly
-      prop.binding.type = type;
+      if (type !== undefined) {
+        prop.binding.type = type;
+      }
 
       // Keep timeAttrs for backward compatibility
-      prop.binding.timeAttrs = timeAttrs as Record<string, unknown> | undefined;
+      prop.binding.timeAttrs = timeAttrs as unknown as
+        | Record<string, unknown>
+        | undefined;
     }
 
     if (key === 'state' && typeof value === 'string') {
@@ -362,8 +365,8 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
     this.emit(
       'property_changed',
       key,
-      value as HashValueType,
-      (prop?.binding.timeAttrs ?? timeAttrs ?? {}) as Attributes
+      value as HashValues,
+      (prop?.binding.timeAttrs ?? timeAttrs ?? {}) as HashAttributes
     );
   }
 
@@ -380,14 +383,14 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
 
   subscribeToProperty(
     propertyPath: string,
-    callback: (value: HashValueType, timeAttrs: Attributes) => void
+    callback: (value: HashValues, timeAttrs: HashAttributes) => void
   ): () => void {
     this._incrementPropertySubscriber(propertyPath);
 
     const listener = (
       path: string,
-      value: HashValueType,
-      timeAttrs: Attributes
+      value: HashValues,
+      timeAttrs: HashAttributes
     ) => {
       if (path === propertyPath) {
         callback(value, timeAttrs);

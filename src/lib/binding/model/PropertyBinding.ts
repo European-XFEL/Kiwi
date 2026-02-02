@@ -2,7 +2,7 @@
  * PropertyBinding - Runtime state and data for a property
  */
 
-import type { HashTypes } from 'karabo-ts';
+import type { HashTypes } from '@/karabo-hash/typenums';
 import type {
   PropertyBinding as IPropertyBinding,
   PropertyValue,

@@ -7,7 +7,7 @@
 import React from 'react';
 import type { EvaluatorProps } from '@/scene/scene_types/controllers/display';
 import { FONT_FAMILY_DEFAULT } from '../utils/fontDefaults';
-import { HashTypes } from 'karabo-ts';
+import { HashTypes } from '@/karabo-hash/typenums';
 
 /**
  * Default float formatting aligned with Karabo GUI:

@@ -47,7 +47,13 @@ export function getHashTypeFromValue(value: any): HashTypes {
       return HashTypes.Int32;
     }
     case 'number': {
-      return HashTypes.Float64;
+      // Note: it is important to differentiate between integer and floating
+      //       point numbers when setting a hash value because at least the
+      //       C++ API checks for that. Trying to put any number value as a
+      //       Float64 triggers a cast exception on karabo/data/types/Element.hh
+      //       as of Karabo 3.x with a description similar to:
+      //        'Value for key "timeout" has type "double". It can't be read as being of type "int"'
+      return _getTypeFromNumber(value);
     }
     case 'object': {
       if (Object.prototype.hasOwnProperty.call(value, 'type_')) {
@@ -64,7 +70,7 @@ export function getHashTypeFromValue(value: any): HashTypes {
             return HashTypes.VectorString;
           }
           case 'number': {
-            return HashTypes.VectorFloat64;
+            return _getTypeFromNumber(first);
           }
           case 'boolean': {
             return HashTypes.VectorBool;
@@ -84,6 +90,31 @@ export function getHashTypeFromValue(value: any): HashTypes {
   throw new Error(
     `Cannot infer HashTypes from value: ${Object.prototype.toString.call(value)}`
   );
+}
+
+function _getTypeFromNumber(value: number): HashTypes {
+  const int32Min = -1 * 2 ** 31;
+  const int32Max = 2 ** 31 - 1;
+  const int64Min = -1 * 2 ** 63;
+  const int64Max = 2 ** 63 - 1;
+  const uint64Max = 2 ** 64 - 1;
+  if (Number.isInteger(value) && value <= int32Max && value >= int32Min) {
+    return HashTypes.Int32;
+  } else if (
+    Number.isInteger(value) &&
+    value <= int64Max &&
+    value >= int64Min
+  ) {
+    return HashTypes.Int64;
+  } else if (Number.isInteger(value) && value <= uint64Max && value >= 0) {
+    return HashTypes.UInt64;
+  } else if (Number.isInteger(value)) {
+    throw new Error(
+      `failed to identify karabo supported type for integer ${value}`
+    );
+  } else {
+    return HashTypes.Float64;
+  }
 }
 
 export const HashTypeToXmlType: Record<HashTypes, string> = {

@@ -1,6 +1,8 @@
-import { decodeBinHash, packEncodedHash } from '@/karabo_hash/hash_utils';
+import { packEncodedHash, unpackEncodedHash } from '@/karabo_hash/hash_utils';
+import { decodeBinary } from '@/karabo-hash/bin_reader';
+import { encodeBinary } from '@/karabo-hash/bin_writer';
 import { Websocket, WebsocketBuilder } from 'websocket-ts';
-import { BinaryEncoder, Hash } from 'karabo-ts';
+import { Hash } from '@/karabo-hash/hash';
 import { useAppSettingsStore } from '@/store/appSettingsStore';
 import { useGlobalActivityStore } from '@/store/globalActivityStore';
 import { GuiServerInfo } from '@/karabo_data/GuiServerInfo';
@@ -96,7 +98,7 @@ export class Network {
       );
       return;
     }
-    const encodedHash = new BinaryEncoder().encodeHash(hash);
+    const encodedHash = encodeBinary(hash);
     this._ws.send(packEncodedHash(encodedHash));
   }
 
@@ -121,7 +123,7 @@ export class Network {
         } else {
           const msgBlob = ev.data as Blob;
           msgBlob.arrayBuffer().then((binHash: ArrayBuffer) => {
-            const hash = decodeBinHash(binHash);
+            const hash = decodeBinary(unpackEncodedHash(binHash));
             const guiServerInfo = guiServerInfoFromHash(hash);
             onSuccess(guiServerInfo);
             ws.close();

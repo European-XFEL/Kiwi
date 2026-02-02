@@ -3,7 +3,7 @@ import {
   NotificationInfo,
 } from '../../karabo_data/GuiProtocolSmallInfo';
 import { GuiServerInfo } from '../../karabo_data/GuiServerInfo';
-import { Hash } from 'karabo-ts';
+import { Hash } from '@/karabo-hash/hash';
 
 export const guiServerInfoFromHash = (hash: Hash): GuiServerInfo => {
   return {
