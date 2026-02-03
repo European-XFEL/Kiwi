@@ -219,13 +219,12 @@ class BinaryDecoder {
   }
 
   readVectorHash(): HashList {
-    let size = readUInt32(this).value_;
-    const ret: Hash[] = [];
-    while (size > 0) {
-      ret.push(this.readHash());
-      size -= 1;
+    const size = readUInt32(this).value_;
+    const ret = new HashList();
+    for (let i = 0; i < size; i++) {
+      ret[i] = this.readHash();
     }
-    return new HashList(ret);
+    return ret;
   }
 
   readHash(): Hash {
