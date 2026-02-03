@@ -415,7 +415,15 @@ export class Schema {
   }
 }
 
-export class HashList {
+export class HashList extends Array<Hash> {
   readonly type_ = HashTypes.VectorHash;
-  constructor(public value_: Hash[]) {}
+
+  constructor(values: number | Iterable<Hash> = []) {
+    if (typeof values === 'number') super(values);
+    else super(...values);
+  }
+
+  get value_(): HashList {
+    return this;
+  }
 }

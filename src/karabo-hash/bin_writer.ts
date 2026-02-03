@@ -1,8 +1,5 @@
 import * as Types from './types';
 import { Hash, Schema, HashList } from './hash';
-// cannot import from the util module as it's a node-only module; in the browser,
-// TextDecoder is a global object and should not be imported
-// import { TextEncoder } from 'util';
 
 function encodeInt8(parser: BinaryEncoder, data: number): ArrayBuffer {
   const bin = new ArrayBuffer(1);
@@ -94,7 +91,7 @@ function encodeString(parser: BinaryEncoder, data: string): ArrayBuffer {
   const dv = new DataView(ret.buffer);
   dv.setUint32(0, buff.length, true);
   ret.set(new Uint8Array(buff), 4);
-  return ret;
+  return ret.buffer;
 }
 
 function encodeVector<T>(
@@ -125,7 +122,7 @@ function encodeVector<T>(
     offset += buffer.byteLength;
   }
 
-  return ret;
+  return ret.buffer;
 }
 
 class BinaryEncoder {
@@ -211,7 +208,7 @@ class BinaryEncoder {
     const dv = new DataView(ret.buffer);
     ret.set(new Uint8Array(buff), 1);
     dv.setUint8(0, buff.length);
-    return ret;
+    return ret.buffer;
   }
 
   encodeHash(hash: Hash): ArrayBuffer {
@@ -271,7 +268,7 @@ class BinaryEncoder {
       pos += element.byteLength;
     });
 
-    return ret;
+    return ret.buffer;
   }
 
   encodeSchema(schema: Schema): ArrayBuffer {
@@ -298,7 +295,7 @@ class BinaryEncoder {
       ret.set(new Uint8Array(element), pos);
       pos += element.byteLength;
     });
-    return ret;
+    return ret.buffer;
   }
 }
 
