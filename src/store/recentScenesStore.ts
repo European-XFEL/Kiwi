@@ -5,10 +5,20 @@ import {
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { RecentSceneModel } from '@/view_models/RecentScenesModel';
-import { moveItemToFirstPosition } from '@/shared/utils/arrayUtils';
 
 const MRU_SCENES_SIZE = 6;
 const MRU_SCENES_KEY = 'MRU_SCENES_';
+
+function moveFront<T>(arr: readonly T[], index: number): T[] {
+  const len = arr.length;
+  if (index < 0 || index >= len) {
+    throw new Error('index out of bounds');
+  }
+  if (index === 0) {
+    return arr.slice();
+  }
+  return [arr[index], ...arr.slice(0, index), ...arr.slice(index + 1)];
+}
 
 // Confirm from local storage if there are recent scenes
 const loadRecentScenes = (): RecentScenesByUser[] | null => {
@@ -37,18 +47,6 @@ const loadRecentScenes = (): RecentScenesByUser[] | null => {
   }
 };
 
-// Save scenes to localStorage with error handling
-const saveScenesToStorage = (
-  userId: string,
-  scenes: RecentSceneModel[]
-): void => {
-  try {
-    localStorage.setItem(`${MRU_SCENES_KEY}${userId}`, JSON.stringify(scenes));
-  } catch (error) {
-    console.warn('Failed to save recent scenes to localStorage:', error);
-  }
-};
-
 // State types
 export interface RecentSceneStoreState {
   recentScenes: Map<string, RecentSceneModel[]>;
@@ -61,8 +59,6 @@ export interface RecentSceneStoreActions {
     userId: string,
     sceneId: { domain: string; uuid: string }
   ) => void;
-  clearRecentScenesForUser: (userId: string) => void;
-  clearAllRecentScenes: () => void;
   getRecentScenesForUser: (userId: string) => RecentSceneModel[];
 }
 
@@ -108,16 +104,13 @@ const useRecentStore = create<TRecentStore>()(
         scenes = [...scenes];
 
         // Check if the scene already exists
-        const existingSceneIndex = scenes.findIndex(
+        const index = scenes.findIndex(
           (scene) => scene.domain === domain && scene.uuid === uuid
         );
 
-        if (existingSceneIndex >= 0) {
+        if (index >= 0) {
           // Move existing scene to the top
-          const rearrangedArray = moveItemToFirstPosition<RecentSceneModel>(
-            scenes,
-            existingSceneIndex
-          );
+          const rearrangedArray = moveFront<RecentSceneModel>(scenes, index);
           scenes = rearrangedArray;
         } else {
           // Add new scene to the beginning
@@ -139,7 +132,10 @@ const useRecentStore = create<TRecentStore>()(
         newRecentScenes.set(userId, scenes);
 
         // Save to localStorage
-        saveScenesToStorage(userId, scenes);
+        localStorage.setItem(
+          `${MRU_SCENES_KEY}${userId}`,
+          JSON.stringify(scenes)
+        );
 
         // Return the new state
         return {
@@ -162,50 +158,13 @@ const useRecentStore = create<TRecentStore>()(
         );
 
         newRecentScenes.set(userId, scenes);
-        saveScenesToStorage(userId, scenes);
+        localStorage.setItem(
+          `${MRU_SCENES_KEY}${userId}`,
+          JSON.stringify(scenes)
+        );
 
         return {
           recentScenes: newRecentScenes,
-        };
-      }),
-
-    clearRecentScenesForUser: (userId: string) =>
-      set((state) => {
-        const newRecentScenes = new Map(state.recentScenes);
-        newRecentScenes.set(userId, []);
-
-        // Clear from localStorage
-        try {
-          localStorage.removeItem(`${MRU_SCENES_KEY}${userId}`);
-        } catch (error) {
-          console.warn(
-            'Failed to clear recent scenes from localStorage:',
-            error
-          );
-        }
-
-        return {
-          recentScenes: newRecentScenes,
-        };
-      }),
-
-    clearAllRecentScenes: () =>
-      set(() => {
-        // Clear all localStorage entries
-        try {
-          const keysToRemove = Object.keys(localStorage).filter((key) =>
-            key.startsWith(MRU_SCENES_KEY)
-          );
-          keysToRemove.forEach((key) => localStorage.removeItem(key));
-        } catch (error) {
-          console.warn(
-            'Failed to clear all recent scenes from localStorage:',
-            error
-          );
-        }
-
-        return {
-          recentScenes: new Map(),
         };
       }),
 
