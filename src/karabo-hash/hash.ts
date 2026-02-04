@@ -43,6 +43,11 @@ export class HashAttributes extends Map<string, HashValues> {
     return super.set(key, wrapKaraboValue(value));
   }
 
+  // * This is solely used for the deserializer
+  public _set_element(key: string, value: any): void {
+    super.set(key, value);
+  }
+
   getValue(path: string): any {
     return this.get(path).value_;
   }
@@ -191,7 +196,9 @@ export class Hash extends Map<string, HashElement> {
     attrs?: HashAttributes | Record<string, any>
   ): void {
     const key = String(path);
-    const elementAttrs = new HashAttributes(attrs);
+    // Avoid copy if possible
+    const elementAttrs =
+      attrs instanceof HashAttributes ? attrs : new HashAttributes(attrs);
     const element = new HashElement(wrapKaraboValue(value), elementAttrs);
 
     if (!key.includes(SEPARATOR)) {

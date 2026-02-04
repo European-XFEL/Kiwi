@@ -238,12 +238,14 @@ class BinaryDecoder {
       let asize = readUInt32(this).value_;
 
       // Collect attributes into a Map for the new Hash
-      const attrs = new Map<string, any>();
+      // This is fine since we pollute with KaraboValues
+      //
+      const attrs = new HashAttributes();
       while (asize > 0) {
         const attrKey = this.readKey();
         const attrType = readUInt32(this).value_;
         const attrValue = getParser(attrType)(this);
-        attrs.set(attrKey, attrValue);
+        attrs._set_element(attrKey, attrValue);
         asize -= 1;
       }
 
