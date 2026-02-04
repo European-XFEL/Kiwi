@@ -9,7 +9,7 @@ import {
 import { devicesConfigsFromHash } from '@/karabo_hash/decoders/device_config';
 import type { PropertyInfo } from '@/karabo_data/DeviceConfigInfo';
 import { DeviceSchemaConnector } from './DeviceSchemaConnector';
-import { DeviceInfo, TopologyEventType } from '@/karabo_data/TopologyInfo';
+import { TopologyEventType } from '@/karabo_data/TopologyInfo';
 import type { DeviceSchemaInfo } from '@/karabo_data/DeviceSchemaInfo';
 import type { SimpleValueTypes } from '@/karabo-hash/types';
 import { deviceManager } from '@/lib/binding/DeviceManager';
@@ -76,14 +76,14 @@ export class DevicePropertyConnector {
         this._startMonitoringDevice(deviceId);
       } else {
         // For offline devices, register the pending start monitoring
-        this._pendingMonitorStarts.add(deviceId);
+        this._pendingMonitors.add(deviceId);
       }
 
       devicePropertyMonitors = new Map<string, PropertyUpdateHandler[]>();
       this._propertyMonitors.set(deviceId, devicePropertyMonitors);
     } else {
       // The device already has at least one registered property monitor
-      if (!this._pendingMonitorStarts.has(deviceId)) {
+      if (!this._pendingMonitors.has(deviceId)) {
         // The device is already being monitored. As a startMonitoring request
         // will not be sent to the GUI Server, send a property update immediately.
         const propertyInfo = this._getDeviceProperty(deviceId, propertyId);
@@ -155,7 +155,7 @@ export class DevicePropertyConnector {
       this._stopMonitoringDevice(deviceId);
       this._propertyMonitors.delete(deviceId);
       this._deviceConfigurations.delete(deviceId);
-      this._pendingMonitorStarts.delete(deviceId);
+      this._pendingMonitors.delete(deviceId);
     }
   }
 
@@ -219,26 +219,26 @@ export class DevicePropertyConnector {
 
   // #region Monitoring Start Pendencies
 
-  private _pendingMonitorStarts = new Set<string>();
+  private _pendingMonitors = new Set<string>();
 
   private _onDeviceInfoUpdate = (
     eventType: TopologyEventType,
-    deviceInfo: DeviceInfo
+    instanceId: string
   ): void => {
     if (
       eventType === TopologyEventType.NEW &&
-      this._pendingMonitorStarts.has(deviceInfo.deviceId)
+      this._pendingMonitors.has(instanceId)
     ) {
       // A device with pending start monitoring became online
-      this._startMonitoringDevice(deviceInfo.deviceId);
-      this._pendingMonitorStarts.delete(deviceInfo.deviceId);
+      this._startMonitoringDevice(instanceId);
+      this._pendingMonitors.delete(instanceId);
     } else if (
       eventType === TopologyEventType.GONE &&
-      this._propertyMonitors.has(deviceInfo.deviceId)
+      this._propertyMonitors.has(instanceId)
     ) {
       // A device being monitored became offline - keep track of it as a
       // device with a pending start monitoring.
-      this._pendingMonitorStarts.add(deviceInfo.deviceId);
+      this._pendingMonitors.add(instanceId);
       // NOTE: no need to send a stop monitoring request to the GUI Server as it
       //       automatically removes the monitoring subscription when it detects
       //       that the monitored device goes offline.

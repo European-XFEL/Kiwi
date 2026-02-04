@@ -1,8 +1,4 @@
 import {
-  sysTopologyInfoFromHash,
-  sysTopologyUpdateInfoFromHash,
-} from '@/karabo_hash/decoders/topology';
-import {
   guiServerInfoFromHash,
   loginInfoFromHash,
   notificationInfoFromHash,
@@ -16,10 +12,13 @@ import { Hash } from '@/karabo-hash/hash';
 
 export class Manager {
   private _network: any;
+  private _topology: any;
+
   private _hashHandlers = new Map<string, (hash: Hash) => void>();
 
   public constructor() {
     this._network = getNetwork();
+    this._topology = getTopology();
     // Bind 'this' context so dynamic calls inside processMessage work correctly
     this._network.onReceivedData = this.processMessage.bind(this);
   }
@@ -139,13 +138,11 @@ export class Manager {
   }
 
   private handle_systemTopology(hash: Hash): void {
-    const sysTopologyInfo = sysTopologyInfoFromHash(hash);
-    getTopology().systemTopology = sysTopologyInfo;
+    this._topology.initialize(hash.get('systemTopology'));
   }
 
   private handle_topologyUpdate(hash: Hash): void {
-    const topologyUpdateInfo = sysTopologyUpdateInfoFromHash(hash);
-    getTopology().updateTopology(topologyUpdateInfo);
+    this._topology.updateTopology(hash);
   }
 
   private handle_projectListDomains(hash: Hash): void {
