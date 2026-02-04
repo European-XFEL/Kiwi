@@ -1,7 +1,7 @@
 // In a real project, ensure these paths are correct relative to this file.
 import { Network } from './Network';
 import { ProjectDBConnector } from './ProjectDBConnector';
-import { TopologyConnector } from './TopologyConnector';
+import { SystemTopology } from './Topology';
 import { Manager } from './Manager';
 import { Mediator } from './Mediator';
 import { ConfigurationStore } from './Configuration';
@@ -34,7 +34,7 @@ function buildGetter<T>(key: string, ClassRef: Constructable<T>): () => T {
 
 export const getDbConn = buildGetter('db_conn', ProjectDBConnector);
 export const getNetwork = buildGetter('network', Network);
-export const getTopology = buildGetter('topology', TopologyConnector);
+export const getTopology = buildGetter('topology', SystemTopology);
 export const getManager = buildGetter('manager', Manager);
 export const getMediator = buildGetter('mediator', Mediator);
 export const getConfig = buildGetter('config', ConfigurationStore);
