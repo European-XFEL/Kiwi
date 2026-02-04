@@ -1,5 +1,12 @@
 import { Hash, HashList, Schema } from '@/karabo-hash/hash';
 import { HashTypes } from '@/karabo-hash/typenums';
+import {
+  StringValue,
+  Float64Value,
+  VectorFloat64Value,
+} from '@/karabo-hash/types';
+
+import { flatIterall } from '@/karabo-hash/utils';
 
 // Helper to check if a value is a wrapped Karabo type (has type_)
 const isWrapped = (v: any) => v && typeof v === 'object' && 'type_' in v;
@@ -438,5 +445,32 @@ describe('Karabo Hash Class Tests', () => {
         expect(retrievedList[0].getValue('leaf')).toBe(true);
       });
     });
+
+    describe('13. flatIterall', () => {
+      test('flattens paths', () => {
+        const h = new Hash();
+        h.set('a.b.c', 'Karabo');
+        h.set('a.b.d', [1.2, 1.4]);
+        h.set('z', 7.3);
+
+        const out = [...flatIterall(h)];
+
+        expect(out.map(([k]) => k)).toEqual(['a.b.c', 'a.b.d', 'z']);
+
+        const values = new Map(out.map(([k, v]) => [k, v.value_]));
+
+        expect(values.get('a.b.c')).toBe('Karabo');
+        expect(values.get('a.b.d')).toEqual([1.2, 1.4]);
+        expect(values.get('z')).toBe(7.3);
+
+        const karaboValues = new Map(out.map(([k, v]) => [k, v]));
+
+        expect(karaboValues.get('a.b.c')).toBeInstanceOf(StringValue);
+        expect(karaboValues.get('a.b.d')).toBeInstanceOf(VectorFloat64Value);
+        expect(karaboValues.get('z')).toBeInstanceOf(Float64Value);
+      });
+    });
+
+    // Misc utils
   });
 });
