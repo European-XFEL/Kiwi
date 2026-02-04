@@ -1,3 +1,5 @@
+import { Hash } from '@/karabo-hash/hash';
+
 export function escapeXml(unsafe: string): string {
   return unsafe.replace(/[<>&'"]/g, (c) => {
     switch (c) {
@@ -50,4 +52,30 @@ export function unwrap(data: any): any {
     return data.value_;
   }
   return data;
+}
+
+/**
+ * Helper to yield a Hash with full leaf keys
+ */
+export function* flatIterall(
+  hash: Hash,
+  base: string = '',
+  empty: boolean = false
+): IterableIterator<[string, any, any]> {
+  const prefix = base ? `${base}.` : '';
+
+  for (const [k, v, a] of hash.iterall()) {
+    const subkey = prefix + k;
+
+    if (v instanceof Hash) {
+      if (empty) {
+        yield [subkey, v, a];
+      } else {
+        // recurse into the nested hash, using the full path as the new base
+        yield* flatIterall(v, subkey, empty);
+      }
+    } else {
+      yield [subkey, v, a];
+    }
+  }
 }
