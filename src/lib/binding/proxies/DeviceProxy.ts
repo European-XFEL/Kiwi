@@ -4,20 +4,12 @@ import type { DeviceIndicatorDescriptor } from './types';
 import { DEVICE_INDICATORS } from '@/lib/binding/overlay_indicator_constants';
 
 import type { DeviceSchemaInfo } from '@/karabo_data/DeviceSchemaInfo';
-import type {
-  DeviceConfigInfo,
-  PropertyInfo,
-  PropertyInfoOptional,
-} from '@/karabo_data/DeviceConfigInfo';
-import type { DeviceInfo } from '@/karabo_data/TopologyInfo';
+import type { PropertyInfo } from '@/karabo_data/DeviceConfigInfo';
 
 import { HashValues, HashAttributes } from '@/karabo-hash/hash';
 
 import { ProxyStatus } from '@/lib/binding/ProxyStatus';
-import {
-  buildDeviceModel,
-  buildEmptyDeviceModel,
-} from '@/lib/binding/model/builders/DeviceModelBuilder';
+import { buildEmptyDeviceModel } from '@/lib/binding/model/builders/DeviceModelBuilder';
 
 import { mapGuiStateColor } from '../utils/mapStateColor';
 import type { GuiStateColorKey } from '@/karabo_data/Indicators';
@@ -61,18 +53,6 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
   // ──────────────────────────────────────────────────
   // Factory helpers
   // ──────────────────────────────────────────────────
-
-  /**
-   * Convenience constructor: build from raw backend data.
-   */
-  static fromBackend(
-    schemaInfo: DeviceSchemaInfo,
-    configInfo: DeviceConfigInfo,
-    deviceInfo: DeviceInfo
-  ): DeviceProxy {
-    const model = buildDeviceModel(schemaInfo, configInfo, deviceInfo);
-    return new DeviceProxy(model);
-  }
 
   /**
    * Create an "empty" proxy (no schema / no config yet).
@@ -162,11 +142,6 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
     return DEVICE_INDICATORS.find((d) => d.status === this.proxyStatus) ?? null;
   }
 
-  // ──────────────────────────────────────────────────
-  // Backend update hooks
-  // (called by DeviceManager / connectors)
-  // ──────────────────────────────────────────────────
-
   /**
    * Apply a single property update from the backend.
    * This is the normal "live update" path when you have a PropertyInfo.
@@ -208,21 +183,6 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
     );
   }
 
-  /**
-   * Apply a full config snapshot (e.g. after reconnect / schema refresh).
-   * Keeps schema but updates all values & timestamps.
-   */
-  applyConfigSnapshot(configInfo: DeviceConfigInfo): void {
-    for (const update of configInfo.properties) {
-      this.applyPropertyUpdate(update);
-    }
-    this._model.runtime.hasConfig = true;
-    this._updateProxyStatus();
-  }
-
-  /**
-   * Update just the "hasConfig" flag (e.g. from DeviceManager).
-   */
   setHasConfig(hasConfig: boolean): void {
     this._model.runtime.hasConfig = hasConfig;
     this._updateProxyStatus();
@@ -318,56 +278,6 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
     this._schemaRequested = false;
     this._model.runtime.hasSchema = true;
     this._updateProxyStatus();
-  }
-
-  /**
-   * Low-level: report a property value change directly.
-   *
-   * Now expects PropertyInfoOptional for consistency.
-   */
-  reportPropertyUpdate(info: PropertyInfoOptional): void {
-    if (!info) return;
-
-    const { key, value, type, timeAttrs } = info;
-
-    const prop = this._model.properties.get(key);
-
-    if (prop) {
-      // Convert timeAttrs to Timestamp if available
-      const timestamp = timeAttrs
-        ? Timestamp.fromTimeAttrs(timeAttrs)
-        : Timestamp.now();
-
-      // Update value via binding
-      prop.binding.setValue(value as PropertyValue, { timestamp });
-
-      // Update type directly
-      if (type !== undefined) {
-        prop.binding.type = type;
-      }
-
-      // Keep timeAttrs for backward compatibility
-      prop.binding.timeAttrs = timeAttrs as unknown as
-        | Record<string, unknown>
-        | undefined;
-    }
-
-    if (key === 'state' && typeof value === 'string') {
-      const oldState = this._model.runtime.state;
-      const newState = value;
-
-      if (oldState !== newState) {
-        this._model.runtime.state = newState;
-        this.emit('state_changed', oldState, newState);
-      }
-    }
-
-    this.emit(
-      'property_changed',
-      key,
-      value as HashValues,
-      (prop?.binding.timeAttrs ?? timeAttrs ?? {}) as HashAttributes
-    );
   }
 
   /**

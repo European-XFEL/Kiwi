@@ -1,9 +1,8 @@
 import { Hash } from '@/karabo-hash/hash';
-import { getNetwork, getManager } from '@/singletons/api';
+import { getNetwork, getManager, getTopology } from '@/singletons/api';
 import { DeviceSchemaInfo } from '@/karabo_data/DeviceSchemaInfo';
 import { deviceSchemaFromHash } from '@/karabo_hash/decoders/device_schema';
 import { buildGetDeviceSchemaHash } from '@/karabo_hash/builders/monitoring_device';
-import { deviceManager } from '@/lib/binding/DeviceManager';
 
 type DeviceSchemaHandler = (deviceSchema: DeviceSchemaInfo) => void;
 
@@ -88,8 +87,8 @@ export class DeviceSchemaConnector {
     const hash = buildGetDeviceSchemaHash(deviceId);
     getNetwork().sendHash(hash);
 
-    // Mark "schema requested" in DeviceManager / DeviceProxy runtime
-    deviceManager.markSchemaRequested(deviceId);
+    // Mark "schema requested" in getTopology() / DeviceProxy runtime
+    getTopology().refreshSchema(deviceId);
   };
 
   // #endregion
@@ -106,8 +105,8 @@ export class DeviceSchemaConnector {
     // 1) Cache the schema for seeding new monitors
     this._schemaCache.set(deviceId, deviceSchemaInfo);
 
-    // 2) Apply schema to DeviceManager (creates PropertyModels)
-    deviceManager.applyDeviceSchema(deviceId, deviceSchemaInfo);
+    // 2) Apply schema to getTopology() (creates PropertyModels)
+    getTopology().updateSchema(deviceId, deviceSchemaInfo);
 
     // 3) Dispatch the SchemaInfo to all the registered observers (if any)
     const deviceSchemaHandlers = this._schemaMonitors.get(deviceId);

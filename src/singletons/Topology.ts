@@ -1,6 +1,8 @@
 import { TopologyEventType } from '@/karabo_data/TopologyInfo';
 import { Hash } from '@/karabo-hash/hash';
-import { deviceManager } from '@/lib/binding/DeviceManager';
+import { DeviceProxy } from '@/lib/binding/proxies/DeviceProxy';
+import type { PropertyInfo } from '@/karabo_data/DeviceConfigInfo';
+import type { DeviceSchemaInfo } from '@/karabo_data/DeviceSchemaInfo';
 
 export type DeviceTopologyHandler = (
   infoType: TopologyEventType,
@@ -9,6 +11,8 @@ export type DeviceTopologyHandler = (
 
 export class SystemTopology {
   public _system_hash: Hash | null = null;
+  private devices = new Map<string, DeviceProxy>();
+
   public constructor() {}
 
   // #region initialize
@@ -22,7 +26,7 @@ export class SystemTopology {
       const devices = systemTopology.getValue(item) as Hash;
       for (const [deviceId, ,] of devices.iterall()) {
         // Update proxy (device became visible in topology)
-        deviceManager.setOnlineFlag(deviceId, true);
+        this.setOnlineFlag(deviceId, true);
 
         if (this.deviceMonitors.has(deviceId)) {
           // Sends updates to all known monitors for the device
@@ -55,7 +59,7 @@ export class SystemTopology {
 
         const gone_instances = gone.getValue(item) as Hash;
         for (const [deviceId, , ,] of gone_instances.iterall()) {
-          deviceManager.setOnlineFlag(deviceId, false);
+          this.setOnlineFlag(deviceId, false);
           this._system_hash?.erase(`${item}.${deviceId}`);
           if (this.deviceMonitors.has(deviceId)) {
             for (const updateHandler of this.deviceMonitors.get(deviceId)!) {
@@ -83,7 +87,7 @@ export class SystemTopology {
         const new_instances = neew.getValue(item) as Hash;
         for (const [deviceId, , ,] of new_instances.iterall()) {
           // Update proxy (device became visible in topology)
-          deviceManager.setOnlineFlag(deviceId, true);
+          this.setOnlineFlag(deviceId, true);
           if (this.deviceMonitors.has(deviceId)) {
             // Sends updates to all known monitors for the device
             for (const updateHandler of this.deviceMonitors.get(deviceId)!) {
@@ -122,17 +126,17 @@ export class SystemTopology {
     // so refresh doesn't start "offline"
     // ───────────────────────────────────────────────
     if (this._system_hash?.get('device').has(deviceId)) {
-      deviceManager.setOnlineFlag(deviceId, true);
+      this.setOnlineFlag(deviceId, true);
       deviceInfoUpdateHandler(TopologyEventType.NEW, deviceId);
       return;
     }
     if (this._system_hash?.get('macro').has(deviceId)) {
-      deviceManager.setOnlineFlag(deviceId, true);
+      this.setOnlineFlag(deviceId, true);
       deviceInfoUpdateHandler(TopologyEventType.NEW, deviceId);
       return;
     }
 
-    deviceManager.setOnlineFlag(deviceId, false);
+    this.setOnlineFlag(deviceId, false);
     deviceInfoUpdateHandler(TopologyEventType.GONE, deviceId);
   };
 
@@ -152,4 +156,53 @@ export class SystemTopology {
       this.deviceMonitors.delete(deviceId);
     }
   };
+
+  getDevice(deviceId: string): DeviceProxy {
+    let proxy = this.devices.get(deviceId);
+    if (!proxy) {
+      proxy = DeviceProxy.createEmptyDeviceProxy(deviceId);
+      this.devices.set(deviceId, proxy);
+    }
+    return proxy;
+  }
+
+  applyPropertyUpdate(deviceId: string, property: PropertyInfo): void {
+    const proxy = this.getDevice(deviceId);
+    proxy.applyPropertyUpdate(property);
+  }
+
+  refreshSchema(deviceId: string): void {
+    const proxy = this.getDevice(deviceId);
+    proxy.markSchemaRequested();
+  }
+
+  updateSchema(deviceId: string, schemaInfo: DeviceSchemaInfo): void {
+    const proxy = this.getDevice(deviceId);
+    proxy.applySchema(schemaInfo);
+  }
+
+  markSchemaLoaded(deviceId: string): void {
+    const proxy = this.getDevice(deviceId);
+    proxy.markSchemaLoaded();
+  }
+
+  setHasConfig(deviceId: string, hasConfig: boolean): void {
+    const proxy = this.getDevice(deviceId);
+    proxy.setHasConfig(hasConfig);
+  }
+
+  setOnlineFlag(deviceId: string, isOnline: boolean): void {
+    const proxy = this.getDevice(deviceId);
+    proxy.updateTopology(isOnline);
+  }
+
+  incrementPropertySubscriber(deviceId: string, propertyKey: string): void {
+    const proxy = this.getDevice(deviceId);
+    proxy.incrementPropertySubscriber(propertyKey);
+  }
+
+  decrementPropertySubscriber(deviceId: string, propertyKey: string): void {
+    const proxy = this.getDevice(deviceId);
+    proxy.decrementPropertySubscriber(propertyKey);
+  }
 }

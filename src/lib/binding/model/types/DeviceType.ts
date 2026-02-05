@@ -1,12 +1,6 @@
 import type { DeviceSchema } from './SchemaType';
 import { ProxyStatus } from '@/lib/binding/ProxyStatus';
-import { DeviceInfo } from '@/karabo_data/TopologyInfo';
 import { PropertyModel } from './PropertyType';
-
-export type DeviceIdentity = Pick<
-  DeviceInfo,
-  'deviceId' | 'classId' | 'serverId' | 'host' | 'karaboVersion'
->;
 
 export interface DeviceRuntimeState {
   state?: string; // Karabo "state" property value
@@ -19,7 +13,7 @@ export interface DeviceRuntimeState {
 }
 
 export interface DeviceModel {
-  identity: DeviceIdentity;
+  identity: any;
   runtime: DeviceRuntimeState;
   schema: DeviceSchema;
   properties: Map<string, PropertyModel>;

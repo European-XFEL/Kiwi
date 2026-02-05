@@ -33,18 +33,11 @@ export {
 } from './proxies/PropertyDescriptor';
 
 // ──────────────────────────────────────────────────────────────────────
-// DEVICE MANAGER (Singleton)
-// ──────────────────────────────────────────────────────────────────────
-
-export { deviceManager } from './DeviceManager';
-
-// ──────────────────────────────────────────────────────────────────────
 // BUILDERS
 // ──────────────────────────────────────────────────────────────────────
 
 export { buildPropertyModel } from './model/builders/PropertyModelBuilder';
 export { buildPropertyMap } from './model/builders/PropertyMapBuilder';
-export { buildDeviceModel } from './model/builders/DeviceModelBuilder';
 
 // ──────────────────────────────────────────────────────────────────────
 // HOOKS (React Interface)
@@ -89,11 +82,7 @@ export type {
   HistoricDataHandler,
 } from './model/types/PropertyType';
 
-export type {
-  DeviceModel,
-  DeviceRuntimeState,
-  DeviceIdentity,
-} from './model/types/DeviceType';
+export type { DeviceModel, DeviceRuntimeState } from './model/types/DeviceType';
 
 export type { PropertySchema, DeviceSchema } from './model/types/SchemaType';
 
