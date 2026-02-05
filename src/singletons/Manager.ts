@@ -9,6 +9,7 @@ import { decodeBinary } from '@/karabo-hash/bin_reader';
 import { AccessControlManager } from '@/features/user/utils/AccessLevel';
 import { getTopology, getNetwork, getConfig } from '@/singletons/api';
 import { Hash } from '@/karabo-hash/hash';
+import { devicesConfigsFromHash } from '@/karabo_hash/decoders/device_config';
 
 export class Manager {
   private _network: any;
@@ -153,9 +154,14 @@ export class Manager {
     broadcast_event(KaraboEvent.ListItems, { data: hash });
   }
 
+  public handle_deviceConfigurations(hash: Hash): void {
+    const configurations = hash.getValue('configurations') as Hash;
+    const deviceConfigInfos = devicesConfigsFromHash(configurations);
+    for (const { deviceId, properties } of deviceConfigInfos) {
+      this._topology.handleDeviceConfiguration(deviceId, properties);
+    }
+  }
   // #endregion
-
-  // #region Dynamic Handlers
 
   public registerHashHandler(
     hashType: string,

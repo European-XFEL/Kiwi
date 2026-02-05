@@ -1,7 +1,5 @@
 import type { DeviceProxy } from './DeviceProxy';
 import type { PropertyModel, PropertyValue } from '../model/types/PropertyType';
-// import type { HashValueType } from '@/karabo_hash/HashValueType';
-// import type { Attributes } from 'karabo-ts';
 import { HashValues, HashAttributes } from '@/karabo-hash/hash';
 
 import {

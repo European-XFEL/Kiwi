@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { DevicePropertyConnector } from '@/singletons/DevicePropertyConnector';
 import { getTopology } from '@/singletons/api';
 import type { PropertyModel } from '@/lib/binding/model/types/PropertyType';
 import type { HashValues } from '@/karabo-hash/hash';
@@ -123,8 +122,8 @@ export function useDeviceProperty(
       return;
     }
 
-    const deviceProxy = getTopology().getDevice(deviceId);
-    const propertyProxy = new PropertyProxy(deviceProxy, propertyPath);
+    const root_proxy = getTopology().getDevice(deviceId);
+    const propertyProxy = new PropertyProxy(root_proxy, propertyPath);
 
     // Initialize with current values
     const currentPropertyModel = propertyProxy.model;
@@ -138,15 +137,12 @@ export function useDeviceProperty(
 
     // Initialize device runtime state
     setDeviceRuntime({
-      deviceState: deviceProxy.state,
-      proxyStatus: deviceProxy.proxyStatus,
+      deviceState: root_proxy.state,
+      proxyStatus: root_proxy.proxyStatus,
     });
 
     // Start monitoring this property
-    const stopMonitoring = DevicePropertyConnector.inst.ensurePropertyMonitored(
-      deviceId,
-      propertyPath
-    );
+    const stopMonitoring = root_proxy.addMonitor(propertyPath);
 
     // Subscribe to property value changes
     const unsubscribeProperty = propertyProxy.subscribe(
@@ -180,7 +176,7 @@ export function useDeviceProperty(
     );
 
     // Subscribe to schema changes
-    const unsubscribeSchema = deviceProxy.subscribeToSchema((payload) => {
+    const unsubscribeSchema = root_proxy.subscribeToSchema((payload) => {
       if (payload.allChanged.includes(propertyPath)) {
         setPropertyData((prev) => ({
           ...prev,
@@ -192,21 +188,21 @@ export function useDeviceProperty(
     // Subscribe to device state/status changes (OPTIMIZED: direct state instead of version counter)
     const updateDeviceRuntime = () => {
       setDeviceRuntime({
-        deviceState: deviceProxy.state,
-        proxyStatus: deviceProxy.proxyStatus,
+        deviceState: root_proxy.state,
+        proxyStatus: root_proxy.proxyStatus,
       });
     };
 
-    deviceProxy.subscribe('state_changed', updateDeviceRuntime);
-    deviceProxy.subscribe('status_changed', updateDeviceRuntime);
+    root_proxy.subscribe('state_changed', updateDeviceRuntime);
+    root_proxy.subscribe('status_changed', updateDeviceRuntime);
 
     setIsInitialized(true);
 
     return () => {
       unsubscribeProperty();
       unsubscribeSchema();
-      deviceProxy.unsubscribe('state_changed', updateDeviceRuntime);
-      deviceProxy.unsubscribe('status_changed', updateDeviceRuntime);
+      root_proxy.unsubscribe('state_changed', updateDeviceRuntime);
+      root_proxy.unsubscribe('status_changed', updateDeviceRuntime);
       stopMonitoring();
     };
   }, [deviceId, propertyPath]);
@@ -352,8 +348,8 @@ function getInitialPropertyData(
     };
   }
 
-  const deviceProxy = getTopology().getDevice(deviceId);
-  const propertyProxy = new PropertyProxy(deviceProxy, propertyPath);
+  const root_proxy = getTopology().getDevice(deviceId);
+  const propertyProxy = new PropertyProxy(root_proxy, propertyPath);
   const propertyModel = propertyProxy.model;
 
   return {
@@ -371,10 +367,10 @@ function getInitialDeviceRuntime(deviceId: string): DeviceRuntimeState {
     };
   }
 
-  const deviceProxy = getTopology().getDevice(deviceId);
+  const root_proxy = getTopology().getDevice(deviceId);
   return {
-    deviceState: deviceProxy.state,
-    proxyStatus: deviceProxy.proxyStatus,
+    deviceState: root_proxy.state,
+    proxyStatus: root_proxy.proxyStatus,
   };
 }
 
