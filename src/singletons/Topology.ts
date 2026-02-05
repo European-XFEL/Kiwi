@@ -181,11 +181,6 @@ export class SystemTopology {
     proxy.applySchema(schemaInfo);
   }
 
-  markSchemaLoaded(deviceId: string): void {
-    const proxy = this.getDevice(deviceId);
-    proxy.markSchemaLoaded();
-  }
-
   setHasConfig(deviceId: string, hasConfig: boolean): void {
     const proxy = this.getDevice(deviceId);
     proxy.setHasConfig(hasConfig);
@@ -193,16 +188,14 @@ export class SystemTopology {
 
   setOnlineFlag(deviceId: string, isOnline: boolean): void {
     const proxy = this.getDevice(deviceId);
-    proxy.updateTopology(isOnline);
+    proxy.setOnlineFlag(isOnline);
   }
 
-  incrementPropertySubscriber(deviceId: string, propertyKey: string): void {
-    const proxy = this.getDevice(deviceId);
-    proxy.incrementPropertySubscriber(propertyKey);
-  }
-
-  decrementPropertySubscriber(deviceId: string, propertyKey: string): void {
-    const proxy = this.getDevice(deviceId);
-    proxy.decrementPropertySubscriber(propertyKey);
+  handleDeviceConfiguration(deviceId: string, config: PropertyInfo[]): void {
+    const proxy = this.devices.get(deviceId);
+    if (!proxy) {
+      return;
+    }
+    proxy.handleDeviceConfiguration(config);
   }
 }
