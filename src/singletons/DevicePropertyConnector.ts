@@ -12,7 +12,6 @@ import { DeviceSchemaConnector } from './DeviceSchemaConnector';
 import { TopologyEventType } from '@/karabo_data/TopologyInfo';
 import type { DeviceSchemaInfo } from '@/karabo_data/DeviceSchemaInfo';
 import type { SimpleValueTypes } from '@/karabo-hash/types';
-import { deviceManager } from '@/lib/binding/DeviceManager';
 
 // SimpleValueTypes[][] is the type used for the value of a table property.
 // Each SimpleValueTypes is the value of a table cell with the row being
@@ -60,7 +59,7 @@ export class DevicePropertyConnector {
     propertyUpdateHandler: PropertyUpdateHandler
   ): void {
     // Ensure proxy exists for this device (creates on-demand)
-    deviceManager.getDevice(deviceId);
+    getTopology().getDevice(deviceId);
 
     // Get or create the property map for this device
     let devicePropertyMonitors = this._propertyMonitors.get(deviceId);
@@ -109,9 +108,9 @@ export class DevicePropertyConnector {
 
     handlers.push(propertyUpdateHandler);
 
-    // FIRST subscription for this (deviceId, propertyId) → increment subscriber count in DeviceManager/DeviceProxy
+    // FIRST subscription for this (deviceId, propertyId) → increment subscriber count in getTopology()/DeviceProxy
     if (wasEmpty) {
-      deviceManager.incrementPropertySubscriber(deviceId, propertyId);
+      getTopology().incrementPropertySubscriber(deviceId, propertyId);
     }
   }
 
@@ -142,8 +141,8 @@ export class DevicePropertyConnector {
       // Removed the last update handler for this device property
       devicePropertyMonitors.delete(propertyId);
 
-      // Mirror that in the DeviceProxy via DeviceManager
-      deviceManager.decrementPropertySubscriber(deviceId, propertyId);
+      // Mirror that in the DeviceProxy via getTopology()
+      getTopology().decrementPropertySubscriber(deviceId, propertyId);
     }
 
     if (devicePropertyMonitors.size === 0) {
@@ -162,7 +161,7 @@ export class DevicePropertyConnector {
   /**
    * Start monitoring a device:
    *  - register schema monitor
-   *  - DeviceSchemaConnector will internally mark schemaRequested and later schemaLoaded via DeviceManager
+   *  - DeviceSchemaConnector will internally mark schemaRequested and later schemaLoaded via getTopology()
    *  - ask GUI server to start monitoring
    */
   private _startMonitoringDevice = (deviceId: string): void => {
@@ -172,7 +171,7 @@ export class DevicePropertyConnector {
     );
 
     // Ask GUI server for schema + config stream
-    // Note: requestDeviceSchema should call DeviceManager.markSchemaRequested internally
+    // Note: requestDeviceSchema should call getTopology().markSchemaRequested internally
     DeviceSchemaConnector.inst.requestDeviceSchema(deviceId);
 
     const hash = buildStartMonitoringHash(deviceId);
@@ -193,7 +192,7 @@ export class DevicePropertyConnector {
    * for a device we are monitoring.
    */
   private _onDeviceSchemaUpdate = (deviceSchema: DeviceSchemaInfo): void => {
-    // Note: DeviceSchemaConnector should call DeviceManager.markSchemaLoaded(deviceId)
+    // Note: DeviceSchemaConnector should call getTopology().markSchemaLoaded(deviceId)
 
     // Re-dispatch existing properties with schema attributes attached
     // This ensures permission checks (requiredAccessLevel, accessMode, allowedStates) work correctly
@@ -350,8 +349,8 @@ export class DevicePropertyConnector {
       // 1) Merge into local cache for initial updates
       this._mergeConfiguration(deviceId, deviceConfig.properties);
 
-      // 2) Tell DeviceManager that we have config (idempotent)
-      deviceManager.setHasConfig(deviceId, true);
+      // 2) Tell getTopology() that we have config (idempotent)
+      getTopology().setHasConfig(deviceId, true);
 
       // 3) Dispatch updates to all property monitors
       for (const propInfo of deviceConfig.properties) {
@@ -362,7 +361,7 @@ export class DevicePropertyConnector {
 
         //always update DeviceProxy with full PropertyInfo
         // This is what ensures model.type is never undefined
-        deviceManager.applyPropertyUpdate(deviceId, propInfo);
+        getTopology().applyPropertyUpdate(deviceId, propInfo);
 
         const propMonitors = this._propertyMonitors.get(deviceId);
 
@@ -430,7 +429,7 @@ export class DevicePropertyConnector {
    */
   ensurePropertyMonitored(deviceId: string, propertyId: string): () => void {
     const noOpHandler: PropertyUpdateHandler = () => {
-      // We don't use the handler in the new world; DeviceManager
+      // We don't use the handler in the new world; getTopology()
       // is updated through reportPropertyValue instead.
     };
 

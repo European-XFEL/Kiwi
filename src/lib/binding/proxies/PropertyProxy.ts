@@ -88,7 +88,6 @@ export class PropertyProxy {
   /**
    * Minimal write helper: set a new value via the binding.
    * For now this is local-only; later you can have this call
-   * a DeviceManager / command to talk to the backend.
    */
   setValue(next: PropertyValue): void {
     const m = this.model;

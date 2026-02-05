@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { deviceManager } from '@/lib/binding/DeviceManager';
 import { DevicePropertyConnector } from '@/singletons/DevicePropertyConnector';
+import { getTopology } from '@/singletons/api';
 import type { PropertyModel } from '@/lib/binding/model/types/PropertyType';
 import type { HashValues } from '@/karabo-hash/hash';
 import type { HashTypes } from '@/karabo-hash/typenums';
@@ -123,7 +123,7 @@ export function useDeviceProperty(
       return;
     }
 
-    const deviceProxy = deviceManager.getDevice(deviceId);
+    const deviceProxy = getTopology().getDevice(deviceId);
     const propertyProxy = new PropertyProxy(deviceProxy, propertyPath);
 
     // Initialize with current values
@@ -220,7 +220,7 @@ export function useDeviceProperty(
       return buildEmptyDerivedValues();
     }
 
-    const proxy = deviceManager.getDevice(deviceId);
+    const proxy = getTopology().getDevice(deviceId);
     const { propertyModel } = propertyData;
     const { deviceState: runtimeDeviceState, proxyStatus } = deviceRuntime;
 
@@ -352,7 +352,7 @@ function getInitialPropertyData(
     };
   }
 
-  const deviceProxy = deviceManager.getDevice(deviceId);
+  const deviceProxy = getTopology().getDevice(deviceId);
   const propertyProxy = new PropertyProxy(deviceProxy, propertyPath);
   const propertyModel = propertyProxy.model;
 
@@ -371,7 +371,7 @@ function getInitialDeviceRuntime(deviceId: string): DeviceRuntimeState {
     };
   }
 
-  const deviceProxy = deviceManager.getDevice(deviceId);
+  const deviceProxy = getTopology().getDevice(deviceId);
   return {
     deviceState: deviceProxy.state,
     proxyStatus: deviceProxy.proxyStatus,
