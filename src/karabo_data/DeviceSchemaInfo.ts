@@ -9,7 +9,6 @@ import {
 } from '@/karabo_data/SchemaEnums';
 
 export interface DeviceSchemaInfo {
-  deviceId: string;
   propertyDescriptors: Map<string, PropertySchemaAttributes>;
 }
 

@@ -198,4 +198,12 @@ export class SystemTopology {
     }
     proxy.handleDeviceConfiguration(config);
   }
+
+  handleDeviceSchema(deviceId: string, schema: DeviceSchemaInfo): void {
+    const proxy = this.devices.get(deviceId);
+    if (!proxy) {
+      return;
+    }
+    proxy.handleDeviceSchema(schema);
+  }
 }

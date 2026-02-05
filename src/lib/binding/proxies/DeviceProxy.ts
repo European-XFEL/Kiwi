@@ -8,6 +8,7 @@ import type { HashAttributes, HashValues } from '@/karabo-hash/hash';
 import { Hash } from '@/karabo-hash/hash';
 import { HashTypes } from '@/karabo-hash/typenums';
 import type { SimpleValueTypes } from '@/karabo-hash/types';
+import { buildGetDeviceSchemaHash } from '@/karabo_hash/builders/monitoring_device';
 
 import { ProxyStatus } from '@/lib/binding/ProxyStatus';
 import { buildEmptyDeviceModel } from '@/lib/binding/model/builders/DeviceModelBuilder';
@@ -17,7 +18,6 @@ import type { GuiStateColorKey } from '@/karabo_data/Indicators';
 import type { PropertyModel, PropertyValue } from '../model/types/PropertyType';
 import { PropertyBinding } from '../model/PropertyBinding';
 import { Timestamp } from '@/lib/binding/utils/timestamps';
-import { DeviceSchemaConnector } from '@/singletons/DeviceSchemaConnector';
 
 import { getNetwork } from '@/singletons/api';
 import {
@@ -56,6 +56,8 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
    * (Equivalent to: Map<deviceId, Map<propertyId, handlers>> but per-device.)
    */
   private _propertyMonitors = new Map<string, PropertyUpdateHandler[]>();
+
+  private deviceSchema: DeviceSchemaInfo | undefined = undefined;
 
   /** cached merged config (ordered by schema when available) */
   private _deviceConfigurations: PropertyInfo[] = [];
@@ -232,7 +234,6 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
    */
   public applySchema(schemaInfo: DeviceSchemaInfo): void {
     this._model.schema = {
-      deviceId: schemaInfo.deviceId,
       properties: Array.from(schemaInfo.propertyDescriptors.entries()).map(
         ([path, schemaAttrs]) => ({ path, schemaAttrs })
       ),
@@ -419,19 +420,12 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
 
   /**
    * Start monitoring this device:
-   *  - register schema monitor
-   *  - request schema (DeviceSchemaConnector should mark schemaRequested)
    *  - ask GUI server to start monitoring
    */
   private _startMonitoringDevice(): void {
     if (this._backendMonitoringActive) return;
 
-    DeviceSchemaConnector.inst.registerSchemaMonitor(
-      this.deviceId,
-      this._onDeviceSchemaUpdate
-    );
-
-    DeviceSchemaConnector.inst.requestDeviceSchema(this.deviceId);
+    this.requestDeviceSchema(this.deviceId);
 
     getNetwork().sendHash(buildStartMonitoringHash(this.deviceId));
 
@@ -442,41 +436,15 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
     if (!this._backendMonitoringActive) return;
 
     getNetwork().sendHash(buildStopMonitoringHash(this.deviceId));
-
-    DeviceSchemaConnector.inst.unregisterSchemaMonitor(
-      this.deviceId,
-      this._onDeviceSchemaUpdate
-    );
-
     this._backendMonitoringActive = false;
   }
-
-  /**
-   * Called whenever DeviceSchemaConnector receives a schema update
-   * for this device we are monitoring.
-   *
-   * Re-dispatch existing cached properties with schemaAttrs attached.
-   */
-  private _onDeviceSchemaUpdate = (deviceSchema: DeviceSchemaInfo): void => {
-    if (deviceSchema.deviceId !== this.deviceId) return;
-
-    // Re-dispatch cached config to handlers with latest schemaAttrs
-    for (const propInfo of this._deviceConfigurations) {
-      const handlers = this._propertyMonitors.get(propInfo.key);
-      if (!handlers?.length) continue;
-
-      for (const handler of handlers) {
-        this._dispatchPropUpdate(handler, propInfo);
-      }
-    }
-  };
 
   private _getDeviceProperty(propertyId: string): PropertyInfo | undefined {
     return this._deviceConfigurations.find((p) => p.key === propertyId);
   }
 
   private _mergeConfiguration(properties: PropertyInfo[]): void {
-    const schema = DeviceSchemaConnector.inst.getDeviceSchema(this.deviceId);
+    const schema = this.deviceSchema;
     const current = this._deviceConfigurations;
 
     if (!schema) {
@@ -511,9 +479,9 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
     propUpdateHandler: PropertyUpdateHandler,
     propInfo: PropertyInfo
   ): void {
-    propInfo.schemaAttrs = DeviceSchemaConnector.inst
-      .getDeviceSchema(this.deviceId)
-      ?.propertyDescriptors.get(propInfo.key);
+    propInfo.schemaAttrs = this.getDeviceSchema()?.propertyDescriptors.get(
+      propInfo.key
+    );
 
     propUpdateHandler(propInfo);
   }
@@ -541,7 +509,7 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
     this._mergeConfiguration(properties);
     this.setHasConfig(true);
 
-    const schema = DeviceSchemaConnector.inst.getDeviceSchema(this.deviceId);
+    const schema = this.getDeviceSchema();
 
     for (const propInfo of properties) {
       // Attach schemaAttrs (if available) before sending to handlers or proxy
@@ -616,4 +584,20 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
     this.emit('destroyed');
     this.removeAllListeners();
   }
+
+  public getDeviceSchema(): DeviceSchemaInfo | undefined {
+    return this.deviceSchema;
+  }
+
+  public requestDeviceSchema = (deviceId: string): void => {
+    const hash = buildGetDeviceSchemaHash(deviceId);
+    getNetwork().sendHash(hash);
+    this.markSchemaRequested();
+  };
+
+  public handleDeviceSchema = (deviceSchemaInfo: DeviceSchemaInfo): void => {
+    // Decode the hash into the appropriate SchemaInfo data structure
+    this.deviceSchema = deviceSchemaInfo;
+    this.applySchema(deviceSchemaInfo);
+  };
 }

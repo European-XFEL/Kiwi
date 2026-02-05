@@ -8,8 +8,9 @@ import { unpackEncodedHash } from '@/karabo_hash/hash_utils';
 import { decodeBinary } from '@/karabo-hash/bin_reader';
 import { AccessControlManager } from '@/features/user/utils/AccessLevel';
 import { getTopology, getNetwork, getConfig } from '@/singletons/api';
-import { Hash } from '@/karabo-hash/hash';
+import { Hash, Schema } from '@/karabo-hash/hash';
 import { devicesConfigsFromHash } from '@/karabo_hash/decoders/device_config';
+import { deviceSchemaFromHash } from '@/karabo_hash/decoders/device_schema';
 
 export class Manager {
   private _network: any;
@@ -161,6 +162,14 @@ export class Manager {
       this._topology.handleDeviceConfiguration(deviceId, properties);
     }
   }
+
+  public handle_deviceSchema(hash: Hash): void {
+    const deviceId = hash.getValue('deviceId') as string;
+    const deviceSchema = hash.getValue('schema') as Schema;
+    const deviceSchemaInfo = deviceSchemaFromHash(deviceSchema);
+    this._topology.handleDeviceSchema(deviceId, deviceSchemaInfo);
+  }
+
   // #endregion
 
   public registerHashHandler(
