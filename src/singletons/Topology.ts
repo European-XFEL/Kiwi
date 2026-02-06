@@ -20,20 +20,11 @@ export class SystemTopology {
   public initialize(systemTopology: Hash) {
     // Store the systemHash, clear before?
     this._system_hash = systemTopology;
-    // const sysTopologyInfo = sysTopologyInfoFromHash(hash);
-
     for (const item of ['device', 'macro'] as const) {
       const devices = systemTopology.getValue(item) as Hash;
       for (const [deviceId, ,] of devices.iterall()) {
         // Update proxy (device became visible in topology)
         this.setOnlineFlag(deviceId, true);
-
-        if (this.deviceMonitors.has(deviceId)) {
-          // Sends updates to all known monitors for the device
-          for (const updateHandler of this.deviceMonitors.get(deviceId)!) {
-            updateHandler(TopologyEventType.NEW, deviceId);
-          }
-        }
       }
     }
   }
@@ -61,11 +52,6 @@ export class SystemTopology {
         for (const [deviceId, , ,] of gone_instances.iterall()) {
           this.setOnlineFlag(deviceId, false);
           this._system_hash?.erase(`${item}.${deviceId}`);
-          if (this.deviceMonitors.has(deviceId)) {
-            for (const updateHandler of this.deviceMonitors.get(deviceId)!) {
-              updateHandler(TopologyEventType.GONE, deviceId);
-            }
-          }
         }
       }
 
@@ -88,12 +74,6 @@ export class SystemTopology {
         for (const [deviceId, , ,] of new_instances.iterall()) {
           // Update proxy (device became visible in topology)
           this.setOnlineFlag(deviceId, true);
-          if (this.deviceMonitors.has(deviceId)) {
-            // Sends updates to all known monitors for the device
-            for (const updateHandler of this.deviceMonitors.get(deviceId)!) {
-              updateHandler(TopologyEventType.NEW, deviceId);
-            }
-          }
         }
       }
     } // new end
@@ -107,56 +87,6 @@ export class SystemTopology {
 
   // #endregion
 
-  // #region DeviceInfoMonitors Management
-
-  private deviceMonitors = new Map<string, DeviceTopologyHandler[]>();
-
-  registerDeviceInfoMonitor = (
-    deviceId: string,
-    deviceInfoUpdateHandler: DeviceTopologyHandler
-  ): void => {
-    if (!this.deviceMonitors.has(deviceId)) {
-      // first monitor for this device
-      this.deviceMonitors.set(deviceId, new Array<DeviceTopologyHandler>());
-    }
-    this.deviceMonitors.get(deviceId)!.push(deviceInfoUpdateHandler);
-
-    // ───────────────────────────────────────────────
-    // Seed current state from systemTopology
-    // so refresh doesn't start "offline"
-    // ───────────────────────────────────────────────
-    if (this._system_hash?.get('device').has(deviceId)) {
-      this.setOnlineFlag(deviceId, true);
-      deviceInfoUpdateHandler(TopologyEventType.NEW, deviceId);
-      return;
-    }
-    if (this._system_hash?.get('macro').has(deviceId)) {
-      this.setOnlineFlag(deviceId, true);
-      deviceInfoUpdateHandler(TopologyEventType.NEW, deviceId);
-      return;
-    }
-
-    this.setOnlineFlag(deviceId, false);
-    deviceInfoUpdateHandler(TopologyEventType.GONE, deviceId);
-  };
-
-  unregisterDeviceInfoMonitor = (
-    deviceId: string,
-    deviceInfoUpdateHandler: DeviceTopologyHandler
-  ): void => {
-    const monitors = this.deviceMonitors.get(deviceId);
-    if (!monitors) return;
-
-    const idx = monitors.indexOf(deviceInfoUpdateHandler);
-    if (idx === -1) return;
-
-    monitors.splice(idx, 1);
-
-    if (monitors.length === 0) {
-      this.deviceMonitors.delete(deviceId);
-    }
-  };
-
   getDevice(deviceId: string): DeviceProxy {
     let proxy = this.devices.get(deviceId);
     if (!proxy) {
@@ -164,26 +94,6 @@ export class SystemTopology {
       this.devices.set(deviceId, proxy);
     }
     return proxy;
-  }
-
-  applyPropertyUpdate(deviceId: string, property: PropertyInfo): void {
-    const proxy = this.getDevice(deviceId);
-    proxy.applyPropertyUpdate(property);
-  }
-
-  refreshSchema(deviceId: string): void {
-    const proxy = this.getDevice(deviceId);
-    proxy.markSchemaRequested();
-  }
-
-  updateSchema(deviceId: string, schemaInfo: DeviceSchemaInfo): void {
-    const proxy = this.getDevice(deviceId);
-    proxy.applySchema(schemaInfo);
-  }
-
-  setHasConfig(deviceId: string, hasConfig: boolean): void {
-    const proxy = this.getDevice(deviceId);
-    proxy.setHasConfig(hasConfig);
   }
 
   setOnlineFlag(deviceId: string, isOnline: boolean): void {

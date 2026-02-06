@@ -395,9 +395,7 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
   }
 
   public addMonitor(propertyId: string): () => void {
-    const noOpHandler: PropertyUpdateHandler = () => {
-      // not used in new world; DeviceProxy is updated via applyPropertyUpdate
-    };
+    const noOpHandler: PropertyUpdateHandler = () => {};
 
     this.registerPropertyMonitor(propertyId, noOpHandler);
     return () => this.unregisterPropertyMonitor(propertyId, noOpHandler);
