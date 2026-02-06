@@ -1,17 +1,15 @@
-import { packEncodedHash, unpackEncodedHash } from '@/karabo_hash/hash_utils';
-import { decodeBinary } from '@/karabo-hash/bin_reader';
+import AuthServerClient from '@/http/AuthServerClient';
 import { encodeBinary } from '@/karabo-hash/bin_writer';
-import { Websocket, WebsocketBuilder } from 'websocket-ts';
 import { Hash } from '@/karabo-hash/hash';
-import { useAppSettingsStore } from '@/store/appSettingsStore';
-import { useGlobalActivityStore } from '@/store/globalActivityStore';
 import { GuiServerInfo } from '@/karabo_data/GuiServerInfo';
-import { guiServerInfoFromHash } from '@/karabo_hash/decoders/gui_session';
+import { AccessLevel } from '@/karabo_data/SchemaEnums';
 import { HashDeque } from '@/karabo_hash/HashDeque';
 import { buildLoginHash } from '@/karabo_hash/builders/gui_session';
+import { packEncodedHash } from '@/karabo_hash/hash_utils';
 import { getConfig } from '@/singletons/api';
-import AuthServerClient from '@/http/AuthServerClient';
-import { AccessLevel } from '@/karabo_data/SchemaEnums';
+import { useAppSettingsStore } from '@/store/appSettingsStore';
+import { useGlobalActivityStore } from '@/store/globalActivityStore';
+import { Websocket, WebsocketBuilder } from 'websocket-ts';
 
 // --- Types ---
 const MAX_ITEM_PROCESSING = 5;
@@ -100,38 +98,6 @@ export class Network {
     }
     const encodedHash = encodeBinary(hash);
     this._ws.send(packEncodedHash(encodedHash));
-  }
-
-  // #endregion
-
-  // #region Probing
-
-  public probeServer(
-    host: string,
-    port: number,
-    onSuccess: (serverInfo: GuiServerInfo) => void,
-    onError: (errMsg: string) => void
-  ): void {
-    new WebsocketBuilder(this._wsProxyURL)
-      .onOpen((ws) => {
-        ws.send(JSON.stringify({ host: host, port: port }));
-      })
-      .onMessage((ws, ev) => {
-        if (typeof ev.data === 'string') {
-          onError(`No GUI server available at "${host}:${port}"`);
-          ws.close();
-        } else {
-          const msgBlob = ev.data as Blob;
-          msgBlob.arrayBuffer().then((binHash: ArrayBuffer) => {
-            const hash = decodeBinary(unpackEncodedHash(binHash));
-            const guiServerInfo = guiServerInfoFromHash(hash);
-            onSuccess(guiServerInfo);
-            ws.close();
-          });
-        }
-      })
-      .onError((ws, ev) => this._handleWsError(ws, ev, onError))
-      .build();
   }
 
   // #endregion
@@ -283,6 +249,25 @@ export class Network {
 
   // #region WebSocket Logic
 
+  /**
+   * Retrieves the message corresponding to a given websocket event.
+   *
+   * @param ws the websocket connection that sources the event
+   * @param ev the websocket event
+   * @returns the message corresponding to the event
+   */
+  public websocketEventMessage(ws: Websocket, ev: Event): string {
+    let message: string | undefined;
+    if (!ws.underlyingWebsocket)
+      message = 'Websocket client initialization error';
+    else if (ws.underlyingWebsocket.CLOSED)
+      message = 'No connection to websocket server';
+    else if (ws.underlyingWebsocket.CLOSING)
+      message = 'Websocket connection being closed.';
+    else message = ev.toString();
+    return message;
+  }
+
   private _startWebsocketSession(host: string, port: number) {
     this._stopTimer();
     this._hashDeque = new HashDeque();
@@ -328,15 +313,7 @@ export class Network {
     ev: Event,
     callback: (msg: string) => void
   ) {
-    let message: string | undefined;
-    if (!ws.underlyingWebsocket)
-      message = 'Websocket client initialization error';
-    else if (ws.underlyingWebsocket.CLOSED)
-      message = 'No connection to websocket server';
-    else if (ws.underlyingWebsocket.CLOSING)
-      message = 'Websocket connection being closed.';
-    else message = ev.toString();
-
+    let message = this.websocketEventMessage(ws, ev);
     ws.close();
     if (callback && message) callback(message);
   }
