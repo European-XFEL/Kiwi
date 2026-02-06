@@ -100,15 +100,10 @@ export interface PropertyState {
  */
 export interface DeviceIndicatorDescriptor {
   status: ProxyStatus;
-  label: string; // Human-readable: "Offline", "Monitoring", etc.
-
-  /** Optional: Icon component (e.g., XCircle from lucide-react) */
+  label: string;
   icon?: React.ComponentType<{ className?: string; size?: number }>;
 
-  /** Optional: Tailwind class or CSS color (e.g., "bg-green-500", "#4CAF50") */
   color?: string;
-
-  /** Optional: Tooltip text */
   tooltip?: string;
 }
 
