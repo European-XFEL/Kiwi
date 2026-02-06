@@ -1,3 +1,4 @@
+import { probeServer } from '@/features/login/utils';
 import AuthServerClient from '@/http/AuthServerClient';
 import { encodeBinary } from '@/karabo-hash/bin_writer';
 import { Hash } from '@/karabo-hash/hash';
@@ -165,9 +166,10 @@ export class Network {
         return;
       }
 
-      this.probeServer(
+      probeServer(
         sessionData.host,
         sessionData.port,
+        // onProbeSuccess
         async (serverInfo: GuiServerInfo) => {
           const isServerAuthenticated = serverInfo.authRequired;
           const sessionDataAuthenticated =
@@ -227,6 +229,7 @@ export class Network {
           }
           this._startWebsocketSession(sessionData!.host, sessionData!.port);
         },
+        // onProbeError
         (error_msg: string) => {
           getConfig().deleteSession();
           onErrorHandler(`Failed to probe server: "${error_msg}".`);

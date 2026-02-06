@@ -20,7 +20,11 @@ export class SystemTopology {
   public initialize(systemTopology: Hash) {
     // Store the systemHash, clear before?
     this._system_hash = systemTopology;
-    for (const item of ['device', 'macro'] as const) {
+    let topologyKeys = ['device'];
+    if (this._system_hash.has('macro')) {
+      topologyKeys.push('macro');
+    }
+    for (const item of topologyKeys) {
       const devices = systemTopology.getValue(item) as Hash;
       for (const [deviceId, ,] of devices.iterall()) {
         // Update proxy (device became visible in topology)
