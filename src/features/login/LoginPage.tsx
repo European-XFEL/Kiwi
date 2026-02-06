@@ -33,19 +33,12 @@ export function LoginPage() {
   } = useServerProbe();
 
   // Auth state and logic
-  const {
-    userName,
-    passwd,
-    accessLevel,
-    setUserName,
-    setPasswd,
-    setAccessLevel,
-    doLogin,
-  } = useAuth({
-    probedServerInfo,
-    setActivityStatus,
-    setErrorMessage,
-  });
+  const { userName, passwd, setUserName, setPasswd, setAccessLevel, doLogin } =
+    useAuth({
+      probedServerInfo,
+      setActivityStatus,
+      setErrorMessage,
+    });
 
   // Status text for loading states
   const statusText = useMemo(() => {
