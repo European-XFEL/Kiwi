@@ -9,6 +9,5 @@ export interface PropertySchema {
 }
 
 export interface DeviceSchema {
-  deviceId: string;
   properties: PropertySchema[];
 }

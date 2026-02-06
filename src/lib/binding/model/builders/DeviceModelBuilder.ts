@@ -24,7 +24,6 @@ export function buildEmptyDeviceModel(deviceId: string): DeviceModel {
     },
     runtime: buildInitialRuntimeState(),
     schema: {
-      deviceId,
       properties: [],
     },
     properties: new Map(),
