@@ -1,4 +1,4 @@
-import type { DeviceModel, DeviceRuntimeState } from '../types/DeviceType';
+import type { DeviceModel, DeviceRuntimeState } from './model/types/DeviceType';
 import { ProxyStatus } from '@/lib/binding/ProxyStatus';
 
 function buildInitialRuntimeState(): DeviceRuntimeState {

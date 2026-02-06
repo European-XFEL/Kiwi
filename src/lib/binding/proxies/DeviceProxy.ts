@@ -11,7 +11,7 @@ import type { SimpleValueTypes } from '@/karabo-hash/types';
 import { buildGetDeviceSchemaHash } from '@/karabo_hash/builders/monitoring_device';
 
 import { ProxyStatus } from '@/lib/binding/ProxyStatus';
-import { buildEmptyDeviceModel } from '@/lib/binding/model/builders/DeviceModelBuilder';
+import { buildEmptyDeviceModel } from '@/lib/binding/Builder';
 
 import { mapGuiStateColor } from '../utils/mapStateColor';
 import type { GuiStateColorKey } from '@/karabo_data/Indicators';

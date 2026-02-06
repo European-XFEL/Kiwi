@@ -1,65 +1,12 @@
-/**
- * Binding Feature - Public API
- *
- * This is the ONLY file other features should import from.
- * All internal implementation is private.
- *
- * The binding layer provides:
- * - Data models (PropertyBinding) with reactive state
- * - Proxies (DeviceProxy, PropertyProxy) for network abstraction
- * - Builders for creating bindings from schema
- * - Status tracking and indicators
- */
-
-// ──────────────────────────────────────────────────────────────────────
-// MODELS
-// ──────────────────────────────────────────────────────────────────────
-
 export { PropertyBinding } from './model/PropertyBinding';
-export { createPropertyBinding } from './model/PropertyBinding';
-
-// ──────────────────────────────────────────────────────────────────────
-// PROXIES
-// ──────────────────────────────────────────────────────────────────────
-
 export { DeviceProxy } from './proxies/DeviceProxy';
 export { PropertyProxy } from './proxies/PropertyProxy';
 
-// PropertyDescriptor type and builder functions
 export type { PropertyDescriptor } from './proxies/PropertyDescriptor';
-export {
-  buildPropertyDescriptor,
-  buildDescriptorWithGlobalContext,
-} from './proxies/PropertyDescriptor';
-
-// ──────────────────────────────────────────────────────────────────────
-// BUILDERS
-// ──────────────────────────────────────────────────────────────────────
-
-export { buildPropertyModel } from './model/builders/PropertyModelBuilder';
-export { buildPropertyMap } from './model/builders/PropertyMapBuilder';
-
-// ──────────────────────────────────────────────────────────────────────
-// HOOKS (React Interface)
-// ──────────────────────────────────────────────────────────────────────
+export { buildPropertyDescriptor } from './proxies/PropertyDescriptor';
 
 export { useDeviceProperty } from './hooks';
 export type { UseDevicePropertyResult } from './hooks';
-
-// ──────────────────────────────────────────────────────────────────────
-// UTILITIES
-// ──────────────────────────────────────────────────────────────────────
-
-export {
-  getDeviceIndicator,
-  getPropertyIndicator,
-  getUnitLabel,
-  isLeafProperty,
-} from './utils';
-
-// ──────────────────────────────────────────────────────────────────────
-// STATUS & INDICATORS
-// ──────────────────────────────────────────────────────────────────────
 
 export { ProxyStatus, PropertyStatus } from './ProxyStatus';
 
@@ -74,12 +21,10 @@ export {
 
 // Model types
 export type {
-  PropertyBinding as IPropertyBinding,
+  BindingInterface as IPropertyBinding,
   PropertyModel,
   PropertyValue,
-  HistoricSample,
   PropertyChangeHandler,
-  HistoricDataHandler,
 } from './model/types/PropertyType';
 
 export type { DeviceModel, DeviceRuntimeState } from './model/types/DeviceType';
