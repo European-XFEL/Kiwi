@@ -9,8 +9,6 @@ import { decodeBinary } from '@/karabo-hash/bin_reader';
 import { AccessControlManager } from '@/features/user/utils/AccessLevel';
 import { getTopology, getNetwork, getConfig } from '@/singletons/api';
 import { Hash, Schema } from '@/karabo-hash/hash';
-import { devicesConfigsFromHash } from '@/karabo_hash/decoders/device_config';
-import { deviceSchemaFromHash } from '@/karabo_hash/decoders/device_schema';
 
 export class Manager {
   private _network: any;
@@ -157,8 +155,7 @@ export class Manager {
 
   public handle_deviceConfigurations(hash: Hash): void {
     const configurations = hash.getValue('configurations') as Hash;
-    const deviceConfigInfos = devicesConfigsFromHash(configurations);
-    for (const { deviceId, properties } of deviceConfigInfos) {
+    for (const [deviceId, properties] of configurations.items()) {
       this._topology.handleDeviceConfiguration(deviceId, properties);
     }
   }
@@ -166,8 +163,7 @@ export class Manager {
   public handle_deviceSchema(hash: Hash): void {
     const deviceId = hash.getValue('deviceId') as string;
     const deviceSchema = hash.getValue('schema') as Schema;
-    const deviceSchemaInfo = deviceSchemaFromHash(deviceSchema);
-    this._topology.handleDeviceSchema(deviceId, deviceSchemaInfo);
+    this._topology.handleDeviceSchema(deviceId, deviceSchema);
   }
 
   // #endregion

@@ -1,23 +1,15 @@
 import type { HashTypes } from '@/karabo-hash/typenums';
-import type {
-  PropertyValue,
-  PropertyChangeHandler,
-  BindingInterface,
-} from './types/PropertyType';
+import type { ProxyValue, BindingInterface } from './types/PropertyType';
 import { Timestamp } from '@/lib/binding/utils/timestamps';
-import type { PropertyInfo } from '@/karabo_data/DeviceConfigInfo';
 
 export class PropertyBinding implements BindingInterface {
-  value: PropertyValue | undefined;
+  value: ProxyValue | undefined;
   type: HashTypes | undefined | string;
   timestamp?: Timestamp;
   timeAttrs?: Record<string, unknown>;
-  info?: PropertyInfo;
-
-  private changeHandlers = new Set<PropertyChangeHandler>();
 
   constructor(initial?: {
-    value?: PropertyValue;
+    value?: ProxyValue;
     type?: HashTypes | string;
     timestamp?: Timestamp;
     timeAttrs?: Record<string, unknown>;
@@ -28,12 +20,12 @@ export class PropertyBinding implements BindingInterface {
     this.timeAttrs = initial?.timeAttrs;
   }
 
-  getValue(): PropertyValue | undefined {
+  getValue(): ProxyValue | undefined {
     return this.value;
   }
 
   setValue(
-    value: PropertyValue,
+    value: ProxyValue,
     options?: {
       timestamp?: Timestamp;
     }
@@ -41,12 +33,5 @@ export class PropertyBinding implements BindingInterface {
     const timestamp = options?.timestamp ?? Timestamp.now();
     this.value = value;
     this.timestamp = timestamp;
-  }
-
-  onChange(handler: PropertyChangeHandler): () => void {
-    this.changeHandlers.add(handler);
-    return () => {
-      this.changeHandlers.delete(handler);
-    };
   }
 }

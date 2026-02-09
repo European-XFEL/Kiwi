@@ -395,4 +395,26 @@ export class Network {
     }
     this.sendHash(loginHash);
   }
+
+  // Protocol
+  // --------------------------------------------------------------------
+
+  public onGetDeviceConfiguration(deviceId: string): void {
+    const h = new Hash({ type: 'getDeviceConfiguration', deviceId: deviceId });
+    this.sendHash(h);
+  }
+
+  public onStartMonitoringDevice(deviceId: string): void {
+    const h = new Hash({ type: 'startMonitoringDevice', deviceId: deviceId });
+    this.sendHash(h);
+  }
+
+  public onStopMonitoringDevice(deviceId: string): void {
+    const h = new Hash({ type: 'stopMonitoringDevice', deviceId: deviceId });
+    this.sendHash(h);
+  }
+  public onGetDeviceSchema(deviceId: string): void {
+    const h = new Hash({ type: 'getDeviceSchema', deviceId: deviceId });
+    this.sendHash(h);
+  }
 }

@@ -1,15 +1,11 @@
 import { XCircle } from 'lucide-react';
 import {
-  DeviceIndicatorDescriptor,
-  PropertyIndicatorDescriptor,
+  ProxyStatusIcon as ProxyStatusIcon,
+  ProxyBindingIcon,
 } from './proxies/types';
 import { ProxyStatus, PropertyStatus } from './ProxyStatus';
 
-// ──────────────────────────────────────────────────────────────────────
-// DEVICE INDICATORS
-// ──────────────────────────────────────────────────────────────────────
-
-export const DEVICE_INDICATORS: DeviceIndicatorDescriptor[] = [
+export const DEVICE_INDICATORS: ProxyStatusIcon[] = [
   {
     status: ProxyStatus.OFFLINE,
     icon: XCircle,
@@ -23,13 +19,13 @@ export const DEVICE_INDICATORS: DeviceIndicatorDescriptor[] = [
     tooltip: 'Device is online but no widgets are watching',
   },
   {
-    status: ProxyStatus.SCHEMA_REQUESTED,
+    status: ProxyStatus.ONLINEREQUESTED,
     color: 'bg-yellow-300',
     label: 'Schema requested',
     tooltip: 'Waiting for device schema from server',
   },
   {
-    status: ProxyStatus.SCHEMA_RECEIVED,
+    status: ProxyStatus.SCHEMA,
     color: 'bg-blue-500',
     label: 'Schema received',
     tooltip: 'Schema received, waiting for initial configuration',
@@ -52,7 +48,7 @@ export const DEVICE_INDICATORS: DeviceIndicatorDescriptor[] = [
 // PROPERTY INDICATORS
 // ──────────────────────────────────────────────────────────────────────
 
-export const PROPERTY_INDICATORS: PropertyIndicatorDescriptor[] = [
+export const PROPERTY_INDICATORS: ProxyBindingIcon[] = [
   {
     status: PropertyStatus.NONE,
     indicator: '',

@@ -1,5 +1,3 @@
-import { PropertyInfo } from '@/karabo_data/DeviceConfigInfo';
-
 /**
  * Represents a high-precision timestamp used in Karabo data systems.
  *
@@ -8,7 +6,6 @@ import { PropertyInfo } from '@/karabo_data/DeviceConfigInfo';
  *
  * - Internal representation: **attoseconds since Unix epoch (1970-01-01T00:00:00Z)**.
  * - Can be constructed from various time sources:
- *   - Karabo `PropertyInfo["timeAttrs"]` (sec + frac fields)
  *   - JavaScript `Date` objects
  *   - Epoch times in seconds, milliseconds, nanoseconds, or attoseconds
  * - Provides safe conversion to lower-precision units (ns, µs, ms, s)
@@ -40,9 +37,8 @@ export class Timestamp {
    *  - bigint (attoseconds since epoch)
    *  - Date (epoch milliseconds)
    *  - number (epoch milliseconds) — use static fromSeconds/fromMilliseconds to be explicit
-   *  - PropertyInfo["timeAttrs"] (Karabo sec+frac)
    */
-  constructor(source: bigint | PropertyInfo['timeAttrs'] | Date | number) {
+  constructor(source: any) {
     if (typeof source === 'bigint') {
       this.attoseconds = source;
     } else if (source instanceof Date) {
@@ -61,7 +57,7 @@ export class Timestamp {
   // ---------- Static factories (explicit & self-documenting) ----------
 
   /** From Karabo property attributes (sec in s, frac in attoseconds). */
-  static fromTimeAttrs(attrs: PropertyInfo['timeAttrs']): Timestamp {
+  static fromTimeAttrs(attrs: any): Timestamp {
     return new Timestamp(this.attosecondsFromTimeAttrs(attrs));
   }
 
@@ -182,9 +178,7 @@ export class Timestamp {
 
   // ---------- Internals ----------
 
-  private static attosecondsFromTimeAttrs(
-    attrs: PropertyInfo['timeAttrs']
-  ): bigint {
+  private static attosecondsFromTimeAttrs(attrs: any): bigint {
     if (!attrs) throw new Error('timeAttrs must be provided');
     const sec = attrs.has('sec') ? attrs.getValue('sec') : undefined;
     const frac = attrs.has('frac') ? attrs.getValue('frac') : undefined;

@@ -1,18 +1,13 @@
 import type { DeviceProxy } from './DeviceProxy';
-import type { PropertyModel, PropertyValue } from '../model/types/PropertyType';
-import { HashValues, HashAttributes } from '@/karabo-hash/hash';
-
-import {
-  buildPropertyDescriptor,
-  type PropertyDescriptor,
-} from './PropertyDescriptor';
-
-import { useGlobalStore } from '@/store/globalAppStateStore';
-import { EditContext } from '../model/editability';
-import { AccessLevel } from '@/karabo_data/SchemaEnums';
+import type { PropertyModel, ProxyValue } from '../model/types/PropertyType';
+import type { HashAttributes, HashValues } from '@/karabo-hash/hash';
 
 /**
- * Convenience wrapper for a single property of a DeviceProxy.
+ * Thin convenience wrapper for a single property of a DeviceProxy.
+ *
+ * IMPORTANT:
+ * - No React/store/UI logic here (no useGlobalStore, no descriptors).
+ * - Subscriptions are still *created by the hook*; this just delegates to DeviceProxy.
  */
 export class PropertyProxy {
   constructor(
@@ -35,47 +30,19 @@ export class PropertyProxy {
     return this.model?.schema;
   }
 
-  /** Build the EditContext for permission checks */
-  private get editContext(): EditContext {
-    const userAccessLevel =
-      useGlobalStore.getState().sessionInfo?.accessLevel ??
-      AccessLevel.Observer;
-
-    const deviceState = this.root.state; // undefined if not set, otherwise actual state
-
-    return {
-      userAccessLevel,
-      deviceState,
-    };
-  }
-
-  /** UI-friendly descriptor (includes schema + helpers) */
-  get descriptor(): PropertyDescriptor | undefined {
-    const m = this.model;
-    return m ? buildPropertyDescriptor(m, this.editContext) : undefined;
-  }
-
-  /** Current value (typed as PropertyValue for core, HashValueType for UI) */
-  get value(): PropertyValue {
+  /** Current value */
+  get value(): ProxyValue | undefined {
     return this.model?.binding.getValue();
   }
 
-  /** Same value but narrowed for legacy widgets that expect HashValueType */
-  get hashValue(): HashValues | undefined {
-    return this.value as HashValues | undefined;
-  }
-
-  /** Timestamp / attributes */
+  /** Raw time attributes from the binding */
   get timeAttrs(): HashAttributes | undefined {
-    // we still store raw timeAttrs on the binding
     return this.model?.binding.timeAttrs as HashAttributes | undefined;
   }
 
   /**
    * Subscribe to value changes of this property only.
    * Returns an unsubscribe function.
-   *
-   * Note: still delegates to DeviceProxy’s event system.
    */
   subscribe(
     callback: (value: HashValues, timeAttrs: HashAttributes) => void
@@ -83,37 +50,10 @@ export class PropertyProxy {
     return this.root.subscribeToProperty(this.path, callback);
   }
 
-  /**
-   * Minimal write helper: set a new value via the binding.
-   * For now this is local-only; later you can have this call
-   */
-  setValue(next: PropertyValue): void {
+  /** Minimal local write helper */
+  setValue(next: ProxyValue): void {
     const m = this.model;
     if (!m) return;
-
     m.binding.setValue(next);
-  }
-
-  /**
-   * Small convenience: is this property editable?
-   * Right now only checks accessMode; later you can extend with:
-   *  - requiredAccessLevel vs userAccessLevel
-   *  - allowedStates vs current device state
-   */
-  get isEditable(): boolean {
-    const schemaAttrs = this.schema?.schemaAttrs;
-    if (!schemaAttrs) return false;
-
-    // AccessMode.Reconfigurable = 4 (your existing convention)
-    return schemaAttrs.accessMode === 4;
-  }
-
-  /** Convenience shortcuts from descriptor (optional but nice) */
-  get displayedName(): string | undefined {
-    return this.descriptor?.displayedName ?? this.key;
-  }
-
-  get unitLabel(): string | undefined {
-    return this.descriptor?.unitLabel;
   }
 }

@@ -3,62 +3,40 @@ import type { DisplayStateColorProps } from '@/scene/scene_types/controllers';
 import { guiStateColors } from '@/karabo_data/Indicators';
 
 import type { UseDevicePropertyResult } from '@/lib/binding';
-
 import { ProxyStatus, PropertyStatus } from '@/lib/binding/ProxyStatus';
 
-// ---------------------------------------------------
-// MOCK: useGuiStateColor
-// ---------------------------------------------------
 const mockUseGuiStateColor = jest.fn();
 jest.mock('@/features/controllers/display/hooks/useGuiStateColor', () => ({
   useGuiStateColor: (...args: any[]) => mockUseGuiStateColor(...args),
 }));
 
-// Import AFTER mocks
 import { DisplayStateColor } from '@/features/controllers';
 
-// ---------------------------------------------------
-// Helpers
-// ---------------------------------------------------
 function makePrimary(
   overrides: Partial<UseDevicePropertyResult> = {}
 ): UseDevicePropertyResult {
   return {
-    // core data
     value: undefined,
     propertyModel: undefined,
     timestamp: undefined,
 
-    // types
     type: undefined,
     valueType: undefined,
-    defaultValue: undefined,
 
-    // device state
     deviceState: 'ERROR',
-    stateColor: undefined,
 
-    // identity
     deviceId: 'DEVICE_X',
     propertyPath: 'state',
 
-    // schema / editability
     descriptor: undefined,
     isEditable: false,
     schemaAttrs: undefined,
 
-    // device lifecycle
     proxyStatus: ProxyStatus.ALIVE,
-    proxyIndicator: undefined,
+    missing: undefined,
 
-    // derived flags
     isOffline: false,
-    isAlive: true,
-    isMonitoring: false,
-    isOnlineLike: true,
-    isReady: true,
 
-    // property-level status
     propertyStatus: PropertyStatus.NONE,
     propertyIndicator: undefined,
 
@@ -77,7 +55,7 @@ function makeProps(
     y: 0,
     width: 30,
     height: 20,
-    keys: ['DEVICE_X.state'], // OK to keep even if not used in component now
+    keys: ['DEVICE_X.state'],
     font_size: 10,
     font_weight: 'normal',
     show_string: false,
@@ -102,32 +80,25 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe('DisplayStateColor - show_string behavior (new architecture)', () => {
-  it('renders text when show_string=true and primary is online + ready', () => {
+describe('DisplayStateColor', () => {
+  it('renders text when show_string=true and deviceState is non-empty', () => {
     const { container } = renderWithKey(
       makeProps({
         show_string: true,
-        primary: makePrimary({
-          deviceState: 'ERROR',
-          isOnlineLike: true,
-          isReady: true,
-        }),
+        primary: makePrimary({ deviceState: 'ERROR' }),
       })
     );
 
     expect(screen.getByText('ERROR')).toBeInTheDocument();
 
-    // New DOM structure:
-    // outer wrapper -> inner colored box
     const displayElement = container.firstChild?.firstChild as HTMLElement;
-
     expect(displayElement).toHaveStyle(
       `background-color: ${guiStateColors.errorColor}`
     );
   });
 
-  it('does not render text when show_string=false (color only)', () => {
-    const { container } = renderWithKey(
+  it('does not render text when show_string=false', () => {
+    renderWithKey(
       makeProps({
         show_string: false,
         primary: makePrimary({ deviceState: 'ERROR' }),
@@ -135,44 +106,32 @@ describe('DisplayStateColor - show_string behavior (new architecture)', () => {
     );
 
     expect(screen.queryByText('ERROR')).not.toBeInTheDocument();
-
-    const displayElement = container.firstChild?.firstChild as HTMLElement;
-
-    expect(displayElement).toHaveStyle(
-      `background-color: ${guiStateColors.errorColor}`
-    );
   });
 
-  it('hides text when show_string=true but primary.isOnlineLike=false', () => {
+  it('does not render text when show_string=true but deviceState is undefined', () => {
+    renderWithKey(
+      makeProps({
+        show_string: true,
+        primary: makePrimary({ deviceState: undefined }),
+      })
+    );
+
+    expect(screen.queryByText('ERROR')).not.toBeInTheDocument();
+  });
+
+  it('still renders text when show_string=true even if primary.isOffline=true', () => {
     renderWithKey(
       makeProps({
         show_string: true,
         primary: makePrimary({
           deviceState: 'ERROR',
-          isOnlineLike: false,
-          isReady: true,
           isOffline: true,
           proxyStatus: ProxyStatus.OFFLINE,
         }),
       })
     );
 
-    expect(screen.queryByText('ERROR')).not.toBeInTheDocument();
-  });
-
-  it('hides text when show_string=true but primary.isReady=false', () => {
-    renderWithKey(
-      makeProps({
-        show_string: true,
-        primary: makePrimary({
-          deviceState: 'ERROR',
-          isOnlineLike: true,
-          isReady: false,
-        }),
-      })
-    );
-
-    expect(screen.queryByText('ERROR')).not.toBeInTheDocument();
+    expect(screen.getByText('ERROR')).toBeInTheDocument();
   });
 
   it('uses unknownColor for unmapped states (via hook)', () => {
@@ -182,34 +141,58 @@ describe('DisplayStateColor - show_string behavior (new architecture)', () => {
 
     const { container } = renderWithKey(
       makeProps({
-        primary: makePrimary({
-          deviceState: 'not-a-known-state',
-        }),
+        primary: makePrimary({ deviceState: 'not-a-known-state' }),
       })
     );
 
     const displayElement = container.firstChild?.firstChild as HTMLElement;
-
     expect(displayElement).toHaveStyle(
       `background-color: ${guiStateColors.unknownColor}`
     );
   });
 
   it('falls back to default gray when hook returns no colorValue', () => {
-    mockUseGuiStateColor.mockReturnValue({
-      colorValue: undefined,
-    });
+    mockUseGuiStateColor.mockReturnValue({ colorValue: undefined });
 
     const { container } = renderWithKey(
       makeProps({
-        primary: makePrimary({
-          deviceState: 'ERROR',
-        }),
+        primary: makePrimary({ deviceState: 'ERROR' }),
       })
     );
 
     const displayElement = container.firstChild?.firstChild as HTMLElement;
+    expect(displayElement).toHaveStyle('background-color: #cccccc');
+  });
 
-    expect(displayElement).toHaveStyle(`background-color: #cccccc`);
+  it('uses tooltipText for title when provided', () => {
+    const { container } = renderWithKey(
+      makeProps({
+        tooltipText: 'hello tooltip',
+        primary: makePrimary({
+          propertyIndicator: { label: 'indicator label' } as any,
+        }),
+      })
+    );
+
+    expect(container.firstChild as HTMLElement).toHaveAttribute(
+      'title',
+      'hello tooltip'
+    );
+  });
+
+  it('falls back to propertyIndicator.label for title when tooltipText is not provided', () => {
+    const { container } = renderWithKey(
+      makeProps({
+        tooltipText: undefined,
+        primary: makePrimary({
+          propertyIndicator: { label: 'indicator label' } as any,
+        }),
+      })
+    );
+
+    expect(container.firstChild as HTMLElement).toHaveAttribute(
+      'title',
+      'indicator label'
+    );
   });
 });
