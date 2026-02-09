@@ -27,6 +27,14 @@ describe('Karabo Hash Class Tests', () => {
       expect(h.getValue('c')).toBe('string');
     });
 
+    test('constructor with key value pairs', () => {
+      const h = new Hash('a', 1, 'b', 2.5, 'c', 'string');
+      expect(h.size).toBe(3);
+      expect(h.getValue('a')).toBe(1);
+      expect(h.getValue('b')).toBe(2.5);
+      expect(h.getValue('c')).toBe('string');
+    });
+
     test('constructor with Iterable', () => {
       const map = new Map<string, any>([
         ['x', 10],

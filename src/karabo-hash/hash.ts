@@ -107,29 +107,44 @@ export class Hash extends Map<string, HashElement> {
   get value_(): Hash {
     return this;
   }
-
-  constructor(init?: Hash | Record<string, any> | Iterable<[string, any]>) {
+  constructor();
+  constructor(
+    init:
+      | Hash
+      | Map<string, any>
+      | Iterable<[string, any]>
+      | Record<string, any>
+  );
+  constructor(...args: (string | any)[]);
+  constructor(...args: any[]) {
     super();
 
-    if (!init) return;
-
-    if (init instanceof Hash) {
-      // Shallow copy: mimic Python's behavior.
-      for (const [k, v, a] of init.iterall()) {
-        // 'a' is already an HashAttributes instance, passing it to setElement
-        // will create a shallow copy via the HashAttributes constructor
-        this.setElement(k, v, a);
+    if (!args.length) {
+      return;
+    } else if (args.length === 1) {
+      const init = args[0];
+      if (init instanceof Hash) {
+        for (const [k, v, a] of init.iterall()) {
+          this.setElement(k, v, a);
+        }
+      } else if (typeof (init as any)[Symbol.iterator] === 'function') {
+        for (const [k, v] of init as Iterable<[string, any]>) {
+          this.setElement(k, v, new HashAttributes());
+        }
+      } else {
+        for (const [k, v] of Object.entries(init as Record<string, any>)) {
+          this.setElement(k, v, new HashAttributes());
+        }
       }
-      return;
-    }
-
-    if (typeof (init as any)[Symbol.iterator] === 'function') {
-      for (const [k, v] of init as Iterable<[string, any]>) this.set(k, v);
-      return;
-    }
-
-    for (const [k, v] of Object.entries(init as Record<string, any>)) {
-      this.set(k, v);
+    } else {
+      if (args.length % 2 !== 0) {
+        throw new Error(
+          'Hash requires an even number of arguments (key-value pairs).'
+        );
+      }
+      for (let i = 0; i < args.length; i += 2) {
+        this.setElement(args[i], args[i + 1], new HashAttributes());
+      }
     }
   }
 
@@ -196,7 +211,6 @@ export class Hash extends Map<string, HashElement> {
     attrs?: HashAttributes | Record<string, any>
   ): void {
     const key = String(path);
-    // Avoid copy if possible
     const elementAttrs =
       attrs instanceof HashAttributes ? attrs : new HashAttributes(attrs);
     const element = new HashElement(wrapKaraboValue(value), elementAttrs);
