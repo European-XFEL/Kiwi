@@ -21,9 +21,9 @@ export { default as SceneCanvas } from './SceneCanvas';
 // SCENE LAYOUTS
 // ──────────────────────────────────────────────────────────────────────
 
-export { default as BoxLayout } from './layouts/BoxLayout';
-export { default as FixedLayout } from './layouts/FixedLayout';
-export { default as GridLayout } from './layouts/GridLayout';
+export { default as BoxLayout } from './components/layouts/BoxLayout';
+export { default as FixedLayout } from './components/layouts/FixedLayout';
+export { default as GridLayout } from './components/layouts/GridLayout';
 
 // ──────────────────────────────────────────────────────────────────────
 // COMPONENTS
@@ -36,4 +36,4 @@ export { default as SceneSizeDisplay } from './components/SceneSizeDisplay';
 // WIDGETS
 // ──────────────────────────────────────────────────────────────────────
 
-export { Label } from './widget';
+export { Label } from './components/widget';

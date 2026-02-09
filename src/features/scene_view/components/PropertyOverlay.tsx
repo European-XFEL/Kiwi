@@ -5,13 +5,14 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from '@/components/ui/tooltip';
-import type { UseDevicePropertyResult } from '@/components/shared/hooks/useDeviceProperty';
+import type { UseDevicePropertyResult } from '@/lib/binding/useDeviceProperty';
 import { ProxyStatus, PropertyStatus } from '@/lib/binding/ProxyStatus';
 import { XIcon } from 'lucide-react';
 
 const CONNECTING_STATUSES: ProxyStatus[] = [
-  ProxyStatus.SCHEMA_REQUESTED,
-  ProxyStatus.SCHEMA_RECEIVED,
+  ProxyStatus.ONLINEREQUESTED,
+  ProxyStatus.SCHEMA,
+  ProxyStatus.ALIVE,
 ];
 
 const PHASE_DURATION_MS = 800;
@@ -49,11 +50,11 @@ export const PropertyOverlay: React.FC<PropertyOverlayProps> = React.memo(
         hasEverConnected.current = true;
         setPhase(0);
       }
-      if (isOffline || proxyStatus === ProxyStatus.UNKNOWN) {
+      if (proxyStatus === ProxyStatus.OFFLINE) {
         hasEverConnected.current = false;
         setPhase(null);
       }
-    }, [isHealthy, isOffline, proxyStatus]);
+    }, [isHealthy, proxyStatus]);
 
     React.useEffect(() => {
       if (phase === null) return;

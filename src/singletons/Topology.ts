@@ -1,13 +1,5 @@
-import { TopologyEventType } from '@/karabo_data/TopologyInfo';
-import { Hash } from '@/karabo-hash/hash';
+import { Hash, Schema } from '@/karabo-hash/hash';
 import { DeviceProxy } from '@/lib/binding/proxies/DeviceProxy';
-import type { PropertyInfo } from '@/karabo_data/DeviceConfigInfo';
-import type { DeviceSchemaInfo } from '@/karabo_data/DeviceSchemaInfo';
-
-export type DeviceTopologyHandler = (
-  infoType: TopologyEventType,
-  instanceId: string
-) => void;
 
 export class SystemTopology {
   public _system_hash: Hash | null = null;
@@ -15,22 +7,10 @@ export class SystemTopology {
 
   public constructor() {}
 
-  // #region initialize
-
   public initialize(systemTopology: Hash) {
     // Store the systemHash, clear before?
+    console.log('Received SystemTopology ...');
     this._system_hash = systemTopology;
-    let topologyKeys = ['device'];
-    if (this._system_hash.has('macro')) {
-      topologyKeys.push('macro');
-    }
-    for (const item of topologyKeys) {
-      const devices = systemTopology.getValue(item) as Hash;
-      for (const [deviceId, ,] of devices.iterall()) {
-        // Update proxy (device became visible in topology)
-        this.setOnlineFlag(deviceId, true);
-      }
-    }
   }
 
   isDeviceOnline = (deviceId: string): boolean => {
@@ -94,18 +74,25 @@ export class SystemTopology {
   getDevice(deviceId: string): DeviceProxy {
     let proxy = this.devices.get(deviceId);
     if (!proxy) {
-      proxy = DeviceProxy.createEmptyDeviceProxy(deviceId);
+      proxy = DeviceProxy.createDeviceProxy(deviceId);
       this.devices.set(deviceId, proxy);
+      if (this.isDeviceOnline(deviceId)) {
+        proxy.setOnlineFlag(true);
+      }
     }
     return proxy;
   }
 
   setOnlineFlag(deviceId: string, isOnline: boolean): void {
-    const proxy = this.getDevice(deviceId);
-    proxy.setOnlineFlag(isOnline);
+    let proxy = this.devices.get(deviceId);
+    if (proxy) {
+      proxy.setOnlineFlag(isOnline);
+    }
   }
 
-  handleDeviceConfiguration(deviceId: string, config: PropertyInfo[]): void {
+  // ---------------------------------------------------------------------------
+
+  handleDeviceConfiguration(deviceId: string, config: Hash): void {
     const proxy = this.devices.get(deviceId);
     if (!proxy) {
       return;
@@ -113,7 +100,7 @@ export class SystemTopology {
     proxy.handleDeviceConfiguration(config);
   }
 
-  handleDeviceSchema(deviceId: string, schema: DeviceSchemaInfo): void {
+  handleDeviceSchema(deviceId: string, schema: Schema): void {
     const proxy = this.devices.get(deviceId);
     if (!proxy) {
       return;

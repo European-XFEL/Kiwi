@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import type { DisplayStatefulIconProps } from '@/scene/scene_types/controllers';
 import { FONT_BASE_SIZE } from '@/features/controllers/utils/fontDefaults';
 
-import type { UseDevicePropertyResult } from '@/lib/binding/hooks/useDeviceProperty';
+import type { UseDevicePropertyResult } from '@/lib/binding/useDeviceProperty';
 import { ProxyStatus, PropertyStatus } from '@/lib/binding/ProxyStatus';
 
 // ---------------------------------------------------

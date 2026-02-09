@@ -9,17 +9,13 @@ import { useGuiStateColor } from './hooks/useGuiStateColor';
 const DisplayStateColor: React.FC<DisplayStateColorProps> = React.memo(
   ({ font_size, font_weight, show_string, tooltipText, primary }) => {
     const deviceState = primary?.deviceState;
-    const isOnlineLike = primary?.isOnlineLike;
-    const isReady = primary?.isReady;
-
-    const rawState = deviceState ?? 'UNKNOWN';
+    const rawState = deviceState ?? '';
 
     // Map state string → CSS color
     const { colorValue } = useGuiStateColor(rawState);
     const bgColor = colorValue ?? '#cccccc';
 
-    // Only show text when device is online-ish and has schema+config
-    const showText = show_string && isOnlineLike && isReady;
+    const showText = show_string && rawState;
 
     return (
       <div

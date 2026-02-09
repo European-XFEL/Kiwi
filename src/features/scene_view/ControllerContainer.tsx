@@ -1,5 +1,5 @@
 import React from 'react';
-import { PropertyOverlay } from './components/overlays/PropertyOverlay';
+import { PropertyOverlay } from './components/PropertyOverlay';
 import { ProxyStatus, PropertyStatus } from '@/lib/binding';
 import { useDeviceProperty, type UseDevicePropertyResult } from '@/lib/binding';
 import { AccessMode } from '@/karabo_data/SchemaEnums';
@@ -84,7 +84,7 @@ export const ControllerContainer: React.FC<ControllerContainerProps> = ({
       return 'Invalid property key';
     }
 
-    if (proxyStatus === ProxyStatus.OFFLINE || isOffline) {
+    if (proxyStatus === ProxyStatus.OFFLINE) {
       return 'Device offline';
     }
 

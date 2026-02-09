@@ -1,29 +1,17 @@
-import { EventEmitter } from '@/lib/binding/utils/EventEmitter';
-import type { DeviceModel } from '../model/types/DeviceType';
+import { EventEmitter } from 'events';
 
-import type { DeviceSchemaInfo } from '@/karabo_data/DeviceSchemaInfo';
-import type { PropertyInfo } from '@/karabo_data/DeviceConfigInfo';
+import { deviceSchemaFromHash } from '@/karabo_hash/decoders/device_schema';
 
 import type { HashAttributes, HashValues } from '@/karabo-hash/hash';
-import { Hash } from '@/karabo-hash/hash';
-import { HashTypes } from '@/karabo-hash/typenums';
-import type { SimpleValueTypes } from '@/karabo-hash/types';
-import { buildGetDeviceSchemaHash } from '@/karabo_hash/builders/monitoring_device';
 
 import { ProxyStatus } from '@/lib/binding/ProxyStatus';
-import { buildEmptyDeviceModel } from '@/lib/binding/Builder';
-
-import { mapGuiStateColor } from '../utils/mapStateColor';
-import type { GuiStateColorKey } from '@/karabo_data/Indicators';
-import type { PropertyModel, PropertyValue } from '../model/types/PropertyType';
+import { Hash, Schema } from '@/karabo-hash/hash';
+import type { PropertyModel, ProxyValue } from '../model/types/PropertyType';
 import { PropertyBinding } from '../model/PropertyBinding';
 import { Timestamp } from '@/lib/binding/utils/timestamps';
 
 import { getNetwork } from '@/singletons/api';
-import {
-  buildStartMonitoringHash,
-  buildStopMonitoringHash,
-} from '@/karabo_hash/builders/monitoring_device';
+import { flatIterall } from '@/karabo-hash/utils';
 
 export type SchemaChangedPayload = {
   deviceId: string;
@@ -32,105 +20,54 @@ export type SchemaChangedPayload = {
   allChanged: string[];
 };
 
-export type DeviceProxyEventName =
-  | 'property_changed' // (path, value, timeAttrs?)
-  | 'schema_changed' // (payload)
-  | 'state_changed' // (oldState, newState)
-  | 'status_changed' // (oldStatus, newStatus)
-  | 'destroyed';
+export interface DeviceModel {
+  deviceId: String;
+  schema: any;
+  properties: Map<string, PropertyModel>;
+}
 
-type PropertyUpdateHandler = (
-  updatedProperty: PropertyInfo | SimpleValueTypes[][]
-) => void;
+export function buildDeviceBinding(deviceId: string): DeviceModel {
+  return {
+    deviceId,
+    schema: {
+      properties: [],
+    },
+    properties: new Map(),
+  };
+}
 
-export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
+export class DeviceProxy extends EventEmitter {
   private _model: DeviceModel;
 
-  // Per-property subscription reference counts
-  private monitorCount = new Map<string, number>();
+  // The BindingRoot Namespace
+  public binding: any;
 
-  private _schemaRequested = false;
+  public state: string | undefined = undefined;
 
-  /**
-   * propertyId -> handlers
-   * (Equivalent to: Map<deviceId, Map<propertyId, handlers>> but per-device.)
-   */
-  private _propertyMonitors = new Map<string, PropertyUpdateHandler[]>();
+  public status: ProxyStatus = ProxyStatus.OFFLINE;
 
-  private deviceSchema: DeviceSchemaInfo | undefined = undefined;
+  public deviceId: string = '';
+  public serverId: string = '';
+  public classId: string = '';
 
-  /** cached merged config (ordered by schema when available) */
-  private _deviceConfigurations: PropertyInfo[] = [];
+  public isOnline: boolean = false;
 
-  /** offline → online restart monitoring pending */
-  private _pendingStartMonitoring = false;
+  private monitorCount = 0;
 
-  /** whether we have sent startMonitoring to GUI server for current session */
-  private _backendMonitoringActive = false;
-
-  constructor(model: DeviceModel) {
+  constructor(model: any) {
     super();
     this._model = model;
+    this.deviceId = model.deviceId;
+    this.setMaxListeners(0);
   }
 
-  static createEmptyDeviceProxy(deviceId: string): DeviceProxy {
-    const emptyModel = buildEmptyDeviceModel(deviceId);
-    return new DeviceProxy(emptyModel);
+  static createDeviceProxy(deviceId: string): DeviceProxy {
+    const model = buildDeviceBinding(deviceId);
+    return new DeviceProxy(model);
   }
-
-  // ──────────────────────────────────────────────────
-  // Public getters
-  // ──────────────────────────────────────────────────
 
   get model(): DeviceModel {
     return this._model;
-  }
-
-  // Identity
-  get deviceId(): string {
-    return this._model.identity.deviceId;
-  }
-
-  get classId(): string | undefined {
-    return this._model.identity.classId;
-  }
-
-  get serverId(): string | undefined {
-    return this._model.identity.serverId;
-  }
-
-  // Runtime / status
-  get proxyStatus(): ProxyStatus {
-    return this._model.runtime.proxyStatus;
-  }
-
-  get isOnline(): boolean {
-    return this._model.runtime.isOnline;
-  }
-
-  get hasSchema(): boolean {
-    return this._model.runtime.hasSchema;
-  }
-
-  get hasConfig(): boolean {
-    return this._model.runtime.hasConfig;
-  }
-
-  get hasReceivedTopology(): boolean {
-    return this._model.runtime.hasReceivedTopology;
-  }
-
-  get propertySubscriberCount(): number {
-    return this._model.runtime.propertySubscriberCount;
-  }
-
-  // Karabo device state (what you map to colors)
-  get state(): string | undefined {
-    return this._model.runtime.state;
-  }
-
-  get stateColor(): GuiStateColorKey | undefined {
-    return this.state ? mapGuiStateColor(this.state) : undefined;
   }
 
   // Schema & properties
@@ -146,97 +83,174 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
     return this._model.properties.get(path);
   }
 
-  /**
-   * Apply a single property update from the backend.
-   * This is the normal "live update" path when you have a PropertyInfo.
-   */
-  applyPropertyUpdate(update: PropertyInfo): void {
-    const { key, value, timeAttrs } = update;
-
+  applyPropertyUpdate(key: string, value: any, attrs: any): void {
     const prop = this._model.properties.get(key);
     if (prop) {
-      const timestamp = timeAttrs
-        ? Timestamp.fromTimeAttrs(timeAttrs)
+      const timestamp = attrs
+        ? Timestamp.fromTimeAttrs(attrs)
         : Timestamp.now();
 
-      prop.binding.setValue(value as PropertyValue, { timestamp });
-
-      prop.binding.timeAttrs = timeAttrs as unknown as
+      prop.binding.setValue(value as ProxyValue, { timestamp });
+      prop.binding.timeAttrs = attrs as unknown as
         | Record<string, unknown>
         | undefined;
     }
 
-    if (key === 'state' && typeof value === 'string') {
-      const oldState = this._model.runtime.state;
+    if (key === 'state') {
+      const oldState = this.state;
       const newState = value;
       if (oldState !== newState) {
-        this._model.runtime.state = newState;
-        this.emit('state_changed', oldState, newState);
+        this.state = newState;
+        this.emit('state_changed', newState);
       }
     }
 
-    // Always notify subscribers (widgets bound to "DEVICE.state", etc.)
     this.emit(
       'property_changed',
       key,
       value as HashValues,
-      (prop?.binding.timeAttrs ?? timeAttrs ?? {}) as HashAttributes
+      (prop?.binding.timeAttrs ?? attrs ?? {}) as HashAttributes
     );
   }
 
-  setHasConfig(hasConfig: boolean): void {
-    if (this._model.runtime.hasConfig === hasConfig) return;
-    this._model.runtime.hasConfig = hasConfig;
-    this._updateProxyStatus();
-  }
-
   public setOnlineFlag(isOnline: boolean): void {
-    const r = this._model.runtime;
+    this.isOnline = isOnline;
+    this.status = isOnline ? ProxyStatus.ONLINE : ProxyStatus.OFFLINE;
+    this.fireStatusUpdate();
 
-    r.hasReceivedTopology = true;
-
-    if (r.isOnline === isOnline) {
-      // Still ensure status is up-to-date if other flags changed earlier.
-      this._updateProxyStatus();
-      return;
+    // If we come online and someone wants monitoring, fetch schema again
+    if (isOnline && this.monitorCount > 0) {
+      this.refreshDeviceSchema();
     }
+  }
 
-    r.isOnline = isOnline;
-    this._updateProxyStatus();
+  public subscribeToSchema(
+    callback: (payload: SchemaChangedPayload) => void
+  ): () => void {
+    const listener = (payload: SchemaChangedPayload) => callback(payload);
+    this.on('schema_changed', listener);
+    return () => this.off('schema_changed', listener);
+  }
 
-    if (isOnline) {
-      if (this._pendingStartMonitoring && this._propertyMonitors.size > 0) {
-        this._pendingStartMonitoring = false;
-        this._ensureMonitoringState();
+  public subscribeToProperty(
+    propertyPath: string,
+    callback: (value: HashValues, timeAttrs: HashAttributes) => void
+  ): () => void {
+    const listener = (
+      path: string,
+      value: HashValues,
+      timeAttrs: HashAttributes
+    ) => {
+      if (path === propertyPath) callback(value, timeAttrs);
+    };
+
+    this.on('property_changed', listener);
+    return () => this.off('property_changed', listener);
+  }
+
+  public addMonitor(): () => void {
+    const ignoredStatuses = new Set<ProxyStatus>([
+      ProxyStatus.OFFLINE,
+      ProxyStatus.ONLINEREQUESTED,
+    ]);
+
+    this.monitorCount += 1;
+
+    if (this.monitorCount === 1) {
+      if (this.status === ProxyStatus.ONLINE) {
+        this.refreshDeviceSchema();
+      } else if (!ignoredStatuses.has(this.status)) {
+        this._startMonitoringDevice();
       }
-      return;
     }
 
-    // offline
-    if (this._propertyMonitors.size > 0) {
-      this._pendingStartMonitoring = true;
-      // NOTE: no need to send stop monitoring; GUI server drops it on offline
+    this.fireStatusUpdate();
+
+    return () => {
+      this.monitorCount = Math.max(this.monitorCount - 1, 0);
+
+      if (this.monitorCount === 0) {
+        this._stopMonitoringDevice();
+      }
+
+      this.fireStatusUpdate();
+    };
+  }
+
+  private _startMonitoringDevice(): void {
+    getNetwork().onStartMonitoringDevice(this.deviceId);
+  }
+
+  private _stopMonitoringDevice(): void {
+    getNetwork().onStopMonitoringDevice(this.deviceId);
+
+    if (
+      this.status === ProxyStatus.ALIVE ||
+      this.status === ProxyStatus.MONITORING
+    ) {
+      this.status = ProxyStatus.ONLINE;
+      this.fireStatusUpdate();
     }
   }
 
-  /**
-   * Mark that schema has been requested from the GUI server,
-   * but not yet fully loaded.
-   */
-  public markSchemaRequested(): void {
-    if (this._schemaRequested) return;
-    this._schemaRequested = true;
-    this._updateProxyStatus();
+  private _config_update_fired(): void {
+    if (this.status === ProxyStatus.SCHEMA) {
+      this.status = ProxyStatus.ALIVE;
+      this.fireStatusUpdate();
+    }
+    if (this.status === ProxyStatus.ALIVE && this.monitorCount > 0) {
+      this.status = ProxyStatus.MONITORING;
+      this.fireStatusUpdate();
+    }
   }
 
-  /**
-   * Apply schema to the device - creates/updates PropertyModels.
-   */
-  public applySchema(schemaInfo: DeviceSchemaInfo): void {
+  private _schema_update_fired(): void {
+    if (this.status === ProxyStatus.ONLINEREQUESTED) {
+      if (this.monitorCount > 0) {
+        this._startMonitoringDevice();
+      }
+      this.status = ProxyStatus.SCHEMA;
+      this.fireStatusUpdate();
+    } else if (
+      this.status === ProxyStatus.ALIVE ||
+      this.status === ProxyStatus.MONITORING
+    ) {
+      getNetwork().onGetDeviceConfiguration(this.deviceId);
+    }
+  }
+
+  public handleDeviceConfiguration(config: Hash): void {
+    for (const [key, value, attrs] of flatIterall(config)) {
+      this.applyPropertyUpdate(key, value.value_, attrs);
+    }
+    this._config_update_fired();
+  }
+
+  private fireStatusUpdate(): void {
+    this.emit('status_changed', this.status);
+  }
+
+  destroy(): void {
+    this.monitorCount = 0;
+    this._stopMonitoringDevice();
+    this.removeAllListeners();
+  }
+
+  public refreshDeviceSchema(): void {
+    // Only “request schema” once per in-flight request
+    if (this.status !== ProxyStatus.ONLINEREQUESTED) {
+      this.status = ProxyStatus.ONLINEREQUESTED;
+      getNetwork().onGetDeviceSchema(this.deviceId);
+      this.fireStatusUpdate();
+    }
+  }
+
+  public handleDeviceSchema = (schema: Schema): void => {
+    const deviceSchemaInfo = deviceSchemaFromHash(schema);
     this._model.schema = {
-      properties: Array.from(schemaInfo.propertyDescriptors.entries()).map(
-        ([path, schemaAttrs]) => ({ path, schemaAttrs })
-      ),
+      properties: Array.from(
+        deviceSchemaInfo.propertyDescriptors.entries()
+      ).map(([path, schemaAttrs]) => ({ path, schemaAttrs })),
     };
 
     const newProperties: string[] = [];
@@ -261,7 +275,7 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
       }
     }
 
-    this.markSchemaLoaded();
+    this._schema_update_fired();
 
     const allChanged = [...newProperties, ...updatedProperties];
 
@@ -271,331 +285,5 @@ export class DeviceProxy extends EventEmitter<DeviceProxyEventName> {
       updatedProperties,
       allChanged,
     } satisfies SchemaChangedPayload);
-
-    // Back-compat: emit property_changed only for NEW properties
-    for (const path of newProperties) {
-      const model = this._model.properties.get(path);
-      if (!model) continue;
-
-      this.emit(
-        'property_changed',
-        path,
-        model.binding.value as HashValues,
-        (model.binding.timeAttrs ?? {}) as unknown as HashAttributes
-      );
-    }
-  }
-
-  private markSchemaLoaded(): void {
-    this._schemaRequested = false;
-    this._model.runtime.hasSchema = true;
-    this._updateProxyStatus();
-  }
-
-  /**
-   * Subscribe to schema changes.
-   */
-  public subscribeToSchema(
-    callback: (payload: SchemaChangedPayload) => void
-  ): () => void {
-    const listener = (payload: SchemaChangedPayload) => callback(payload);
-    this.subscribe('schema_changed', listener);
-    return () => this.unsubscribe('schema_changed', listener);
-  }
-
-  public subscribeToProperty(
-    propertyPath: string,
-    callback: (value: HashValues, timeAttrs: HashAttributes) => void
-  ): () => void {
-    this._incrementPropertySubscriber(propertyPath);
-
-    const listener = (
-      path: string,
-      value: HashValues,
-      timeAttrs: HashAttributes
-    ) => {
-      if (path === propertyPath) callback(value, timeAttrs);
-    };
-
-    this.subscribe('property_changed', listener);
-
-    return () => {
-      this.unsubscribe('property_changed', listener);
-      this._decrementPropertySubscriber(propertyPath);
-    };
-  }
-
-  private _incrementPropertySubscriber(propertyPath: string): void {
-    const prev = this.monitorCount.get(propertyPath) ?? 0;
-    this.monitorCount.set(propertyPath, prev + 1);
-
-    this._model.runtime.propertySubscriberCount++;
-    this._updateProxyStatus();
-  }
-
-  private _decrementPropertySubscriber(propertyPath: string): void {
-    const prev = this.monitorCount.get(propertyPath) ?? 0;
-    const next = Math.max(prev - 1, 0);
-
-    if (next === 0) this.monitorCount.delete(propertyPath);
-    else this.monitorCount.set(propertyPath, next);
-
-    this._model.runtime.propertySubscriberCount = Math.max(
-      this._model.runtime.propertySubscriberCount - 1,
-      0
-    );
-    this._updateProxyStatus();
-  }
-
-  private registerPropertyMonitor(
-    propertyId: string,
-    propertyUpdateHandler: PropertyUpdateHandler
-  ): void {
-    const existingHandlers = this._propertyMonitors.get(propertyId);
-    const handlers = existingHandlers ?? [];
-    const wasEmpty = !existingHandlers || existingHandlers.length === 0;
-
-    if (!existingHandlers) {
-      this._propertyMonitors.set(propertyId, handlers);
-    } else if (!this._pendingStartMonitoring) {
-      // Already monitoring; dispatch immediately if we have a cached value
-      const propertyInfo = this._getDeviceProperty(propertyId);
-      if (propertyInfo)
-        this._dispatchPropUpdate(propertyUpdateHandler, propertyInfo);
-    }
-
-    handlers.push(propertyUpdateHandler);
-
-    // First handler for this property => count as subscriber
-    if (wasEmpty) this._incrementPropertySubscriber(propertyId);
-
-    this._ensureMonitoringState();
-  }
-
-  private unregisterPropertyMonitor(
-    propertyId: string,
-    propertyUpdateHandler: PropertyUpdateHandler
-  ): void {
-    const handlers = this._propertyMonitors.get(propertyId);
-    if (!handlers) return;
-
-    const idx = handlers.indexOf(propertyUpdateHandler);
-    if (idx >= 0) handlers.splice(idx, 1);
-
-    if (handlers.length === 0) {
-      this._propertyMonitors.delete(propertyId);
-      this._decrementPropertySubscriber(propertyId);
-    }
-
-    if (this._propertyMonitors.size === 0) {
-      this._stopMonitoringDevice();
-      this._deviceConfigurations = [];
-      this._pendingStartMonitoring = false;
-    }
-  }
-
-  public addMonitor(propertyId: string): () => void {
-    const noOpHandler: PropertyUpdateHandler = () => {};
-
-    this.registerPropertyMonitor(propertyId, noOpHandler);
-    return () => this.unregisterPropertyMonitor(propertyId, noOpHandler);
-  }
-
-  private _ensureMonitoringState(): void {
-    if (this._propertyMonitors.size === 0) return;
-
-    if (!this.isOnline) {
-      this._pendingStartMonitoring = true;
-      return;
-    }
-
-    this._pendingStartMonitoring = false;
-
-    if (!this._backendMonitoringActive) {
-      this._startMonitoringDevice();
-    }
-  }
-
-  /**
-   * Start monitoring this device:
-   *  - ask GUI server to start monitoring
-   */
-  private _startMonitoringDevice(): void {
-    if (this._backendMonitoringActive) return;
-
-    this.requestDeviceSchema(this.deviceId);
-
-    getNetwork().sendHash(buildStartMonitoringHash(this.deviceId));
-
-    this._backendMonitoringActive = true;
-  }
-
-  private _stopMonitoringDevice(): void {
-    if (!this._backendMonitoringActive) return;
-
-    getNetwork().sendHash(buildStopMonitoringHash(this.deviceId));
-    this._backendMonitoringActive = false;
-  }
-
-  private _getDeviceProperty(propertyId: string): PropertyInfo | undefined {
-    return this._deviceConfigurations.find((p) => p.key === propertyId);
-  }
-
-  private _mergeConfiguration(properties: PropertyInfo[]): void {
-    const schema = this.deviceSchema;
-    const current = this._deviceConfigurations;
-
-    if (!schema) {
-      console.warn(
-        `Merging configuration for device "${this.deviceId}" whose schema is not yet known!`
-      );
-
-      const incomingKeys = new Set(properties.map((p) => p.key));
-      const keep = current.filter((p) => !incomingKeys.has(p.key));
-      this._deviceConfigurations = [...keep, ...properties];
-      return;
-    }
-
-    // Schema-known: preserve schema order and keep last-known values.
-    const incomingByKey = new Map(properties.map((p) => [p.key, p] as const));
-    const currentByKey = new Map(current.map((p) => [p.key, p] as const));
-
-    const merged: PropertyInfo[] = [];
-    for (const key of schema.propertyDescriptors.keys()) {
-      const incoming = incomingByKey.get(key);
-      if (incoming) merged.push(incoming);
-      else {
-        const existing = currentByKey.get(key);
-        if (existing) merged.push(existing);
-      }
-    }
-
-    this._deviceConfigurations = merged;
-  }
-
-  private _dispatchPropUpdate(
-    propUpdateHandler: PropertyUpdateHandler,
-    propInfo: PropertyInfo
-  ): void {
-    propInfo.schemaAttrs = this.getDeviceSchema()?.propertyDescriptors.get(
-      propInfo.key
-    );
-
-    propUpdateHandler(propInfo);
-  }
-
-  private _extractCellValues(propInfo: PropertyInfo): SimpleValueTypes[][] {
-    const tableCells: SimpleValueTypes[][] = [];
-    const hashVector = propInfo.value as unknown as Hash[];
-
-    for (const rowHash of hashVector) {
-      const rowCells: SimpleValueTypes[] = [];
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      for (const [, cellData] of rowHash.items()) {
-        rowCells.push(cellData.value_);
-      }
-      tableCells.push(rowCells);
-    }
-
-    return tableCells;
-  }
-
-  handleDeviceConfiguration(properties: PropertyInfo[]): void {
-    // No one watching this device's properties → ignore
-    if (this._propertyMonitors.size === 0) return;
-
-    this._mergeConfiguration(properties);
-    this.setHasConfig(true);
-
-    const schema = this.getDeviceSchema();
-
-    for (const propInfo of properties) {
-      // Attach schemaAttrs (if available) before sending to handlers or proxy
-      propInfo.schemaAttrs = schema?.propertyDescriptors.get(propInfo.key);
-
-      // Keep DeviceProxy model updated with full PropertyInfo
-      this.applyPropertyUpdate(propInfo);
-
-      const handlers = this._propertyMonitors.get(propInfo.key);
-      if (!handlers?.length) continue;
-
-      // Table property special handling for UI handlers
-      if (propInfo.type === HashTypes.VectorHash) {
-        const tableCells = this._extractCellValues(propInfo);
-        for (const handler of handlers) handler(tableCells);
-        continue;
-      }
-
-      // Normal scalar/vector properties
-      for (const handler of handlers) {
-        handler(propInfo);
-      }
-    }
-  }
-
-  private _updateProxyStatus(): void {
-    const oldStatus = this._model.runtime.proxyStatus;
-    const newStatus = this._computeProxyStatus();
-
-    if (oldStatus !== newStatus) {
-      this._model.runtime.proxyStatus = newStatus;
-      this.emit('status_changed', oldStatus, newStatus);
-    }
-  }
-
-  private _computeProxyStatus(): ProxyStatus {
-    const r = this._model.runtime;
-
-    if (
-      !r.hasReceivedTopology &&
-      !r.hasSchema &&
-      !r.hasConfig &&
-      !this._schemaRequested
-    ) {
-      return ProxyStatus.UNKNOWN;
-    }
-
-    if (!r.isOnline) return ProxyStatus.OFFLINE;
-    if (this._schemaRequested && !r.hasSchema)
-      return ProxyStatus.SCHEMA_REQUESTED;
-    if (r.hasSchema && !r.hasConfig) return ProxyStatus.SCHEMA_RECEIVED;
-
-    if (r.hasSchema && r.hasConfig) {
-      return r.propertySubscriberCount > 0
-        ? ProxyStatus.MONITORING
-        : ProxyStatus.ALIVE;
-    }
-
-    return ProxyStatus.ONLINE;
-  }
-
-  destroy(): void {
-    this.monitorCount.clear();
-    this._model.runtime.propertySubscriberCount = 0;
-
-    this._propertyMonitors.clear();
-    this._deviceConfigurations = [];
-    this._pendingStartMonitoring = false;
-
-    this._stopMonitoringDevice();
-
-    this.emit('destroyed');
-    this.removeAllListeners();
-  }
-
-  public getDeviceSchema(): DeviceSchemaInfo | undefined {
-    return this.deviceSchema;
-  }
-
-  public requestDeviceSchema = (deviceId: string): void => {
-    const hash = buildGetDeviceSchemaHash(deviceId);
-    getNetwork().sendHash(hash);
-    this.markSchemaRequested();
-  };
-
-  public handleDeviceSchema = (deviceSchemaInfo: DeviceSchemaInfo): void => {
-    // Decode the hash into the appropriate SchemaInfo data structure
-    this.deviceSchema = deviceSchemaInfo;
-    this.applySchema(deviceSchemaInfo);
   };
 }

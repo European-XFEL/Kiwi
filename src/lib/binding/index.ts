@@ -5,8 +5,8 @@ export { PropertyProxy } from './proxies/PropertyProxy';
 export type { PropertyDescriptor } from './proxies/PropertyDescriptor';
 export { buildPropertyDescriptor } from './proxies/PropertyDescriptor';
 
-export { useDeviceProperty } from './hooks';
-export type { UseDevicePropertyResult } from './hooks';
+export { useDeviceProperty } from './useDeviceProperty';
+export type { UseDevicePropertyResult } from './useDeviceProperty';
 
 export { ProxyStatus, PropertyStatus } from './ProxyStatus';
 
@@ -15,32 +15,14 @@ export {
   PROPERTY_INDICATORS,
 } from './overlay_indicator_constants';
 
-// ──────────────────────────────────────────────────────────────────────
-// TYPES
-// ──────────────────────────────────────────────────────────────────────
-
-// Model types
 export type {
-  BindingInterface as IPropertyBinding,
+  BindingInterface,
   PropertyModel,
-  PropertyValue,
-  PropertyChangeHandler,
+  ProxyValue,
 } from './model/types/PropertyType';
-
-export type { DeviceModel, DeviceRuntimeState } from './model/types/DeviceType';
 
 export type { PropertySchema, DeviceSchema } from './model/types/SchemaType';
 
-// Proxy types
-export type {
-  DeviceState,
-  DeviceTopologyStatus,
-  DeviceSchemaStatus,
-  DeviceConfigStatus,
-  PropertyState,
-  DeviceIndicatorDescriptor,
-  PropertyIndicatorDescriptor,
-} from './proxies/types';
+export type { ProxyStatusIcon, ProxyBindingIcon } from './proxies/types';
 
-// Editability
 export { isPropertyEditable } from './model/editability';
