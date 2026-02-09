@@ -9,6 +9,7 @@ export const KARABO_SCHEMA_METRIC_PREFIX_SYMBOL = 'metricPrefixSymbol';
 export const KARABO_SCHEMA_ROW_SCHEMA = 'rowSchema';
 export const KARABO_SCHEMA_ALLOWED_STATES = 'allowedStates';
 export const KARABO_SCHEMA_VALUE_TYPE = 'valueType';
+export const KARABO_SCHEMA_NODE_TYPE = 'nodeType';
 export const KARABO_SCHEMA_MIN_INC = 'minInc';
 export const KARABO_SCHEMA_MIN_EXC = 'minExc';
 export const KARABO_SCHEMA_MAX_INC = 'maxInc';
