@@ -46,13 +46,13 @@ export class Timestamp {
    */
   public static fromHashAttributes(
     attrs: Map<string, any> | Record<string, any>
-  ): Timestamp | null {
+  ): Timestamp | undefined {
     // Abstraction to check existence and get value
     const isMap = attrs instanceof Map;
 
     // Check if 'sec' exists strictly!
     if (isMap ? !(attrs as Map<string, any>).has('sec') : !('sec' in attrs)) {
-      return null;
+      return undefined;
     }
 
     const get = (k: string): any => {

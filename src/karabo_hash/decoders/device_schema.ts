@@ -1,19 +1,16 @@
 import {
-  DeviceSchemaInfo,
   PropertySchemaAttributes,
   TableColumnInfo,
 } from '@/karabo_data/DeviceSchemaInfo';
 
-import { MetricPrefix, Unit } from '@/karabo_data/SchemaEnums';
 import { flattenHash } from '@/karabo_hash/hash_utils';
-import { KaraboValue, SimpleValueTypes } from '@/karabo-hash/types';
-import { Hash as NewHash, Schema } from '@/karabo-hash/hash';
-import { HashTypes } from '@/karabo-hash/typenums';
+import { KaraboValue } from '@/karabo-hash/types';
+import { Hash as NewHash } from '@/karabo-hash/hash';
 
 /// Decodes the rowSchema attribute of a Table property into a list of
 /// TableColumnInfo records. The value of the rowSchema attribute is an
 /// schema itself.
-const decodeRowSchema = (karaboVal: KaraboValue): TableColumnInfo[] => {
+export const decodeRowSchema = (karaboVal: KaraboValue): TableColumnInfo[] => {
   const tableColumns: TableColumnInfo[] = [];
   const rowSchemaHash = karaboVal.value_ as object;
   if ('hash' in rowSchemaHash) {
@@ -52,71 +49,4 @@ const decodeRowSchema = (karaboVal: KaraboValue): TableColumnInfo[] => {
     }
   }
   return tableColumns;
-};
-
-export const deviceSchemaFromHash = (schema: Schema): DeviceSchemaInfo => {
-  const schemaInfo = {
-    propertyDescriptors: new Map<string, PropertySchemaAttributes>(),
-  };
-  const schemaHash = schema.hash;
-  if (schemaHash !== undefined) {
-    const schemaHashLeaves = flattenHash(schemaHash);
-    for (const { path, attrs } of schemaHashLeaves) {
-      const propAttrs: Partial<PropertySchemaAttributes> = {};
-      for (let [key, karaboVal] of attrs) {
-        switch (key) {
-          case 'valueType':
-            propAttrs.valueType = karaboVal.value_ as HashTypes;
-            break;
-          case 'defaultValue':
-            propAttrs.defaultValue = karaboVal.value_;
-            break;
-          case 'requiredAccessLevel':
-            propAttrs.requiredAccessLevel = karaboVal.value_ as number;
-            break;
-          case 'accessMode':
-            propAttrs.accessMode = karaboVal.value_ as number;
-            break;
-          case 'displayedName':
-            propAttrs.displayedName = karaboVal.value_ as string;
-            break;
-          case 'options':
-            propAttrs.options = karaboVal.value_ as SimpleValueTypes[];
-            break;
-          case 'unitSymbol':
-            if (Object.values(Unit).includes(karaboVal.value_ as Unit)) {
-              propAttrs.unitSymbol = karaboVal.value_ as Unit;
-            }
-            break;
-          case 'metricPrefixSymbol':
-            if (
-              Object.values(MetricPrefix).includes(
-                karaboVal.value_ as MetricPrefix
-              )
-            ) {
-              propAttrs.metricPrefixSymbol = karaboVal.value_ as MetricPrefix;
-            }
-            break;
-          case 'displayType':
-            propAttrs.displayType = karaboVal.value_ as string;
-            break;
-          case 'nodeType':
-            propAttrs.nodeType = karaboVal.value_ as number;
-            break;
-          case 'allowedStates':
-            propAttrs.allowedStates = karaboVal.value_ as string[];
-            break;
-          case 'rowSchema':
-            propAttrs.rowSchema = decodeRowSchema(karaboVal);
-            break;
-          // TODO: handle remaining property attributes
-        }
-      }
-      schemaInfo.propertyDescriptors.set(
-        path,
-        propAttrs as PropertySchemaAttributes
-      );
-    }
-  }
-  return schemaInfo;
 };

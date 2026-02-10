@@ -53,26 +53,14 @@ function normalizeTableCells(raw: unknown): SimpleValueTypes[][] {
   return [];
 }
 
-/**
- * Pull row schema from whichever location your new descriptor/schemaAttrs exposes.
- */
 function extractColumnBinding(
   primary: DisplayTableElementProps['primary']
 ): TableColumnInfo[] {
-  const fromSchemaAttrs = (primary?.schemaAttrs as any)?.rowSchema as
+  const schema = (primary?.binding as any)?.rowSchema as
     | TableColumnInfo[]
     | undefined;
 
-  const fromDescriptorDirect = (primary?.descriptor as any)?.rowSchema as
-    | TableColumnInfo[]
-    | undefined;
-
-  const fromDescriptorSchemaAttrs = (primary?.descriptor?.schemaAttrs as any)
-    ?.rowSchema as TableColumnInfo[] | undefined;
-
-  return (
-    fromSchemaAttrs ?? fromDescriptorDirect ?? fromDescriptorSchemaAttrs ?? []
-  );
+  return schema ?? [];
 }
 
 const DisplayTableElement: React.FC<DisplayTableElementProps> = ({

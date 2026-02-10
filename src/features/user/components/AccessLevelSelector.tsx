@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAccessLevel } from '@/features/user/hooks/useAccessLevel';
 import { useGlobalStore } from '@/store/globalAppStateStore';
-import { AccessLevel } from '@/karabo_data/SchemaEnums';
+import { AccessLevel } from '@/karabo-hash/enums';
 import { getAccessLevelDisplay } from '@/shared/utils/getAccessLevelDisplay';
 import { getConfig } from '@/singletons/api';
 import type { AccessLevelSelectorProps } from '../types/user.types';
@@ -121,7 +121,7 @@ export default function AccessLevelSelector({
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        {[AccessLevel.Observer, AccessLevel.Operator, AccessLevel.Expert].map(
+        {[AccessLevel.OBSERVER, AccessLevel.OPERATOR, AccessLevel.EXPERT].map(
           (level) => {
             const levelInfo = getAccessLevelDisplay(level);
             const isCurrentLevel = level === accessLevel;

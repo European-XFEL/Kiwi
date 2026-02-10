@@ -2,7 +2,6 @@ import React from 'react';
 import { PropertyOverlay } from './components/PropertyOverlay';
 import { ProxyStatus, PropertyStatus } from '@/lib/binding';
 import { useDeviceProperty, type UseDevicePropertyResult } from '@/lib/binding';
-import { AccessMode } from '@/karabo_data/SchemaEnums';
 
 /**
  * Runtime context computed by the container.
@@ -69,7 +68,6 @@ export const ControllerContainer: React.FC<ControllerContainerProps> = ({
     deviceId,
     propertyPath,
     isEditable,
-    schemaAttrs,
     proxyStatus,
     isOffline,
     propertyStatus,
@@ -83,42 +81,15 @@ export const ControllerContainer: React.FC<ControllerContainerProps> = ({
     if (!deviceId || !propertyPath) {
       return 'Invalid property key';
     }
-
-    if (proxyStatus === ProxyStatus.OFFLINE) {
-      return 'Device offline';
-    }
-
     if (propertyMissing) {
-      return 'Property missing in device schema/config';
+      return `${deviceId}.${propertyPath} missing from Schema`;
     }
-
-    if (schemaAttrs?.accessMode === AccessMode.ReadOnly) {
-      return 'Property is read-only and cannot be edited from the GUI';
-    }
-
-    if (schemaAttrs?.accessMode === AccessMode.InitOnly) {
-      return 'Property is InitOnly and can only be configured in the device run file';
-    }
-
-    if (schemaAttrs?.requiredAccessLevel !== undefined && !isEditable) {
-      return `Requires access level ${schemaAttrs.requiredAccessLevel} or higher`;
-    }
-
-    if (!isEditable) {
-      return 'Property is not editable in the current context';
+    if (proxyStatus === ProxyStatus.OFFLINE) {
+      return `${deviceId}.${propertyPath}`;
     }
 
     return undefined;
-  }, [
-    primaryKey,
-    deviceId,
-    propertyPath,
-    proxyStatus,
-    isOffline,
-    propertyMissing,
-    schemaAttrs,
-    isEditable,
-  ]);
+  }, [primaryKey, deviceId, propertyPath, propertyMissing]);
 
   const canEdit =
     !!primaryKey &&

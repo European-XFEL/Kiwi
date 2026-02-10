@@ -1,96 +1,84 @@
 import * as React from 'react';
 import { getTopology } from '@/singletons/api';
-import type { PropertyModel } from '@/lib/binding/model/types/PropertyType';
 import type { HashValues } from '@/karabo-hash/hash';
 import type { HashTypes } from '@/karabo-hash/typenums';
-import { PropertyProxy } from '@/lib/binding/proxies/PropertyProxy';
-import {
-  buildPropertyDescriptor,
-  type PropertyDescriptor,
-} from '@/lib/binding/proxies/PropertyDescriptor';
+import { PropertyProxy } from '@/lib/binding/PropertyProxy';
 import { useGlobalStore } from '@/store/globalAppStateStore';
-import { AccessLevel } from '@/karabo_data/SchemaEnums';
-import type { EditContext } from '@/lib/binding/model/editability';
 import { splitKaraboKeys } from './utils/splitKaraboKeys';
 import { ProxyStatus, PropertyStatus } from '@/lib/binding/ProxyStatus';
 import {
   DEVICE_INDICATORS,
   PROPERTY_INDICATORS,
-} from '@/lib/binding/overlay_indicator_constants';
-import type {
-  ProxyStatusIcon,
-  ProxyBindingIcon,
-} from '@/lib/binding/proxies/types';
-import { Timestamp } from '@/lib/binding/utils/timestamps';
+} from '@/lib/binding/OverlayIndicator';
+import type { ProxyStatusIcon, ProxyBindingIcon } from '@/lib/binding/types';
+import { Timestamp } from '@/karabo-hash/timestamp';
+import { BaseBinding } from './BaseBinding';
+import { AccessMode, AccessLevel } from '@/karabo-hash/enums';
 
-export interface UseDevicePropertyResult {
+export interface UsePropertyProxyUpdate {
+  binding: BaseBinding | undefined;
   value: HashValues | undefined;
-  propertyModel: PropertyModel | undefined;
   timestamp: Timestamp | undefined;
 
-  type: HashTypes | undefined;
-  valueType: HashTypes | undefined;
-
+  hashType: HashTypes | undefined;
   deviceState: string | undefined;
 
   deviceId: string | undefined;
   propertyPath: string | undefined;
 
-  descriptor: PropertyDescriptor | undefined;
   isEditable: boolean;
-  schemaAttrs: PropertyDescriptor['schemaAttrs'] | undefined;
-
   proxyStatus: ProxyStatus;
   missing: ProxyStatusIcon | undefined;
-
   isOffline: boolean;
 
   propertyStatus: PropertyStatus;
   propertyIndicator: ProxyBindingIcon | undefined;
 }
 
-interface PropertyData {
-  propertyModel: PropertyModel | undefined;
+interface ProxyValue {
+  binding: BaseBinding | undefined;
   value: HashValues | undefined;
   timestamp: Timestamp | undefined;
 }
 
-interface ProxyStatusView {
+interface RootProxyValue {
   deviceState: string | undefined;
   proxyStatus: ProxyStatus;
 }
 
-export function useDeviceProperty(
+export function usePropertyProxy(
   karaboKeys: string | undefined
-): UseDevicePropertyResult {
-  // Parse "DEVICE.prop" → deviceId + propertyPath
+): UsePropertyProxyUpdate {
   const { deviceId, propertyPath } = React.useMemo(() => {
-    if (!karaboKeys?.includes('.')) {
-      return { deviceId: '', propertyPath: '' };
-    }
+    if (!karaboKeys?.includes('.')) return { deviceId: '', propertyPath: '' };
     return splitKaraboKeys(karaboKeys);
   }, [karaboKeys]);
 
   const userAccessLevel = useGlobalStore(
-    (s) => s.sessionInfo?.accessLevel ?? AccessLevel.Observer
+    (s) => s.sessionInfo?.accessLevel ?? AccessLevel.OBSERVER
   );
 
-  const [propertyData, setPropertyData] = React.useState<PropertyData>(() =>
-    initializeProxyData(deviceId, propertyPath)
-  );
+  const [proxyData, setProxyData] = React.useState<ProxyValue>(() => ({
+    binding: undefined,
+    value: undefined,
+    timestamp: undefined,
+  }));
 
-  const [proxyView, setProxyView] = React.useState<ProxyStatusView>(() =>
-    initializeProxyStatusView(deviceId)
+  const [rootProxyData, setRootProxyData] = React.useState<RootProxyValue>(
+    () => ({
+      deviceState: undefined,
+      proxyStatus: ProxyStatus.OFFLINE,
+    })
   );
 
   React.useEffect(() => {
     if (!deviceId || !propertyPath) {
-      setPropertyData({
-        propertyModel: undefined,
+      setProxyData({
+        binding: undefined,
         value: undefined,
         timestamp: undefined,
       });
-      setProxyView({
+      setRootProxyData({
         deviceState: undefined,
         proxyStatus: ProxyStatus.OFFLINE,
       });
@@ -98,206 +86,97 @@ export function useDeviceProperty(
     }
 
     const root_proxy = getTopology().getDevice(deviceId);
-    const propertyProxy = new PropertyProxy(root_proxy, propertyPath);
+    const removeMonitor = root_proxy.addMonitor();
+    const proxy = new PropertyProxy(root_proxy, propertyPath);
 
-    // Init property snapshot
-    const currentPropertyModel = propertyProxy.model;
-    setPropertyData({
-      propertyModel: currentPropertyModel,
-      value: currentPropertyModel?.binding.value ?? undefined,
-      timestamp: currentPropertyModel?.binding.timestamp,
-    });
-
-    // Init device snapshot
-    setProxyView({
+    setRootProxyData({
       deviceState: root_proxy.state,
       proxyStatus: root_proxy.status,
     });
-
-    // Start monitoring this device (global refcount)
-    const stopMonitoring = root_proxy.addMonitor();
-
-    // Property value changes
-    const unsubscribeProperty = propertyProxy.subscribe(
-      (newValue, newTimeAttrs) => {
-        let timestamp: Timestamp | undefined;
-
-        if (
-          newTimeAttrs &&
-          Object.hasOwn(newTimeAttrs, 'sec') &&
-          Object.hasOwn(newTimeAttrs, 'frac')
-        ) {
-          try {
-            timestamp = Timestamp.fromTimeAttrs(newTimeAttrs);
-          } catch (err) {
-            console.warn(
-              `Failed to parse timestamp for ${deviceId}.${propertyPath}:`,
-              err
-            );
-            timestamp = undefined;
-          }
-        }
-
-        setPropertyData({
-          propertyModel: propertyProxy.model,
-          value: newValue,
-          timestamp,
-        });
-      }
-    );
-
-    const unsubscribeSchema = root_proxy.subscribeToSchema((payload) => {
-      if (payload.allChanged.includes(propertyPath)) {
-        setPropertyData((prev) => ({
-          ...prev,
-          propertyModel: propertyProxy.model,
-        }));
-      }
+    setProxyData({
+      binding: proxy.binding,
+      value: proxy.value,
+      timestamp: proxy.timestamp,
     });
 
-    const updateProxyView = () => {
-      setProxyView({
-        deviceState: root_proxy.state,
-        proxyStatus: root_proxy.status,
+    const removeValueUpdate = proxy.value_update((p) => {
+      setProxyData({
+        binding: p.binding,
+        value: p.value,
+        timestamp: p.timestamp,
+      });
+    });
+
+    const removeSchemaMonitor = root_proxy.binding_update(() => {
+      setProxyData((prev) =>
+        prev.binding === proxy.binding
+          ? prev
+          : { ...prev, binding: proxy.binding }
+      );
+    });
+
+    const updateRootProxyData = () => {
+      setRootProxyData((prev) => {
+        const next = {
+          deviceState: root_proxy.state,
+          proxyStatus: root_proxy.status,
+        };
+        return prev.deviceState === next.deviceState &&
+          prev.proxyStatus === next.proxyStatus
+          ? prev
+          : next;
       });
     };
 
-    root_proxy.on('state_changed', updateProxyView);
-    root_proxy.on('status_changed', updateProxyView);
+    const removeState = root_proxy.state_update.subscribe(updateRootProxyData);
+    const removeStatus =
+      root_proxy.status_update.subscribe(updateRootProxyData);
 
     return () => {
-      unsubscribeProperty();
-      unsubscribeSchema();
-      root_proxy.off('state_changed', updateProxyView);
-      root_proxy.off('status_changed', updateProxyView);
-      stopMonitoring();
+      removeMonitor();
+      removeValueUpdate();
+      removeSchemaMonitor();
+      removeState();
+      removeStatus();
     };
   }, [deviceId, propertyPath]);
 
-  const derivedValues = React.useMemo(() => {
-    if (!deviceId || !propertyPath) {
-      return buildEmptyDerivedValues();
-    }
+  const binding = proxyData.binding;
+  const proxyStatus = rootProxyData.proxyStatus;
 
-    const { propertyModel } = propertyData;
-    const { deviceState, proxyStatus } = proxyView;
+  const missing =
+    DEVICE_INDICATORS.find((d) => d.status === proxyStatus) ?? undefined;
 
-    const missing =
-      DEVICE_INDICATORS.find((d) => d.status === proxyStatus) ?? undefined;
+  const isOffline = proxyStatus === ProxyStatus.OFFLINE;
 
-    const isOffline = proxyStatus === ProxyStatus.OFFLINE;
+  const isEditable =
+    binding?.accessMode === AccessMode.RECONFIGURABLE &&
+    binding?.requiredAccessLevel < userAccessLevel;
 
-    let descriptor: PropertyDescriptor | undefined;
-    let isEditable = false;
-    let schemaAttrs: PropertyDescriptor['schemaAttrs'] | undefined;
+  const propertyStatus = !binding
+    ? PropertyStatus.MISSING
+    : PropertyStatus.NONE;
 
-    if (propertyModel) {
-      const ctx: EditContext = { userAccessLevel, deviceState };
-      descriptor = buildPropertyDescriptor(propertyModel, ctx);
-      isEditable = descriptor.isEditable;
-      schemaAttrs = descriptor.schemaAttrs;
-    }
+  const propertyIndicator =
+    PROPERTY_INDICATORS.find((p) => p.status === propertyStatus) ?? undefined;
 
-    const propertyStatus = !propertyModel
-      ? PropertyStatus.MISSING
-      : PropertyStatus.NONE;
-
-    const propertyIndicator =
-      PROPERTY_INDICATORS.find((p) => p.status === propertyStatus) ?? undefined;
-
-    return {
-      descriptor,
-      isEditable,
-      schemaAttrs,
-      deviceState,
-      proxyStatus,
-      missing,
-      propertyStatus,
-      propertyIndicator,
-      isOffline,
-    };
-  }, [
-    deviceId,
-    propertyPath,
-    propertyData.propertyModel,
-    proxyView,
-    userAccessLevel,
-  ]);
-
-  const result = React.useMemo((): UseDevicePropertyResult => {
-    const { propertyModel, value, timestamp } = propertyData;
-    const { schemaAttrs } = derivedValues;
-
-    const valueType =
-      (propertyModel?.schema.schemaAttrs.valueType as HashTypes | undefined) ??
-      (schemaAttrs?.valueType as HashTypes | undefined);
-
-    const type =
-      (propertyModel?.binding.type as HashTypes | undefined) ?? valueType;
-
-    return {
-      propertyModel,
-      value,
-      timestamp,
-
-      type,
-      valueType,
-
-      deviceId: deviceId || undefined,
-      propertyPath: propertyPath || undefined,
-
-      ...derivedValues,
-    };
-  }, [propertyData, derivedValues, deviceId, propertyPath]);
-
-  return result;
-}
-
-function initializeProxyData(
-  deviceId: string,
-  propertyPath: string
-): PropertyData {
-  if (!deviceId || !propertyPath) {
-    return { propertyModel: undefined, value: undefined, timestamp: undefined };
-  }
-
-  const root_proxy = getTopology().getDevice(deviceId);
-  const propertyProxy = new PropertyProxy(root_proxy, propertyPath);
-  const propertyModel = propertyProxy.model;
+  const hashType = (binding?.hashType as HashTypes | undefined) ?? undefined;
 
   return {
-    propertyModel,
-    value: propertyModel?.binding.value ?? undefined,
-    timestamp: propertyModel?.binding.timestamp,
-  };
-}
+    binding,
+    value: proxyData.value,
+    timestamp: proxyData.timestamp,
+    hashType,
 
-function initializeProxyStatusView(deviceId: string): ProxyStatusView {
-  if (!deviceId) {
-    return { deviceState: undefined, proxyStatus: ProxyStatus.OFFLINE };
-  }
+    deviceState: rootProxyData.deviceState,
+    deviceId: deviceId || undefined,
+    propertyPath: propertyPath || undefined,
 
-  const root_proxy = getTopology().getDevice(deviceId);
-  return {
-    deviceState: root_proxy.state,
-    proxyStatus: root_proxy.status,
-  };
-}
-
-function buildEmptyDerivedValues() {
-  const fallbackIndicator =
-    PROPERTY_INDICATORS.find((i) => i.status === PropertyStatus.MISSING) ??
-    undefined;
-
-  return {
-    descriptor: undefined as PropertyDescriptor | undefined,
-    isEditable: false,
-    schemaAttrs: undefined as PropertyDescriptor['schemaAttrs'] | undefined,
-    deviceState: undefined as string | undefined,
-    proxyStatus: ProxyStatus.OFFLINE,
-    missing: undefined as ProxyStatusIcon | undefined,
-    propertyStatus: PropertyStatus.NONE,
-    propertyIndicator: fallbackIndicator,
-    isOffline: false,
+    isEditable,
+    proxyStatus,
+    missing,
+    isOffline,
+    propertyStatus,
+    propertyIndicator,
   };
 }

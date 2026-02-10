@@ -1,5 +1,5 @@
 import type React from 'react';
-import { PropertyStatus, ProxyStatus } from '../ProxyStatus';
+import { PropertyStatus, ProxyStatus } from './ProxyStatus';
 
 /**
  * Device overlay indicator descriptor

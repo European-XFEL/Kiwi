@@ -1,7 +1,3 @@
-/**
- * EditableComboBox - controller component
- */
-
 import * as React from 'react';
 import type { EditableComboBoxProps } from '@/scene/scene_types/controllers';
 import { FONT_FAMILY_DEFAULT } from '../utils/fontDefaults';
@@ -16,35 +12,28 @@ const EditableComboBox: React.FC<EditableComboBoxProps> = ({
   primary,
 }) => {
   const value = primary?.value;
-  const schemaAttrs = primary?.schemaAttrs;
+  const binding = primary?.binding;
 
-  const [localValue, setLocalValue] = React.useState<string | undefined>(
-    undefined
-  );
+  const options = (binding?.options ?? []) as SimpleValueTypes[];
 
-  const options = React.useMemo((): SimpleValueTypes[] => {
-    const schemaOptions = schemaAttrs?.options ?? [];
-    return schemaOptions as SimpleValueTypes[];
-  }, [schemaAttrs]);
+  const { optionStrings, optionSet } = React.useMemo(() => {
+    const strs = options.map((o) => o.toString());
+    return { optionStrings: strs, optionSet: new Set(strs) };
+  }, [options]);
 
-  React.useEffect(() => {
-    const incoming = String(value ?? schemaAttrs?.defaultValue ?? '');
-    const matchExists =
-      options.findIndex((option) => option.toString() === incoming) >= 0;
-    setLocalValue(matchExists ? incoming : undefined);
-  }, [value, schemaAttrs?.defaultValue, options]);
+  const incoming = value == null ? '' : String(value);
+  const selected = optionSet.has(incoming) ? incoming : '';
+
+  const title =
+    tooltipText || disabledReason || primary?.propertyIndicator?.label;
 
   return (
-    <div
-      className="w-full h-full"
-      title={tooltipText || disabledReason || primary?.propertyIndicator?.label}
-    >
+    <div className="w-full h-full" title={title}>
       <select
-        value={localValue ?? ''}
+        value={selected}
         onChange={(e) => {
-          const v = e.target.value || undefined;
-          setLocalValue(v);
-          // TODO: push value to backend
+          const v = e.target.value; // "" means placeholder
+          // TODO: push value to backend (send v === "" ? undefined : v)
         }}
         disabled={!isEnabled}
         className={`w-full h-full border border-solid rounded ${
@@ -61,14 +50,12 @@ const EditableComboBox: React.FC<EditableComboBoxProps> = ({
         <option value="" disabled>
           {isEnabled ? 'Select an option' : 'Read-only'}
         </option>
-        {options.map((opt) => {
-          const str = opt.toString();
-          return (
-            <option key={str} value={str}>
-              {str}
-            </option>
-          );
-        })}
+
+        {optionStrings.map((str) => (
+          <option key={str} value={str}>
+            {str}
+          </option>
+        ))}
       </select>
     </div>
   );

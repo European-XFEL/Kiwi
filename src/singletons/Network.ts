@@ -3,7 +3,7 @@ import AuthServerClient from '@/http/AuthServerClient';
 import { encodeBinary } from '@/karabo-hash/bin_writer';
 import { Hash } from '@/karabo-hash/hash';
 import { GuiServerInfo } from '@/karabo_data/GuiServerInfo';
-import { AccessLevel } from '@/karabo_data/SchemaEnums';
+import { AccessLevel } from '@/karabo-hash/enums';
 import { HashDeque } from '@/karabo_hash/HashDeque';
 import { buildLoginHash } from '@/karabo_hash/builders/gui_session';
 import { packEncodedHash } from '@/karabo_hash/hash_utils';

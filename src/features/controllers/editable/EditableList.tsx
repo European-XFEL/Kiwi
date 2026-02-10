@@ -1,7 +1,3 @@
-/**
- * EditableList - controller component
- */
-
 import * as React from 'react';
 import type { EditableListProps } from '@/scene/scene_types/controllers';
 import { FONT_FAMILY_DEFAULT } from '../utils/fontDefaults';
@@ -15,6 +11,19 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
+function formatListValue(v: unknown): string {
+  if (Array.isArray(v)) return v.map(String).join(', ');
+  if (v == null) return '';
+  return String(v);
+}
+
+function parseListString(s: string): string[] {
+  return s
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 const EditableList: React.FC<EditableListProps> = ({
   font_size,
   font_weight,
@@ -23,34 +32,39 @@ const EditableList: React.FC<EditableListProps> = ({
   isEnabled,
   primary,
 }) => {
-  const value = primary?.value;
-  const schemaAttrs = primary?.schemaAttrs;
+  const proxyValue = primary?.value;
 
-  const [localValue, setLocalValue] = React.useState('');
+  const [localValue, setLocalValue] = React.useState<string>(() =>
+    formatListValue(proxyValue)
+  );
+  const [isEditing, setIsEditing] = React.useState(false);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
 
   React.useEffect(() => {
-    const incoming = value ?? schemaAttrs?.defaultValue ?? [];
-    setLocalValue(
-      Array.isArray(incoming) ? incoming.join(', ') : String(incoming)
-    );
-  }, [value, schemaAttrs?.defaultValue]);
+    if (isEditing) return;
+
+    const next = formatListValue(proxyValue);
+    setLocalValue((prev) => (prev === next ? prev : next));
+  }, [proxyValue, isEditing]);
+
+  const title =
+    tooltipText || disabledReason || primary?.propertyIndicator?.label;
 
   return (
-    <div
-      className="flex items-center gap-1 w-full h-full"
-      title={tooltipText || disabledReason || primary?.propertyIndicator?.label}
-    >
+    <div className="flex items-center gap-1 w-full h-full" title={title}>
       <input
         type="text"
         value={localValue}
+        onFocus={() => setIsEditing(true)}
         onChange={(e) => setLocalValue(e.target.value)}
         onBlur={(e) => {
-          const items = e.target.value
-            .split(',')
-            .map((item) => item.trim())
-            .filter(Boolean);
-          setLocalValue(items.join(', '));
+          setIsEditing(false);
+
+          const items = parseListString(e.target.value);
+          const normalized = items.join(', ');
+          setLocalValue((prev) => (prev === normalized ? prev : normalized));
+
+          // TODO: push value to backend (items)
         }}
         disabled={!isEnabled}
         className={`w-full h-full border border-solid rounded px-1 min-w-0 ${

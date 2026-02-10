@@ -3,8 +3,8 @@ import { AccessLevel, AccessMode, Assignment } from '@/karabo-hash/enums';
 import { Timestamp } from '@/karabo-hash/timestamp';
 import { HashAttributes } from '@/karabo-hash/hash';
 import { HashTypes, XmlTypeToHashType } from '@/karabo-hash/typenums';
-
-import { EventEmitter } from 'events';
+import { WeakEvent } from './WeakEvent';
+import { decodeRowSchema } from '@/karabo_hash/decoders/device_schema';
 
 import {
   KARABO_SCHEMA_DISPLAYED_NAME,
@@ -17,10 +17,13 @@ import {
   KARABO_SCHEMA_METRIC_PREFIX_SYMBOL,
   KARABO_SCHEMA_ALLOWED_STATES,
   KARABO_SCHEMA_VALUE_TYPE,
+  KARABO_SCHEMA_ROW_SCHEMA,
 } from '@/karabo-hash/const';
 
 export class BaseBinding<TValue = any> {
   protected _attributes!: HashAttributes;
+
+  value_update = new WeakEvent();
 
   hashType = HashTypes.Hash;
 
@@ -34,6 +37,9 @@ export class BaseBinding<TValue = any> {
   options: any[] = [];
   requiredAccessLevel: AccessLevel = AccessLevel.OBSERVER;
   unit_label = '';
+
+  // Keep placeholder
+  rowSchema?: any;
 
   constructor(opts?: {
     attributes?: HashAttributes;
@@ -51,6 +57,12 @@ export class BaseBinding<TValue = any> {
   set attributes(v: HashAttributes) {
     this._attributes = v;
     this._update_shortcuts(this._attributes);
+  }
+
+  public setValue(value: TValue, timestamp: Timestamp | undefined) {
+    this.value = value;
+    this.timestamp = timestamp ?? new Timestamp();
+    this.value_update.fire(value, timestamp);
   }
 
   is_allowed(state: string | State): boolean {
@@ -93,6 +105,12 @@ export class BaseBinding<TValue = any> {
       this.hashType = XmlTypeToHashType[valueType];
     }
 
+    if (attrs.has(KARABO_SCHEMA_ROW_SCHEMA)) {
+      this.rowSchema = decodeRowSchema(
+        attrs.getValue(KARABO_SCHEMA_ROW_SCHEMA)
+      );
+    }
+
     if (
       attrs.has(KARABO_SCHEMA_UNIT_SYMBOL) ||
       attrs.has(KARABO_SCHEMA_METRIC_PREFIX_SYMBOL)
@@ -125,9 +143,8 @@ export class BindingNamespace<T = any> implements Iterable<string> {
     this.names.set(key, value);
   }
 
-  get(key: string): T {
+  get(key: string): any {
     const item = this.names.get(key);
-    if (item === undefined) throw Error('Undefined item for ${key}');
     return item;
   }
 
@@ -148,8 +165,6 @@ export class BindingRoot extends BaseBinding<BindingNamespace> {
   value: BindingNamespace;
   classId = '';
 
-  readonly schema_update = new EventEmitter();
-
   constructor(opts?: {
     attributes?: HashAttributes;
     value?: BindingNamespace;
@@ -160,11 +175,14 @@ export class BindingRoot extends BaseBinding<BindingNamespace> {
     if (opts?.classId != null) this.classId = opts.classId;
   }
 
-  public getBinding(path: string): BaseBinding {
+  public getBinding(path: string): BaseBinding | undefined {
     const parts = path.split('.').map((p) => p.trim());
 
     let binding: BaseBinding;
     binding = this.value.get(parts[0]);
+    if (!binding) {
+      return undefined;
+    }
     for (let i = 1; i < parts.length; i++) {
       const ns = binding.value;
       if (!(ns instanceof BindingNamespace)) {
@@ -173,13 +191,12 @@ export class BindingRoot extends BaseBinding<BindingNamespace> {
         );
       }
       binding = ns.get(parts[i]);
+      if (!binding) {
+        return undefined;
+      }
     }
 
     return binding;
-  }
-
-  fireSchemaUpdate(): void {
-    this.schema_update.emit('schema_update');
   }
 }
 

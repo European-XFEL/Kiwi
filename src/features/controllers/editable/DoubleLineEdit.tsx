@@ -1,12 +1,8 @@
-/**
- * DoubleLineEdit - controller component
- */
 import * as React from 'react';
 import type { DoubleLineEditProps } from '@/scene/scene_types/controllers';
 import { FONT_FAMILY_DEFAULT } from '../utils/fontDefaults';
 
 import { formatScalarValueWithUnit } from '@/features/controllers/utils/validation/value_formatters';
-
 import {
   schemaSaysFloat,
   schemaSaysInt,
@@ -21,19 +17,45 @@ function normalizeFontWeight(input?: string) {
 
   const v = input.toLowerCase().replace(/\s|_/g, '');
 
-  if (v === 'thin') return 100;
-  if (v === 'extralight' || v === 'ultralight') return 200;
-  if (v === 'light') return 300;
-  if (v === 'regular' || v === 'normal') return 400;
-  if (v === 'medium') return 500;
-  if (v === 'semibold' || v === 'demibold') return 600;
-  if (v === 'bold') return 700;
-  if (v === 'extrabold' || v === 'ultrabold') return 800;
-  if (v === 'black' || v === 'heavy') return 900;
-
-  const asNum = Number(input);
-  return Number.isFinite(asNum) ? asNum : undefined;
+  switch (v) {
+    case 'thin':
+      return 100;
+    case 'extralight':
+    case 'ultralight':
+      return 200;
+    case 'light':
+      return 300;
+    case 'regular':
+    case 'normal':
+      return 400;
+    case 'medium':
+      return 500;
+    case 'semibold':
+    case 'demibold':
+      return 600;
+    case 'bold':
+      return 700;
+    case 'extrabold':
+    case 'ultrabold':
+      return 800;
+    case 'black':
+    case 'heavy':
+      return 900;
+    default: {
+      const asNum = Number(input);
+      return Number.isFinite(asNum) ? asNum : undefined;
+    }
+  }
 }
+
+function toNumber(value: unknown): number | null {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (value == null) return null;
+  const n = parseFloat(String(value));
+  return Number.isFinite(n) ? n : null;
+}
+
+const DOUBLE_LINE_FLOAT_PRECISION = 8;
 
 const DoubleLineEdit: React.FC<DoubleLineEditProps> = ({
   decimals = -1,
@@ -45,33 +67,48 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = ({
   primary,
 }) => {
   const value = primary?.value;
-  const schemaAttrs = primary?.schemaAttrs;
+  const binding = primary?.binding;
 
-  const [localValue, setLocalValue] = React.useState<string>('');
+  const [localValue, setLocalValue] = React.useState('');
 
   /**
    * Prevent the sync effect from overwriting user typing.
-   * This is the "Number-of-edit prototype" pattern.
+   * "Number-of-edit prototype" pattern.
    */
   const isEditingRef = React.useRef(false);
 
-  // Resolve schema value type from common locations
   const schemaValueType = React.useMemo<SchemaValueType | undefined>(() => {
-    const fromPrimary = (primary as any)?.valueType as
-      | SchemaValueType
-      | undefined;
-    const fromSchema = (schemaAttrs as any)?.valueType as
-      | SchemaValueType
-      | undefined;
-    return fromPrimary ?? fromSchema;
-  }, [primary, schemaAttrs]);
+    const p = primary as any;
+    const b = binding as any;
+    return (
+      (p?.valueType as SchemaValueType | undefined) ??
+      (b?.valueType as SchemaValueType | undefined)
+    );
+  }, [primary, binding]);
 
-  // Build combined unit string
-  const unit = React.useMemo(() => {
-    const prefix = schemaAttrs?.metricPrefixSymbol ?? '';
-    const symbol = schemaAttrs?.unitSymbol ?? '';
-    return `${prefix}${symbol}`.trim();
-  }, [schemaAttrs?.metricPrefixSymbol, schemaAttrs?.unitSymbol]);
+  const unit = binding?.unit_label ?? '';
+
+  const schemaFormat = React.useMemo(() => {
+    return {
+      isInt: schemaSaysInt(schemaValueType),
+      isFloat: schemaSaysFloat(schemaValueType),
+      isVector: schemaSaysVector(schemaValueType),
+      isBool: schemaSaysBool(schemaValueType),
+      isString: schemaSaysString(schemaValueType),
+    };
+  }, [schemaValueType]);
+
+  const fontStyle = React.useMemo(
+    () => ({
+      fontFamily: FONT_FAMILY_DEFAULT,
+      fontSize: font_size,
+      fontWeight: normalizeFontWeight(font_weight),
+    }),
+    [font_size, font_weight]
+  );
+
+  const precisionForInput =
+    decimals === -1 ? DOUBLE_LINE_FLOAT_PRECISION : decimals;
 
   /**
    * Number-only formatting for the input string
@@ -80,19 +117,17 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = ({
    */
   const formatForInput = React.useCallback(
     (num: number): string => {
-      if (schemaSaysVector(schemaValueType)) {
-        return String(num);
-      }
-
+      // If schema flips to non-numeric, keep UI stable (still show something)
       if (
-        schemaSaysString(schemaValueType) ||
-        schemaSaysBool(schemaValueType)
+        schemaFormat.isVector ||
+        schemaFormat.isBool ||
+        schemaFormat.isString
       ) {
         return String(num);
       }
 
-      if (schemaSaysInt(schemaValueType)) {
-        const intVal = Number.isNaN(num) ? 0 : Math.trunc(num);
+      if (schemaFormat.isInt) {
+        const intVal = Math.trunc(num);
         return formatScalarValueWithUnit({
           value: intVal,
           schemaValueType,
@@ -100,32 +135,21 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = ({
         });
       }
 
-      if (schemaSaysFloat(schemaValueType)) {
-        if (decimals === -1) {
-          return formatScalarValueWithUnit({
-            value: num,
-            schemaValueType,
-            unit: '',
-            floatPrecision: 8,
-          });
-        }
+      // Float or unknown numeric fallback
+      if (!Number.isFinite(num)) return '';
 
-        return Number.isNaN(num) ? '' : num.toFixed(decimals);
-      }
-
-      // Unknown numeric fallback: treat like float for UI purposes
       if (decimals === -1) {
         return formatScalarValueWithUnit({
           value: num,
           schemaValueType,
           unit: '',
-          floatPrecision: 8,
+          floatPrecision: DOUBLE_LINE_FLOAT_PRECISION,
         });
       }
 
-      return Number.isNaN(num) ? '' : num.toFixed(decimals);
+      return num.toFixed(precisionForInput);
     },
-    [schemaValueType, decimals]
+    [schemaFormat, schemaValueType, decimals, precisionForInput]
   );
 
   /**
@@ -136,8 +160,8 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = ({
       formatScalarValueWithUnit({
         value: val,
         schemaValueType,
-        unit,
-        floatPrecision: 8,
+        unit: unit || undefined,
+        floatPrecision: DOUBLE_LINE_FLOAT_PRECISION,
       }),
     [schemaValueType, unit]
   );
@@ -148,73 +172,51 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = ({
   const commitToPrimary = React.useCallback(
     (nextValue: number) => {
       if (!primary) return;
-      const anyPrimary = primary as any;
+      const p = primary as any;
 
-      if (typeof anyPrimary.setValue === 'function') {
-        anyPrimary.setValue(nextValue);
-        return;
-      }
-      if (typeof anyPrimary.onChange === 'function') {
-        anyPrimary.onChange(nextValue);
-        return;
-      }
-      if (typeof anyPrimary.update === 'function') {
-        anyPrimary.update({ value: nextValue });
-        return;
-      }
+      if (typeof p.setValue === 'function') return p.setValue(nextValue);
+      if (typeof p.onChange === 'function') return p.onChange(nextValue);
+      if (typeof p.update === 'function') return p.update({ value: nextValue });
     },
     [primary]
   );
 
   /**
    * Schema-aware coercion for saving.
-   * This is the key piece for "runtime type change":
    * - FLOAT -> keep float
    * - INT   -> truncate
    * - non-numeric schema -> do not commit a number
    */
   const coerceForCommit = React.useCallback(
     (raw: string): number | null => {
-      const num = parseFloat(raw);
-      if (Number.isNaN(num)) return null;
+      const num = toNumber(raw);
+      if (num == null) return null;
 
-      if (schemaSaysInt(schemaValueType)) {
-        return Math.trunc(num);
-      }
-
-      if (schemaSaysFloat(schemaValueType)) {
-        return num;
-      }
+      if (schemaFormat.isInt) return Math.trunc(num);
+      if (schemaFormat.isFloat) return num;
 
       // If schema flips to string/bool/vector, this control shouldn't commit a number.
-      if (
-        schemaSaysString(schemaValueType) ||
-        schemaSaysBool(schemaValueType) ||
-        schemaSaysVector(schemaValueType)
-      ) {
+      if (schemaFormat.isString || schemaFormat.isBool || schemaFormat.isVector)
         return null;
-      }
 
       // Unknown: default to numeric float-like
       return num;
     },
-    [schemaValueType]
+    [schemaFormat]
   );
 
   /**
    * Sync local with external value/default
-   * - will also re-run if schemaValueType changes
-   *   because formatForInput will change.
+   * - will also re-run if schemaValueType changes because formatForInput changes
    */
   React.useEffect(() => {
     if (isEditingRef.current) return;
 
-    const incoming = value ?? schemaAttrs?.defaultValue ?? 0;
-    const numValue =
-      typeof incoming === 'number' ? incoming : parseFloat(String(incoming));
+    const incoming = value ?? binding?.value ?? 0;
+    const num = toNumber(incoming);
 
-    setLocalValue(!isNaN(numValue) ? formatForInput(numValue) : '');
-  }, [value, schemaAttrs?.defaultValue, formatForInput]);
+    setLocalValue(num == null ? '' : formatForInput(num));
+  }, [value, binding?.value, formatForInput]);
 
   /**
    * Tooltip/title
@@ -223,9 +225,8 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = ({
     if (tooltipText) return tooltipText;
     if (disabledReason) return disabledReason;
 
-    const incoming = value ?? schemaAttrs?.defaultValue;
-    if (incoming !== undefined) {
-      const formatted = formatForDisplay(incoming);
+    if (value !== undefined) {
+      const formatted = formatForDisplay(value);
       if (formatted) return formatted;
     }
 
@@ -234,27 +235,30 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = ({
     tooltipText,
     disabledReason,
     value,
-    schemaAttrs?.defaultValue,
     formatForDisplay,
     primary?.propertyIndicator?.label,
   ]);
 
-  const handleBlur = (raw: string) => {
-    const coerced = coerceForCommit(raw);
+  const resetToExternal = React.useCallback(() => {
+    const incoming = value ?? binding?.value ?? 0;
+    const num = toNumber(incoming);
+    setLocalValue(num == null ? '' : formatForInput(num));
+  }, [value, binding?.value, formatForInput]);
 
-    if (coerced == null) {
-      // Reset to last known external/default
-      const incoming = value ?? schemaAttrs?.defaultValue ?? 0;
-      const num =
-        typeof incoming === 'number' ? incoming : parseFloat(String(incoming));
+  const handleBlur = React.useCallback(
+    (raw: string) => {
+      const coerced = coerceForCommit(raw);
 
-      setLocalValue(!isNaN(num) ? formatForInput(num) : '');
-      return;
-    }
+      if (coerced == null) {
+        resetToExternal();
+        return;
+      }
 
-    setLocalValue(formatForInput(coerced));
-    commitToPrimary(coerced);
-  };
+      setLocalValue(formatForInput(coerced));
+      commitToPrimary(coerced);
+    },
+    [coerceForCommit, resetToExternal, formatForInput, commitToPrimary]
+  );
 
   return (
     <div
@@ -279,26 +283,15 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = ({
             ? 'text-black bg-white cursor-text'
             : 'text-gray-500 bg-gray-100 cursor-not-allowed'
         }`}
-        style={{
-          fontFamily: FONT_FAMILY_DEFAULT,
-          fontSize: font_size,
-          fontWeight: normalizeFontWeight(font_weight),
-        }}
+        style={fontStyle}
         placeholder={isEnabled ? '0.0' : 'Read-only'}
       />
 
-      {unit && (
-        <span
-          className="text-black"
-          style={{
-            fontFamily: FONT_FAMILY_DEFAULT,
-            fontSize: font_size,
-            fontWeight: normalizeFontWeight(font_weight),
-          }}
-        >
+      {unit ? (
+        <span className="text-black" style={fontStyle}>
           {unit}
         </span>
-      )}
+      ) : null}
     </div>
   );
 };

@@ -42,9 +42,7 @@ const chooseTargetPoints = (length: number, defaultThreshold: number) => {
 const getSchemaValueType = (
   primary: VectorPrimary
 ): SchemaValueType | undefined =>
-  (primary as any)?.valueType ??
-  primary?.schemaAttrs?.valueType ??
-  primary?.propertyModel?.schema.schemaAttrs.valueType;
+  (primary as any)?.valueType ?? primary?.binding?.hashType;
 
 const toNumberSafe = (v: unknown): number | null => {
   if (typeof v === 'number') return Number.isFinite(v) ? v : null;
@@ -110,7 +108,7 @@ export const useDisplayVectorGraph = (
     [primary]
   );
 
-  const rawValue = primary?.value ?? primary?.schemaAttrs?.defaultValue;
+  const rawValue = primary?.value;
 
   const baseVector = useMemo(
     () => normalizeVector(rawValue, schemaValueType),

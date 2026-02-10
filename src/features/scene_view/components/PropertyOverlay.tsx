@@ -5,7 +5,7 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from '@/components/ui/tooltip';
-import type { UseDevicePropertyResult } from '@/lib/binding/useDeviceProperty';
+import type { UsePropertyProxyUpdate } from '@/lib/binding/useDeviceProperty';
 import { ProxyStatus, PropertyStatus } from '@/lib/binding/ProxyStatus';
 import { XIcon } from 'lucide-react';
 
@@ -18,7 +18,7 @@ const CONNECTING_STATUSES: ProxyStatus[] = [
 const PHASE_DURATION_MS = 800;
 
 export interface PropertyOverlayProps {
-  primary: UseDevicePropertyResult;
+  primary: UsePropertyProxyUpdate;
   x: number;
   y: number;
   width: number;
@@ -94,7 +94,7 @@ export const PropertyOverlay: React.FC<PropertyOverlayProps> = React.memo(
     if (phase === 0) {
       indicatorColorClass = 'bg-yellow-400';
     } else if (phase === 1) {
-      indicatorColorClass = 'bg-amber-500';
+      indicatorColorClass = 'bg-blue-500';
     } else if (phase === 2) {
       indicatorColorClass = 'bg-emerald-500';
     }

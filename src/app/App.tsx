@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { initAppSettings } from './AppSettings';
 import { useAppSettingsStore } from '@/store/appSettingsStore';
 import { useGlobalStore } from '@/store/globalAppStateStore';
-import { AccessLevel } from '@/karabo_data/SchemaEnums';
+import { AccessLevel } from '@/karabo-hash/enums';
 import { getNetwork, getManager } from '@/singletons/api';
 import AuthServerClient from '@/http/AuthServerClient';
 import { BrowserRouter } from 'react-router-dom';

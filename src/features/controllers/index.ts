@@ -8,7 +8,6 @@
  * and should be imported from there when needed.
  */
 
-// Display Controllers (Read-only)
 export { default as DisplayCheckbox } from './display/DisplayCheckbox';
 export { default as DisplayCommand } from './display/DisplayCommand';
 export { default as DisplayEvaluator } from './display/DisplayEvaluator';
@@ -19,9 +18,7 @@ export { default as DisplayStateColor } from './display/DisplayStateColor';
 export { StatefulIcon as DisplayStatefulWidgetIcon } from '@/features/icons';
 export { default as DisplayTableElement } from './display/DisplayTableElement';
 
-// Display Controller Hooks
-export { useDeviceTableProperty } from './display/hooks';
-export type { PaginationControls, PaginatedTableData } from './display/hooks';
+export { useDeviceTableProperty } from './display/hooks/useDeviceTableProperty';
 
 // Plot Controllers (Graphs & Visualizations)
 export { default as DisplayTrendGraph } from './plots/DisplayTrendGraph';
