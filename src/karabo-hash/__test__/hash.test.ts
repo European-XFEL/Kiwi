@@ -326,10 +326,10 @@ describe('Karabo Hash Class Tests', () => {
   });
 
   describe('9. Misc Utilities', () => {
-    test('getOrUndefined', () => {
+    test('find', () => {
       const h = new Hash({ a: 1 });
-      expect(h.getOrUndefined('a')).toBeDefined();
-      expect(h.getOrUndefined('missing')).toBeUndefined();
+      expect(h.find('a')).toBeDefined();
+      expect(h.find('missing')).toBeUndefined();
     });
 
     describe('10. Schema Class', () => {
