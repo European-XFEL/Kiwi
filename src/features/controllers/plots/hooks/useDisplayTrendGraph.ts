@@ -27,6 +27,7 @@ const toFiniteNumber = (raw: unknown): number | null => {
 
 const safeNowMs = (primary?: UseDevicePropertyResult): number => {
   try {
+    // TODO: Check time
     return primary?.timestamp ? primary.timestamp.toMilliseconds() : Date.now();
   } catch {
     return Date.now();
@@ -100,7 +101,7 @@ export const useDisplayTrendGraph = (
   useEffect(() => {
     if (!primary || isOffline) return;
 
-    const raw = primary.value ?? primary.schemaAttrs?.defaultValue;
+    const raw = primary.value;
     const value = toFiniteNumber(raw);
     if (value == null) return;
 

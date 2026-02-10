@@ -1,4 +1,4 @@
-import { AccessLevel } from '@/karabo_data/SchemaEnums';
+import { AccessLevel } from '@/karabo-hash/enums';
 
 export interface LoginInformationInfo {
   accessLevel: AccessLevel;

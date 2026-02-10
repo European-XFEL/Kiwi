@@ -1,8 +1,5 @@
 import { XCircle } from 'lucide-react';
-import {
-  ProxyStatusIcon as ProxyStatusIcon,
-  ProxyBindingIcon,
-} from './proxies/types';
+import { ProxyStatusIcon as ProxyStatusIcon, ProxyBindingIcon } from './types';
 import { ProxyStatus, PropertyStatus } from './ProxyStatus';
 
 export const DEVICE_INDICATORS: ProxyStatusIcon[] = [
@@ -32,21 +29,11 @@ export const DEVICE_INDICATORS: ProxyStatusIcon[] = [
   },
   {
     status: ProxyStatus.ALIVE,
-    color: 'bg-blue-400',
+    color: 'bg-green-400',
     label: 'Ready',
     tooltip: 'Device has schema and config (not actively monitored)',
   },
-  {
-    status: ProxyStatus.MONITORING,
-    color: 'bg-green-500',
-    label: 'Monitoring',
-    tooltip: 'Device is actively monitored – data is flowing',
-  },
 ];
-
-// ──────────────────────────────────────────────────────────────────────
-// PROPERTY INDICATORS
-// ──────────────────────────────────────────────────────────────────────
 
 export const PROPERTY_INDICATORS: ProxyBindingIcon[] = [
   {

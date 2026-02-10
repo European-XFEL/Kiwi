@@ -25,7 +25,6 @@ export function buildBinding(
     rootNamespace.set(key, node);
   }
 
-  binding.fireSchemaUpdate();
   return binding;
 }
 

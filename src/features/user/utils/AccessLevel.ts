@@ -1,13 +1,12 @@
-import { AccessLevel } from '@/karabo_data/SchemaEnums';
+import { AccessLevel } from '@/karabo-hash/enums';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 
 export class AccessControlManager {
   private static _instance?: AccessControlManager;
 
-  private _originalLevel: AccessLevel = AccessLevel.Observer;
-  private _currentLevel: AccessLevel = AccessLevel.Observer;
+  private _originalLevel: AccessLevel = AccessLevel.OBSERVER;
+  private _currentLevel: AccessLevel = AccessLevel.OBSERVER;
   private _isAuthenticated = false;
-  private _userId?: string;
 
   private constructor() {}
 
@@ -31,7 +30,6 @@ export class AccessControlManager {
     this._originalLevel = params.accessLevel;
     this._currentLevel = params.accessLevel;
     this._isAuthenticated = params.isAuthenticated;
-    this._userId = params.userId;
 
     this.syncToStore();
   }
@@ -50,19 +48,19 @@ export class AccessControlManager {
 
   getAvailableLevels(): AccessLevel[] {
     switch (this._originalLevel) {
-      case AccessLevel.Observer:
-        return [AccessLevel.Observer];
-      case AccessLevel.Operator:
-        return [AccessLevel.Observer, AccessLevel.Operator];
-      case AccessLevel.Expert:
-        return [AccessLevel.Observer, AccessLevel.Operator, AccessLevel.Expert];
+      case AccessLevel.OBSERVER:
+        return [AccessLevel.OBSERVER];
+      case AccessLevel.OPERATOR:
+        return [AccessLevel.OBSERVER, AccessLevel.OBSERVER];
+      case AccessLevel.EXPERT:
+        return [AccessLevel.OBSERVER, AccessLevel.OPERATOR, AccessLevel.EXPERT];
       default:
         return [this._originalLevel];
     }
   }
 
   canChangeLevel(): boolean {
-    return this._originalLevel >= AccessLevel.Operator;
+    return this._originalLevel >= AccessLevel.OPERATOR;
   }
 
   canChangeTo(target: AccessLevel): boolean {
@@ -82,10 +80,9 @@ export class AccessControlManager {
   }
 
   reset(): void {
-    this._originalLevel = AccessLevel.Observer;
-    this._currentLevel = AccessLevel.Observer;
+    this._originalLevel = AccessLevel.OBSERVER;
+    this._currentLevel = AccessLevel.OBSERVER;
     this._isAuthenticated = false;
-    this._userId = undefined;
     this.syncToStore();
   }
 }

@@ -1,7 +1,3 @@
-/**
- * EditableLineEdit - controller component
- */
-
 import * as React from 'react';
 import type { EditableLineEditProps } from '@/scene/scene_types/controllers';
 import { FONT_FAMILY_DEFAULT } from '../utils/fontDefaults';
@@ -14,27 +10,33 @@ const EditableLineEdit: React.FC<EditableLineEditProps> = ({
   isEnabled,
   primary,
 }) => {
-  const value = primary?.value;
-  const schemaAttrs = primary?.schemaAttrs;
+  const proxyValue = primary?.value;
 
-  const [localValue, setLocalValue] = React.useState<string>('');
+  const [localValue, setLocalValue] = React.useState<string>(() =>
+    proxyValue == null ? '' : String(proxyValue)
+  );
+  const [isEditing, setIsEditing] = React.useState(false);
 
   React.useEffect(() => {
-    const incoming = value ?? schemaAttrs?.defaultValue ?? '';
-    setLocalValue(String(incoming));
-  }, [value, schemaAttrs?.defaultValue]);
+    if (isEditing) return;
+
+    const next = proxyValue == null ? '' : String(proxyValue);
+    setLocalValue((prev) => (prev === next ? prev : next));
+  }, [proxyValue, isEditing]);
+
+  const title =
+    tooltipText || disabledReason || primary?.propertyIndicator?.label;
 
   return (
-    <div
-      className="w-full h-full"
-      title={tooltipText || disabledReason || primary?.propertyIndicator?.label}
-    >
+    <div className="w-full h-full" title={title}>
       <input
         type="text"
         value={localValue}
+        onFocus={() => setIsEditing(true)}
         onChange={(e) => setLocalValue(e.target.value)}
         onBlur={() => {
-          // TODO: push value to backend
+          setIsEditing(false);
+          // TODO: push value to backend (e.g., localValue)
         }}
         disabled={!isEnabled}
         className={`border border-solid rounded px-1 w-full h-full ${

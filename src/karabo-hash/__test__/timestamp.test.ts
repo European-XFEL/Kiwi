@@ -44,7 +44,7 @@ describe('Timestamp Tests', () => {
   });
 
   test('test_hash_read', () => {
-    expect(Timestamp.fromHashAttributes(new Map())).toBeNull();
+    expect(Timestamp.fromHashAttributes(new Map())).toBeUndefined();
 
     const attrs = new Map<string, bigint>();
     attrs.set('sec', 1234n);

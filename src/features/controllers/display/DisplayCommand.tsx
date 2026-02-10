@@ -7,7 +7,7 @@ import type { DisplayCommandProps } from '@/scene/scene_types/controllers';
 import { Button } from '@/components/ui/button';
 import { FONT_FAMILY_DEFAULT } from '../utils/fontDefaults';
 import { useGlobalStore } from '@/store/globalAppStateStore';
-import { AccessLevel } from '@/karabo_data/SchemaEnums';
+import { AccessLevel } from '@/karabo-hash/enums';
 import { ProxyStatus } from '@/lib/binding/ProxyStatus';
 import { buildExecuteCommandHash } from '@/karabo_hash/builders/command_execution.ts';
 import { getNetwork } from '@/singletons/api';
@@ -22,84 +22,47 @@ const DisplayCommand: React.FC<DisplayCommandProps> = ({
 }) => {
   const deviceId = primary?.deviceId;
   const propertyPath = primary?.propertyPath;
-  const descriptor = primary?.descriptor;
   const proxyStatus = primary?.proxyStatus;
   const deviceState = primary?.deviceState;
-  const schemaAttrs = primary?.schemaAttrs;
   const isOffline = primary?.isOffline;
+  const binding = primary?.binding;
 
   const userAccessLevel = useGlobalStore(
-    (s) => s.sessionInfo?.accessLevel ?? AccessLevel.Observer
+    (s) => s.sessionInfo?.accessLevel ?? AccessLevel.OBSERVER
   );
 
-  // ─────────────────────────────────────────
-  // Permissions (AccessLevel)
-  // ─────────────────────────────────────────
   const hasCommandPermission = React.useMemo(() => {
     // Base rule: at least Operator
-    if (userAccessLevel < AccessLevel.Operator) return false;
+    if (userAccessLevel < AccessLevel.OPERATOR) return false;
 
     // Schema-level override if present
-    if (schemaAttrs?.requiredAccessLevel !== undefined) {
-      return userAccessLevel >= schemaAttrs.requiredAccessLevel;
+    if (binding?.requiredAccessLevel !== undefined) {
+      return userAccessLevel >= binding.requiredAccessLevel;
     }
 
     return true;
-  }, [userAccessLevel, schemaAttrs?.requiredAccessLevel]);
+  }, [userAccessLevel, binding?.requiredAccessLevel]);
 
-  // ─────────────────────────────────────────
-  // Online / offline
-  //   - OFFLINE → definitely not online
-  //   - UNKNOWN → still initializing → treat as not online for commands
-  // ─────────────────────────────────────────
-  const isDeviceOnline =
-    proxyStatus !== ProxyStatus.OFFLINE &&
-    proxyStatus !== ProxyStatus.UNKNOWN &&
-    !isOffline;
+  const isDeviceOnline = proxyStatus !== ProxyStatus.OFFLINE && !isOffline;
 
-  // ─────────────────────────────────────────
-  // ALLOWED_STATES (scene + schema)
-  //   - if there is a restriction and we don't know deviceState yet,
-  //     keep the command DISABLED
-  // ─────────────────────────────────────────
   const stateAllowsCommand = React.useMemo(() => {
     if (!deviceId) return false;
-
-    const sceneAllowedStates = allowedStates || [];
-    const schemaAllowedStates = schemaAttrs?.allowedStates || [];
-    const combinedAllowedStates = [
-      ...sceneAllowedStates,
-      ...schemaAllowedStates,
-    ];
-
-    // No allowedStates anywhere → no restriction
-    if (combinedAllowedStates.length === 0) return true;
-
-    // There *is* an ALLOWED_STATES list, but we don't know the state yet
-    // → be conservative and *disallow* until state is known
     if (!deviceState) return false;
 
-    const current = deviceState.trim().toUpperCase();
-    const allowed = combinedAllowedStates.map((s) => s.trim().toUpperCase());
-    return allowed.includes(current);
-  }, [deviceId, deviceState, allowedStates, schemaAttrs?.allowedStates]);
+    const isAllowed = binding?.is_allowed(deviceState);
+    return isAllowed;
+  }, [deviceId, deviceState, allowedStates, binding]);
 
   // ─────────────────────────────────────────
   // Caption / label
   // ─────────────────────────────────────────
+
   const buttonCaption = React.useMemo(() => {
-    if (descriptor?.displayedName) return descriptor.displayedName;
+    if (binding?.displayedName) return binding.displayedName;
     if (propertyPath) return propertyPath;
     return primary?.propertyIndicator?.label ?? '';
-  }, [
-    descriptor?.displayedName,
-    propertyPath,
-    primary?.propertyIndicator?.label,
-  ]);
+  }, [binding?.displayedName, propertyPath, primary?.propertyIndicator?.label]);
 
-  // ─────────────────────────────────────────
-  // Final enablement
-  // ─────────────────────────────────────────
   const isEnabled =
     hasCommandPermission && isDeviceOnline && stateAllowsCommand;
 
@@ -107,14 +70,14 @@ const DisplayCommand: React.FC<DisplayCommandProps> = ({
     if (!deviceId) return 'No device selected for this command';
 
     if (!isDeviceOnline) {
-      if (proxyStatus === ProxyStatus.UNKNOWN) {
+      if (proxyStatus === ProxyStatus.OFFLINE) {
         return 'Device status is still initializing';
       }
       return 'Device offline – command cannot be executed';
     }
 
     if (!hasCommandPermission) {
-      const required = schemaAttrs?.requiredAccessLevel ?? AccessLevel.Operator;
+      const required = binding?.requiredAccessLevel ?? AccessLevel.OBSERVER;
       return `Requires access level ${AccessLevel[required]} or higher`;
     }
 
@@ -128,7 +91,7 @@ const DisplayCommand: React.FC<DisplayCommandProps> = ({
     isDeviceOnline,
     proxyStatus,
     hasCommandPermission,
-    schemaAttrs?.requiredAccessLevel,
+    binding?.requiredAccessLevel,
     stateAllowsCommand,
   ]);
 

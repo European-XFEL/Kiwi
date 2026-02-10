@@ -18,17 +18,12 @@ const DisplayLabel: React.FC<DisplayLabelProps> = ({
   disabledReason,
   primary,
 }) => {
-  const value = primary?.propertyModel?.binding.getValue();
-  const propertyModel = primary?.propertyModel;
+  const value = primary?.value;
+  const binding = primary?.binding;
 
   const labelValue = React.useMemo(() => {
     if (value === undefined) return '';
-
-    const schemaAttrs = propertyModel?.schema.schemaAttrs;
-
-    const prefix = schemaAttrs?.metricPrefixSymbol ?? '';
-    const symbol = schemaAttrs?.unitSymbol ?? '';
-    const unit = `${prefix}${symbol}`.trim();
+    const unit = binding?.unit_label ?? '';
 
     /**
      * Prefer schema-provided abstract valueType when available.
@@ -37,9 +32,7 @@ const DisplayLabel: React.FC<DisplayLabelProps> = ({
      * We intentionally do NOT force runtime `propertyModel.type` here.
      * The helper is tolerant of mixed representations anyway.
      */
-    const schemaValueType =
-      (primary as any)?.valueType ??
-      (schemaAttrs?.valueType as SchemaValueType | undefined);
+    const schemaValueType = binding?.hashType as SchemaValueType | undefined;
 
     return formatScalarValueWithUnit({
       value,
@@ -47,7 +40,7 @@ const DisplayLabel: React.FC<DisplayLabelProps> = ({
       unit,
       floatPrecision: 8,
     });
-  }, [value, propertyModel, primary]);
+  }, [value, binding, primary]);
 
   return (
     <div

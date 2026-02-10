@@ -6,7 +6,7 @@ import {
   ArchivePolicy,
   Assignment,
   NodeType,
-} from '@/karabo_data/SchemaEnums';
+} from '@/karabo-hash/enums';
 
 export interface DeviceSchemaInfo {
   propertyDescriptors: Map<string, PropertySchemaAttributes>;
@@ -20,8 +20,6 @@ export interface TableColumnInfo {
 export interface PropertySchemaAttributes {
   valueType: HashTypes;
   defaultValue?: ValueTypes;
-  // displayType serves as a "guide" for the GUI client for displaying the
-  // property. Usual values for it: "Slot", "ImageData", "NDArray", "OutputSchema"
   displayType?: string;
   displayedName?: string;
   description?: string;
