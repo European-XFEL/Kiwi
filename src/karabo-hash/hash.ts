@@ -200,12 +200,12 @@ export class Hash extends Map<string, HashElement> {
     Map.prototype.set.call(this, key, element);
   }
 
-  getElement(path: string): { data: any; attrs: HashAttributes } {
+  public getElement(path: string): { data: any; attrs: HashAttributes } {
     const element = this._getElement(path, false);
     return { data: element.data, attrs: element.attrs };
   }
 
-  setElement(
+  public setElement(
     path: string,
     value: any,
     attrs?: HashAttributes | Record<string, any>
@@ -258,15 +258,15 @@ export class Hash extends Map<string, HashElement> {
     return this._getElement(path, false).data;
   }
 
-  getValue(path: string): any {
+  public getValue(path: string): any {
     return this._getElement(path, false).data.value_;
   }
 
-  getAttributes(path: string): HashAttributes {
+  public getAttributes(path: string): HashAttributes {
     return this._getElement(path, false).attrs;
   }
 
-  getAttribute(path: string, attrKey: string): HashValues {
+  public getAttribute(path: string, attrKey: string): HashValues {
     const attrs = this._getElement(path, false).attrs;
     const v = attrs.get(attrKey);
     if (v === undefined) {
@@ -275,17 +275,17 @@ export class Hash extends Map<string, HashElement> {
     return v;
   }
 
-  getAttributeValue(path: string, attrKey: string): any {
+  public getAttributeValue(path: string, attrKey: string): any {
     const v = this.getAttribute(path, attrKey);
     return v.value_;
   }
 
-  setAttribute(path: string, attrKey: string, attrValue: any): void {
+  public setAttribute(path: string, attrKey: string, attrValue: any): void {
     const element = this._getElement(path, false);
     element.attrs.set(attrKey, attrValue);
   }
 
-  setAttributes(
+  public setAttributes(
     path: string,
     attrs: HashAttributes | Record<string, any>
   ): void {
@@ -320,12 +320,15 @@ export class Hash extends Map<string, HashElement> {
     }
   }
 
-  merge(other: Hash, attributePolicy: 'merge' | 'replace' = 'merge'): void {
+  public merge(
+    other: Hash,
+    attributePolicy: 'merge' | 'replace' = 'merge'
+  ): void {
     const mergeAttrs = attributePolicy === 'merge';
 
     for (const [k, v] of other.items()) {
       if (v instanceof Hash) {
-        const existing = this.getOrUndefined(k);
+        const existing = this.find(k);
         if (!(existing instanceof Hash)) {
           this.set(k, new Hash());
         }
@@ -358,7 +361,7 @@ export class Hash extends Map<string, HashElement> {
     }
   }
 
-  getOrUndefined(path: string): any | undefined {
+  public find(path: string): any | undefined {
     try {
       return this.get(path);
     } catch {
@@ -366,7 +369,7 @@ export class Hash extends Map<string, HashElement> {
     }
   }
 
-  erase(path: string): void {
+  public erase(path: string): void {
     const p = String(path);
 
     if (!p.includes(SEPARATOR)) {
@@ -378,17 +381,17 @@ export class Hash extends Map<string, HashElement> {
     Map.prototype.delete.call(hash, key);
   }
 
-  getKeys(into?: string[]): string[] | void {
+  public getKeys(into?: string[]): string[] | void {
     const keys = Array.from(this.keys());
     if (!into) return keys;
     into.push(...keys);
   }
 
-  empty(): boolean {
+  public empty(): boolean {
     return this.size === 0;
   }
 
-  paths(opts: { intermediate?: boolean } = {}): string[] {
+  public paths(opts: { intermediate?: boolean } = {}): string[] {
     const { intermediate = false } = opts;
 
     const leafPaths = (h: Hash, prefix: string[] = []): string[] => {
