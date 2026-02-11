@@ -12,8 +12,4 @@ export { LoginPage } from './LoginPage';
 export { useAuth, useServerProbe } from './hooks';
 
 // Types (if needed by other features)
-export type {
-  ActivityStatus,
-  LoginCredentials,
-  AuthState,
-} from './types/auth.types';
+export type { ActivityStatus, LoginCredentials, AuthState } from './auth.types';

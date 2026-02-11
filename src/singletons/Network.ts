@@ -1,19 +1,19 @@
 import { probeServer } from '@/features/login/utils';
+import { GuiServerInfo } from '@/features/login/types';
+
 import AuthServerClient from '@/http/AuthServerClient';
 import { encodeBinary } from '@/karabo-hash/bin_writer';
 import { Hash } from '@/karabo-hash/hash';
-import { GuiServerInfo } from '@/karabo_data/GuiServerInfo';
 import { AccessLevel } from '@/karabo-hash/enums';
 import { HashDeque } from '@/karabo_hash/HashDeque';
-import { buildLoginHash } from '@/karabo_hash/builders/gui_session';
 import { packEncodedHash } from '@/karabo_hash/hash_utils';
 import { getConfig } from '@/singletons/api';
 import { useAppSettingsStore } from '@/store/appSettingsStore';
 import { useGlobalActivityStore } from '@/store/globalActivityStore';
 import { Websocket, WebsocketBuilder } from 'websocket-ts';
 
-// --- Types ---
 const MAX_ITEM_PROCESSING = 5;
+const REQUEST_REPLY_TIMEOUT = 5;
 
 export type SessionStartedHandler = (
   accessLevel: AccessLevel,
@@ -171,7 +171,8 @@ export class Network {
         sessionData.port,
         // onProbeSuccess
         async (serverInfo: GuiServerInfo) => {
-          const isServerAuthenticated = serverInfo.authRequired;
+          const authRequired = serverInfo['authRequired'] as boolean;
+          const isServerAuthenticated = authRequired;
           const sessionDataAuthenticated =
             sessionData!.refreshToken != undefined;
 
@@ -377,44 +378,67 @@ export class Network {
 
   public performLogin() {
     if (!this._session) return;
-    let loginHash: Hash;
     if (this._session.isAuthSession) {
-      loginHash = buildLoginHash(
-        'KIWI',
-        '3.0.0',
-        this._session.oneTimeToken,
-        undefined
-      );
+      this.onLogin('KIWI', '3.0.0', this._session.oneTimeToken, undefined);
     } else {
-      loginHash = buildLoginHash(
-        'KIWI',
-        '3.0.0',
-        undefined,
-        this._session.userId
-      );
+      this.onLogin('KIWI', '3.0.0', undefined, this._session.userId);
     }
-    this.sendHash(loginHash);
   }
 
   // Protocol
   // --------------------------------------------------------------------
 
+  public onLogin(
+    clientId: string,
+    version: string,
+    oneTimeToken?: string,
+    clientUserId?: string
+  ): void {
+    const h = new Hash({
+      type: 'login',
+      clientId: clientId,
+      version: version,
+      ...(oneTimeToken && { oneTimeToken: oneTimeToken }),
+      ...(clientUserId && { clientUserId: clientUserId }),
+    });
+
+    this.sendHash(h);
+  }
+
   public onGetDeviceConfiguration(deviceId: string): void {
-    const h = new Hash({ type: 'getDeviceConfiguration', deviceId: deviceId });
+    const h = new Hash('type', 'getDeviceConfiguration', 'deviceId', deviceId);
     this.sendHash(h);
   }
 
   public onStartMonitoringDevice(deviceId: string): void {
-    const h = new Hash({ type: 'startMonitoringDevice', deviceId: deviceId });
+    const h = new Hash('type', 'startMonitoringDevice', 'deviceId', deviceId);
     this.sendHash(h);
   }
 
   public onStopMonitoringDevice(deviceId: string): void {
-    const h = new Hash({ type: 'stopMonitoringDevice', deviceId: deviceId });
+    const h = new Hash('type', 'stopMonitoringDevice', 'deviceId', deviceId);
     this.sendHash(h);
   }
+
   public onGetDeviceSchema(deviceId: string): void {
-    const h = new Hash({ type: 'getDeviceSchema', deviceId: deviceId });
+    const h = new Hash('type', 'getDeviceSchema', 'deviceId', deviceId);
+    this.sendHash(h);
+  }
+
+  public onExecute(deviceId: string, command: string): void {
+    // prettier-ignore
+    const h = new Hash('type', 'execute', 'deviceId', deviceId, 'command', command);
+    this.sendHash(h);
+  }
+
+  public onReconfigure(deviceId: string, configuration: Hash): void {
+    const h = new Hash({
+      type: 'reconfigure',
+      deviceId: deviceId,
+      configuration: configuration,
+      reply: true,
+      timeout: REQUEST_REPLY_TIMEOUT,
+    });
     this.sendHash(h);
   }
 }

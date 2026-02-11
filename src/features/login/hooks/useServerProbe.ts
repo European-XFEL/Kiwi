@@ -1,6 +1,5 @@
-import { GuiServerInfo } from '@/karabo_data/GuiServerInfo';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityStatus } from '../types/auth.types';
+import { ActivityStatus, GuiServerInfo } from '../auth.types';
 import { probeServer } from '@/features/login/utils';
 
 const DEBOUNCE_MS = 2000;
