@@ -7,7 +7,7 @@ import AccessLevelForm from './components/AccesslevelForm';
 import LoginStatus from './components/LoginStatus';
 import { useServerProbe } from './hooks/useServerProbe';
 import { useAuth } from './hooks/useAuth';
-import { ActivityStatus } from './types/auth.types';
+import { ActivityStatus } from './auth.types';
 
 /**
  * LoginPage - Main login interface

@@ -1,8 +1,3 @@
-import {
-  guiServerInfoFromHash,
-  loginInfoFromHash,
-  notificationInfoFromHash,
-} from '@/karabo_hash/decoders/gui_session';
 import { broadcast_event, KaraboEvent } from '@/events';
 import { unpackEncodedHash } from '@/karabo_hash/hash_utils';
 import { decodeBinary } from '@/karabo-hash/bin_reader';
@@ -58,9 +53,16 @@ export class Manager {
   // #region Protocol Handlers (Naming Convention: handle_<type>)
 
   private handle_brokerInformation(hash: Hash): void {
-    const serverInfo = guiServerInfoFromHash(hash);
+    const deviceId = hash.getValue('deviceId') as string;
+    const hostname = hash.getValue('hostname') as string;
+    const hostport = parseInt(hash.getValue('hostport') as string);
+    const authRequired = !!hash.getValue('authServer');
+    const authServer = hash.getValue('authServer') as string;
+    const readOnly = hash.getValue('readOnly') as boolean;
+    const topic = hash.getValue('topic') as string;
+    const version = hash.getValue('version') as string;
 
-    this._network.updateSessionServerInfo(serverInfo.topic, serverInfo.version);
+    this._network.updateSessionServerInfo(topic, version);
     this._network.performLogin();
 
     // Check for Non-Auth session logic
@@ -93,12 +95,12 @@ export class Manager {
   }
 
   // Alias for deprecated 'serverInformation' to use the same logic
-  private handle_serverInformation(hash: Hash): void {
+  public handle_serverInformation(hash: Hash): void {
     this.handle_brokerInformation(hash);
   }
 
-  private handle_loginInformation(hash: Hash): void {
-    const loginInfoHash = loginInfoFromHash(hash);
+  public handle_loginInformation(hash: Hash): void {
+    const accessLevel = hash.getValue('accessLevel') as number;
     const session = this._network.session;
 
     if (!session) return;
@@ -111,15 +113,15 @@ export class Manager {
     );
 
     AccessControlManager.instance.initFromLogin({
-      accessLevel: loginInfoHash.accessLevel,
+      accessLevel: accessLevel,
       isAuthenticated: true,
       userId: session.userId!,
     });
 
-    this._network.updateSessionAuth(loginInfoHash.accessLevel);
+    this._network.updateSessionAuth(accessLevel);
 
     session.startHandler(
-      loginInfoHash.accessLevel,
+      accessLevel,
       session.host,
       session.port,
       session.userId!,
@@ -128,28 +130,28 @@ export class Manager {
     );
   }
 
-  private handle_notification(hash: Hash): void {
+  public handle_notification(hash: Hash): void {
     const session = this._network.session;
     // If a notification arrives before user is logged, it is interpreted as a login error.
     if (session && !session.userLogged) {
-      const notificationHash = notificationInfoFromHash(hash);
-      session.startErrorHandler(notificationHash.message);
+      const message = hash.getValue('message') as string;
+      session.startErrorHandler(message);
     }
   }
 
-  private handle_systemTopology(hash: Hash): void {
+  public handle_systemTopology(hash: Hash): void {
     this._topology.initialize(hash.get('systemTopology'));
   }
 
-  private handle_topologyUpdate(hash: Hash): void {
+  public handle_topologyUpdate(hash: Hash): void {
     this._topology.updateTopology(hash);
   }
 
-  private handle_projectListDomains(hash: Hash): void {
+  public handle_projectListDomains(hash: Hash): void {
     broadcast_event(KaraboEvent.ListDomains, { data: hash });
   }
 
-  private handle_projectListItems(hash: Hash): void {
+  public handle_projectListItems(hash: Hash): void {
     broadcast_event(KaraboEvent.ListItems, { data: hash });
   }
 

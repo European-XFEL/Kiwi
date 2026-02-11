@@ -2,11 +2,10 @@ import { useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getNetwork } from '@/singletons/api';
 import { AccessLevel } from '@/karabo-hash/enums';
-import { GuiServerInfo } from '@/karabo_data/GuiServerInfo';
 import AuthServerClient from '@/http/AuthServerClient';
 import { useAppSettingsStore } from '@/store/appSettingsStore';
 import { useGlobalStore } from '@/store/globalAppStateStore';
-import { ActivityStatus } from '../types/auth.types';
+import { ActivityStatus, GuiServerInfo } from '../auth.types';
 
 interface UseAuthProps {
   probedServerInfo: GuiServerInfo | null;
