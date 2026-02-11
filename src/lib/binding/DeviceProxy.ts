@@ -1,16 +1,29 @@
 import { ProxyStatus } from '@/lib/binding/ProxyStatus';
 import { Hash, Schema } from '@/karabo-hash/hash';
-import { Timestamp as KaraboTimestamp } from '@/karabo-hash/timestamp';
+import { Timestamp } from '@/karabo-hash/timestamp';
 import { buildBinding } from '@/lib/binding/BindingFactory';
 
 import { getNetwork } from '@/singletons/api';
-import { flatIterall } from '@/karabo-hash/utils';
-import { BaseBinding, BindingRoot } from './BaseBinding';
+import { BaseBinding, BindingRoot, NodeBinding } from './BaseBinding';
 import { WeakEvent } from './WeakEvent';
+
+export function applyConfiguration(config: Hash, binding: any) {
+  const namespace = binding.value;
+  for (const [key, value, attrs] of config.iterall()) {
+    if (!namespace.has(key)) continue;
+
+    const binding = namespace.get(key);
+    if (value instanceof Hash && binding instanceof NodeBinding) {
+      applyConfiguration(value, binding);
+    } else {
+      // Set the timestamp no matter what, and take raw value
+      binding.setValue(value.value_, Timestamp.fromHashAttributes(attrs));
+    }
+  }
+}
 
 export class DeviceProxy {
   public binding: BindingRoot = new BindingRoot();
-  public state: string | undefined = undefined;
 
   public status: ProxyStatus = ProxyStatus.OFFLINE;
 
@@ -34,30 +47,25 @@ export class DeviceProxy {
   static createDeviceProxy(deviceId: string): DeviceProxy {
     return new DeviceProxy(deviceId);
   }
+  public get state(): string | undefined {
+    return this.getBinding('state')?.value as string | undefined;
+  }
 
   getBinding(path: string): BaseBinding | undefined {
     return this.binding.getBinding(path);
   }
 
-  applyPropertyUpdate(key: string, value: any, attrs: any): void {
-    const binding = this.binding.getBinding(key);
-    if (binding) {
-      binding.setValue(value, KaraboTimestamp.fromHashAttributes(attrs));
-    }
-    if (key === 'state') {
-      const oldState = this.state;
-      const newState = value;
-      if (oldState !== newState) {
-        this.state = newState;
-        this.state_update.fire(newState);
-      }
+  private updateStatus(newStatus: ProxyStatus): void {
+    const oldStatus = this.status;
+    if (oldStatus !== newStatus) {
+      this.status = newStatus;
+      this.status_update.fire(newStatus);
     }
   }
 
   public setOnlineFlag(isOnline: boolean): void {
     this.isOnline = isOnline;
-    this.status = isOnline ? ProxyStatus.ONLINE : ProxyStatus.OFFLINE;
-    this.fireStatusUpdate();
+    this.updateStatus(isOnline ? ProxyStatus.ONLINE : ProxyStatus.OFFLINE);
 
     // If we come online and someone wants monitoring, fetch schema again
     if (isOnline && this.monitorCount > 0) {
@@ -84,17 +92,12 @@ export class DeviceProxy {
         this._startMonitoringDevice();
       }
     }
-
-    this.fireStatusUpdate();
-
     return () => {
       this.monitorCount -= 1;
 
       if (this.monitorCount === 0) {
         this._stopMonitoringDevice();
       }
-
-      this.fireStatusUpdate();
     };
   }
 
@@ -109,30 +112,27 @@ export class DeviceProxy {
       this.status === ProxyStatus.ALIVE ||
       this.status === ProxyStatus.MONITORING
     ) {
-      this.status = ProxyStatus.ONLINE;
-      this.fireStatusUpdate();
+      this.updateStatus(ProxyStatus.ONLINE);
     }
   }
 
   private _config_update_fired(): void {
     if (this.status === ProxyStatus.SCHEMA) {
-      this.status = ProxyStatus.ALIVE;
-      this.fireStatusUpdate();
+      this.updateStatus(ProxyStatus.ALIVE);
     }
     if (this.status === ProxyStatus.ALIVE && this.monitorCount > 0) {
-      this.status = ProxyStatus.MONITORING;
-      this.fireStatusUpdate();
+      this.updateStatus(ProxyStatus.MONITORING);
     }
   }
 
   private _schema_update_fired(): void {
     this.schema_update.fire();
+
     if (this.status === ProxyStatus.ONLINEREQUESTED) {
       if (this.monitorCount > 0) {
         this._startMonitoringDevice();
       }
-      this.status = ProxyStatus.SCHEMA;
-      this.fireStatusUpdate();
+      this.updateStatus(ProxyStatus.SCHEMA);
     } else if (
       this.status === ProxyStatus.ALIVE ||
       this.status === ProxyStatus.MONITORING
@@ -142,14 +142,11 @@ export class DeviceProxy {
   }
 
   public handleDeviceConfiguration(config: Hash): void {
-    for (const [key, value, attrs] of flatIterall(config)) {
-      this.applyPropertyUpdate(key, value.value_, attrs);
+    applyConfiguration(config, this.binding);
+    if (config.has('state')) {
+      this.state_update.fire(this.state);
     }
     this._config_update_fired();
-  }
-
-  private fireStatusUpdate(): void {
-    this.status_update.fire(this.status);
   }
 
   destroy(): void {
@@ -160,11 +157,11 @@ export class DeviceProxy {
   public refreshDeviceSchema(): void {
     // Only “request schema” once per in-flight request
     if (this.status !== ProxyStatus.ONLINEREQUESTED) {
-      this.status = ProxyStatus.ONLINEREQUESTED;
+      this.updateStatus(ProxyStatus.ONLINEREQUESTED);
       getNetwork().onGetDeviceSchema(this.deviceId);
-      this.fireStatusUpdate();
     }
   }
+
   public handleDeviceSchema = (schema: Schema): void => {
     // rebuild device-level binding
     this.binding = buildBinding(schema, this.binding);
