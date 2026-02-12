@@ -67,8 +67,10 @@ export class BaseBinding<TValue = any> {
 
   is_allowed(state: string | State): boolean {
     const s = typeof state === 'string' ? state : state.name;
-    const alloweds: string[] =
-      this._attributes.getValue(KARABO_SCHEMA_ALLOWED_STATES) ?? [];
+    let alloweds: string[] = [];
+    if (this._attributes.has(KARABO_SCHEMA_ALLOWED_STATES)) {
+      alloweds = this._attributes.getValue(KARABO_SCHEMA_ALLOWED_STATES);
+    }
     return alloweds.length === 0 || alloweds.includes(s);
   }
 
