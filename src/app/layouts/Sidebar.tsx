@@ -1,9 +1,22 @@
 import * as React from 'react';
-import type { Position } from '@/shared/types';
-import { getPositionClass } from '@/shared/utils/position';
-import { toSize } from '@/shared/utils/to-size';
 
-export type SidebarProps = React.HTMLAttributes<HTMLElement> & {
+type Position = 'sticky' | 'fixed' | 'static';
+
+const getPositionClass = (pos: Position = 'static'): string =>
+  pos === 'fixed'
+    ? 'fixed left-0 top-0'
+    : pos === 'sticky'
+      ? 'sticky left-0 top-0'
+      : '';
+
+const toSize = (v: unknown, fallback: string) =>
+  typeof v === 'number'
+    ? `${v}px`
+    : typeof v === 'string' && v.trim()
+      ? v
+      : fallback;
+
+type SidebarProps = React.HTMLAttributes<HTMLElement> & {
   position?: Position;
   width?: string | number;
   height?: string | number;

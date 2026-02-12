@@ -1,5 +1,9 @@
 import { Outlet } from 'react-router-dom';
-import type { BodyProps } from '@/shared/types';
+
+export type BodyProps = React.HTMLAttributes<HTMLElement> & {
+  useOutlet?: boolean;
+  id?: string;
+};
 
 export default function Body({
   useOutlet,
