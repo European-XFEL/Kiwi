@@ -1,10 +1,10 @@
 import { State } from '@/karabo-hash/State';
 import { AccessLevel, AccessMode, Assignment } from '@/karabo-hash/enums';
 import { Timestamp } from '@/karabo-hash/timestamp';
-import { HashAttributes } from '@/karabo-hash/hash';
+import { HashAttributes, Schema } from '@/karabo-hash/hash';
 import { HashTypes, XmlTypeToHashType } from '@/karabo-hash/typenums';
 import { WeakEvent } from './WeakEvent';
-import { decodeRowSchema } from '@/karabo_hash/decoders/device_schema';
+import { buildNode } from '@/lib/binding/BindingFactory';
 
 import {
   KARABO_SCHEMA_DISPLAYED_NAME,
@@ -108,9 +108,14 @@ export class BaseBinding<TValue = any> {
     }
 
     if (attrs.has(KARABO_SCHEMA_ROW_SCHEMA)) {
-      this.rowSchema = decodeRowSchema(
-        attrs.getValue(KARABO_SCHEMA_ROW_SCHEMA)
-      );
+      const schema = attrs.getValue(KARABO_SCHEMA_ROW_SCHEMA) as Schema;
+      const bindings: Record<string, BaseBinding> = {};
+
+      for (const [key, _value, a] of schema.hash.iterall()) {
+        const node = buildNode(undefined, a);
+        bindings[key] = node;
+      }
+      this.rowSchema = bindings;
     }
 
     if (

@@ -18,8 +18,6 @@ export { default as DisplayStateColor } from './display/DisplayStateColor';
 export { StatefulIcon as DisplayStatefulWidgetIcon } from '@/features/icons';
 export { default as DisplayTableElement } from './display/DisplayTableElement';
 
-export { useDeviceTableProperty } from './display/hooks/useDeviceTableProperty';
-
 // Plot Controllers (Graphs & Visualizations)
 export { default as DisplayTrendGraph } from './plots/DisplayTrendGraph';
 export { default as DisplayVectorGraph } from './plots/DisplayVectorGraph';
