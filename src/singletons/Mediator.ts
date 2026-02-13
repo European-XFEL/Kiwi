@@ -1,9 +1,10 @@
-type BroadCastHandler = (data: any) => void;
+import { Hash } from '@/karabo-hash/hash';
+type BroadCastHandler = (data: Hash) => void;
 
 export class Mediator {
   private listeners = new Map<any, Set<BroadCastHandler>>();
 
-  postEvent(sender: any, data: any = {}) {
+  postEvent(sender: any, data: Hash = new Hash()) {
     const set = this.listeners.get(sender);
     if (!set || set.size === 0) {
       return;

@@ -1,10 +1,10 @@
+import { GuiServerInfo } from '@/features/login/auth.types';
 import { probeServer } from '@/features/login/utils';
-import { GuiServerInfo } from '@/features/login/types';
 
 import AuthServerClient from '@/http/AuthServerClient';
 import { encodeBinary } from '@/karabo-hash/bin_writer';
-import { Hash } from '@/karabo-hash/hash';
 import { AccessLevel } from '@/karabo-hash/enums';
+import { Hash } from '@/karabo-hash/hash';
 import { HashDeque } from '@/karabo_hash/HashDeque';
 import { packEncodedHash } from '@/karabo_hash/hash_utils';
 import { getConfig } from '@/singletons/api';

@@ -1,9 +1,9 @@
 import { broadcast_event, KaraboEvent } from '@/events';
-import { unpackEncodedHash } from '@/karabo_hash/hash_utils';
-import { decodeBinary } from '@/karabo-hash/bin_reader';
 import { AccessControlManager } from '@/features/user/utils/AccessLevel';
-import { getTopology, getNetwork, getConfig } from '@/singletons/api';
+import { decodeBinary } from '@/karabo-hash/bin_reader';
 import { Hash, Schema } from '@/karabo-hash/hash';
+import { unpackEncodedHash } from '@/karabo_hash/hash_utils';
+import { getConfig, getNetwork, getTopology } from '@/singletons/api';
 
 export class Manager {
   private _network: any;
@@ -148,11 +148,15 @@ export class Manager {
   }
 
   public handle_projectListDomains(hash: Hash): void {
-    broadcast_event(KaraboEvent.ListDomains, { data: hash });
+    broadcast_event(KaraboEvent.ListDomains, hash);
   }
 
   public handle_projectListItems(hash: Hash): void {
-    broadcast_event(KaraboEvent.ListItems, { data: hash });
+    broadcast_event(KaraboEvent.ListItems, hash);
+  }
+
+  public handle_projectLoadItems(hash: Hash): void {
+    broadcast_event(KaraboEvent.LoadProjectItems, hash);
   }
 
   public handle_deviceConfigurations(hash: Hash): void {
@@ -166,22 +170,6 @@ export class Manager {
     const deviceId = hash.getValue('deviceId') as string;
     const deviceSchema = hash.getValue('schema') as Schema;
     this._topology.handleDeviceSchema(deviceId, deviceSchema);
-  }
-
-  // #endregion
-
-  public registerHashHandler(
-    hashType: string,
-    handler: (hash: Hash) => void
-  ): void {
-    if (this._hashHandlers.has(hashType)) {
-      throw new Error(`Hash handler for type ${hashType} already registered`);
-    }
-    this._hashHandlers.set(hashType, handler);
-  }
-
-  public unregisterHashHandler(hashType: string): void {
-    this._hashHandlers.delete(hashType);
   }
 
   // #endregion
