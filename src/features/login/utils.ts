@@ -1,6 +1,5 @@
 import { decodeBinary } from '@/karabo-hash/bin_reader';
 import { Hash } from '@/karabo-hash/hash';
-import { unpackEncodedHash } from '@/karabo_hash/hash_utils';
 import { getNetwork } from '@/singletons/api';
 import { useAppSettingsStore } from '@/store/appSettingsStore';
 import { WebsocketBuilder } from 'websocket-ts';
@@ -38,7 +37,9 @@ export function probeServer(
       } else {
         const msgBlob = ev.data as Blob;
         msgBlob.arrayBuffer().then((binHash: ArrayBuffer) => {
-          const hash = decodeBinary(unpackEncodedHash(binHash));
+          const hash = decodeBinary(
+            new Uint8Array(binHash, 4, binHash.byteLength - 4)
+          );
           const guiServerInfo = extractGuiServerInfo(hash);
           onSuccess(guiServerInfo);
           ws.close();

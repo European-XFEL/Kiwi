@@ -6,7 +6,6 @@ import { encodeBinary } from '@/karabo-hash/bin_writer';
 import { AccessLevel } from '@/karabo-hash/enums';
 import { Hash } from '@/karabo-hash/hash';
 import { HashDeque } from '@/karabo_hash/HashDeque';
-import { packEncodedHash } from '@/karabo_hash/hash_utils';
 import { getConfig } from '@/singletons/api';
 import { useAppSettingsStore } from '@/store/appSettingsStore';
 import { useGlobalActivityStore } from '@/store/globalActivityStore';
@@ -97,8 +96,18 @@ export class Network {
       );
       return;
     }
-    const encodedHash = encodeBinary(hash);
-    this._ws.send(packEncodedHash(encodedHash));
+    const payloadBuf = encodeBinary(hash);
+    // View, no copy
+    const payload = new Uint8Array(payloadBuf);
+
+    const data = new Uint8Array(4 + payload.byteLength);
+
+    const header = new DataView(data.buffer);
+    header.setUint32(0, payload.byteLength, true); // little-endian length prefix
+
+    data.set(payload, 4);
+
+    this._ws.send(data);
   }
 
   // #endregion
