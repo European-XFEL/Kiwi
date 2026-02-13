@@ -4,7 +4,7 @@ import { probeServer } from '@/features/login/utils';
 import AuthServerClient from '@/http/AuthServerClient';
 import { encodeBinary } from '@/karabo-hash/bin_writer';
 import { AccessLevel } from '@/karabo-hash/enums';
-import { Hash } from '@/karabo-hash/hash';
+import { Hash, HashList } from '@/karabo-hash/hash';
 import { HashDeque } from '@/karabo_hash/HashDeque';
 import { packEncodedHash } from '@/karabo_hash/hash_utils';
 import { getConfig } from '@/singletons/api';
@@ -440,5 +440,50 @@ export class Network {
       timeout: REQUEST_REPLY_TIMEOUT,
     });
     this.sendHash(h);
+  }
+
+  public onProjectListDomains() {
+    const hash = new Hash({
+      type: 'requestGeneric',
+      empty: true,
+      timeout: 10,
+      instanceId: 'KaraboProjectDB',
+      slot: 'slotGenericRequest',
+      replyType: 'projectListDomains',
+    });
+    hash.set('args.type', 'listDomains');
+    this.sendHash(hash);
+  }
+
+  public onProjectListItems(domain: string) {
+    const hash = new Hash({
+      type: 'requestGeneric',
+      args: new Hash({
+        type: 'listItems',
+        domain: domain,
+        item_types: ['project'],
+      }),
+      // false causes the GUI Server to echo back the request parameters, from where the domain will be extracted
+      empty: false,
+      timeout: 10,
+      instanceId: 'KaraboProjectDB',
+      slot: 'slotGenericRequest',
+      replyType: 'projectListItems',
+    });
+    this.sendHash(hash);
+  }
+
+  public onProjectLoadItems(itemsHashes: HashList) {
+    const hash = new Hash({
+      type: 'requestGeneric',
+      empty: false,
+      timeout: 10,
+      instanceId: 'KaraboProjectDB',
+      slot: 'slotGenericRequest',
+      replyType: 'projectLoadItems',
+    });
+    hash.set('args.type', 'loadItems');
+    hash.set('args.items', itemsHashes);
+    this.sendHash(hash);
   }
 }
