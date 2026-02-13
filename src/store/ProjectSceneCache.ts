@@ -12,36 +12,36 @@ export class ProjectSceneCache {
 
   private constructor() {}
 
-  static #_inst?: ProjectSceneCache;
+  private static _inst?: ProjectSceneCache;
 
-  static get inst(): ProjectSceneCache {
-    if (ProjectSceneCache.#_inst === undefined) {
-      ProjectSceneCache.#_inst = new ProjectSceneCache();
+  public static get inst(): ProjectSceneCache {
+    if (ProjectSceneCache._inst === undefined) {
+      ProjectSceneCache._inst = new ProjectSceneCache();
       // Performs a cache pruning on startup
-      //   setTimeout(() => {
-      //     ProjectSceneCache.#_inst!.#_pruneCache();
-      //   }, 200);
+      setTimeout(() => {
+        ProjectSceneCache._inst!._pruneCache();
+      }, 0);
       // Starts the periodic cache pruning loop
       setInterval(
-        ProjectSceneCache.#_inst.#_pruneCache,
+        ProjectSceneCache._inst._pruneCache,
         1000 * ProjectSceneCache.CACHE_PRUNE_INTERVAL_SECONDS
       );
     }
-    return ProjectSceneCache.#_inst;
+    return ProjectSceneCache._inst;
   }
 
   // #endregion
 
   // #region Store and Get scene info
 
-  storeSceneInfo(info: ProjectSceneInfo): void {
+  public storeSceneInfo(info: ProjectSceneInfo): void {
     localStorage.setItem(
       this.#_getInfoKey(info.domain, info.uuid),
       JSON.stringify({ info: info, savedAt: new Date() })
     );
   }
 
-  getSceneInfoFromQueryParams = (
+  public getSceneInfoFromQueryParams = (
     queryParams: string,
     onProjectSceneInfo: (info: ProjectSceneInfo | null) => void
   ): void => {
@@ -52,25 +52,25 @@ export class ProjectSceneCache {
       const domain = sceneData[3];
       const projectName = sceneData[4];
       const uuid = sceneData[5];
-      this.getSceneInfo(domain, projectName, uuid, onProjectSceneInfo);
+      this._getSceneInfo(domain, projectName, uuid, onProjectSceneInfo);
     } else {
       onProjectSceneInfo(null);
     }
   };
 
-  #_gettingSceneInfo: boolean = false;
+  _gettingSceneInfo: boolean = false;
 
-  getSceneInfo = (
+  private _getSceneInfo = (
     domain: string,
     projectName: string,
     uuid: string,
     onProjectSceneInfo: (info: ProjectSceneInfo | null) => void
   ): void => {
-    if (this.#_gettingSceneInfo) {
+    if (this._gettingSceneInfo) {
       // There's already a scene info operation taking place, postpone the
       // execution of this to a later time
       setTimeout(
-        this.getSceneInfo,
+        this._getSceneInfo,
         100,
         domain,
         projectName,
@@ -78,12 +78,12 @@ export class ProjectSceneCache {
         onProjectSceneInfo
       );
     } else {
-      this.#_gettingSceneInfo = true;
-      this.#_getSceneInfoWorker(domain, projectName, uuid, onProjectSceneInfo);
+      this._gettingSceneInfo = true;
+      this._getSceneInfoWorker(domain, projectName, uuid, onProjectSceneInfo);
     }
   };
 
-  #_getSceneInfoWorker = (
+  private _getSceneInfoWorker = (
     domain: string,
     projectName: string,
     uuid: string,
@@ -106,14 +106,14 @@ export class ProjectSceneCache {
           // NOTE: this assignment is internal to the callback and cannot be
           // moved outside, or the enforcement of only one scene retrieval at
           // a time via a network request would be lost.
-          this.#_gettingSceneInfo = false;
+          this._gettingSceneInfo = false;
         }
       );
     } else {
       // The scene has been found in the cache
       const sceneInfo = JSON.parse(infoValue).info;
       onProjectSceneInfo(sceneInfo);
-      this.#_gettingSceneInfo = false;
+      this._gettingSceneInfo = false;
     }
   };
 
@@ -128,7 +128,7 @@ export class ProjectSceneCache {
   static MAX_CACHE_AGE_MILLISECONDS = 30 * 1000; // 30 seconds
   static CACHE_PRUNE_INTERVAL_SECONDS = 15;
 
-  #_pruneCache = (): void => {
+  private _pruneCache = (): void => {
     // First step - remove all expired cache items
     const now = new Date();
     const keys = Object.keys(localStorage);

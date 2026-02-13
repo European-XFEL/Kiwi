@@ -14,6 +14,10 @@ export class SystemTopology {
     this._ensureAllKeys();
   }
 
+  public get initialized(): boolean {
+    return this._system_hash != null;
+  }
+
   public isDeviceOnline = (deviceId: string): boolean => {
     if (this._system_hash?.getValue('device').has(deviceId)) {
       return true;

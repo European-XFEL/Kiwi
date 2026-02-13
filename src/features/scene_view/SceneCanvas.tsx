@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
+import { getTopology } from '@/singletons/api';
 
 const SVG_SHAPES = new Set(['ArrowPolygon', 'Line', 'Polygon', 'Rectangle']);
 
@@ -58,6 +59,28 @@ const SceneCanvas: React.FC = () => {
 
   // Load + parse scene
   React.useEffect(() => {
+    /** Sets a parsed scene after being sure that the system topology has
+     * been initialized.
+     *
+     * If a scene is available in the cache upon a full application reload, it
+     * is highly likely that the initial system topology will be still unknown,
+     * as it has to be received from the connected GUI Server via the network.
+     */
+    function setSceneDeferrable(parsed: Scene) {
+      if (getTopology().initialized) {
+        setScene(parsed);
+        setError('');
+      } else {
+        const checkTopology = setInterval(() => {
+          if (getTopology().initialized) {
+            setScene(parsed);
+            setError('');
+            clearInterval(checkTopology);
+          }
+        }, 100);
+      }
+    }
+
     ProjectSceneCache.inst.getSceneInfoFromQueryParams(
       location.search,
       (info: ProjectSceneInfo | null) => {
@@ -88,8 +111,8 @@ const SceneCanvas: React.FC = () => {
           }
 
           document.title = `Kiwi [${info.domain}:${info.name}]`;
-          setScene(parsed);
-          setError('');
+
+          setSceneDeferrable(parsed);
         } catch (e) {
           setError(`Couldn't parse scene data.<br/>${String(e)}`);
           setScene(null);
