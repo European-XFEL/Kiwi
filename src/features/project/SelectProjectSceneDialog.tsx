@@ -150,17 +150,10 @@ export default function SelectProjectSceneDialog({
     }
   }, [open]);
 
-  useKaraboEvent(KaraboEvent.ListDomains, (hash: any) => {
-    // Note: As the type of the hash had to be removed to comply with the more
-    //       generic type required by the event dispatching mechanism, and the
-    //       TS compiler cannot infer that hash is a Hash, the generated JS has
-    //       no way to refer to Hash specific methods like getValue. The
-    //       generated JS will throw a runtime error if an attempt is made to
-    //       use hash.getValue in the following line.
-    let data = hash['data'];
-    let domains;
+  useKaraboEvent(KaraboEvent.ListDomains, (hash: Hash) => {
+    let domains: string[] = [];
     try {
-      domains = getDomains(data);
+      domains = getDomains(hash);
     } catch (e) {
       setErrorMessage(
         `Error reading domains: ${e}. Close and reopen the dialog.`

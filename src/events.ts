@@ -1,16 +1,17 @@
+import { Hash } from '@/karabo-hash/hash';
 import { getMediator } from '@/singletons/api';
 import { useEffect, useRef } from 'react';
 
-type PayloadMap = Record<string, unknown>;
-export type BroadcastHandler = (data: PayloadMap) => void;
+export type BroadcastHandler = (data: Hash) => void;
 export type KaraboEventMap = Partial<Record<any, BroadcastHandler>>;
 
 enum KaraboEvent {
   ListDomains = 'ListDomains',
   ListItems = 'ListProjects',
+  LoadProjectItems = 'LoadProjectItems',
 }
 
-function broadcast_event(sender: KaraboEvent, data: {}) {
+function broadcast_event(sender: KaraboEvent, data: Hash) {
   getMediator().postEvent(sender, data);
 }
 
@@ -25,7 +26,7 @@ function unregister_for_broadcasts(eventMap: KaraboEventMap) {
 /**
  * React hook: subscribe once (per key), return unsubscribe and call only per key
  */
-function useKaraboEvent(key: any, handler: (data: PayloadMap) => void) {
+function useKaraboEvent(key: any, handler: (data: Hash) => void) {
   const ref = useRef(handler);
   ref.current = handler;
 

@@ -17,7 +17,10 @@ export class SystemTopology {
     if (this._system_hash?.getValue('device').has(deviceId)) {
       return true;
     }
-    if (this._system_hash?.getValue('macro').has(deviceId)) {
+    if (
+      this._system_hash?.has('macro') &&
+      this._system_hash?.getValue('macro').has(deviceId)
+    ) {
       return true;
     }
     return false;

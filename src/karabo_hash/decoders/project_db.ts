@@ -1,11 +1,11 @@
 import { Hash, HashValues } from '@/karabo-hash/hash';
+import { XMLParser } from 'fast-xml-parser';
 import {
   DbItemInfo,
   ListProjectsResult,
   LoadProjectItemsResult,
   ProjectItemInfo,
 } from '../../karabo_data/ProjectDbInfo';
-import { XMLParser } from 'fast-xml-parser';
 
 export const listProjectsResultFromHash = (hash: Hash): ListProjectsResult => {
   const reason = hash.get('reason') as string;
