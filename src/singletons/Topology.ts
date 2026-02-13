@@ -11,16 +11,14 @@ export class SystemTopology {
     // Store the systemHash, clear before?
     console.log('Received SystemTopology ...');
     this._system_hash = systemTopology;
+    this._ensureAllKeys();
   }
 
-  isDeviceOnline = (deviceId: string): boolean => {
+  public isDeviceOnline = (deviceId: string): boolean => {
     if (this._system_hash?.getValue('device').has(deviceId)) {
       return true;
     }
-    if (
-      this._system_hash?.has('macro') &&
-      this._system_hash?.getValue('macro').has(deviceId)
-    ) {
+    if (this._system_hash?.getValue('macro').has(deviceId)) {
       return true;
     }
     return false;
@@ -70,11 +68,11 @@ export class SystemTopology {
     if (!update.empty()) {
       this._system_hash?.merge(update);
     }
+
+    this._ensureAllKeys();
   }
 
-  // #endregion
-
-  getDevice(deviceId: string): DeviceProxy {
+  public getDevice(deviceId: string): DeviceProxy {
     let proxy = this.devices.get(deviceId);
     if (!proxy) {
       proxy = DeviceProxy.createDeviceProxy(deviceId);
@@ -86,7 +84,7 @@ export class SystemTopology {
     return proxy;
   }
 
-  setOnlineFlag(deviceId: string, isOnline: boolean): void {
+  public setOnlineFlag(deviceId: string, isOnline: boolean): void {
     let proxy = this.devices.get(deviceId);
     if (proxy) {
       proxy.setOnlineFlag(isOnline);
@@ -95,7 +93,7 @@ export class SystemTopology {
 
   // ---------------------------------------------------------------------------
 
-  handleDeviceConfiguration(deviceId: string, config: Hash): void {
+  public handleDeviceConfiguration(deviceId: string, config: Hash): void {
     const proxy = this.devices.get(deviceId);
     if (!proxy) {
       return;
@@ -103,11 +101,21 @@ export class SystemTopology {
     proxy.handleDeviceConfiguration(config);
   }
 
-  handleDeviceSchema(deviceId: string, schema: Schema): void {
+  public handleDeviceSchema(deviceId: string, schema: Schema): void {
     const proxy = this.devices.get(deviceId);
     if (!proxy) {
       return;
     }
     proxy.handleDeviceSchema(schema);
+  }
+
+  private _ensureAllKeys(): void {
+    if (this._system_hash) {
+      for (const key of ['device', 'server', 'macro'] as const) {
+        if (!this._system_hash?.has(key)) {
+          this._system_hash.set(key, new Hash());
+        }
+      }
+    }
   }
 }
