@@ -204,7 +204,11 @@ class BinaryDecoder {
   key_decoder = new TextDecoder('ascii');
 
   constructor(public data: Uint8Array) {
-    this.dataview = new DataView(this.data.buffer);
+    this.dataview = new DataView(
+      this.data.buffer,
+      this.data.byteOffset,
+      this.data.byteLength
+    );
   }
 
   readKey(): string {

@@ -2,7 +2,6 @@ import { broadcast_event, KaraboEvent } from '@/events';
 import { AccessControlManager } from '@/features/user/utils/AccessLevel';
 import { decodeBinary } from '@/karabo-hash/bin_reader';
 import { Hash, Schema } from '@/karabo-hash/hash';
-import { unpackEncodedHash } from '@/karabo_hash/hash_utils';
 import { getConfig, getNetwork, getTopology } from '@/singletons/api';
 
 export class Manager {
@@ -26,7 +25,9 @@ export class Manager {
       console.log('Received an empty bin hash');
       return;
     }
-    const hash = decodeBinary(unpackEncodedHash(binHash));
+    // Remove the length of Hash. Create a view from byte 4, no copy
+    const bins = new Uint8Array(binHash, 4, binHash.byteLength - 4);
+    const hash = decodeBinary(bins);
     const protocolType = (hash.getValue('type') as string) ?? '';
 
     // Construct the expected method name
