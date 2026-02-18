@@ -8,10 +8,9 @@ export class SystemTopology {
   public constructor() {}
 
   public initialize(systemTopology: Hash) {
-    // Store the systemHash, clear before?
     console.log('Received SystemTopology ...');
     this._system_hash = systemTopology;
-    this._ensureAllKeys();
+    this._ensureTopologyKeys();
   }
 
   public get initialized(): boolean {
@@ -72,8 +71,6 @@ export class SystemTopology {
     if (!update.empty()) {
       this._system_hash?.merge(update);
     }
-
-    this._ensureAllKeys();
   }
 
   public getDevice(deviceId: string): DeviceProxy {
@@ -113,9 +110,15 @@ export class SystemTopology {
     proxy.handleDeviceSchema(schema);
   }
 
-  private _ensureAllKeys(): void {
+  private _ensureTopologyKeys(): void {
     if (this._system_hash) {
-      for (const key of ['device', 'server', 'macro'] as const) {
+      for (const key of [
+        'device',
+        'server',
+        'macro',
+        'client',
+        'unknown',
+      ] as const) {
         if (!this._system_hash?.has(key)) {
           this._system_hash.set(key, new Hash());
         }
