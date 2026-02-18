@@ -5,7 +5,8 @@ import AuthServerClient from '@/http/AuthServerClient';
 import { encodeBinary } from '@/karabo-hash/bin_writer';
 import { AccessLevel } from '@/karabo-hash/enums';
 import { Hash, HashList } from '@/karabo-hash/hash';
-import { HashDeque } from '@/karabo_hash/HashDeque';
+import { Deque } from '@datastructures-js/deque';
+
 import { getConfig } from '@/singletons/api';
 import { useAppSettingsStore } from '@/store/appSettingsStore';
 import { useGlobalActivityStore } from '@/store/globalActivityStore';
@@ -13,6 +14,8 @@ import { Websocket, WebsocketBuilder } from 'websocket-ts';
 
 const MAX_ITEM_PROCESSING = 5;
 const REQUEST_REPLY_TIMEOUT = 5;
+
+type BinHashItem = { bin: ArrayBuffer; time: number };
 
 export type SessionStartedHandler = (
   accessLevel: AccessLevel,
@@ -47,7 +50,7 @@ export class Network {
   // Session State
   private _session?: GuiServerSession;
   private _ws?: Websocket;
-  private _hashDeque = new HashDeque();
+  private _hashDeque = new Deque<BinHashItem>();
   private _timer: ReturnType<typeof setInterval> | null = null;
   private _onSessionDropped?: (err_msg: string) => void;
 
@@ -283,7 +286,7 @@ export class Network {
 
   private _startWebsocketSession(host: string, port: number) {
     this._stopTimer();
-    this._hashDeque = new HashDeque();
+    this._hashDeque = new Deque();
     if (this._ws) this._ws.close();
 
     this._ws = new WebsocketBuilder(this._wsProxyURL)
@@ -315,7 +318,7 @@ export class Network {
     } else {
       const msgBlob = ev.data as Blob;
       msgBlob.arrayBuffer().then((binHash: ArrayBuffer) => {
-        this._hashDeque.pushHash(binHash);
+        this._hashDeque.pushBack({ bin: binHash, time: performance.now() });
         this._ensureTimerRunning();
       });
     }
@@ -360,25 +363,26 @@ export class Network {
 
   private _processQueueBatch() {
     let taskCounter = MAX_ITEM_PROCESSING;
-    while (this._hashDeque.itemsCount > 0 && taskCounter > 0) {
-      const binHash = this._hashDeque.popHash();
-      if (binHash) {
-        // Emit the data "signal"
-        if (this.onReceivedData) {
-          this.onReceivedData(binHash);
-        }
+    let latency = 0.0;
+
+    while (this._hashDeque.size() > 0 && taskCounter > 0) {
+      const item = this._hashDeque.popFront();
+      if (!item) break;
+
+      const { bin: binHash, time: queued_time } = item;
+      latency = performance.now() - queued_time;
+      if (binHash && this.onReceivedData) {
+        this.onReceivedData(binHash);
       }
+
       taskCounter--;
     }
 
     useGlobalActivityStore
       .getState()
-      .updateActivity(
-        this._hashDeque.itemsCount,
-        this._hashDeque.latestLatency
-      );
+      .updateActivity(this._hashDeque.size(), latency);
 
-    if (this._hashDeque.itemsCount === 0) {
+    if (this._hashDeque.size() === 0) {
       this._stopTimer();
     }
   }
