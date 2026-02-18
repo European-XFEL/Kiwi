@@ -96,6 +96,23 @@ describe('Karabo Hash Class Tests', () => {
     });
   });
 
+  describe('2.1 Basic Type Access (getValue)', () => {
+    let h: Hash;
+    beforeEach(() => (h = new Hash()));
+
+    test('set and get (Wrapped vs Unwrapped)', () => {
+      h.set('foo', 42);
+
+      const value = h.getValue('foo') as number;
+      expect(value).toBe(42);
+      expect(h.getValue<number>('foo')).toBe(42);
+
+      h.set('bar', new Hash('nested', 2.3));
+      const hh = h.getValue<Hash>('bar');
+      expect(hh.getValue<number>('nested')).toBe(2.3);
+    });
+  });
+
   describe('3. Nested Access (Dot Notation)', () => {
     let h: Hash;
     beforeEach(() => (h = new Hash()));
@@ -185,6 +202,7 @@ describe('Karabo Hash Class Tests', () => {
       expect(attrs.has('old')).toBe(false); // Replaced
       expect(attrs.has('new')).toBe(true);
       expect(attrs.get('new').value_).toBe(99);
+      expect(attrs.getValue<number>('new')).toBe(99);
     });
   });
 

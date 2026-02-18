@@ -48,8 +48,8 @@ export class HashAttributes extends Map<string, HashValues> {
     super.set(key, value);
   }
 
-  getValue(path: string): any {
-    return this.get(path).value_;
+  public getValue<T = any>(path: string): T {
+    return this.get(path).value_ as T;
   }
 }
 
@@ -77,7 +77,7 @@ export class HashElement {
     yield this.attrs;
   }
 
-  equals(other: unknown): boolean {
+  public equals(other: unknown): boolean {
     if (!(other instanceof HashElement)) {
       return false;
     }
@@ -104,7 +104,7 @@ export class HashElement {
 export class Hash extends Map<string, HashElement> {
   readonly type_ = HashTypes.Hash;
 
-  get value_(): Hash {
+  public get value_(): Hash {
     return this;
   }
   constructor();
@@ -258,8 +258,8 @@ export class Hash extends Map<string, HashElement> {
     return this._getElement(path, false).data;
   }
 
-  public getValue(path: string): any {
-    return this._getElement(path, false).data.value_;
+  public getValue<T = any>(path: string): T {
+    return this._getElement(path, false).data.value_ as T;
   }
 
   public getAttributes(path: string): HashAttributes {
@@ -434,7 +434,7 @@ export class Schema {
     public hash: Hash
   ) {}
 
-  get value_(): Schema {
+  public get value_(): Schema {
     return this;
   }
 }
@@ -447,7 +447,7 @@ export class HashList extends Array<Hash> {
     else super(...values);
   }
 
-  get value_(): HashList {
+  public get value_(): HashList {
     return this;
   }
 }
