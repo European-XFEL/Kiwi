@@ -1,11 +1,12 @@
 /**
  * Editable controller widget models.
  *
- * All extend BaseEditWidget (→ BaseLabelModel → BaseWidgetObjectData).
+ * All extend BaseEditWidget (→ BaseWidgetObjectData).
  * All default to parent_component = 'EditableApplyLaterComponent'.
  */
 
 import { BaseEditWidget } from '../../bases';
+import { FONT_SIZE_DEFAULT } from '@/karabo-common/constants';
 
 // EditableComboBox
 // ----------------------------------------------------------------------------
@@ -47,6 +48,8 @@ export class EditableListElementModel extends BaseEditWidget {
 
 export class EditableSpinBoxModel extends BaseEditWidget {
   klass = 'EditableSpinBox';
+  font_size = FONT_SIZE_DEFAULT;
+  font_weight: 'normal' | 'bold' = 'normal';
 }
 
 // EditableRegex (Python: EditableRegexModel)
@@ -94,4 +97,6 @@ export class FloatSpinBoxModel extends BaseEditWidget {
   klass = 'FloatSpinBox';
   step = 0;
   decimals = 3;
+  font_size = FONT_SIZE_DEFAULT;
+  font_weight: 'normal' | 'bold' = 'normal';
 }

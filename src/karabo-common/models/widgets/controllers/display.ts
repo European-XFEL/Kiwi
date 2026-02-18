@@ -7,15 +7,12 @@
  */
 
 import {
-  FONT_BASE_SIZE,
-  FONT_FAMILY_DEFAULT,
-} from '@/features/controllers/utils/fontDefaults';
-import {
   BaseLabelModel,
   BaseWidgetObjectData,
   BaseDisplayEditableWidget,
   BasePlotModel,
 } from '../../bases';
+import { FONT_SIZE_DEFAULT } from '../../../constants';
 
 // DisplayLabel
 // ----------------------------------------------------------------------------
@@ -75,14 +72,11 @@ export class TableElementModel extends BaseDisplayEditableWidget {
 
 // DisplayCommand
 // ----------------------------------------------------------------------------
-//structure and label(button)
 export class DisplayCommandModel extends BaseWidgetObjectData {
   klass = 'DisplayCommand';
   requires_confirmation = false;
-  font_family: string = FONT_FAMILY_DEFAULT;
-  font_size: number = FONT_BASE_SIZE;
+  font_size = FONT_SIZE_DEFAULT;
   font_weight: 'normal' | 'bold' = 'normal';
-  font_style: string = 'normal';
 }
 
 // DisplayStateColor — extends DisplayLabelModel (Python: complex.py:72)
