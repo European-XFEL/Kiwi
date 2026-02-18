@@ -3,18 +3,31 @@
  *
  */
 
-import { BaseLabelModel } from '../bases';
+import { BaseWidgetObjectData } from '../bases';
+import { FONT_DEFAULT } from '../../constants';
 
 // Label
 // ----------------------------------------------------------------------------
 
 /** Static text label. No device binding, no controller wrapper. */
-export class LabelModel extends BaseLabelModel {
+export class LabelModel extends BaseWidgetObjectData {
   klass = 'Label';
   text = '';
-  background = '#FFFFFF';
-  foreground = '#000000';
+  font: string = FONT_DEFAULT;
+  foreground = '';
+  background = 'transparent';
   frame_width = 0;
-  text_decoration = 'none';
-  alignment: 'left' | 'center' | 'right' = 'left';
+  alignh: 1 | 2 | 4 = 1;
+}
+
+// Sticker
+// ----------------------------------------------------------------------------
+
+/** Multiline text label with a full font descriptor. No device binding. */
+export class StickerModel extends BaseWidgetObjectData {
+  klass = 'Sticker';
+  text = '';
+  font: string = FONT_DEFAULT;
+  foreground = '';
+  background = 'white';
 }

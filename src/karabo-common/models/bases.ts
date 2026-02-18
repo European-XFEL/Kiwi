@@ -2,15 +2,20 @@
  * Base model classes for the Karabo scene system.
  */
 
-import {
-  FONT_BASE_SIZE,
-  FONT_FAMILY_DEFAULT,
-} from '@/features/controllers/utils/fontDefaults';
+import { FONT_DEFAULT, FONT_SIZE_DEFAULT } from '../constants';
 
 // BaseSavableModel
 /** Root marker class for all serializable scene objects. */
 export abstract class BaseSavableModel {}
 
+// BaseProjectObjectModel
+//
+
+/** Base class for project-managed objects (scenes, macros, etc.). */
+export class BaseProjectObjectModel extends BaseSavableModel {
+  simple_name = '';
+  uuid = '';
+}
 // BaseLayoutData
 //
 
@@ -117,19 +122,17 @@ export abstract class BaseWidgetObjectData extends BaseSceneObjectData {
 // BaseLabelModel
 //
 
-/** Intermediate class for widgets that display text. Holds font properties. */
+/** Intermediate class for widgets that display text. */
 export abstract class BaseLabelModel extends BaseWidgetObjectData {
-  font_family: string = FONT_FAMILY_DEFAULT;
-  font_size: number = FONT_BASE_SIZE;
+  font_size: number = FONT_SIZE_DEFAULT;
   font_weight: 'normal' | 'bold' = 'normal';
-  font_style: string = 'normal';
 }
 
 // BaseEditWidget
 //
 
-/** Base class for editable widgets that display text. */
-export abstract class BaseEditWidget extends BaseLabelModel {
+/** Base class for editable widgets. */
+export abstract class BaseEditWidget extends BaseWidgetObjectData {
   parent_component = 'EditableApplyLaterComponent';
 }
 
@@ -172,6 +175,19 @@ export abstract class BasePlotModel extends BaseWidgetObjectData {
   background = 'transparent';
 }
 
+// BaseLinkModel
+// ----------------------------------------------------------------------------
+
+/** Base for all link widgets. Holds label, font, and colors. */
+export abstract class BaseLinkModel extends BaseWidgetObjectData {
+  target = '';
+  text = '';
+  font: string = FONT_DEFAULT;
+  foreground = '';
+  background = 'transparent';
+  frame_width = 1;
+}
+
 // XMLElementModel
 //
 
@@ -193,10 +209,19 @@ export abstract class XMLElementModel extends BaseSceneObjectData {
   }
 }
 
+// UnknownWidgetDataModel
+//
+
+/** Catch-all for widgets with unrecognized krb:widget or krb:class. */
+export class UnknownWidgetDataModel extends BaseWidgetObjectData {
+  /** All raw attributes from the JSON element, preserved for round-trip. */
+  attributes: Record<string, unknown> = {};
+}
+
 // UnknownXMLDataModel
 //
 
-/** Catch-all for unrecognized SVG elements. */
+/** Catch-all for unrecognized SVG elements (no krb: attributes). */
 export class UnknownXMLDataModel extends XMLElementModel {
   tag = '';
   attributes: Record<string, string> = {};

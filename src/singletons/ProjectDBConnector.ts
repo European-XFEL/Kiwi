@@ -1,4 +1,5 @@
 import { Hash, HashList, HashValues } from '@/karabo-hash/hash';
+import { readScene } from '@/karabo-common/readers/readScene';
 import { XMLParser } from 'fast-xml-parser';
 import {
   DbItemInfo,
@@ -440,6 +441,8 @@ export class ProjectDBConnector {
           };
           items.push(item);
         } else if (itemType === 'scene') {
+          // TODO: remove — temporary debug to inspect readScene output
+          console.log('[readScene] model:', readScene(xml));
           // Build a ProjectSceneInfo object
           const item = {
             domain: domain,
