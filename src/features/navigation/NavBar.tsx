@@ -11,21 +11,37 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { GuiServerDisplay, ActiveIndicator } from '@/features/status';
 import { useLocation } from 'react-router-dom';
-import { ProjectSceneCache } from '@/store/ProjectSceneCache';
-import { ProjectSceneInfo } from '@/karabo_data/ProjectDbInfo';
+
+import {
+  LoadProjectSceneResult,
+  ProjectSceneInfo,
+} from '@/karabo_data/ProjectDbInfo';
 import { useEffect, useState } from 'react';
+import { getDbConn } from '@/singletons/api';
+import { sceneParamsFromURL } from './utils';
 
 export function NavBar() {
   const location = useLocation();
   const [sceneInfo, setSceneInfo] = useState<ProjectSceneInfo | null>(null);
 
   useEffect(() => {
-    ProjectSceneCache.inst.getSceneInfoFromQueryParams(
-      location.search,
-      (info: ProjectSceneInfo | null) => {
-        setSceneInfo(info);
-      }
-    );
+    const sceneParams = sceneParamsFromURL(location.search);
+    if (sceneParams) {
+      getDbConn().getScene(
+        sceneParams?.domain,
+        sceneParams?.projectName,
+        sceneParams?.uuid,
+        (result: LoadProjectSceneResult) => {
+          if (result.scene) {
+            setSceneInfo(result.scene);
+          } else {
+            console.error(
+              `Error retrieving scene '${sceneParams?.uuid}' from project '${sceneParams?.domain}:${sceneParams?.projectName}': ${result.error_msg}`
+            );
+          }
+        }
+      );
+    }
   }, [location.search]);
 
   return (

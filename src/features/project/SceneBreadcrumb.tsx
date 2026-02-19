@@ -1,5 +1,3 @@
-import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -13,14 +11,15 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useNavigate } from 'react-router-dom';
-import { getDbConn } from '@/singletons/api';
 import { ProjectItemInfo, ProjectSceneInfo } from '@/karabo_data/ProjectDbInfo';
+import { cn } from '@/shared/utils/cn';
+import { getDbConn } from '@/singletons/api';
 import { useGlobalStore } from '@/store/globalAppStateStore';
-import { ProjectSceneCache } from '@/store/ProjectSceneCache';
+import { Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ProjectsTable from './components/ProjectTable';
 import ScenesTable from './components/ScenesTable';
-import { cn } from '@/shared/utils/cn';
 import type { SceneBreadcrumbProps } from './types/project.types';
 
 export default function SceneBreadcrumb({
@@ -88,7 +87,6 @@ export default function SceneBreadcrumb({
   };
 
   const handleSceneClick = (scene: ProjectSceneInfo) => {
-    ProjectSceneCache.inst.storeSceneInfo(scene);
     navigate(
       `/scene?host=${sessionInfo!.guiServerHost}&port=${
         sessionInfo!.guiServerPort

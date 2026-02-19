@@ -1,18 +1,19 @@
-import { XCircle, Dot, FileText } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useGlobalStore } from '@/store/globalAppStateStore';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { ProjectSceneCache } from '@/store/ProjectSceneCache';
-import { ProjectSceneInfo } from '@/karabo_data/ProjectDbInfo';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { sceneParamsFromURL } from '@/features/navigation/utils';
+import { LoadProjectSceneResult } from '@/karabo_data/ProjectDbInfo';
 import { cn } from '@/shared/utils/cn';
+import { getDbConn } from '@/singletons/api';
+import { useGlobalStore } from '@/store/globalAppStateStore';
+import { Dot, FileText, XCircle } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export type SceneStatusProps = {
   className?: string;
@@ -42,20 +43,24 @@ export default function SceneStatus({
   }, [hasScene, navigate, setLoadedScene]);
 
   useEffect(() => {
-    ProjectSceneCache.inst.getSceneInfoFromQueryParams(
-      location.search,
-      (info: ProjectSceneInfo | null) => {
-        if (info) {
-          setSceneInfo({
-            domain: info.domain,
-            projectName: info.projectName,
-            name: info.name,
-          });
-        } else {
-          setSceneInfo(null);
+    const sceneParams = sceneParamsFromURL(location.search);
+    if (sceneParams) {
+      getDbConn().getScene(
+        sceneParams?.domain,
+        sceneParams?.projectName,
+        sceneParams?.uuid,
+        (result: LoadProjectSceneResult) => {
+          if (result.scene) {
+            setSceneInfo(result.scene);
+          } else {
+            setSceneInfo(null);
+            console.error(
+              `Error retrieving scene '${sceneParams?.uuid}' from project '${sceneParams?.domain}:${sceneParams?.projectName}': ${result.error_msg}`
+            );
+          }
         }
-      }
-    );
+      );
+    }
   }, [location.search]);
 
   const fullSceneName = sceneInfo

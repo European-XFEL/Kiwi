@@ -1,18 +1,18 @@
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
+import { sceneParamsFromURL } from '@/features/navigation/utils';
+import { LoadProjectSceneResult } from '@/karabo_data/ProjectDbInfo';
+import { Scene } from '@/scene/Scene';
+import { getDbConn, getTopology } from '@/singletons/api';
+import { useGlobalStore } from '@/store/globalAppStateStore';
+import { useLoadedSceneStore } from '@/store/loadedSceneStore';
+import useRecentStore from '@/store/recentScenesStore';
+import { UserRecentSceneModel } from '@/view_models/RecentScenesModel';
+import { AlertTriangle } from 'lucide-react';
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ProjectSceneCache } from '@/store/ProjectSceneCache';
-import { ProjectSceneInfo } from '@/karabo_data/ProjectDbInfo';
-import { UserRecentSceneModel } from '@/view_models/RecentScenesModel';
-import { Scene } from '@/scene/Scene';
-import { useGlobalStore } from '@/store/globalAppStateStore';
-import useRecentStore from '@/store/recentScenesStore';
-import { useLoadedSceneStore } from '@/store/loadedSceneStore';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle } from 'lucide-react';
-import { getTopology } from '@/singletons/api';
 
 const SVG_SHAPES = new Set(['ArrowPolygon', 'Line', 'Polygon', 'Rectangle']);
 
@@ -81,44 +81,43 @@ const SceneCanvas: React.FC = () => {
       }
     }
 
-    ProjectSceneCache.inst.getSceneInfoFromQueryParams(
-      location.search,
-      (info: ProjectSceneInfo | null) => {
-        if (!info) {
-          setError(
-            "Couldn't retrieve scene data.<br/>Please check Project Database availability."
-          );
-          setScene(null);
-          document.title = 'Kiwi';
-          return;
-        }
-
-        try {
-          const parsed = new Scene(info.svg);
-
-          // tell the app the size
-          setLoadedScene({ width: parsed.width, height: parsed.height });
-
-          if (loggedUser) {
-            const recentScene: UserRecentSceneModel = {
-              userId: loggedUser,
-              domain: info.domain,
-              uuid: info.uuid,
-              name: info.name,
-              projectName: info.projectName,
-            };
-            setRecentScene(recentScene);
+    const sceneParams = sceneParamsFromURL(location.search);
+    if (sceneParams) {
+      getDbConn().getScene(
+        sceneParams?.domain,
+        sceneParams?.projectName,
+        sceneParams?.uuid,
+        (result: LoadProjectSceneResult) => {
+          if (result.error_msg) {
+            setError(
+              `Couldn't retrieve scene data.<br/>Please check Project Database availability.<br/>Details: ${result.error_msg}`
+            );
+            setScene(null);
+            document.title = 'Kiwi';
+            return;
           }
-
-          document.title = `Kiwi [${info.domain}:${info.name}]`;
-
-          setSceneDeferrable(parsed);
-        } catch (e) {
-          setError(`Couldn't parse scene data.<br/>${String(e)}`);
-          setScene(null);
-        }
-      }
-    );
+          try {
+            const parsed = new Scene(result.scene!.svg);
+            setLoadedScene({ width: parsed.width, height: parsed.height });
+            if (loggedUser) {
+              const recentScene: UserRecentSceneModel = {
+                userId: loggedUser,
+                domain: result.scene!.domain,
+                uuid: result.scene!.uuid,
+                name: result.scene!.name,
+                projectName: result.scene!.projectName,
+              };
+              setRecentScene(recentScene);
+            }
+            document.title = `Kiwi [${result.scene!.domain}:${result.scene!.name}]`;
+            setSceneDeferrable(parsed);
+          } catch (e) {
+            setError(`Couldn't parse scene data.<br/>${String(e)}`);
+            setScene(null);
+          }
+        } // getScene.onScene
+      ); // getDbConn.getScene
+    } // if (sceneParams)
   }, [location.search, loggedUser, setLoadedScene, setRecentScene]);
 
   const renderScene = () => {
