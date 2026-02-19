@@ -3,7 +3,7 @@ import type { DisplayVectorGraphProps } from '@/scene/scene_types/controllers/di
 import {
   schemaSaysVector,
   type SchemaValueType,
-} from '@/features/controllers/utils/validation/schema_type_identifier';
+} from '@/features/controllers/utils/validation/hashTypeIdentifiers';
 import { downsampleArray } from '../utils/lttb';
 
 export type VectorPrimary = DisplayVectorGraphProps['primary'];

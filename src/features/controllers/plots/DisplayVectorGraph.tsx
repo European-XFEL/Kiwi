@@ -9,7 +9,7 @@ import {
   schemaSaysVector,
   schemaSaysFloat,
   schemaSaysInt,
-} from '@/features/controllers/utils/validation/schema_type_identifier';
+} from '@/features/controllers/utils/validation/hashTypeIdentifiers';
 
 type PlotlyAxisType = 'linear' | 'log';
 
