@@ -7,12 +7,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Hash } from '@/karabo-hash/hash';
+import { Hash } from '@/karabo/data/hash';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { getDbConn } from '@/singletons/api';
-import { ProjectItemInfo, ProjectSceneInfo } from '@/karabo_data/ProjectDbInfo';
+import { ProjectItemInfo, ProjectSceneInfo } from '@/lib/ProjectDbInfo';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import DomainSelector from './components/DomainSelector';
 import ProjectFilter from './components/ProjectFilter';

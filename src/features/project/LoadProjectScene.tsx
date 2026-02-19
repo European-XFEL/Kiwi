@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { ProjectSceneInfo } from '@/karabo_data/ProjectDbInfo';
+import { ProjectSceneInfo } from '@/lib/ProjectDbInfo';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { FolderOpen } from 'lucide-react';
 import { useState } from 'react';

@@ -5,7 +5,7 @@
 import React from 'react';
 import type { DisplayLineEditProps } from '@/scene/scene_types/controllers/display';
 import { FONT_FAMILY_DEFAULT } from '../utils/fontDefaults';
-import { HashTypes } from '@/karabo-hash/typenums';
+import { HashTypes } from '@/karabo/data/typenums';
 
 const DisplayLineEdit: React.FC<DisplayLineEditProps> = ({
   font_size,

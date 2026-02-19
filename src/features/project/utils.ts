@@ -1,4 +1,4 @@
-import { Hash } from '@/karabo-hash/hash';
+import { Hash } from '@/karabo/data/hash';
 
 export const getDomains = (hash: Hash): string[] => {
   const reason = hash.getValue('reason');

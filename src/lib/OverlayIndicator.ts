@@ -1,6 +1,9 @@
 import { XCircle } from 'lucide-react';
-import { ProxyStatusIcon as ProxyStatusIcon, ProxyBindingIcon } from './types';
-import { ProxyStatus, PropertyStatus } from './ProxyStatus';
+import {
+  ProxyStatusIcon as ProxyStatusIcon,
+  ProxyBindingIcon,
+} from './binding/types';
+import { ProxyStatus, PropertyStatus } from './binding/ProxyStatus';
 
 export const DEVICE_INDICATORS: ProxyStatusIcon[] = [
   {

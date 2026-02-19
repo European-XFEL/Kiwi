@@ -1,5 +1,5 @@
-import { SimpleValueTypes } from '@/karabo-hash/types';
-import { HashTypes } from '@/karabo-hash/typenums';
+import { SimpleValueTypes } from '@/karabo/data/types';
+import { HashTypes } from '@/karabo/data/typenums';
 import { BaseBinding } from '@/lib/binding/BaseBinding';
 
 export function formatTableCell(

@@ -1,5 +1,5 @@
-import { decodeBinary } from '@/karabo-hash/bin_reader';
-import { Hash } from '@/karabo-hash/hash';
+import { decodeBinary } from '@/karabo/data/bin_reader';
+import { Hash } from '@/karabo/data/hash';
 import { getNetwork } from '@/singletons/api';
 import { useAppSettingsStore } from '@/store/appSettingsStore';
 import { WebsocketBuilder } from 'websocket-ts';

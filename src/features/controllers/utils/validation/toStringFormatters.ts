@@ -1,4 +1,4 @@
-import type { HashTypes } from '@/karabo-hash/typenums';
+import type { HashTypes } from '@/karabo/data/typenums';
 import {
   schemaSaysBool as isBoolType,
   schemaSaysFloat as isFloatType,

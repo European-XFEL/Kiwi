@@ -7,10 +7,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  ProjectSceneInfo,
-  asLocalDateTimeString,
-} from '@/karabo_data/ProjectDbInfo';
+import { ProjectSceneInfo, asLocalDateTimeString } from '@/lib/ProjectDbInfo';
 import type { ScenesTableProps } from '../types/project.types';
 
 export default function ScenesTable({

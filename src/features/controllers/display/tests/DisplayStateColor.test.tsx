@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import type { DisplayStateColorProps } from '@/scene/scene_types/controllers';
-import { guiStateColors } from '@/karabo_data/Indicators';
+import { guiStateColors } from '@/lib/Indicators';
 
 import type { UseDevicePropertyResult } from '@/lib/binding';
 import { ProxyStatus, PropertyStatus } from '@/lib/binding/ProxyStatus';

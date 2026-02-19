@@ -1,8 +1,8 @@
 import fs from 'fs';
-import { Schema } from '@/karabo-hash/hash';
-import { AccessMode, Assignment, AccessLevel } from '@/karabo-hash/enums';
+import { Schema } from '@/karabo/data/hash';
+import { AccessMode, Assignment, AccessLevel } from '@/karabo/data/enums';
 
-import { decodeBinarySchema } from '@/karabo-hash/bin_reader';
+import { decodeBinarySchema } from '@/karabo/data/bin_reader';
 import { buildBinding } from '@/lib/binding/BindingFactory';
 import {
   BindingRoot,

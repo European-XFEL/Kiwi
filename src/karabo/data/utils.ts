@@ -1,4 +1,4 @@
-import { Hash } from '@/karabo-hash/hash';
+import { Hash } from '@/karabo/data/hash';
 
 export function escapeXml(unsafe: string): string {
   return unsafe.replace(/[<>&'"]/g, (c) => {

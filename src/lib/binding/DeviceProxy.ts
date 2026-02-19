@@ -1,11 +1,11 @@
 import { ProxyStatus } from '@/lib/binding/ProxyStatus';
-import { Hash, Schema } from '@/karabo-hash/hash';
-import { Timestamp } from '@/karabo-hash/timestamp';
+import { Hash, Schema } from '@/karabo/data/hash';
+import { Timestamp } from '@/karabo/data/timestamp';
 import { buildBinding } from '@/lib/binding/BindingFactory';
 
 import { getNetwork } from '@/singletons/api';
 import { BaseBinding, BindingRoot, NodeBinding } from './BaseBinding';
-import { WeakEvent } from './WeakEvent';
+import { WeakEvent } from '../WeakEvent';
 
 export function applyConfiguration(config: Hash, binding: any) {
   const namespace = binding.value;

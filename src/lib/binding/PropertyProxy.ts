@@ -1,6 +1,6 @@
 import { BaseBinding } from './BaseBinding';
 import type { DeviceProxy } from './DeviceProxy';
-import { WeakEvent } from './WeakEvent';
+import { WeakEvent } from '../WeakEvent';
 
 type Unsubscribe = () => void;
 

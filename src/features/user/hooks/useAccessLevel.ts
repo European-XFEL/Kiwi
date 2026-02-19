@@ -1,4 +1,4 @@
-import { AccessLevel } from '@/karabo-hash/enums';
+import { AccessLevel } from '@/karabo/data/enums';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { AccessControlManager } from '@/features/user/utils/AccessLevel';
 

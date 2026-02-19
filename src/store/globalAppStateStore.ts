@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { SceneModel } from '@/view_models/SceneModel';
-import { AccessLevel } from '@/karabo-hash/enums';
+import { AccessLevel } from '@/karabo/data/enums';
 
 /** App status tag */
 // UNRECOVERABLE_ERROR -> Advice to reload the page (takes full page view port). Goes back to INIT

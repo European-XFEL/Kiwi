@@ -12,10 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { GuiServerDisplay, ActiveIndicator } from '@/features/status';
 import { useLocation } from 'react-router-dom';
 
-import {
-  LoadProjectSceneResult,
-  ProjectSceneInfo,
-} from '@/karabo_data/ProjectDbInfo';
+import { LoadProjectSceneResult, ProjectSceneInfo } from '@/lib/ProjectDbInfo';
 import { useEffect, useState } from 'react';
 import { getDbConn } from '@/singletons/api';
 import { sceneParamsFromURL } from './utils';

@@ -1,12 +1,12 @@
-import { Hash, HashList, Schema } from '@/karabo-hash/hash';
-import { HashTypes } from '@/karabo-hash/typenums';
+import { Hash, HashList, Schema } from '@/karabo/data/hash';
+import { HashTypes } from '@/karabo/data/typenums';
 import {
   StringValue,
   Float64Value,
   VectorFloat64Value,
-} from '@/karabo-hash/types';
+} from '@/karabo/data/types';
 
-import { flatIterall } from '@/karabo-hash/utils';
+import { flatIterall } from '@/karabo/data/utils';
 
 // Helper to check if a value is a wrapped Karabo type (has type_)
 const isWrapped = (v: any) => v && typeof v === 'object' && 'type_' in v;

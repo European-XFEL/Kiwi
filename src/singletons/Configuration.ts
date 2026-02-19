@@ -1,5 +1,5 @@
 import { encryptData, decryptData } from '@/shared/utils/crypto';
-import { AccessLevel } from '@/karabo-hash/enums';
+import { AccessLevel } from '@/karabo/data/enums';
 
 /**  Subset of data needed to resume a GUI Session when the app starts. */
 export interface SessionData {

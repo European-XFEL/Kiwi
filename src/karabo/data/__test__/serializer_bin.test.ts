@@ -1,7 +1,7 @@
 import fs from 'fs';
-import { Hash, HashList, Schema } from '@/karabo-hash/hash';
-import { decodeBinary, decodeBinarySchema } from '@/karabo-hash/bin_reader';
-import { encodeBinary } from '@/karabo-hash/bin_writer';
+import { Hash, HashList, Schema } from '@/karabo/data/hash';
+import { decodeBinary, decodeBinarySchema } from '@/karabo/data/bin_reader';
+import { encodeBinary } from '@/karabo/data/bin_writer';
 
 import path from 'path';
 

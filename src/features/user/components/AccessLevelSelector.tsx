@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAccessLevel } from '@/features/user/hooks/useAccessLevel';
 import { useGlobalStore } from '@/store/globalAppStateStore';
-import { AccessLevel } from '@/karabo-hash/enums';
+import { AccessLevel } from '@/karabo/data/enums';
 import { getAccessLevelDisplay } from '@/shared/utils/getAccessLevelDisplay';
 import { getConfig } from '@/singletons/api';
 import type { AccessLevelSelectorProps } from '../types/user.types';
