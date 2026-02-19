@@ -7,7 +7,7 @@
  * It only answers "what does the schema say?"
  */
 
-import { HashTypes } from '@/karabo-hash/typenums';
+import { HashTypes } from '@/karabo/data/typenums';
 
 // Runtime groups (HashTypes-based)
 const FLOAT_TYPES = new Set<HashTypes>([HashTypes.Float32, HashTypes.Float64]);

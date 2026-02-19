@@ -1,4 +1,4 @@
-import { AccessLevel } from '@/karabo-hash/enums';
+import { AccessLevel } from '@/karabo/data/enums';
 
 export const getAccessLevelDisplay = (accessLevel?: number) => {
   if (accessLevel === undefined) return null;

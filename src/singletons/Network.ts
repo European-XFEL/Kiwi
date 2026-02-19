@@ -2,9 +2,9 @@ import { GuiServerInfo } from '@/features/login/auth.types';
 import { probeServer } from '@/features/login/utils';
 
 import AuthServerClient from '@/http/AuthServerClient';
-import { encodeBinary } from '@/karabo-hash/bin_writer';
-import { AccessLevel } from '@/karabo-hash/enums';
-import { Hash, HashList } from '@/karabo-hash/hash';
+import { encodeBinary } from '@/karabo/data/bin_writer';
+import { AccessLevel } from '@/karabo/data/enums';
+import { Hash, HashList } from '@/karabo/data/hash';
 import { Deque } from '@datastructures-js/deque';
 
 import { getConfig } from '@/singletons/api';

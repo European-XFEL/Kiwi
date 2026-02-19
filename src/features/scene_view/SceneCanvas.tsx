@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { sceneParamsFromURL } from '@/features/navigation/utils';
-import { LoadProjectSceneResult } from '@/karabo_data/ProjectDbInfo';
+import { LoadProjectSceneResult } from '@/lib/ProjectDbInfo';
 import { Scene } from '@/scene/Scene';
 import { getDbConn, getTopology } from '@/singletons/api';
 import { useGlobalStore } from '@/store/globalAppStateStore';

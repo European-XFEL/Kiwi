@@ -6,6 +6,6 @@ export type { UsePropertyProxyUpdate as UseDevicePropertyResult } from './useDev
 
 export { ProxyStatus, PropertyStatus } from './ProxyStatus';
 
-export { DEVICE_INDICATORS, PROPERTY_INDICATORS } from './OverlayIndicator';
+export { DEVICE_INDICATORS, PROPERTY_INDICATORS } from '../OverlayIndicator';
 
 export type { ProxyStatusIcon, ProxyBindingIcon } from './types';

@@ -1,4 +1,4 @@
-import { Hash, Schema } from '@/karabo-hash/hash';
+import { Hash, Schema } from '@/karabo/data/hash';
 import { DeviceProxy } from '@/lib/binding/DeviceProxy';
 
 export class SystemTopology {

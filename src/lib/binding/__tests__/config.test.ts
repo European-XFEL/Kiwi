@@ -1,8 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 
-import { Schema, Hash } from '@/karabo-hash/hash';
-import { decodeBinarySchema } from '@/karabo-hash/bin_reader';
+import { Schema, Hash } from '@/karabo/data/hash';
+import { decodeBinarySchema } from '@/karabo/data/bin_reader';
 import { buildBinding } from '@/lib/binding/BindingFactory';
 import { applyConfiguration } from '@/lib/binding/DeviceProxy';
 

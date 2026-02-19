@@ -1,4 +1,4 @@
-import { Hash } from '@/karabo-hash/hash';
+import { Hash } from '@/karabo/data/hash';
 type BroadCastHandler = (data: Hash) => void;
 
 export class Mediator {

@@ -1,4 +1,4 @@
-import { ProjectSceneInfo } from '@/karabo_data/ProjectDbInfo';
+import { ProjectSceneInfo } from '@/lib/ProjectDbInfo';
 
 export class ProjectSceneCache {
   static readonly ITEM_PREFIX = 'prjScene';

@@ -7,7 +7,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { sceneParamsFromURL } from '@/features/navigation/utils';
-import { LoadProjectSceneResult } from '@/karabo_data/ProjectDbInfo';
+import { LoadProjectSceneResult } from '@/lib/ProjectDbInfo';
 import { cn } from '@/shared/utils/cn';
 import { getDbConn } from '@/singletons/api';
 import { useGlobalStore } from '@/store/globalAppStateStore';

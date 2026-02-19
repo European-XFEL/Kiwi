@@ -6,7 +6,7 @@
 import React from 'react';
 import type { EvaluatorProps } from '@/scene/scene_types/controllers/display';
 import { FONT_FAMILY_DEFAULT } from '../utils/fontDefaults';
-import { HashTypes } from '@/karabo-hash/typenums';
+import { HashTypes } from '@/karabo/data/typenums';
 
 function coerceFloat(val: unknown): string {
   const num = typeof val === 'number' ? val : Number(val);

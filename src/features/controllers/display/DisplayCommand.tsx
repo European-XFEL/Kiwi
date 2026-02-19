@@ -3,7 +3,7 @@ import type { DisplayCommandProps } from '@/scene/scene_types/controllers';
 import { Button } from '@/components/ui/button';
 import { FONT_FAMILY_DEFAULT } from '../utils/fontDefaults';
 import { useGlobalStore } from '@/store/globalAppStateStore';
-import { AccessLevel } from '@/karabo-hash/enums';
+import { AccessLevel } from '@/karabo/data/enums';
 import { ProxyStatus } from '@/lib/binding/ProxyStatus';
 import { getNetwork } from '@/singletons/api';
 

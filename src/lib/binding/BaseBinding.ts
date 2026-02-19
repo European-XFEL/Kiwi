@@ -1,9 +1,9 @@
-import { State } from '@/karabo-hash/State';
-import { AccessLevel, AccessMode, Assignment } from '@/karabo-hash/enums';
-import { Timestamp } from '@/karabo-hash/timestamp';
-import { HashAttributes, Schema } from '@/karabo-hash/hash';
-import { HashTypes, XmlTypeToHashType } from '@/karabo-hash/typenums';
-import { WeakEvent } from './WeakEvent';
+import { State } from '@/karabo/data/State';
+import { AccessLevel, AccessMode, Assignment } from '@/karabo/data/enums';
+import { Timestamp } from '@/karabo/data/timestamp';
+import { HashAttributes, Schema } from '@/karabo/data/hash';
+import { HashTypes, XmlTypeToHashType } from '@/karabo/data/typenums';
+import { WeakEvent } from '../WeakEvent';
 import { buildNode } from '@/lib/binding/BindingFactory';
 
 import {
@@ -18,7 +18,7 @@ import {
   KARABO_SCHEMA_ALLOWED_STATES,
   KARABO_SCHEMA_VALUE_TYPE,
   KARABO_SCHEMA_ROW_SCHEMA,
-} from '@/karabo-hash/const';
+} from '@/karabo/data/const';
 
 export class BaseBinding<TValue = any> {
   protected _attributes!: HashAttributes;

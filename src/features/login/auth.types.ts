@@ -1,4 +1,4 @@
-import { AccessLevel } from '@/karabo-hash/enums';
+import { AccessLevel } from '@/karabo/data/enums';
 
 export enum ActivityStatus {
   NO_ACTIVITY = 'NO_ACTIVITY',

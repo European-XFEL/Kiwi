@@ -1,7 +1,7 @@
 import * as React from 'react';
 import type { EditableComboBoxProps } from '@/scene/scene_types/controllers';
 import { FONT_FAMILY_DEFAULT } from '../utils/fontDefaults';
-import { SimpleValueTypes } from '@/karabo-hash/types';
+import { SimpleValueTypes } from '@/karabo/data/types';
 
 const EditableComboBox: React.FC<EditableComboBoxProps> = ({
   font_size,

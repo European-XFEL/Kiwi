@@ -1,4 +1,4 @@
-import { Hash } from '@/karabo-hash/hash';
+import { Hash } from '@/karabo/data/hash';
 import { getMediator } from '@/singletons/api';
 import { useEffect, useRef } from 'react';
 

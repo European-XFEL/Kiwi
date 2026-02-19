@@ -1,19 +1,16 @@
 import * as React from 'react';
 import { getTopology } from '@/singletons/api';
-import type { HashValues } from '@/karabo-hash/hash';
-import type { HashTypes } from '@/karabo-hash/typenums';
+import type { HashValues } from '@/karabo/data/hash';
+import type { HashTypes } from '@/karabo/data/typenums';
 import { PropertyProxy } from '@/lib/binding/PropertyProxy';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { splitKaraboKeys } from './utils/splitKaraboKeys';
 import { ProxyStatus, PropertyStatus } from '@/lib/binding/ProxyStatus';
-import {
-  DEVICE_INDICATORS,
-  PROPERTY_INDICATORS,
-} from '@/lib/binding/OverlayIndicator';
+import { DEVICE_INDICATORS, PROPERTY_INDICATORS } from '@/lib/OverlayIndicator';
 import type { ProxyStatusIcon, ProxyBindingIcon } from '@/lib/binding/types';
-import { Timestamp } from '@/karabo-hash/timestamp';
+import { Timestamp } from '@/karabo/data/timestamp';
 import { BaseBinding } from './BaseBinding';
-import { AccessMode, AccessLevel } from '@/karabo-hash/enums';
+import { AccessMode, AccessLevel } from '@/karabo/data/enums';
 import { DeviceProxy } from './DeviceProxy';
 
 export interface UsePropertyProxyUpdate {

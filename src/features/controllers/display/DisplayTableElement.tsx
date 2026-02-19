@@ -11,9 +11,9 @@ import {
 } from '@/components/ui/table';
 
 import { formatTableCell, isNumericType } from './utils/formatTableCell';
-import { Hash } from '@/karabo-hash/hash';
+import { Hash } from '@/karabo/data/hash';
 import type { BaseBinding } from '@/lib/binding/BaseBinding';
-import type { SimpleValueTypes } from '@/karabo-hash/types';
+import type { SimpleValueTypes } from '@/karabo/data/types';
 
 type RowSchema = Record<string, BaseBinding>;
 type Column = { key: string; binding: BaseBinding };

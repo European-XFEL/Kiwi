@@ -1,5 +1,5 @@
 import { readScene } from '@/karabo-common/readers/readScene';
-import { Hash, HashList, HashValues } from '@/karabo-hash/hash';
+import { Hash, HashList, HashValues } from '@/karabo/data/hash';
 import {
   DbItemInfo,
   isProjectContentsInfo,
@@ -10,7 +10,7 @@ import {
   LoadProjectSceneResult,
   ProjectItemInfo,
   ProjectSceneInfo,
-} from '@/karabo_data/ProjectDbInfo';
+} from '@/lib/ProjectDbInfo';
 import { XMLParser } from 'fast-xml-parser';
 
 import { getNetwork } from '@/singletons/api';
