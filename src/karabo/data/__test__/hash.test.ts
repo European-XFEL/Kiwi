@@ -1,9 +1,9 @@
 import { Hash, HashList, Schema } from '@/karabo/data/hash';
-import { HashTypes } from '@/karabo/data/typenums';
+import { HashType } from '@/karabo/data/typenums';
 import {
   StringValue,
-  Float64Value,
-  VectorFloat64Value,
+  DoubleValue,
+  VectorDoubleValue,
 } from '@/karabo/data/types';
 
 import { flatIterall } from '@/karabo/data/utils';
@@ -365,7 +365,7 @@ describe('Karabo Hash Class Tests', () => {
       test('Schema satisfies KaraboValue protocol', () => {
         const schema = new Schema('Test', new Hash());
 
-        expect(schema.type_).toBe(HashTypes.Schema);
+        expect(schema.type_).toBe(HashType.Schema);
         // For Schema, value_ returns the instance itself
         expect(schema.value_).toBe(schema);
       });
@@ -381,7 +381,7 @@ describe('Karabo Hash Class Tests', () => {
         // 1. Check direct get() - returns the Schema instance
         const retrieved = root.get('meta');
         expect(retrieved).toBeInstanceOf(Schema);
-        expect(retrieved.type_).toBe(HashTypes.Schema);
+        expect(retrieved.type_).toBe(HashType.Schema);
         expect(retrieved.name).toBe('Embedded');
 
         // 2. Check getValue() - returns the Schema instance (value_ is self)
@@ -406,7 +406,7 @@ describe('Karabo Hash Class Tests', () => {
       test('HashList satisfies KaraboValue protocol', () => {
         const list = new HashList([]);
 
-        expect(list.type_).toBe(HashTypes.VectorHash);
+        expect(list.type_).toBe(HashType.VectorHash);
         // value_ should be the raw array
         expect(Array.isArray(list.value_)).toBe(true);
       });
@@ -421,7 +421,7 @@ describe('Karabo Hash Class Tests', () => {
         // 1. Check direct get() - returns the HashList instance
         const retrievedRaw = root.get('configurations');
         expect(retrievedRaw).toBeInstanceOf(HashList);
-        expect(retrievedRaw.type_).toBe(HashTypes.VectorHash);
+        expect(retrievedRaw.type_).toBe(HashType.VectorHash);
 
         // 2. Check getValue() - returns the Array<Hash>
         const retrievedVal = root.getValue('configurations');
@@ -492,8 +492,8 @@ describe('Karabo Hash Class Tests', () => {
         const karaboValues = new Map(out.map(([k, v]) => [k, v]));
 
         expect(karaboValues.get('a.b.c')).toBeInstanceOf(StringValue);
-        expect(karaboValues.get('a.b.d')).toBeInstanceOf(VectorFloat64Value);
-        expect(karaboValues.get('z')).toBeInstanceOf(Float64Value);
+        expect(karaboValues.get('a.b.d')).toBeInstanceOf(VectorDoubleValue);
+        expect(karaboValues.get('z')).toBeInstanceOf(DoubleValue);
       });
     });
 

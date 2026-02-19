@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { getTopology } from '@/singletons/api';
 import type { HashValues } from '@/karabo/data/hash';
-import type { HashTypes } from '@/karabo/data/typenums';
+import type { HashType } from '@/karabo/data/typenums';
 import { PropertyProxy } from '@/lib/binding/PropertyProxy';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { splitKaraboKeys } from './utils/splitKaraboKeys';
@@ -18,7 +18,7 @@ export interface UsePropertyProxyUpdate {
   value: HashValues | undefined;
   timestamp: Timestamp | undefined;
 
-  hashType: HashTypes | undefined;
+  hashType: HashType | undefined;
   deviceState: string | undefined;
 
   deviceId: string | undefined;
@@ -174,7 +174,7 @@ export function usePropertyProxy(
   const propertyIndicator =
     PROPERTY_INDICATORS.find((p) => p.status === propertyStatus) ?? undefined;
 
-  const hashType = (binding?.hashType as HashTypes | undefined) ?? undefined;
+  const hashType = (binding?.hashType as HashType | undefined) ?? undefined;
 
   return {
     binding,

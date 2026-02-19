@@ -177,13 +177,13 @@ class BinaryEncoder {
       return encodeVector(this, value.value_, (p, v) =>
         encodeUInt64(p, BigInt(v))
       );
-    } else if (value instanceof Types.Float32Value) {
+    } else if (value instanceof Types.FloatValue) {
       return encodeFloat32(this, value.value_);
-    } else if (value instanceof Types.VectorFloat32Value) {
+    } else if (value instanceof Types.VectorFloatValue) {
       return encodeVector(this, value.value_, encodeFloat32);
-    } else if (value instanceof Types.Float64Value) {
+    } else if (value instanceof Types.DoubleValue) {
       return encodeFloat64(this, value.value_);
-    } else if (value instanceof Types.VectorFloat64Value) {
+    } else if (value instanceof Types.VectorDoubleValue) {
       return encodeVector(this, value.value_, encodeFloat64);
     } else if (value instanceof Types.StringValue) {
       return encodeString(this, value.value_);

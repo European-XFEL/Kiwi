@@ -6,8 +6,8 @@ import { encodeXML, saveToFile } from '../xml_writer';
 import { decodeXML, loadFromFile } from '../xml_reader';
 import {
   BoolValue,
-  Float32Value,
-  Float64Value,
+  FloatValue,
+  DoubleValue,
   Int32Value,
   Int64Value,
   Int8Value,
@@ -16,8 +16,8 @@ import {
   UInt64Value,
   VectorBoolValue,
   VectorCharValue,
-  VectorFloat32Value,
-  VectorFloat64Value,
+  VectorFloatValue,
+  VectorDoubleValue,
   VectorInt32Value,
   VectorStringValue,
 } from '../types';
@@ -148,15 +148,15 @@ function create_hash(): Hash {
   // --- Floats ---
   // Float32 might lose precision in roundtrip if not careful,
   // but the XML reader reads it back as a JS number.
-  h.set('float32', new Float32Value(1.25));
-  h.set('float64', new Float64Value(Math.PI));
+  h.set('float32', new FloatValue(1.25));
+  h.set('float64', new DoubleValue(Math.PI));
 
   // --- Vectors ---
   h.set('v_string', new VectorStringValue(['one', 'two', 'three']));
   h.set('v_bool', new VectorBoolValue([true, false, true]));
   h.set('v_int32', new VectorInt32Value([1, 2, 3, 4]));
-  h.set('v_float32', new VectorFloat32Value([1.1, 2.2, 3.3]));
-  h.set('v_float64', new VectorFloat64Value([1.1, 2.2, 3.3]));
+  h.set('v_float32', new VectorFloatValue([1.1, 2.2, 3.3]));
+  h.set('v_float64', new VectorDoubleValue([1.1, 2.2, 3.3]));
 
   // --- Byte Array (Vector Char) ---
   const bytes = new Uint8Array([0xde, 0xad, 0xbe, 0xef]);

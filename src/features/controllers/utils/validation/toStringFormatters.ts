@@ -1,15 +1,15 @@
-import type { HashTypes } from '@/karabo/data/typenums';
+import type { HashType } from '@/karabo/data/typenums';
 import {
-  schemaSaysBool as isBoolType,
-  schemaSaysFloat as isFloatType,
-  schemaSaysInt as isIntegerType,
-  schemaSaysString as isStringType,
-  schemaSaysVector as isVectorType,
+  isHashBool as isBoolType,
+  isHashFloat as isFloatType,
+  isHashInteger as isIntegerType,
+  isHashString as isStringType,
+  isHashVector as isVectorType,
 } from './hashTypeIdentifiers';
 
 interface FormatScalarOptions {
   value: unknown;
-  hashType?: HashTypes;
+  hashType?: HashType;
   unit?: string;
   floatPrecision?: number;
 }

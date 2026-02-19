@@ -1,6 +1,6 @@
 import sax from 'sax';
 import { Hash, HashList, Schema } from './hash';
-import { HashTypes, XmlTypeToHashType } from './typenums';
+import { HashType, XmlTypeToHashType } from './typenums';
 import * as Types from './types';
 import * as fs from 'fs';
 
@@ -117,14 +117,14 @@ const read_xml_vector_uint64 = (data: string) =>
   new Types.VectorUInt64Value(parseXMLVectorBigInt(data));
 
 // --- Floats ---
-const read_xml_float32 = (data: string) =>
-  new Types.Float32Value(parseXMLNumber(data));
-const read_xml_float64 = (data: string) =>
-  new Types.Float64Value(parseXMLNumber(data));
-const read_xml_vector_float32 = (data: string) =>
-  new Types.VectorFloat32Value(parseXMLVectorNumber(data));
-const read_xml_vector_float64 = (data: string) =>
-  new Types.VectorFloat64Value(parseXMLVectorNumber(data));
+const read_xml_float = (data: string) =>
+  new Types.FloatValue(parseXMLNumber(data));
+const read_xml_double = (data: string) =>
+  new Types.DoubleValue(parseXMLNumber(data));
+const read_xml_vector_float = (data: string) =>
+  new Types.VectorFloatValue(parseXMLVectorNumber(data));
+const read_xml_vector_double = (data: string) =>
+  new Types.VectorDoubleValue(parseXMLVectorNumber(data));
 
 // --- Strings & Chars ---
 const read_xml_string = (data: string) => new Types.StringValue(data);
@@ -162,47 +162,47 @@ const read_xml_empty = (_data: string) => null;
 
 // ============================================================================
 
-const READER_MAP: Record<HashTypes, (data: string) => any> = {
-  [HashTypes.Bool]: read_xml_bool,
-  [HashTypes.VectorBool]: read_xml_vector_bool,
+const READER_MAP: Record<HashType, (data: string) => any> = {
+  [HashType.Bool]: read_xml_bool,
+  [HashType.VectorBool]: read_xml_vector_bool,
 
-  [HashTypes.Int8]: read_xml_int8,
-  [HashTypes.UInt8]: read_xml_uint8,
-  [HashTypes.VectorInt8]: read_xml_vector_int8,
-  [HashTypes.VectorUInt8]: read_xml_vector_uint8,
+  [HashType.Int8]: read_xml_int8,
+  [HashType.UInt8]: read_xml_uint8,
+  [HashType.VectorInt8]: read_xml_vector_int8,
+  [HashType.VectorUInt8]: read_xml_vector_uint8,
 
-  [HashTypes.Int16]: read_xml_int16,
-  [HashTypes.UInt16]: read_xml_uint16,
-  [HashTypes.VectorInt16]: read_xml_vector_int16,
-  [HashTypes.VectorUInt16]: read_xml_vector_uint16,
+  [HashType.Int16]: read_xml_int16,
+  [HashType.UInt16]: read_xml_uint16,
+  [HashType.VectorInt16]: read_xml_vector_int16,
+  [HashType.VectorUInt16]: read_xml_vector_uint16,
 
-  [HashTypes.Int32]: read_xml_int32,
-  [HashTypes.UInt32]: read_xml_uint32,
-  [HashTypes.VectorInt32]: read_xml_vector_int32,
-  [HashTypes.VectorUInt32]: read_xml_vector_uint32,
+  [HashType.Int32]: read_xml_int32,
+  [HashType.UInt32]: read_xml_uint32,
+  [HashType.VectorInt32]: read_xml_vector_int32,
+  [HashType.VectorUInt32]: read_xml_vector_uint32,
 
-  [HashTypes.Int64]: read_xml_int64,
-  [HashTypes.UInt64]: read_xml_uint64,
-  [HashTypes.VectorInt64]: read_xml_vector_int64,
-  [HashTypes.VectorUInt64]: read_xml_vector_uint64,
+  [HashType.Int64]: read_xml_int64,
+  [HashType.UInt64]: read_xml_uint64,
+  [HashType.VectorInt64]: read_xml_vector_int64,
+  [HashType.VectorUInt64]: read_xml_vector_uint64,
 
-  [HashTypes.Float32]: read_xml_float32,
-  [HashTypes.Float64]: read_xml_float64,
-  [HashTypes.VectorFloat32]: read_xml_vector_float32,
-  [HashTypes.VectorFloat64]: read_xml_vector_float64,
+  [HashType.Float]: read_xml_float,
+  [HashType.Double]: read_xml_double,
+  [HashType.VectorFloat]: read_xml_vector_float,
+  [HashType.VectorDouble]: read_xml_vector_double,
 
-  [HashTypes.String]: read_xml_string,
-  [HashTypes.VectorString]: read_xml_vector_string,
+  [HashType.String]: read_xml_string,
+  [HashType.VectorString]: read_xml_vector_string,
 
-  [HashTypes.Char]: read_xml_char,
-  [HashTypes.VectorChar]: read_xml_vector_char,
-  [HashTypes.ByteArray]: read_xml_vector_char,
+  [HashType.Char]: read_xml_char,
+  [HashType.VectorChar]: read_xml_vector_char,
+  [HashType.ByteArray]: read_xml_vector_char,
 
-  [HashTypes.Schema]: read_xml_schema,
-  [HashTypes.None_]: read_xml_empty,
+  [HashType.Schema]: read_xml_schema,
+  [HashType.None_]: read_xml_empty,
 
-  [HashTypes.Hash]: (d) => d,
-  [HashTypes.VectorHash]: (d) => d,
+  [HashType.Hash]: (d) => d,
+  [HashType.VectorHash]: (d) => d,
 };
 
 // ============================================================================
@@ -227,17 +227,17 @@ export class KaraboXmlParser {
     const parser = sax.parser(true, { trim: false });
 
     // Ensure parser errors are propagated
-    parser.onerror = (e) => {
+    parser.onerror = (e: any) => {
       throw e;
     };
 
-    parser.onopentag = (node) => {
+    parser.onopentag = (node: any) => {
       this.startElement(node.name, node.attributes as Record<string, string>);
     };
-    parser.ontext = (text) => {
+    parser.ontext = (text: any) => {
       this.characters(text);
     };
-    parser.onclosetag = (name) => {
+    parser.onclosetag = (name: any) => {
       this.endElement(name);
     };
 
@@ -283,7 +283,7 @@ export class KaraboXmlParser {
         const [dtypeStr, svalue] = v.split(':', 2);
         const dtype = XmlTypeToHashType[dtypeStr.substring(4)];
         if (
-          (dtype === HashTypes.Schema || dtype === HashTypes.VectorHash) &&
+          (dtype === HashType.Schema || dtype === HashType.VectorHash) &&
           svalue.startsWith('_attr_root_')
         ) {
           context.schemaAttrs?.add(svalue);
@@ -324,7 +324,7 @@ export class KaraboXmlParser {
         const dtype = XmlTypeToHashType[dtypeStr.substring(4)];
 
         if (dtype !== undefined) {
-          if (dtype === HashTypes.Schema || dtype === HashTypes.VectorHash) {
+          if (dtype === HashType.Schema || dtype === HashType.VectorHash) {
             // Handle Complex Schema Attributes
             if (
               svalue.startsWith('_attr_root_') &&
@@ -339,7 +339,7 @@ export class KaraboXmlParser {
             const reader = READER_MAP[dtype];
             if (!reader) {
               throw new Error(
-                `Missing reader for type: ${HashTypes[dtype] || dtype}`
+                `Missing reader for type: ${HashType[dtype] || dtype}`
               );
             }
             processedAttrs[key] = reader(svalue);

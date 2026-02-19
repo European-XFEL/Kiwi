@@ -1,5 +1,5 @@
 // Mock for karabo-ts to avoid ES module issues in Jest
-export const HashTypes = {
+export const HashType = {
   Bool: 0,
   VectorBool: 1,
   Char: 2,

@@ -4,11 +4,11 @@ import { FONT_FAMILY_DEFAULT } from '../utils/fontDefaults';
 
 import { scalarToString } from '@/features/controllers/utils/validation/toStringFormatters';
 import {
-  schemaSaysFloat,
-  schemaSaysInt,
-  schemaSaysVector,
-  schemaSaysBool,
-  schemaSaysString,
+  isHashFloat,
+  isHashInteger,
+  isHashVector,
+  isHashBool,
+  isHashString,
   type SchemaValueType,
 } from '@/features/controllers/utils/validation/hashTypeIdentifiers';
 
@@ -90,11 +90,11 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = ({
 
   const schemaFormat = React.useMemo(() => {
     return {
-      isInt: schemaSaysInt(schemaValueType),
-      isFloat: schemaSaysFloat(schemaValueType),
-      isVector: schemaSaysVector(schemaValueType),
-      isBool: schemaSaysBool(schemaValueType),
-      isString: schemaSaysString(schemaValueType),
+      isInt: isHashInteger(schemaValueType),
+      isFloat: isHashFloat(schemaValueType),
+      isVector: isHashVector(schemaValueType),
+      isBool: isHashBool(schemaValueType),
+      isString: isHashString(schemaValueType),
     };
   }, [schemaValueType]);
 

@@ -6,7 +6,7 @@
 import React from 'react';
 import type { EvaluatorProps } from '@/scene/scene_types/controllers/display';
 import { FONT_FAMILY_DEFAULT } from '../utils/fontDefaults';
-import { HashTypes } from '@/karabo/data/typenums';
+import { HashType } from '@/karabo/data/typenums';
 
 function coerceFloat(val: unknown): string {
   const num = typeof val === 'number' ? val : Number(val);
@@ -20,7 +20,7 @@ function toDisplayString(value: unknown, hashType?: number): string {
   if (value === null) return 'null';
 
   const isFloatType =
-    hashType === HashTypes.Float32 || hashType === HashTypes.Float64;
+    hashType === HashType.Float || hashType === HashType.Double;
 
   return isFloatType ? coerceFloat(value) : String(value);
 }
