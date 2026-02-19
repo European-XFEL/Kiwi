@@ -1,4 +1,4 @@
-export enum HashTypes {
+export enum HashType {
   Bool = 0,
   VectorBool = 1,
   Char = 2,
@@ -19,10 +19,10 @@ export enum HashTypes {
   VectorInt64 = 17,
   UInt64 = 18,
   VectorUInt64 = 19,
-  Float32 = 20,
-  VectorFloat32 = 21,
-  Float64 = 22,
-  VectorFloat64 = 23,
+  Float = 20,
+  VectorFloat = 21,
+  Double = 22,
+  VectorDouble = 23,
   String = 28,
   VectorString = 29,
   Hash = 30,
@@ -32,19 +32,19 @@ export enum HashTypes {
   ByteArray = 37,
 }
 
-export function getHashTypeFromValue(value: any): HashTypes {
+export function getHashTypeFromValue(value: any): HashType {
   if (value instanceof Uint8Array) {
-    return HashTypes.VectorChar;
+    return HashType.VectorChar;
   }
   switch (typeof value) {
     case 'string': {
-      return HashTypes.String;
+      return HashType.String;
     }
     case 'boolean': {
-      return HashTypes.Bool;
+      return HashType.Bool;
     }
     case 'bigint': {
-      return HashTypes.Int64;
+      return HashType.Int64;
     }
     case 'number': {
       return _getNumberType(value);
@@ -56,21 +56,21 @@ export function getHashTypeFromValue(value: any): HashTypes {
 
       if (Array.isArray(value)) {
         if (value.length === 0) {
-          return HashTypes.VectorString;
+          return HashType.VectorString;
         }
         const first = value[0];
         switch (typeof first) {
           case 'string': {
-            return HashTypes.VectorString;
+            return HashType.VectorString;
           }
           case 'number': {
             return _getNumberVector(first);
           }
           case 'boolean': {
-            return HashTypes.VectorBool;
+            return HashType.VectorBool;
           }
           case 'bigint': {
-            return HashTypes.VectorInt32;
+            return HashType.VectorInt32;
           }
           default: {
             break;
@@ -82,66 +82,66 @@ export function getHashTypeFromValue(value: any): HashTypes {
   }
 
   throw new Error(
-    `Cannot infer HashTypes from value: ${Object.prototype.toString.call(value)}`
+    `Cannot infer HashType from value: ${Object.prototype.toString.call(value)}`
   );
 }
 
-function _getNumberType(value: number): HashTypes {
+function _getNumberType(value: number): HashType {
   if (Number.isInteger(value)) {
-    return HashTypes.Int32;
+    return HashType.Int32;
   } else {
-    return HashTypes.Float64;
+    return HashType.Double;
   }
 }
 
-function _getNumberVector(value: number): HashTypes {
+function _getNumberVector(value: number): HashType {
   if (Number.isInteger(value)) {
-    return HashTypes.VectorInt32;
+    return HashType.VectorInt32;
   } else {
-    return HashTypes.VectorFloat64;
+    return HashType.VectorDouble;
   }
 }
 
-export const HashTypeToXmlType: Record<HashTypes, string> = {
-  [HashTypes.Bool]: 'BOOL',
-  [HashTypes.VectorBool]: 'VECTOR_BOOL',
-  [HashTypes.Char]: 'CHAR',
-  [HashTypes.VectorChar]: 'VECTOR_CHAR',
-  [HashTypes.Int8]: 'INT8',
-  [HashTypes.VectorInt8]: 'VECTOR_INT8',
-  [HashTypes.UInt8]: 'UINT8',
-  [HashTypes.VectorUInt8]: 'VECTOR_UINT8',
-  [HashTypes.Int16]: 'INT16',
-  [HashTypes.VectorInt16]: 'VECTOR_INT16',
-  [HashTypes.UInt16]: 'UINT16',
-  [HashTypes.VectorUInt16]: 'VECTOR_UINT16',
-  [HashTypes.Int32]: 'INT32',
-  [HashTypes.VectorInt32]: 'VECTOR_INT32',
-  [HashTypes.UInt32]: 'UINT32',
-  [HashTypes.VectorUInt32]: 'VECTOR_UINT32',
-  [HashTypes.Int64]: 'INT64',
-  [HashTypes.VectorInt64]: 'VECTOR_INT64',
-  [HashTypes.UInt64]: 'UINT64',
-  [HashTypes.VectorUInt64]: 'VECTOR_UINT64',
-  [HashTypes.Float32]: 'FLOAT',
-  [HashTypes.VectorFloat32]: 'VECTOR_FLOAT',
-  [HashTypes.Float64]: 'DOUBLE',
-  [HashTypes.VectorFloat64]: 'VECTOR_DOUBLE',
-  [HashTypes.String]: 'STRING',
-  [HashTypes.VectorString]: 'VECTOR_STRING',
-  [HashTypes.Hash]: 'HASH',
-  [HashTypes.VectorHash]: 'VECTOR_HASH',
-  [HashTypes.ByteArray]: 'BYTE_ARRAY',
-  [HashTypes.Schema]: 'SCHEMA',
-  [HashTypes.None_]: 'NONE',
+export const HashTypeToXmlType: Record<HashType, string> = {
+  [HashType.Bool]: 'BOOL',
+  [HashType.VectorBool]: 'VECTOR_BOOL',
+  [HashType.Char]: 'CHAR',
+  [HashType.VectorChar]: 'VECTOR_CHAR',
+  [HashType.Int8]: 'INT8',
+  [HashType.VectorInt8]: 'VECTOR_INT8',
+  [HashType.UInt8]: 'UINT8',
+  [HashType.VectorUInt8]: 'VECTOR_UINT8',
+  [HashType.Int16]: 'INT16',
+  [HashType.VectorInt16]: 'VECTOR_INT16',
+  [HashType.UInt16]: 'UINT16',
+  [HashType.VectorUInt16]: 'VECTOR_UINT16',
+  [HashType.Int32]: 'INT32',
+  [HashType.VectorInt32]: 'VECTOR_INT32',
+  [HashType.UInt32]: 'UINT32',
+  [HashType.VectorUInt32]: 'VECTOR_UINT32',
+  [HashType.Int64]: 'INT64',
+  [HashType.VectorInt64]: 'VECTOR_INT64',
+  [HashType.UInt64]: 'UINT64',
+  [HashType.VectorUInt64]: 'VECTOR_UINT64',
+  [HashType.Float]: 'FLOAT',
+  [HashType.VectorFloat]: 'VECTOR_FLOAT',
+  [HashType.Double]: 'DOUBLE',
+  [HashType.VectorDouble]: 'VECTOR_DOUBLE',
+  [HashType.String]: 'STRING',
+  [HashType.VectorString]: 'VECTOR_STRING',
+  [HashType.Hash]: 'HASH',
+  [HashType.VectorHash]: 'VECTOR_HASH',
+  [HashType.ByteArray]: 'BYTE_ARRAY',
+  [HashType.Schema]: 'SCHEMA',
+  [HashType.None_]: 'NONE',
 };
 
-export const XmlTypeToHashType: Record<string, HashTypes> = Object.entries(
+export const XmlTypeToHashType: Record<string, HashType> = Object.entries(
   HashTypeToXmlType
 ).reduce(
   (acc, [enumValue, xmlString]) => {
-    acc[xmlString] = Number(enumValue) as HashTypes;
+    acc[xmlString] = Number(enumValue) as HashType;
     return acc;
   },
-  {} as Record<string, HashTypes>
+  {} as Record<string, HashType>
 );

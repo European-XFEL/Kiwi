@@ -51,16 +51,14 @@ function readInt64(parser: BinaryDecoder): Types.Int64Value {
   return new Types.Int64Value(value);
 }
 
-function readFloat32(parser: BinaryDecoder): Types.Float32Value {
+function readFloat32(parser: BinaryDecoder): Types.FloatValue {
   parser.pos += 4;
-  return new Types.Float32Value(
-    parser.dataview.getFloat32(parser.pos - 4, true)
-  );
+  return new Types.FloatValue(parser.dataview.getFloat32(parser.pos - 4, true));
 }
 
-function readFloat64(parser: BinaryDecoder): Types.Float64Value {
+function readFloat64(parser: BinaryDecoder): Types.DoubleValue {
   parser.pos += 8;
-  return new Types.Float64Value(
+  return new Types.DoubleValue(
     parser.dataview.getFloat64(parser.pos - 8, true)
   );
 }
@@ -167,9 +165,9 @@ const parsers = [
   readUInt64, // UInt64 = 18
   buildVectorReader(readUInt64, Types.VectorUInt64Value), // VectorUInt64 = 19
   readFloat32, // Float = 20
-  buildVectorReader(readFloat32, Types.VectorFloat32Value), // VectorFloat = 21
+  buildVectorReader(readFloat32, Types.VectorFloatValue), // VectorFloat = 21
   readFloat64, // Double = 22
-  buildVectorReader(readFloat64, Types.VectorFloat64Value), // VectorDouble = 23
+  buildVectorReader(readFloat64, Types.VectorDoubleValue), // VectorDouble = 23
   (p: BinaryDecoder) => parserUndefined(p, 24), // ComplexFloat = 24
   (p: BinaryDecoder) => parserUndefined(p, 25), // VectorComplexFloat = 25
   (p: BinaryDecoder) => parserUndefined(p, 26), // ComplexDouble = 26

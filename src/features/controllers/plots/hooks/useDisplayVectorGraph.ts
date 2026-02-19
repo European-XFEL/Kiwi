@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { DisplayVectorGraphProps } from '@/scene/scene_types/controllers/display';
 import {
-  schemaSaysVector,
+  isHashVector,
   type SchemaValueType,
 } from '@/features/controllers/utils/validation/hashTypeIdentifiers';
 import { downsampleArray } from '../utils/lttb';
@@ -63,7 +63,7 @@ const normalizeVector = (
 ): number[] => {
   if (!raw) return [];
 
-  const schemaKnowsVector = schemaSaysVector(schemaValueType);
+  const schemaKnowsVector = isHashVector(schemaValueType);
   const isRuntimeVectorShape =
     Array.isArray(raw) ||
     (ArrayBuffer.isView(raw) && !(raw instanceof DataView));

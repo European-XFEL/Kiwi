@@ -2,7 +2,7 @@ import { State } from '@/karabo/data/State';
 import { AccessLevel, AccessMode, Assignment } from '@/karabo/data/enums';
 import { Timestamp } from '@/karabo/data/timestamp';
 import { HashAttributes, Schema } from '@/karabo/data/hash';
-import { HashTypes, XmlTypeToHashType } from '@/karabo/data/typenums';
+import { HashType, XmlTypeToHashType } from '@/karabo/data/typenums';
 import { WeakEvent } from '../WeakEvent';
 import { buildNode } from '@/lib/binding/BindingFactory';
 
@@ -25,7 +25,7 @@ export class BaseBinding<TValue = any> {
 
   value_update = new WeakEvent();
 
-  hashType = HashTypes.Hash;
+  hashType = HashType.Hash;
 
   timestamp?: Timestamp;
   value: TValue | undefined = undefined;

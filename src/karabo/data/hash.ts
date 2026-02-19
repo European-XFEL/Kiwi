@@ -1,4 +1,4 @@
-import { HashTypes, getHashTypeFromValue } from './typenums';
+import { HashType, getHashTypeFromValue } from './typenums';
 import { KaraboValue, castKaraboValue } from './types';
 
 const SEPARATOR = '.' as const;
@@ -102,7 +102,7 @@ export class HashElement {
 }
 
 export class Hash extends Map<string, HashElement> {
-  readonly type_ = HashTypes.Hash;
+  readonly type_ = HashType.Hash;
 
   public get value_(): Hash {
     return this;
@@ -427,7 +427,7 @@ export function wrapKaraboValue(value: any): HashValues {
 }
 
 export class Schema {
-  readonly type_ = HashTypes.Schema;
+  readonly type_ = HashType.Schema;
 
   constructor(
     public name: string,
@@ -440,7 +440,7 @@ export class Schema {
 }
 
 export class HashList extends Array<Hash> {
-  readonly type_ = HashTypes.VectorHash;
+  readonly type_ = HashType.VectorHash;
 
   constructor(values: number | Iterable<Hash> = []) {
     if (typeof values === 'number') super(values);

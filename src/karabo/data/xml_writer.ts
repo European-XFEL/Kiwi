@@ -1,5 +1,5 @@
 import { Hash, HashList, Schema } from './hash';
-import { HashTypes, HashTypeToXmlType } from './typenums';
+import { HashType, HashTypeToXmlType } from './typenums';
 import { escapeXml, quoteAttr, toBase64, unwrap } from './utils';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -104,44 +104,44 @@ function* yield_xml_hash(data: Hash): Generator<string> {
 
 // ============================================================================
 
-const WRITER_MAP: Partial<Record<HashTypes, (data: any) => Generator<string>>> =
+const WRITER_MAP: Partial<Record<HashType, (data: any) => Generator<string>>> =
   {
-    [HashTypes.Bool]: yield_xml_bool,
+    [HashType.Bool]: yield_xml_bool,
 
-    [HashTypes.Char]: yield_xml_simple,
-    [HashTypes.Int8]: yield_xml_simple,
-    [HashTypes.UInt8]: yield_xml_simple,
-    [HashTypes.Int16]: yield_xml_simple,
-    [HashTypes.UInt16]: yield_xml_simple,
-    [HashTypes.Int32]: yield_xml_simple,
-    [HashTypes.UInt32]: yield_xml_simple,
-    [HashTypes.Int64]: yield_xml_simple,
-    [HashTypes.UInt64]: yield_xml_simple,
-    [HashTypes.Float32]: yield_xml_simple,
-    [HashTypes.Float64]: yield_xml_simple,
+    [HashType.Char]: yield_xml_simple,
+    [HashType.Int8]: yield_xml_simple,
+    [HashType.UInt8]: yield_xml_simple,
+    [HashType.Int16]: yield_xml_simple,
+    [HashType.UInt16]: yield_xml_simple,
+    [HashType.Int32]: yield_xml_simple,
+    [HashType.UInt32]: yield_xml_simple,
+    [HashType.Int64]: yield_xml_simple,
+    [HashType.UInt64]: yield_xml_simple,
+    [HashType.Float]: yield_xml_simple,
+    [HashType.Double]: yield_xml_simple,
 
-    [HashTypes.VectorBool]: yield_xml_vector_bool,
-    [HashTypes.VectorChar]: yield_xml_vector_char,
+    [HashType.VectorBool]: yield_xml_vector_bool,
+    [HashType.VectorChar]: yield_xml_vector_char,
 
-    [HashTypes.VectorInt8]: yield_xml_vector_simple,
-    [HashTypes.VectorUInt8]: yield_xml_vector_simple,
-    [HashTypes.VectorInt16]: yield_xml_vector_simple,
-    [HashTypes.VectorUInt16]: yield_xml_vector_simple,
-    [HashTypes.VectorInt32]: yield_xml_vector_simple,
-    [HashTypes.VectorUInt32]: yield_xml_vector_simple,
-    [HashTypes.VectorInt64]: yield_xml_vector_simple,
-    [HashTypes.VectorUInt64]: yield_xml_vector_simple,
-    [HashTypes.VectorFloat32]: yield_xml_vector_simple,
-    [HashTypes.VectorFloat64]: yield_xml_vector_simple,
+    [HashType.VectorInt8]: yield_xml_vector_simple,
+    [HashType.VectorUInt8]: yield_xml_vector_simple,
+    [HashType.VectorInt16]: yield_xml_vector_simple,
+    [HashType.VectorUInt16]: yield_xml_vector_simple,
+    [HashType.VectorInt32]: yield_xml_vector_simple,
+    [HashType.VectorUInt32]: yield_xml_vector_simple,
+    [HashType.VectorInt64]: yield_xml_vector_simple,
+    [HashType.VectorUInt64]: yield_xml_vector_simple,
+    [HashType.VectorFloat]: yield_xml_vector_simple,
+    [HashType.VectorDouble]: yield_xml_vector_simple,
 
-    [HashTypes.String]: yield_xml_simple,
-    [HashTypes.VectorString]: yield_xml_vector_simple,
+    [HashType.String]: yield_xml_simple,
+    [HashType.VectorString]: yield_xml_vector_simple,
 
-    [HashTypes.Hash]: yield_xml_hash,
-    [HashTypes.VectorHash]: yield_xml_vector_hash,
-    [HashTypes.Schema]: yield_xml_schema,
-    [HashTypes.None_]: yield_xml_simple,
-    [HashTypes.ByteArray]: yield_xml_byte_array,
+    [HashType.Hash]: yield_xml_hash,
+    [HashType.VectorHash]: yield_xml_vector_hash,
+    [HashType.Schema]: yield_xml_schema,
+    [HashType.None_]: yield_xml_simple,
+    [HashType.ByteArray]: yield_xml_byte_array,
   };
 
 // ============================================================================

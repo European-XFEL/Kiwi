@@ -6,9 +6,9 @@ import type { DisplayVectorGraphProps } from '@/scene/scene_types/controllers/di
 import { useDisplayVectorGraph } from './hooks/useDisplayVectorGraph';
 
 import {
-  schemaSaysVector,
-  schemaSaysFloat,
-  schemaSaysInt,
+  isHashVector,
+  isHashFloat,
+  isHashInteger,
 } from '@/features/controllers/utils/validation/hashTypeIdentifiers';
 
 type PlotlyAxisType = 'linear' | 'log';
@@ -210,9 +210,9 @@ const DisplayVectorGraph: React.FC<DisplayVectorGraphProps> = React.memo(
               ? String(schemaValueType)
               : undefined
         }
-        data-schema-says-vector={schemaSaysVector(schemaValueType) || undefined}
-        data-schema-says-float={schemaSaysFloat(schemaValueType) || undefined}
-        data-schema-says-int={schemaSaysInt(schemaValueType) || undefined}
+        data-schema-says-vector={isHashVector(schemaValueType) || undefined}
+        data-schema-says-float={isHashFloat(schemaValueType) || undefined}
+        data-schema-says-int={isHashInteger(schemaValueType) || undefined}
       >
         <Plot
           data={plotlyData}

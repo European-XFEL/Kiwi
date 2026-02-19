@@ -5,7 +5,7 @@
 import React from 'react';
 import type { DisplayLineEditProps } from '@/scene/scene_types/controllers/display';
 import { FONT_FAMILY_DEFAULT } from '../utils/fontDefaults';
-import { HashTypes } from '@/karabo/data/typenums';
+import { HashType } from '@/karabo/data/typenums';
 
 const DisplayLineEdit: React.FC<DisplayLineEditProps> = ({
   font_size,
@@ -26,7 +26,7 @@ const DisplayLineEdit: React.FC<DisplayLineEditProps> = ({
     const displayUnit = binding?.unit_label;
     const propType = binding?.hashType;
 
-    if (propType === HashTypes.Float32 || propType === HashTypes.Float64) {
+    if (propType === HashType.Float || propType === HashType.Double) {
       const num = Number(value);
       const formatted = Number.isNaN(num)
         ? String(value)
