@@ -8,8 +8,8 @@
 import React from 'react';
 import type { DisplayLabelProps } from '@/scene/scene_types/controllers/display';
 import { FONT_FAMILY_DEFAULT } from '../utils/fontDefaults';
-import { formatScalarValueWithUnit } from '@/features/controllers/utils/validation/value_formatters';
-import type { SchemaValueType } from '@/features/controllers/utils/validation/schema_type_identifier';
+import { scalarToString } from '@/features/controllers/utils/validation/toStringFormatters';
+import type { SchemaValueType } from '@/features/controllers/utils/validation/hashTypeIdentifiers';
 
 const DisplayLabel: React.FC<DisplayLabelProps> = ({
   font_size,
@@ -34,7 +34,7 @@ const DisplayLabel: React.FC<DisplayLabelProps> = ({
      */
     const schemaValueType = binding?.hashType as SchemaValueType | undefined;
 
-    return formatScalarValueWithUnit({
+    return scalarToString({
       value,
       schemaValueType,
       unit,

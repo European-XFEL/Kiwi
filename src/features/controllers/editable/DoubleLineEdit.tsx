@@ -2,7 +2,7 @@ import * as React from 'react';
 import type { DoubleLineEditProps } from '@/scene/scene_types/controllers';
 import { FONT_FAMILY_DEFAULT } from '../utils/fontDefaults';
 
-import { formatScalarValueWithUnit } from '@/features/controllers/utils/validation/value_formatters';
+import { scalarToString } from '@/features/controllers/utils/validation/toStringFormatters';
 import {
   schemaSaysFloat,
   schemaSaysInt,
@@ -10,7 +10,7 @@ import {
   schemaSaysBool,
   schemaSaysString,
   type SchemaValueType,
-} from '@/features/controllers/utils/validation/schema_type_identifier';
+} from '@/features/controllers/utils/validation/hashTypeIdentifiers';
 
 function normalizeFontWeight(input?: string) {
   if (!input) return undefined;
@@ -128,7 +128,7 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = ({
 
       if (schemaFormat.isInt) {
         const intVal = Math.trunc(num);
-        return formatScalarValueWithUnit({
+        return scalarToString({
           value: intVal,
           schemaValueType,
           unit: '',
@@ -139,7 +139,7 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = ({
       if (!Number.isFinite(num)) return '';
 
       if (decimals === -1) {
-        return formatScalarValueWithUnit({
+        return scalarToString({
           value: num,
           schemaValueType,
           unit: '',
@@ -157,7 +157,7 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = ({
    */
   const formatForDisplay = React.useCallback(
     (val: unknown): string =>
-      formatScalarValueWithUnit({
+      scalarToString({
         value: val,
         schemaValueType,
         unit: unit || undefined,
