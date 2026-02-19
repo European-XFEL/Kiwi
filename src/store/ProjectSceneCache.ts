@@ -1,123 +1,45 @@
-import {
-  LoadProjectSceneResult,
-  ProjectSceneInfo,
-} from '@/karabo_data/ProjectDbInfo';
-import { getDbConn } from '@/singletons/api';
+import { ProjectSceneInfo } from '@/karabo_data/ProjectDbInfo';
 
 export class ProjectSceneCache {
   static readonly ITEM_PREFIX = 'prjScene';
   static readonly SEPARATOR = ':-:-:';
 
-  // #region Singleton support
-
-  private constructor() {}
-
-  private static _inst?: ProjectSceneCache;
-
-  public static get inst(): ProjectSceneCache {
-    if (ProjectSceneCache._inst === undefined) {
-      ProjectSceneCache._inst = new ProjectSceneCache();
-      // Performs a cache pruning on startup
-      setTimeout(() => {
-        ProjectSceneCache._inst!._pruneCache();
-      }, 0);
-      // Starts the periodic cache pruning loop
-      setInterval(
-        ProjectSceneCache._inst._pruneCache,
-        1000 * ProjectSceneCache.CACHE_PRUNE_INTERVAL_SECONDS
-      );
-    }
-    return ProjectSceneCache._inst;
+  public constructor() {
+    // Performs a cache pruning on startup
+    setTimeout(() => {
+      this._pruneCache();
+    }, 0);
+    // Starts the periodic cache pruning loop
+    setInterval(
+      this._pruneCache,
+      1000 * ProjectSceneCache.CACHE_PRUNE_INTERVAL_SECONDS
+    );
   }
-
-  // #endregion
 
   // #region Store and Get scene info
 
+  public getSceneInfo = (
+    domain: string,
+    uuid: string
+  ): ProjectSceneInfo | null => {
+    const infoValue = localStorage.getItem(this._getInfoKey(domain, uuid));
+    if (infoValue) {
+      // The scene has been found in the cache
+      const sceneInfo = JSON.parse(infoValue).info;
+      return sceneInfo;
+    } else {
+      return null;
+    }
+  };
+
   public storeSceneInfo(info: ProjectSceneInfo): void {
     localStorage.setItem(
-      this.#_getInfoKey(info.domain, info.uuid),
+      this._getInfoKey(info.domain, info.uuid),
       JSON.stringify({ info: info, savedAt: new Date() })
     );
   }
 
-  public getSceneInfoFromQueryParams = (
-    queryParams: string,
-    onProjectSceneInfo: (info: ProjectSceneInfo | null) => void
-  ): void => {
-    const sceneData = queryParams.match(
-      /^.*\?host=([^&]+)&port=([^&]+)&domain=([^&]+)&projectName=([^&]+)&uuid=([^&]+).*$/
-    );
-    if (sceneData) {
-      const domain = sceneData[3];
-      const projectName = sceneData[4];
-      const uuid = sceneData[5];
-      this._getSceneInfo(domain, projectName, uuid, onProjectSceneInfo);
-    } else {
-      onProjectSceneInfo(null);
-    }
-  };
-
-  _gettingSceneInfo: boolean = false;
-
-  private _getSceneInfo = (
-    domain: string,
-    projectName: string,
-    uuid: string,
-    onProjectSceneInfo: (info: ProjectSceneInfo | null) => void
-  ): void => {
-    if (this._gettingSceneInfo) {
-      // There's already a scene info operation taking place, postpone the
-      // execution of this to a later time
-      setTimeout(
-        this._getSceneInfo,
-        100,
-        domain,
-        projectName,
-        uuid,
-        onProjectSceneInfo
-      );
-    } else {
-      this._gettingSceneInfo = true;
-      this._getSceneInfoWorker(domain, projectName, uuid, onProjectSceneInfo);
-    }
-  };
-
-  private _getSceneInfoWorker = (
-    domain: string,
-    projectName: string,
-    uuid: string,
-    onProjectSceneInfo: (info: ProjectSceneInfo | null) => void
-  ): void => {
-    const infoValue = localStorage.getItem(this.#_getInfoKey(domain, uuid));
-    if (infoValue === null) {
-      getDbConn().getScene(
-        domain,
-        projectName,
-        uuid,
-        (result: LoadProjectSceneResult) => {
-          if (result.scene !== undefined) {
-            this.storeSceneInfo(result.scene);
-            onProjectSceneInfo(result.scene);
-          } else {
-            onProjectSceneInfo(null);
-            console.log(result.error_msg);
-          }
-          // NOTE: this assignment is internal to the callback and cannot be
-          // moved outside, or the enforcement of only one scene retrieval at
-          // a time via a network request would be lost.
-          this._gettingSceneInfo = false;
-        }
-      );
-    } else {
-      // The scene has been found in the cache
-      const sceneInfo = JSON.parse(infoValue).info;
-      onProjectSceneInfo(sceneInfo);
-      this._gettingSceneInfo = false;
-    }
-  };
-
-  #_getInfoKey = (domain: string, uuid: string): string => {
+  private _getInfoKey = (domain: string, uuid: string): string => {
     return `${ProjectSceneCache.ITEM_PREFIX}${ProjectSceneCache.SEPARATOR}${domain}${ProjectSceneCache.SEPARATOR}${uuid}`;
   };
 

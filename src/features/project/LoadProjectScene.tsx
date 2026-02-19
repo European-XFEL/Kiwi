@@ -1,11 +1,10 @@
-import { useState } from 'react';
-import { FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import SelectProjectSceneDialog from './SelectProjectSceneDialog';
 import { ProjectSceneInfo } from '@/karabo_data/ProjectDbInfo';
-import { useNavigate } from 'react-router-dom';
 import { useGlobalStore } from '@/store/globalAppStateStore';
-import { ProjectSceneCache } from '@/store/ProjectSceneCache';
+import { FolderOpen } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import SelectProjectSceneDialog from './SelectProjectSceneDialog';
 import type { LoadProjectSceneProps } from './types/project.types';
 
 export default function LoadProjectScene({
@@ -27,7 +26,6 @@ export default function LoadProjectScene({
 
   const handleSceneSelected = (selectedScene: ProjectSceneInfo) => {
     setOpenDialog(false);
-    ProjectSceneCache.inst.storeSceneInfo(selectedScene);
 
     if (!sessionInfo) return;
 

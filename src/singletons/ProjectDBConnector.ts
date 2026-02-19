@@ -1,19 +1,20 @@
-import { Hash, HashList, HashValues } from '@/karabo-hash/hash';
 import { readScene } from '@/karabo-common/readers/readScene';
-import { XMLParser } from 'fast-xml-parser';
+import { Hash, HashList, HashValues } from '@/karabo-hash/hash';
 import {
   DbItemInfo,
   isProjectContentsInfo,
   isSceneInfo,
-  ProjectItemInfo,
   ListProjectScenesResult,
   ListProjectsResult,
   LoadProjectItemsResult,
   LoadProjectSceneResult,
+  ProjectItemInfo,
   ProjectSceneInfo,
 } from '@/karabo_data/ProjectDbInfo';
+import { XMLParser } from 'fast-xml-parser';
 
 import { getNetwork } from '@/singletons/api';
+import { ProjectSceneCache } from '@/store/ProjectSceneCache';
 
 import {
   KaraboEvent,
@@ -24,10 +25,11 @@ import {
 
 export class ProjectDBConnector {
   private readonly eventMap: KaraboEventMap;
-  // The active loadItemHandler: onLoadScenesHash during a listScenes operation,
+  // The active loadItemHandler: onLoadItemsHash during a listScenes operation,
   // onLoadSceneHash during a getScene operation or undefined while none of
   // those operations are taking place
   private _activeLoadItemsHandler?: (hash: Hash) => void;
+  private _sceneCache = new ProjectSceneCache();
 
   public constructor() {
     this.eventMap = {
@@ -236,22 +238,27 @@ export class ProjectDBConnector {
     uuid: string,
     onScene: (loadSceneResult: LoadProjectSceneResult) => void
   ): void {
-    // Stores the callback to be called when the GUI Server sends back the scene.
-    if (this._onGetSceneCallback || this._onListScenesCallback) {
-      // There's already a pending getScene or listScene operation. Refuse the new request.
-      // Those operations can't be concurrently executed because they handle "projectLoadItems"
-      // hashes sent by the GUI Server differently.
-      const loadSceneResult: LoadProjectSceneResult = {
-        scene: undefined,
-        error_msg:
-          "There's already a pending getScene operation. Cannot start a new one!",
+    const sceneInfo = this._sceneCache.getSceneInfo(domain, uuid);
+    if (sceneInfo) {
+      // Scene was found in cache - call the onScene handler and leave
+      const loadSceneResult = {
+        scene: sceneInfo,
+        error_msg: undefined,
       };
       onScene(loadSceneResult);
       return;
     }
+    // Stores the callback to be called when the GUI Server sends back the scene.
+    if (this._onGetSceneCallback || this._onListScenesCallback) {
+      // There's already a pending getScene or listScene operation. Postpone the request.
+      // Those operations can't be concurrently executed because they handle "projectLoadItems"
+      // hashes sent by the GUI Server differently.
+      setTimeout(() => this.getScene(domain, projectName, uuid, onScene), 100);
+      return;
+    }
     // Registers the handler for handling projectLoadItems messages from the GUI Server
     // for the duration of the getScene operation.
-    this._activeLoadItemsHandler = this.#_onLoadSceneHash;
+    this._activeLoadItemsHandler = this._onLoadSceneHash;
 
     this._onGetSceneCallback = onScene;
     this._projectName = projectName;
@@ -262,10 +269,10 @@ export class ProjectDBConnector {
     );
   }
 
-  // The callback to be registered by an external caller for the getScene operation.
+  // The callback to be registered by an external caller of the getScene operation.
   _onGetSceneCallback?: (scenesInfo: LoadProjectSceneResult) => void;
 
-  #_onLoadSceneHash = (hash: Hash): void => {
+  private _onLoadSceneHash = (hash: Hash): void => {
     let itemsInfo: LoadProjectItemsResult | undefined = undefined;
     let loadSceneErr: string | undefined = undefined;
     try {
@@ -299,6 +306,7 @@ export class ProjectDBConnector {
       });
     } else {
       const sceneInfo = itemsInfo!.projectItems[0] as ProjectSceneInfo;
+      this._sceneCache.storeSceneInfo(sceneInfo);
       this._onGetSceneCallback?.({
         scene: {
           domain: sceneInfo.domain,
