@@ -5,6 +5,8 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
 
+type Direction = 'horizontal' | 'vertical';
+
 export type LogoProps = React.HTMLAttributes<HTMLDivElement> & {
   imageUrl?: string;
   logoText?: string;
@@ -41,4 +43,19 @@ export type NavToggleProps = {
   primaryAction?: React.ReactNode;
   triggerButtonProps?: React.ComponentProps<typeof Button>;
   children?: React.ReactNode;
+};
+
+export type Logo = {
+  className?: string;
+  imageUrl?: string;
+  logoText?: string;
+};
+
+export type NavbarProps = {
+  className?: string;
+  logo?: Logo;
+  children: React.ReactNode;
+  /** Layout direction: 'horizontal' (top navbar) or 'vertical' (sidebar). */
+  direction?: Direction;
+  gapClassName?: string /** Optional gap between items (e.g., 'gap-2', 'gap-4'). */;
 };

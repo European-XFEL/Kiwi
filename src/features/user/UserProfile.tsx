@@ -11,7 +11,22 @@ import {
 
 import { getNetwork } from '@/singletons/api';
 import { useGlobalStore } from '@/store/globalAppStateStore';
-import { getInitials } from '@/shared/utils/getInitials';
+
+const getInitials = (text?: string): string => {
+  if (!text) return '?';
+
+  const trimmed = text.trim();
+  const words = trimmed.split(/\s+/);
+
+  if (words.length === 1) {
+    return trimmed.charAt(0).toUpperCase();
+  }
+
+  return words
+    .slice(0, 2)
+    .map((word) => word.charAt(0).toUpperCase())
+    .join('');
+};
 
 export default function UserInfo() {
   const { sessionInfo, setLoggedOut } = useGlobalStore();
