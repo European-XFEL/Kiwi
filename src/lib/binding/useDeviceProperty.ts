@@ -14,6 +14,7 @@ import type { ProxyStatusIcon, ProxyBindingIcon } from '@/lib/binding/types';
 import { Timestamp } from '@/karabo-hash/timestamp';
 import { BaseBinding } from './BaseBinding';
 import { AccessMode, AccessLevel } from '@/karabo-hash/enums';
+import { DeviceProxy } from './DeviceProxy';
 
 export interface UsePropertyProxyUpdate {
   binding: BaseBinding | undefined;
@@ -46,6 +47,23 @@ interface RootProxyValue {
   proxyStatus: ProxyStatus;
 }
 
+type ProxyStore = {
+  root: DeviceProxy;
+  proxy: PropertyProxy;
+  updaters: Array<() => void>;
+};
+
+const EMPTY_PROXY: ProxyValue = {
+  binding: undefined,
+  value: undefined,
+  timestamp: undefined,
+};
+
+const EMPTY_ROOT: RootProxyValue = {
+  deviceState: undefined,
+  proxyStatus: ProxyStatus.OFFLINE,
+};
+
 export function usePropertyProxy(
   karaboKeys: string | undefined
 ): UsePropertyProxyUpdate {
@@ -58,69 +76,49 @@ export function usePropertyProxy(
     (s) => s.sessionInfo?.accessLevel ?? AccessLevel.OBSERVER
   );
 
-  const [proxyData, setProxyData] = React.useState<ProxyValue>(() => ({
-    binding: undefined,
-    value: undefined,
-    timestamp: undefined,
-  }));
+  const storeRef = React.useRef<ProxyStore | null>(null);
 
+  const [proxyData, setProxyData] = React.useState<ProxyValue>(
+    () => EMPTY_PROXY
+  );
   const [rootProxyData, setRootProxyData] = React.useState<RootProxyValue>(
-    () => ({
-      deviceState: undefined,
-      proxyStatus: ProxyStatus.OFFLINE,
-    })
+    () => EMPTY_ROOT
   );
 
   React.useEffect(() => {
+    // Keys invalid => tear down everything and reset.
     if (!deviceId || !propertyPath) {
-      setProxyData({
-        binding: undefined,
-        value: undefined,
-        timestamp: undefined,
-      });
-      setRootProxyData({
-        deviceState: undefined,
-        proxyStatus: ProxyStatus.OFFLINE,
-      });
+      storeRef.current?.updaters.forEach((fn) => fn());
+      storeRef.current = null;
+      setProxyData(EMPTY_PROXY);
+      setRootProxyData(EMPTY_ROOT);
       return;
     }
 
-    const root_proxy = getTopology().getDevice(deviceId);
-    const removeMonitor = root_proxy.addMonitor();
-    const proxy = new PropertyProxy(root_proxy, propertyPath);
+    // Create instances once for stable keys.
+    if (!storeRef.current) {
+      const root = getTopology().getDevice(deviceId);
+      const proxy = new PropertyProxy(root, propertyPath);
+      storeRef.current = { root, proxy, updaters: [] };
+    }
 
-    setRootProxyData({
-      deviceState: root_proxy.state,
-      proxyStatus: root_proxy.status,
-    });
+    const store = storeRef.current;
+    const { root, proxy } = store;
+
+    store.updaters.forEach((fn) => fn());
+    store.updaters = [];
+
+    // Initial snapshot
+    setRootProxyData({ deviceState: root.state, proxyStatus: root.status });
     setProxyData({
       binding: proxy.binding,
       value: proxy.value,
       timestamp: proxy.timestamp,
     });
 
-    const removeValueUpdate = proxy.value_update((p) => {
-      setProxyData({
-        binding: p.binding,
-        value: p.value,
-        timestamp: p.timestamp,
-      });
-    });
-
-    const removeSchemaMonitor = root_proxy.binding_update(() => {
-      setProxyData((prev) =>
-        prev.binding === proxy.binding
-          ? prev
-          : { ...prev, binding: proxy.binding }
-      );
-    });
-
-    const updateRootProxyData = () => {
+    const updateRoot = () => {
       setRootProxyData((prev) => {
-        const next = {
-          deviceState: root_proxy.state,
-          proxyStatus: root_proxy.status,
-        };
+        const next = { deviceState: root.state, proxyStatus: root.status };
         return prev.deviceState === next.deviceState &&
           prev.proxyStatus === next.proxyStatus
           ? prev
@@ -128,16 +126,35 @@ export function usePropertyProxy(
       });
     };
 
-    const removeState = root_proxy.state_update.subscribe(updateRootProxyData);
-    const removeStatus =
-      root_proxy.status_update.subscribe(updateRootProxyData);
+    store.updaters.push(root.addMonitor());
+
+    store.updaters.push(
+      proxy.value_update((p) => {
+        setProxyData({
+          binding: p.binding,
+          value: p.value,
+          timestamp: p.timestamp,
+        });
+      })
+    );
+
+    store.updaters.push(
+      root.binding_update(() => {
+        setProxyData((prev) =>
+          prev.binding === proxy.binding
+            ? prev
+            : { ...prev, binding: proxy.binding }
+        );
+      })
+    );
+
+    store.updaters.push(root.state_update.subscribe(updateRoot));
+    store.updaters.push(root.status_update.subscribe(updateRoot));
 
     return () => {
-      removeMonitor();
-      removeValueUpdate();
-      removeSchemaMonitor();
-      removeState();
-      removeStatus();
+      store.updaters.forEach((fn) => fn());
+      store.updaters = [];
+      // NOTE: keep storeRef.current to keep proxies
     };
   }, [deviceId, propertyPath]);
 
