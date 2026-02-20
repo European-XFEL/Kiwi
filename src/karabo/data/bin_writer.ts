@@ -205,9 +205,9 @@ class BinaryEncoder {
   encodeKey(key: string): ArrayBuffer {
     const buff = this.encoder.encode(key);
     const ret = new Uint8Array(buff.length + 1);
-    const dv = new DataView(ret.buffer);
-    ret.set(new Uint8Array(buff), 1);
-    dv.setUint8(0, buff.length);
+    ret[0] = buff.length;
+    // Pass the original buffer
+    ret.set(buff, 1);
     return ret.buffer;
   }
 
