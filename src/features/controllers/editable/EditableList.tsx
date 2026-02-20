@@ -8,8 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+} from '@/components/dialog';
+import { Button } from '@/components/button';
 
 function formatListValue(v: unknown): string {
   if (Array.isArray(v)) return v.map(String).join(', ');

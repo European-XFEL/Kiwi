@@ -1,7 +1,7 @@
 import React from 'react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/input';
+import { Label } from '@/components/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/card';
 
 export type ServerProbeFormProps = {
   host: string;

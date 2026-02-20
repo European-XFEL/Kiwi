@@ -1,4 +1,4 @@
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea } from '@/components/scroll-area';
 import {
   Table,
   TableBody,
@@ -6,7 +6,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from '@/components/table';
 import { asLocalDateTimeString } from '@/lib/ProjectDbInfo';
 import type { ScenesTableProps } from '../types/project.types';
 

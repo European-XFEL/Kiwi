@@ -1,14 +1,14 @@
 import { useRef } from 'react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Input } from '@/components/input';
+import { Label } from '@/components/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+} from '@/components/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/card';
 import { AccessLevel } from '@/karabo/data/enums';
 
 export type AccessLevelFormProps = {

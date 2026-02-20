@@ -1,5 +1,5 @@
-import { Spinner } from '@/components/ui/spinner';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Spinner } from '@/components/spinner';
+import { Alert, AlertDescription } from '@/components/alert';
 import { AlertCircle } from 'lucide-react';
 
 export type LoginStatusProps = {

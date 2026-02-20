@@ -1,11 +1,7 @@
 import { FilterIcon, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Button } from '@/components/button';
+import { Input } from '@/components/input';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tooltip';
 import type { ProjectFilterProps } from '../types/project.types';
 
 export default function ProjectFilter({

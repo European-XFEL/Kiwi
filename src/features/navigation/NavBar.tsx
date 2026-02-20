@@ -7,8 +7,8 @@ import { LoadProjectScene, SceneBreadcrumb } from '@/features/project';
 import Logo from './components/Logo';
 import { SceneStatus } from '@/features/scene_view';
 import { UserProfile, AccessLevelSelector } from '@/features/user';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/button';
+import { Separator } from '@/components/separator';
 import { GuiServerDisplay, ActiveIndicator } from '@/features/status';
 import { useLocation } from 'react-router-dom';
 

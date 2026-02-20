@@ -8,7 +8,7 @@ import AuthServerClient from '@/http/AuthServerClient';
 import { BrowserRouter } from 'react-router-dom';
 import AppRouter from './router/AppRouter';
 import { appRoutes } from './routes';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { TooltipProvider } from '@/components/tooltip';
 
 const App: React.FC = () => {
   const executedOnceRef = React.useRef('');
