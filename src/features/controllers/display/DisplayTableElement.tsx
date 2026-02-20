@@ -46,12 +46,8 @@ const DisplayTableElement: React.FC<DisplayTableElementProps> = ({
   primary,
 }) => {
   const title = tooltipText || disabledReason || '';
-
   const raw = primary?.value;
-  const rowSchema = (primary as any)?.binding?.rowSchema as
-    | RowSchema
-    | undefined;
-
+  const rowSchema = (primary as any)?.binding?.rowSchema as RowSchema;
   const columns = React.useMemo(() => toColumns(rowSchema), [rowSchema]);
   const columnKeys = React.useMemo(
     () => columns.map(({ key }) => key),
@@ -100,7 +96,7 @@ const DisplayTableElement: React.FC<DisplayTableElementProps> = ({
                   >
                     {columns.map(({ key, binding }, columnIndex) => {
                       const cell = row[columnIndex];
-                      const numeric = isNumericType(binding.valueType);
+                      const numeric = isNumericType(binding.hashType);
 
                       const value = formatTableCell(cell, binding);
 
