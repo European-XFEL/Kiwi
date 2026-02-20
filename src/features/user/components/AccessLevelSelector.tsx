@@ -6,9 +6,9 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+} from '@/components/dropdown-menu';
+import { Button } from '@/components/button';
+import { Badge } from '@/components/badge';
 import { useAccessLevel } from '@/features/user/hooks/useAccessLevel';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { AccessLevel } from '@/karabo/data/enums';

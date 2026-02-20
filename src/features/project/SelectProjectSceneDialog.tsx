@@ -6,11 +6,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '@/components/dialog';
 import { Hash } from '@/karabo/data/hash';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/button';
+import { Card, CardContent } from '@/components/card';
+import { Separator } from '@/components/separator';
 import { getDbConn } from '@/singletons/api';
 import { ProjectItemInfo, ProjectSceneInfo } from '@/lib/ProjectDbInfo';
 import { useGlobalStore } from '@/store/globalAppStateStore';

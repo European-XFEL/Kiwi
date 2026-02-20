@@ -1,6 +1,6 @@
-import { Separator } from '@/components/ui/separator';
+import { Separator } from '@/components/separator';
 import Header from '../layouts/Header';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/card';
 import { AlertTriangle } from 'lucide-react';
 
 const ErrorState = ({ error }: { error: string }) => (

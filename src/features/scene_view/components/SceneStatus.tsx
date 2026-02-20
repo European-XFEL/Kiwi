@@ -1,11 +1,11 @@
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/badge';
+import { Button } from '@/components/button';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from '@/components/tooltip';
 import { sceneParamsFromURL } from '@/features/navigation/utils';
 import { LoadProjectSceneResult } from '@/lib/ProjectDbInfo';
 import { cn } from '@/shared/utils/cn';

@@ -5,12 +5,12 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
+} from '@/components/breadcrumb';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@/components/dropdown-menu';
 import { ProjectItemInfo, ProjectSceneInfo } from '@/lib/ProjectDbInfo';
 import { cn } from '@/shared/utils/cn';
 import { getDbConn } from '@/singletons/api';

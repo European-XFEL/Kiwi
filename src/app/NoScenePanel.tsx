@@ -5,7 +5,7 @@ import { useGlobalStore } from '@/store/globalAppStateStore';
 import useRecentStore from '@/store/recentScenesStore';
 import { RecentScenesList } from '@/features/project';
 import BookmarkInfo from './components/BookmarkInfo';
-import { Separator } from '@/components/ui/separator';
+import { Separator } from '@/components/separator';
 
 const NoScenePanel: React.FC = () => {
   const { sessionInfo } = useGlobalStore();

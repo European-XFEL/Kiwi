@@ -5,7 +5,7 @@
 
 import * as React from 'react';
 import type { DisplayCheckBoxProps } from '@/scene/scene_types/controllers';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Checkbox } from '@/components/checkbox';
 import { FONT_FAMILY_DEFAULT } from '../utils/fontDefaults';
 
 const CHECKBOX_CLASSNAME =

@@ -1,7 +1,7 @@
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Spinner } from '@/components/ui/spinner';
+import { Alert, AlertDescription, AlertTitle } from '@/components/alert';
+import { Button } from '@/components/button';
+import { Card, CardContent } from '@/components/card';
+import { Spinner } from '@/components/spinner';
 import { sceneParamsFromURL } from '@/features/navigation/utils';
 import { LoadProjectSceneResult } from '@/lib/ProjectDbInfo';
 import { Scene } from '@/scene/Scene';

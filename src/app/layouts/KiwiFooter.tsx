@@ -1,4 +1,4 @@
-import { Separator } from '@/components/ui/separator';
+import { Separator } from '@/components/separator';
 import { TopicDisplay, GuiServerDisplay } from '@/features/status';
 import { ConnectionTimer } from '@/features/user';
 import { SceneSizeDisplay } from '@/features/scene_view';

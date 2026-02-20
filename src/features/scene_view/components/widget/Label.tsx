@@ -5,7 +5,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from '@/components/tooltip';
 
 const Label: React.FC<LabelProps> = (props) => {
   const spanRef = React.useRef<HTMLSpanElement>(null);

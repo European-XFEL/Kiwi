@@ -4,7 +4,7 @@ import {
   TooltipContent,
   TooltipTrigger,
   TooltipProvider,
-} from '@/components/ui/tooltip';
+} from '@/components/tooltip';
 import type { UsePropertyProxyUpdate } from '@/lib/binding/useDeviceProperty';
 import { ProxyStatus, PropertyStatus } from '@/lib/binding/ProxyStatus';
 import { XIcon } from 'lucide-react';

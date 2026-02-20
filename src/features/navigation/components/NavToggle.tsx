@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/button';
 import { X } from 'lucide-react';
 import {
   Sheet,
@@ -10,7 +10,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from '@/components/ui/sheet';
+} from '@/components/sheet';
 import type { NavToggleProps } from '../types/navigation.types';
 
 export default function NavToggle({

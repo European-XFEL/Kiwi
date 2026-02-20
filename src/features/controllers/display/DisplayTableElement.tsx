@@ -8,7 +8,7 @@ import {
   TableHead,
   TableRow,
   TableCell,
-} from '@/components/ui/table';
+} from '@/components/table';
 
 import { formatTableCell, isNumericType } from './utils/formatTableCell';
 import { Hash } from '@/karabo/data/hash';

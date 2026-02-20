@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/button';
 import { ProjectSceneInfo } from '@/lib/ProjectDbInfo';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { FolderOpen } from 'lucide-react';
