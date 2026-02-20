@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { Position } from '@/shared/types';
+import type { Position } from './types';
 
 export type HeaderProps = React.HTMLAttributes<HTMLElement> & {
   position?: Position;

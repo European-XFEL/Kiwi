@@ -1,9 +1,6 @@
 import { useMemo } from 'react';
 import type { DisplayVectorGraphProps } from '@/scene/scene_types/controllers/display';
-import {
-  isHashVector,
-  type SchemaValueType,
-} from '@/features/controllers/utils/validation/hashTypeIdentifiers';
+import { isHashVector } from '@/features/controllers/utils/validation/hashTypeIdentifiers';
 import { downsampleArray } from '../utils/lttb';
 
 export type VectorPrimary = DisplayVectorGraphProps['primary'];
@@ -19,7 +16,7 @@ export const DEFAULT_CONFIG: Required<UseDisplayVectorGraphConfig> = {
 export interface UseDisplayVectorGraphResult {
   vectorData: number[];
   indices: number[];
-  schemaValueType?: SchemaValueType;
+  schemaValueType?: any;
   isOffline: boolean;
   rawLength: number;
 }
@@ -39,9 +36,7 @@ const chooseTargetPoints = (length: number, defaultThreshold: number) => {
   return Math.min(target, length);
 };
 
-const getSchemaValueType = (
-  primary: VectorPrimary
-): SchemaValueType | undefined =>
+const getSchemaValueType = (primary: VectorPrimary): any | undefined =>
   (primary as any)?.valueType ?? primary?.binding?.hashType;
 
 const toNumberSafe = (v: unknown): number | null => {
@@ -57,10 +52,7 @@ const toNumberSafe = (v: unknown): number | null => {
   return null;
 };
 
-const normalizeVector = (
-  raw: unknown,
-  schemaValueType?: SchemaValueType
-): number[] => {
+const normalizeVector = (raw: unknown, schemaValueType?: any): number[] => {
   if (!raw) return [];
 
   const schemaKnowsVector = isHashVector(schemaValueType);

@@ -61,7 +61,7 @@ function* yield_xml_schema(data: any): Generator<string> {
 
 function* yield_xml_hash(data: Hash): Generator<string> {
   for (const [key, value, attrs] of data.iterall()) {
-    const valueType = value.type_;
+    const valueType = value.type_ as HashType;
     const valueTypeName = HashTypeToXmlType[valueType];
     const valueWriter = WRITER_MAP[valueType];
 
@@ -71,14 +71,16 @@ function* yield_xml_hash(data: Hash): Generator<string> {
     // Attributes
     if (attrs) {
       for (const [attrKey, attrVal] of Object.entries(attrs)) {
-        const attrType = attrVal.type_;
+        const attrType = attrVal.type_ as HashType;
         const attrTypeName = HashTypeToXmlType[attrType];
         let attrDataString = '';
         if (attrTypeName) {
           // It is a Karabo Attribute (Typed)
           const attrWriter = WRITER_MAP[attrType];
-          const generator = attrWriter(attrVal);
-
+          // Since the attrType has been successfuly used as an index to obtain
+          // the attrTypeName, the attrType can be trusted as a WRITER_MAP key
+          // and hence the attrWriter! below should be trustable as well.
+          const generator = attrWriter!(attrVal);
           for (const chunk of generator) {
             attrDataString += chunk;
           }
@@ -95,7 +97,7 @@ function* yield_xml_hash(data: Hash): Generator<string> {
     yield '>';
 
     // Value Content
-    yield* valueWriter(value);
+    yield* valueWriter!(value);
 
     // Close Tag
     yield `</${key}>`;
@@ -147,7 +149,7 @@ const WRITER_MAP: Partial<Record<HashType, (data: any) => Generator<string>>> =
 // ============================================================================
 
 function* yieldXML(data: Hash): Generator<string> {
-  const keys = data.keys();
+  const keys = Array.from(data.keys());
   const size = keys.length;
 
   if (size === 1) {

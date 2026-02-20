@@ -113,7 +113,7 @@ function readVectorString(parser: BinaryDecoder): Types.VectorStringValue {
 function buildVectorReader(elementReader: any, klass: any) {
   return (parser: BinaryDecoder) => {
     let size = readUInt32(parser).value_;
-    const slice_ = [];
+    const slice_: any[] = [];
     while (size > 0) {
       const element = elementReader(parser);
       slice_.push(element.value_);
@@ -139,7 +139,7 @@ function readSchema(parser: BinaryDecoder): Schema {
   return new Schema(name, hsh);
 }
 
-function parserUndefined(parser: BinaryDecoder, type: number): any {
+function parserUndefined(_parser: BinaryDecoder, type: number): any {
   throw new Error(`Parser not Implemented ${type}`);
 }
 

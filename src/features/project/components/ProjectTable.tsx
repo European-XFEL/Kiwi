@@ -1,3 +1,4 @@
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Table,
   TableBody,
@@ -6,8 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { ProjectItemInfo, asLocalDateTimeString } from '@/lib/ProjectDbInfo';
+import { asLocalDateTimeString } from '@/lib/ProjectDbInfo';
 import type { ProjectsTableProps } from '../types/project.types';
 
 export default function ProjectsTable({

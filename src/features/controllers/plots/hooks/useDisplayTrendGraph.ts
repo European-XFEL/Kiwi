@@ -28,7 +28,7 @@ const toFiniteNumber = (raw: unknown): number | null => {
 const safeNowMs = (primary?: UseDevicePropertyResult): number => {
   try {
     // TODO: Check time
-    return primary?.timestamp ? primary.timestamp.toMilliseconds() : Date.now();
+    return primary?.timestamp ? primary.timestamp.toTimestamp() : Date.now();
   } catch {
     return Date.now();
   }

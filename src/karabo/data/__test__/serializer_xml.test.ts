@@ -182,7 +182,6 @@ function create_hash(): Hash {
 
 describe('TestSerializers', () => {
   let tempDir: string;
-  let oldCwd: string;
   let FILENAME: string;
 
   // Replicating global HASH from python
@@ -195,7 +194,6 @@ describe('TestSerializers', () => {
   beforeEach(() => {
     // Create temp dir
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'karabo_test_'));
-    oldCwd = process.cwd();
     // In Node it is unsafe to change process.cwd() inside tests running in parallel.
     // We will resolve paths against tempDir instead.
     FILENAME = path.join(tempDir, 'all', 'the', 'folders', 'hash.xml');

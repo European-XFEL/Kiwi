@@ -16,25 +16,19 @@ function makePrimary(
   overrides: Partial<UseDevicePropertyResult> = {}
 ): UseDevicePropertyResult {
   return {
+    binding: undefined,
     value: undefined,
-    propertyModel: undefined,
     timestamp: undefined,
 
-    type: undefined,
-    valueType: undefined,
-
+    hashType: undefined,
     deviceState: 'ERROR',
 
     deviceId: 'DEVICE_X',
     propertyPath: 'state',
 
-    descriptor: undefined,
     isEditable: false,
-    schemaAttrs: undefined,
-
     proxyStatus: ProxyStatus.ALIVE,
     missing: undefined,
-
     isOffline: false,
 
     propertyStatus: PropertyStatus.NONE,

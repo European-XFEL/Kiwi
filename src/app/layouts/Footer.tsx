@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { Position } from '@/shared/types';
+import { Position } from './types';
 
 export type FooterProps = React.HTMLAttributes<HTMLElement> & {
   position?: Position;

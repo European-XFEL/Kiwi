@@ -9,8 +9,8 @@ import {
   isHashVector,
   isHashBool,
   isHashString,
-  type SchemaValueType,
 } from '@/features/controllers/utils/validation/hashTypeIdentifiers';
+import { HashType } from '@/karabo/data';
 
 function normalizeFontWeight(input?: string) {
   if (!input) return undefined;
@@ -77,12 +77,12 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = ({
    */
   const isEditingRef = React.useRef(false);
 
-  const schemaValueType = React.useMemo<SchemaValueType | undefined>(() => {
+  const schemaValueType = React.useMemo<HashType | undefined>(() => {
     const p = primary as any;
     const b = binding as any;
     return (
-      (p?.valueType as SchemaValueType | undefined) ??
-      (b?.valueType as SchemaValueType | undefined)
+      (p?.valueType as HashType | undefined) ??
+      (b?.valueType as HashType | undefined)
     );
   }, [primary, binding]);
 
@@ -130,7 +130,7 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = ({
         const intVal = Math.trunc(num);
         return scalarToString({
           value: intVal,
-          schemaValueType,
+          hashType: schemaValueType,
           unit: '',
         });
       }
@@ -141,7 +141,7 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = ({
       if (decimals === -1) {
         return scalarToString({
           value: num,
-          schemaValueType,
+          hashType: schemaValueType,
           unit: '',
           floatPrecision: DOUBLE_LINE_FLOAT_PRECISION,
         });
@@ -159,7 +159,7 @@ const DoubleLineEdit: React.FC<DoubleLineEditProps> = ({
     (val: unknown): string =>
       scalarToString({
         value: val,
-        schemaValueType,
+        hashType: schemaValueType,
         unit: unit || undefined,
         floatPrecision: DOUBLE_LINE_FLOAT_PRECISION,
       }),

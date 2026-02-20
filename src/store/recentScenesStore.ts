@@ -28,7 +28,7 @@ const loadRecentScenes = (): RecentScenesByUser[] | null => {
     );
     if (recentScenesKeys.length === 0) return null;
 
-    const recentScenes = [];
+    const recentScenes: any[] = [];
     for (const key of recentScenesKeys) {
       // The keys of the localStorage are of the form: ${MRU_SCENES_KEY}${userId}
       const userId = key.substring(MRU_SCENES_KEY.length);

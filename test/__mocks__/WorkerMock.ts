@@ -8,7 +8,7 @@ export default class WorkerMock {
     this.url = stringUrl;
   }
 
-  postMessage(message: any) {
+  postMessage(_message: any) {
     // You can add logic here if you want to inspect messages in tests
     // console.log('Worker received:', message);
   }
@@ -17,15 +17,15 @@ export default class WorkerMock {
     // console.log('Worker terminated');
   }
 
-  addEventListener(type: string, listener: any) {
+  addEventListener(_type: string, _listener: any) {
     // Mock implementation
   }
 
-  removeEventListener(type: string, listener: any) {
+  removeEventListener(_type: string, _listener: any) {
     // Mock implementation
   }
 
-  dispatchEvent(event: Event): boolean {
+  dispatchEvent(_event: Event): boolean {
     return true;
   }
 }
