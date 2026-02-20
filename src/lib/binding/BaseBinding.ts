@@ -1,8 +1,14 @@
-import { State } from '@/karabo/data/State';
-import { AccessLevel, AccessMode, Assignment } from '@/karabo/data/enums';
-import { Timestamp } from '@/karabo/data/timestamp';
-import { HashAttributes, Schema } from '@/karabo/data/hash';
-import { HashType, XmlTypeToHashType } from '@/karabo/data/typenums';
+import {
+  HashType,
+  XmlTypeToHashType,
+  HashAttributes,
+  Schema,
+  Timestamp,
+  AccessLevel,
+  AccessMode,
+  Assignment,
+  State,
+} from '@/karabo/data';
 import { WeakEvent } from '../WeakEvent';
 import { buildNode } from '@/lib/binding/BindingFactory';
 
