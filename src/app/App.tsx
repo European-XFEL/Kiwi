@@ -4,7 +4,7 @@ import { useAppSettingsStore } from '@/store/appSettingsStore';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { AccessLevel } from '@/karabo/data/enums';
 import { getNetwork, getManager } from '@/singletons/api';
-import AuthServerClient from '@/http/AuthServerClient';
+import AuthServerClient from '@/lib/http/AuthServerClient';
 import { BrowserRouter } from 'react-router-dom';
 import AppRouter from './router/AppRouter';
 import { appRoutes } from './routes';
