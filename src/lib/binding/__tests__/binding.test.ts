@@ -9,7 +9,7 @@ import {
   BaseBinding,
   BindingNamespace,
 } from '@/lib/binding/BaseBinding';
-
+import { VectorHashBinding } from '@/lib/binding/BaseBinding';
 import path from 'path';
 
 describe('check binding', () => {
@@ -35,14 +35,14 @@ describe('check binding', () => {
     expect(binding1).toBeInstanceOf(BaseBinding);
     expect(binding2).toBeInstanceOf(BaseBinding);
 
-    binding1.value = 99;
-    expect(binding1.value).toBe(99);
-    expect(binding2.value).toBe(99);
+    binding1!.value = 99;
+    expect(binding1!.value).toBe(99);
+    expect(binding2!.value).toBe(99);
 
     root.value.get('leaf').value = 13;
     expect(root.value.get('leaf').value).toBe(13);
-    expect(binding1.value).toBe(13);
-    expect(binding2.value).toBe(13);
+    expect(binding1!.value).toBe(13);
+    expect(binding2!.value).toBe(13);
 
     root.value.clear_namespace();
     expect(root.value.length).toBe(0);
@@ -85,6 +85,15 @@ describe('check binding', () => {
     expect(bool.attributes.getValue('nodeType')).toBe(0);
     expect(bool.attributes.getValue('valueType')).toBe('BOOL');
 
+    // table Property
+    const tableProperty = bindingRoot.value.get('table');
+    expect(tableProperty).toBeInstanceOf(VectorHashBinding);
+    expect(tableProperty.rowSchema).toBeDefined();
+    const length = Object.keys(tableProperty.rowSchema).length;
+    expect(length).toBe(5);
+    expect(tableProperty.assignment).toBe(Assignment.OPTIONAL);
+    expect(tableProperty.requiredAccessLevel).toBe(AccessLevel.OPERATOR);
+
     // Node Property
     const node = bindingRoot.value.get('vectors');
     expect(node).toBeInstanceOf(BaseBinding);
@@ -102,8 +111,8 @@ describe('check binding', () => {
     // Convenience getters
     const nodeVectorInt32 = bindingRoot.getBinding('vectors.int32Property');
     expect(nodeVectorInt32).toBeInstanceOf(BaseBinding);
-    expect(nodeVectorInt32.hashType).toBe(13);
-    expect(nodeVectorInt32.assignment).toBe(Assignment.OPTIONAL);
-    expect(nodeVectorInt32.requiredAccessLevel).toBe(AccessLevel.OPERATOR);
+    expect(nodeVectorInt32!.hashType).toBe(13);
+    expect(nodeVectorInt32!.assignment).toBe(Assignment.OPTIONAL);
+    expect(nodeVectorInt32!.requiredAccessLevel).toBe(AccessLevel.OPERATOR);
   });
 });

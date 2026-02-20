@@ -6,6 +6,7 @@ import {
   BindingNamespace,
   BindingRoot,
   NodeBinding,
+  VectorHashBinding,
 } from './BaseBinding';
 import { NodeType } from '@/karabo/data/enums';
 
@@ -33,6 +34,11 @@ export function buildNode(value: any, attrs: HashAttributes): BaseBinding {
   const nodeType = a.getValue(KARABO_SCHEMA_NODE_TYPE) as NodeType;
 
   if (nodeType === NodeType.Leaf) {
+    const valueType = a.getValue<string>('valueType');
+    const factory = _BINDINGS[valueType];
+    if (factory) {
+      return new factory({ value: undefined, attributes: a });
+    }
     const leaf = new BaseBinding({ value: undefined, attributes: a });
     return leaf;
   }
@@ -56,3 +62,9 @@ function buildSubnamespace(hashVal: Hash): BindingNamespace<BaseBinding> {
   }
   return ns;
 }
+
+type BindingCtor = new (...args: any[]) => BaseBinding;
+
+const _BINDINGS: Record<string, BindingCtor> = {
+  VECTOR_HASH: VectorHashBinding,
+};

@@ -44,9 +44,6 @@ export class BaseBinding<TValue = any> {
   requiredAccessLevel: AccessLevel = AccessLevel.OBSERVER;
   unit_label = '';
 
-  // Keep placeholder
-  rowSchema?: any;
-
   constructor(opts?: {
     attributes?: HashAttributes;
     value?: TValue | undefined;
@@ -62,7 +59,7 @@ export class BaseBinding<TValue = any> {
 
   set attributes(v: HashAttributes) {
     this._attributes = v;
-    this._update_shortcuts(this._attributes);
+    this.update_shortcuts(this._attributes);
   }
 
   public setValue(value: TValue, timestamp: Timestamp | undefined) {
@@ -80,7 +77,7 @@ export class BaseBinding<TValue = any> {
     return alloweds.length === 0 || alloweds.includes(s);
   }
 
-  protected _update_shortcuts(attrs: HashAttributes): void {
+  public update_shortcuts(attrs: HashAttributes): void {
     if (attrs.has(KARABO_SCHEMA_DISPLAYED_NAME)) {
       this.displayedName = attrs.getValue(KARABO_SCHEMA_DISPLAYED_NAME);
     }
@@ -111,17 +108,6 @@ export class BaseBinding<TValue = any> {
     if (attrs.has(KARABO_SCHEMA_VALUE_TYPE)) {
       const valueType = attrs.getValue(KARABO_SCHEMA_VALUE_TYPE);
       this.hashType = XmlTypeToHashType[valueType];
-    }
-
-    if (attrs.has(KARABO_SCHEMA_ROW_SCHEMA)) {
-      const schema = attrs.getValue(KARABO_SCHEMA_ROW_SCHEMA) as Schema;
-      const bindings: Record<string, BaseBinding> = {};
-
-      for (const [key, _value, a] of schema.hash.iterall()) {
-        const node = buildNode(undefined, a);
-        bindings[key] = node;
-      }
-      this.rowSchema = bindings;
     }
 
     if (
@@ -214,11 +200,36 @@ export class BindingRoot extends BaseBinding<BindingNamespace> {
 }
 
 export class NodeBinding extends BaseBinding<BindingNamespace<BaseBinding>> {
+  value: BindingNamespace<BaseBinding>;
+
   constructor(opts?: {
     attributes?: HashAttributes;
     value?: BindingNamespace<BaseBinding>;
   }) {
     super({ attributes: opts?.attributes });
     this.value = opts?.value ?? new BindingNamespace<BaseBinding>();
+  }
+}
+
+export class VectorHashBinding extends BaseBinding<any> {
+  private _cachedRowSchema?: Record<string, BaseBinding>;
+
+  get rowSchema(): Record<string, BaseBinding> | undefined {
+    if (this._cachedRowSchema) {
+      return this._cachedRowSchema;
+    }
+    const schema = this.attributes.getValue<Schema>(KARABO_SCHEMA_ROW_SCHEMA);
+    const bindings: Record<string, BaseBinding<any>> = {};
+    for (const [key, _value, a] of schema.hash.iterall()) {
+      bindings[key] = buildNode(undefined, a);
+    }
+    this._cachedRowSchema = bindings;
+    return bindings;
+  }
+
+  public override update_shortcuts(attrs: HashAttributes): void {
+    super.update_shortcuts(attrs);
+    // Invalidate cache when complete reassignments happen
+    this._cachedRowSchema = undefined;
   }
 }
