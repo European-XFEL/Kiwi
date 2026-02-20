@@ -1,16 +1,21 @@
-import {
+export {
   Hash,
   Schema,
   HashAttributes,
   HashElement,
   HashList,
-  HashValues,
+  type HashValues,
 } from './hash';
-import { decodeXML, loadFromFile } from './xml_reader';
-import { encodeXML, saveToFile } from './xml_writer';
-import { HashType } from './typenums';
-import { Timestamp } from './timestamp';
-import {
+export { decodeXML, loadFromFile } from './xml_reader';
+export { encodeXML, saveToFile } from './xml_writer';
+export {
+  HashType,
+  XmlTypeToHashType,
+  HashTypeToXmlType,
+  getHashTypeFromValue,
+} from './typenums';
+export { Timestamp } from './timestamp';
+export {
   AccessLevel,
   Assignment,
   AccessMode,
@@ -20,6 +25,7 @@ import {
   Unit,
   Encoding,
 } from './enums';
-import { decodeBinary, decodeBinarySchema } from './bin_reader';
-import { encodeBinary, encodeBinarySchema } from './bin_writer';
-import { unwrap } from './utils';
+export { decodeBinary, decodeBinarySchema } from './bin_reader';
+export { encodeBinary, encodeBinarySchema } from './bin_writer';
+export { unwrap } from './utils';
+export { State } from './State';
