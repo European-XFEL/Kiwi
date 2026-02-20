@@ -9,7 +9,7 @@ import React from 'react';
 import type { DisplayLabelProps } from '@/scene/scene_types/controllers/display';
 import { FONT_FAMILY_DEFAULT } from '../utils/fontDefaults';
 import { scalarToString } from '@/features/controllers/utils/validation/toStringFormatters';
-import type { SchemaValueType } from '@/features/controllers/utils/validation/hashTypeIdentifiers';
+import { HashType } from '@/karabo/data';
 
 const DisplayLabel: React.FC<DisplayLabelProps> = ({
   font_size,
@@ -32,11 +32,11 @@ const DisplayLabel: React.FC<DisplayLabelProps> = ({
      * We intentionally do NOT force runtime `propertyModel.type` here.
      * The helper is tolerant of mixed representations anyway.
      */
-    const schemaValueType = binding?.hashType as SchemaValueType | undefined;
+    const hashType = binding?.hashType as HashType | undefined;
 
     return scalarToString({
       value,
-      schemaValueType,
+      hashType,
       unit,
       floatPrecision: 8,
     });

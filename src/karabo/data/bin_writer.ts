@@ -1,84 +1,84 @@
 import * as Types from './types';
 import { Hash, Schema, HashList } from './hash';
 
-function encodeInt8(parser: BinaryEncoder, data: number): ArrayBuffer {
+function encodeInt8(_parser: BinaryEncoder, data: number): ArrayBuffer {
   const bin = new ArrayBuffer(1);
   const dv = new DataView(bin);
   dv.setInt8(0, data);
   return bin;
 }
 
-function encodeChar(parser: BinaryEncoder, data: number): ArrayBuffer {
+function encodeChar(_parser: BinaryEncoder, data: number): ArrayBuffer {
   const bin = new ArrayBuffer(1);
   const dv = new DataView(bin);
   dv.setUint8(0, data);
   return bin;
 }
 
-function encodeUInt8(parser: BinaryEncoder, data: number): ArrayBuffer {
+function encodeUInt8(_parser: BinaryEncoder, data: number): ArrayBuffer {
   const bin = new ArrayBuffer(1);
   const dv = new DataView(bin);
   dv.setUint8(0, data);
   return bin;
 }
 
-function encodeInt16(parser: BinaryEncoder, data: number): ArrayBuffer {
+function encodeInt16(_parser: BinaryEncoder, data: number): ArrayBuffer {
   const bin = new ArrayBuffer(2);
   const dv = new DataView(bin);
   dv.setInt16(0, data, true);
   return bin;
 }
 
-function encodeUInt16(parser: BinaryEncoder, data: number): ArrayBuffer {
+function encodeUInt16(_parser: BinaryEncoder, data: number): ArrayBuffer {
   const bin = new ArrayBuffer(2);
   const dv = new DataView(bin);
   dv.setUint16(0, data, true);
   return bin;
 }
 
-function encodeInt32(parser: BinaryEncoder, data: number): ArrayBuffer {
+function encodeInt32(_parser: BinaryEncoder, data: number): ArrayBuffer {
   const bin = new ArrayBuffer(4);
   const dv = new DataView(bin);
   dv.setInt32(0, data, true);
   return bin;
 }
 
-function encodeUInt32(parser: BinaryEncoder, data: number): ArrayBuffer {
+function encodeUInt32(_parser: BinaryEncoder, data: number): ArrayBuffer {
   const bin = new ArrayBuffer(4);
   const dv = new DataView(bin);
   dv.setUint32(0, data, true);
   return bin;
 }
 
-function encodeInt64(parser: BinaryEncoder, data: bigint): ArrayBuffer {
+function encodeInt64(_parser: BinaryEncoder, data: bigint): ArrayBuffer {
   const bin = new ArrayBuffer(8);
   const dv = new DataView(bin);
   dv.setBigInt64(0, data, true);
   return bin;
 }
 
-function encodeUInt64(parser: BinaryEncoder, data: bigint): ArrayBuffer {
+function encodeUInt64(_parser: BinaryEncoder, data: bigint): ArrayBuffer {
   const bin = new ArrayBuffer(8);
   const dv = new DataView(bin);
   dv.setBigUint64(0, data, true);
   return bin;
 }
 
-function encodeFloat32(parser: BinaryEncoder, data: number): ArrayBuffer {
+function encodeFloat32(_parser: BinaryEncoder, data: number): ArrayBuffer {
   const bin = new ArrayBuffer(4);
   const dv = new DataView(bin);
   dv.setFloat32(0, data, true);
   return bin;
 }
 
-function encodeFloat64(parser: BinaryEncoder, data: number): ArrayBuffer {
+function encodeFloat64(_parser: BinaryEncoder, data: number): ArrayBuffer {
   const bin = new ArrayBuffer(8);
   const dv = new DataView(bin);
   dv.setFloat64(0, data, true);
   return bin;
 }
 
-function encodeBoolean(parser: BinaryEncoder, data: boolean): ArrayBuffer {
+function encodeBoolean(_parser: BinaryEncoder, data: boolean): ArrayBuffer {
   const bin = new ArrayBuffer(1);
   const dv = new DataView(bin);
   dv.setUint8(0, data ? 1 : 0);

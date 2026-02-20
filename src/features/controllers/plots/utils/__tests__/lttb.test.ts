@@ -733,7 +733,7 @@ describe('LTTB — stress suite', () => {
     it('repeated calls with same data are consistent (no state leaks)', () => {
       const data = makeAdversarialSeries(10000, 7777);
 
-      const results = [];
+      const results: XYPoint[][] = [];
       for (let i = 0; i < 100; i++) {
         results.push(lttb(data, 500));
       }

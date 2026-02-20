@@ -278,7 +278,7 @@ export class KaraboXmlParser {
     };
 
     // Pre-scan for Attributes that are actually nested structures
-    for (const [k, v] of Object.entries(attrs)) {
+    for (const [_, v] of Object.entries(attrs)) {
       if (v.startsWith('KRB_') && v.includes(':')) {
         const [dtypeStr, svalue] = v.split(':', 2);
         const dtype = XmlTypeToHashType[dtypeStr.substring(4)];

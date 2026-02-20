@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { NavbarProps } from '@/shared/types';
+import type { NavbarProps } from '@/features/navigation/types/navigation.types';
 
 const NavigationMenu = React.forwardRef<HTMLElement, NavbarProps>(
   (

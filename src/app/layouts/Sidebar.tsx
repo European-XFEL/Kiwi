@@ -1,6 +1,5 @@
 import * as React from 'react';
-
-type Position = 'sticky' | 'fixed' | 'static';
+import type { Position } from './types';
 
 const getPositionClass = (pos: Position = 'static'): string =>
   pos === 'fixed'

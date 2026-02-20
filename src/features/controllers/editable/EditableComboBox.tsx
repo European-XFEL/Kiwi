@@ -31,10 +31,11 @@ const EditableComboBox: React.FC<EditableComboBoxProps> = ({
     <div className="w-full h-full" title={title}>
       <select
         value={selected}
-        onChange={(e) => {
-          const v = e.target.value; // "" means placeholder
-          // TODO: push value to backend (send v === "" ? undefined : v)
-        }}
+        // TODO: Resolve internal TODO and activate the whole onChange handler
+        // onChange={(e) => {
+        //   const v = e.target.value; // "" means placeholder
+        //   // TODO: push value to backend (send v === "" ? undefined : v)
+        // }}
         disabled={!isEnabled}
         className={`w-full h-full border border-solid rounded ${
           isEnabled

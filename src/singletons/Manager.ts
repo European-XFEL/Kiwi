@@ -54,12 +54,6 @@ export class Manager {
   // #region Protocol Handlers (Naming Convention: handle_<type>)
 
   private handle_brokerInformation(hash: Hash): void {
-    const deviceId = hash.getValue('deviceId') as string;
-    const hostname = hash.getValue('hostname') as string;
-    const hostport = parseInt(hash.getValue('hostport') as string);
-    const authRequired = !!hash.getValue('authServer');
-    const authServer = hash.getValue('authServer') as string;
-    const readOnly = hash.getValue('readOnly') as boolean;
     const topic = hash.getValue('topic') as string;
     const version = hash.getValue('version') as string;
 

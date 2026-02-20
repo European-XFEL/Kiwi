@@ -1,11 +1,11 @@
 /** DisplayLabel — display controller. Config from model, device data from deviceCtx. */
 
-import React from 'react';
+import { FONT_FAMILY_DEFAULT } from '@/features/controllers/utils/fontDefaults';
+import { scalarToString } from '@/features/controllers/utils/validation/toStringFormatters';
 import type { ControllerContainerContext } from '@/features/scene_view/ControllerContainer';
 import { DisplayLabelModel } from '@/karabo-common/models/widgets/controllers/display';
 import { registerRenderer } from '@/karabo-common/render/registry';
-import { formatScalarValueWithUnit } from '@/features/controllers/utils/validation/value_formatters';
-import { FONT_FAMILY_DEFAULT } from '@/features/controllers/utils/fontDefaults';
+import React from 'react';
 
 // DisplayLabel
 // ----------------------------------------------------------------------------
@@ -26,9 +26,9 @@ const DisplayLabel: React.FC<{
 
   const labelValue =
     value !== undefined
-      ? formatScalarValueWithUnit({
+      ? scalarToString({
           value,
-          schemaValueType: binding?.hashType as any,
+          hashType: binding?.hashType as any,
           unit: binding?.unit_label ?? '',
           floatPrecision: 8,
         })

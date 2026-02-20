@@ -5,8 +5,8 @@ const __INTERNAL_STATE__ = Symbol('____INTERNAL_STATE____');
 export class State {
   private static readonly _registry = new Map<string, State>();
 
-  public readonly name: string;
-  public readonly parent: State | null;
+  public readonly name!: string;
+  public readonly parent!: State | null;
 
   // The constructor is public to allow "lookup" via new State('NAME'),
   // but prevents creation of *new* states unless the internal symbol is passed.

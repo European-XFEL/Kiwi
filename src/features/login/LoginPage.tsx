@@ -71,7 +71,7 @@ export function LoginPage() {
   };
 
   // Select the correct form to render based on server requirements
-  let formContent = null;
+  let formContent: React.ReactElement | null = null;
   if (probedServerInfo?.authRequired) {
     formContent = (
       <AuthenticationForm
