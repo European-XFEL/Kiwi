@@ -1,7 +1,8 @@
 import AppBody from '../AppBody';
 import NoScenePanel from '../NoScenePanel';
 import { SceneCanvas } from '@/features/scene_view';
-import { RouteProp } from '@/app/router/types';
+//import SceneView from '@/karabo-common/scene_view/SceneView';
+import { RouteProp } from '../router/types';
 
 export const appRoutes: RouteProp[] = [
   {
@@ -12,6 +13,10 @@ export const appRoutes: RouteProp[] = [
         path: 'scene',
         element: <SceneCanvas />,
       },
+      // {
+      //   path: 'scene_v2',
+      //   element: <SceneView />,
+      // },
       {
         path: 'no_scene',
         element: <NoScenePanel />,
