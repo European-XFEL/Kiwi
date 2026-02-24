@@ -1,6 +1,11 @@
 /**
  * ElementRenderer — resolves a scene model to a renderer component.
- * Controllers are wrapped in ControllerContainer to inject device context.
+ *
+ * Two exports:
+ *  - renderContent: resolves model → component, zero positioning.
+ *    Used by layouts for their children (the layout's wrapper div is the shell).
+ *  - ElementRenderer: PositionedShell + renderContent.
+ *    Used by SceneView for top-level children.
  */
 
 import React from 'react';
@@ -20,29 +25,28 @@ import {
   SceneLinkModel,
   WebLinkModel,
 } from '@/karabo-common/models/widgets/links';
-import { ControllerContainer } from '@/features/scene_view/ControllerContainer';
-import { getRenderer } from './registry';
+import { ControllerContainer } from '@/karabo-common/scene_view/ControllerContainer';
+import { containerPointerEvents } from '@/karabo-common/scene_view/mode';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tooltip';
 
-// ---------------------------------------------------------------------------
-// Non-controller widgets: static, links, and other scene objects that do not
-// subscribe to live device properties. Mirrors Python's _SCENE_OBJ_FACTORIES.
-// ---------------------------------------------------------------------------
+import { getRenderer } from './registry';
+import { resolveBounds } from './bounds';
+
+export { resolveBounds, isLayout, isShape } from './bounds';
+
+// NON_CONTROLLER_WIDGETS
+// ----------------------------------------------------------------------------
+// Widgets that render directly — no device subscription needed.
+// Mirrors Python's _SCENE_OBJ_FACTORIES.
 
 const NON_CONTROLLER_WIDGETS = new Set<Function>([
-  // Static
   LabelModel,
   StickerModel,
-  // Links
   DeviceSceneLinkModel,
   SceneLinkModel,
   WebLinkModel,
-  // Fallbacks
   UnknownWidgetDataModel,
   UnknownXMLDataModel,
-  // TODO: add once implemented
-  // PopupButtonModel,
-  // InstanceStatusModel,
-  // ImageRendererModel,
 ]);
 
 const isControllerWidget = (
@@ -51,22 +55,20 @@ const isControllerWidget = (
   model instanceof BaseWidgetObjectData &&
   !NON_CONTROLLER_WIDGETS.has(model.constructor);
 
-// ---------------------------------------------------------------------------
-// ElementRenderer
-// ---------------------------------------------------------------------------
+// renderContent
+// ----------------------------------------------------------------------------
+// Resolves a model to its component and renders it — zero positioning.
+// Layouts call this for their children after the wrapper div sets position.
 
-export const ElementRenderer: React.FC<{ model: BaseSceneObjectData }> = ({
-  model,
-}) => {
+export function renderContent(model: BaseSceneObjectData): React.ReactNode {
   const Renderer = getRenderer(model);
 
   if (!Renderer) {
-    // Unknown Widget: has geometry, so render dashed placeholder
+    if (model instanceof UnknownXMLDataModel) return null;
+
     if (model instanceof UnknownWidgetDataModel) {
       return (
         <Placeholder
-          x={model.x}
-          y={model.y}
           width={model.width}
           height={model.height}
           label={`Unknown widget: ${model.klass}`}
@@ -74,17 +76,12 @@ export const ElementRenderer: React.FC<{ model: BaseSceneObjectData }> = ({
       );
     }
 
-    // Unknown XML: no geometry info, nothing to render
-    if (model instanceof UnknownXMLDataModel) return null;
-
-    // Known model without a registered renderer yet
     const unregistered = model as Partial<BaseWidgetObjectData> & {
       klass?: string;
     };
+
     return (
       <Placeholder
-        x={unregistered.x ?? 0}
-        y={unregistered.y ?? 0}
         width={unregistered.width ?? 60}
         height={unregistered.height ?? 20}
         label={`No renderer: ${unregistered.klass ?? model.constructor.name}`}
@@ -92,44 +89,77 @@ export const ElementRenderer: React.FC<{ model: BaseSceneObjectData }> = ({
     );
   }
 
-  // Controllers get device context via ControllerContainer
   if (isControllerWidget(model)) {
     return (
       <ControllerContainer
         keys={model.keys}
-        x={model.x}
-        y={model.y}
         width={model.width}
         height={model.height}
       >
-        {(deviceCtx) => <Renderer model={model} ctx={deviceCtx} />}
+        {(ctx) => <Renderer model={model} ctx={ctx} />}
       </ControllerContainer>
     );
   }
 
-  // Static/link widgets render directly
   return <Renderer model={model} />;
+}
+
+// ElementRenderer
+// ----------------------------------------------------------------------------
+// Wraps renderContent in a PositionedShell.
+// Only used by SceneView — never inside layout wrapper divs.
+
+export const ElementRenderer: React.FC<{ model: BaseSceneObjectData }> = ({
+  model,
+}) => <PositionedShell model={model}>{renderContent(model)}</PositionedShell>;
+
+// PositionedShell
+// ----------------------------------------------------------------------------
+// The single absolute-positioned div that places an element in scene space.
+
+const PositionedShell: React.FC<{
+  model: BaseSceneObjectData;
+  children: React.ReactNode;
+}> = ({ model, children }) => {
+  const { x, y, width, height } = resolveBounds(model);
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        left: x,
+        top: y,
+        width,
+        height,
+        pointerEvents: containerPointerEvents(),
+      }}
+    >
+      {children}
+    </div>
+  );
 };
 
-// Reusable dashed placeholder block
-const Placeholder: React.FC<{
-  x: number;
-  y: number;
+// Placeholder
+// ----------------------------------------------------------------------------
+// Fills the parent shell — no self-positioning.
+
+export const Placeholder: React.FC<{
   width: number;
   height: number;
   label: string;
-}> = ({ x, y, width, height, label }) => (
-  <div
-    style={{
-      position: 'absolute',
-      left: `${x}px`,
-      top: `${y}px`,
-      width: `${width}px`,
-      height: `${height}px`,
-    }}
-    className="border border-dashed border-gray-400 opacity-50 flex items-center justify-center text-xs text-gray-500 overflow-hidden"
-    title={label}
-  >
-    {label}
-  </div>
+}> = ({ width, height, label }) => (
+  <Tooltip delayDuration={120}>
+    <TooltipTrigger asChild>
+      <div
+        style={{ width, height }}
+        className="border border-dashed border-red-300 bg-red-50/60 flex items-center justify-center overflow-hidden cursor-help"
+        aria-label={label}
+      >
+        <span className="text-red-600 text-sm font-semibold leading-none">
+          ?
+        </span>
+      </div>
+    </TooltipTrigger>
+    <TooltipContent className="max-w-[320px] text-xs">{label}</TooltipContent>
+  </Tooltip>
 );

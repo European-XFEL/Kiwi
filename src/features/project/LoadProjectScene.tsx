@@ -30,6 +30,7 @@ export default function LoadProjectScene({
     if (!sessionInfo) return;
 
     navigate(
+      // `/scene_v2?host=${sessionInfo.guiServerHost}&port=${
       `/scene?host=${sessionInfo.guiServerHost}&port=${
         sessionInfo.guiServerPort
       }&domain=${encodeURIComponent(

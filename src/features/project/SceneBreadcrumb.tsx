@@ -88,6 +88,7 @@ export default function SceneBreadcrumb({
 
   const handleSceneClick = (scene: ProjectSceneInfo) => {
     navigate(
+      // `/scene_v2?host=${sessionInfo!.guiServerHost}&port=${
       `/scene?host=${sessionInfo!.guiServerHost}&port=${
         sessionInfo!.guiServerPort
       }` +

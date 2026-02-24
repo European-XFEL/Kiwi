@@ -1,4 +1,3 @@
-import { readScene } from '@/karabo-common/readers/readScene';
 import { Hash, HashList, HashValues } from '@/karabo/data/hash';
 import {
   DbItemInfo,
@@ -449,8 +448,6 @@ export class ProjectDBConnector {
           };
           items.push(item);
         } else if (itemType === 'scene') {
-          // TODO: remove — temporary debug to inspect readScene output
-          console.log('[readScene] model:', readScene(xml));
           // Build a ProjectSceneInfo object
           const item = {
             domain: domain,
@@ -459,12 +456,11 @@ export class ProjectDBConnector {
             name: xmlObj.xml['@_simple_name'],
             description: xmlObj.xml['@_description'],
             dateModified: xmlObj.xml['@_date'],
-            // NOTE: Some older scenes have the root element of the svg as "svg",
-            //       while some newer scenes have "svg:svg"
             svg:
               xmlObj.xml['svg:svg'] != undefined
                 ? JSON.stringify(xmlObj.xml['svg:svg'])
                 : JSON.stringify(xmlObj.xml['svg']),
+            // svg: xml,
             item_type: itemType,
           };
           //console.log(item);

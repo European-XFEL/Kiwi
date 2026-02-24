@@ -21,6 +21,7 @@ const NoScenePanel: React.FC = () => {
 
   const handleSceneClick = (recentScene: RecentSceneModel) => {
     navigate(
+      // `/scene_v2?host=${sessionInfo!.guiServerHost}` +
       `/scene?host=${sessionInfo!.guiServerHost}` +
         `&port=${sessionInfo!.guiServerPort}` +
         `&domain=${encodeURIComponent(recentScene.domain)}` +
