@@ -1,7 +1,7 @@
 import { GuiServerInfo } from '@/features/login/auth.types';
 import { probeServer } from '@/features/login/utils';
 
-import AuthServerClient from '@/http/AuthServerClient';
+import AuthServerClient from '@/lib/http/AuthServerClient';
 import { encodeBinary } from '@/karabo/data/bin_writer';
 import { AccessLevel } from '@/karabo/data/enums';
 import { Hash, HashList } from '@/karabo/data/hash';
