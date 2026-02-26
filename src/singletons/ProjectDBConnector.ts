@@ -11,6 +11,7 @@ import {
   ProjectSceneInfo,
 } from '@/lib/ProjectDbInfo';
 import { XMLParser } from 'fast-xml-parser';
+import { readSceneFromSvgJson } from '@/karabo/common/readers/readScene';
 
 import { getNetwork } from '@/singletons/api';
 import { ProjectSceneCache } from '@/store/ProjectSceneCache';
@@ -237,14 +238,12 @@ export class ProjectDBConnector {
     uuid: string,
     onScene: (loadSceneResult: LoadProjectSceneResult) => void
   ): void {
+    //cache lookup - note that the cache is only for scenes, so we don't need to check the projectName
     const sceneInfo = this._sceneCache.getSceneInfo(domain, uuid);
     if (sceneInfo) {
-      // Scene was found in cache - call the onScene handler and leave
-      const loadSceneResult = {
-        scene: sceneInfo,
-        error_msg: undefined,
-      };
-      onScene(loadSceneResult);
+      // Scene was found in cache - rebuild model from cached JSON and return
+      const model = readSceneFromSvgJson(JSON.parse(sceneInfo.svg));
+      onScene({ scene: sceneInfo, model, error_msg: undefined });
       return;
     }
     // Stores the callback to be called when the GUI Server sends back the scene.
@@ -305,18 +304,11 @@ export class ProjectDBConnector {
       });
     } else {
       const sceneInfo = itemsInfo!.projectItems[0] as ProjectSceneInfo;
+      const model = readSceneFromSvgJson(JSON.parse(sceneInfo.svg));
       this._sceneCache.storeSceneInfo(sceneInfo);
       this._onGetSceneCallback?.({
-        scene: {
-          domain: sceneInfo.domain,
-          projectName: this._projectName,
-          uuid: sceneInfo.uuid,
-          item_type: sceneInfo.item_type,
-          name: sceneInfo.name,
-          description: sceneInfo.description,
-          svg: sceneInfo.svg,
-          dateModified: sceneInfo.dateModified,
-        },
+        scene: { ...sceneInfo, projectName: this._projectName },
+        model,
         error_msg: undefined,
       });
     }

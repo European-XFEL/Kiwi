@@ -1,3 +1,5 @@
+import type { SceneModel } from '@/karabo/common/models/SceneModel';
+
 // #region Data structures for project entities
 export interface DbItemInfo {
   domain: string;
@@ -69,6 +71,7 @@ export interface LoadProjectItemsResult {
 
 export interface LoadProjectSceneResult {
   scene?: ProjectSceneInfo; // undefined if error
+  model?: SceneModel; // built by connector, never cached
   error_msg?: string; // undefined if no error
 }
 
