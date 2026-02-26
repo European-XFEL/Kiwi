@@ -95,13 +95,6 @@ export default function SceneStatus({
                 <span className="text-muted-foreground mx-1">·</span>
                 <span>{sceneInfo.name}</span>
               </div>
-
-              <Badge
-                variant="secondary"
-                className="shrink-0 bg-emerald-100 text-emerald-700 hover:bg-emerald-100 text-xs"
-              >
-                Active
-              </Badge>
             </>
           )}
 
@@ -154,12 +147,6 @@ export default function SceneStatus({
                 <span className="text-muted-foreground mx-1.5">·</span>
                 <span>{sceneInfo.name}</span>
               </div>
-              <Badge
-                variant="secondary"
-                className="shrink-0 bg-emerald-100 text-emerald-700 hover:bg-emerald-100 text-xs"
-              >
-                Active
-              </Badge>
             </>
           ) : (
             <>

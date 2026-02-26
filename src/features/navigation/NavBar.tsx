@@ -5,7 +5,7 @@ import { NavItem } from './components/NavItem';
 import NavToggle from './components/NavToggle';
 import { LoadProjectScene, SceneBreadcrumb } from '@/features/project';
 import Logo from './components/Logo';
-import { SceneStatus } from '@/features/scene_view';
+import { SceneStatus, FitModeSelect } from '@/features/scene_view';
 import { UserProfile, AccessLevelSelector } from '@/features/user';
 import { Button } from '@/components/button';
 import { Separator } from '@/components/separator';
@@ -154,6 +154,12 @@ export function NavBar() {
                 </span>
               )}
             </div>
+          </NavItem>
+
+          <Separator orientation="vertical" className="h-8 mx-2" />
+
+          <NavItem>
+            <FitModeSelect />
           </NavItem>
 
           <Separator orientation="vertical" className="h-8 mx-2" />
