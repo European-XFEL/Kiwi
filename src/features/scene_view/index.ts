@@ -31,6 +31,7 @@ export { default as GridLayout } from './components/layouts/GridLayout';
 
 export { default as SceneStatus } from './components/SceneStatus';
 export { default as SceneSizeDisplay } from './components/SceneSizeDisplay';
+export { default as FitModeSelect } from './components/FitModeSelect';
 
 // ──────────────────────────────────────────────────────────────────────
 // WIDGETS

@@ -13,6 +13,7 @@ import { UserRecentSceneModel } from '@/view_models/RecentScenesModel';
 import { AlertTriangle } from 'lucide-react';
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useSceneScale } from './hooks/useSceneScale';
 
 const SVG_SHAPES = new Set(['ArrowPolygon', 'Line', 'Polygon', 'Rectangle']);
 
@@ -25,37 +26,16 @@ const SceneCanvas: React.FC = () => {
 
   const { lastGlobalError, sessionInfo } = useGlobalStore();
   const { setRecentScene } = useRecentStore();
-  const { setScene: setLoadedScene } = useLoadedSceneStore();
+  const { setScene: setLoadedScene, fitMode } = useLoadedSceneStore();
   const loggedUser = sessionInfo?.loggedUser;
 
+  //attach a ref to the container div(viewport), to measure its size for scaling the scene to fit
   const containerRef = React.useRef<HTMLDivElement | null>(null);
-  const [scale, setScale] = React.useState(1);
-
-  // Auto-fit scaling
-  React.useLayoutEffect(() => {
-    if (!containerRef.current) return;
-
-    const ro = new ResizeObserver(() => {
-      if (!containerRef.current || !scene) return;
-      const { width: cw, height: ch } =
-        containerRef.current.getBoundingClientRect();
-
-      const sw = scene.width;
-      const sh = scene.height;
-
-      if (sw > 0 && sh > 0 && cw > 0 && ch > 0) {
-        const availW = Math.max(cw - 8, 0);
-        const availH = Math.max(ch - 8, 0);
-        const s = Math.min(availW / sw, availH / sh, 1);
-        setScale(Number.isFinite(s) ? s : 1);
-      } else {
-        setScale(1);
-      }
-    });
-
-    ro.observe(containerRef.current);
-    return () => ro.disconnect();
-  }, [scene]);
+  const scale = useSceneScale(
+    containerRef,
+    scene ? { width: scene.width, height: scene.height } : null,
+    fitMode
+  );
 
   // Load + parse scene
   React.useEffect(() => {
