@@ -63,3 +63,12 @@ export function readScene(xml: string): SceneModel {
 
   return readElement(root, tag) as SceneModel;
 }
+
+/** Build a SceneModel from an already-parsed SVG JSON object.
+ *  Used by ProjectDBConnector to avoid re-parsing XML on cache hits. */
+export function readSceneFromSvgJson(
+  svgJson: Record<string, unknown>
+): SceneModel {
+  readerRegistry.version = toNum(svgJson[ATTR_KRB_VERSION], SCENE_FILE_VERSION);
+  return readElement(svgJson, SVG_SVG) as SceneModel;
+}

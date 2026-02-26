@@ -68,6 +68,7 @@ const SceneCanvas: React.FC = () => {
         sceneParams?.projectName,
         sceneParams?.uuid,
         (result: LoadProjectSceneResult) => {
+          // console.log('[SceneCanvas] getScene result:', result);
           if (result.error_msg) {
             setError(
               `Couldn't retrieve scene data.<br/>Please check Project Database availability.<br/>Details: ${result.error_msg}`

@@ -11,7 +11,6 @@ import { useLocation } from 'react-router-dom';
 import { sceneParamsFromURL } from '@/features/navigation/utils';
 import { getDbConn, getTopology } from '@/singletons/api';
 import type { LoadProjectSceneResult } from '@/lib/ProjectDbInfo';
-import { readScene } from '@/karabo/common/readers/readScene';
 import type { SceneModel } from '@/karabo/common/models/SceneModel';
 import { ElementRenderer } from '@/karabo/common/scene_view/render/ElementRenderer';
 
@@ -42,23 +41,18 @@ const SceneView: React.FC = () => {
           return;
         }
 
-        try {
-          const model = readScene(result.scene!.svg);
+        const model = result.model!;
 
-          // Defer rendering until topology is ready (device subscriptions need it)
-          if (getTopology().initialized) {
-            setSceneModel(model);
-          } else {
-            const poll = setInterval(() => {
-              if (getTopology().initialized) {
-                clearInterval(poll);
-                setSceneModel(model);
-              }
-            }, 100);
-          }
-        } catch (e) {
-          setError(`Parse error: ${String(e)}`);
-          setSceneModel(null);
+        // Defer rendering until topology is ready (device subscriptions need it)
+        if (getTopology().initialized) {
+          setSceneModel(model);
+        } else {
+          const poll = setInterval(() => {
+            if (getTopology().initialized) {
+              clearInterval(poll);
+              setSceneModel(model);
+            }
+          }, 100);
         }
       }
     );
