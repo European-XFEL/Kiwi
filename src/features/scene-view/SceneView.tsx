@@ -3,8 +3,9 @@ import { Button } from '@/components/button';
 import { Card, CardContent } from '@/components/card';
 import { Spinner } from '@/components/spinner';
 import { sceneParamsFromURL } from '@/features/navigation/utils';
+import { ElementRenderer } from '@/features/scene-view/render/ElementRenderer';
+import type { SceneModel } from '@/karabo/common/models/SceneModel';
 import { LoadProjectSceneResult } from '@/lib/ProjectDbInfo';
-import { Scene } from '@/scene/Scene';
 import { getDbConn, getTopology } from '@/singletons/api';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { useLoadedSceneStore } from '@/store/loadedSceneStore';
@@ -13,15 +14,16 @@ import { UserRecentSceneModel } from '@/view_models/RecentScenesModel';
 import { AlertTriangle } from 'lucide-react';
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useSceneScale } from './hooks/useSceneScale';
+import { useSceneScale } from '../scene_view/hooks/useSceneScale';
 
-const SVG_SHAPES = new Set(['ArrowPolygon', 'Line', 'Polygon', 'Rectangle']);
+// Bootstrap — triggers all registerRenderer() calls
+import '@/features/scene-view/renderers';
 
 const SceneCanvas: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [scene, setScene] = React.useState<Scene | null>(null);
+  const [scene, setScene] = React.useState<SceneModel | null>(null);
   const [error, setError] = React.useState<string>('');
 
   const { lastGlobalError, sessionInfo } = useGlobalStore();
@@ -29,7 +31,6 @@ const SceneCanvas: React.FC = () => {
   const { setScene: setLoadedScene, fitMode } = useLoadedSceneStore();
   const loggedUser = sessionInfo?.loggedUser;
 
-  //attach a ref to the container div(viewport), to measure its size for scaling the scene to fit
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const scale = useSceneScale(
     containerRef,
@@ -39,23 +40,16 @@ const SceneCanvas: React.FC = () => {
 
   // Load + parse scene
   React.useEffect(() => {
-    /** Sets a parsed scene after being sure that the system topology has
-     * been initialized.
-     *
-     * If a scene is available in the cache upon a full application reload, it
-     * is highly likely that the initial system topology will be still unknown,
-     * as it has to be received from the connected GUI Server via the network.
-     */
-    function setSceneDeferrable(parsed: Scene) {
+    function setSceneDeferrable(model: SceneModel) {
       if (getTopology().initialized) {
-        setScene(parsed);
+        setScene(model);
         setError('');
       } else {
-        const checkTopology = setInterval(() => {
+        const poll = setInterval(() => {
           if (getTopology().initialized) {
-            setScene(parsed);
+            clearInterval(poll);
+            setScene(model);
             setError('');
-            clearInterval(checkTopology);
           }
         }, 100);
       }
@@ -64,11 +58,10 @@ const SceneCanvas: React.FC = () => {
     const sceneParams = sceneParamsFromURL(location.search);
     if (sceneParams) {
       getDbConn().getScene(
-        sceneParams?.domain,
-        sceneParams?.projectName,
-        sceneParams?.uuid,
+        sceneParams.domain,
+        sceneParams.projectName,
+        sceneParams.uuid,
         (result: LoadProjectSceneResult) => {
-          // console.log('[SceneCanvas] getScene result:', result);
           if (result.error_msg) {
             setError(
               `Couldn't retrieve scene data.<br/>Please check Project Database availability.<br/>Details: ${result.error_msg}`
@@ -77,28 +70,26 @@ const SceneCanvas: React.FC = () => {
             document.title = 'Kiwi';
             return;
           }
-          try {
-            const parsed = new Scene(result.scene!.svg);
-            setLoadedScene({ width: parsed.width, height: parsed.height });
-            if (loggedUser) {
-              const recentScene: UserRecentSceneModel = {
-                userId: loggedUser,
-                domain: result.scene!.domain,
-                uuid: result.scene!.uuid,
-                name: result.scene!.name,
-                projectName: result.scene!.projectName,
-              };
-              setRecentScene(recentScene);
-            }
-            document.title = `Kiwi [${result.scene!.domain}:${result.scene!.name}]`;
-            setSceneDeferrable(parsed);
-          } catch (e) {
-            setError(`Couldn't parse scene data.<br/>${String(e)}`);
-            setScene(null);
+
+          const model = result.model!;
+          setLoadedScene({ width: model.width, height: model.height });
+
+          if (loggedUser) {
+            const recentScene: UserRecentSceneModel = {
+              userId: loggedUser,
+              domain: result.scene!.domain,
+              uuid: result.scene!.uuid,
+              name: result.scene!.name,
+              projectName: result.scene!.projectName,
+            };
+            setRecentScene(recentScene);
           }
-        } // getScene.onScene
-      ); // getDbConn.getScene
-    } // if (sceneParams)
+
+          document.title = `Kiwi [${result.scene!.domain}:${result.scene!.name}]`;
+          setSceneDeferrable(model);
+        }
+      );
+    }
   }, [location.search, loggedUser, setLoadedScene, setRecentScene]);
 
   const renderScene = () => {
@@ -142,28 +133,7 @@ const SceneCanvas: React.FC = () => {
       );
     }
 
-    const width = scene.width;
-    const height = scene.height;
-
-    //Use the FLAT list, already layout-resolved by Scene
-    const flat = scene.sceneElements;
-
-    // Split into SVG primitives vs HTML widgets
-    const shapes = flat.filter((el) => {
-      const name = el.reactComponent?.name || '';
-      return SVG_SHAPES.has(name);
-    });
-
-    const widgets = flat.filter((el) => {
-      const name = el.reactComponent?.name || '';
-      return !SVG_SHAPES.has(name);
-    });
-
-    const renderIfComponent = (
-      component: React.FC<any> | undefined,
-      props: any,
-      key: string
-    ) => (component ? React.createElement(component, { key, ...props }) : null);
+    const { width, height } = scene;
 
     return (
       <div className="w-full h-full overflow-auto">
@@ -183,24 +153,9 @@ const SceneCanvas: React.FC = () => {
               transformOrigin: 'top left',
             }}
           >
-            {/* SVG layer */}
-            <svg
-              className="absolute inset-0 pointer-events-none"
-              width={width}
-              height={height}
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              {shapes.map((el, idx) =>
-                renderIfComponent(el.reactComponent, el.props, `shape_${idx}`)
-              )}
-            </svg>
-
-            {/* HTML layer */}
-            <div className="relative">
-              {widgets.map((el, idx) =>
-                renderIfComponent(el.reactComponent, el.props, `widget_${idx}`)
-              )}
-            </div>
+            {scene.children.map((child, i) => (
+              <ElementRenderer key={i} model={child} />
+            ))}
           </div>
         </div>
       </div>

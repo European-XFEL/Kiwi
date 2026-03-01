@@ -16,7 +16,7 @@ import { cn } from '@/shared/utils/cn';
 import { getDbConn } from '@/singletons/api';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProjectsTable from './components/ProjectTable';
 import ScenesTable from './components/ScenesTable';
@@ -31,12 +31,28 @@ export default function SceneBreadcrumb({
   const navigate = useNavigate();
   const { sessionInfo } = useGlobalStore();
 
+  // Controlled open state for both menus
+  const [projectOpen, setProjectOpen] = useState(false);
+  const [sceneOpen, setSceneOpen] = useState(false);
+
   const [projectsLoading, setProjectsLoading] = useState(false);
   const [projects, setProjects] = useState<ProjectItemInfo[]>([]);
   const [selectedProject, setSelectedProject] = useState<ProjectItemInfo>();
 
   const [scenesLoading, setScenesLoading] = useState(false);
   const [scenes, setScenes] = useState<ProjectSceneInfo[]>([]);
+  const [scenesError, setScenesError] = useState('');
+  // undefined = not yet interacted, show route prop
+  // null      = project changed, show placeholder
+  // string   = scene was selected, show that name
+  const [displaySceneName, setDisplaySceneName] = useState<
+    string | null | undefined
+  >(undefined);
+
+  // Cache: project UUID → scene list. Stable ref, writes don't trigger re-renders.
+  const scenesCache = useRef<Map<string, ProjectSceneInfo[]>>(new Map());
+  // Track which project UUID is currently being fetched to prevent duplicate requests.
+  const loadingForUuid = useRef<string | null>(null);
 
   const handleProjectDropdownOpen = () => {
     setProjectsLoading(true);
@@ -49,20 +65,51 @@ export default function SceneBreadcrumb({
   };
 
   const loadScenes = (project: ProjectItemInfo) => {
+    // Cache hit — reuse immediately, no fetch
+    const cached = scenesCache.current.get(project.uuid);
+    if (cached) {
+      setScenes(cached);
+      setScenesError('');
+      return;
+    }
+
+    // Already fetching for this project — don't start a duplicate request
+    if (loadingForUuid.current === project.uuid) return;
+
+    loadingForUuid.current = project.uuid;
+    setScenes([]);
     setScenesLoading(true);
+    setScenesError('');
+
     getDbConn().listScenes(
       project.domain,
       project.name,
       project.uuid,
       (scenesInfo) => {
-        if (!scenesInfo.error_msg) setScenes(scenesInfo.scenes);
+        loadingForUuid.current = null;
+        if (scenesInfo.error_msg) {
+          setScenesError(scenesInfo.error_msg);
+        } else {
+          scenesCache.current.set(project.uuid, scenesInfo.scenes);
+          setScenes(scenesInfo.scenes);
+        }
         setScenesLoading(false);
       }
     );
   };
 
+  const handleProjectClick = (project: ProjectItemInfo) => {
+    setSelectedProject(project);
+    setDisplaySceneName(null); // project changed — hide stale scene name
+    setProjectOpen(false);
+    // Kick off scene fetch before opening the menu so it's ready (or loading) immediately
+    loadScenes(project);
+    setSceneOpen(true);
+  };
+
   const handleSceneDropdownOpen = () => {
     if (!selectedProject) {
+      // No prior project selection — resolve from the current route prop
       setProjectsLoading(true);
       getDbConn().listProjects(domain, (projectsInfo) => {
         if (!projectsInfo.error_msg) {
@@ -81,14 +128,10 @@ export default function SceneBreadcrumb({
     }
   };
 
-  const handleProjectClick = (project: ProjectItemInfo) => {
-    setSelectedProject(project);
-    loadScenes(project);
-  };
-
   const handleSceneClick = (scene: ProjectSceneInfo) => {
+    setDisplaySceneName(scene.name);
+    setSceneOpen(false);
     navigate(
-      // `/scene_v2?host=${sessionInfo!.guiServerHost}&port=${
       `/scene?host=${sessionInfo!.guiServerHost}&port=${
         sessionInfo!.guiServerPort
       }` +
@@ -97,6 +140,13 @@ export default function SceneBreadcrumb({
         `&uuid=${encodeURIComponent(scene.uuid)}`
     );
   };
+
+  const displayProjectName = selectedProject?.name ?? projectName;
+  // undefined → show route prop; null → project changed, show placeholder; string → selected scene
+  const shownSceneName =
+    displaySceneName === undefined
+      ? sceneName
+      : (displaySceneName ?? 'Select a scene...');
 
   return (
     <Breadcrumb className={cn('min-w-0 max-w-full', className)}>
@@ -113,14 +163,18 @@ export default function SceneBreadcrumb({
         {/* Project (dropdown) */}
         <BreadcrumbItem className="min-w-0 max-w-[40%]">
           <DropdownMenu
-            onOpenChange={(open) => open && handleProjectDropdownOpen()}
+            open={projectOpen}
+            onOpenChange={(open) => {
+              setProjectOpen(open);
+              if (open) handleProjectDropdownOpen();
+            }}
           >
             <DropdownMenuTrigger asChild>
               <BreadcrumbLink
                 className="cursor-pointer font-semibold block truncate max-w-full"
-                title={projectName}
+                title={displayProjectName}
               >
-                {projectName}
+                {displayProjectName}
               </BreadcrumbLink>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -148,14 +202,18 @@ export default function SceneBreadcrumb({
         {/* Scene (dropdown) */}
         <BreadcrumbItem className="min-w-0 max-w-[40%]">
           <DropdownMenu
-            onOpenChange={(open) => open && handleSceneDropdownOpen()}
+            open={sceneOpen}
+            onOpenChange={(open) => {
+              setSceneOpen(open);
+              if (open) handleSceneDropdownOpen();
+            }}
           >
             <DropdownMenuTrigger asChild>
               <BreadcrumbLink
                 className="cursor-pointer font-semibold block truncate max-w-full"
-                title={sceneName}
+                title={shownSceneName}
               >
-                {sceneName}
+                {shownSceneName}
               </BreadcrumbLink>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -166,6 +224,10 @@ export default function SceneBreadcrumb({
               {scenesLoading ? (
                 <div className="flex items-center justify-center p-8">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : scenesError ? (
+                <div className="p-4 text-sm text-destructive">
+                  {scenesError}
                 </div>
               ) : (
                 <ScenesTable
