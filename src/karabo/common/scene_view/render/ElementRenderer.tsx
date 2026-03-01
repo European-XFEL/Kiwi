@@ -26,6 +26,8 @@ import {
   WebLinkModel,
 } from '@/karabo/common/models/widgets/links';
 import { ControllerContainer } from '@/karabo/common/scene_view/ControllerContainer';
+import { useController } from '@/karabo/common/scene_view/hook/useController';
+import { PropertyOverlay } from '@/features/scene_view/components/PropertyOverlay';
 import { containerPointerEvents } from '@/karabo/common/scene_view/mode';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tooltip';
 
@@ -54,6 +56,32 @@ const isControllerWidget = (
 ): model is BaseWidgetObjectData =>
   model instanceof BaseWidgetObjectData &&
   !NON_CONTROLLER_WIDGETS.has(model.constructor);
+
+// ControllerView
+// ----------------------------------------------------------------------------
+// Calls useController for device binding, renders the widget and its overlay
+// as siblings — controller and overlay belong together.
+
+const ControllerView: React.FC<{
+  model: BaseWidgetObjectData;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Renderer: React.ComponentType<any>;
+}> = ({ model, Renderer }) => {
+  const ctx = useController(model.keys);
+
+  return (
+    <>
+      <Renderer model={model} ctx={ctx} />
+      <PropertyOverlay
+        primary={ctx.primary}
+        x={0}
+        y={0}
+        width={model.width}
+        height={model.height}
+      />
+    </>
+  );
+};
 
 // renderContent
 // ----------------------------------------------------------------------------
@@ -91,12 +119,8 @@ export function renderContent(model: BaseSceneObjectData): React.ReactNode {
 
   if (isControllerWidget(model)) {
     return (
-      <ControllerContainer
-        keys={model.keys}
-        width={model.width}
-        height={model.height}
-      >
-        {(ctx) => <Renderer model={model} ctx={ctx} />}
+      <ControllerContainer width={model.width} height={model.height}>
+        <ControllerView model={model} Renderer={Renderer} />
       </ControllerContainer>
     );
   }

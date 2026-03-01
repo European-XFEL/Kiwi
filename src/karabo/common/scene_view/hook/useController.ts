@@ -1,5 +1,5 @@
 /**
- * useControllerState — device subscription + controller UI state in one hook.
+ * useController — device subscription + controller UI state.
  */
 
 import React from 'react';
@@ -13,7 +13,7 @@ import {
 // ControllerContainerContext
 // ---
 // Everything a widget component needs from the device layer.
-// Widgets receive this via render prop from ControllerContainer.
+// Injected into widgets as the `ctx` prop.
 
 export interface ControllerContainerContext {
   canEdit: boolean;
@@ -27,10 +27,10 @@ export interface ControllerContainerContext {
   primary: UseDevicePropertyResult;
 }
 
-// useControllerState
+// useController
 // ---
 
-export function useControllerState(keys: string[]): ControllerContainerContext {
+export function useController(keys: string[]): ControllerContainerContext {
   const primaryKey = keys?.[0] ?? '';
   const primary = useDeviceProperty(primaryKey || undefined);
 

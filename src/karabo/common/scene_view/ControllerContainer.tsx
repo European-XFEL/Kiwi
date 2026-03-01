@@ -1,14 +1,11 @@
 /**
- * ControllerContainer — overlay/presentation wrapper for controller widgets.
+ * ControllerContainer — layout shell for controller widgets.
+ * Manages dimensions and scene interaction mode only.
  */
 
 import React from 'react';
-import { PropertyOverlay } from '@/features/scene_view/components/PropertyOverlay';
-import { containerPointerEvents, contentsWrapperStyle } from './mode';
-import {
-  useControllerState,
-  type ControllerContainerContext,
-} from './hook/useControllerState';
+import { useContainer } from './hook/useContainer';
+import type { ControllerContainerContext } from './hook/useController';
 
 export type { ControllerContainerContext };
 
@@ -16,22 +13,20 @@ export type { ControllerContainerContext };
 // ---
 
 export interface ControllerContainerProps {
-  keys: string[];
   width: number;
   height: number;
-  children: (ctx: ControllerContainerContext) => React.ReactNode;
+  children: React.ReactNode;
 }
 
 // ControllerContainer
 // ---
 
 export const ControllerContainer: React.FC<ControllerContainerProps> = ({
-  keys,
   width,
   height,
   children,
 }) => {
-  const ctx = useControllerState(keys);
+  const { containerStyle, contentsStyle } = useContainer();
 
   return (
     <div
@@ -39,17 +34,10 @@ export const ControllerContainer: React.FC<ControllerContainerProps> = ({
         position: 'relative',
         width,
         height,
-        pointerEvents: containerPointerEvents(),
+        ...containerStyle,
       }}
     >
-      <div style={contentsWrapperStyle()}>{children(ctx)}</div>
-      <PropertyOverlay
-        primary={ctx.primary}
-        x={0}
-        y={0}
-        width={width}
-        height={height}
-      />
+      <div style={contentsStyle}>{children}</div>
     </div>
   );
 };
