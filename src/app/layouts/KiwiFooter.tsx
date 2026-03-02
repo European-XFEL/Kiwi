@@ -1,7 +1,7 @@
 import { Separator } from '@/components/separator';
 import { TopicDisplay, GuiServerDisplay } from '@/features/status';
 import { ConnectionTimer } from '@/features/user';
-import { SceneSizeDisplay } from '@/features/scene_view';
+import { SceneSizeDisplay } from '@/features/scene-view';
 import Footer from './Footer';
 
 export default function KiwiFooter() {

@@ -1,10 +1,10 @@
 /** DisplayAlarmFloat — float display colour-coded by alarm/warn thresholds. */
 
 import React from 'react';
-import type { ControllerContainerContext } from '@/features/scene-view/ControllerContainer';
+import type { ControllerContainerContext } from '@/features/scene-view/components/ControllerContainer';
 import { DisplayAlarmFloatModel } from '@/karabo/common/models/widgets/controllers/display';
 import { registerRenderer } from '@/features/scene-view/render/registry';
-import { FONT_FAMILY_DEFAULT } from '@/features/controllers/utils/fontDefaults';
+import { FONT_FAMILY_DEFAULT } from '@/karabo/common/utils/fontDefaults';
 
 // DisplayAlarmFloat
 // ----------------------------------------------------------------------------

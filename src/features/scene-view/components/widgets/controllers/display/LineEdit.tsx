@@ -1,10 +1,10 @@
 /** LineEdit — DisplayLineEdit (read-only) and EditableLineEdit (interactive). */
 
 import React from 'react';
-import type { ControllerContainerContext } from '@/features/scene-view/ControllerContainer';
+import type { ControllerContainerContext } from '@/features/scene-view/components/ControllerContainer';
 import { LineEditModel } from '@/karabo/common/models/widgets/controllers/display';
 import { registerRenderer } from '@/features/scene-view/render/registry';
-import { FONT_FAMILY_DEFAULT } from '@/features/controllers/utils/fontDefaults';
+import { FONT_FAMILY_DEFAULT } from '@/karabo/common/utils/fontDefaults';
 
 // LineEdit
 // ----------------------------------------------------------------------------

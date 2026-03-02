@@ -3,8 +3,15 @@
  */
 
 import React, { useMemo } from 'react';
-import type { DisplayStatefulIconProps } from '@/scene/scene_types/controllers';
-import { useGuiStateColor } from '@/features/controllers/display/hooks/useGuiStateColor';
+import type { UsePropertyProxyUpdate } from '@/lib/binding/useDeviceProperty';
+import { useGuiStateColor } from '../hooks/useGuiStateColor';
+
+export interface DisplayStatefulIconProps {
+  icon_name: string;
+  tooltipText?: string;
+  disabledReason?: string;
+  primary?: Pick<UsePropertyProxyUpdate, 'value' | 'propertyIndicator'>;
+}
 import { statefulIconTextById } from '../utils/statefulIcons';
 import {
   recolorPreloadedSvg,

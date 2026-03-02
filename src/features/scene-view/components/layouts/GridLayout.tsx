@@ -8,7 +8,7 @@ import { GridLayoutModel } from '@/karabo/common/models/layouts';
 import { GridLayoutChildData } from '@/karabo/common/models/bases';
 import { renderContent } from '@/features/scene-view/render/ElementRenderer';
 import { resolveBounds } from '@/features/scene-view/render/bounds';
-import { containerPointerEvents } from '@/features/scene-view/mode';
+import { containerPointerEvents } from '@/features/scene-view/utils/mode';
 import { registerRenderer } from '@/features/scene-view/render/registry';
 
 type GridLayoutProps = {

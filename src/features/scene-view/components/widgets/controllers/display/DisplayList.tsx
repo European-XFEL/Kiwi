@@ -1,11 +1,11 @@
 /** DisplayList — displays a list/scalar value as a string. Same layout as DisplayLabel. */
 
 import React from 'react';
-import type { ControllerContainerContext } from '@/features/scene-view/ControllerContainer';
+import type { ControllerContainerContext } from '@/features/scene-view/components/ControllerContainer';
 import { DisplayListModel } from '@/karabo/common/models/widgets/controllers/display';
 import { registerRenderer } from '@/features/scene-view/render/registry';
-import { scalarToString } from '@/features/controllers/utils/validation/toStringFormatters';
-import { FONT_FAMILY_DEFAULT } from '@/features/controllers/utils/fontDefaults';
+import { scalarToString } from '@/karabo/common/utils/toStringFormatters';
+import { FONT_FAMILY_DEFAULT } from '@/karabo/common/utils/fontDefaults';
 
 // DisplayList
 // ----------------------------------------------------------------------------

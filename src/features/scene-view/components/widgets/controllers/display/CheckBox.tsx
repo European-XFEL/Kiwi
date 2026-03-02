@@ -1,12 +1,16 @@
 /** CheckBox — DisplayCheckBox (read-only) and EditableCheckBox (interactive). */
 
 import React from 'react';
-import type { ControllerContainerContext } from '@/features/scene-view/ControllerContainer';
+import type { ControllerContainerContext } from '@/features/scene-view/components/ControllerContainer';
 import { CheckBoxModel } from '@/karabo/common/models/widgets/controllers/display';
 import { registerRenderer } from '@/features/scene-view/render/registry';
+import { Checkbox } from '@/components/checkbox';
 
 // CheckBox
 // ----------------------------------------------------------------------------
+
+const CHECKBOX_CLASSNAME =
+  'border border-gray-700 rounded-none data-[state=checked]:bg-white data-[state=checked]:text-black data-[state=checked]:border-black';
 
 function toBool(value: unknown): boolean {
   if (typeof value === 'boolean') return value;
@@ -25,7 +29,12 @@ const DisplayCheckBox: React.FC<{
       className="w-full h-full flex items-center justify-center"
       title={ctx?.tooltipText ?? ctx?.disabledReason}
     >
-      <input type="checkbox" checked={checked} readOnly disabled />
+      <Checkbox
+        checked={checked}
+        disabled
+        aria-readonly="true"
+        className={CHECKBOX_CLASSNAME}
+      />
     </div>
   );
 };
@@ -42,13 +51,13 @@ const EditableCheckBox: React.FC<{
       className="w-full h-full flex items-center justify-center"
       title={ctx?.tooltipText ?? ctx?.disabledReason}
     >
-      <input
-        type="checkbox"
+      <Checkbox
         checked={checked}
         disabled={!enabled}
-        onChange={() => {
+        onCheckedChange={() => {
           // TODO: push !checked to backend
         }}
+        className={CHECKBOX_CLASSNAME}
       />
     </div>
   );

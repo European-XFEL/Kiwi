@@ -1,13 +1,13 @@
 /** EditableComboBox and EditableChoiceElement — dropdown select from allowed values. */
 
 import React from 'react';
-import type { ControllerContainerContext } from '@/features/scene-view/ControllerContainer';
+import type { ControllerContainerContext } from '@/features/scene-view/components/ControllerContainer';
 import {
   EditableComboBoxModel,
   EditableChoiceElementModel,
 } from '@/karabo/common/models/widgets/controllers/editable';
 import { registerRenderer } from '@/features/scene-view/render/registry';
-import { FONT_FAMILY_DEFAULT } from '@/features/controllers/utils/fontDefaults';
+import { FONT_FAMILY_DEFAULT } from '@/karabo/common/utils/fontDefaults';
 
 // ComboBox
 // ----------------------------------------------------------------------------
