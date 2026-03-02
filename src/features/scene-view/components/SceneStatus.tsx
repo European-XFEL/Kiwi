@@ -9,7 +9,7 @@ import {
 import { sceneParamsFromURL } from '@/features/navigation/utils';
 import { LoadProjectSceneResult } from '@/lib/ProjectDbInfo';
 import { cn } from '@/shared/utils/cn';
-import { getDbConn } from '@/singletons/api';
+import { getDbConn } from '@/lib/singletons/api';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { Dot, FileText, XCircle } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';

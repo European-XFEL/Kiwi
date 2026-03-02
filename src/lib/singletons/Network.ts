@@ -7,7 +7,7 @@ import { AccessLevel } from '@/karabo/data/enums';
 import { Hash, HashList } from '@/karabo/data/hash';
 import { Deque } from '@datastructures-js/deque';
 
-import { getConfig } from '@/singletons/api';
+import { getConfig } from '@/lib/singletons/api';
 import { useAppSettingsStore } from '@/store/appSettingsStore';
 import { useGlobalActivityStore } from '@/store/globalActivityStore';
 import { Websocket, WebsocketBuilder } from 'websocket-ts';

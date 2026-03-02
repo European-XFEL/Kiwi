@@ -11,7 +11,7 @@ import { Hash } from '@/karabo/data/hash';
 import { Button } from '@/components/button';
 import { Card, CardContent } from '@/components/card';
 import { Separator } from '@/components/separator';
-import { getDbConn } from '@/singletons/api';
+import { getDbConn } from '@/lib/singletons/api';
 import { ProjectItemInfo, ProjectSceneInfo } from '@/lib/ProjectDbInfo';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import DomainSelector from './components/DomainSelector';

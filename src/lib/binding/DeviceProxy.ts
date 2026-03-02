@@ -3,7 +3,7 @@ import { Hash, Schema } from '@/karabo/data/hash';
 import { Timestamp } from '@/karabo/data/timestamp';
 import { buildBinding } from '@/lib/binding/BindingFactory';
 
-import { getNetwork } from '@/singletons/api';
+import { getNetwork } from '@/lib/singletons/api';
 import { BaseBinding, BindingRoot, NodeBinding } from './BaseBinding';
 import { WeakEvent } from '../WeakEvent';
 

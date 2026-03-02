@@ -1,4 +1,4 @@
-import { singletons } from '@/singletons/api';
+import { singletons } from '@/lib/singletons/api';
 
 export class SingletonContext {
   private replaced = new Map<string, any>();

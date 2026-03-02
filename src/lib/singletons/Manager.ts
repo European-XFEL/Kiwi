@@ -2,7 +2,7 @@ import { broadcast_event, KaraboEvent } from '@/events';
 import { AccessControlManager } from '@/features/user/utils/AccessLevel';
 import { decodeBinary } from '@/karabo/data/bin_reader';
 import { Hash, Schema } from '@/karabo/data/hash';
-import { getConfig, getNetwork, getTopology } from '@/singletons/api';
+import { getConfig, getNetwork, getTopology } from '@/lib/singletons/api';
 
 export class Manager {
   private _network: any;

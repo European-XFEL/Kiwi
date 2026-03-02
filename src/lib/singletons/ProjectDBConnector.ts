@@ -13,7 +13,7 @@ import {
 import { XMLParser } from 'fast-xml-parser';
 import { readSceneFromSvgJson } from '@/karabo/common/readers/readScene';
 
-import { getNetwork } from '@/singletons/api';
+import { getNetwork } from '@/lib/singletons/api';
 import { ProjectSceneCache } from '@/store/ProjectSceneCache';
 
 import {

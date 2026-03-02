@@ -13,7 +13,7 @@ import {
 } from '@/components/dropdown-menu';
 import { ProjectItemInfo, ProjectSceneInfo } from '@/lib/ProjectDbInfo';
 import { cn } from '@/shared/utils/cn';
-import { getDbConn } from '@/singletons/api';
+import { getDbConn } from '@/lib/singletons/api';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { Loader2 } from 'lucide-react';
 import { useRef, useState } from 'react';

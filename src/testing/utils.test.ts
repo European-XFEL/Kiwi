@@ -1,4 +1,4 @@
-import { getTopology } from '@/singletons/api';
+import { getTopology } from '@/lib/singletons/api';
 import { SingletonContext } from './utils';
 
 test('Test Singleton replacement', async () => {
