@@ -21,20 +21,19 @@ import {
   StickerModel,
 } from '@/karabo/common/models/widgets/static';
 import {
-  DeviceSceneLinkModel,
   SceneLinkModel,
   WebLinkModel,
 } from '@/karabo/common/models/widgets/links';
-import { ControllerContainer } from '@/features/scene-view/ControllerContainer';
-import { containerPointerEvents } from '@/features/scene-view/mode';
+import { ControllerContainer } from '@/features/scene-view/components/ControllerContainer';
+import { containerPointerEvents } from '@/features/scene-view/utils/mode';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tooltip';
 
 import { getRenderer } from './registry';
 import { resolveBounds } from './bounds';
-import { useController } from '../hook/useController';
-import { PropertyOverlay } from '@/features/scene_view/components/PropertyOverlay';
+import { useController } from '../hooks/useController';
+import { PropertyOverlay } from '@/features/scene-view/components/PropertyOverlay';
 
-export { resolveBounds, isLayout, isShape } from './bounds';
+export { resolveBounds, isLayout } from './bounds';
 
 // NON_CONTROLLER_WIDGETS
 // ----------------------------------------------------------------------------
@@ -44,7 +43,6 @@ export { resolveBounds, isLayout, isShape } from './bounds';
 const NON_CONTROLLER_WIDGETS = new Set<Function>([
   LabelModel,
   StickerModel,
-  DeviceSceneLinkModel,
   SceneLinkModel,
   WebLinkModel,
   UnknownWidgetDataModel,
@@ -133,9 +131,11 @@ export function renderContent(model: BaseSceneObjectData): React.ReactNode {
 // Wraps renderContent in a PositionedShell.
 // Only used by SceneView — never inside layout wrapper divs.
 
-export const ElementRenderer: React.FC<{ model: BaseSceneObjectData }> = ({
-  model,
-}) => <PositionedShell model={model}>{renderContent(model)}</PositionedShell>;
+export const ElementRenderer: React.FC<{
+  model: BaseSceneObjectData;
+}> = ({ model }) => (
+  <PositionedShell model={model}>{renderContent(model)}</PositionedShell>
+);
 
 // PositionedShell
 // ----------------------------------------------------------------------------

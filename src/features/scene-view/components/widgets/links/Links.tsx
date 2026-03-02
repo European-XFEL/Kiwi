@@ -1,13 +1,48 @@
-/** Links — DeviceSceneLink, SceneLink, WebLink. No device binding. */
+/** Links — DeviceSceneLink (controller), SceneLink, WebLink. */
 
 import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Cpu, ExternalLink, Film } from 'lucide-react';
 import {
   DeviceSceneLinkModel,
   SceneLinkModel,
   WebLinkModel,
 } from '@/karabo/common/models/widgets/links';
+import type { ControllerContainerContext } from '@/features/scene-view/components/ControllerContainer';
 import { registerRenderer } from '@/features/scene-view/render/registry';
-import { QtFontDescriptor } from '@/scene/utils/QtFontDescriptor';
+import { QtFontDescriptor } from '@/karabo/common/utils/QtFontDescriptor';
+
+// useSceneNavigate
+// ----------------------------------------------------------------------------
+// target may be "projectName:uuid" (SceneLink) or just "uuid" (DeviceSceneLink).
+// Replaces only the parts that are present, preserving host/port/domain.
+
+function useSceneNavigate(target: string, targetWindow: 'mainwin' | 'dialog') {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  return React.useCallback(() => {
+    if (!target) return;
+    const colonIdx = target.indexOf(':');
+    const projectName = colonIdx >= 0 ? target.slice(0, colonIdx) : null;
+    const uuid = colonIdx >= 0 ? target.slice(colonIdx + 1) : target;
+
+    let next = location.search.replace(/([?&]uuid=)[^&]*/, `$1${uuid}`);
+    if (projectName) {
+      next = next.replace(/([?&]projectName=)[^&]*/, `$1${projectName}`);
+    }
+
+    if (targetWindow === 'dialog') {
+      window.open(
+        `${location.pathname}${next}`,
+        '_blank',
+        'noopener,noreferrer'
+      );
+    } else {
+      navigate({ pathname: location.pathname, search: next });
+    }
+  }, [target, targetWindow, location, navigate]);
+}
 
 // LinkButton — shared layout for all link types
 // ----------------------------------------------------------------------------
@@ -20,6 +55,8 @@ function LinkButton({
   frame_width,
   title,
   onClick,
+  Icon,
+  iconColor,
 }: {
   text: string;
   font: string;
@@ -28,6 +65,8 @@ function LinkButton({
   frame_width: number;
   title?: string;
   onClick?: () => void;
+  Icon: React.ElementType;
+  iconColor: string;
 }) {
   const f = new QtFontDescriptor(font);
   return (
@@ -36,6 +75,7 @@ function LinkButton({
       title={title}
       onClick={onClick}
       style={{
+        position: 'relative',
         width: '100%',
         height: '100%',
         backgroundColor: background,
@@ -54,6 +94,11 @@ function LinkButton({
         textOverflow: 'ellipsis',
       }}
     >
+      <Icon
+        size={10}
+        color={iconColor}
+        style={{ position: 'absolute', top: 2, left: 2 }}
+      />
       {text}
     </button>
   );
@@ -61,39 +106,59 @@ function LinkButton({
 
 // DeviceSceneLink
 // ----------------------------------------------------------------------------
+// target="scene" is a fixed label — the real scene identifier comes from
+// the device's availableScenes property (ctx.primary.value).
 
-const DeviceSceneLink: React.FC<{ model: DeviceSceneLinkModel }> = ({
-  model,
-}) => (
-  <LinkButton
-    text={model.text}
-    font={model.font}
-    foreground={model.foreground}
-    background={model.background}
-    frame_width={model.frame_width}
-    title={`Scene: ${model.target}`}
-    onClick={() => {
-      // TODO: open target scene in dialog or tab
-    }}
-  />
-);
+const DeviceSceneLink: React.FC<{
+  model: DeviceSceneLinkModel;
+  ctx?: ControllerContainerContext;
+}> = ({ model, ctx }) => {
+  const scenes = ctx?.primary?.value;
+  const firstScene: string =
+    Array.isArray(scenes) && scenes.length > 0
+      ? String(scenes[0])
+      : typeof scenes === 'string' && scenes
+        ? scenes
+        : '';
+  const go = useSceneNavigate(firstScene, model.target_window);
+  return (
+    <LinkButton
+      text={model.text}
+      font={model.font}
+      foreground={model.foreground}
+      background={model.background}
+      frame_width={model.frame_width}
+      title={
+        firstScene
+          ? `Scene: ${firstScene}`
+          : (ctx?.disabledReason ?? 'No scene available')
+      }
+      onClick={firstScene ? go : undefined}
+      Icon={Cpu}
+      iconColor="#0ea5e9"
+    />
+  );
+};
 
 // SceneLink
 // ----------------------------------------------------------------------------
 
-const SceneLink: React.FC<{ model: SceneLinkModel }> = ({ model }) => (
-  <LinkButton
-    text={model.text}
-    font={model.font}
-    foreground={model.foreground}
-    background={model.background}
-    frame_width={model.frame_width}
-    title={`Scene: ${model.target}`}
-    onClick={() => {
-      // TODO: navigate to target scene
-    }}
-  />
-);
+const SceneLink: React.FC<{ model: SceneLinkModel }> = ({ model }) => {
+  const go = useSceneNavigate(model.target, model.target_window);
+  return (
+    <LinkButton
+      text={model.text}
+      font={model.font}
+      foreground={model.foreground}
+      background={model.background}
+      frame_width={model.frame_width}
+      title={`Scene: ${model.target}`}
+      onClick={go}
+      Icon={Film}
+      iconColor="#64748b"
+    />
+  );
+};
 
 // WebLink
 // ----------------------------------------------------------------------------
@@ -110,6 +175,8 @@ const WebLink: React.FC<{ model: WebLinkModel }> = ({ model }) => (
       if (model.target)
         window.open(model.target, '_blank', 'noopener,noreferrer');
     }}
+    Icon={ExternalLink}
+    iconColor="#f43f5e"
   />
 );
 

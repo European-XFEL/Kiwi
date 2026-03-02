@@ -3,7 +3,7 @@
 import React from 'react';
 import { LabelModel } from '@/karabo/common/models/widgets/static';
 import { registerRenderer } from '@/features/scene-view/render/registry';
-import { QtFontDescriptor } from '@/scene/utils/QtFontDescriptor';
+import { QtFontDescriptor } from '@/karabo/common/utils/QtFontDescriptor';
 
 // Label
 // ----------------------------------------------------------------------------

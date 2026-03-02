@@ -1,16 +1,15 @@
-import { Menu } from 'lucide-react';
+import { Menu, Home } from 'lucide-react';
 import Header from '@/app/layouts/Header';
 import NavigationMenu from './components/NavMenu';
 import { NavItem } from './components/NavItem';
 import NavToggle from './components/NavToggle';
 import { LoadProjectScene, SceneBreadcrumb } from '@/features/project';
 import Logo from './components/Logo';
-import { SceneStatus, FitModeSelect } from '@/features/scene_view';
 import { UserProfile, AccessLevelSelector } from '@/features/user';
 import { Button } from '@/components/button';
 import { Separator } from '@/components/separator';
 import { GuiServerDisplay, ActiveIndicator } from '@/features/status';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { LoadProjectSceneResult, ProjectSceneInfo } from '@/lib/ProjectDbInfo';
 import { useEffect, useState } from 'react';
@@ -19,7 +18,13 @@ import { sceneParamsFromURL } from './utils';
 
 export function NavBar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [sceneInfo, setSceneInfo] = useState<ProjectSceneInfo | null>(null);
+
+  const handleHome = () => {
+    setSceneInfo(null);
+    navigate('/no_scene');
+  };
 
   useEffect(() => {
     const sceneParams = sceneParamsFromURL(location.search);
@@ -67,13 +72,19 @@ export function NavBar() {
                 variant="outline"
                 className="w-full justify-start"
               />
-              <Separator />
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide px-1">
-                  Current Scene
-                </p>
-                <SceneStatus variant="compact" />
-              </div>
+              {sceneInfo && (
+                <>
+                  <Separator />
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start gap-2"
+                    onClick={handleHome}
+                  >
+                    <Home className="h-4 w-4" />
+                    Go home
+                  </Button>
+                </>
+              )}
             </nav>
           </NavToggle>
 
@@ -128,16 +139,18 @@ export function NavBar() {
 
           <NavItem className="flex-1 min-w-0 overflow-hidden">
             <div className="flex items-center gap-2 overflow-hidden w-full">
-              <div className="hidden xl:flex shrink-0">
-                <SceneStatus variant="compact" />
-              </div>
-
               {sceneInfo && (
                 <>
-                  <Separator
-                    orientation="vertical"
-                    className="hidden xl:block h-6 w-px bg-border shrink-0"
-                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleHome}
+                    aria-label="Go home"
+                    className="shrink-0"
+                  >
+                    <Home className="h-4 w-4" />
+                  </Button>
+                  <Separator orientation="vertical" className="h-6 shrink-0" />
                   <div className="min-w-0 flex-1 overflow-hidden">
                     <SceneBreadcrumb
                       domain={sceneInfo.domain}
@@ -154,12 +167,6 @@ export function NavBar() {
                 </span>
               )}
             </div>
-          </NavItem>
-
-          <Separator orientation="vertical" className="h-8 mx-2" />
-
-          <NavItem>
-            <FitModeSelect />
           </NavItem>
 
           <Separator orientation="vertical" className="h-8 mx-2" />

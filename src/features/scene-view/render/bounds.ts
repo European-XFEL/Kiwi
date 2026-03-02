@@ -7,7 +7,6 @@
 import {
   type BaseSceneObjectData,
   BaseLayoutModel,
-  BaseShapeObjectData,
   BaseWidgetObjectData,
 } from '@/karabo/common/models/bases';
 import {
@@ -27,13 +26,6 @@ export interface Bounds {
   width: number;
   height: number;
 }
-
-// isShape
-// ---
-
-/** True for purely decorative shape elements (Line, Polygon, Arrow, Rectangle, Path). */
-export const isShape = (sceneElement: BaseSceneObjectData): boolean =>
-  sceneElement instanceof BaseShapeObjectData;
 
 /** True for layout containers (Fixed, Grid, Box) which are usually wrapper-only. */
 export const isLayout = (sceneElement: BaseSceneObjectData): boolean =>
