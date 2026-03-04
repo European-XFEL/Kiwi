@@ -15,7 +15,7 @@ import { FONT_FAMILY_DEFAULT } from '@/karabo/common/utils/fontDefaults';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { AccessLevel } from '@/karabo/data/enums';
 import { ProxyStatus } from '@/lib/binding/ProxyStatus';
-import { getNetwork } from '@/singletons/api';
+import { getNetwork } from '@/lib/singletons/api';
 
 // DisplayCommand
 // ----------------------------------------------------------------------------

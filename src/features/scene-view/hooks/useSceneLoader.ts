@@ -10,7 +10,7 @@
 import type { SceneModel } from '@/karabo/common/models/SceneModel';
 import type { LoadProjectSceneResult } from '@/lib/ProjectDbInfo';
 import { sceneParamsFromURL } from '@/features/navigation/utils';
-import { getDbConn, getTopology } from '@/singletons/api';
+import { getDbConn, getTopology } from '@/lib/singletons/api';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { useLoadedSceneStore } from '@/store/loadedSceneStore';
 import useRecentStore from '@/store/recentScenesStore';

@@ -13,7 +13,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { LoadProjectSceneResult, ProjectSceneInfo } from '@/lib/ProjectDbInfo';
 import { useEffect, useState } from 'react';
-import { getDbConn } from '@/singletons/api';
+import { getDbConn } from '@/lib/singletons/api';
 import { sceneParamsFromURL } from './utils';
 
 export function NavBar() {

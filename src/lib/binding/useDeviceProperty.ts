@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { getTopology } from '@/singletons/api';
+import { getTopology } from '@/lib/singletons/api';
 import type { HashValues } from '@/karabo/data/hash';
 import type { HashType } from '@/karabo/data/typenums';
 import { PropertyProxy } from '@/lib/binding/PropertyProxy';

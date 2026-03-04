@@ -13,7 +13,7 @@ import { useAccessLevel } from '@/features/user/hooks/useAccessLevel';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { AccessLevel } from '@/karabo/data/enums';
 import { getAccessLevelDisplay } from '@/shared/utils/getAccessLevelDisplay';
-import { getConfig } from '@/singletons/api';
+import { getConfig } from '@/lib/singletons/api';
 import type { AccessLevelSelectorProps } from '../types/user.types';
 
 export default function AccessLevelSelector({

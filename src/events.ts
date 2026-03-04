@@ -1,5 +1,5 @@
 import { Hash } from '@/karabo/data/hash';
-import { getMediator } from '@/singletons/api';
+import { getMediator } from '@/lib/singletons/api';
 import { useEffect, useRef } from 'react';
 
 export type BroadcastHandler = (data: Hash) => void;

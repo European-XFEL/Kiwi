@@ -9,7 +9,7 @@ import {
   DropdownMenuLabel,
 } from '@/components/dropdown-menu';
 
-import { getNetwork } from '@/singletons/api';
+import { getNetwork } from '@/lib/singletons/api';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 
 const getInitials = (text?: string): string => {
