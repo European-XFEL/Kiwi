@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'lodash';
 import type { UseDevicePropertyResult } from '@/lib/binding';
 
@@ -27,11 +27,13 @@ const toFiniteNumber = (raw: unknown): number | null => {
 
 const safeNowMs = (primary?: UseDevicePropertyResult): number => {
   try {
-    // TODO: Check time
-    return primary?.timestamp ? primary.timestamp.toTimestamp() : Date.now();
+    const seconds = primary?.timestamp?.toTimestamp();
+    // toTimestamp() returns seconds — convert to epoch milliseconds.
+    if (seconds != null && Number.isFinite(seconds)) return seconds * 1000;
   } catch {
-    return Date.now();
+    // fall through
   }
+  return Date.now();
 };
 
 const prune = (data: TrendDataPoint[], max: number, windowMs: number) => {
@@ -63,54 +65,61 @@ export const useDisplayTrendGraph = (
   const [trendData, setTrendData] = useState<TrendDataPoint[]>([]);
   const lastTsRef = useRef<number>(-Infinity);
 
-  const appendPoint = useCallback(
-    (point: TrendDataPoint) => {
+  // Ref keeps the append function fresh without changing throttledUpdate's identity.
+  const appendPointRef = useRef((point: TrendDataPoint) => {
+    setTrendData((prev) =>
+      prune([...prev, point], maxDataPoints, timeWindowMs)
+    );
+  });
+
+  useEffect(() => {
+    appendPointRef.current = (point: TrendDataPoint) => {
       setTrendData((prev) =>
         prune([...prev, point], maxDataPoints, timeWindowMs)
       );
-    },
-    [maxDataPoints, timeWindowMs]
-  );
+    };
+  }, [maxDataPoints, timeWindowMs]);
 
-  const throttledAppend = useMemo(
+  // throttledUpdate only re-creates when throttleDelayMs changes — not on prune config changes.
+  const throttledUpdate = useMemo(
     () =>
-      throttle(appendPoint, throttleDelayMs, {
-        leading: true,
-        trailing: true,
-      }),
-    [appendPoint, throttleDelayMs]
+      throttle(
+        (point: TrendDataPoint) => appendPointRef.current(point),
+        throttleDelayMs,
+        { leading: true, trailing: true }
+      ),
+    [throttleDelayMs]
   );
 
   // reset on binding identity change
   useEffect(() => {
+    throttledUpdate.cancel();
     setTrendData([]);
     lastTsRef.current = -Infinity;
-    throttledAppend.cancel();
-  }, [primary?.deviceId, primary?.propertyPath, throttledAppend]);
+  }, [primary?.deviceId, primary?.propertyPath, throttledUpdate]);
 
   // clear on offline
   useEffect(() => {
     if (!isOffline) return;
 
-    throttledAppend.cancel();
+    throttledUpdate.cancel();
     setTrendData([]);
     lastTsRef.current = -Infinity;
-  }, [isOffline, throttledAppend]);
+  }, [isOffline, throttledUpdate]);
 
   // append points on updates
   useEffect(() => {
     if (!primary || isOffline) return;
 
-    const raw = primary.value;
-    const value = toFiniteNumber(raw);
+    const value = toFiniteNumber(primary.value);
     if (value == null) return;
 
     const timestamp = safeNowMs(primary);
     if (timestamp <= lastTsRef.current) return;
     lastTsRef.current = timestamp;
 
-    throttledAppend({ timestamp, value });
-  }, [primary?.value, primary?.timestamp, primary, isOffline, throttledAppend]);
+    throttledUpdate({ timestamp, value });
+  }, [primary?.value, primary?.timestamp, primary, isOffline, throttledUpdate]);
 
   // periodic pruning
   useEffect(() => {
@@ -122,7 +131,7 @@ export const useDisplayTrendGraph = (
   }, [maxDataPoints, timeWindowMs]);
 
   // cleanup
-  useEffect(() => () => throttledAppend.cancel(), [throttledAppend]);
+  useEffect(() => () => throttledUpdate.cancel(), [throttledUpdate]);
 
   const timestamps = useMemo(
     () => trendData.map((d) => d.timestamp),

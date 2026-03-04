@@ -5,7 +5,6 @@ import {
   SceneLoadError,
   SceneLoading,
 } from '@/features/scene-view/components/SceneStatusViews';
-import { FitModeToolbar } from '@/features/scene-view/components/FitModeToolbar';
 import { SceneShell } from '@/features/scene-view/components/SceneShell';
 import { SceneStage } from '@/features/scene-view/components/SceneStage';
 import { SceneViewport } from '@/features/scene-view/components/SceneViewport';
@@ -108,7 +107,6 @@ const SceneView: React.FC = () => {
             </div>
           )}
         </SceneViewport>
-        <FitModeToolbar />
       </SceneShell>
     </SceneWindow>
   );

@@ -19,7 +19,12 @@ import {
   TableElementModel,
 } from '@/karabo/common/models';
 
-import { readBaseWidgetData, toNum, toStr } from '@/karabo/common/readers/util';
+import {
+  readBaseWidgetData,
+  toBool,
+  toNum,
+  toStr,
+} from '@/karabo/common/readers/util';
 
 // DisplayLabel
 // ----------------------------------------------------------------------------
@@ -97,8 +102,7 @@ registerReader('DisplayCommand', (json) => {
   if (json['@_krb:font_size'] !== undefined)
     command.font_size = toNum(json['@_krb:font_size'], command.font_size);
   if (toStr(json['@_krb:font_weight']) === 'bold') command.font_weight = 'bold';
-  command.requires_confirmation =
-    toStr(json['@_krb:requires_confirmation']) === 'true';
+  command.requires_confirmation = toBool(json['@_krb:requires_confirmation']);
 
   return command;
 });
@@ -110,7 +114,7 @@ registerReader('DisplayStateColor', (json) => {
   const state = new DisplayStateColorModel();
 
   readBaseWidgetData(json, state);
-  state.show_string = toStr(json['@_krb:show_string']) === 'true';
+  state.show_string = toBool(json['@_krb:show_string']);
 
   return state;
 });
@@ -142,7 +146,7 @@ registerReader('Evaluator', (json) => {
 // DisplayTrendGraph
 // ----------------------------------------------------------------------------
 
-registerReader('DisplayTrendGraph', (json) => {
+const readTrendGraph = (json: Record<string, unknown>) => {
   const graph = new DisplayTrendGraphModel();
 
   readBaseWidgetData(json, graph);
@@ -150,14 +154,14 @@ registerReader('DisplayTrendGraph', (json) => {
   graph.y_label = toStr(json['@_krb:y_label']);
   graph.x_units = toStr(json['@_krb:x_units']);
   graph.y_units = toStr(json['@_krb:y_units']);
-  graph.x_grid = toStr(json['@_krb:x_grid']) === 'true';
-  graph.y_grid = toStr(json['@_krb:y_grid']) === 'true';
-  graph.x_log = toStr(json['@_krb:x_log']) === 'true';
-  graph.y_log = toStr(json['@_krb:y_log']) === 'true';
-  graph.x_invert = toStr(json['@_krb:x_invert']) === 'true';
-  graph.y_invert = toStr(json['@_krb:y_invert']) === 'true';
-  graph.x_autorange = toStr(json['@_krb:x_autorange'], 'true') === 'true';
-  graph.y_autorange = toStr(json['@_krb:y_autorange'], 'true') === 'true';
+  graph.x_grid = toBool(json['@_krb:x_grid']);
+  graph.y_grid = toBool(json['@_krb:y_grid']);
+  graph.x_log = toBool(json['@_krb:x_log']);
+  graph.y_log = toBool(json['@_krb:y_log']);
+  graph.x_invert = toBool(json['@_krb:x_invert']);
+  graph.y_invert = toBool(json['@_krb:y_invert']);
+  graph.x_autorange = toBool(json['@_krb:x_autorange'], true);
+  graph.y_autorange = toBool(json['@_krb:y_autorange'], true);
   graph.x_min = toNum(json['@_krb:x_min']);
   graph.x_max = toNum(json['@_krb:x_max']);
   graph.y_min = toNum(json['@_krb:y_min']);
@@ -166,12 +170,15 @@ registerReader('DisplayTrendGraph', (json) => {
   graph.background = toStr(json['@_krb:background'], 'transparent');
 
   return graph;
-});
+};
+
+registerReader('DisplayTrendGraph', readTrendGraph);
+registerReader('TrendGraph', readTrendGraph);
 
 // DisplayVectorGraph
 // ----------------------------------------------------------------------------
 
-registerReader('DisplayVectorGraph', (json) => {
+const readVectorGraph = (json: Record<string, unknown>) => {
   const graph = new DisplayVectorGraphModel();
 
   readBaseWidgetData(json, graph);
@@ -179,14 +186,14 @@ registerReader('DisplayVectorGraph', (json) => {
   graph.y_label = toStr(json['@_krb:y_label']);
   graph.x_units = toStr(json['@_krb:x_units']);
   graph.y_units = toStr(json['@_krb:y_units']);
-  graph.x_grid = toStr(json['@_krb:x_grid']) === 'true';
-  graph.y_grid = toStr(json['@_krb:y_grid']) === 'true';
-  graph.x_log = toStr(json['@_krb:x_log']) === 'true';
-  graph.y_log = toStr(json['@_krb:y_log']) === 'true';
-  graph.x_invert = toStr(json['@_krb:x_invert']) === 'true';
-  graph.y_invert = toStr(json['@_krb:y_invert']) === 'true';
-  graph.x_autorange = toStr(json['@_krb:x_autorange'], 'true') === 'true';
-  graph.y_autorange = toStr(json['@_krb:y_autorange'], 'true') === 'true';
+  graph.x_grid = toBool(json['@_krb:x_grid']);
+  graph.y_grid = toBool(json['@_krb:y_grid']);
+  graph.x_log = toBool(json['@_krb:x_log']);
+  graph.y_log = toBool(json['@_krb:y_log']);
+  graph.x_invert = toBool(json['@_krb:x_invert']);
+  graph.y_invert = toBool(json['@_krb:y_invert']);
+  graph.x_autorange = toBool(json['@_krb:x_autorange'], true);
+  graph.y_autorange = toBool(json['@_krb:y_autorange'], true);
   graph.x_min = toNum(json['@_krb:x_min']);
   graph.x_max = toNum(json['@_krb:x_max']);
   graph.y_min = toNum(json['@_krb:y_min']);
@@ -198,7 +205,10 @@ registerReader('DisplayVectorGraph', (json) => {
   graph.roi_tool = toNum(json['@_krb:roi_tool']);
 
   return graph;
-});
+};
+
+registerReader('DisplayVectorGraph', readVectorGraph);
+registerReader('VectorGraph', readVectorGraph);
 
 // Dual-mode widgets (Display side)
 // ----------------------------------------------------------------------------
@@ -226,7 +236,7 @@ registerReader('DisplayTableElement', (json) => {
 
   table.klass = 'DisplayTableElement';
   readBaseWidgetData(json, table);
-  table.resizeToContents = toStr(json['@_krb:resizeToContents']) === 'true';
+  table.resizeToContents = toBool(json['@_krb:resizeToContents']);
 
   return table;
 });
@@ -257,7 +267,7 @@ registerReader('EditableTableElement', (json) => {
 
   table.klass = 'EditableTableElement';
   readBaseWidgetData(json, table);
-  table.resizeToContents = toStr(json['@_krb:resizeToContents']) === 'true';
+  table.resizeToContents = toBool(json['@_krb:resizeToContents']);
 
   return table;
 });
