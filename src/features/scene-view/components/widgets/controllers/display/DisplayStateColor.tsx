@@ -4,7 +4,7 @@ import React from 'react';
 import type { ControllerContainerContext } from '@/features/scene-view/components/ControllerContainer';
 import { DisplayStateColorModel } from '@/karabo/common/models/widgets/controllers/display';
 import { registerRenderer } from '@/features/scene-view/render/registry';
-import { useGuiStateColor } from '@/features/icons/hooks/useGuiStateColor';
+import { useGuiStateColor } from '@/features/scene-view/hooks/useGuiStateColor';
 import { FONT_FAMILY_DEFAULT } from '@/karabo/common/utils/fontDefaults';
 
 // DisplayStateColor

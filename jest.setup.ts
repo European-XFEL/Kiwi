@@ -9,8 +9,9 @@ Object.assign(global, { TextDecoder, TextEncoder });
 // -----------------------------------------------------------------------------
 
 // Mock modules that use import.meta.glob or other unsupported syntax
-jest.mock('@/features/icons/utils/statefulIcons', () => ({
-  statefulIconTextById: {},
+jest.mock('@/features/scene-view/utils/bootstrapStatefulIcons', () => ({
+  statefulIconModelsById: {},
+  bootstrapStatefulIcons: jest.fn(),
 }));
 
 // Mock the simple Vigenère cipher crypto utility for tests
