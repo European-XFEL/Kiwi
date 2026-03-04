@@ -18,7 +18,11 @@ import {
   TickSliderModel,
 } from '@/karabo/common/models';
 
-import { readBaseWidgetData, toNum, toStr } from '@/karabo/common/readers/util';
+import {
+  readBaseWidgetData,
+  toBool,
+  toNum,
+} from '@/karabo/common/readers/util';
 
 // EditableComboBox
 // ----------------------------------------------------------------------------
@@ -139,7 +143,7 @@ registerReader('TickSlider', (json) => {
 
   readBaseWidgetData(json, slider);
   slider.ticks = toNum(json['@_krb:ticks'], 1);
-  slider.show_value = toStr(json['@_krb:show_value'], 'true') === 'true';
+  slider.show_value = toBool(json['@_krb:show_value'], true);
 
   return slider;
 });

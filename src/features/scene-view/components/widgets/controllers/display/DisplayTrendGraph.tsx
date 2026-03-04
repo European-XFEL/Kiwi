@@ -30,7 +30,6 @@ const DisplayTrendGraph: React.FC<{
 
   const { timestamps, values, isOffline } = useDisplayTrendGraph(ctx?.primary, {
     maxDataPoints: 1000,
-    timeWindowMs: Infinity,
     throttleDelayMs: 500,
   });
 
@@ -75,32 +74,50 @@ const DisplayTrendGraph: React.FC<{
 
   const layout = React.useMemo<Partial<Layout>>(() => {
     const isHeatmap = chartType === 'heatmap';
+    const bgcolor =
+      model.background && model.background !== 'transparent'
+        ? model.background
+        : 'rgba(0,0,0,0)';
+
+    const xLabel = [model.x_label, model.x_units].filter(Boolean).join(' ');
+    const yLabel = [model.y_label, model.y_units].filter(Boolean).join(' ');
+
+    const yRange =
+      !model.y_autorange && model.y_min !== model.y_max
+        ? ([model.y_min, model.y_max] as [number, number])
+        : undefined;
+
     return {
       autosize: true,
-      margin: { t: 36, r: 12, b: 36, l: 44 },
-      paper_bgcolor:
-        model.background && model.background !== 'transparent'
-          ? model.background
-          : 'rgba(0,0,0,0)',
-      plot_bgcolor:
-        model.background && model.background !== 'transparent'
-          ? model.background
-          : 'rgba(0,0,0,0)',
+      title: model.title
+        ? { text: model.title, font: { size: 13 } }
+        : undefined,
+      margin: { t: model.title ? 48 : 36, r: 12, b: 36, l: 44 },
+      paper_bgcolor: bgcolor,
+      plot_bgcolor: bgcolor,
       xaxis: {
         title: {
-          text: isHeatmap ? 'Time bins' : model.x_label || 'Time',
+          text: isHeatmap ? 'Time bins' : xLabel || 'Time',
           standoff: 8,
         },
         showgrid: !isHeatmap && model.x_grid,
         type: isHeatmap ? undefined : 'date',
+        autorange: model.x_invert ? 'reversed' : true,
         automargin: true,
       },
       yaxis: {
         title: {
-          text: isHeatmap ? 'Value bins' : model.y_label || 'Value',
+          text: isHeatmap ? 'Value bins' : yLabel || 'Value',
           standoff: 8,
         },
         showgrid: !isHeatmap && model.y_grid,
+        type: !isHeatmap && model.y_log ? 'log' : undefined,
+        autorange: model.y_invert
+          ? 'reversed'
+          : model.y_autorange
+            ? true
+            : undefined,
+        range: yRange,
         automargin: true,
       },
       hovermode: isHeatmap ? 'closest' : 'x unified',

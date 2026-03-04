@@ -21,6 +21,12 @@ export function toStr(value: unknown, fallback = ''): string {
   return value != null ? String(value) : fallback;
 }
 
+/** Parses XML boolean strings — accepts Python "True" and JS "true". */
+export function toBool(value: unknown, fallback = false): boolean {
+  if (value == null) return fallback;
+  return String(value).toLowerCase() === 'true';
+}
+
 export interface ParsedChildElement {
   tag: string;
   element: Record<string, unknown>;

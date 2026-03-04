@@ -1,4 +1,5 @@
 import React from 'react';
+import { FitModeToolbar } from '@/features/scene-view/components/FitModeToolbar';
 
 interface SceneShellProps {
   className?: string;
@@ -21,6 +22,8 @@ export function SceneShell({ className, children }: SceneShellProps) {
 
       {/* Right panel slot — config editor (uncomment when ready) */}
       {/* <div className="w-64 shrink-0">Right panel</div> */}
+
+      <FitModeToolbar />
     </div>
   );
 }
