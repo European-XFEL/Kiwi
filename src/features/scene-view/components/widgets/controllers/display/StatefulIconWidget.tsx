@@ -4,12 +4,8 @@ import React from 'react';
 import type { ControllerContainerContext } from '@/features/scene-view/components/ControllerContainer';
 import { StatefulIconWidgetModel } from '@/karabo/common/models/widgets/controllers/display';
 import { registerRenderer } from '@/features/scene-view/render/registry';
-import { useGuiStateColor } from '@/features/icons/hooks/useGuiStateColor';
-import {
-  statefulIconTextById,
-  recolorPreloadedSvg,
-  getPreloadedCacheKey,
-} from '@/features/icons';
+import { useGuiStateColor } from '@/features/scene-view/hooks/useGuiStateColor';
+import { statefulIconModelsById } from '@/features/scene-view/utils/bootstrapStatefulIcons';
 
 // StatefulIconWidget
 // ----------------------------------------------------------------------------
@@ -21,21 +17,12 @@ const StatefulIconWidget: React.FC<{
   const rawState =
     (ctx?.primary?.deviceState as string | undefined) ?? 'UNKNOWN';
   const { colorValue } = useGuiStateColor(rawState);
-  const svgXML = statefulIconTextById?.[model.icon_name] ?? null;
+  const iconModel = statefulIconModelsById[model.icon_name] ?? null;
 
   const recoloredSvg = React.useMemo(() => {
-    if (!svgXML) return '';
-    const cacheKey = getPreloadedCacheKey(model.icon_name, colorValue, {
-      stroke: true,
-      fit: 'contain',
-      nonScalingStroke: false,
-    });
-    return recolorPreloadedSvg(svgXML, colorValue, cacheKey, {
-      stroke: true,
-      fit: 'contain',
-      nonScalingStroke: false,
-    }).svg;
-  }, [svgXML, colorValue, model.icon_name]);
+    if (!iconModel) return '';
+    return iconModel.withColor(colorValue).toSvgWithViewBox();
+  }, [iconModel, colorValue]);
 
   return (
     <div

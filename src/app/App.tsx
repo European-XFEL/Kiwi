@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { bootstrapStatefulIcons } from '@/features/scene-view/utils/bootstrapStatefulIcons';
 import { initAppSettings } from './AppSettings';
 import { useAppSettingsStore } from '@/store/appSettingsStore';
 import { useGlobalStore } from '@/store/globalAppStateStore';
@@ -22,6 +23,9 @@ const App: React.FC = () => {
 
     if (!executedOnceRef.current) {
       executedOnceRef.current = 'true';
+
+      bootstrapStatefulIcons();
+
       // Initialize the Manager singleton;
       getManager();
       // TODO: No attachment of handlers ... use mediator
