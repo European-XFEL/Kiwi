@@ -5,7 +5,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/tooltip';
-import { cn } from '@/shared/utils/cn';
+import { cn } from '@/components/utils/cn';
 import { useLoadedSceneStore } from '@/store/loadedSceneStore';
 import type { FitMode } from '@/features/scene-view/hooks/useSceneScale';
 import {

@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/dropdown-menu';
 import { ProjectItemInfo, ProjectSceneInfo } from '@/lib/ProjectDbInfo';
-import { cn } from '@/shared/utils/cn';
+import { cn } from '@/components/utils/cn';
 import { getDbConn } from '@/lib/singletons/api';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { Loader2 } from 'lucide-react';

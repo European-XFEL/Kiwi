@@ -3,7 +3,7 @@ import {
   measureComputation,
   measureRendering,
   type PerformanceMetrics,
-} from '@/shared/utils/performance';
+} from '@/lib/performance';
 
 // In-memory LRU-ish cache for recolored SVGs
 const recolorCache = new Map<string, string>();
@@ -519,4 +519,4 @@ export {
   measureComputation,
   measureRendering,
   createPerformanceTracker,
-} from '@/shared/utils/performance';
+} from '@/lib/performance';
