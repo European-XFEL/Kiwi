@@ -1,9 +1,9 @@
 /** DoubleLineEdit — float input, syncs from device, writes back on blur. */
 
 import React from 'react';
-import type { ControllerContainerContext } from '@/features/scene-view/components/ControllerContainer';
+import type { ControllerContainerContext } from '@/features/controllers/components/ControllerContainer';
 import { DoubleLineEditModel } from '@/karabo/common/models/widgets/controllers/editable';
-import { registerRenderer } from '@/features/scene-view/render/registry';
+import { registerRenderer } from '@/features/scene-view/registry';
 import { FONT_FAMILY_DEFAULT } from '@/karabo/common/utils/fontDefaults';
 
 // DoubleLineEdit

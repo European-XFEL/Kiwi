@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { bootstrapStatefulIcons } from '@/features/scene-view/utils/bootstrapStatefulIcons';
+import { bootstrapStatefulIcons } from '@/features/controllers';
 import { initAppSettings } from './AppSettings';
 import { useAppSettingsStore } from '@/store/appSettingsStore';
 import { useGlobalStore } from '@/store/globalAppStateStore';

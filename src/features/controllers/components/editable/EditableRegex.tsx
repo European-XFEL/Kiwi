@@ -1,35 +1,16 @@
-/** LineEdit — DisplayLineEdit (read-only) and EditableLineEdit (interactive). */
+/** EditableRegex — text input. */
 
 import React from 'react';
-import type { ControllerContainerContext } from '@/features/scene-view/components/ControllerContainer';
-import { LineEditModel } from '@/karabo/common/models/widgets/controllers/display';
-import { registerRenderer } from '@/features/scene-view/render/registry';
+import type { ControllerContainerContext } from '@/features/controllers/components/ControllerContainer';
+import { EditableRegexModel } from '@/karabo/common/models/widgets/controllers/editable';
+import { registerRenderer } from '@/features/scene-view/registry';
 import { FONT_FAMILY_DEFAULT } from '@/karabo/common/utils/fontDefaults';
 
-// LineEdit
+// EditableRegex
 // ----------------------------------------------------------------------------
 
-const DisplayLineEdit: React.FC<{
-  model: LineEditModel;
-  ctx?: ControllerContainerContext;
-}> = ({ model: _model, ctx }) => {
-  const value = ctx?.primary?.value ?? '';
-  return (
-    <div className="w-full h-full flex items-center" title={ctx?.tooltipText}>
-      <input
-        type="text"
-        value={String(value)}
-        readOnly
-        disabled
-        className="w-full border border-solid rounded px-1 text-gray-500 bg-gray-100 cursor-not-allowed"
-        style={{ fontFamily: FONT_FAMILY_DEFAULT }}
-      />
-    </div>
-  );
-};
-
-const EditableLineEdit: React.FC<{
-  model: LineEditModel;
+const EditableRegex: React.FC<{
+  model: EditableRegexModel;
   ctx?: ControllerContainerContext;
 }> = ({ model: _model, ctx }) => {
   const proxyValue = ctx?.primary?.value;
@@ -70,5 +51,6 @@ const EditableLineEdit: React.FC<{
   );
 };
 
-registerRenderer('DisplayLineEdit', DisplayLineEdit);
-registerRenderer('EditableLineEdit', EditableLineEdit);
+registerRenderer('EditableRegex', EditableRegex);
+
+export default EditableRegex;
