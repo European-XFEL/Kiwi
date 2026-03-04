@@ -5,12 +5,18 @@ import type { ControllerContainerContext } from '@/features/scene-view/component
 import { CheckBoxModel } from '@/karabo/common/models/widgets/controllers/display';
 import { registerRenderer } from '@/features/scene-view/render/registry';
 import { Checkbox } from '@/components/checkbox';
+//import { Hash } from '@/karabo/data/hash';
+//import { getNetwork } from '@/lib/singletons/api';
 
 // CheckBox
 // ----------------------------------------------------------------------------
 
-const CHECKBOX_CLASSNAME =
-  'border border-gray-700 rounded-none data-[state=checked]:bg-white data-[state=checked]:text-black data-[state=checked]:border-black';
+const CHECKBOX_BASE =
+  'border border-gray-700 rounded-none ' +
+  'data-[state=checked]:bg-white data-[state=checked]:text-black data-[state=checked]:border-black';
+
+const DISPLAY_CHECKBOX_CLASSNAME = CHECKBOX_BASE + ' pointer-events-none';
+const EDITABLE_CHECKBOX_CLASSNAME = CHECKBOX_BASE;
 
 function toBool(value: unknown): boolean {
   if (typeof value === 'boolean') return value;
@@ -31,9 +37,8 @@ const DisplayCheckBox: React.FC<{
     >
       <Checkbox
         checked={checked}
-        disabled
         aria-readonly="true"
-        className={CHECKBOX_CLASSNAME}
+        className={DISPLAY_CHECKBOX_CLASSNAME}
       />
     </div>
   );
@@ -55,9 +60,15 @@ const EditableCheckBox: React.FC<{
         checked={checked}
         disabled={!enabled}
         onCheckedChange={() => {
-          // TODO: push !checked to backend
+          // const deviceId = ctx?.primary?.deviceId;
+          // const propertyPath = ctx?.primary?.propertyPath;
+          // if (!deviceId || !propertyPath) return;
+          // getNetwork().onReconfigure(
+          //   deviceId,
+          //   new Hash(propertyPath, !checked)
+          // );
         }}
-        className={CHECKBOX_CLASSNAME}
+        className={EDITABLE_CHECKBOX_CLASSNAME}
       />
     </div>
   );
