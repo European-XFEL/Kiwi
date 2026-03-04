@@ -14,7 +14,7 @@ jest.mock('@/features/icons/utils/statefulIcons', () => ({
 }));
 
 // Mock the simple Vigenère cipher crypto utility for tests
-jest.mock('@/shared/utils/crypto', () => ({
+jest.mock('@/lib/crypto', () => ({
   encryptData: jest.fn((text: string) => `encrypted_${text}`),
   decryptData: jest.fn((text: string) => text.replace('encrypted_', '')),
 }));

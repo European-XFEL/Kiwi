@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/card';
 import { Spinner } from '@/components/spinner';
-import { cn } from '@/shared/utils/cn';
+import { cn } from '@/components/utils/cn';
 
 type InitializingStateProps = {
   visible: boolean;

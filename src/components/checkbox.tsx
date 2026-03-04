@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as CheckboxPrimitive from '@radix-ui/react-checkbox';
 import { CheckIcon } from 'lucide-react';
 
-import { cn } from '@/shared/utils/cn';
+import { cn } from '@/components/utils/cn';
 
 const ROOT_CLASSNAME =
   // "peer" lets sibling elements style themselves based on this checkbox state (peer-checked, etc.)
