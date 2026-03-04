@@ -83,9 +83,8 @@ describe('Timestamp Tests', () => {
   });
 
   test('test_compare', () => {
-    const t1 = new Timestamp();
-    while (Date.now() <= t1.toTimestamp() * 1000) {}
-    const t2 = new Timestamp();
+    const t1 = new Timestamp('2009-04-20T10:32:22 UTC');
+    const t2 = new Timestamp('2009-04-20T10:32:23 UTC');
     const t3 = new Timestamp(t2);
 
     expect(t1.lessThan(t2)).toBe(true);

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { SceneModel } from '@/view_models/SceneModel';
-import { type FitMode } from '@/features/scene-view/hooks/useSceneScale';
+import { type FitMode } from '@/features/scene-view';
 
 export interface LoadedSceneStateStoreProp {
   scene?: SceneModel;

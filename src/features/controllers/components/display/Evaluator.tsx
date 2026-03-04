@@ -1,17 +1,17 @@
-/** DisplayList — displays a list/scalar value as a string. Same layout as DisplayLabel. */
+/** Evaluator — shows device value (expression evaluation deferred). */
 
 import React from 'react';
-import type { ControllerContainerContext } from '@/features/scene-view/components/ControllerContainer';
-import { DisplayListModel } from '@/karabo/common/models/widgets/controllers/display';
-import { registerRenderer } from '@/features/scene-view/render/registry';
+import type { ControllerContainerContext } from '@/features/controllers/components/ControllerContainer';
+import { EvaluatorModel } from '@/karabo/common/models/widgets/controllers/display';
+import { registerRenderer } from '@/features/scene-view/registry';
 import { scalarToString } from '@/karabo/common/utils/toStringFormatters';
 import { FONT_FAMILY_DEFAULT } from '@/karabo/common/utils/fontDefaults';
 
-// DisplayList
+// Evaluator
 // ----------------------------------------------------------------------------
 
-const DisplayList: React.FC<{
-  model: DisplayListModel;
+const Evaluator: React.FC<{
+  model: EvaluatorModel;
   ctx?: ControllerContainerContext;
 }> = ({ model, ctx }) => {
   const value = ctx?.primary?.value;
@@ -42,6 +42,6 @@ const DisplayList: React.FC<{
   );
 };
 
-registerRenderer('DisplayList', DisplayList);
+registerRenderer('Evaluator', Evaluator);
 
-export default DisplayList;
+export default Evaluator;

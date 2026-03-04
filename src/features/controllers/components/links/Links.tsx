@@ -8,8 +8,8 @@ import {
   SceneLinkModel,
   WebLinkModel,
 } from '@/karabo/common/models/widgets/links';
-import type { ControllerContainerContext } from '@/features/scene-view/components/ControllerContainer';
-import { registerRenderer } from '@/features/scene-view/render/registry';
+import type { ControllerContainerContext } from '@/features/controllers/components/ControllerContainer';
+import { registerRenderer } from '@/features/scene-view/registry';
 import { QtFontDescriptor } from '@/karabo/common/utils/QtFontDescriptor';
 
 // useSceneNavigate

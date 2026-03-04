@@ -7,7 +7,10 @@
  */
 
 import type React from 'react';
-import { containerPointerEvents, contentsWrapperStyle } from '../utils/mode';
+import {
+  containerPointerEvents,
+  contentsWrapperStyle,
+} from '../../scene-view/utils/mode';
 
 // ContainerState
 // ---

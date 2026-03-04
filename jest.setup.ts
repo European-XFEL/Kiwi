@@ -9,7 +9,7 @@ Object.assign(global, { TextDecoder, TextEncoder });
 // -----------------------------------------------------------------------------
 
 // Mock modules that use import.meta.glob or other unsupported syntax
-jest.mock('@/features/scene-view/utils/bootstrapStatefulIcons', () => ({
+jest.mock('@/features/controllers/utils/bootstrapStatefulIcons', () => ({
   statefulIconModelsById: {},
   bootstrapStatefulIcons: jest.fn(),
 }));

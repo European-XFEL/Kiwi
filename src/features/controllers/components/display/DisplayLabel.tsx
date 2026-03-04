@@ -1,9 +1,9 @@
 /** DisplayLabel — display controller. Config from model, device data from ctx. */
 
 import React from 'react';
-import type { ControllerContainerContext } from '@/features/scene-view/components/ControllerContainer';
+import type { ControllerContainerContext } from '@/features/controllers/components/ControllerContainer';
 import { DisplayLabelModel } from '@/karabo/common/models/widgets/controllers/display';
-import { registerRenderer } from '@/features/scene-view/render/registry';
+import { registerRenderer } from '@/features/scene-view/registry';
 import { scalarToString } from '@/karabo/common/utils/toStringFormatters';
 import { FONT_FAMILY_DEFAULT } from '@/karabo/common/utils/fontDefaults';
 

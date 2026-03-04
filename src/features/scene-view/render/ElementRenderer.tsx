@@ -24,13 +24,12 @@ import {
   SceneLinkModel,
   WebLinkModel,
 } from '@/karabo/common/models/widgets/links';
-import { ControllerContainer } from '@/features/scene-view/components/ControllerContainer';
+import { ControllerContainer, useController } from '@/features/controllers';
 import { containerPointerEvents } from '@/features/scene-view/utils/mode';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tooltip';
 
 import { getRenderer } from './registry';
 import { resolveBounds } from './bounds';
-import { useController } from '../hooks/useController';
 import { PropertyOverlay } from '@/features/scene-view/components/PropertyOverlay';
 
 export { resolveBounds, isLayout } from './bounds';

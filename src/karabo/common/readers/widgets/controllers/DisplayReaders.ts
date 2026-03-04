@@ -173,7 +173,6 @@ const readTrendGraph = (json: Record<string, unknown>) => {
 };
 
 registerReader('DisplayTrendGraph', readTrendGraph);
-registerReader('TrendGraph', readTrendGraph);
 
 // DisplayVectorGraph
 // ----------------------------------------------------------------------------
@@ -207,7 +206,6 @@ const readVectorGraph = (json: Record<string, unknown>) => {
   return graph;
 };
 
-registerReader('DisplayVectorGraph', readVectorGraph);
 registerReader('VectorGraph', readVectorGraph);
 
 // Dual-mode widgets (Display side)

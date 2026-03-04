@@ -3,12 +3,12 @@
 import React from 'react';
 import Plot from 'react-plotly.js';
 import type { Data, Layout } from 'plotly.js';
-import type { ControllerContainerContext } from '@/features/scene-view/components/ControllerContainer';
+import type { ControllerContainerContext } from '@/features/controllers/components/ControllerContainer';
 import { DisplayTrendGraphModel } from '@/karabo/common/models/widgets/controllers/display';
-import { registerRenderer } from '@/features/scene-view/render/registry';
-import { useDisplayTrendGraph } from '@/features/scene-view/hooks/useDisplayTrendGraph';
-import { TraceFactory } from '@/features/scene-view/utils/traceFactory';
-import { buildTimeValueHeatmap } from '@/features/scene-view/utils/heatmapBining';
+import { registerRenderer } from '@/features/scene-view/registry';
+import { useDisplayTrendGraph } from '@/features/controllers/hooks/useDisplayTrendGraph';
+import { TraceFactory } from '../../utils/traceFactory';
+import { buildTimeValueHeatmap } from '@/features/controllers/utils/heatmapBining';
 import {
   Select,
   SelectContent,

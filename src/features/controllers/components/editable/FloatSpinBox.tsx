@@ -1,36 +1,35 @@
-/** Hexadecimal — integer input displayed and entered in hexadecimal. */
+/** FloatSpinBox — float spin box with configurable step and decimals. */
 
 import React from 'react';
-import type { ControllerContainerContext } from '@/features/scene-view/components/ControllerContainer';
-import { HexadecimalModel } from '@/karabo/common/models/widgets/controllers/editable';
-import { registerRenderer } from '@/features/scene-view/render/registry';
+import type { ControllerContainerContext } from '@/features/controllers/components/ControllerContainer';
+import { FloatSpinBoxModel } from '@/karabo/common/models/widgets/controllers/editable';
+import { registerRenderer } from '@/features/scene-view/registry';
 import { FONT_FAMILY_DEFAULT } from '@/karabo/common/utils/fontDefaults';
 
-// Hexadecimal
+// FloatSpinBox
 // ----------------------------------------------------------------------------
 
-function toHexString(value: unknown): string {
-  const num = typeof value === 'number' ? value : parseInt(String(value), 10);
-  return Number.isFinite(num)
-    ? `0x${Math.trunc(num).toString(16).toUpperCase()}`
-    : '0x0';
-}
-
-const Hexadecimal: React.FC<{
-  model: HexadecimalModel;
+const FloatSpinBox: React.FC<{
+  model: FloatSpinBoxModel;
   ctx?: ControllerContainerContext;
-}> = ({ model: _model, ctx }) => {
+}> = ({ model, ctx }) => {
   const proxyValue = ctx?.primary?.value;
   const enabled = ctx?.isEnabled ?? false;
+  const step = model.step > 0 ? model.step : 0.1;
+
+  const toDisplay = (v: unknown) => {
+    const num = Number(v ?? 0);
+    return Number.isFinite(num) ? num.toFixed(model.decimals) : '0';
+  };
 
   const [localValue, setLocalValue] = React.useState(() =>
-    toHexString(proxyValue)
+    toDisplay(proxyValue)
   );
   const [isEditing, setIsEditing] = React.useState(false);
 
   React.useEffect(() => {
     if (isEditing) return;
-    const next = toHexString(proxyValue);
+    const next = toDisplay(proxyValue);
     setLocalValue((prev) => (prev === next ? prev : next));
   }, [proxyValue, isEditing]);
 
@@ -40,34 +39,37 @@ const Hexadecimal: React.FC<{
       title={ctx?.tooltipText ?? ctx?.disabledReason}
     >
       <input
-        type="text"
+        type="number"
+        step={step}
         value={localValue}
         onFocus={() => setIsEditing(true)}
         onChange={(e) => setLocalValue(e.target.value)}
         onBlur={(e) => {
           setIsEditing(false);
-          const raw = e.target.value.replace(/^0x/i, '');
-          const parsed = parseInt(raw, 16);
+          const parsed = parseFloat(e.target.value);
           if (Number.isFinite(parsed)) {
-            setLocalValue(toHexString(parsed));
+            setLocalValue(toDisplay(parsed));
             // TODO: push parsed to backend
           } else {
-            setLocalValue(toHexString(proxyValue));
+            setLocalValue(toDisplay(proxyValue));
           }
         }}
         disabled={!enabled}
-        className={`w-full border border-solid rounded px-1 font-mono ${
+        className={`border border-solid rounded px-1 w-full ${
           enabled
             ? 'text-black bg-white cursor-text'
             : 'text-gray-500 bg-gray-100 cursor-not-allowed'
         }`}
-        style={{ fontFamily: FONT_FAMILY_DEFAULT }}
-        placeholder="0x0"
+        style={{
+          fontFamily: FONT_FAMILY_DEFAULT,
+          fontSize: model.font_size,
+          fontWeight: model.font_weight,
+        }}
       />
     </div>
   );
 };
 
-registerRenderer('Hexadecimal', Hexadecimal);
+registerRenderer('FloatSpinBox', FloatSpinBox);
 
-export default Hexadecimal;
+export default FloatSpinBox;

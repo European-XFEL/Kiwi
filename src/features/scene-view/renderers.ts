@@ -18,34 +18,34 @@ import './components/shapes/ArrowPolygon';
 import './components/shapes/Path';
 
 // Static widgets
-import './components/widgets/static/Label';
-import './components/widgets/static/Sticker';
+import './components/static/Label';
+import './components/static/Sticker';
 
 // Links
-import './components/widgets/links/Links';
+import '../controllers/components/links/Links';
 
 // Display controllers
-import './components/widgets/controllers/display/DisplayLabel';
-import './components/widgets/controllers/display/DisplayCommand';
-import './components/widgets/controllers/display/DisplayFloat';
-import './components/widgets/controllers/display/DisplayList';
-import './components/widgets/controllers/display/DisplayAlarmFloat';
-import './components/widgets/controllers/display/DisplayStateColor';
-import './components/widgets/controllers/display/Evaluator';
-import './components/widgets/controllers/display/CheckBox';
-import './components/widgets/controllers/display/LineEdit';
-import './components/widgets/controllers/display/TableElement';
-import './components/widgets/controllers/display/StatefulIconWidget';
-import './components/widgets/controllers/display/DisplayTrendGraph';
-import './components/widgets/controllers/display/DisplayVectorGraph';
+import '../controllers/components/display/DisplayLabel';
+import '../controllers/components/display/DisplayCommand';
+import '../controllers/components/display/DisplayFloat';
+import '../controllers/components/display/DisplayList';
+import '../controllers/components/display/DisplayAlarmFloat';
+import '../controllers/components/display/DisplayStateColor';
+import '../controllers/components/display/Evaluator';
+import '../controllers/components/display/CheckBox';
+import '../controllers/components/display/LineEdit';
+import '../controllers/components/display/TableElement';
+import '../controllers/components/display/StatefulIconWidget';
+import '../controllers/components/display/DisplayTrendGraph';
+import '../controllers/components/display/DisplayVectorGraph';
 
 // Editable controllers
-import './components/widgets/controllers/editable/IntLineEdit';
-import './components/widgets/controllers/editable/DoubleLineEdit';
-import './components/widgets/controllers/editable/EditableSpinBox';
-import './components/widgets/controllers/editable/FloatSpinBox';
-import './components/widgets/controllers/editable/TickSlider';
-import './components/widgets/controllers/editable/EditableComboBox';
-import './components/widgets/controllers/editable/EditableRegex';
-import './components/widgets/controllers/editable/Hexadecimal';
-import './components/widgets/controllers/editable/EditableLists';
+import '../controllers/components/editable/IntLineEdit';
+import '../controllers/components/editable/DoubleLineEdit';
+import '../controllers/components/editable/EditableSpinBox';
+import '../controllers/components/editable/FloatSpinBox';
+import '../controllers/components/editable/TickSlider';
+import '../controllers/components/editable/EditableComboBox';
+import '../controllers/components/editable/EditableRegex';
+import '../controllers/components/editable/Hexadecimal';
+import '../controllers/components/editable/EditableLists';

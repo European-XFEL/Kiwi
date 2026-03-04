@@ -3,10 +3,10 @@
 import React from 'react';
 import Plot from 'react-plotly.js';
 import type { Data, Layout } from 'plotly.js';
-import type { ControllerContainerContext } from '@/features/scene-view/components/ControllerContainer';
+import type { ControllerContainerContext } from '@/features/controllers/components/ControllerContainer';
 import { DisplayVectorGraphModel } from '@/karabo/common/models/widgets/controllers/display';
-import { registerRenderer } from '@/features/scene-view/render/registry';
-import { useDisplayVectorGraph } from '@/features/scene-view/hooks/useDisplayVectorGraph';
+import { registerRenderer } from '@/features/scene-view/registry';
+import { useDisplayVectorGraph } from '@/features/controllers/hooks/useDisplayVectorGraph';
 
 // DisplayVectorGraph
 // ----------------------------------------------------------------------------
@@ -138,5 +138,6 @@ const DisplayVectorGraph: React.FC<{
 };
 
 registerRenderer('DisplayVectorGraph', DisplayVectorGraph);
+registerRenderer('VectorGraph', DisplayVectorGraph);
 
 export default DisplayVectorGraph;

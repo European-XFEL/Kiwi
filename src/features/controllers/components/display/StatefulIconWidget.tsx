@@ -1,11 +1,11 @@
 /** StatefulIconWidget — SVG icon recolored by device state. */
 
 import React from 'react';
-import type { ControllerContainerContext } from '@/features/scene-view/components/ControllerContainer';
+import type { ControllerContainerContext } from '@/features/controllers/components/ControllerContainer';
 import { StatefulIconWidgetModel } from '@/karabo/common/models/widgets/controllers/display';
-import { registerRenderer } from '@/features/scene-view/render/registry';
-import { useGuiStateColor } from '@/features/scene-view/hooks/useGuiStateColor';
-import { statefulIconModelsById } from '@/features/scene-view/utils/bootstrapStatefulIcons';
+import { registerRenderer } from '@/features/scene-view/registry';
+import { useGuiStateColor } from '@/features/controllers/hooks/useGuiStateColor';
+import { statefulIconModelsById } from '@/features/controllers/utils/bootstrapStatefulIcons';
 
 // StatefulIconWidget
 // ----------------------------------------------------------------------------
