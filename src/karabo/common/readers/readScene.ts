@@ -6,13 +6,9 @@
  */
 
 import { XMLParser } from 'fast-xml-parser';
-import { readElement, readerRegistry } from '@/karabo/common/registry';
-import { SceneModel } from '@/karabo/common/models/SceneModel';
-import {
-  ATTR_KRB_VERSION,
-  SCENE_FILE_VERSION,
-  SVG_SVG,
-} from '@/karabo/common/constants';
+import { readElement, readerRegistry } from '../Registry';
+import { SceneModel } from '../models/SceneModel';
+import { ATTR_KRB_VERSION, SCENE_FILE_VERSION, SVG_SVG } from '../constants';
 import { toNum } from './util';
 
 // Bootstrap all readers (side-effect imports register them)

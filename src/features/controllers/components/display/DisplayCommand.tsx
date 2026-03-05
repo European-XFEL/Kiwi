@@ -7,11 +7,10 @@
  */
 
 import React from 'react';
-import type { ControllerContainerContext } from '@/features/controllers/components/ControllerContainer';
-import { DisplayCommandModel } from '@/karabo/common/models/widgets/controllers/display';
+import type { ControllerContainerContext } from '../ControllerContainer';
+import { DisplayCommandModel, FONT_FAMILY_DEFAULT } from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/registry';
 import { Button } from '@/components/button';
-import { FONT_FAMILY_DEFAULT } from '@/karabo/common/utils/fontDefaults';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { AccessLevel } from '@/karabo/data/enums';
 import { ProxyStatus } from '@/lib/binding/ProxyStatus';

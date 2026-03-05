@@ -5,15 +5,12 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { readScene } from '../readScene';
-import { SceneModel } from '@/karabo/common/models/SceneModel';
-import { BoxLayoutModel } from '@/karabo/common/models/layouts';
-import { LabelModel } from '@/karabo/common/models/widgets/static';
-import { UnknownWidgetDataModel } from '@/karabo/common/models/bases';
-import { DisplayCommandModel } from '@/karabo/common/models/widgets/controllers/display';
-import {
-  DeviceSceneLinkModel,
-  WebLinkModel,
-} from '@/karabo/common/models/widgets/links';
+import { SceneModel } from '../../models/SceneModel';
+import { BoxLayoutModel } from '../../models/layouts';
+import { LabelModel } from '../../models/widgets/static';
+import { UnknownWidgetDataModel } from '../../models/bases';
+import { DisplayCommandModel } from '../../models/widgets/display';
+import { DeviceSceneLinkModel, WebLinkModel } from '../../models/widgets/links';
 
 const SAMPLE_DIR = path.resolve(__dirname, './sample_data');
 

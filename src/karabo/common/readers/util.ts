@@ -8,9 +8,9 @@ import type {
   BaseSceneObjectData,
   BaseShapeObjectData,
   BaseWidgetObjectData,
-} from '@/karabo/common/models/bases';
-import { readElement } from '@/karabo/common/registry';
-import { ATTR_KRB_CLASS, ATTR_KRB_WIDGET } from '@/karabo/common/constants';
+} from '../models/bases';
+import { readElement } from '../Registry';
+import { ATTR_KRB_CLASS, ATTR_KRB_WIDGET } from '../constants';
 
 export function toNum(value: unknown, fallback = 0): number {
   const parsed = parseFloat(String(value ?? ''));

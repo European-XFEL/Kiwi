@@ -2,10 +2,9 @@
  * Editable controller widget readers.
  */
 
-import { registerReader } from '@/karabo/common/registry';
+import { registerReader } from '../Registry';
 import {
   DoubleLineEditModel,
-  EditableChoiceElementModel,
   EditableComboBoxModel,
   EditableListElementModel,
   EditableListModel,
@@ -16,13 +15,9 @@ import {
   HexadecimalModel,
   IntLineEditModel,
   TickSliderModel,
-} from '@/karabo/common/models';
+} from '../models';
 
-import {
-  readBaseWidgetData,
-  toBool,
-  toNum,
-} from '@/karabo/common/readers/util';
+import { readBaseWidgetData, toBool, toNum } from './util';
 
 // EditableComboBox
 // ----------------------------------------------------------------------------
@@ -33,17 +28,6 @@ registerReader('EditableComboBox', (json) => {
   readBaseWidgetData(json, combo);
 
   return combo;
-});
-
-// EditableChoiceElement
-// ----------------------------------------------------------------------------
-
-registerReader('EditableChoiceElement', (json) => {
-  const choice = new EditableChoiceElementModel();
-
-  readBaseWidgetData(json, choice);
-
-  return choice;
 });
 
 // EditableList

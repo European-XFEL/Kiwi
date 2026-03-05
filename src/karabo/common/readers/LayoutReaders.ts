@@ -2,20 +2,20 @@
  * Layout readers — BoxLayout, FixedLayout, GridLayout.
  */
 
-import { registerReader, readElement } from '@/karabo/common/registry';
+import { registerReader, readElement } from '../Registry';
 import {
   BoxLayoutModel,
   Direction,
   FixedLayoutModel,
   GridLayoutModel,
-} from '@/karabo/common/models';
-import { GridLayoutChildData } from '@/karabo/common/models/bases';
+} from '../models';
+import { GridLayoutChildData } from '../models/bases';
 import {
   readBaseLayoutData,
   readChildren,
   collectSvgChildren,
   toNum,
-} from '@/karabo/common/readers/util';
+} from '../readers/util';
 
 // BoxLayout
 // ----------------------------------------------------------------------------
