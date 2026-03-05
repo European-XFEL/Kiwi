@@ -5,10 +5,9 @@
  */
 
 import './SceneReader';
-import './widgets/StaticReader';
-import './widgets/LinkReaders';
+import './StaticReader';
+import './LinkReaders';
 import './LayoutReaders';
 import './ShapeReaders';
-import './widgets/controllers/DisplayReaders';
-import './widgets/controllers/EditableReaders';
+import './EditableReaders';
 import './FallbackReaders';

@@ -4,15 +4,15 @@
  * Shapes have no krb:class — identified by SVG tag alone.
  */
 
-import { registerReader } from '@/karabo/common/registry';
+import { registerReader } from '../Registry';
 import {
   ArrowPolygonModel,
   LineModel,
   PolygonModel,
   RectangleModel,
-} from '@/karabo/common/models';
-import { SVG_LINE, SVG_POLYGON, SVG_RECT } from '@/karabo/common/constants';
-import { readBaseShapeData, toNum, toStr } from '@/karabo/common/readers/util';
+} from '../models';
+import { SVG_LINE, SVG_POLYGON, SVG_RECT } from '../constants';
+import { readBaseShapeData, toNum, toStr } from '../readers/util';
 
 // Rectangle
 // ----------------------------------------------------------------------------

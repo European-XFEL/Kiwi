@@ -2,9 +2,9 @@
  * Static widget readers — Label, Sticker.
  */
 
-import { registerReader } from '@/karabo/common/registry';
-import { LabelModel, StickerModel } from '@/karabo/common/models';
-import { readBaseWidgetData, toNum, toStr } from '@/karabo/common/readers/util';
+import { registerReader } from '../Registry';
+import { LabelModel, StickerModel } from '../models';
+import { readBaseWidgetData, toNum, toStr } from '../readers/util';
 
 // Label
 // ----------------------------------------------------------------------------
