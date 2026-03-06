@@ -1,8 +1,8 @@
 /** TableElement — schema-aware table for DisplayTableElement / EditableTableElement. */
 
 import React from 'react';
-import type { ControllerContainerContext } from '../ControllerContainer';
-import { TableElementModel } from '@/karabo/common/api';
+import type { ControllerContainerContext } from '@/features/controllers/components/ControllerContainer';
+import { TableElementModel } from '@/karabo/common/models/widgets/controllers/display';
 import { registerRenderer } from '@/features/scene-view/registry';
 import {
   Table,
@@ -16,8 +16,9 @@ import {
   formatTableCell,
   isNumericType,
 } from '@/features/controllers/utils/formatTableCell';
-import { Hash, SimpleValueTypes } from '@/karabo/data/';
+import { Hash } from '@/karabo/data/hash';
 import type { BaseBinding } from '@/lib/binding/BaseBinding';
+import type { SimpleValueTypes } from '@/karabo/data/types';
 
 // TableElement
 // ----------------------------------------------------------------------------

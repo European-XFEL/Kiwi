@@ -6,8 +6,8 @@
  * can resolve either form directly.
  */
 
-import { registerReader } from '../Registry';
-import { SceneModel } from '../models/SceneModel';
+import { registerReader } from '@/karabo/common/registry';
+import { SceneModel } from '@/karabo/common/models/SceneModel';
 import {
   ATTR_HEIGHT,
   ATTR_KRB_UUID,
@@ -15,7 +15,7 @@ import {
   SCENE_FILE_VERSION,
   ATTR_WIDTH,
   SVG_SVG,
-} from '../constants';
+} from '@/karabo/common/constants';
 import { readChildren, toNum, toStr } from './util';
 
 // Scene

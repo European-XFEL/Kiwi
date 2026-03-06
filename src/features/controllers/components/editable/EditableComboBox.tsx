@@ -1,12 +1,13 @@
 /** EditableComboBox and EditableChoiceElement — dropdown select from allowed values. */
 
 import React from 'react';
-import type { ControllerContainerContext } from '../ControllerContainer';
+import type { ControllerContainerContext } from '@/features/controllers/components/ControllerContainer';
 import {
   EditableComboBoxModel,
-  FONT_FAMILY_DEFAULT,
-} from '@/karabo/common/api';
+  EditableChoiceElementModel,
+} from '@/karabo/common/models/widgets/controllers/editable';
 import { registerRenderer } from '@/features/scene-view/registry';
+import { FONT_FAMILY_DEFAULT } from '@/karabo/common/utils/fontDefaults';
 
 // ComboBox
 // ----------------------------------------------------------------------------
@@ -80,4 +81,25 @@ const EditableComboBox: React.FC<{
   );
 };
 
+// EditableChoiceElement
+// ----------------------------------------------------------------------------
+
+const EditableChoiceElement: React.FC<{
+  model: EditableChoiceElementModel;
+  ctx?: ControllerContainerContext;
+}> = ({ model: _model, ctx }) => {
+  const value = ctx?.primary?.value;
+  const options: string[] = (ctx?.primary?.binding as any)?.options ?? [];
+  const enabled = ctx?.isEnabled ?? false;
+  return (
+    <ComboBox
+      value={value}
+      options={options}
+      enabled={enabled}
+      title={ctx?.tooltipText ?? ctx?.disabledReason}
+    />
+  );
+};
+
 registerRenderer('EditableComboBox', EditableComboBox);
+registerRenderer('EditableChoiceElement', EditableChoiceElement);

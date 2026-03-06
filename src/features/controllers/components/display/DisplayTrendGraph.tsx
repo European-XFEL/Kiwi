@@ -3,8 +3,8 @@
 import React from 'react';
 import Plot from 'react-plotly.js';
 import type { Data, Layout } from 'plotly.js';
-import type { ControllerContainerContext } from '../ControllerContainer';
-import { DisplayTrendGraphModel } from '@/karabo/common/api';
+import type { ControllerContainerContext } from '@/features/controllers/components/ControllerContainer';
+import { DisplayTrendGraphModel } from '@/karabo/common/models/widgets/controllers/display';
 import { registerRenderer } from '@/features/scene-view/registry';
 import { useDisplayTrendGraph } from '@/features/controllers/hooks/useDisplayTrendGraph';
 import { TraceFactory } from '../../utils/traceFactory';
