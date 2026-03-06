@@ -5,14 +5,21 @@
  * All default to parent_component = 'EditableApplyLaterComponent'.
  */
 
-import { BaseEditWidget } from '../bases';
-import { FONT_SIZE_DEFAULT } from '../../constants';
+import { BaseEditWidget } from '../../bases';
+import { FONT_SIZE_DEFAULT } from '@/karabo/common/constants';
 
 // EditableComboBox
 // ----------------------------------------------------------------------------
 
 export class EditableComboBoxModel extends BaseEditWidget {
   klass = 'EditableComboBox';
+}
+
+// EditableChoiceElement
+// ----------------------------------------------------------------------------
+
+export class EditableChoiceElementModel extends BaseEditWidget {
+  klass = 'EditableChoiceElement';
 }
 
 // EditableList

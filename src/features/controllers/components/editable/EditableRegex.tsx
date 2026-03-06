@@ -1,9 +1,10 @@
 /** EditableRegex — text input. */
 
 import React from 'react';
-import type { ControllerContainerContext } from '../ControllerContainer';
-import { EditableRegexModel, FONT_FAMILY_DEFAULT } from '@/karabo/common/api';
+import type { ControllerContainerContext } from '@/features/controllers/components/ControllerContainer';
+import { EditableRegexModel } from '@/karabo/common/models/widgets/controllers/editable';
 import { registerRenderer } from '@/features/scene-view/registry';
+import { FONT_FAMILY_DEFAULT } from '@/karabo/common/utils/fontDefaults';
 
 // EditableRegex
 // ----------------------------------------------------------------------------

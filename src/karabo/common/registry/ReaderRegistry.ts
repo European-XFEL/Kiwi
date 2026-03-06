@@ -1,12 +1,12 @@
 /** ReaderRegistry — flat name → reader map with version support. */
 
-import type { BaseSceneObjectData } from './models/bases';
+import type { BaseSceneObjectData } from '../models/bases';
 import {
   ATTR_KRB_CLASS,
   ATTR_KRB_WIDGET,
   SCENE_FILE_VERSION,
   UNKNOWN_WIDGET_CLASS,
-} from './constants';
+} from '../constants';
 
 // Types
 // ----------------------------------------------------------------------------
@@ -140,28 +140,3 @@ class ReaderRegistry {
 }
 
 export const readerRegistry = ReaderRegistry.getInstance();
-
-export function readElement(
-  element: Record<string, unknown>,
-  tag?: string
-): BaseSceneObjectData {
-  return readerRegistry.read(element, tag);
-}
-
-/**
- * Register a reader function in the ReaderRegistry.
- *
- * @param name    — Lookup key, typically the krb:widget or krb:class value (e.g. "DisplayLabel", "BoxLayout").
- * @param readerFn — Factory that receives parsed JSON and returns a model instance.
- * @param xmltag  — Optional SVG tag to double-register under (e.g. SVG_RECT, SVG_SVG).
- *                   Only needed for elements identified by tag alone (shapes, scene root).
- * @param version — Scene file version this reader targets. Defaults to SCENE_FILE_VERSION.
- */
-export function registerReader(
-  name: string,
-  readerFn: ReaderFn,
-  xmltag?: string,
-  version = SCENE_FILE_VERSION
-): void {
-  readerRegistry.register(name, readerFn, xmltag, version);
-}

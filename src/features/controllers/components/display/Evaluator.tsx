@@ -1,10 +1,11 @@
 /** Evaluator — shows device value (expression evaluation deferred). */
 
 import React from 'react';
-import type { ControllerContainerContext } from '../ControllerContainer';
-import { EvaluatorModel, FONT_FAMILY_DEFAULT } from '@/karabo/common/api';
+import type { ControllerContainerContext } from '@/features/controllers/components/ControllerContainer';
+import { EvaluatorModel } from '@/karabo/common/models/widgets/controllers/display';
 import { registerRenderer } from '@/features/scene-view/registry';
 import { scalarToString } from '@/karabo/common/utils/toStringFormatters';
+import { FONT_FAMILY_DEFAULT } from '@/karabo/common/utils/fontDefaults';
 
 // Evaluator
 // ----------------------------------------------------------------------------

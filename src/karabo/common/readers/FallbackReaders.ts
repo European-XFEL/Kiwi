@@ -2,9 +2,12 @@
  * Fallback readers — handle unrecognized widgets and unknown SVG elements.
  */
 
-import { registerReader } from '../Registry';
-import { UnknownWidgetDataModel, UnknownXMLDataModel } from '../models';
-import { UNKNOWN_WIDGET_CLASS } from '../constants';
+import { registerReader } from '@/karabo/common/registry';
+import {
+  UnknownWidgetDataModel,
+  UnknownXMLDataModel,
+} from '@/karabo/common/models';
+import { UNKNOWN_WIDGET_CLASS } from '@/karabo/common/constants';
 import { readBaseWidgetData, toStr } from './util';
 
 // Unknown Widget

@@ -2,9 +2,13 @@
  * Link widget readers — DeviceSceneLink, SceneLink, WebLink.
  */
 
-import { registerReader } from '../Registry';
-import { DeviceSceneLinkModel, SceneLinkModel, WebLinkModel } from '../models';
-import { readBaseLinkData, toStr } from '../readers/util';
+import { registerReader } from '@/karabo/common/registry';
+import {
+  DeviceSceneLinkModel,
+  SceneLinkModel,
+  WebLinkModel,
+} from '@/karabo/common/models';
+import { readBaseLinkData, toStr } from '@/karabo/common/readers/util';
 
 // DeviceSceneLink
 // ----------------------------------------------------------------------------
