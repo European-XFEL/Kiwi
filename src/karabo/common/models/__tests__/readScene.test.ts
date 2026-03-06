@@ -4,16 +4,16 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { readScene } from '../readScene';
-import { SceneModel } from '@/karabo/common/models/SceneModel';
-import { BoxLayoutModel } from '@/karabo/common/models/layouts';
-import { LabelModel } from '@/karabo/common/models/widgets/static';
-import { UnknownWidgetDataModel } from '@/karabo/common/models/bases';
-import { DisplayCommandModel } from '@/karabo/common/models/widgets/controllers/display';
 import {
+  SceneModel,
+  readScene,
+  BoxLayoutModel,
+  LabelModel,
+  UnknownWidgetDataModel,
+  DisplayCommandModel,
   DeviceSceneLinkModel,
   WebLinkModel,
-} from '@/karabo/common/models/widgets/links';
+} from '@/karabo/common/api';
 
 const SAMPLE_DIR = path.resolve(__dirname, './sample_data');
 

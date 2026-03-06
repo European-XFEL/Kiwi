@@ -2,14 +2,14 @@
 
 import React from 'react';
 import { SquarePen } from 'lucide-react';
-import type { ControllerContainerContext } from '@/features/controllers/components/ControllerContainer';
+import type { ControllerContainerContext } from '../ControllerContainer';
 import {
   EditableListModel,
   EditableRegexListModel,
   EditableListElementModel,
-} from '@/karabo/common/models/widgets/controllers/editable';
+  FONT_FAMILY_DEFAULT,
+} from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/registry';
-import { FONT_FAMILY_DEFAULT } from '@/karabo/common/utils/fontDefaults';
 import { Button } from '@/components/button';
 import {
   Dialog,

@@ -1,8 +1,8 @@
 /** CheckBox — DisplayCheckBox (read-only) and EditableCheckBox (interactive). */
 
 import React from 'react';
-import type { ControllerContainerContext } from '@/features/controllers/components/ControllerContainer';
-import { CheckBoxModel } from '@/karabo/common/models/widgets/controllers/display';
+import type { ControllerContainerContext } from '../ControllerContainer';
+import { CheckBoxModel } from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/registry';
 import { Checkbox } from '@/components/checkbox';
 //import { Hash } from '@/karabo/data/hash';
