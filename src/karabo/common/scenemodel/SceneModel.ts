@@ -3,8 +3,8 @@
 import { BaseSceneObjectData } from './bases';
 
 import { XMLParser } from 'fast-xml-parser';
-import { readElement, readerRegistry } from '../Registry';
-import { ATTR_KRB_VERSION, SCENE_FILE_VERSION, SVG_SVG } from '../constants';
+import { readElement, readerRegistry } from './Registry';
+import { ATTR_KRB_VERSION, SCENE_FILE_VERSION, SVG_SVG } from './constants';
 import { toNum } from './util';
 
 export class SceneModel extends BaseSceneObjectData {

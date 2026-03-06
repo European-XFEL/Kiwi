@@ -4,8 +4,8 @@
 
 import React from 'react';
 
-import { GridLayoutModel } from '@/karabo/common/models/layouts';
-import { GridLayoutChildData } from '@/karabo/common/models/bases';
+import { GridLayoutModel } from '@/karabo/common/scenemodel/layouts';
+import { GridLayoutChildData } from '@/karabo/common/scenemodel/bases';
 import { renderContent } from '@/features/scene-view/render/ElementRenderer';
 import { resolveBounds } from '@/features/scene-view/render/bounds';
 import { containerPointerEvents } from '@/features/scene-view/utils/mode';

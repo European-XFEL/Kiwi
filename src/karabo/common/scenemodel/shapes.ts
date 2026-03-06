@@ -6,8 +6,8 @@
 
 import { BaseShapeObjectData } from './bases';
 
-import { registerReader } from '../Registry';
-import { SVG_LINE, SVG_POLYGON, SVG_RECT } from '../constants';
+import { registerReader } from './Registry';
+import { SVG_LINE, SVG_POLYGON, SVG_RECT } from './constants';
 import { readBaseShapeData, toNum, toStr } from './util';
 
 // Line

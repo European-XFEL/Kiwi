@@ -3,7 +3,7 @@
  */
 
 import { BaseLinkModel } from '../bases';
-import { registerReader } from '../../Registry';
+import { registerReader } from '../Registry';
 import { readBaseLinkData, toStr } from '../util';
 
 // DeviceSceneLink

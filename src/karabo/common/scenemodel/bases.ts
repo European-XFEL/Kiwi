@@ -2,7 +2,7 @@
  * Base model classes for the Karabo scene system.
  */
 
-import { FONT_DEFAULT, FONT_SIZE_DEFAULT } from '../constants';
+import { FONT_DEFAULT, FONT_SIZE_DEFAULT } from './constants';
 
 // BaseSavableModel
 /** Root marker class for all serializable scene objects. */

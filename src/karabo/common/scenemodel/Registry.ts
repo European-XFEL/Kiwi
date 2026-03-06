@@ -1,6 +1,6 @@
 /** ReaderRegistry — flat name → reader map with version support. */
 
-import type { BaseSceneObjectData } from './models/bases';
+import type { BaseSceneObjectData } from './bases';
 import {
   ATTR_KRB_CLASS,
   ATTR_KRB_WIDGET,

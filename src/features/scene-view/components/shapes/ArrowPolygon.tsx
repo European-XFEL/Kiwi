@@ -1,7 +1,7 @@
 /** ArrowPolygon — line shaft with a triangular arrowhead. */
 
 import React from 'react';
-import { ArrowPolygonModel } from '@/karabo/common/models/shapes';
+import { ArrowPolygonModel } from '@/karabo/common/scenemodel/shapes';
 import { registerRenderer } from '@/features/scene-view/render/registry';
 import { strokePad, shapeSvgProps, strokeFillAttrs } from './shapeUtils';
 

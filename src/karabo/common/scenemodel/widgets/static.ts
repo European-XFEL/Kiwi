@@ -4,9 +4,9 @@
  */
 
 import { BaseWidgetObjectData } from '../bases';
-import { FONT_DEFAULT } from '../../constants';
+import { FONT_DEFAULT } from '../constants';
 
-import { registerReader } from '../../Registry';
+import { registerReader } from '../Registry';
 import { readBaseWidgetData, toNum, toStr } from '../util';
 
 // Label

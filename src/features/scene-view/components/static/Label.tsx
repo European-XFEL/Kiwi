@@ -1,9 +1,9 @@
 /** Label — static text widget, no device binding. */
 
 import React from 'react';
-import { LabelModel } from '@/karabo/common/models/widgets/static';
+import { LabelModel } from '@/karabo/common/scenemodel/widgets/static';
 import { registerRenderer } from '@/features/scene-view/render/registry';
-import { QtFontDescriptor } from '@/karabo/common/utils/QtFontDescriptor';
+import { QFont } from '@/features/controllers/utils/fonts';
 
 // Label
 // ----------------------------------------------------------------------------
@@ -15,7 +15,7 @@ const ALIGNH_MAP: Record<1 | 2 | 4, React.CSSProperties['justifyContent']> = {
 };
 
 const Label: React.FC<{ model: LabelModel }> = ({ model }) => {
-  const font = new QtFontDescriptor(model.font);
+  const font = new QFont(model.font);
 
   return (
     <div

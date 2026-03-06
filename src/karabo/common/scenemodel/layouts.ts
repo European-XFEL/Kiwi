@@ -18,7 +18,7 @@ import {
   collectSvgChildren,
   toNum,
 } from './util';
-import { registerReader, readElement } from '../Registry';
+import { registerReader, readElement } from './Registry';
 
 // Direction
 // ----------------------------------------------------------------------------

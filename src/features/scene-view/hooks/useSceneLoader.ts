@@ -7,7 +7,7 @@
  * Returns { scene, error } — SceneView only has to render.
  */
 
-import type { SceneModel } from '@/karabo/common/models/SceneModel';
+import type { SceneModel } from '@/karabo/common/scenemodel/SceneModel';
 import type { LoadProjectSceneResult } from '@/lib/ProjectDbInfo';
 import { sceneParamsFromURL } from '@/features/navigation/utils';
 import { getDbConn, getTopology } from '@/lib/singletons/api';
