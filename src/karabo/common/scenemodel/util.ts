@@ -8,9 +8,9 @@ import type {
   BaseSceneObjectData,
   BaseShapeObjectData,
   BaseWidgetObjectData,
-} from '../models/bases';
-import { readElement } from '../Registry';
-import { ATTR_KRB_CLASS, ATTR_KRB_WIDGET } from '../constants';
+} from './bases';
+import { readElement } from './Registry';
+import { ATTR_KRB_CLASS, ATTR_KRB_WIDGET } from './constants';
 
 import { FixedLayoutChildData, GridLayoutChildData } from './bases';
 import type { FixedLayoutModel } from './layouts';

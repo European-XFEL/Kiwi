@@ -8,13 +8,13 @@ import {
   type BaseSceneObjectData,
   BaseLayoutModel,
   BaseWidgetObjectData,
-} from '@/karabo/common/models/bases';
+} from '@/karabo/common/scenemodel/bases';
 import {
   LineModel,
   PolygonModel,
   ArrowPolygonModel,
   RectangleModel,
-} from '@/karabo/common/models/shapes';
+} from '@/karabo/common/scenemodel/shapes';
 
 // Bounds
 // ---

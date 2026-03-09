@@ -15,22 +15,16 @@ import {
   BaseWidgetObjectData,
   UnknownWidgetDataModel,
   UnknownXMLDataModel,
-} from '@/karabo/common/models/bases';
-import {
-  LabelModel,
-  StickerModel,
-} from '@/karabo/common/models/widgets/static';
-import {
-  SceneLinkModel,
-  WebLinkModel,
-} from '@/karabo/common/models/widgets/links';
-import { ControllerContainer, useController } from '@/features/controllers';
-import { containerPointerEvents } from '@/features/scene-view/utils/mode';
+} from '@/karabo/common/api';
+import { LabelModel, StickerModel } from '@/karabo/common/api';
+import { SceneLinkModel, WebLinkModel } from '@/karabo/common/api';
+import { ControllerContainer, useController } from '@/features/controllers/api';
+import { containerPointerEvents } from '../utils/mode';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tooltip';
 
 import { getRenderer } from './registry';
 import { resolveBounds } from './bounds';
-import { PropertyOverlay } from '@/features/scene-view/components/PropertyOverlay';
+import { PropertyOverlay } from '../components/PropertyOverlay';
 
 export { resolveBounds, isLayout } from './bounds';
 

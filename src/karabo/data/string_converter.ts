@@ -5,7 +5,7 @@ import {
   isHashInteger as isIntegerType,
   isHashString as isStringType,
   isHashVector as isVectorType,
-} from './hashTypeIdentifiers';
+} from './typenumIdentifier';
 
 interface FormatScalarOptions {
   value: unknown;

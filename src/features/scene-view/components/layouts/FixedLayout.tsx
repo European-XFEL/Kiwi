@@ -4,7 +4,7 @@
 
 import React from 'react';
 
-import { FixedLayoutModel } from '@/karabo/common/models/layouts';
+import { FixedLayoutModel } from '@/karabo/common/scenemodel/layouts';
 import { renderContent } from '@/features/scene-view/render/ElementRenderer';
 import { resolveBounds } from '@/features/scene-view/render/bounds';
 import { containerPointerEvents } from '@/features/scene-view/utils/mode';

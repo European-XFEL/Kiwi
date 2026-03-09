@@ -6,8 +6,8 @@
  * can resolve either form directly.
  */
 
-import { registerReader } from '../Registry';
-import { SceneModel } from '../models/SceneModel';
+import { registerReader } from './Registry';
+import { SceneModel } from './SceneModel';
 import {
   ATTR_HEIGHT,
   ATTR_KRB_UUID,
@@ -16,7 +16,7 @@ import {
   ATTR_WIDTH,
   SVG_SVG,
   UNKNOWN_WIDGET_CLASS,
-} from '../constants';
+} from './constants';
 import { readChildren, toNum, toStr, readBaseWidgetData } from './util';
 import { UnknownWidgetDataModel, UnknownXMLDataModel } from './bases';
 

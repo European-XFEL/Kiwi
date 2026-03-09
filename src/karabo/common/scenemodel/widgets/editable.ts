@@ -6,8 +6,8 @@
  */
 
 import { BaseEditWidget } from '../bases';
-import { FONT_SIZE_DEFAULT } from '../../constants';
-import { registerReader } from '../../Registry';
+import { FONT_SIZE_DEFAULT } from '../constants';
+import { registerReader } from '../Registry';
 
 import { readBaseWidgetData, toBool, toNum } from '../util';
 

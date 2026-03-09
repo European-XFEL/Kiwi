@@ -1,4 +1,4 @@
-import type { SceneModel } from '@/karabo/common/models/SceneModel';
+import type { SceneModel } from '@/karabo/common/scenemodel/SceneModel';
 
 // #region Data structures for project entities
 export interface DbItemInfo {

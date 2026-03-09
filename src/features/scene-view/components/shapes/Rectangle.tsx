@@ -1,7 +1,7 @@
 /** Rectangle — filled/stroked rectangular shape. No data binding. */
 
 import React from 'react';
-import { RectangleModel } from '@/karabo/common/models/shapes';
+import { RectangleModel } from '@/karabo/common/scenemodel/shapes';
 import { registerRenderer } from '@/features/scene-view/render/registry';
 import { strokeFillAttrs } from './shapeUtils';
 

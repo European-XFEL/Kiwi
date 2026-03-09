@@ -12,9 +12,9 @@ import {
   BaseDisplayEditableWidget,
   BasePlotModel,
 } from '../bases';
-import { FONT_SIZE_DEFAULT } from '../../constants';
+import { FONT_SIZE_DEFAULT } from '../constants';
 import { readBaseWidgetData, toBool, toNum, toStr } from '../util';
-import { registerReader } from '../../Registry';
+import { registerReader } from '../Registry';
 
 // DisplayLabel
 // ----------------------------------------------------------------------------

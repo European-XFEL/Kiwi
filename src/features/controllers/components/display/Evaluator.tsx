@@ -4,7 +4,7 @@ import React from 'react';
 import type { ControllerContainerContext } from '../ControllerContainer';
 import { EvaluatorModel, FONT_FAMILY_DEFAULT } from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/registry';
-import { scalarToString } from '@/karabo/common/utils/toStringFormatters';
+import { scalarToString } from '@/karabo/data/string_converter';
 
 // Evaluator
 // ----------------------------------------------------------------------------

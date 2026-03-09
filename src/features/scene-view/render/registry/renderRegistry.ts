@@ -1,22 +1,19 @@
 /** Render registry — module-level map of model key → React renderer. */
 
 import type React from 'react';
-import {
-  BaseSceneObjectData,
-  BaseWidgetObjectData,
-} from '@/karabo/common/models/bases';
+import { BaseSceneObjectData, BaseWidgetObjectData } from '@/karabo/common/api';
 import {
   BoxLayoutModel,
   FixedLayoutModel,
   GridLayoutModel,
-} from '@/karabo/common/models/layouts';
+} from '@/karabo/common/api';
 import {
   ArrowPolygonModel,
   LineModel,
   PathModel,
   PolygonModel,
   RectangleModel,
-} from '@/karabo/common/models/shapes';
+} from '@/karabo/common/api';
 
 // Renderer
 // ----------------------------------------------------------------------------
