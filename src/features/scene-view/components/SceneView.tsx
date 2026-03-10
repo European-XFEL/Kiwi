@@ -1,14 +1,14 @@
-import { ElementRenderer } from '@/features/scene-view/render/ElementRenderer';
-import { useSceneLoader } from '@/features/scene-view/hooks/useSceneLoader';
+import { ElementRenderer } from '../render/ElementRenderer';
+import { useSceneLoader } from '../hooks/useSceneLoader';
 import {
   SceneFatalError,
   SceneLoadError,
   SceneLoading,
-} from '@/features/scene-view/components/SceneStatusViews';
-import { SceneShell } from '@/features/scene-view/components/SceneShell';
-import { SceneStage } from '@/features/scene-view/components/SceneStage';
-import { SceneViewport } from '@/features/scene-view/components/SceneViewport';
-import { SceneWindow } from '@/features/scene-view/components/SceneWindow';
+} from './SceneStatusViews';
+import { SceneShell } from './SceneShell';
+import { SceneStage } from './SceneStage';
+import { SceneViewport } from './SceneViewport';
+import { SceneWindow } from './SceneWindow';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { useLoadedSceneStore } from '@/store/loadedSceneStore';
 import React from 'react';
@@ -20,7 +20,7 @@ import {
 } from '../utils/sceneLayout';
 
 // Bootstrap — triggers all registerRenderer() calls
-import '@/features/scene-view/renderers';
+import '../renderers';
 
 const SceneView: React.FC = () => {
   const { lastGlobalError } = useGlobalStore();

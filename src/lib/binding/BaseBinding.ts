@@ -8,9 +8,9 @@ import {
   AccessMode,
   Assignment,
   State,
-} from '@/karabo/data';
+} from '@/karabo/data/api';
 import { WeakEvent } from '../WeakEvent';
-import { buildNode } from '@/lib/binding/BindingFactory';
+import { buildNode } from './BindingFactory';
 
 import {
   KARABO_SCHEMA_DISPLAYED_NAME,

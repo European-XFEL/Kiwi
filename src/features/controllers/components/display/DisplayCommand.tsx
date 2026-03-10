@@ -12,8 +12,8 @@ import { DisplayCommandModel, FONT_FAMILY_DEFAULT } from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/registry';
 import { Button } from '@/components/button';
 import { useGlobalStore } from '@/store/globalAppStateStore';
-import { AccessLevel } from '@/karabo/data/enums';
-import { ProxyStatus } from '@/lib/binding/ProxyStatus';
+import { AccessLevel } from '@/karabo/data/api';
+import { ProxyStatus } from '@/lib/binding/api';
 import { getNetwork } from '@/lib/singletons/api';
 
 // DisplayCommand

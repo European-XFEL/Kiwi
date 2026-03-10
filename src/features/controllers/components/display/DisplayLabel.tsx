@@ -4,7 +4,7 @@ import React from 'react';
 import type { ControllerContainerContext } from '../ControllerContainer';
 import { DisplayLabelModel, FONT_FAMILY_DEFAULT } from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/registry';
-import { scalarToString } from '@/karabo/data/string_converter';
+import { scalarToString } from '@/karabo/data/api';
 
 // DisplayLabel
 // ----------------------------------------------------------------------------

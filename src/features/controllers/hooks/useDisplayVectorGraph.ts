@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
-import type { UseDevicePropertyResult } from '@/lib/binding';
+import type { UsePropertyProxyUpdate } from '@/lib/binding/api';
 import { isHashVector } from '@/karabo/data/typenumIdentifier';
 import { downsampleArray } from '../utils/lttb';
 
-export type VectorPrimary = UseDevicePropertyResult | undefined;
+export type VectorPrimary = UsePropertyProxyUpdate | undefined;
 
 export interface UseDisplayVectorGraphConfig {
   defaultThreshold?: number;

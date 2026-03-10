@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getNetwork } from '@/lib/singletons/api';
-import { AccessLevel } from '@/karabo/data/enums';
+import { AccessLevel } from '@/karabo/data/api';
 import AuthServerClient from '@/lib/http/AuthServerClient';
 import { useAppSettingsStore } from '@/store/appSettingsStore';
 import { useGlobalStore } from '@/store/globalAppStateStore';

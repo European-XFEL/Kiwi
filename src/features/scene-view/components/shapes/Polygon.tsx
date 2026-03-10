@@ -1,8 +1,8 @@
 /** Polygon — closed polygon defined by a points string. */
 
 import React from 'react';
-import { PolygonModel } from '@/karabo/common/scenemodel/shapes';
-import { registerRenderer } from '@/features/scene-view/render/registry';
+import { PolygonModel } from '@/karabo/common/api';
+import { registerRenderer } from '../../render/registry';
 import { strokePad, shapeSvgProps, strokeFillAttrs } from './shapeUtils';
 
 // Polygon

@@ -7,7 +7,7 @@
  */
 
 import React from 'react';
-import { PathModel } from '@/karabo/common/scenemodel/shapes';
+import { PathModel } from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/render/registry';
 
 // Path

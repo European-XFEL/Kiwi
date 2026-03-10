@@ -1,7 +1,6 @@
-import { ProxyStatus } from '@/lib/binding/ProxyStatus';
-import { Hash, Schema } from '@/karabo/data/hash';
-import { Timestamp } from '@/karabo/data/timestamp';
-import { buildBinding } from '@/lib/binding/BindingFactory';
+import { ProxyStatus } from './ProxyStatus';
+import { Hash, Schema, Timestamp } from '@/karabo/data/api';
+import { buildBinding } from './BindingFactory';
 
 import { getNetwork } from '@/lib/singletons/api';
 import { BaseBinding, BindingRoot, NodeBinding } from './BaseBinding';

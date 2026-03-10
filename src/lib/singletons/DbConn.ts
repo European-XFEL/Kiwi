@@ -1,4 +1,4 @@
-import { Hash, HashList, HashValues } from '@/karabo/data/hash';
+import { Hash, HashList, HashValues } from '@/karabo/data/api';
 import {
   DbItemInfo,
   isProjectContentsInfo,
@@ -23,7 +23,7 @@ import {
   unregister_for_broadcasts,
 } from '@/events';
 
-export class ProjectDBConnector {
+export class DbConnection {
   private readonly eventMap: KaraboEventMap;
   // The active loadItemHandler: onLoadItemsHash during a listScenes operation,
   // onLoadSceneHash during a getScene operation or undefined while none of

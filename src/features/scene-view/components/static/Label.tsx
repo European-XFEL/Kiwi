@@ -1,8 +1,8 @@
 /** Label — static text widget, no device binding. */
 
 import React from 'react';
-import { LabelModel } from '@/karabo/common/scenemodel/widgets/static';
-import { registerRenderer } from '@/features/scene-view/render/registry';
+import { LabelModel } from '@/karabo/common/api';
+import { registerRenderer } from '../../render/registry';
 import { QFont } from '@/features/controllers/utils/fonts';
 
 // Label

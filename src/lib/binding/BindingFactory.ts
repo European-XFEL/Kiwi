@@ -1,5 +1,10 @@
-import { HashAttributes, Hash, Schema } from '@/karabo/data/hash';
-import { KARABO_SCHEMA_NODE_TYPE } from '@/karabo/data/const';
+import {
+  HashAttributes,
+  Hash,
+  Schema,
+  KARABO_SCHEMA_NODE_TYPE,
+  NodeType,
+} from '@/karabo/data/api';
 
 import {
   BaseBinding,
@@ -8,7 +13,6 @@ import {
   NodeBinding,
   VectorHashBinding,
 } from './BaseBinding';
-import { NodeType } from '@/karabo/data/enums';
 
 export function buildBinding(
   schema: Schema,
