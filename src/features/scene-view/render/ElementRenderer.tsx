@@ -23,7 +23,7 @@ import { containerPointerEvents } from '../utils/mode';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tooltip';
 
 import { getRenderer } from './registry';
-import { resolveBounds } from './bounds';
+import { isInRenderPhase, resolveBounds, type RenderPhase } from './bounds';
 import { PropertyOverlay } from '../components/PropertyOverlay';
 
 export { resolveBounds, isLayout } from './bounds';
@@ -79,7 +79,12 @@ const ControllerView: React.FC<{
 // Resolves a model to its component and renders it — zero positioning.
 // Layouts call this for their children after the wrapper div sets position.
 
-export function renderContent(model: BaseSceneObjectData): React.ReactNode {
+export function renderContent(
+  model: BaseSceneObjectData,
+  phase: RenderPhase = 'all'
+): React.ReactNode {
+  if (!isInRenderPhase(model, phase)) return null;
+
   const Renderer = getRenderer(model);
 
   if (!Renderer) {
@@ -126,8 +131,9 @@ export function renderContent(model: BaseSceneObjectData): React.ReactNode {
 
 export const ElementRenderer: React.FC<{
   model: BaseSceneObjectData;
-}> = ({ model }) => (
-  <PositionedShell model={model}>{renderContent(model)}</PositionedShell>
+  phase?: RenderPhase;
+}> = ({ model, phase = 'all' }) => (
+  <PositionedShell model={model}>{renderContent(model, phase)}</PositionedShell>
 );
 
 // PositionedShell
