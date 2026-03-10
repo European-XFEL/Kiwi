@@ -8,7 +8,7 @@
  *      while the shell positions the element.
  */
 
-import type { BaseShapeObjectData } from '@/karabo/common/scenemodel/bases';
+import type { BaseShapeObjectData } from '@/karabo/common/api';
 
 // strokePad
 // ----------------------------------------------------------------------------

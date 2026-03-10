@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'lodash';
-import type { UseDevicePropertyResult } from '@/lib/binding';
+import type { UsePropertyProxyUpdate } from '@/lib/binding/api';
 
 interface TrendDataPoint {
   timestamp: number; // epoch ms
@@ -25,7 +25,7 @@ const toFiniteNumber = (raw: unknown): number | null => {
   return Number.isFinite(n) ? n : null;
 };
 
-const safeNowMs = (primary?: UseDevicePropertyResult): number => {
+const safeNowMs = (primary?: UsePropertyProxyUpdate): number => {
   try {
     const seconds = primary?.timestamp?.toTimestamp();
     // toTimestamp() returns seconds — convert to epoch milliseconds.
@@ -52,7 +52,7 @@ const prune = (data: TrendDataPoint[], max: number, windowMs: number) => {
  * useDisplayTrendGraph
  */
 export const useDisplayTrendGraph = (
-  primary: UseDevicePropertyResult | undefined,
+  primary: UsePropertyProxyUpdate | undefined,
   config: TrendConfig = {}
 ) => {
   const { maxDataPoints, timeWindowMs, throttleDelayMs } = {

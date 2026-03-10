@@ -6,9 +6,9 @@ import React from 'react';
 import {
   ProxyStatus,
   PropertyStatus,
-  useDeviceProperty,
-  type UseDevicePropertyResult,
-} from '@/lib/binding';
+  usePropertyProxy,
+  type UsePropertyProxyUpdate,
+} from '@/lib/binding/api';
 
 // ControllerContainerContext
 // ---
@@ -24,7 +24,7 @@ export interface ControllerContainerContext {
   propertyMissing?: boolean;
   hasPendingEdits?: boolean;
   /** Raw binding result — gives widgets access to value, binding schema, timestamp. */
-  primary: UseDevicePropertyResult;
+  primary: UsePropertyProxyUpdate;
 }
 
 // useController
@@ -32,7 +32,7 @@ export interface ControllerContainerContext {
 
 export function useController(keys: string[]): ControllerContainerContext {
   const primaryKey = keys?.[0] ?? '';
-  const primary = useDeviceProperty(primaryKey || undefined);
+  const primary = usePropertyProxy(primaryKey || undefined);
 
   const {
     deviceId,

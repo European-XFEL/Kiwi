@@ -16,8 +16,8 @@ import {
   formatTableCell,
   isNumericType,
 } from '@/features/controllers/utils/formatTableCell';
-import { Hash, SimpleValueTypes } from '@/karabo/data/';
-import type { BaseBinding } from '@/lib/binding/BaseBinding';
+import { Hash, SimpleValueTypes } from '@/karabo/data/api';
+import type { BaseBinding } from '@/lib/binding/api';
 
 // TableElement
 // ----------------------------------------------------------------------------

@@ -1,8 +1,8 @@
 /** Sticker — multiline static text label, no device binding. */
 
 import React from 'react';
-import { StickerModel } from '@/karabo/common/scenemodel/widgets/static';
-import { registerRenderer } from '@/features/scene-view/render/registry';
+import { StickerModel } from '@/karabo/common/api';
+import { registerRenderer } from '../../render/registry';
 import { QFont } from '@/features/controllers/utils/fonts';
 
 // Sticker

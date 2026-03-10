@@ -4,12 +4,11 @@
 
 import React from 'react';
 
-import { GridLayoutModel } from '@/karabo/common/scenemodel/layouts';
-import { GridLayoutChildData } from '@/karabo/common/scenemodel/bases';
-import { renderContent } from '@/features/scene-view/render/ElementRenderer';
-import { resolveBounds } from '@/features/scene-view/render/bounds';
-import { containerPointerEvents } from '@/features/scene-view/utils/mode';
-import { registerRenderer } from '@/features/scene-view/render/registry';
+import { GridLayoutModel, GridLayoutChildData } from '@/karabo/common/api';
+import { renderContent } from '../../render/ElementRenderer';
+import { resolveBounds } from '../../render/bounds';
+import { containerPointerEvents } from '../../utils/mode';
+import { registerRenderer } from '../../render/registry';
 
 type GridLayoutProps = {
   model: GridLayoutModel;

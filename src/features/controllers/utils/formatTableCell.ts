@@ -1,6 +1,5 @@
-import { SimpleValueTypes } from '@/karabo/data/types';
-import { HashType } from '@/karabo/data/typenums';
-import { BaseBinding } from '@/lib/binding/BaseBinding';
+import { HashType, SimpleValueTypes } from '@/karabo/data/api';
+import { BaseBinding } from '@/lib/binding/api';
 
 export function formatTableCell(
   value: SimpleValueTypes,

@@ -1,5 +1,5 @@
-import { Hash, Schema } from '@/karabo/data/hash';
-import { DeviceProxy } from '@/lib/binding/DeviceProxy';
+import { Hash, Schema } from '@/karabo/data/api';
+import { DeviceProxy } from '@/lib/binding/api';
 
 export class SystemTopology {
   public _system_hash: Hash | null = null;

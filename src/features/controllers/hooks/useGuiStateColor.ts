@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { mapGuiStateColor } from '@/lib/binding/utils/mapStateColor';
+import { mapGuiStateColor } from '@/lib/binding/api';
 import { guiStateColors, GuiStateColorKey } from '@/lib/Indicators';
 
 export function useGuiStateColor(rawState: string) {

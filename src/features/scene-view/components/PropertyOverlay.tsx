@@ -5,8 +5,8 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from '@/components/tooltip';
-import type { UsePropertyProxyUpdate } from '@/lib/binding/useDeviceProperty';
-import { ProxyStatus, PropertyStatus } from '@/lib/binding/ProxyStatus';
+import type { UsePropertyProxyUpdate } from '@/lib/binding/api';
+import { ProxyStatus, PropertyStatus } from '@/lib/binding/api';
 import { XIcon } from 'lucide-react';
 
 const CONNECTING_STATUSES: ProxyStatus[] = [
