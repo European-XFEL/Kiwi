@@ -7,6 +7,7 @@
 import {
   type BaseSceneObjectData,
   BaseLayoutModel,
+  BaseShapeObjectData,
   BaseWidgetObjectData,
 } from '@/karabo/common/scenemodel/bases';
 import {
@@ -27,9 +28,31 @@ export interface Bounds {
   height: number;
 }
 
+/** True for purely decorative shape elements (Line, Polygon, Arrow, Rectangle, Path). */
+export const isShape = (sceneElement: BaseSceneObjectData): boolean =>
+  sceneElement instanceof BaseShapeObjectData;
+
 /** True for layout containers (Fixed, Grid, Box) which are usually wrapper-only. */
 export const isLayout = (sceneElement: BaseSceneObjectData): boolean =>
   sceneElement instanceof BaseLayoutModel;
+
+// RenderPhase
+// ---
+
+export type RenderPhase = 'all' | 'shape' | 'widget';
+
+/**
+ * Returns true if `el` should render in `phase`.
+ * Layouts always render in both passes so their children can be reached.
+ */
+export const isInRenderPhase = (
+  el: BaseSceneObjectData,
+  phase: RenderPhase
+): boolean => {
+  if (phase === 'all') return true;
+  if (isLayout(el)) return true;
+  return phase === 'shape' ? isShape(el) : !isShape(el);
+};
 
 // resolveBounds
 // ---

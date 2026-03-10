@@ -57,7 +57,10 @@ const SceneView: React.FC = () => {
       scene ? (
         <>
           {scene.children.map((child, i) => (
-            <ElementRenderer key={i} model={child} />
+            <ElementRenderer key={`shape_${i}`} model={child} phase="shape" />
+          ))}
+          {scene.children.map((child, i) => (
+            <ElementRenderer key={`widget_${i}`} model={child} phase="widget" />
           ))}
         </>
       ) : null,
