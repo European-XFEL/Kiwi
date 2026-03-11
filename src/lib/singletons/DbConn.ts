@@ -9,12 +9,11 @@ import {
   LoadProjectSceneResult,
   ProjectItemInfo,
   ProjectSceneInfo,
-} from '@/lib/ProjectDbInfo';
+  ProjectSceneCache,
+} from '@/karabo/common/project/api';
 import { XMLParser } from 'fast-xml-parser';
-import { readSceneFromSvgJson } from '@/karabo/common/api';
-
+import { readSceneFromSvgJson } from '@/karabo/common/scenemodel/api';
 import { getNetwork } from '@/lib/singletons/api';
-import { ProjectSceneCache } from '@/store/ProjectSceneCache';
 
 import {
   KaraboEvent,
