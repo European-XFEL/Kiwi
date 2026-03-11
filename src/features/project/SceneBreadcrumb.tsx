@@ -11,7 +11,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/dropdown-menu';
-import { ProjectItemInfo, ProjectSceneInfo } from '@/lib/ProjectDbInfo';
+import { ProjectItemInfo, ProjectSceneInfo } from '@/karabo/common/project/api';
 import { cn } from '@/components/utils/cn';
 import { getDbConn } from '@/lib/singletons/api';
 import { useGlobalStore } from '@/store/globalAppStateStore';

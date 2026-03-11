@@ -8,7 +8,7 @@
  */
 
 import type { SceneModel } from '@/karabo/common/scenemodel/SceneModel';
-import type { LoadProjectSceneResult } from '@/lib/ProjectDbInfo';
+import type { LoadProjectSceneResult } from '@/karabo/common/project/ProjectDbInfo';
 import { sceneParamsFromURL } from '@/features/navigation/utils';
 import { getDbConn, getTopology } from '@/lib/singletons/api';
 import { useGlobalStore } from '@/store/globalAppStateStore';

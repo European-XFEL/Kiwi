@@ -1,4 +1,4 @@
-import { ProjectSceneInfo } from '@/lib/ProjectDbInfo';
+import { ProjectSceneInfo } from './ProjectDbInfo';
 
 export class ProjectSceneCache {
   static readonly ITEM_PREFIX = 'prjScene';

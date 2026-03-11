@@ -3,7 +3,7 @@
  */
 
 import * as React from 'react';
-import { ProjectItemInfo, ProjectSceneInfo } from '@/lib/ProjectDbInfo';
+import { ProjectItemInfo, ProjectSceneInfo } from '@/karabo/common/project/api';
 import { RecentSceneModel } from '@/view_models/RecentScenesModel';
 
 // Main component props

@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/table';
-import { asLocalDateTimeString } from '@/lib/ProjectDbInfo';
+import { asLocalDateTimeString } from '@/karabo/common/project/api';
 import { Search } from 'lucide-react';
 import { useState } from 'react';
 import type { ProjectsTableProps } from '../types/project.types';
