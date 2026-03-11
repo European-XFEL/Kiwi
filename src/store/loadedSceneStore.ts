@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { SceneModel } from '@/view_models/SceneModel';
+import { SceneModel } from './store.types';
 import { type FitMode } from '@/features/scene-view';
 
 export interface LoadedSceneStateStoreProp {

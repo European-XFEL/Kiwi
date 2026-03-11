@@ -1,10 +1,10 @@
 import {
   RecentScenesByUser,
-  UserRecentSceneModel,
-} from '@/view_models/RecentScenesModel';
+  UserRecentSceneInfo,
+  RecentSceneInfo,
+} from './store.types';
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
-import { RecentSceneModel } from '@/view_models/RecentScenesModel';
 
 const MRU_SCENES_SIZE = 6;
 const MRU_SCENES_KEY = 'MRU_SCENES_';
@@ -49,17 +49,17 @@ const loadRecentScenes = (): RecentScenesByUser[] | null => {
 
 // State types
 export interface RecentSceneStoreState {
-  recentScenes: Map<string, RecentSceneModel[]>;
+  recentScenes: Map<string, RecentSceneInfo[]>;
 }
 
 // Action types
 export interface RecentSceneStoreActions {
-  setRecentScene: (scene: UserRecentSceneModel) => void;
+  setRecentScene: (scene: UserRecentSceneInfo) => void;
   removeRecentScene: (
     userId: string,
     sceneId: { domain: string; uuid: string }
   ) => void;
-  getRecentScenesForUser: (userId: string) => RecentSceneModel[];
+  getRecentScenesForUser: (userId: string) => RecentSceneInfo[];
 }
 
 // Store type
@@ -68,7 +68,7 @@ type TRecentStore = RecentSceneStoreState & RecentSceneStoreActions;
 // Helper function to return a map
 const createInitialState = (): RecentSceneStoreState => {
   const loadedScenes = loadRecentScenes();
-  const recentScenesMap = new Map<string, RecentSceneModel[]>();
+  const recentScenesMap = new Map<string, RecentSceneInfo[]>();
 
   if (loadedScenes) {
     // Load all users' scenes, not just the first one
@@ -85,12 +85,12 @@ const createInitialState = (): RecentSceneStoreState => {
 // Initial state of the recent scene
 const initialState: RecentSceneStoreState = createInitialState();
 
-const useRecentStore = create<TRecentStore>()(
+export const useRecentStore = create<TRecentStore>()(
   subscribeWithSelector((set, get) => ({
     // Spread the initial state
     ...initialState,
 
-    setRecentScene: (userScene: UserRecentSceneModel) =>
+    setRecentScene: (userScene: UserRecentSceneInfo) =>
       set((state) => {
         // Create a new Map to ensure immutability
         const newRecentScenes = new Map(state.recentScenes);
@@ -110,11 +110,11 @@ const useRecentStore = create<TRecentStore>()(
 
         if (index >= 0) {
           // Move existing scene to the top
-          const rearrangedArray = moveFront<RecentSceneModel>(scenes, index);
+          const rearrangedArray = moveFront<RecentSceneInfo>(scenes, index);
           scenes = rearrangedArray;
         } else {
           // Add new scene to the beginning
-          const newScene: RecentSceneModel = {
+          const newScene: RecentSceneInfo = {
             domain,
             uuid,
             name,
@@ -174,5 +174,3 @@ const useRecentStore = create<TRecentStore>()(
     },
   }))
 );
-
-export default useRecentStore;

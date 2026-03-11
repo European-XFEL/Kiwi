@@ -7,14 +7,16 @@
  * Returns { scene, error } — SceneView only has to render.
  */
 
-import type { SceneModel } from '@/karabo/common/scenemodel/SceneModel';
-import type { LoadProjectSceneResult } from '@/karabo/common/project/ProjectDbInfo';
+import type { SceneModel } from '@/karabo/common/scenemodel/api';
+import type { LoadProjectSceneResult } from '@/karabo/common/project/api';
 import { sceneParamsFromURL } from '@/features/navigation/utils';
 import { getDbConn, getTopology } from '@/lib/singletons/api';
-import { useGlobalStore } from '@/store/globalAppStateStore';
-import { useLoadedSceneStore } from '@/store/loadedSceneStore';
-import useRecentStore from '@/store/recentScenesStore';
-import type { UserRecentSceneModel } from '@/view_models/RecentScenesModel';
+import {
+  type UserRecentSceneInfo,
+  useRecentStore,
+  useGlobalStore,
+  useLoadedSceneStore,
+} from '@/store/api';
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -85,7 +87,7 @@ export function useSceneLoader(): SceneLoaderResult {
         setLoadedScene({ width: model.width, height: model.height });
 
         if (loggedUser) {
-          const recentScene: UserRecentSceneModel = {
+          const recentScene: UserRecentSceneInfo = {
             userId: loggedUser,
             domain: result.scene!.domain,
             uuid: result.scene!.uuid,

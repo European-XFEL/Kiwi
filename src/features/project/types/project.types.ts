@@ -4,7 +4,7 @@
 
 import * as React from 'react';
 import { ProjectItemInfo, ProjectSceneInfo } from '@/karabo/common/project/api';
-import { RecentSceneModel } from '@/view_models/RecentScenesModel';
+import { RecentSceneInfo } from '@/store/api';
 
 // Main component props
 export type LoadProjectSceneProps = {
@@ -60,15 +60,15 @@ export type ScenesTableProps = {
 };
 
 export type RecentSceneItemProps = {
-  scene: RecentSceneModel;
-  onOpen: (scene: RecentSceneModel) => void;
-  onRemove: (scene: RecentSceneModel) => void;
+  scene: RecentSceneInfo;
+  onOpen: (scene: RecentSceneInfo) => void;
+  onRemove: (scene: RecentSceneInfo) => void;
   disabled?: boolean;
 };
 
 export type RecentScenesListProps = {
-  scenes: RecentSceneModel[];
-  onSceneOpen: (scene: RecentSceneModel) => void;
-  onSceneRemove: (scene: RecentSceneModel) => void;
+  scenes: RecentSceneInfo[];
+  onSceneOpen: (scene: RecentSceneInfo) => void;
+  onSceneRemove: (scene: RecentSceneInfo) => void;
   disabled?: boolean;
 };
