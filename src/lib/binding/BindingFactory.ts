@@ -39,7 +39,7 @@ export function buildNode(value: any, attrs: HashAttributes): BaseBinding {
 
   if (nodeType === NodeType.Leaf) {
     const valueType = a.getValue<string>('valueType');
-    const factory = _BINDINGS[valueType];
+    const factory = getBindings()[valueType];
     if (factory) {
       return new factory({ value: undefined, attributes: a });
     }
@@ -69,6 +69,8 @@ function buildSubnamespace(hashVal: Hash): BindingNamespace<BaseBinding> {
 
 type BindingCtor = new (...args: any[]) => BaseBinding;
 
-const _BINDINGS: Record<string, BindingCtor> = {
-  VECTOR_HASH: VectorHashBinding,
-};
+let _BINDINGS: Record<string, BindingCtor> | null = null;
+function getBindings(): Record<string, BindingCtor> {
+  if (!_BINDINGS) _BINDINGS = { VECTOR_HASH: VectorHashBinding };
+  return _BINDINGS;
+}
