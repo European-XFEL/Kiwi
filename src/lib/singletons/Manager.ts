@@ -1,4 +1,4 @@
-import { broadcast_event, KaraboEvent } from '@/events';
+import { broadcast_event, KaraboEvent } from '@/lib/events';
 import { AccessControlManager } from '@/features/user/utils/AccessLevel';
 import { decodeBinary, Hash, Schema } from '@/karabo/data/api';
 import { getConfig, getNetwork, getTopology } from '@/lib/singletons/api';
