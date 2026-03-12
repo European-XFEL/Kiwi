@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { SceneModel } from '@/view_models/SceneModel';
+import { type SceneModel } from './store.types';
 import { AccessLevel } from '@/karabo/data/enums';
 
 /** App status tag */

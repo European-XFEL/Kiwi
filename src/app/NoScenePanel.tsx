@@ -1,8 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { RecentSceneModel } from '@/view_models/RecentScenesModel';
-import { useGlobalStore } from '@/store/globalAppStateStore';
-import useRecentStore from '@/store/recentScenesStore';
+import { RecentSceneInfo, useRecentStore, useGlobalStore } from '@/store/api';
 import { RecentScenesList } from '@/features/project';
 import BookmarkInfo from './components/BookmarkInfo';
 import { Separator } from '@/components/separator';
@@ -15,11 +13,11 @@ const NoScenePanel: React.FC = () => {
   document.title = 'Kiwi';
 
   const loggedUser = sessionInfo?.loggedUser ?? null;
-  const userScenes: RecentSceneModel[] = loggedUser
+  const userScenes: RecentSceneInfo[] = loggedUser
     ? getRecentScenesForUser(loggedUser)
     : [];
 
-  const handleSceneClick = (recentScene: RecentSceneModel) => {
+  const handleSceneClick = (recentScene: RecentSceneInfo) => {
     navigate(
       // `/scene_v2?host=${sessionInfo!.guiServerHost}` +
       `/scene?host=${sessionInfo!.guiServerHost}` +
@@ -31,7 +29,7 @@ const NoScenePanel: React.FC = () => {
     );
   };
 
-  const handleRemoveScene = (recentScene: RecentSceneModel) => {
+  const handleRemoveScene = (recentScene: RecentSceneInfo) => {
     if (loggedUser) {
       removeRecentScene(loggedUser, {
         domain: recentScene.domain,
