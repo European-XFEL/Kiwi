@@ -1,10 +1,10 @@
 import { create } from 'zustand';
-import { SceneModel } from './store.types';
+import { SceneSize } from './store.types';
 import { type FitMode } from '@/features/scene-view';
 
 export interface LoadedSceneStateStoreProp {
-  scene?: SceneModel;
-  setScene: (scene?: SceneModel) => void;
+  scene?: SceneSize;
+  setScene: (scene?: SceneSize) => void;
   fitMode: FitMode;
   setFitMode: (mode: FitMode) => void;
 }

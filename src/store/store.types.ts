@@ -14,7 +14,7 @@ export interface RecentScenesByUser {
   scenes: RecentSceneInfo[];
 }
 
-export interface SceneModel {
+export interface SceneSize {
   height: number;
   width: number;
 }
