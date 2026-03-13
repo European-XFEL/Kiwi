@@ -145,8 +145,12 @@ export function usePropertyProxy(
       })
     );
 
-    store.updaters.push(root.state_update.subscribe(updateRoot));
-    store.updaters.push(root.status_update.subscribe(updateRoot));
+    store.updaters.push(
+      root.state_update.subscribe(storeRef.current, updateRoot)
+    );
+    store.updaters.push(
+      root.status_update.subscribe(storeRef.current, updateRoot)
+    );
 
     return () => {
       store.updaters.forEach((fn) => fn());

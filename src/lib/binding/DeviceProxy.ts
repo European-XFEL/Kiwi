@@ -73,7 +73,7 @@ export class DeviceProxy {
   }
 
   public binding_update(callback: () => void): () => void {
-    return this.schema_update.subscribe(callback);
+    return this.schema_update.subscribe(this, callback);
   }
 
   public addMonitor(): () => void {
