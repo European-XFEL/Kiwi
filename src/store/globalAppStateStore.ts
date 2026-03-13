@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { type SceneModel } from './store.types';
+import { type SceneSize } from './store.types';
 import { AccessLevel } from '@/karabo/data/enums';
 
 /** App status tag */
@@ -36,7 +36,7 @@ export interface GlobalAppState {
   globalState: GlobalState;
   lastGlobalError: string;
   sessionInfo?: GuiServerSessionInfo;
-  loadedScene?: SceneModel;
+  loadedScene?: SceneSize;
 }
 
 /** Actions */
@@ -46,7 +46,7 @@ export interface GlobalActions {
   setSceneDisplayError: (msg: string) => void;
   setLoggedIn: (session: GuiServerSessionInfo) => void;
   setLoggedOut: () => void;
-  setLoadedScene: (scene?: SceneModel) => void;
+  setLoadedScene: (scene?: SceneSize) => void;
   reset: () => void;
   updateAccessLevel: (level: AccessLevel) => void;
 }
