@@ -12,16 +12,10 @@ export class WeakEvent {
     this.subscribers.delete(id)
   );
 
-  subscribeWeak(owner: object, handler: (...args: any[]) => void): Unsubscribe {
+  subscribe(owner: object, handler: (...args: any[]) => void): Unsubscribe {
     const id = this.nextId++;
     this.subscribers.set(id, { owner: new WeakRef(owner), handler });
     this.registry.register(owner, id);
-    return () => this.subscribers.delete(id);
-  }
-
-  subscribe(handler: (...args: any[]) => void): Unsubscribe {
-    const id = this.nextId++;
-    this.subscribers.set(id, { handler });
     return () => this.subscribers.delete(id);
   }
 

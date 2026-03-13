@@ -18,7 +18,7 @@ export class PropertyProxy {
   ) {
     this.setBinding(this.root_proxy.getBinding(this.path));
 
-    this.removeBindingUpdate = this.root_proxy.schema_update.subscribeWeak(
+    this.removeBindingUpdate = this.root_proxy.schema_update.subscribe(
       this,
       this.onSchemaUpdate
     );
@@ -44,7 +44,7 @@ export class PropertyProxy {
 
     // attach to new binding
     if (this.binding) {
-      this.removeConfigUpdate = this.binding.value_update.subscribeWeak(
+      this.removeConfigUpdate = this.binding.value_update.subscribe(
         this,
         this.onBindingValueUpdate
       );
@@ -60,7 +60,7 @@ export class PropertyProxy {
   };
 
   public value_update(callback: (proxy: PropertyProxy) => void): Unsubscribe {
-    return this.config_update.subscribe(() => callback(this));
+    return this.config_update.subscribe(this, () => callback(this));
   }
 
   public dispose(): void {
