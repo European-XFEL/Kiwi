@@ -25,11 +25,11 @@ yarn install
 yarn dev
 ```
 
-# Testing
+## Testing
 
 Jest is used for unit and integration testing with React Testing Library for component testing.
 
-## Running Tests
+### Running Tests
 
 Create test files with the `.test.tsx` or `.test.ts` extension (e.g., `MyComponent.test.tsx`) and run:
 
@@ -42,14 +42,14 @@ yarn cov
 
 ```
 
-## Script Reference
+### Script Reference
 
 | Command | Description                                |
 | ------- | ------------------------------------------ |
 | `test`  | Runs tests in watch mode (development)     |
 | `cov`   | Generates coverage report for source files |
 
-## Test File Examples
+### Test File Examples
 
 **Component Test:**
 
@@ -73,6 +73,16 @@ import { myHelper } from './utils';
 test('helper function works correctly', () => {
   expect(myHelper('input')).toBe('expected output');
 });
+```
+
+## Running built application on docker using nginx
+
+To launch a docker container running nginx with the kiwi application files
+being served from `/home/user/apps/kiwi` and accessible at `http://localhost:8080`
+on the docker host:
+
+```
+docker run --name kiwi_app -v /home/user/apps/kiwi:/usr/share/nginx/html:ro -p 8080:80 -d nginx
 ```
 
 ## Original README.md contents scaffolded by `vite`
