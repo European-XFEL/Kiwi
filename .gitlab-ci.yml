@@ -7,14 +7,22 @@ workflow:
 stages:
   - lint
   - test
+  - deploy
 
 variables:
   NODE_ENV: test
-  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
-  PRE_COMMIT_HOME: "$CI_PROJECT_DIR/.cache/pre-commit"
+  PIP_CACHE_DIR: '$CI_PROJECT_DIR/.cache/pip'
+  PRE_COMMIT_HOME: '$CI_PROJECT_DIR/.cache/pre-commit'
 
 .default_node_image: &node_image
-  image: node:22
+  image: europeanxfel/karabo-ci:debian-12-node_25.001
+
+.before_script_commands: &before_script_commands
+  before_script:
+    - corepack enable
+    - node -v
+    - npm -v
+    - yarn -v
 
 # Node/Yarn cache (global)
 cache:
@@ -49,14 +57,24 @@ project-lint:
     - pre-commit run --all-files
 
 test:
-  <<: *node_image
+  <<: [*node_image, *before_script_commands]
   stage: test
-  before_script:
-    - corepack enable
-    - node -v
-    - npm -v
-    - yarn -v
   script:
     - yarn install --immutable
     - yarn build
     - yarn cov --watchAll=false
+
+prerelease_deploy:
+  stage: deploy
+  <<: [*node_image, *before_script_commands]
+  variables:
+    KIWI_BUILD_ARTIFACT_DIR: kiwi/tags/$CI_COMMIT_REF_NAME
+  script:
+    - yarn install --immutable
+    - yarn build
+    - cd dist
+    - tar -czf ../kiwi_$CI_COMMIT_REF_NAME.tar.gz .
+    - sshpass -p "$XKIWI_PWD" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $KIWI_BUILD_UPLOAD_HOST "mkdir -p $KIWI_BUILD_UPLOAD_DIR/$KIWI_BUILD_ARTIFACT_DIR"
+    - sshpass -p "$XKIWI_PWD" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ../kiwi_$CI_COMMIT_REF_NAME.tar.gz $KIWI_BUILD_UPLOAD_HOST:$KIWI_BUILD_UPLOAD_DIR/$KIWI_BUILD_ARTIFACT_DIR
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^(\d+\.)(\d+\.)(\d+)((a|b|rc|\.)\d+)$/
