@@ -20,7 +20,7 @@ import ProjectsTable from './components/ProjectTable';
 import ScenesTable from './components/ScenesTable';
 import { LoadingStatus } from '@/features/status';
 import type { SelectProjectSceneDialogProps } from './types/project.types';
-import { useKaraboEvent, KaraboEvent } from '@/events';
+import { useKaraboEvent, KaraboEvent } from '@/lib/events';
 import { getDomains } from './utils';
 enum ActivityStatus {
   NO_ACTIVITY,

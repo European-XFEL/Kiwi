@@ -20,7 +20,7 @@ import {
   KaraboEventMap,
   register_for_broadcasts,
   unregister_for_broadcasts,
-} from '@/events';
+} from '@/lib/events';
 
 export class DbConnection {
   private readonly eventMap: KaraboEventMap;
