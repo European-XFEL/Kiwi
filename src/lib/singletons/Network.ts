@@ -162,7 +162,6 @@ export class Network {
   }
 
   public async resumeGuiSession(
-    authServerCli: AuthServerClient,
     onResumedHandler: SessionStartedHandler,
     onNoSessionHandler: () => void,
     onErrorHandler: SessionStartErrorHandler
@@ -208,6 +207,7 @@ export class Network {
             };
           } else {
             // Auth resume
+            const authServerCli = new AuthServerClient(serverInfo.authServer);
             const res = await authServerCli.refreshTokens(
               sessionData!.refreshToken!,
               sessionData!.userId

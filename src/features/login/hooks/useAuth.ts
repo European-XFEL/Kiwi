@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { getNetwork } from '@/lib/singletons/api';
 import { AccessLevel } from '@/karabo/data/api';
 import AuthServerClient from '@/lib/http/AuthServerClient';
-import { useAppSettingsStore } from '@/store/appSettingsStore';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { ActivityStatus, GuiServerInfo } from '../auth.types';
 
@@ -32,7 +31,6 @@ export function useAuth({
   setErrorMessage,
 }: UseAuthProps): UseAuthReturn {
   const setLoggedIn = useGlobalStore((s) => s.setLoggedIn);
-  const { authServerURL } = useAppSettingsStore();
   const navigate = useNavigate();
 
   const [userName, setUserName] = useState('');
@@ -80,7 +78,7 @@ export function useAuth({
 
   // Update auth server URL ref
   if (!authServerURLRef.current) {
-    authServerURLRef.current = authServerURL;
+    authServerURLRef.current = probedServerInfo?.authServer ?? '';
   }
 
   // Main login function

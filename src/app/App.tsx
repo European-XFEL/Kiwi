@@ -3,23 +3,21 @@ import { bootstrapStatefulIcons } from '@/features/controllers/api';
 import { initAppSettings } from './AppSettings';
 import { useAppSettingsStore } from '@/store/appSettingsStore';
 import { useGlobalStore } from '@/store/globalAppStateStore';
-import { AccessLevel } from '@/karabo/data/enums';
 import { getNetwork, getManager } from '@/lib/singletons/api';
-import AuthServerClient from '@/lib/http/AuthServerClient';
 import { BrowserRouter } from 'react-router-dom';
 import AppRouter from './router/AppRouter';
 import { appRoutes } from './routes';
 import { TooltipProvider } from '@/components/tooltip';
+import { AccessLevel } from '@/karabo/data/enums';
 
 const App: React.FC = () => {
   const executedOnceRef = React.useRef('');
-  const { setWsProxyUrl, setAuthServerUrl } = useAppSettingsStore();
+  const { setWsProxyUrl } = useAppSettingsStore();
   const { setError, setLoggedIn, setLoggedOut } = useGlobalStore();
 
   useEffect(() => {
     const appSettings = initAppSettings();
     setWsProxyUrl(appSettings.wsProxyURL);
-    setAuthServerUrl(appSettings.authServerURL);
 
     if (!executedOnceRef.current) {
       executedOnceRef.current = 'true';
@@ -34,7 +32,6 @@ const App: React.FC = () => {
       };
 
       getNetwork().resumeGuiSession(
-        new AuthServerClient(appSettings.authServerURL),
         (
           accessLevel: AccessLevel,
           host: string,
@@ -57,7 +54,7 @@ const App: React.FC = () => {
         (errorMsg: string) => setError(errorMsg)
       );
     }
-  }, [setWsProxyUrl, setAuthServerUrl, setError, setLoggedIn, setLoggedOut]);
+  }, [setWsProxyUrl, setError, setLoggedIn, setLoggedOut]);
 
   return (
     <TooltipProvider delayDuration={150} skipDelayDuration={300}>
