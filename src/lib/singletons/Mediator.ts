@@ -43,7 +43,7 @@ export class Mediator {
       [any, BroadCastHandler | undefined]
     >) {
       if (!handler) {
-        // console.log('No handler registered ...');
+        console.log('No handler registered ...');
         continue;
       }
 
