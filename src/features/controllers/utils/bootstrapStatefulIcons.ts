@@ -55,7 +55,7 @@ export function bootstrapStatefulIcons(force = false): void {
       : iconModel;
   }
 
-  console.info(
+  console.debug(
     '[statefulIcons] bootstrapped',
     Object.keys(statefulIconModelsById).length,
     'icons'

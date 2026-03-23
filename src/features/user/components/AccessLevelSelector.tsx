@@ -57,7 +57,7 @@ export default function AccessLevelSelector({
           sessionInfo.loggedUser,
           newLevel
         );
-        console.log(
+        console.debug(
           `Access level changed to: ${AccessLevel[newLevel]} and persisted to session storage`
         );
       } else if (storedSession?.refreshToken) {
