@@ -47,6 +47,7 @@ export class Network {
 
   // Session State
   private _session?: GuiServerSession;
+  private _closeRequested = false; // when true (e.g. user logout), web socket connection closes are expected and are not errors
   private _ws?: Websocket;
   private _hashDeque = new Deque<BinHashItem>();
   private _timer: ReturnType<typeof setInterval> | null = null;
@@ -92,8 +93,8 @@ export class Network {
 
   public sendHash(hash: Hash): void {
     if (!this._ws) {
-      console.warn(
-        'Invalid use of sendHash! No active GUI Server session exists!'
+      console.debug(
+        `Attempt to sendHash after websocket connection is gone: hash = ${hash}`
       );
       return;
     }
@@ -254,6 +255,7 @@ export class Network {
 
   public finishSession(): void {
     this._session = undefined;
+    this._closeRequested = true;
     this._stopWebsocketSession();
     getConfig().deleteSession();
     useGlobalActivityStore.getState().reset();
@@ -275,9 +277,9 @@ export class Network {
     if (!ws.underlyingWebsocket)
       message = 'Websocket client initialization error';
     else if (ws.underlyingWebsocket.CLOSED)
-      message = 'No connection to websocket server';
+      message = 'No connection to GUI server - web socket closed';
     else if (ws.underlyingWebsocket.CLOSING)
-      message = 'Websocket connection being closed.';
+      message = 'No connection to GUI server - web socket closing';
     else message = ev.toString();
     return message;
   }
@@ -289,19 +291,32 @@ export class Network {
 
     this._ws = new WebsocketBuilder(this._wsProxyURL)
       .onOpen((ws) => ws.send(JSON.stringify({ host, port })))
-      .onClose((ws, ev) =>
-        this._handleWsError(ws, ev, (msg) => this._handleSessionError(msg))
-      )
+      .onClose((ws, ev) => {
+        if (!this._closeRequested) {
+          // Outside normal session finishes (e.g. user logouts) a web socket
+          // close is considered an error.
+          this._handleWsError(ws, ev, (msg) => this._handleSessionError(msg));
+        } else {
+          // the web socket was closed as part of a normal session finish.
+          // must reset the flag. Note: The reset cannot be performed by
+          // the method finishGuiSession (the one that sets it) because
+          // this handler is only processed by the event loop after
+          // finishGuiSession has returned
+          this._closeRequested = false;
+        }
+      })
       .onMessage(this._onWsMessage)
-      .onError((ws, ev) =>
-        this._handleWsError(ws, ev, (msg) => this._handleSessionError(msg))
-      )
+      .onError((ws, ev) => {
+        this._handleWsError(ws, ev, (msg) => this._handleSessionError(msg));
+      })
       .build();
   }
 
   private _stopWebsocketSession() {
     this._stopTimer();
-    this._ws?.close();
+    if (this._ws?.underlyingWebsocket.OPEN) {
+      this._ws?.close();
+    }
     this._ws = undefined;
   }
 
@@ -333,10 +348,7 @@ export class Network {
   }
 
   private _handleSessionError(message: string) {
-    if (this._session) {
-      this._session.startErrorHandler(message);
-      this._session = undefined;
-    } else if (this._onSessionDropped) {
+    if (this._onSessionDropped) {
       this._onSessionDropped(message);
     }
     this._stopWebsocketSession();
