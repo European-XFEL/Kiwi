@@ -18,6 +18,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const appSettings = initAppSettings();
     setWsProxyUrl(appSettings.wsProxyURL);
+    console.log(`Kiwi.App: using burrow at ${appSettings.wsProxyURL}`);
 
     if (!executedOnceRef.current) {
       executedOnceRef.current = 'true';

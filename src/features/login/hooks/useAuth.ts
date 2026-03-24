@@ -42,21 +42,22 @@ export function useAuth({
   // Auth session started callback
   const onAuthSessionStarted = useCallback(
     (
-      lvl: AccessLevel,
-      h: string,
-      p: number,
+      accessLevel: AccessLevel,
+      host: string,
+      port: number,
+      userId: string,
       topic: string,
       serverVersion: string
     ) => {
-      localStorage.setItem('lastHost', h);
-      localStorage.setItem('lastPort', `${p}`);
+      localStorage.setItem('lastHost', host);
+      localStorage.setItem('lastPort', `${port}`);
       setActivityStatus(ActivityStatus.NO_ACTIVITY);
 
       setLoggedIn({
-        accessLevel: lvl,
-        loggedUser: userName,
-        guiServerHost: h,
-        guiServerPort: p,
+        accessLevel: accessLevel,
+        loggedUser: userId,
+        guiServerHost: host,
+        guiServerPort: port,
         guiServerTopic: topic,
         guiServerVersion: serverVersion,
         sessionStartEpoc: Date.now(),
