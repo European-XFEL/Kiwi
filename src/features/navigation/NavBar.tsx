@@ -1,5 +1,5 @@
 import { Menu, Home } from 'lucide-react';
-import Header from '@/app/layouts/Header';
+import { KiwiHeader } from '@/app/api';
 import NavigationMenu from './components/NavMenu';
 import { NavItem } from './components/NavItem';
 import NavToggle from './components/NavToggle';
@@ -50,7 +50,7 @@ export function NavBar() {
   }, [location.search]);
 
   return (
-    <Header className="border-b">
+    <KiwiHeader className="border-b">
       <NavigationMenu className="justify-between px-2 py-2 w-full">
         {/* Mobile/Tablet Layout */}
         <div className="flex items-center justify-between w-full xl:hidden gap-2">
@@ -191,6 +191,6 @@ export function NavBar() {
           </NavItem>
         </div>
       </NavigationMenu>
-    </Header>
+    </KiwiHeader>
   );
 }
