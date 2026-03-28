@@ -15,7 +15,7 @@ const toSize = (v: unknown, fallback: string) =>
       ? v
       : fallback;
 
-type SidebarProps = React.HTMLAttributes<HTMLElement> & {
+export type SidebarProps = React.HTMLAttributes<HTMLElement> & {
   position?: Position;
   width?: string | number;
   height?: string | number;
