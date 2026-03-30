@@ -1,4 +1,3 @@
-import { Input } from '@/components/input';
 import { ScrollArea } from '@/components/scroll-area';
 import {
   Table,
@@ -8,9 +7,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/table';
+import KiwiSearchInput from '@/components/KiwiSearchInput';
 import { asLocalDateTimeString } from '@/karabo/common/project/api';
-import { Search } from 'lucide-react';
-import { useState } from 'react';
 import type { ScenesTableProps } from '../types/project.types';
 
 export default function ScenesTable({
@@ -18,24 +16,18 @@ export default function ScenesTable({
   selectedScene,
   onSceneClick,
   onSceneDoubleClick,
+  query,
+  onQueryChange,
 }: ScenesTableProps) {
-  const [query, setQuery] = useState('');
-
-  const filtered = query
-    ? scenes.filter((s) => s.name.toLowerCase().includes(query.toLowerCase()))
-    : scenes;
-
   return (
     <div className="flex flex-col gap-2">
-      <div className="relative">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
-        <Input
+      {onQueryChange !== undefined && (
+        <KiwiSearchInput
+          value={query ?? ''}
+          onChange={onQueryChange}
           placeholder="Filter scenes..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="pl-8 h-8 text-sm"
         />
-      </div>
+      )}
       <ScrollArea className="h-48 rounded-md border">
         <Table>
           <TableHeader className="sticky top-0 bg-background">
@@ -45,7 +37,7 @@ export default function ScenesTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length === 0 ? (
+            {scenes.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={2}
@@ -55,7 +47,7 @@ export default function ScenesTable({
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((scene, index) => (
+              scenes.map((scene, index) => (
                 <TableRow
                   key={`${index}::${scene.uuid}`}
                   onClick={() => onSceneClick(scene)}

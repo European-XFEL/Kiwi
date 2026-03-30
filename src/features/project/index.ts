@@ -20,7 +20,6 @@ export type {
   SceneBreadcrumbProps,
   SelectProjectSceneDialogProps,
   DomainSelectorProps,
-  ProjectFilterProps,
   ProjectsTableProps,
   ScenesTableProps,
   RecentSceneItemProps,

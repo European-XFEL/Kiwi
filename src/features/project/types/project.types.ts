@@ -2,7 +2,6 @@
  * Project Feature - Type Definitions
  */
 
-import * as React from 'react';
 import { ProjectItemInfo, ProjectSceneInfo } from '@/karabo/common/project/api';
 import { RecentSceneInfo } from '@/store/api';
 
@@ -40,16 +39,12 @@ export type DomainSelectorProps = {
   disabled?: boolean;
 };
 
-export type ProjectFilterProps = {
-  onFilter: () => void;
-  onClear: () => void;
-  inputRef: React.RefObject<HTMLInputElement | null>;
-};
-
 export type ProjectsTableProps = {
   projects: ProjectItemInfo[];
   selectedProject?: ProjectItemInfo;
   onProjectClick: (project: ProjectItemInfo) => void;
+  query?: string;
+  onQueryChange?: (q: string) => void;
 };
 
 export type ScenesTableProps = {
@@ -57,6 +52,8 @@ export type ScenesTableProps = {
   selectedScene?: ProjectSceneInfo;
   onSceneClick: (scene: ProjectSceneInfo) => void;
   onSceneDoubleClick: (scene: ProjectSceneInfo) => void;
+  query?: string;
+  onQueryChange?: (q: string) => void;
 };
 
 export type RecentSceneItemProps = {
