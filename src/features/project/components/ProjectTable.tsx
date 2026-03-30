@@ -1,4 +1,3 @@
-import { Input } from '@/components/input';
 import { ScrollArea } from '@/components/scroll-area';
 import {
   Table,
@@ -8,33 +7,26 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/table';
+import KiwiSearchInput from '@/components/KiwiSearchInput';
 import { asLocalDateTimeString } from '@/karabo/common/project/api';
-import { Search } from 'lucide-react';
-import { useState } from 'react';
 import type { ProjectsTableProps } from '../types/project.types';
 
 export default function ProjectsTable({
   projects,
   selectedProject,
   onProjectClick,
+  query,
+  onQueryChange,
 }: ProjectsTableProps) {
-  const [query, setQuery] = useState('');
-
-  const filtered = query
-    ? projects.filter((p) => p.name.toLowerCase().includes(query.toLowerCase()))
-    : projects;
-
   return (
     <div className="flex flex-col gap-2">
-      <div className="relative">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
-        <Input
+      {onQueryChange !== undefined && (
+        <KiwiSearchInput
+          value={query ?? ''}
+          onChange={onQueryChange}
           placeholder="Filter projects..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="pl-8 h-8 text-sm"
         />
-      </div>
+      )}
       <ScrollArea className="h-48 rounded-md border">
         <Table>
           <TableHeader className="sticky top-0 bg-background">
@@ -44,7 +36,7 @@ export default function ProjectsTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length === 0 ? (
+            {projects.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={2}
@@ -54,7 +46,7 @@ export default function ProjectsTable({
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((project, index) => (
+              projects.map((project, index) => (
                 <TableRow
                   key={`${index}::${project.uuid}`}
                   onClick={() => onProjectClick(project)}

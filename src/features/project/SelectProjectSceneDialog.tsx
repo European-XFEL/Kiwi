@@ -9,19 +9,19 @@ import {
 } from '@/components/dialog';
 import { Hash } from '@/karabo/data/api';
 import { Button } from '@/components/button';
-import { Card, CardContent } from '@/components/card';
 import { Separator } from '@/components/separator';
 import { getDbConn } from '@/lib/singletons/api';
 import { ProjectItemInfo, ProjectSceneInfo } from '@/karabo/common/project/api';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import DomainSelector from './components/DomainSelector';
-import ProjectFilter from './components/ProjectFilter';
 import ProjectsTable from './components/ProjectTable';
 import ScenesTable from './components/ScenesTable';
 import { LoadingStatus } from '@/features/status';
 import type { SelectProjectSceneDialogProps } from './types/project.types';
 import { useKaraboEvent, KaraboEvent } from '@/lib/events';
 import { getDomains } from './utils';
+import { useDeferredSearch } from './hooks/useDeferredSearch';
+
 enum ActivityStatus {
   NO_ACTIVITY,
   GETTING_DOMAINS,
@@ -45,39 +45,43 @@ export default function SelectProjectSceneDialog({
   const [selectedProject, setSelectedProject] = useState<
     ProjectItemInfo | undefined
   >(undefined);
-  const [totalProjects, setTotalProjects] = useState<number>(0);
   const [scenes, setScenes] = useState<ProjectSceneInfo[]>([]);
   const [selectedScene, setSelectedScene] = useState<
     ProjectSceneInfo | undefined
   >(undefined);
   const executedOnceRef = useRef('');
-  const projectFilterRef = useRef<HTMLInputElement>(null);
+
+  const projectSearch = useDeferredSearch();
+  const sceneSearch = useDeferredSearch();
+
+  const filteredProjects = projectSearch.deferredQuery
+    ? projects.filter((p) =>
+        p.name.toLowerCase().includes(projectSearch.deferredQuery.toLowerCase())
+      )
+    : projects;
+
+  const filteredScenes = sceneSearch.deferredQuery
+    ? scenes.filter((s) =>
+        s.name.toLowerCase().includes(sceneSearch.deferredQuery.toLowerCase())
+      )
+    : scenes;
 
   const updateProjects = (domain: string) => {
     setActivityStatus(ActivityStatus.GETTING_PROJECTS);
     setScenes([]);
     setSelectedScene(undefined);
+    sceneSearch.clear();
 
     getDbConn().listProjects(domain, (projectsInfo) => {
       if (projectsInfo.error_msg) {
         setErrorMessage(projectsInfo.error_msg);
       } else {
-        let projectsFiltered = projectsInfo.projects.filter(
+        const allProjects = projectsInfo.projects.filter(
           (pInf) => !pInf.isTrashed
         );
-        setTotalProjects(projectsFiltered.length);
-
-        const projectFilter =
-          projectFilterRef.current?.value.toLowerCase() || '';
-        if (projectFilter.length > 0) {
-          projectsFiltered = projectsFiltered.filter(
-            (pInf) => pInf.name.toLowerCase().indexOf(projectFilter) >= 0
-          );
-        }
-
-        setProjects(projectsFiltered);
-        if (projectsFiltered.length > 0) {
-          const selProject = projectsFiltered[0];
+        setProjects(allProjects);
+        if (allProjects.length > 0) {
+          const selProject = allProjects[0];
           setSelectedProject(selProject);
           updateScenes(selProject.domain, selProject.name, selProject.uuid);
         }
@@ -186,37 +190,20 @@ export default function SelectProjectSceneDialog({
         </DialogHeader>
 
         <div className="flex-1 overflow-auto space-y-4 pr-2">
-          {/* Project Filter Section */}
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold">Project Filter</h3>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex gap-4 items-end">
-                  <DomainSelector
-                    domains={domains}
-                    selectedDomain={selectedDomain}
-                    onDomainChange={(domain) => {
-                      setSelectedDomain(domain);
-                      updateProjects(domain);
-                    }}
-                    disabled={activityStatus !== ActivityStatus.NO_ACTIVITY}
-                  />
-                  <ProjectFilter
-                    inputRef={projectFilterRef}
-                    onFilter={() => updateProjects(selectedDomain)}
-                    onClear={() => {
-                      if (projectFilterRef.current) {
-                        projectFilterRef.current.value = '';
-                      }
-                      updateProjects(selectedDomain);
-                    }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+          {/* Domain selector */}
+          <div>
+            <DomainSelector
+              domains={domains}
+              selectedDomain={selectedDomain}
+              onDomainChange={(domain) => {
+                setSelectedDomain(domain);
+                updateProjects(domain);
+              }}
+              disabled={activityStatus !== ActivityStatus.NO_ACTIVITY}
+            />
           </div>
 
-          {/* Projects Section */}
+          {/* Projects */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">
@@ -224,34 +211,42 @@ export default function SelectProjectSceneDialog({
               </h3>
               <span className="text-xs text-muted-foreground">
                 (
-                {totalProjects === projects.length
+                {filteredProjects.length === projects.length
                   ? projects.length
-                  : `${projects.length} of ${totalProjects}`}
+                  : `${filteredProjects.length} of ${projects.length}`}
                 )
               </span>
             </div>
             <ProjectsTable
-              projects={projects}
+              projects={filteredProjects}
               selectedProject={selectedProject}
               onProjectClick={handleProjectClick}
+              query={projectSearch.query}
+              onQueryChange={projectSearch.setQuery}
             />
           </div>
 
-          {/* Scenes Section */}
+          {/* Scenes */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">
                 Scenes on Project "{selectedProject?.name ?? ''}"
               </h3>
               <span className="text-xs text-muted-foreground">
-                ({scenes.length})
+                (
+                {filteredScenes.length === scenes.length
+                  ? scenes.length
+                  : `${filteredScenes.length} of ${scenes.length}`}
+                )
               </span>
             </div>
             <ScenesTable
-              scenes={scenes}
+              scenes={filteredScenes}
               selectedScene={selectedScene}
               onSceneClick={handleSceneClick}
               onSceneDoubleClick={handleSceneDoubleClick}
+              query={sceneSearch.query}
+              onQueryChange={sceneSearch.setQuery}
             />
           </div>
         </div>
