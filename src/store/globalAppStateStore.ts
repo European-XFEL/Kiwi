@@ -26,6 +26,8 @@ export interface GuiServerSessionInfo {
 export type GlobalState =
   | 'INIT'
   | 'LOGGED_IN'
+  | 'NOTIFIED_SESSION_EXPIRATION'
+  | 'SESSION_EXPIRED'
   | 'LOGGED_OUT'
   | 'UNRECOVERABLE_ERROR'
   | 'SCENE_OPEN_ERROR'
@@ -37,6 +39,7 @@ export interface GlobalAppState {
   lastGlobalError: string;
   sessionInfo?: GuiServerSessionInfo;
   loadedScene?: SceneSize;
+  secondsToSessionExpiration?: number;
 }
 
 /** Actions */
@@ -45,6 +48,8 @@ export interface GlobalActions {
   setSceneOpenError: (msg: string) => void;
   setSceneDisplayError: (msg: string) => void;
   setLoggedIn: (session: GuiServerSessionInfo) => void;
+  setNotifiedSessionExpiration: (secondsToExpiration: number) => void;
+  setSessionExpired: () => void;
   setLoggedOut: () => void;
   setLoadedScene: (scene?: SceneSize) => void;
   reset: () => void;
@@ -60,6 +65,7 @@ export const initialState: GlobalAppState = {
   lastGlobalError: '',
   sessionInfo: undefined,
   loadedScene: undefined,
+  secondsToSessionExpiration: undefined,
 };
 
 //store
@@ -93,12 +99,29 @@ export const useGlobalStore = create<GlobalStore>((set) => ({
       lastGlobalError: '',
     }),
 
+  setNotifiedSessionExpiration: (secondsToExpiration: number) => {
+    set({
+      globalState: 'NOTIFIED_SESSION_EXPIRATION',
+      secondsToSessionExpiration: secondsToExpiration,
+    });
+  },
+
+  setSessionExpired: () =>
+    set({
+      globalState: 'SESSION_EXPIRED',
+      sessionInfo: undefined,
+      loadedScene: undefined,
+      lastGlobalError: '',
+      secondsToSessionExpiration: undefined,
+    }),
+
   setLoggedOut: () =>
     set({
       globalState: 'LOGGED_OUT',
       sessionInfo: undefined,
       loadedScene: undefined,
       lastGlobalError: '',
+      secondsToSessionExpiration: undefined,
     }),
 
   setLoadedScene: (scene) =>

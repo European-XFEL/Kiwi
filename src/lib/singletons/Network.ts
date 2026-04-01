@@ -48,10 +48,15 @@ export class Network {
   // Session State
   private _session?: GuiServerSession;
   private _closeRequested = false; // when true (e.g. user logout), web socket connection closes are expected and are not errors
+  private _sessionExpired = false; //
   private _ws?: Websocket;
   private _hashDeque = new Deque<BinHashItem>();
   private _timer: ReturnType<typeof setInterval> | null = null;
   private _onSessionDropped?: (err_msg: string) => void;
+  private _onSessionExpired?: () => void;
+  private _onSessionExpirationNotification?: (
+    secondsToExpiration: number
+  ) => void;
 
   public constructor() {}
 
@@ -89,6 +94,37 @@ export class Network {
       throw new Error('Cannot set onSessionDropped: a handler is already set');
     }
     this._onSessionDropped = value;
+  }
+
+  public get onSessionExpirationNotification():
+    | ((secondsToExpiration: number) => void)
+    | undefined {
+    return this._onSessionExpirationNotification;
+  }
+
+  public set onSessionExpirationNotification(
+    value: ((secondsToExpiration: number) => void) | undefined
+  ) {
+    if (
+      value != undefined &&
+      this._onSessionExpirationNotification != undefined
+    ) {
+      throw new Error(
+        'Cannot set onSessionExpirationNotification: a handler is already set'
+      );
+    }
+    this._onSessionExpirationNotification = value;
+  }
+
+  public get onSessionExpired(): (() => void) | undefined {
+    return this._onSessionExpired;
+  }
+
+  public set onSessionExpired(value: (() => void) | undefined) {
+    if (value != undefined && this._onSessionExpired != undefined) {
+      throw new Error('Cannot set onSessionExpired: a handler is already set');
+    }
+    this._onSessionExpired = value;
   }
 
   public sendHash(hash: Hash): void {
@@ -253,6 +289,20 @@ export class Network {
     }
   }
 
+  public notifySessionExpiration(secondsToExpiration: number): void {
+    if (this._onSessionExpirationNotification) {
+      this._onSessionExpirationNotification(secondsToExpiration);
+    }
+  }
+
+  public expireSession(): void {
+    this._session = undefined;
+    this._sessionExpired = true;
+    this._stopWebsocketSession();
+    getConfig().deleteSession();
+    useGlobalActivityStore.getState().reset();
+  }
+
   public finishSession(): void {
     this._session = undefined;
     this._closeRequested = true;
@@ -292,17 +342,28 @@ export class Network {
     this._ws = new WebsocketBuilder(this._wsProxyURL)
       .onOpen((ws) => ws.send(JSON.stringify({ host, port })))
       .onClose((ws, ev) => {
-        if (!this._closeRequested) {
-          // Outside normal session finishes (e.g. user logouts) a web socket
-          // close is considered an error.
+        if (!this._closeRequested && !this._sessionExpired) {
+          // Outside normal session finishes (e.g. user logouts) and session
+          // expirations, a web socket close is considered an error.
           this._handleWsError(ws, ev, (msg) => this._handleSessionError(msg));
-        } else {
-          // the web socket was closed as part of a normal session finish.
-          // must reset the flag. Note: The reset cannot be performed by
-          // the method finishGuiSession (the one that sets it) because
-          // this handler is only processed by the event loop after
-          // finishGuiSession has returned
+        } else if (this._closeRequested) {
+          // the web socket was closed as part of a normal session finish or
+          // as part of a session expiration. Must reset the corresponding flags.
+          // Note: The resets cannot be performed by neither of the setting
+          // methods (expireSession and finishSession) because this handler is
+          // only processed by the event loop after the settings methods have
+          // returned.
           this._closeRequested = false;
+        } else {
+          // the web socket was closed as part of a session expiration. Must
+          // reset the corresponding flag.
+          // Note: The resets cannot be performed by the method expireSession
+          // because this handler is only processed by the event loop after
+          // expireSession has returned.
+          if (this._onSessionExpired) {
+            this._onSessionExpired();
+          }
+          this._sessionExpired = false;
         }
       })
       .onMessage(this._onWsMessage)
