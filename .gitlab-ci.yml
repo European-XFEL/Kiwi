@@ -61,7 +61,6 @@ test:
   stage: test
   script:
     - yarn install --immutable
-    - yarn build
     - yarn cov --watchAll=false
 
 prerelease_deploy:
@@ -71,10 +70,27 @@ prerelease_deploy:
     KIWI_BUILD_ARTIFACT_DIR: kiwi/tags/$CI_COMMIT_REF_NAME
   script:
     - yarn install --immutable
-    - yarn build
+    # build-staging bundles the application with the settings from .env.stagging
+    - yarn build-staging
     - cd dist
     - tar -czf ../kiwi_$CI_COMMIT_REF_NAME.tar.gz .
     - sshpass -p "$XKIWI_PWD" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $KIWI_BUILD_UPLOAD_HOST "mkdir -p $KIWI_BUILD_UPLOAD_DIR/$KIWI_BUILD_ARTIFACT_DIR"
     - sshpass -p "$XKIWI_PWD" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ../kiwi_$CI_COMMIT_REF_NAME.tar.gz $KIWI_BUILD_UPLOAD_HOST:$KIWI_BUILD_UPLOAD_DIR/$KIWI_BUILD_ARTIFACT_DIR
   rules:
     - if: $CI_COMMIT_TAG =~ /^(\d+\.)(\d+\.)(\d+)((a|b|rc|\.)\d+)$/
+
+release_deploy:
+  stage: deploy
+  <<: [*node_image, *before_script_commands]
+  variables:
+    KIWI_BUILD_ARTIFACT_DIR: kiwi/tags/$CI_COMMIT_REF_NAME
+  script:
+    - yarn install --immutable
+    # build bundles the application with the settings from .env.production
+    - yarn build
+    - cd dist
+    - tar -czf ../kiwi_$CI_COMMIT_REF_NAME.tar.gz .
+    - sshpass -p "$XKIWI_PWD" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $KIWI_BUILD_UPLOAD_HOST "mkdir -p $KIWI_BUILD_UPLOAD_DIR/$KIWI_BUILD_ARTIFACT_DIR"
+    - sshpass -p "$XKIWI_PWD" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ../kiwi_$CI_COMMIT_REF_NAME.tar.gz $KIWI_BUILD_UPLOAD_HOST:$KIWI_BUILD_UPLOAD_DIR/$KIWI_BUILD_ARTIFACT_DIR
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^(\d+\.)(\d+\.)(\d+)$/
