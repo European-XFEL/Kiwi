@@ -25,6 +25,7 @@ import {
   KARABO_SCHEMA_VALUE_TYPE,
   KARABO_SCHEMA_ROW_SCHEMA,
 } from '@/karabo/data/const';
+import * as types from '@/karabo/data/types';
 
 export class BaseBinding<TValue = any> {
   protected _attributes!: HashAttributes;
@@ -63,9 +64,16 @@ export class BaseBinding<TValue = any> {
   }
 
   public setValue(value: TValue, timestamp: Timestamp | undefined) {
+    this.validate(value);
     this.value = value;
     this.timestamp = timestamp ?? new Timestamp();
     this.value_update.fire(value, timestamp);
+  }
+
+  private validate(value: any) {
+    if (value === undefined) {
+      throw new Error('Value is undefined');
+    }
   }
 
   is_allowed(state: string | State): boolean {
@@ -161,7 +169,6 @@ export class BindingNamespace<T = any> implements Iterable<string> {
 }
 
 export class BindingRoot extends BaseBinding<BindingNamespace> {
-  value: BindingNamespace;
   classId = '';
 
   constructor(opts?: {
@@ -178,7 +185,7 @@ export class BindingRoot extends BaseBinding<BindingNamespace> {
     const parts = path.split('.').map((p) => p.trim());
 
     let binding: BaseBinding;
-    binding = this.value.get(parts[0]);
+    binding = this.value!.get(parts[0]);
     if (!binding) {
       return undefined;
     }
@@ -233,3 +240,36 @@ export class VectorHashBinding extends BaseBinding<any> {
     this._cachedRowSchema = undefined;
   }
 }
+
+export class StringBinding extends BaseBinding<types.StringValue> {}
+export class BoolBinding extends BaseBinding<types.BoolValue> {}
+export class CharBinding extends BaseBinding<types.CharValue> {}
+
+export class UInt8Binding extends BaseBinding<types.UInt8Value> {}
+export class UInt16Binding extends BaseBinding<types.UInt16Value> {}
+export class UInt32Binding extends BaseBinding<types.UInt32Value> {}
+export class UInt64Binding extends BaseBinding<types.UInt64Value> {}
+
+export class Int8Binding extends BaseBinding<types.Int8Value> {}
+export class Int16Binding extends BaseBinding<types.Int16Value> {}
+export class Int32Binding extends BaseBinding<types.Int32Value> {}
+export class Int64Binding extends BaseBinding<types.Int64Value> {}
+
+export class FloatBinding extends BaseBinding<types.FloatValue> {}
+export class DoubleBinding extends BaseBinding<types.DoubleValue> {}
+
+export class ByteArrayBinding extends BaseBinding<types.VectorCharValue> {}
+export class VectorStringBinding extends BaseBinding<types.VectorStringValue> {}
+export class VectorBoolBinding extends BaseBinding<types.VectorBoolValue> {}
+export class VectorFloatBinding extends BaseBinding<types.VectorFloatValue> {}
+export class VectorDoubleBinding extends BaseBinding<types.VectorDoubleValue> {}
+
+export class VectorUInt8Binding extends BaseBinding<types.VectorUInt8Value> {}
+export class VectorUInt16Binding extends BaseBinding<types.VectorUInt16Value> {}
+export class VectorUInt32Binding extends BaseBinding<types.VectorUInt32Value> {}
+export class VectorUInt64Binding extends BaseBinding<types.VectorUInt64Value> {}
+
+export class VectorInt8Binding extends BaseBinding<types.VectorInt8Value> {}
+export class VectorInt16Binding extends BaseBinding<types.VectorInt16Value> {}
+export class VectorInt32Binding extends BaseBinding<types.VectorInt32Value> {}
+export class VectorInt64Binding extends BaseBinding<types.VectorInt64Value> {}
