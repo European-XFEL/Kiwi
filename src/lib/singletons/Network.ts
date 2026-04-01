@@ -375,9 +375,7 @@ export class Network {
 
   private _stopWebsocketSession() {
     this._stopTimer();
-    if (this._ws?.underlyingWebsocket.OPEN) {
-      this._ws?.close();
-    }
+    this._ws?.close();
     this._ws = undefined;
   }
 
