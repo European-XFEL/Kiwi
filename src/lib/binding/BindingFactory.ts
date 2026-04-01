@@ -14,10 +14,12 @@ import {
   VectorHashBinding,
   StringBinding,
   BoolBinding,
+  SlotBinding,
   FloatBinding,
   DoubleBinding,
   CharBinding,
   Int16Binding,
+  ImageBinding,
   Int32Binding,
   Int64Binding,
   UInt32Binding,
@@ -73,7 +75,12 @@ export function buildNode(value: any, attrs: HashAttributes): BaseBinding {
   }
 
   if (nodeType === NodeType.Node) {
+    const displayType = a.findValue<string>('displayType');
     const namespace = buildSubnamespace(value);
+    const factory = getNodeBindings()[displayType];
+    if (factory) {
+      return new factory({ value: namespace, attributes: a });
+    }
     const node = new NodeBinding({ value: namespace, attributes: a });
     return node;
   }
@@ -126,4 +133,14 @@ function getBindings(): Record<string, BindingCtor> {
       VECTOR_HASH: VectorHashBinding,
     };
   return _BINDINGS;
+}
+
+let _NODE_BINDINGS: Record<string, BindingCtor> | null = null;
+function getNodeBindings(): Record<string, BindingCtor> {
+  if (!_NODE_BINDINGS)
+    _NODE_BINDINGS = {
+      Slot: SlotBinding,
+      ImageData: ImageBinding,
+    };
+  return _NODE_BINDINGS;
 }

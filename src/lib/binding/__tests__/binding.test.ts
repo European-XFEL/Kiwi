@@ -22,6 +22,8 @@ import {
   VectorInt64Binding,
   VectorInt16Binding,
   VectorUInt16Binding,
+  ImageBinding,
+  SlotBinding,
 } from '@/lib/binding/BaseBinding';
 import { VectorHashBinding } from '@/lib/binding/BaseBinding';
 import path from 'path';
@@ -164,5 +166,11 @@ describe('check binding', () => {
 
     const nodeVectorDouble = bindingRoot.getBinding('vectors.doubleProperty');
     expect(nodeVectorDouble).toBeInstanceOf(VectorDoubleBinding);
+
+    const image = bindingRoot.getBinding('output.schema.node.image');
+    expect(image).toBeInstanceOf(ImageBinding);
+
+    const slot = bindingRoot.getBinding('startWritingOutput');
+    expect(slot).toBeInstanceOf(SlotBinding);
   });
 });

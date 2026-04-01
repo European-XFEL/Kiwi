@@ -273,3 +273,6 @@ export class VectorInt8Binding extends BaseBinding<types.VectorInt8Value> {}
 export class VectorInt16Binding extends BaseBinding<types.VectorInt16Value> {}
 export class VectorInt32Binding extends BaseBinding<types.VectorInt32Value> {}
 export class VectorInt64Binding extends BaseBinding<types.VectorInt64Value> {}
+
+export class SlotBinding extends NodeBinding {}
+export class ImageBinding extends NodeBinding {}
