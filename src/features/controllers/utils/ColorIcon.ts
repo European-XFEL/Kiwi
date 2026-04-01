@@ -150,7 +150,7 @@ function recolorStyle(styleText: string, color: string): string {
 
 /** True when a color string belongs to the recolorable placeholder palette. */
 function shouldRecolor(value: string): boolean {
-  return RECOLORABLE.has(value.trim().toLowerCase());
+  return RECOLORABLE.has(value.trim());
 }
 
 /** Normalizes `ColorInput` into a hex string. */

@@ -19,8 +19,9 @@ import ScenesTable from './components/ScenesTable';
 import { LoadingStatus } from '@/features/status';
 import type { SelectProjectSceneDialogProps } from './types/project.types';
 import { useKaraboEvent, KaraboEvent } from '@/lib/events';
-import { getDomains } from './utils';
+import { getDomains } from './utils/getDomains';
 import { useDeferredSearch } from './hooks/useDeferredSearch';
+import { filterByQuery } from './utils/filterByQuery';
 
 enum ActivityStatus {
   NO_ACTIVITY,
@@ -54,17 +55,17 @@ export default function SelectProjectSceneDialog({
   const projectSearch = useDeferredSearch();
   const sceneSearch = useDeferredSearch();
 
-  const filteredProjects = projectSearch.deferredQuery
-    ? projects.filter((p) =>
-        p.name.toLowerCase().includes(projectSearch.deferredQuery.toLowerCase())
-      )
-    : projects;
+  const filteredProjects = filterByQuery(
+    projects,
+    projectSearch.deferredQuery,
+    (project) => project.name
+  );
 
-  const filteredScenes = sceneSearch.deferredQuery
-    ? scenes.filter((s) =>
-        s.name.toLowerCase().includes(sceneSearch.deferredQuery.toLowerCase())
-      )
-    : scenes;
+  const filteredScenes = filterByQuery(
+    scenes,
+    sceneSearch.deferredQuery,
+    (scene) => scene.name
+  );
 
   const updateProjects = (domain: string) => {
     setActivityStatus(ActivityStatus.GETTING_PROJECTS);

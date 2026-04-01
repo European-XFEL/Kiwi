@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RecentSceneInfo, useRecentStore, useGlobalStore } from '@/store/api';
-import { RecentScenesList } from '@/features/project';
+import { RecentScenesList } from '@/features/project/api';
 import BookmarkInfo from './components/BookmarkInfo';
 import { Separator } from '@/components/separator';
 

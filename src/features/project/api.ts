@@ -14,6 +14,10 @@ export { default as SelectProjectSceneDialog } from './SelectProjectSceneDialog'
 export { default as RecentScenesList } from './components/RecentScenesList';
 export { default as RecentSceneItem } from './components/RecentSceneItem';
 
+// Search utilities
+export { useDeferredSearch } from './hooks/useDeferredSearch';
+export { filterByQuery } from './utils/filterByQuery';
+
 // Types
 export type {
   LoadProjectSceneProps,
