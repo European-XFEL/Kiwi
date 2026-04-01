@@ -3,7 +3,7 @@ import { KiwiHeader } from '@/app/api';
 import NavigationMenu from './components/NavMenu';
 import { NavItem } from './components/NavItem';
 import NavToggle from './components/NavToggle';
-import { LoadProjectScene, SceneBreadcrumb } from '@/features/project';
+import { LoadProjectScene, SceneBreadcrumb } from '@/features/project/api';
 import Logo from './components/Logo';
 import { UserProfile, AccessLevelSelector } from '@/features/user';
 import { Button } from '@/components/button';

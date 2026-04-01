@@ -20,7 +20,9 @@ import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProjectsTable from './components/ProjectTable';
 import ScenesTable from './components/ScenesTable';
+import { useDeferredSearch } from './hooks/useDeferredSearch';
 import type { SceneBreadcrumbProps } from './types/project.types';
+import { filterByQuery } from './utils/filterByQuery';
 
 export default function SceneBreadcrumb({
   domain,
@@ -34,6 +36,8 @@ export default function SceneBreadcrumb({
   // Controlled open state for both menus
   const [projectOpen, setProjectOpen] = useState(false);
   const [sceneOpen, setSceneOpen] = useState(false);
+  const projectSearch = useDeferredSearch();
+  const sceneSearch = useDeferredSearch();
 
   const [projectsLoading, setProjectsLoading] = useState(false);
   const [projects, setProjects] = useState<ProjectItemInfo[]>([]);
@@ -53,6 +57,18 @@ export default function SceneBreadcrumb({
   const scenesCache = useRef<Map<string, ProjectSceneInfo[]>>(new Map());
   // Track which project UUID is currently being fetched to prevent duplicate requests.
   const loadingForUuid = useRef<string | null>(null);
+
+  const filteredProjects = filterByQuery(
+    projects,
+    projectSearch.deferredQuery,
+    (project) => project.name
+  );
+
+  const filteredScenes = filterByQuery(
+    scenes,
+    sceneSearch.deferredQuery,
+    (scene) => scene.name
+  );
 
   const handleProjectDropdownOpen = () => {
     setProjectsLoading(true);
@@ -101,6 +117,7 @@ export default function SceneBreadcrumb({
   const handleProjectClick = (project: ProjectItemInfo) => {
     setSelectedProject(project);
     setDisplaySceneName(null); // project changed — hide stale scene name
+    sceneSearch.clear();
     setProjectOpen(false);
     // Kick off scene fetch before opening the menu so it's ready (or loading) immediately
     loadScenes(project);
@@ -188,9 +205,11 @@ export default function SceneBreadcrumb({
                 </div>
               ) : (
                 <ProjectsTable
-                  projects={projects}
+                  projects={filteredProjects}
                   selectedProject={selectedProject}
                   onProjectClick={handleProjectClick}
+                  query={projectSearch.query}
+                  onQueryChange={projectSearch.setQuery}
                 />
               )}
             </DropdownMenuContent>
@@ -231,9 +250,11 @@ export default function SceneBreadcrumb({
                 </div>
               ) : (
                 <ScenesTable
-                  scenes={scenes}
+                  scenes={filteredScenes}
                   onSceneClick={handleSceneClick}
                   onSceneDoubleClick={handleSceneClick}
+                  query={sceneSearch.query}
+                  onQueryChange={sceneSearch.setQuery}
                 />
               )}
             </DropdownMenuContent>
