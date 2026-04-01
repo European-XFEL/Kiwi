@@ -10,7 +10,7 @@ import {
 } from '@/karabo/common/scenemodel/widgets/links';
 import type { ControllerContainerContext } from '@/features/controllers/components/ControllerContainer';
 import { registerRenderer } from '@/features/scene-view/registry';
-import { QFont } from '@/features/controllers/utils/fonts';
+import { getQFontTextStyle } from '@/features/controllers/utils/fonts';
 
 // useSceneNavigate
 // ----------------------------------------------------------------------------
@@ -68,7 +68,6 @@ function LinkButton({
   Icon: React.ElementType;
   iconColor: string;
 }) {
-  const f = new QFont(font);
   return (
     <button
       type="button"
@@ -83,11 +82,7 @@ function LinkButton({
         borderWidth: frame_width,
         borderStyle: 'solid',
         borderColor: foreground,
-        fontFamily: f.css_fontFamily,
-        fontSize: f.css_fontSize,
-        fontWeight: f.css_fontWeight,
-        fontStyle: f.css_fontStyle,
-        textDecoration: f.css_textDecoration,
+        ...getQFontTextStyle(font),
         cursor: onClick ? 'pointer' : 'default',
         overflow: 'hidden',
         whiteSpace: 'nowrap',

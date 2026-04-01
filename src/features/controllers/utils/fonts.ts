@@ -1,8 +1,10 @@
+import type { CSSProperties } from 'react';
 import {
   FONT_BASE_SIZE,
   FONT_FAMILY_DEFAULT,
   FONT_FAMILY_MONOSPACED,
   FONT_FAMILY_SERIF,
+  FONT_SIZE_DEFAULT,
 } from '@/karabo/common/api';
 
 const DEFAULT_QFONT_DESCRIPTOR = 'Source Sans Pro,10,-1,5,50,0,0,0,0,0';
@@ -31,7 +33,7 @@ const DEFAULT_PARSED_QFONT: ParsedQFont = {
   rawMode: 0,
 };
 
-function parseQFont(descriptor: string): ParsedQFont {
+export function parseQFont(descriptor: string): ParsedQFont {
   const parts = descriptor.split(',');
 
   if (parts.length < 10) {
@@ -165,4 +167,46 @@ export class QFont {
   get css_fontWeight(): string {
     return this.weight > 50 ? 'bold' : 'normal';
   }
+}
+
+export function qtPointSizeToCssPt(pointSize: number): string {
+  if (pointSize <= 0) {
+    console.warn(
+      `[QFont] Invalid scene font size "${pointSize}". Falling back to default font size ${FONT_SIZE_DEFAULT}pt.`
+    );
+  }
+
+  const normalizedPointSize = pointSize > 0 ? pointSize : FONT_SIZE_DEFAULT;
+  return `${normalizedPointSize}pt`;
+}
+
+export function getQFontTextStyle(fontSource: string): CSSProperties {
+  const font = new QFont(fontSource);
+  const fontSize =
+    font.pointSize > 0
+      ? qtPointSizeToCssPt(font.pointSize)
+      : font.pixelSize > 0
+        ? `${font.pixelSize}px`
+        : `${FONT_BASE_SIZE}px`;
+
+  return {
+    fontFamily: font.css_fontFamily,
+    fontSize,
+    fontWeight: font.css_fontWeight,
+    fontStyle: font.css_fontStyle,
+    textDecoration: font.css_textDecoration,
+  };
+}
+
+export function getControllerFontStyle(
+  font_size: number,
+  font_weight: 'normal' | 'bold'
+): CSSProperties {
+  return {
+    fontFamily: FONT_FAMILY_DEFAULT,
+    fontSize: qtPointSizeToCssPt(font_size),
+    fontWeight: font_weight,
+    fontStyle: 'normal',
+    textDecoration: 'none',
+  };
 }
