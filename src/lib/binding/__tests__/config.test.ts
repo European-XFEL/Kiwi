@@ -47,11 +47,11 @@ describe('check configuration', () => {
 
     applyConfiguration(config, bindingRoot);
 
-    expect(bool?.value).toBe(false);
-    expect(leaf?.value).toBe(2);
+    expect(bool?.value.value_).toBe(false);
+    expect(leaf?.value.value_).toBe(2);
 
     // For arrays, use deep equality:
-    expect(nodeVectorInt32?.value).toEqual([1, 2]);
-    expect(nodeVectorBool?.value).toEqual([true, false]);
+    expect(nodeVectorInt32?.value.value_).toEqual([1, 2]);
+    expect(nodeVectorBool?.value.value_).toEqual([true, false]);
   });
 });

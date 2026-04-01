@@ -16,7 +16,7 @@ export function applyConfiguration(config: Hash, binding: any) {
       applyConfiguration(value, binding);
     } else {
       // Set the timestamp no matter what, and take raw value
-      binding.setValue(value.value_, Timestamp.fromHashAttributes(attrs));
+      binding.setValue(value, Timestamp.fromHashAttributes(attrs));
     }
   }
 }
@@ -47,7 +47,7 @@ export class DeviceProxy {
     return new DeviceProxy(deviceId);
   }
   public get state(): string | undefined {
-    return this.getBinding('state')?.value as string | undefined;
+    return this.getBinding('state')?.value?.value_ as string | undefined;
   }
 
   getBinding(path: string): BaseBinding | undefined {

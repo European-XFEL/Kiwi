@@ -29,7 +29,7 @@ export class PropertyProxy {
   }
 
   get value(): any {
-    return this.binding?.value;
+    return this.binding?.value.value_;
   }
 
   get timestamp(): any {
