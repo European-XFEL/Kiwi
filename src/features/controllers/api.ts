@@ -11,3 +11,9 @@ export type { ControllerContainerContext } from './components/ControllerContaine
 export { useController } from './hooks/useController';
 
 export { bootstrapStatefulIcons } from './utils/bootstrapStatefulIcons';
+export {
+  QFont,
+  parseQFont,
+  getQFontTextStyle,
+  getControllerFontStyle,
+} from './utils/fonts';

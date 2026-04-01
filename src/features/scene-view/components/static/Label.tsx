@@ -3,7 +3,7 @@
 import React from 'react';
 import { LabelModel } from '@/karabo/common/api';
 import { registerRenderer } from '../../render/registry';
-import { QFont } from '@/features/controllers/utils/fonts';
+import { getQFontTextStyle } from '@/features/controllers/utils/fonts';
 
 // Label
 // ----------------------------------------------------------------------------
@@ -15,8 +15,6 @@ const ALIGNH_MAP: Record<1 | 2 | 4, React.CSSProperties['justifyContent']> = {
 };
 
 const Label: React.FC<{ model: LabelModel }> = ({ model }) => {
-  const font = new QFont(model.font);
-
   return (
     <div
       role="text"
@@ -35,11 +33,7 @@ const Label: React.FC<{ model: LabelModel }> = ({ model }) => {
         overflow: 'hidden',
         whiteSpace: 'nowrap',
         textOverflow: 'ellipsis',
-        fontFamily: font.css_fontFamily,
-        fontSize: font.css_fontSize,
-        fontWeight: font.css_fontWeight,
-        fontStyle: font.css_fontStyle,
-        textDecoration: font.css_textDecoration,
+        ...getQFontTextStyle(model.font),
       }}
     >
       {model.text}

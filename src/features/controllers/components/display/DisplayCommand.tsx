@@ -8,13 +8,14 @@
 
 import React from 'react';
 import type { ControllerContainerContext } from '../ControllerContainer';
-import { DisplayCommandModel, FONT_FAMILY_DEFAULT } from '@/karabo/common/api';
+import { DisplayCommandModel } from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/registry';
-import { Button } from '@/components/button';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { AccessLevel } from '@/karabo/data/api';
 import { ProxyStatus } from '@/lib/binding/api';
 import { getNetwork } from '@/lib/singletons/api';
+import { getControllerFontStyle } from '../../utils/fonts';
+import CommandButton from '@/components/CommandButton';
 
 // DisplayCommand
 // ----------------------------------------------------------------------------
@@ -91,30 +92,20 @@ const DisplayCommand: React.FC<{
     [deviceId, propertyPath, model.requires_confirmation, buttonCaption]
   );
 
-  const baseClasses = 'w-full h-full border-2 px-2';
-  const enabledClasses =
-    'border-primary bg-primary hover:bg-primary/90 cursor-pointer';
-  const disabledClasses =
-    'border-gray-300 bg-gray-400 cursor-not-allowed opacity-60';
-
   return (
-    <Button
-      size="sm"
+    <CommandButton
+      width={model.width}
+      height={model.height}
       disabled={!isEnabled}
-      aria-label={`Command: ${buttonCaption}`}
+      ariaLabel={`Command: ${buttonCaption}`}
       title={ctx?.tooltipText || disabledReason}
-      className={`${baseClasses} ${isEnabled ? enabledClasses : disabledClasses}`}
-      style={{
-        fontFamily: FONT_FAMILY_DEFAULT,
-        fontSize: model.font_size,
-        fontWeight: model.font_weight,
-      }}
+      style={getControllerFontStyle(model.font_size, model.font_weight)}
       onClick={onSubmitCommand}
     >
       {model.requires_confirmation
         ? `${buttonCaption} (Confirm)`
         : buttonCaption}
-    </Button>
+    </CommandButton>
   );
 };
 

@@ -28,3 +28,4 @@ export {
   FONT_FAMILY_MONOSPACED,
   FONT_FAMILY_SERIF,
 } from './fontDefaults';
+export { FONT_SIZE_DEFAULT } from './constants';

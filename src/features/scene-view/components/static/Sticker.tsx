@@ -3,14 +3,12 @@
 import React from 'react';
 import { StickerModel } from '@/karabo/common/api';
 import { registerRenderer } from '../../render/registry';
-import { QFont } from '@/features/controllers/utils/fonts';
+import { getQFontTextStyle } from '@/features/controllers/utils/fonts';
 
 // Sticker
 // ----------------------------------------------------------------------------
 
 const Sticker: React.FC<{ model: StickerModel }> = ({ model }) => {
-  const font = new QFont(model.font);
-
   return (
     <div
       style={{
@@ -24,11 +22,7 @@ const Sticker: React.FC<{ model: StickerModel }> = ({ model }) => {
         whiteSpace: 'pre-wrap',
         wordBreak: 'break-word',
         padding: '2px 4px',
-        fontFamily: font.css_fontFamily,
-        fontSize: font.css_fontSize,
-        fontWeight: font.css_fontWeight,
-        fontStyle: font.css_fontStyle,
-        textDecoration: font.css_textDecoration,
+        ...getQFontTextStyle(model.font),
       }}
     >
       {model.text}

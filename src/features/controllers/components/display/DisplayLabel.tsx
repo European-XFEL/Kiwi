@@ -2,9 +2,10 @@
 
 import React from 'react';
 import type { ControllerContainerContext } from '../ControllerContainer';
-import { DisplayLabelModel, FONT_FAMILY_DEFAULT } from '@/karabo/common/api';
+import { DisplayLabelModel } from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/registry';
 import { scalarToString } from '@/karabo/data/api';
+import { getControllerFontStyle } from '../../utils/fonts';
 
 // DisplayLabel
 // ----------------------------------------------------------------------------
@@ -35,15 +36,18 @@ const DisplayLabel: React.FC<{
 
   return (
     <div
-      className="overflow-clip flex items-center justify-center border border-solid p-px w-full h-full"
-      style={{
-        fontFamily: FONT_FAMILY_DEFAULT,
-        fontSize: model.font_size,
-        fontWeight: model.font_weight,
-      }}
+      className="overflow-hidden flex items-center justify-center border border-solid p-px w-full h-full"
       title={ctx.tooltipText ?? ctx.disabledReason}
     >
-      {labelValue}
+      <span
+        className="block whitespace-nowrap overflow-hidden text-ellipsis max-w-full"
+        style={{
+          ...getControllerFontStyle(model.font_size, model.font_weight),
+          lineHeight: 1,
+        }}
+      >
+        {labelValue}
+      </span>
     </div>
   );
 };
