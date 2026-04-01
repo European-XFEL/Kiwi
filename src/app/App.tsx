@@ -9,6 +9,8 @@ import AppRouter from './router/AppRouter';
 import { appRoutes } from './routes';
 import { TooltipProvider } from '@/components/tooltip';
 import { AccessLevel } from '@/karabo/data/enums';
+import { KaraboEvent, useKaraboEvent } from '@/lib/events';
+import { Hash } from '@/karabo/data/hash';
 
 const App: React.FC = () => {
   const executedOnceRef = React.useRef('');
@@ -20,6 +22,18 @@ const App: React.FC = () => {
     setSessionExpired,
     setLoggedOut,
   } = useGlobalStore();
+
+  useKaraboEvent(KaraboEvent.SessionDropped, (hash: Hash) => {
+    setError(hash.getValue('message'));
+  });
+
+  useKaraboEvent(KaraboEvent.SessionExpired, (_: Hash) => {
+    setSessionExpired();
+  });
+
+  useKaraboEvent(KaraboEvent.SessionExpirationNotified, (hash: Hash) => {
+    setNotifiedSessionExpiration(hash.getValue('secondsToExpiration'));
+  });
 
   useEffect(() => {
     const appSettings = initAppSettings();
@@ -33,18 +47,6 @@ const App: React.FC = () => {
 
       // Initialize the Manager singleton;
       getManager();
-      // TODO: No attachment of handlers ... use mediator
-      getNetwork().onSessionDropped = (err_msg: string) => {
-        setError(err_msg);
-      };
-      getNetwork().onSessionExpired = () => {
-        setSessionExpired();
-      };
-      getNetwork().onSessionExpirationNotification = (
-        secondsToExpiration: number
-      ) => {
-        setNotifiedSessionExpiration(secondsToExpiration);
-      };
 
       getNetwork().resumeGuiSession(
         (

@@ -6,6 +6,9 @@ export type BroadcastHandler = (data: Hash) => void;
 export type KaraboEventMap = Partial<Record<any, BroadcastHandler>>;
 
 enum KaraboEvent {
+  SessionDropped = 'SessionDropped',
+  SessionExpired = 'SessionExpired',
+  SessionExpirationNotified = 'SessionExpirationNotified',
   ListDomains = 'ListDomains',
   ListItems = 'ListProjects',
   LoadProjectItems = 'LoadProjectItems',

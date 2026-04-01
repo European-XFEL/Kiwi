@@ -162,9 +162,7 @@ export class Manager {
       );
       return;
     }
-    this._network.notifySessionExpiration(
-      hash.getValue('secondsToExpiration') as number
-    );
+    broadcast_event(KaraboEvent.SessionExpirationNotified, hash);
   }
 
   public handle_systemTopology(hash: Hash): void {
