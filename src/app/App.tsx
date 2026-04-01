@@ -13,7 +13,13 @@ import { AccessLevel } from '@/karabo/data/enums';
 const App: React.FC = () => {
   const executedOnceRef = React.useRef('');
   const { setWsProxyUrl } = useAppSettingsStore();
-  const { setError, setLoggedIn, setLoggedOut } = useGlobalStore();
+  const {
+    setError,
+    setLoggedIn,
+    setNotifiedSessionExpiration,
+    setSessionExpired,
+    setLoggedOut,
+  } = useGlobalStore();
 
   useEffect(() => {
     const appSettings = initAppSettings();
@@ -30,6 +36,14 @@ const App: React.FC = () => {
       // TODO: No attachment of handlers ... use mediator
       getNetwork().onSessionDropped = (err_msg: string) => {
         setError(err_msg);
+      };
+      getNetwork().onSessionExpired = () => {
+        setSessionExpired();
+      };
+      getNetwork().onSessionExpirationNotification = (
+        secondsToExpiration: number
+      ) => {
+        setNotifiedSessionExpiration(secondsToExpiration);
       };
 
       getNetwork().resumeGuiSession(

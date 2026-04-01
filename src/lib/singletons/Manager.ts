@@ -133,6 +133,40 @@ export class Manager {
     }
   }
 
+  public handle_onSessionExpired(_: Hash): void {
+    const session = this._network.session;
+    if (session && !session.isAuthSession) {
+      console.warn(
+        'Session expiration messages should only be sent Authenticated GUI Servers!'
+      );
+      console.warn(
+        `Check the configuration of the server ${session.host}:${session.port}`
+      );
+      return;
+    }
+    // After sending the end of session notification, the GUI Server
+    // waits at least 1 second and terminates the connection. We finish
+    // the connection from Kiwi's side before that to avoid Kiwi
+    // interpreting the terminated connection as a connection loss.
+    this._network.expireSession();
+  }
+
+  public handle_onEndSessionNotice(hash: Hash): void {
+    const session = this._network.session;
+    if (session && !session.isAuthSession) {
+      console.warn(
+        'Session expiration should only happen for Authenticated GUI Servers!'
+      );
+      console.warn(
+        `Check the configuration of the server ${session.host}:${session.port}`
+      );
+      return;
+    }
+    this._network.notifySessionExpiration(
+      hash.getValue('secondsToExpiration') as number
+    );
+  }
+
   public handle_systemTopology(hash: Hash): void {
     this._topology.initialize(hash.get('systemTopology'));
   }
