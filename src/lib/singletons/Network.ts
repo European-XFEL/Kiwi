@@ -1,4 +1,5 @@
 import { GuiServerInfo } from '@/features/login/auth.types';
+import { broadcast_event, KaraboEvent } from '@/lib/events';
 import { probeServer } from '@/features/login/utils';
 
 import AuthServerClient from '@/lib/http/AuthServerClient';
@@ -52,11 +53,6 @@ export class Network {
   private _ws?: Websocket;
   private _hashDeque = new Deque<BinHashItem>();
   private _timer: ReturnType<typeof setInterval> | null = null;
-  private _onSessionDropped?: (err_msg: string) => void;
-  private _onSessionExpired?: () => void;
-  private _onSessionExpirationNotification?: (
-    secondsToExpiration: number
-  ) => void;
 
   public constructor() {}
 
@@ -83,48 +79,6 @@ export class Network {
       if (accessLevel) this._session.accessLevel = accessLevel;
       if (refreshToken) this._session.refreshToken = refreshToken;
     }
-  }
-
-  public get onSessionDropped(): ((err_msg: string) => void) | undefined {
-    return this._onSessionDropped;
-  }
-
-  public set onSessionDropped(value: ((err_msg: string) => void) | undefined) {
-    if (value != undefined && this._onSessionDropped != undefined) {
-      throw new Error('Cannot set onSessionDropped: a handler is already set');
-    }
-    this._onSessionDropped = value;
-  }
-
-  public get onSessionExpirationNotification():
-    | ((secondsToExpiration: number) => void)
-    | undefined {
-    return this._onSessionExpirationNotification;
-  }
-
-  public set onSessionExpirationNotification(
-    value: ((secondsToExpiration: number) => void) | undefined
-  ) {
-    if (
-      value != undefined &&
-      this._onSessionExpirationNotification != undefined
-    ) {
-      throw new Error(
-        'Cannot set onSessionExpirationNotification: a handler is already set'
-      );
-    }
-    this._onSessionExpirationNotification = value;
-  }
-
-  public get onSessionExpired(): (() => void) | undefined {
-    return this._onSessionExpired;
-  }
-
-  public set onSessionExpired(value: (() => void) | undefined) {
-    if (value != undefined && this._onSessionExpired != undefined) {
-      throw new Error('Cannot set onSessionExpired: a handler is already set');
-    }
-    this._onSessionExpired = value;
   }
 
   public sendHash(hash: Hash): void {
@@ -289,12 +243,6 @@ export class Network {
     }
   }
 
-  public notifySessionExpiration(secondsToExpiration: number): void {
-    if (this._onSessionExpirationNotification) {
-      this._onSessionExpirationNotification(secondsToExpiration);
-    }
-  }
-
   public expireSession(): void {
     this._session = undefined;
     this._sessionExpired = true;
@@ -360,9 +308,7 @@ export class Network {
           // Note: The resets cannot be performed by the method expireSession
           // because this handler is only processed by the event loop after
           // expireSession has returned.
-          if (this._onSessionExpired) {
-            this._onSessionExpired();
-          }
+          broadcast_event(KaraboEvent.SessionExpired, new Hash({}));
           this._sessionExpired = false;
         }
       })
@@ -407,9 +353,7 @@ export class Network {
   }
 
   private _handleSessionError(message: string) {
-    if (this._onSessionDropped) {
-      this._onSessionDropped(message);
-    }
+    broadcast_event(KaraboEvent.SessionDropped, new Hash('message', message));
     this._stopWebsocketSession();
   }
 
