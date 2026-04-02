@@ -109,6 +109,8 @@ export const useRecentStore = create<TRecentStore>()(
         );
 
         if (index >= 0) {
+          // Ensure the name of the scene is updated - it might have been edited externally
+          scenes[index].name = name;
           // Move existing scene to the top
           const rearrangedArray = moveFront<RecentSceneInfo>(scenes, index);
           scenes = rearrangedArray;
