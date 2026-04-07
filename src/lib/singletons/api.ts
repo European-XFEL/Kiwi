@@ -2,9 +2,11 @@
 import { Network } from './Network';
 import { DbConnection } from './DbConn';
 import { SystemTopology } from './Topology';
-import { Manager } from './Manager';
+import { Manager, RequestHandler } from './Manager';
 import { Mediator } from './Mediator';
 import { ConfigurationStore } from './Configuration';
+
+export type { RequestHandler };
 
 // We use a Map for better performance and clarity than a plain object
 export const singletons = new Map<string, any>();

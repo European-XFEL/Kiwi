@@ -457,6 +457,32 @@ export class Network {
     this.sendHash(h);
   }
 
+  public onExecuteGeneric(
+    instanceId: string,
+    slotName: string,
+    params: Hash,
+    token?: string
+  ): void {
+    console.log(
+      `Executing slot <b>${slotName}</b> of instance <b>${instanceId}</b>`
+    );
+
+    const h = new Hash();
+    h.set('type', 'requestGeneric');
+
+    if (token !== undefined) {
+      h.set('token', token);
+    }
+
+    h.set('instanceId', instanceId);
+    h.set('slot', slotName);
+    h.set('args', params);
+    h.set('timeout', REQUEST_REPLY_TIMEOUT);
+    h.set('replyType', 'requestGeneric');
+
+    this.sendHash(h);
+  }
+
   public onReconfigure(deviceId: string, configuration: Hash): void {
     const h = new Hash({
       type: 'reconfigure',
