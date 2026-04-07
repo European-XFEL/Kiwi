@@ -8,6 +8,7 @@ import { BrowserRouter } from 'react-router-dom';
 import AppRouter from './router/AppRouter';
 import { appRoutes } from './routes';
 import { TooltipProvider } from '@/components/tooltip';
+import { Toaster } from '@/components/sonner';
 import { AccessLevel } from '@/karabo/data/enums';
 import { KaraboEvent, useKaraboEvent } from '@/lib/events';
 import { Hash } from '@/karabo/data/hash';
@@ -75,13 +76,22 @@ const App: React.FC = () => {
 
   return (
     <TooltipProvider delayDuration={150} skipDelayDuration={300}>
-      <BrowserRouter>
-        <AppRouter
-          routes={appRoutes}
-          indexRedirect="no_scene"
-          fallbackRedirect="no_scene"
+      <>
+        <BrowserRouter>
+          <AppRouter
+            routes={appRoutes}
+            indexRedirect="no_scene"
+            fallbackRedirect="no_scene"
+          />
+        </BrowserRouter>
+        <Toaster
+          position="top-center"
+          closeButton
+          richColors
+          offset={{ top: '4.5rem' }}
+          mobileOffset={{ top: '3.5rem' }}
         />
-      </BrowserRouter>
+      </>
     </TooltipProvider>
   );
 };
