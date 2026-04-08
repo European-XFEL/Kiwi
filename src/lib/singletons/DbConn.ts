@@ -4,10 +4,8 @@ import {
   isProjectContentsInfo,
   isSceneInfo,
   ListProjectScenesResult,
-  ListProjectsResult,
   LoadProjectItemsResult,
   LoadProjectSceneResult,
-  ProjectItemInfo,
   ProjectSceneInfo,
   ProjectSceneCache,
 } from '@/karabo/common/project/api';
@@ -16,11 +14,19 @@ import { readSceneFromSvgJson } from '@/karabo/common/scenemodel/api';
 import { getNetwork } from '@/lib/singletons/api';
 
 import {
+  broadcast_event,
   KaraboEvent,
   KaraboEventMap,
   register_for_broadcasts,
   unregister_for_broadcasts,
 } from '@/lib/events';
+
+enum DbConnectionState {
+  IDLE,
+  GETTING_PROJECTS,
+  GETTING_PROJECT_SCENES,
+  GETTING_SCENE,
+}
 
 export class DbConnection {
   private readonly eventMap: KaraboEventMap;
@@ -29,6 +35,7 @@ export class DbConnection {
   // those operations are taking place
   private _activeLoadItemsHandler?: (hash: Hash) => void;
   private _sceneCache = new ProjectSceneCache();
+  private _state = DbConnectionState.IDLE;
 
   public constructor() {
     this.eventMap = {
@@ -51,41 +58,17 @@ export class DbConnection {
 
   // #region List Projects
 
-  public listProjects(
-    domain: string,
-    onProjects: (projectsInfo: ListProjectsResult) => void
-  ): void {
-    this._onListProjectsCallback = onProjects;
+  public listProjects(domain: string): void {
+    this._state = DbConnectionState.GETTING_PROJECTS;
     getNetwork().onProjectListItems(domain);
   }
-
-  // The callback to be registered by an external caller for the listProjects operation.
-  private _onListProjectsCallback?: (projectsInfo: ListProjectsResult) => void;
 
   // The internal callback registered to handle projectListItems messages
   // received from the GUI Server. Responsible for dispatching the call to the
   // callback registered by the external caller of listProjects.
   private _onEventListItems = (hash: Hash): void => {
-    let projectsInfo: ListProjectsResult;
-    try {
-      projectsInfo = this._listProjectsResultFromHash(hash);
-    } catch (e) {
-      if (e instanceof Error) {
-        projectsInfo = {
-          projects: [],
-          error_msg: (e as Error).message,
-        };
-      } else {
-        projectsInfo = {
-          projects: [],
-          error_msg: 'Error decoding the list of projects',
-        };
-        console.error(`Error decoding the list of projects: ${e}`);
-      }
-    }
-    projectsInfo.projects.sort((a, b) => a.name.localeCompare(b.name));
-    this._onListProjectsCallback?.(projectsInfo);
-    this._onListProjectsCallback = undefined;
+    this._state = DbConnectionState.IDLE;
+    broadcast_event(KaraboEvent.ListProjects, hash);
   };
 
   // #endregion
@@ -97,22 +80,19 @@ export class DbConnection {
     uuidProject: string,
     onScenes: (scenesInfo: ListProjectScenesResult) => void
   ): void {
-    // Stores the callback to be called when the list of scenes is ready.
-    if (this._onListScenesCallback || this._onGetSceneCallback) {
-      // There's already a pending getScenes operation. Refuse the new request.
-      const scenesInfo = {
-        scenes: [],
-        error_msg:
-          "There's already a pending listScenes operation. Cannot start a new one!",
-      };
-      onScenes(scenesInfo);
+    if (this._state != DbConnectionState.IDLE) {
+      // Only starts a listScenes operation while idle
+      console.warn(
+        "Cannot start a 'listScenes' operation while not in IDLE state"
+      );
       return;
     }
+    this._state = DbConnectionState.GETTING_PROJECT_SCENES;
+    this._onListScenesCallback = onScenes;
     // Registers the handler for handling projectLoadItems messages from the GUI Server
     // for the duration of the listScenes operation.
     this._activeLoadItemsHandler = this._onLoadItemsHash;
 
-    this._onListScenesCallback = onScenes;
     // Starts the sequence of operations to get the list of scenes of a project.
     // Differently from the listDomains and listProjects operations, listScenes
     // requires multiple round-trips of "loadItems" operations.
@@ -218,6 +198,7 @@ export class DbConnection {
           ),
         };
       }
+      this._state = DbConnectionState.IDLE;
       this._onListScenesCallback?.(listScenesResult);
       this._onListScenesCallback = undefined;
       // Avoid retaining the set of collected scenes for more time than needed.
@@ -246,13 +227,14 @@ export class DbConnection {
       return;
     }
     // Stores the callback to be called when the GUI Server sends back the scene.
-    if (this._onGetSceneCallback || this._onListScenesCallback) {
-      // There's already a pending getScene or listScene operation. Postpone the request.
+    if (this._state != DbConnectionState.IDLE) {
+      // There's already a pending operation. Postpone the request.
       // Those operations can't be concurrently executed because they handle "projectLoadItems"
       // hashes sent by the GUI Server differently.
       setTimeout(() => this.getScene(domain, projectName, uuid, onScene), 100);
       return;
     }
+    this._state = DbConnectionState.GETTING_SCENE;
     // Registers the handler for handling projectLoadItems messages from the GUI Server
     // for the duration of the getScene operation.
     this._activeLoadItemsHandler = this._onLoadSceneHash;
@@ -311,6 +293,7 @@ export class DbConnection {
         error_msg: undefined,
       });
     }
+    this._state = DbConnectionState.IDLE;
     this._onGetSceneCallback = undefined;
     // Unregister the hash handler for the duration of the getScene operation.
     this._activeLoadItemsHandler = undefined;
@@ -344,29 +327,6 @@ export class DbConnection {
   // #endregion
 
   // #region Hash decoding utilities
-
-  private _listProjectsResultFromHash = (hash: Hash): ListProjectsResult => {
-    const reason = hash.get('reason') as string;
-    if (reason.length > 0) {
-      // An error occurred
-      return { error_msg: reason, projects: [] };
-    } else {
-      const itemsHashes = hash.getValue('reply.items') as HashValues[];
-      const domain = hash.getValue('request.args.domain') as string;
-      const projects: ProjectItemInfo[] = itemsHashes.map((hv: HashValues) => {
-        const item = new Hash(hv);
-        return {
-          domain: domain,
-          uuid: item.getValue('uuid') as string,
-          name: item.getValue('simple_name') as string,
-          dateModified: item.getValue('date') as string,
-          isTrashed: item.getValue('is_trashed') as boolean,
-          item_type: 'project',
-        };
-      });
-      return { error_msg: undefined, projects: projects };
-    }
-  };
 
   private _loadProjectItemsResultFromHash = (
     projectName: string,
