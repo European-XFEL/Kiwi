@@ -6,12 +6,13 @@ export type BroadcastHandler = (data: Hash) => void;
 export type KaraboEventMap = Partial<Record<any, BroadcastHandler>>;
 
 enum KaraboEvent {
+  ListDomains = 'ListDomains', // triggered by reception of GUI Server message of type
+  ListProjects = 'ListProjects',
+  ListItems = 'ListItems', // triggered by reception of GUI Server message of type
+  LoadProjectItems = 'LoadProjectItems', // triggered by reception of GUI Server message of type
   SessionDropped = 'SessionDropped',
   SessionExpired = 'SessionExpired',
   SessionExpirationNotified = 'SessionExpirationNotified',
-  ListDomains = 'ListDomains',
-  ListItems = 'ListProjects',
-  LoadProjectItems = 'LoadProjectItems',
 }
 
 function broadcast_event(sender: KaraboEvent, data: Hash) {

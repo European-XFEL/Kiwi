@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/dialog';
-import { Hash } from '@/karabo/data/api';
+import { Hash, HashValues } from '@/karabo/data/api';
 import { Button } from '@/components/button';
 import { Separator } from '@/components/separator';
 import { getDbConn } from '@/lib/singletons/api';
@@ -73,22 +73,7 @@ export default function SelectProjectSceneDialog({
     setSelectedScene(undefined);
     sceneSearch.clear();
 
-    getDbConn().listProjects(domain, (projectsInfo) => {
-      if (projectsInfo.error_msg) {
-        setErrorMessage(projectsInfo.error_msg);
-      } else {
-        const allProjects = projectsInfo.projects.filter(
-          (pInf) => !pInf.isTrashed
-        );
-        setProjects(allProjects);
-        if (allProjects.length > 0) {
-          const selProject = allProjects[0];
-          setSelectedProject(selProject);
-          updateScenes(selProject.domain, selProject.name, selProject.uuid);
-        }
-      }
-      setActivityStatus(ActivityStatus.NO_ACTIVITY);
-    });
+    getDbConn().listProjects(domain);
   };
 
   const updateScenes = (
@@ -179,6 +164,41 @@ export default function SelectProjectSceneDialog({
     }
     setActivityStatus(ActivityStatus.NO_ACTIVITY);
   });
+
+  useKaraboEvent(KaraboEvent.ListProjects, (hash: Hash) => {
+    const reason = hash.getValue('reason');
+    if (reason.length > 0) {
+      setErrorMessage(reason);
+    } else {
+      // Projects were retrieved successfully
+      const itemsHashes = hash.getValue('reply.items') as HashValues[];
+      const domain = hash.getValue('request.args.domain') as string;
+      const projects: ProjectItemInfo[] = itemsHashes.map((hv: HashValues) => {
+        const item = new Hash(hv);
+        return {
+          domain: domain,
+          uuid: item.getValue('uuid') as string,
+          name: item.getValue('simple_name') as string,
+          dateModified: item.getValue('date') as string,
+          isTrashed: item.getValue('is_trashed') as boolean,
+          item_type: 'project',
+        };
+      });
+      const nonTrashed = projects.filter((pInf) => !pInf.isTrashed);
+      const nonTrashedSorted = nonTrashed.sort((a, b) =>
+        a.name.localeCompare(b.name)
+      );
+      setProjects(nonTrashedSorted);
+      if (nonTrashedSorted.length > 0) {
+        const selProject = nonTrashedSorted[0];
+        setSelectedProject(selProject);
+        updateScenes(selProject.domain, selProject.name, selProject.uuid);
+      }
+    }
+    setActivityStatus(ActivityStatus.NO_ACTIVITY);
+  });
+
+  useKaraboEvent(KaraboEvent.ListScenes, (hash: Hash) => {});
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>
