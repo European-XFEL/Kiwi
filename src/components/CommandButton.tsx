@@ -21,6 +21,14 @@ export default function CommandButton({
   onClick,
   children,
 }: CommandButtonProps) {
+  const baseClasses =
+    'inline-flex appearance-none items-center justify-center rounded-[3px] px-3 select-none transition-all duration-75 outline-none overflow-hidden';
+
+  const enabledClasses =
+    'text-[#222] border border-[#a0a0a0] bg-gradient-to-b from-[#fdfdfd] to-[#dedede] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] hover:from-[#ffffff] hover:to-[#e8e8e8] active:bg-none active:bg-[#d0d0d0] active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.15)] active:border-[#888888] cursor-default';
+  const disabledClasses =
+    'text-[#999] border border-[#cccccc] bg-[#efefef] cursor-not-allowed';
+
   return (
     <button
       type="button"
@@ -31,18 +39,22 @@ export default function CommandButton({
       style={{
         width,
         height,
-        minWidth: 0,
-        minHeight: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         boxSizing: 'border-box',
         ...style,
       }}
-      className={`inline-flex appearance-none items-center justify-center border border-solid rounded-lg px-1 leading-none select-none shadow-[0_1px_2px_rgba(0,0,0,0.12)] ${
-        disabled
-          ? 'bg-gray-300 text-gray-600 border-gray-400 cursor-not-allowed'
-          : 'bg-primary text-primary-foreground border-primary cursor-pointer'
-      }`}
+      className={`${baseClasses} ${disabled ? disabledClasses : enabledClasses}`}
     >
-      <span className="block min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+      <span
+        className="drop-shadow-[0_1px_0_rgba(255,255,255,0.6)]"
+        style={{
+          whiteSpace: 'nowrap',
+          lineHeight: 'normal',
+          flexShrink: 0,
+        }}
+      >
         {children}
       </span>
     </button>
