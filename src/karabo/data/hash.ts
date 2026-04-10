@@ -48,6 +48,14 @@ export class HashAttributes extends Map<string, HashValues> {
     super.set(key, value);
   }
 
+  public findValue<T = any>(path: string): any | undefined {
+    try {
+      return this.get(path).value_ as T;
+    } catch {
+      return undefined;
+    }
+  }
+
   public getValue<T = any>(path: string): T {
     return this.get(path).value_ as T;
   }

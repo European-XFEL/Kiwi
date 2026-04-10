@@ -188,6 +188,9 @@ describe('Karabo Hash Class Tests', () => {
       expect(attrs).toBeInstanceOf(Map);
       expect(attrs.size).toBe(2);
       expect(attrs.get('a1').value_).toBe(1);
+
+      expect(attrs.findValue('a1')).toBe(1);
+      expect(attrs.findValue('aX')).toBeUndefined();
     });
 
     test('setAttributes (Replace)', () => {
