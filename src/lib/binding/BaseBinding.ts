@@ -50,7 +50,8 @@ export class BaseBinding<TValue = any> {
     value?: TValue | undefined;
   }) {
     const attrs = opts?.attributes ?? new HashAttributes();
-    if (opts && 'value' in opts) this.value = opts.value as TValue | undefined;
+    if (opts && 'value' in opts)
+      this.value = this.validate(opts.value) as TValue | undefined;
     this.attributes = attrs;
   }
 
@@ -63,17 +64,15 @@ export class BaseBinding<TValue = any> {
     this.update_shortcuts(this._attributes);
   }
 
-  public setValue(value: TValue, timestamp: Timestamp | undefined) {
-    this.validate(value);
+  public setValue(value: any, timestamp: Timestamp | undefined) {
+    value = this.validate(value);
     this.value = value;
     this.timestamp = timestamp ?? new Timestamp();
     this.value_update.fire(value, timestamp);
   }
 
-  private validate(value: any) {
-    if (value === undefined) {
-      throw new Error('Value is undefined');
-    }
+  protected validate(value: any): TValue {
+    return value;
   }
 
   is_allowed(state: string | State): boolean {
@@ -241,7 +240,18 @@ export class VectorHashBinding extends BaseBinding<any> {
   }
 }
 
-export class StringBinding extends BaseBinding<types.StringValue> {}
+export class StringBinding extends BaseBinding<types.StringValue> {
+  protected override validate(value: any) {
+    if (value === undefined) {
+      return undefined;
+    }
+    if (!(value instanceof types.StringValue)) {
+      value = new types.StringValue(String(value));
+    }
+    return value;
+  }
+}
+
 export class BoolBinding extends BaseBinding<types.BoolValue> {}
 export class CharBinding extends BaseBinding<types.CharValue> {}
 
