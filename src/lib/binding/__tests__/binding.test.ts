@@ -24,9 +24,11 @@ import {
   VectorUInt16Binding,
   ImageBinding,
   SlotBinding,
+  StringBinding,
 } from '@/lib/binding/BaseBinding';
 import { VectorHashBinding } from '@/lib/binding/BaseBinding';
 import path from 'path';
+import { StringValue } from '@/karabo/data/types';
 
 describe('check binding', () => {
   it('BaseBinding Mutable', () => {
@@ -43,8 +45,8 @@ describe('check binding', () => {
   it('BindingRoot Namespace Mutable', () => {
     const leaf = new BaseBinding({ value: 1 });
     const root = new BindingRoot();
-    root.value.set('leaf', leaf);
-    expect(root.value.length).toBe(1);
+    root.value!.set('leaf', leaf);
+    expect(root.value!.length).toBe(1);
 
     const binding1 = root.getBinding('leaf');
     const binding2 = root.getBinding('leaf');
@@ -172,5 +174,15 @@ describe('check binding', () => {
 
     const slot = bindingRoot.getBinding('startWritingOutput');
     expect(slot).toBeInstanceOf(SlotBinding);
+  });
+
+  it('StringBinding', () => {
+    const stringBinding = new StringBinding();
+    stringBinding.setValue('2', undefined);
+    expect(stringBinding.value).toStrictEqual(new StringValue('2'));
+    stringBinding.setValue(3, undefined);
+    expect(stringBinding.value).toStrictEqual(new StringValue('3'));
+    stringBinding.setValue(4.1, undefined);
+    expect(stringBinding.value).toStrictEqual(new StringValue('4.1'));
   });
 });
