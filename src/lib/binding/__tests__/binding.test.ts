@@ -18,6 +18,7 @@ import {
   VectorInt8Binding,
   VectorInt32Binding,
   BoolBinding,
+  UInt8Binding,
   UInt32Binding,
   VectorInt64Binding,
   VectorInt16Binding,
@@ -28,7 +29,7 @@ import {
 } from '@/lib/binding/BaseBinding';
 import { VectorHashBinding } from '@/lib/binding/BaseBinding';
 import path from 'path';
-import { StringValue } from '@/karabo/data/types';
+import { StringValue, UInt8Value } from '@/karabo/data/types';
 
 describe('check binding', () => {
   it('BaseBinding Mutable', () => {
@@ -185,4 +186,26 @@ describe('check binding', () => {
     stringBinding.setValue(4.1, undefined);
     expect(stringBinding.value).toStrictEqual(new StringValue('4.1'));
   });
+
+  it('IntBindings', () => {
+    const uint8Binding = new UInt8Binding();
+    uint8Binding.setValue('2', undefined);
+    expect(uint8Binding.value).toStrictEqual(new UInt8Value(2));
+    uint8Binding.setValue(3, undefined);
+    expect(uint8Binding.value).toStrictEqual(new UInt8Value(3));
+    expect(() => uint8Binding.setValue(4.1, undefined)).toThrow(
+      'Value must be a non-negative integer between 0 and 255. Given: 4.1'
+    );
+    expect(() => uint8Binding.setValue('4.1', undefined)).toThrow(
+      'Value must be a non-negative integer between 0 and 255. Given: 4.1'
+    );
+    expect(() => uint8Binding.setValue(-1, undefined)).toThrow(
+      'Value must be a non-negative integer between 0 and 255. Given: -1'
+    );
+    expect(() => uint8Binding.setValue(256, undefined)).toThrow(
+      'Value must be a non-negative integer between 0 and 255. Given: 256'
+    );
+  });
+
+  // Total
 });
