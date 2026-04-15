@@ -71,7 +71,7 @@ export class BaseBinding<TValue = any> {
     this.value_update.fire(value, timestamp);
   }
 
-  protected validate(value: any): TValue {
+  protected validate(value: any): TValue | undefined {
     return value;
   }
 
@@ -241,7 +241,7 @@ export class VectorHashBinding extends BaseBinding<any> {
 }
 
 export class StringBinding extends BaseBinding<types.StringValue> {
-  protected override validate(value: any) {
+  protected override validate(value: any): types.StringValue | undefined {
     if (value === undefined) {
       return undefined;
     }
@@ -255,7 +255,44 @@ export class StringBinding extends BaseBinding<types.StringValue> {
 export class BoolBinding extends BaseBinding<types.BoolValue> {}
 export class CharBinding extends BaseBinding<types.CharValue> {}
 
-export class UInt8Binding extends BaseBinding<types.UInt8Value> {}
+export class UInt8Binding extends BaseBinding<types.UInt8Value> {
+  protected override validate(value: any): types.UInt8Value | undefined {
+    if (value === undefined) {
+      return undefined;
+    }
+
+    if (value instanceof types.UInt8Value) {
+      return value; // Return if it's already a UInt8Value
+    }
+
+    if (typeof value === 'string') {
+      const parsedValue = parseFloat(value);
+      // Check if it is a valid integer
+      if (
+        !Number.isInteger(parsedValue) ||
+        parsedValue < 0 ||
+        parsedValue > 255
+      ) {
+        throw new Error(
+          `Value must be a non-negative integer between 0 and 255. Given: ${parsedValue}`
+        );
+      }
+      value = Math.floor(parsedValue);
+    } else if (typeof value === 'number') {
+      // Check if the number is an integer and within range
+      if (!Number.isInteger(value) || value < 0 || value > 255) {
+        throw new Error(
+          `Value must be a non-negative integer between 0 and 255. Given: ${value}`
+        );
+      }
+    } else {
+      throw new Error('Value must be a string, number, or UInt8Value.');
+    }
+
+    return new types.UInt8Value(value);
+  }
+}
+
 export class UInt16Binding extends BaseBinding<types.UInt16Value> {}
 export class UInt32Binding extends BaseBinding<types.UInt32Value> {}
 export class UInt64Binding extends BaseBinding<types.UInt64Value> {}
