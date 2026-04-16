@@ -1,4 +1,5 @@
 import { HashType } from './typenums';
+import { Integer, BigInteger, FloatingPoint } from './basetypes';
 
 export type SimpleValueTypes = number | string | bigint | boolean;
 
@@ -9,23 +10,13 @@ export interface KaraboValue {
   value_: any;
 }
 
-class Integer {
-  readonly min: number = 0;
-  readonly max: number = 0;
-  protected value_: number;
-
-  constructor(value: number) {
-    this.value_ = Math.min(Math.max(value, this.min), this.max);
-  }
-}
-
 export class UInt8Value extends Integer implements KaraboValue {
   readonly type_ = HashType.UInt8;
-  readonly min = 0;
-  readonly max = 2 ** 8 - 1;
+  static readonly MIN = 0;
+  static readonly MAX = 2 ** 8 - 1;
 
-  constructor(public value_: number) {
-    super(value_);
+  constructor(value: number) {
+    super(value);
   }
 }
 
@@ -37,11 +28,11 @@ export class VectorUInt8Value implements KaraboValue {
 
 export class Int8Value extends Integer implements KaraboValue {
   readonly type_ = HashType.Int8;
-  readonly min = -1 * 2 ** 7;
-  readonly max = 2 ** 7 - 1;
+  static readonly MIN = -1 * 2 ** 7;
+  static readonly MAX = 2 ** 7 - 1;
 
-  constructor(public value_: number) {
-    super(value_);
+  constructor(value: number) {
+    super(value);
   }
 }
 
@@ -53,11 +44,11 @@ export class VectorInt8Value implements KaraboValue {
 
 export class UInt16Value extends Integer implements KaraboValue {
   readonly type_ = HashType.UInt16;
-  readonly min = 0;
-  readonly max = 2 ** 16 - 1;
+  static readonly MIN = 0;
+  static readonly MAX = 2 ** 16 - 1;
 
-  constructor(public value_: number) {
-    super(value_);
+  constructor(value: number) {
+    super(value);
   }
 }
 
@@ -69,11 +60,11 @@ export class VectorUInt16Value implements KaraboValue {
 
 export class Int16Value extends Integer implements KaraboValue {
   readonly type_ = HashType.Int16;
-  readonly min = -1 * 2 ** 15;
-  readonly max = 2 ** 15 - 1;
+  static readonly MIN = -1 * 2 ** 15;
+  static readonly MAX = 2 ** 15 - 1;
 
-  constructor(public value_: number) {
-    super(value_);
+  constructor(value: number) {
+    super(value);
   }
 }
 
@@ -85,12 +76,11 @@ export class VectorInt16Value implements KaraboValue {
 
 export class UInt32Value extends Integer implements KaraboValue {
   readonly type_ = HashType.UInt32;
+  static readonly MIN = 0;
+  static readonly MAX = 2 ** 32 - 1;
 
-  readonly min = 0;
-  readonly max = 2 ** 32 - 1;
-
-  constructor(public value_: number) {
-    super(value_);
+  constructor(value: number) {
+    super(value);
   }
 }
 
@@ -102,11 +92,11 @@ export class VectorUInt32Value implements KaraboValue {
 
 export class Int32Value extends Integer implements KaraboValue {
   readonly type_ = HashType.Int32;
-  readonly min = -1 * 2 ** 31;
-  readonly max = 2 ** 31 - 1;
+  static readonly MIN = -1 * 2 ** 31;
+  static readonly MAX = 2 ** 31 - 1;
 
-  constructor(public value_: number) {
-    super(value_);
+  constructor(value: number) {
+    super(value);
   }
 }
 
@@ -116,14 +106,13 @@ export class VectorInt32Value implements KaraboValue {
   constructor(public value_: number[]) {}
 }
 
-export class UInt64Value implements KaraboValue {
+export class UInt64Value extends BigInteger implements KaraboValue {
   readonly type_ = HashType.UInt64;
-  readonly min = 0;
-  readonly max = 2 ** 64 - 1;
-  public value_: bigint;
+  static readonly MIN = 0n;
+  static readonly MAX = 2n ** 64n - 1n;
 
   constructor(value: bigint) {
-    this.value_ = BigInt.asUintN(64, value);
+    super(BigInt.asUintN(64, value));
   }
 }
 
@@ -132,15 +121,15 @@ export class VectorUInt64Value implements KaraboValue {
   constructor(public value_: bigint[]) {}
 }
 
-export class Int64Value implements KaraboValue {
+export class Int64Value extends BigInteger implements KaraboValue {
   readonly type_ = HashType.Int64;
-  readonly min = -1 * 2 ** 63;
-  readonly max = 2 ** 63 - 1;
 
-  public value_: bigint;
+  // XXX: 'n' for BigInt literals
+  static readonly MIN = -(2n ** 63n);
+  static readonly MAX = 2n ** 63n - 1n;
 
   constructor(value: bigint) {
-    this.value_ = BigInt.asIntN(64, value);
+    super(BigInt.asIntN(64, value));
   }
 }
 
@@ -150,10 +139,17 @@ export class VectorInt64Value implements KaraboValue {
   constructor(public value_: bigint[]) {}
 }
 
-export class FloatValue implements KaraboValue {
+export class FloatValue extends FloatingPoint implements KaraboValue {
   readonly type_ = HashType.Float;
 
-  constructor(public value_: number) {}
+  // IEEE 754 single-precision (32-bit) boundaries
+  static readonly MIN = -3.402823466e38;
+  static readonly MAX = 3.402823466e38;
+
+  constructor(value: number) {
+    // Math.fround safely rounds a 64-bit to 32-bit precision
+    super(Math.fround(value));
+  }
 }
 
 export class VectorFloatValue implements KaraboValue {
@@ -162,10 +158,16 @@ export class VectorFloatValue implements KaraboValue {
   constructor(public value_: number[]) {}
 }
 
-export class DoubleValue implements KaraboValue {
+export class DoubleValue extends FloatingPoint implements KaraboValue {
   readonly type_ = HashType.Double;
+  // IEEE 754 double-precision (64-bit) boundaries
+  static readonly MIN = -Number.MAX_VALUE;
+  static readonly MAX = Number.MAX_VALUE;
 
-  constructor(public value_: number) {}
+  constructor(value: number) {
+    // Standard JS precision is already 64-bit double
+    super(value);
+  }
 }
 
 export class VectorDoubleValue implements KaraboValue {

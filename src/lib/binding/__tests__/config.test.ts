@@ -18,9 +18,9 @@ describe('check configuration', () => {
     const bindingRoot = buildBinding(schema);
     expect(bindingRoot.classId).toBe('PropertyTest');
 
-    const leaf = bindingRoot.value.get('uint32PropertyReadOnly');
-    const bool = bindingRoot.value.get('boolProperty');
-    const vectors = bindingRoot.value.get('vectors');
+    const leaf = bindingRoot.value!.get('uint32PropertyReadOnly');
+    const bool = bindingRoot.value!.get('boolProperty');
+    const vectors = bindingRoot.value!.get('vectors');
 
     expect(leaf).toBeDefined();
     expect(bool).toBeDefined();
