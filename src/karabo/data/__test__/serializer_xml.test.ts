@@ -332,7 +332,9 @@ describe('TestSerializers', () => {
     // 4. Verify Content inside Schema
     expect(rowSchema.hash.has('e1')).toBeTruthy();
     expect(rowSchema.hash.getValue('e4')).toBe(0); // value inside the tag
-    expect(rowSchema.hash.getAttributeValue('e4', 'defaultValue')).toBe(3.1415);
+    expect(rowSchema.hash.getAttributeValue('e4', 'defaultValue')).toBe(
+      3.1414999961853027
+    );
   });
 
   test('legacy_xml_BoundSchema_load', () => {

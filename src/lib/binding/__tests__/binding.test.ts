@@ -25,11 +25,19 @@ import {
   VectorUInt16Binding,
   ImageBinding,
   SlotBinding,
+  FloatBinding,
+  DoubleBinding,
+  Int16Binding,
+  Int32Binding,
+  Int64Binding,
+  Int8Binding,
+  UInt16Binding,
+  UInt64Binding,
   StringBinding,
 } from '@/lib/binding/BaseBinding';
 import { VectorHashBinding } from '@/lib/binding/BaseBinding';
 import path from 'path';
-import { StringValue, UInt8Value } from '@/karabo/data/types';
+import * as types from '@/karabo/data/types';
 
 describe('check binding', () => {
   it('BaseBinding Mutable', () => {
@@ -180,30 +188,181 @@ describe('check binding', () => {
   it('StringBinding', () => {
     const stringBinding = new StringBinding();
     stringBinding.setValue('2', undefined);
-    expect(stringBinding.value).toStrictEqual(new StringValue('2'));
+    expect(stringBinding.value).toStrictEqual(new types.StringValue('2'));
     stringBinding.setValue(3, undefined);
-    expect(stringBinding.value).toStrictEqual(new StringValue('3'));
+    expect(stringBinding.value).toStrictEqual(new types.StringValue('3'));
     stringBinding.setValue(4.1, undefined);
-    expect(stringBinding.value).toStrictEqual(new StringValue('4.1'));
+    expect(stringBinding.value).toStrictEqual(new types.StringValue('4.1'));
   });
 
-  it('IntBindings', () => {
+  it('UInt8Binding', () => {
     const uint8Binding = new UInt8Binding();
     uint8Binding.setValue('2', undefined);
-    expect(uint8Binding.value).toStrictEqual(new UInt8Value(2));
+    expect(uint8Binding.value).toStrictEqual(new types.UInt8Value(2));
     uint8Binding.setValue(3, undefined);
-    expect(uint8Binding.value).toStrictEqual(new UInt8Value(3));
+    expect(uint8Binding.value).toStrictEqual(new types.UInt8Value(3));
     expect(() => uint8Binding.setValue(4.1, undefined)).toThrow(
-      'Value must be a non-negative integer between 0 and 255. Given: 4.1'
+      'Value must be an integer. Given: 4.1'
     );
     expect(() => uint8Binding.setValue('4.1', undefined)).toThrow(
-      'Value must be a non-negative integer between 0 and 255. Given: 4.1'
+      'Value must be an integer. Given: 4.1'
     );
     expect(() => uint8Binding.setValue(-1, undefined)).toThrow(
-      'Value must be a non-negative integer between 0 and 255. Given: -1'
+      'Value out of bounds (0 to 255). Given: -1'
     );
     expect(() => uint8Binding.setValue(256, undefined)).toThrow(
-      'Value must be a non-negative integer between 0 and 255. Given: 256'
+      'Value out of bounds (0 to 255). Given: 256'
+    );
+  });
+
+  it('UInt16Binding', () => {
+    const binding = new UInt16Binding();
+    binding.setValue('2', undefined);
+    expect(binding.value).toStrictEqual(new types.UInt16Value(2));
+    binding.setValue(3, undefined);
+    expect(binding.value).toStrictEqual(new types.UInt16Value(3));
+
+    expect(() => binding.setValue(4.1, undefined)).toThrow(
+      'Value must be an integer. Given: 4.1'
+    );
+    expect(() => binding.setValue('4.1', undefined)).toThrow(
+      'Value must be an integer. Given: 4.1'
+    );
+    expect(() => binding.setValue(-1, undefined)).toThrow(
+      'Value out of bounds (0 to 65535). Given: -1'
+    );
+    expect(() => binding.setValue(65536, undefined)).toThrow(
+      'Value out of bounds (0 to 65535). Given: 65536'
+    );
+  });
+
+  it('UInt32Binding', () => {
+    const binding = new UInt32Binding();
+    binding.setValue('2', undefined);
+    expect(binding.value).toStrictEqual(new types.UInt32Value(2));
+    binding.setValue(3, undefined);
+    expect(binding.value).toStrictEqual(new types.UInt32Value(3));
+
+    expect(() => binding.setValue(4.1, undefined)).toThrow(
+      'Value must be an integer. Given: 4.1'
+    );
+    expect(() => binding.setValue(-1, undefined)).toThrow(
+      'Value out of bounds (0 to 4294967295). Given: -1'
+    );
+    expect(() => binding.setValue(4294967296, undefined)).toThrow(
+      'Value out of bounds (0 to 4294967295). Given: 4294967296'
+    );
+  });
+
+  it('UInt64Binding', () => {
+    const binding = new UInt64Binding();
+    binding.setValue('2', undefined);
+    expect(binding.value).toStrictEqual(new types.UInt64Value(2n));
+    binding.setValue(3n, undefined);
+    expect(binding.value).toStrictEqual(new types.UInt64Value(3n));
+
+    // BigInt() natively throws on decimals during parsing
+    expect(() => binding.setValue('4.1', undefined)).toThrow(
+      'Value must be a valid 64-bit integer. Given: 4.1'
+    );
+    // 2n ** 64n - 1n evaluates to 18446744073709551615
+    expect(() => binding.setValue(-1, undefined)).toThrow(
+      'Value out of bounds (0 to 18446744073709551615). Given: -1'
+    );
+  });
+
+  it('Int8Binding', () => {
+    const binding = new Int8Binding();
+    binding.setValue('-2', undefined);
+    expect(binding.value).toStrictEqual(new types.Int8Value(-2));
+    binding.setValue(3, undefined);
+    expect(binding.value).toStrictEqual(new types.Int8Value(3));
+
+    expect(() => binding.setValue(4.1, undefined)).toThrow(
+      'Value must be an integer. Given: 4.1'
+    );
+    expect(() => binding.setValue(-129, undefined)).toThrow(
+      'Value out of bounds (-128 to 127). Given: -129'
+    );
+    expect(() => binding.setValue(128, undefined)).toThrow(
+      'Value out of bounds (-128 to 127). Given: 128'
+    );
+  });
+
+  it('Int16Binding', () => {
+    const binding = new Int16Binding();
+    binding.setValue('-2', undefined);
+    expect(binding.value).toStrictEqual(new types.Int16Value(-2));
+    binding.setValue(3, undefined);
+    expect(binding.value).toStrictEqual(new types.Int16Value(3));
+
+    expect(() => binding.setValue(4.1, undefined)).toThrow(
+      'Value must be an integer. Given: 4.1'
+    );
+    expect(() => binding.setValue(-32769, undefined)).toThrow(
+      'Value out of bounds (-32768 to 32767). Given: -32769'
+    );
+    expect(() => binding.setValue(32768, undefined)).toThrow(
+      'Value out of bounds (-32768 to 32767). Given: 32768'
+    );
+  });
+
+  it('Int32Binding', () => {
+    const binding = new Int32Binding();
+    binding.setValue('-2', undefined);
+    expect(binding.value).toStrictEqual(new types.Int32Value(-2));
+    binding.setValue(3, undefined);
+    expect(binding.value).toStrictEqual(new types.Int32Value(3));
+
+    expect(() => binding.setValue(4.1, undefined)).toThrow(
+      'Value must be an integer. Given: 4.1'
+    );
+    expect(() => binding.setValue(-2147483649, undefined)).toThrow(
+      'Value out of bounds (-2147483648 to 2147483647). Given: -2147483649'
+    );
+    expect(() => binding.setValue(2147483648, undefined)).toThrow(
+      'Value out of bounds (-2147483648 to 2147483647). Given: 2147483648'
+    );
+  });
+
+  it('Int64Binding', () => {
+    const binding = new Int64Binding();
+    binding.setValue('-2', undefined);
+    expect(binding.value).toStrictEqual(new types.Int64Value(-2n));
+    binding.setValue(3n, undefined);
+    expect(binding.value).toStrictEqual(new types.Int64Value(3n));
+
+    expect(() => binding.setValue('4.1', undefined)).toThrow(
+      'Value must be a valid 64-bit integer. Given: 4.1'
+    );
+  });
+
+  it('FloatBinding', () => {
+    const binding = new FloatBinding();
+    // Floats accept decimals
+    binding.setValue('4.1', undefined);
+    expect(binding.value).toStrictEqual(new types.FloatValue(4.1));
+    binding.setValue(-4.1, undefined);
+    expect(binding.value).toStrictEqual(new types.FloatValue(-4.1));
+    binding.setValue(3, undefined);
+    expect(binding.value).toStrictEqual(new types.FloatValue(3.0));
+
+    // Floats reject non-numeric strings
+    expect(() => binding.setValue('abc', undefined)).toThrow(
+      'Value must be a valid number. Given: abc'
+    );
+  });
+
+  it('DoubleBinding', () => {
+    const binding = new DoubleBinding();
+    binding.setValue('4.123456789', undefined);
+    expect(binding.value).toStrictEqual(new types.DoubleValue(4.123456789));
+    binding.setValue(-4.1, undefined);
+    expect(binding.value).toStrictEqual(new types.DoubleValue(-4.1));
+    binding.setValue(new types.DoubleValue(-4.1), undefined);
+    expect(binding.value).toStrictEqual(new types.DoubleValue(-4.1));
+    expect(() => binding.setValue('abc', undefined)).toThrow(
+      'Value must be a valid number. Given: abc'
     );
   });
 

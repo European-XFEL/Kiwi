@@ -51,7 +51,9 @@ export class BaseBinding<TValue = any> {
   }) {
     const attrs = opts?.attributes ?? new HashAttributes();
     if (opts && 'value' in opts)
-      this.value = this.validate(opts.value) as TValue | undefined;
+      this.value = opts.value
+        ? (this.validate(opts.value) as TValue)
+        : undefined;
     this.attributes = attrs;
   }
 
@@ -241,10 +243,7 @@ export class VectorHashBinding extends BaseBinding<any> {
 }
 
 export class StringBinding extends BaseBinding<types.StringValue> {
-  protected override validate(value: any): types.StringValue | undefined {
-    if (value === undefined) {
-      return undefined;
-    }
+  protected override validate(value: any): types.StringValue {
     if (!(value instanceof types.StringValue)) {
       value = new types.StringValue(String(value));
     }
@@ -252,58 +251,80 @@ export class StringBinding extends BaseBinding<types.StringValue> {
   }
 }
 
-export class BoolBinding extends BaseBinding<types.BoolValue> {}
-export class CharBinding extends BaseBinding<types.CharValue> {}
-
-export class UInt8Binding extends BaseBinding<types.UInt8Value> {
-  protected override validate(value: any): types.UInt8Value | undefined {
-    if (value === undefined) {
-      return undefined;
+export class BoolBinding extends BaseBinding<types.BoolValue> {
+  protected override validate(value: any): types.BoolValue {
+    if (value instanceof types.BoolValue) {
+      return value;
     }
-
-    if (value instanceof types.UInt8Value) {
-      return value; // Return if it's already a UInt8Value
-    }
-
-    if (typeof value === 'string') {
-      const parsedValue = parseFloat(value);
-      // Check if it is a valid integer
-      if (
-        !Number.isInteger(parsedValue) ||
-        parsedValue < 0 ||
-        parsedValue > 255
-      ) {
-        throw new Error(
-          `Value must be a non-negative integer between 0 and 255. Given: ${parsedValue}`
-        );
-      }
-      value = Math.floor(parsedValue);
-    } else if (typeof value === 'number') {
-      // Check if the number is an integer and within range
-      if (!Number.isInteger(value) || value < 0 || value > 255) {
-        throw new Error(
-          `Value must be a non-negative integer between 0 and 255. Given: ${value}`
-        );
-      }
-    } else {
-      throw new Error('Value must be a string, number, or UInt8Value.');
-    }
-
-    return new types.UInt8Value(value);
+    const parsed =
+      typeof value === 'string'
+        ? value.toLowerCase() === 'true' || value === '1'
+        : Boolean(value);
+    return new types.BoolValue(parsed);
   }
 }
 
-export class UInt16Binding extends BaseBinding<types.UInt16Value> {}
-export class UInt32Binding extends BaseBinding<types.UInt32Value> {}
-export class UInt64Binding extends BaseBinding<types.UInt64Value> {}
+export class CharBinding extends BaseBinding<types.CharValue> {}
 
-export class Int8Binding extends BaseBinding<types.Int8Value> {}
-export class Int16Binding extends BaseBinding<types.Int16Value> {}
-export class Int32Binding extends BaseBinding<types.Int32Value> {}
-export class Int64Binding extends BaseBinding<types.Int64Value> {}
+export class UInt8Binding extends BaseBinding<types.UInt8Value> {
+  protected override validate(v: any): types.UInt8Value {
+    return types.UInt8Value.cast(v);
+  }
+}
 
-export class FloatBinding extends BaseBinding<types.FloatValue> {}
-export class DoubleBinding extends BaseBinding<types.DoubleValue> {}
+export class UInt16Binding extends BaseBinding<types.UInt16Value> {
+  protected override validate(v: any): types.UInt16Value {
+    return types.UInt16Value.cast(v);
+  }
+}
+
+export class UInt32Binding extends BaseBinding<types.UInt32Value> {
+  protected override validate(v: any): types.UInt32Value {
+    return types.UInt32Value.cast(v);
+  }
+}
+
+export class UInt64Binding extends BaseBinding<types.UInt64Value> {
+  protected override validate(v: any): types.UInt64Value {
+    return types.UInt64Value.cast(v);
+  }
+}
+
+export class Int8Binding extends BaseBinding<types.Int8Value> {
+  protected override validate(v: any): types.Int8Value {
+    return types.Int8Value.cast(v);
+  }
+}
+
+export class Int16Binding extends BaseBinding<types.Int16Value> {
+  protected override validate(v: any): types.Int16Value {
+    return types.Int16Value.cast(v);
+  }
+}
+
+export class Int32Binding extends BaseBinding<types.Int32Value> {
+  protected override validate(v: any): types.Int32Value {
+    return types.Int32Value.cast(v);
+  }
+}
+
+export class Int64Binding extends BaseBinding<types.Int64Value> {
+  protected override validate(v: any): types.Int64Value {
+    return types.Int64Value.cast(v);
+  }
+}
+
+export class FloatBinding extends BaseBinding<types.FloatValue> {
+  protected override validate(v: any): types.FloatValue {
+    return types.FloatValue.cast(v);
+  }
+}
+
+export class DoubleBinding extends BaseBinding<types.DoubleValue> {
+  protected override validate(v: any): types.DoubleValue {
+    return types.DoubleValue.cast(v);
+  }
+}
 
 export class ByteArrayBinding extends BaseBinding<types.VectorCharValue> {}
 export class VectorStringBinding extends BaseBinding<types.VectorStringValue> {}
