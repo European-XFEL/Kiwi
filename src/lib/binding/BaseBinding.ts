@@ -9,7 +9,7 @@ import {
   Assignment,
   State,
 } from '@/karabo/data/api';
-import { WeakEvent } from '../WeakEvent';
+import { Signal } from '../utils';
 import { buildNode } from './BindingFactory';
 
 import {
@@ -30,7 +30,7 @@ import * as types from '@/karabo/data/types';
 export class BaseBinding<TValue = any> {
   protected _attributes!: HashAttributes;
 
-  value_update = new WeakEvent();
+  value_update = new Signal<[any, any]>();
 
   hashType = HashType.Hash;
 
