@@ -11,16 +11,18 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/dropdown-menu';
+import { Hash, HashValues } from '@/karabo/data/api';
 import { ProjectItemInfo, ProjectSceneInfo } from '@/karabo/common/project/api';
 import { cn } from '@/components/utils/cn';
 import { getDbConn } from '@/lib/singletons/api';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { Loader2 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProjectsTable from './components/ProjectTable';
 import ScenesTable from './components/ScenesTable';
 import { useDeferredSearch } from './hooks/useDeferredSearch';
+import { useKaraboEvent, KaraboEvent } from '@/lib/events';
 import type { SceneBreadcrumbProps } from './types/project.types';
 import { filterByQuery } from './utils/filterByQuery';
 
@@ -39,6 +41,7 @@ export default function SceneBreadcrumb({
   const projectSearch = useDeferredSearch();
   const sceneSearch = useDeferredSearch();
 
+  const projectsInitializedRef = useRef(false);
   const [projectsLoading, setProjectsLoading] = useState(false);
   const [projects, setProjects] = useState<ProjectItemInfo[]>([]);
   const [selectedProject, setSelectedProject] = useState<ProjectItemInfo>();
@@ -70,15 +73,53 @@ export default function SceneBreadcrumb({
     (scene) => scene.name
   );
 
+  useEffect(() => {
+    // Load the domains project at initialization time to avoid
+    // the extra time when the user goes directly to the scene
+    // selection in the breadcrumb.
+    if (!projectsInitializedRef.current) {
+      projectsInitializedRef.current = true;
+      setProjectsLoading(true);
+      getDbConn().listProjects(domain);
+    }
+  }, []);
+
   const handleProjectDropdownOpen = () => {
     setProjectsLoading(true);
-    getDbConn().listProjects(domain, (projectsInfo) => {
-      if (!projectsInfo.error_msg) {
-        setProjects(projectsInfo.projects.filter((p) => !p.isTrashed));
+    getDbConn().listProjects(domain);
+  };
+
+  useKaraboEvent(KaraboEvent.ListProjects, (hash: Hash) => {
+    const reason = hash.getValue('reason');
+    if (reason.length == 0) {
+      // Project retrieval was successful
+      const itemsHashes = hash.getValue('reply.items') as HashValues[];
+      const domain = hash.getValue('request.args.domain') as string;
+      const projects: ProjectItemInfo[] = itemsHashes.map((hv: HashValues) => {
+        const item = new Hash(hv);
+        return {
+          domain: domain,
+          uuid: item.getValue('uuid') as string,
+          name: item.getValue('simple_name') as string,
+          dateModified: item.getValue('date') as string,
+          isTrashed: item.getValue('is_trashed') as boolean,
+          item_type: 'project',
+        };
+      });
+      const nonTrashed = projects.filter((pInf) => !pInf.isTrashed);
+      const nonTrashedSorted = nonTrashed.sort((a, b) =>
+        a.name.localeCompare(b.name)
+      );
+      setProjects(nonTrashedSorted);
+      if (!selectedProject) {
+        const selected = projects.find((p) => p.name == projectName);
+        if (selected) {
+          setSelectedProject(selected);
+        }
       }
       setProjectsLoading(false);
-    });
-  };
+    }
+  });
 
   const loadScenes = (project: ProjectItemInfo) => {
     // Cache hit — reuse immediately, no fetch
@@ -125,22 +166,7 @@ export default function SceneBreadcrumb({
   };
 
   const handleSceneDropdownOpen = () => {
-    if (!selectedProject) {
-      // No prior project selection — resolve from the current route prop
-      setProjectsLoading(true);
-      getDbConn().listProjects(domain, (projectsInfo) => {
-        if (!projectsInfo.error_msg) {
-          const current = projectsInfo.projects.find(
-            (p) => p.name === projectName
-          );
-          if (current) {
-            setSelectedProject(current);
-            loadScenes(current);
-          }
-        }
-        setProjectsLoading(false);
-      });
-    } else {
+    if (selectedProject) {
       loadScenes(selectedProject);
     }
   };
