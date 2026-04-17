@@ -244,23 +244,13 @@ export class VectorHashBinding extends BaseBinding<any> {
 
 export class StringBinding extends BaseBinding<types.StringValue> {
   protected override validate(value: any): types.StringValue {
-    if (!(value instanceof types.StringValue)) {
-      value = new types.StringValue(String(value));
-    }
-    return value;
+    return types.StringValue.cast(value);
   }
 }
 
 export class BoolBinding extends BaseBinding<types.BoolValue> {
   protected override validate(value: any): types.BoolValue {
-    if (value instanceof types.BoolValue) {
-      return value;
-    }
-    const parsed =
-      typeof value === 'string'
-        ? value.toLowerCase() === 'true' || value === '1'
-        : Boolean(value);
-    return new types.BoolValue(parsed);
+    return types.BoolValue.cast(value);
   }
 }
 

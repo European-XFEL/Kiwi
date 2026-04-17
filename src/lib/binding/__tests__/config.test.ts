@@ -19,10 +19,12 @@ describe('check configuration', () => {
     expect(bindingRoot.classId).toBe('PropertyTest');
 
     const leaf = bindingRoot.value!.get('uint32PropertyReadOnly');
+    const string = bindingRoot.value!.get('stringProperty');
     const bool = bindingRoot.value!.get('boolProperty');
     const vectors = bindingRoot.value!.get('vectors');
 
     expect(leaf).toBeDefined();
+    expect(string).toBeDefined();
     expect(bool).toBeDefined();
     expect(vectors).toBeDefined();
 
@@ -35,6 +37,8 @@ describe('check configuration', () => {
     const config = new Hash(
       'boolProperty',
       false,
+      'stringProperty',
+      'karabo',
       'uint32PropertyReadOnly',
       2,
       'vectors.int32Property',
@@ -49,6 +53,7 @@ describe('check configuration', () => {
 
     expect(bool?.value.value_).toBe(false);
     expect(leaf?.value.value_).toBe(2);
+    expect(string?.value.value_).toBe('karabo');
 
     // For arrays, use deep equality:
     expect(nodeVectorInt32?.value.value_).toEqual([1, 2]);

@@ -1,5 +1,11 @@
 import { HashType } from './typenums';
-import { Integer, BigInteger, FloatingPoint } from './basetypes';
+import {
+  Integer,
+  BigInteger,
+  FloatingPoint,
+  StringLike,
+  BooleanLike,
+} from './basetypes';
 
 export type SimpleValueTypes = number | string | bigint | boolean;
 
@@ -176,10 +182,8 @@ export class VectorDoubleValue implements KaraboValue {
   constructor(public value_: number[]) {}
 }
 
-export class BoolValue implements KaraboValue {
+export class BoolValue extends BooleanLike implements KaraboValue {
   readonly type_ = HashType.Bool;
-
-  constructor(public value_: boolean) {}
 }
 
 export class VectorBoolValue implements KaraboValue {
@@ -188,10 +192,8 @@ export class VectorBoolValue implements KaraboValue {
   constructor(public value_: boolean[]) {}
 }
 
-export class StringValue implements KaraboValue {
+export class StringValue extends StringLike implements KaraboValue {
   readonly type_ = HashType.String;
-
-  constructor(public value_: string) {}
 }
 
 export class VectorStringValue implements KaraboValue {
@@ -200,10 +202,8 @@ export class VectorStringValue implements KaraboValue {
   constructor(public value_: string[]) {}
 }
 
-export class VectorCharValue implements KaraboValue {
+export class VectorCharValue extends StringLike implements KaraboValue {
   readonly type_ = HashType.VectorChar;
-
-  constructor(public value_: Uint8Array) {}
 }
 
 export class CharValue implements KaraboValue {
