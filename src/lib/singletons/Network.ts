@@ -453,7 +453,7 @@ export class Network {
 
   public onExecute(deviceId: string, command: string): void {
     // prettier-ignore
-    const h = new Hash('type', 'execute', 'deviceId', deviceId, 'command', command);
+    const h = new Hash('type', 'execute', 'deviceId', deviceId, 'command', command, 'reply', true);
     this.sendHash(h);
   }
 

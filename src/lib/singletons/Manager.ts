@@ -4,6 +4,8 @@ import { decodeBinary, Hash, Schema } from '@/karabo/data/api';
 import { getConfig, getNetwork, getTopology } from '@/lib/singletons/api';
 
 import { v4 as uuidv4 } from 'uuid';
+import { get_reason_parts } from './util';
+import { showMessageBox } from '../messagebox';
 
 export interface RequestHandler {
   (success: boolean, reply: any): void;
@@ -259,5 +261,23 @@ export class Manager {
     this._topology.handleDeviceSchema(deviceId, deviceSchema);
   }
 
+  public handle_executeReply(hash: Hash): void {
+    const success = hash.getValue<boolean>('success');
+    if (!success) {
+      const reason = hash.getValue('reason');
+
+      const [msg, details] = get_reason_parts(reason);
+      const input_info = hash.getValue<Hash>('input');
+      const deviceId = input_info.getValue<string>('deviceId');
+      const command = input_info.getValue<string>('command');
+      const title = `Execute slot ${command} of device ${deviceId} failed.`;
+      showMessageBox({
+        variant: 'error',
+        title,
+        msg: msg,
+        details,
+      });
+    }
+  }
   // #endregion
 }
