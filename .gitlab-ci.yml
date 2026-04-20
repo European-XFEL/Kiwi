@@ -63,6 +63,10 @@ test:
     - yarn install --immutable
     - yarn build-staging
     - yarn cov --watchAll=false
+  rules:
+      # Don't run the test job on pre-release and release tags; tests will have already been run in
+      # during the development of all the MRs that compose the tagged version
+    - if: ($CI_COMMIT_TAG !~ /^(\d+\.)(\d+\.)(\d+)$/ && $CI_COMMIT_TAG !~ /^(\d+\.)(\d+\.)(\d+)((a|b|rc|\.)\d+)$/)
 
 prerelease_deploy:
   stage: deploy
@@ -71,7 +75,7 @@ prerelease_deploy:
     KIWI_BUILD_ARTIFACT_DIR: kiwi/tags/$CI_COMMIT_REF_NAME
   script:
     - yarn install --immutable
-    # build-staging bundles the application with the settings from .env.stagging
+    # build-staging bundles the application with the settings from .env.staging
     - yarn build-staging
     - cd dist
     - tar -czf ../kiwi_$CI_COMMIT_REF_NAME.tar.gz .
