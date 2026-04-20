@@ -61,6 +61,7 @@ test:
   stage: test
   script:
     - yarn install --immutable
+    - yarn build-staging
     - yarn cov --watchAll=false
 
 prerelease_deploy:
