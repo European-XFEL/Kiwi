@@ -1,13 +1,13 @@
 import { BaseBinding } from './BaseBinding';
 import type { DeviceProxy } from './DeviceProxy';
-import { WeakEvent } from '../WeakEvent';
+import { Signal } from '../utils';
 
 type Unsubscribe = () => void;
 
 export class PropertyProxy {
   public binding?: BaseBinding;
 
-  public readonly config_update = new WeakEvent();
+  public readonly config_update = new Signal<[PropertyProxy]>();
 
   private removeConfigUpdate?: Unsubscribe;
   private removeBindingUpdate?: Unsubscribe;
@@ -51,16 +51,16 @@ export class PropertyProxy {
     }
   }
 
-  private onBindingValueUpdate = (): void => {
+  private onBindingValueUpdate(): void {
     this.config_update.fire(this);
-  };
+  }
 
-  private onSchemaUpdate = (): void => {
+  private onSchemaUpdate(): void {
     this.setBinding(this.root_proxy.getBinding(this.path));
-  };
+  }
 
   public value_update(callback: (proxy: PropertyProxy) => void): Unsubscribe {
-    return this.config_update.subscribe(this, () => callback(this));
+    return this.config_update.subscribe(this, callback);
   }
 
   public dispose(): void {

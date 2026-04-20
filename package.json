@@ -9,7 +9,7 @@
     "build-staging": "tsc -b && vite build --mode staging --sourcemap 'hidden'",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "jest --watchAll",
+    "test": "node --expose-gc ./node_modules/jest/bin/jest.js --watchAll",
     "cov": "jest --coverage --collectCoverageFrom='src/**/*.{js,jsx,ts,tsx}'"
   },
   "dependencies": {

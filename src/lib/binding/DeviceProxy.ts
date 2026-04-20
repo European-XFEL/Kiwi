@@ -4,7 +4,7 @@ import { buildBinding } from './BindingFactory';
 
 import { getNetwork } from '@/lib/singletons/api';
 import { BaseBinding, BindingRoot, NodeBinding } from './BaseBinding';
-import { WeakEvent } from '../WeakEvent';
+import { Signal } from '../utils';
 
 export function applyConfiguration(config: Hash, binding: any) {
   const namespace = binding.value;
@@ -34,10 +34,10 @@ export class DeviceProxy {
 
   private monitorCount = 0;
 
-  config_update = new WeakEvent();
-  schema_update = new WeakEvent();
-  state_update = new WeakEvent();
-  status_update = new WeakEvent();
+  config_update = new Signal<[]>();
+  schema_update = new Signal<[]>();
+  state_update = new Signal<[string | undefined]>();
+  status_update = new Signal<[string]>();
 
   constructor(deviceId: string) {
     this.deviceId = deviceId;
