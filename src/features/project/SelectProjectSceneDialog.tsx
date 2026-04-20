@@ -198,7 +198,8 @@ export default function SelectProjectSceneDialog({
     setActivityStatus(ActivityStatus.NO_ACTIVITY);
   });
 
-  useKaraboEvent(KaraboEvent.ListScenes, (hash: Hash) => {});
+  // TODO: Enable a new event for the scenes of a project retrieved
+  // useKaraboEvent(KaraboEvent.ListScenes, (hash: Hash) => {});
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>

@@ -226,9 +226,13 @@ describe('readScene', () => {
   });
 
   it('returns an empty SceneModel for invalid XML', () => {
+    // Temporarily mock console.warn to avoid warnings in the test output -
+    // readScene outputs a console warning before returning
+    let consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
     const scene = readScene('<not-svg>invalid</not-svg>');
     expect(scene).toBeInstanceOf(SceneModel);
     expect(scene.children).toHaveLength(0);
+    consoleSpy.mockRestore();
   });
 
   it('reads the vacumm scene without throwing', () => {

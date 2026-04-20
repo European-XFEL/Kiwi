@@ -4806,6 +4806,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/path-browserify@npm:^1":
+  version: 1.0.3
+  resolution: "@types/path-browserify@npm:1.0.3"
+  checksum: 10c0/6ed6de375c210dbc20d171ab547be6065ce9904463ca8ca63443a3b23efc7234ff5400d62be05b9be36fc2e863b77592c2e607896988ad39a45276b8a7e42d70
+  languageName: node
+  linkType: hard
+
 "@types/pbf@npm:*, @types/pbf@npm:^3.0.5":
   version: 3.0.5
   resolution: "@types/pbf@npm:3.0.5"
@@ -5542,11 +5549,11 @@ __metadata:
   linkType: hard
 
 "baseline-browser-mapping@npm:^2.8.19":
-  version: 2.8.23
-  resolution: "baseline-browser-mapping@npm:2.8.23"
+  version: 2.10.20
+  resolution: "baseline-browser-mapping@npm:2.10.20"
   bin:
-    baseline-browser-mapping: dist/cli.js
-  checksum: 10c0/5a63c1c241d288e5c79aa32a1cbea335b5af899172161aa9f9701a67c5b9b55ea3b3945a70a842385374627dde1de27504641bc95257d8c2e81f0c593c719121
+    baseline-browser-mapping: dist/cli.cjs
+  checksum: 10c0/3d60c9656c4c4673593aa8d0ae9aa6b69b4e018c2f585874a0e8a40cb28d0559f57ee1b2e7e44cb1e7f6aac66f658a4a3c1285901b8836d8ae31e189e30aa816
   languageName: node
   linkType: hard
 
@@ -5701,9 +5708,9 @@ __metadata:
   linkType: hard
 
 "caniuse-lite@npm:^1.0.30001751":
-  version: 1.0.30001753
-  resolution: "caniuse-lite@npm:1.0.30001753"
-  checksum: 10c0/730344b6c54769f544f1d4bd7f99a122cd5f6e964e482adbcb18b63cda56e9c40aca1e3ab47c7154098803c9ba3772cca0aba936d1c924e67e8db8345712e5a8
+  version: 1.0.30001788
+  resolution: "caniuse-lite@npm:1.0.30001788"
+  checksum: 10c0/d3c4695d0e7a1e95194cc5072e26db59cbcd25adfff64253859213c1a04ce9bc17f7b8ec8b11908ac1ecc6c1a0caf95fae0aec064a64b8df03286dffa629ce8a
   languageName: node
   linkType: hard
 
@@ -8827,6 +8834,7 @@ __metadata:
     "@types/jest": "npm:^30.0.0"
     "@types/lodash": "npm:^4.17.20"
     "@types/node": "npm:^24.6.0"
+    "@types/path-browserify": "npm:^1"
     "@types/plotly.js": "npm:^3"
     "@types/react": "npm:^19.0.0"
     "@types/react-dom": "npm:^19.0.0"
@@ -8848,6 +8856,7 @@ __metadata:
     lodash: "npm:^4.17.21"
     lucide-react: "npm:^0.544.0"
     next-themes: "npm:^0.4.6"
+    path-browserify: "npm:^1.0.1"
     plotly: "npm:^1.0.6"
     plotly.js: "npm:^3.2.0"
     radix-ui: "npm:^1.4.3"
@@ -9821,6 +9830,13 @@ __metadata:
   dependencies:
     entities: "npm:^6.0.0"
   checksum: 10c0/7fd2e4e247e85241d6f2a464d0085eed599a26d7b0a5233790c49f53473232eb85350e8133344d9b3fd58b89339e7ad7270fe1f89d28abe50674ec97b87f80b5
+  languageName: node
+  linkType: hard
+
+"path-browserify@npm:^1.0.1":
+  version: 1.0.1
+  resolution: "path-browserify@npm:1.0.1"
+  checksum: 10c0/8b8c3fd5c66bd340272180590ae4ff139769e9ab79522e2eb82e3d571a89b8117c04147f65ad066dccfb42fcad902e5b7d794b3d35e0fd840491a8ddbedf8c66
   languageName: node
   linkType: hard
 

@@ -6,6 +6,10 @@ import svgr from 'vite-plugin-svgr';
 
 // https://vite.dev/config/
 export default defineConfig({
+  build: {
+    // TODO: Evaluate use of build.rollupOptions.output.manualChunks
+    chunkSizeWarningLimit: 10240,
+  },
   plugins: [
     react(),
     tailwindcss(),
@@ -22,6 +26,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
+      path: 'path-browserify',
       '@': path.resolve(__dirname, './src'),
     },
   },
