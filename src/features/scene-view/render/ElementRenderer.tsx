@@ -28,6 +28,13 @@ import { PropertyOverlay } from '../components/PropertyOverlay';
 
 export { resolveBounds, isLayout } from './bounds';
 
+const _warnedKlasses = new Set<string>();
+function warnOnce(key: string, msg: string) {
+  if (_warnedKlasses.has(key)) return;
+  _warnedKlasses.add(key);
+  console.warn(msg);
+}
+
 // NON_CONTROLLER_WIDGETS
 // ----------------------------------------------------------------------------
 // Widgets that render directly — no device subscription needed.
@@ -91,6 +98,10 @@ export function renderContent(
     if (model instanceof UnknownXMLDataModel) return null;
 
     if (model instanceof UnknownWidgetDataModel) {
+      warnOnce(
+        model.klass,
+        `[Scene] Unknown widget: "${model.klass}" — no builder registered for this klass`
+      );
       return (
         <Placeholder
           width={model.width}
@@ -103,12 +114,17 @@ export function renderContent(
     const unregistered = model as Partial<BaseWidgetObjectData> & {
       klass?: string;
     };
+    const klass = unregistered.klass ?? model.constructor.name;
+    warnOnce(
+      klass,
+      `[Scene] No renderer registered for "${klass}" — add a registerRenderer() call`
+    );
 
     return (
       <Placeholder
         width={unregistered.width ?? 60}
         height={unregistered.height ?? 20}
-        label={`No renderer: ${unregistered.klass ?? model.constructor.name}`}
+        label={`No renderer: ${klass}`}
       />
     );
   }
