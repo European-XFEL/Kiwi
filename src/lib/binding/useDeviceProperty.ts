@@ -82,30 +82,24 @@ export function usePropertyProxy(
     () => EMPTY_ROOT
   );
 
+  const storeMatchesKeys =
+    !!deviceId &&
+    !!propertyPath &&
+    storeRef.current?.root.deviceId === deviceId &&
+    storeRef.current?.proxy.path === propertyPath;
+
   React.useEffect(() => {
-    // Keys invalid => tear down everything and reset.
     if (!deviceId || !propertyPath) {
-      storeRef.current?.updaters.forEach((fn) => fn());
-      storeRef.current = null;
       setProxyData(EMPTY_PROXY);
       setRootProxyData(EMPTY_ROOT);
       return;
     }
 
-    // Create instances once for stable keys.
-    if (!storeRef.current) {
-      const root = getTopology().getDevice(deviceId);
-      const proxy = new PropertyProxy(root, propertyPath);
-      storeRef.current = { root, proxy, updaters: [] };
-    }
+    const root = getTopology().getDevice(deviceId);
+    const proxy = new PropertyProxy(root, propertyPath);
+    const store: ProxyStore = { root, proxy, updaters: [] };
+    storeRef.current = store;
 
-    const store = storeRef.current;
-    const { root, proxy } = store;
-
-    store.updaters.forEach((fn) => fn());
-    store.updaters = [];
-
-    // Initial snapshot
     setRootProxyData({ deviceState: root.state, proxyStatus: root.status });
     setProxyData({
       binding: proxy.binding,
@@ -126,7 +120,7 @@ export function usePropertyProxy(
     store.updaters.push(root.addMonitor());
 
     store.updaters.push(
-      proxy.value_update((p) => {
+      proxy.value_update((p: PropertyProxy) => {
         setProxyData({
           binding: p.binding,
           value: p.value,
@@ -145,22 +139,26 @@ export function usePropertyProxy(
       })
     );
 
-    store.updaters.push(
-      root.state_update.subscribe(storeRef.current, updateRoot)
-    );
-    store.updaters.push(
-      root.status_update.subscribe(storeRef.current, updateRoot)
-    );
+    store.updaters.push(root.state_update.subscribe(store, updateRoot));
+    store.updaters.push(root.status_update.subscribe(store, updateRoot));
 
     return () => {
       store.updaters.forEach((fn) => fn());
       store.updaters = [];
-      // NOTE: keep storeRef.current to keep proxies
+      store.proxy.dispose();
+      if (storeRef.current === store) {
+        storeRef.current = null;
+      }
+      setProxyData(EMPTY_PROXY);
+      setRootProxyData(EMPTY_ROOT);
     };
   }, [deviceId, propertyPath]);
 
-  const binding = proxyData.binding;
-  const proxyStatus = rootProxyData.proxyStatus;
+  const currentProxyData = storeMatchesKeys ? proxyData : EMPTY_PROXY;
+  const currentRootProxyData = storeMatchesKeys ? rootProxyData : EMPTY_ROOT;
+
+  const binding = currentProxyData.binding;
+  const proxyStatus = currentRootProxyData.proxyStatus;
 
   const missing =
     DEVICE_INDICATORS.find((d) => d.status === proxyStatus) ?? undefined;
@@ -182,11 +180,11 @@ export function usePropertyProxy(
 
   return {
     binding,
-    value: proxyData.value,
-    timestamp: proxyData.timestamp,
+    value: currentProxyData.value,
+    timestamp: currentProxyData.timestamp,
     hashType,
 
-    deviceState: rootProxyData.deviceState,
+    deviceState: currentRootProxyData.deviceState,
     deviceId: deviceId || undefined,
     propertyPath: propertyPath || undefined,
 
