@@ -2,7 +2,6 @@ import sax from 'sax';
 import { Hash, HashList, Schema } from './hash';
 import { HashType, XmlTypeToHashType } from './typenums';
 import * as Types from './types';
-import * as fs from 'fs';
 
 const parseXMLBool = (data: string): boolean => {
   const d = data.trim().toLowerCase();
@@ -55,18 +54,14 @@ const parseXMLVectorString = (data: string): string[] => {
 };
 
 const parseXMLByteArray = (data: string): Uint8Array => {
-  if (typeof Buffer !== 'undefined') {
-    return Buffer.from(data, 'base64');
-  } else {
-    // Browser polyfill for atob
-    const binString = atob(data);
-    const len = binString.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-      bytes[i] = binString.charCodeAt(i);
-    }
-    return bytes;
+  // Browser polyfill for atob
+  const binString = atob(data);
+  const len = binString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binString.charCodeAt(i);
   }
+  return bytes;
 };
 
 // ============================================================================
@@ -410,15 +405,4 @@ export class KaraboXmlParser {
 export function decodeXML(data: string): Hash | any {
   const parser = new KaraboXmlParser();
   return parser.parse(data);
-}
-
-/**
- * loadFromFile a Hash with xml format.
- */
-export function loadFromFile(filepath: string): any {
-  if (!fs.existsSync(filepath)) {
-    throw new Error(`File not found: ${filepath}`);
-  }
-  const content = fs.readFileSync(filepath, 'utf-8');
-  return decodeXML(content);
 }

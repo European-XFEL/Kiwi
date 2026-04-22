@@ -1,8 +1,6 @@
 import { Hash, HashList, Schema } from './hash';
 import { HashType, HashTypeToXmlType } from './typenums';
 import { escapeXml, quoteAttr, toBase64, unwrap } from './utils';
-import * as fs from 'fs';
-import * as path from 'path';
 
 function* yield_xml_simple(data: any): Generator<string> {
   yield escapeXml(String(unwrap(data)));
@@ -175,30 +173,4 @@ export function encodeXML(data: Hash): string {
     result += chunk;
   }
   return result;
-}
-
-/**
- * saveToFile a Hash with xml format.
- */
-export function saveToFile(hash: Hash | null, filepath: string): void {
-  if (hash === null) {
-    throw new Error('Cannot save null hash');
-  }
-  if (!(hash instanceof Hash)) {
-    throw new Error('Input is not a Hash object');
-  }
-
-  // Ensure directory exists
-  const dir = path.dirname(filepath);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-
-  // Check if it is a directory
-  if (fs.existsSync(filepath) && fs.lstatSync(filepath).isDirectory()) {
-    throw new Error(`Path is a directory: ${filepath}`);
-  }
-
-  const xmlContent = encodeXML(hash);
-  fs.writeFileSync(filepath, xmlContent, { encoding: 'utf-8' });
 }

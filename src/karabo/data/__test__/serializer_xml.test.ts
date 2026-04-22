@@ -2,8 +2,10 @@ import * as path from 'path';
 import * as os from 'os';
 import * as fs from 'fs';
 import { Hash, HashList, Schema } from '../hash';
-import { encodeXML, saveToFile } from '../xml_writer';
-import { decodeXML, loadFromFile } from '../xml_reader';
+import { decodeXML } from '../xml_reader';
+import { encodeXML } from '../xml_writer';
+import { loadFromFile, saveToFile } from '../xml_file_io';
+
 import {
   BoolValue,
   FloatValue,
