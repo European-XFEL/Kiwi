@@ -133,3 +133,64 @@ export abstract class FloatingPoint {
     return new this(parsed);
   }
 }
+
+// --------------------------------------
+
+export abstract class StringLike {
+  public value_: string;
+
+  constructor(value: string) {
+    this.value_ = value;
+  }
+
+  get value(): string {
+    return this.value_;
+  }
+
+  static cast<T extends StringLike>(
+    this: { new (value: string): T },
+    value: any
+  ): T {
+    if (value instanceof this) {
+      return value;
+    }
+    if (value !== null && typeof value === 'object') {
+      value = value.value_ ?? value.value ?? value.valueOf();
+    }
+    if (value === null || value === undefined) {
+      throw new Error(`Value cannot be null or undefined.`);
+    }
+
+    const parsed = String(value);
+    return new this(parsed);
+  }
+}
+
+// --------------------------------------
+
+export abstract class BooleanLike {
+  public value_: boolean;
+
+  constructor(value: boolean) {
+    this.value_ = value;
+  }
+
+  get value(): boolean {
+    return this.value_;
+  }
+
+  static cast<T extends BooleanLike>(
+    this: { new (value: boolean): T },
+    value: any
+  ): T {
+    if (value instanceof this) {
+      return value;
+    }
+    if (value !== null && typeof value === 'object') {
+      value = value.value_ ?? value.value ?? value.valueOf();
+    }
+    // follow bool(int(value)) logic:
+    const num = Number(value);
+    return new this(num !== 0);
+  }
+}
