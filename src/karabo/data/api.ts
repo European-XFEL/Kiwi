@@ -6,8 +6,8 @@ export {
   HashList,
   type HashValues,
 } from './hash';
-export { decodeXML, loadFromFile } from './xml_reader';
-export { encodeXML, saveToFile } from './xml_writer';
+export { decodeXML } from './xml_reader';
+export { encodeXML } from './xml_writer';
 export {
   HashType,
   XmlTypeToHashType,
