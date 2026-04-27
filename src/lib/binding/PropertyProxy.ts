@@ -6,6 +6,7 @@ type Unsubscribe = () => void;
 
 export class PropertyProxy {
   public binding?: BaseBinding;
+  private edit_binding?: BaseBinding;
 
   public readonly config_update = new Signal<[PropertyProxy]>();
 
@@ -34,6 +35,18 @@ export class PropertyProxy {
 
   get timestamp(): any {
     return this.binding?.timestamp;
+  }
+
+  get edit_value(): any {
+    return this.edit_binding?.value;
+  }
+
+  set edit_value(value: any) {
+    if (!this.edit_binding) {
+      const klass = this.binding!.constructor as new () => BaseBinding;
+      this.edit_binding = new klass();
+    }
+    this.edit_binding.setValue(value, undefined);
   }
 
   private setBinding(binding?: BaseBinding): void {
