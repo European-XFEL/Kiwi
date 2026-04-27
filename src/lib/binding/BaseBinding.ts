@@ -45,10 +45,7 @@ export class BaseBinding<TValue = any> {
   requiredAccessLevel: AccessLevel = AccessLevel.OBSERVER;
   unit_label = '';
 
-  constructor(opts?: {
-    attributes?: HashAttributes;
-    value?: TValue | undefined;
-  }) {
+  constructor(opts?: { attributes?: HashAttributes; value?: any | undefined }) {
     const attrs = opts?.attributes ?? new HashAttributes();
     if (opts && 'value' in opts)
       this.value = opts.value

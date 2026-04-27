@@ -30,5 +30,6 @@ export { encodeBinary, encodeBinarySchema } from './bin_writer';
 export { unwrap } from './utils';
 export { State } from './State';
 export { type SimpleValueTypes } from './types';
+export { StringValue } from './types';
 export * from './const';
 export { scalarToString } from './string_converter';
