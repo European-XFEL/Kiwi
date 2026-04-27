@@ -202,8 +202,10 @@ export class VectorStringValue implements KaraboValue {
   constructor(public value_: string[]) {}
 }
 
-export class VectorCharValue extends StringLike implements KaraboValue {
+export class VectorCharValue implements KaraboValue {
   readonly type_ = HashType.VectorChar;
+  // Must be string
+  constructor(public value_: Uint8Array) {}
 }
 
 export class CharValue implements KaraboValue {
