@@ -49,7 +49,7 @@ export function useSceneLoader(): SceneLoaderResult {
       }
     };
 
-    // Defer rendering until the topology is initialised.
+    // Defer rendering until the topology is initialized.
     // Widgets need the device registry to be ready before subscribing.
     function applyWhenReady(model: SceneModel) {
       if (getTopology().initialized) {

@@ -1,10 +1,11 @@
 import { useState, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { getNetwork } from '@/lib/singletons/api';
 import { AccessLevel } from '@/karabo/data/api';
 import AuthServerClient from '@/lib/http/AuthServerClient';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { ActivityStatus, GuiServerInfo } from '../auth.types';
+import { sceneParamsFromURL } from '@/features/navigation/utils';
 
 interface UseAuthProps {
   probedServerInfo: GuiServerInfo | null;
@@ -32,6 +33,7 @@ export function useAuth({
 }: UseAuthProps): UseAuthReturn {
   const setLoggedIn = useGlobalStore((s) => s.setLoggedIn);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [userName, setUserName] = useState('');
   const [passwd, setPasswd] = useState('');
@@ -63,7 +65,13 @@ export function useAuth({
         sessionStartEpoc: Date.now(),
       });
 
-      navigate('no_scene');
+      const sceneParams = sceneParamsFromURL(location.search);
+      if (!sceneParams) {
+        navigate('no_scene');
+      }
+      // else (there's are scene params in the location bar):  it means
+      // the user activated some previously saved scene bookmark. Just let
+      // the router handle the route and the scene will be loaded.
     },
     [userName, setLoggedIn, navigate, setActivityStatus]
   );
