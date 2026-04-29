@@ -1,6 +1,7 @@
 import { BaseBinding } from './BaseBinding';
 import type { DeviceProxy } from './DeviceProxy';
 import { Signal } from '../utils';
+import { AccessLevel, AccessMode } from '@/karabo/data/enums';
 
 type Unsubscribe = () => void;
 
@@ -9,6 +10,7 @@ export class PropertyProxy {
   private edit_binding?: BaseBinding;
 
   public readonly config_update = new Signal<[PropertyProxy]>();
+  private readonly binding_update_signal = new Signal<[PropertyProxy]>();
 
   private removeConfigUpdate?: Unsubscribe;
   private removeBindingUpdate?: Unsubscribe;
@@ -29,6 +31,10 @@ export class PropertyProxy {
     return this.path;
   }
 
+  get root(): DeviceProxy {
+    return this.root_proxy;
+  }
+
   get value(): any {
     return this.binding?.value?.value_;
   }
@@ -39,6 +45,15 @@ export class PropertyProxy {
 
   get edit_value(): any {
     return this.edit_binding?.value;
+  }
+
+  isEditable(userAccessLevel: AccessLevel): boolean {
+    const binding = this.binding;
+    if (!binding) return false;
+    if (binding.accessMode !== AccessMode.RECONFIGURABLE) return false;
+    if (userAccessLevel < binding.requiredAccessLevel) return false;
+
+    return binding.is_allowed(this.root_proxy.state ?? '');
   }
 
   set edit_value(value: any) {
@@ -70,10 +85,15 @@ export class PropertyProxy {
 
   private onSchemaUpdate(): void {
     this.setBinding(this.root_proxy.getBinding(this.path));
+    this.binding_update_signal.fire(this);
   }
 
   public value_update(callback: (proxy: PropertyProxy) => void): Unsubscribe {
     return this.config_update.subscribe(this, callback);
+  }
+
+  public binding_update(callback: (proxy: PropertyProxy) => void): Unsubscribe {
+    return this.binding_update_signal.subscribe(this, callback);
   }
 
   public dispose(): void {

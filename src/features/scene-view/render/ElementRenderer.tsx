@@ -16,6 +16,7 @@ import {
   UnknownWidgetDataModel,
   UnknownXMLDataModel,
 } from '@/karabo/common/api';
+import { AccessLevel, AccessMode } from '@/karabo/data/enums';
 import { LabelModel, StickerModel } from '@/karabo/common/api';
 import { SceneLinkModel, WebLinkModel } from '@/karabo/common/api';
 import { ControllerContainer, useController } from '@/features/controllers/api';
@@ -49,6 +50,8 @@ const NON_CONTROLLER_WIDGETS = new Set<Function>([
   UnknownXMLDataModel,
 ]);
 
+const EDITABLE_PARENT_COMPONENT = 'EditableApplyLaterComponent';
+
 const isControllerWidget = (
   model: BaseSceneObjectData
 ): model is BaseWidgetObjectData =>
@@ -65,17 +68,98 @@ const ControllerView: React.FC<{
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Renderer: React.ComponentType<any>;
 }> = ({ model, Renderer }) => {
+  const [isTooltipOpen, setIsTooltipOpen] = React.useState(false);
+  const tooltipAutoCloseRef = React.useRef<number | null>(null);
   const ctx = useController(model.keys);
+  const propertyTooltipText =
+    model.keys.filter(Boolean).join(', ') ||
+    (ctx.tooltipText ?? ctx.disabledReason);
+  const tooltipStatusText =
+    ctx.disabledReason && ctx.disabledReason !== propertyTooltipText
+      ? ctx.disabledReason
+      : undefined;
+  const isEditableWidget = model.parent_component === EDITABLE_PARENT_COMPONENT;
+  const hasEditAccess =
+    ctx.primary.binding?.accessMode === AccessMode.RECONFIGURABLE &&
+    ctx.userAccessLevel >=
+      (ctx.primary.binding?.requiredAccessLevel ?? AccessLevel.OBSERVER);
+  const tooltipBody =
+    propertyTooltipText || tooltipStatusText ? (
+      <>
+        {propertyTooltipText && <p>{propertyTooltipText}</p>}
+        {tooltipStatusText && <p>{tooltipStatusText}</p>}
+      </>
+    ) : null;
+  const tooltipContent = isEditableWidget ? (
+    <div className="space-y-0.5">
+      <p>
+        AccessLevel: {AccessLevel[ctx.userAccessLevel]} - Access:{' '}
+        {hasEditAccess ? 'True' : 'False'}
+      </p>
+      {tooltipBody}
+    </div>
+  ) : (
+    tooltipBody
+  );
+  const controllerContent = (
+    <div className="w-full h-full">
+      <Renderer model={model} ctx={ctx} />
+    </div>
+  );
+
+  const clearTooltipAutoClose = React.useCallback(() => {
+    if (tooltipAutoCloseRef.current == null) return;
+
+    window.clearTimeout(tooltipAutoCloseRef.current);
+    tooltipAutoCloseRef.current = null;
+  }, []);
+
+  const handleTooltipOpenChange = React.useCallback(
+    (nextOpen: boolean) => {
+      clearTooltipAutoClose();
+      setIsTooltipOpen(nextOpen);
+
+      if (nextOpen) {
+        tooltipAutoCloseRef.current = window.setTimeout(() => {
+          setIsTooltipOpen(false);
+          tooltipAutoCloseRef.current = null;
+        }, 5000);
+      }
+    },
+    [clearTooltipAutoClose]
+  );
+
+  React.useEffect(() => clearTooltipAutoClose, [clearTooltipAutoClose]);
 
   return (
     <>
-      <Renderer model={model} ctx={ctx} />
+      {tooltipContent ? (
+        <Tooltip
+          delayDuration={1500}
+          open={isTooltipOpen}
+          onOpenChange={handleTooltipOpenChange}
+        >
+          <TooltipTrigger asChild>{controllerContent}</TooltipTrigger>
+          <TooltipContent
+            hideArrow
+            side="bottom"
+            align="start"
+            sideOffset={4}
+            className="max-w-[420px] rounded-none border border-[#b88700] bg-[#fff7bf] px-1.5 py-0.5 text-[11px] leading-tight text-black shadow-sm"
+          >
+            {tooltipContent}
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        controllerContent
+      )}
       <PropertyOverlay
         primary={ctx.primary}
         x={0}
         y={0}
         width={model.width}
         height={model.height}
+        tooltipText={ctx.tooltipText}
       />
     </>
   );

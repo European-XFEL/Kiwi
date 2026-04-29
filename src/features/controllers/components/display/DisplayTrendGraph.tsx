@@ -6,74 +6,114 @@ import type { Data, Layout } from 'plotly.js';
 import type { ControllerContainerContext } from '../ControllerContainer';
 import { DisplayTrendGraphModel } from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/registry';
+import type { PropertyProxyContext } from '@/features/controllers/hooks/usePropertyProxies';
 import { useDisplayTrendGraph } from '@/features/controllers/hooks/useDisplayTrendGraph';
 import { TraceFactory } from '../../utils/traceFactory';
-import { buildTimeValueHeatmap } from '@/features/controllers/utils/heatmapBining';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/select';
 
 // DisplayTrendGraph
 // ----------------------------------------------------------------------------
 
-type ChartType = 'line' | 'scatter' | 'area' | 'bar' | 'heatmap';
+const TRACE_COLORS = [
+  '#009be5',
+  '#ff0040',
+  '#2ca02c',
+  '#ff9f1a',
+  '#8a2be2',
+  '#00a3a3',
+];
+
+type SeriesInfo = {
+  label: string;
+  hoverTemplate: string;
+};
+
+const buildSeriesInfo = (
+  proxies: PropertyProxyContext[],
+  keys: string[]
+): SeriesInfo[] =>
+  proxies.map((proxyCtx, index) => {
+    const key = keys[index];
+    const displayName = proxyCtx.proxy?.binding?.displayedName;
+    const propertyPath = proxyCtx.propertyPath;
+    const title = displayName || propertyPath || key || `Series ${index + 1}`;
+    const subtitle = displayName && key ? key : undefined;
+    const label = displayName
+      ? keys.length === 1 || !key
+        ? displayName
+        : `${displayName} (${key})`
+      : key || propertyPath || `Series ${index + 1}`;
+
+    return {
+      label,
+      hoverTemplate: [
+        title ? `<b>${title}</b>` : undefined,
+        subtitle,
+        'Value: %{y:.6f}',
+      ]
+        .filter(Boolean)
+        .join('<br>')
+        .concat('<extra></extra>'),
+    };
+  });
 
 const DisplayTrendGraph: React.FC<{
   model: DisplayTrendGraphModel;
   ctx?: ControllerContainerContext;
 }> = React.memo(({ model, ctx }) => {
-  const [chartType, setChartType] = React.useState<ChartType>('line');
+  if (!ctx) return null;
 
-  const { timestamps, values, isOffline } = useDisplayTrendGraph(ctx?.primary, {
-    maxDataPoints: 1000,
-    throttleDelayMs: 500,
-  });
+  const proxies = ctx.proxies;
+  const { series, isOffline } = useDisplayTrendGraph(
+    proxies,
+    ctx.root.isOffline,
+    ctx.root.deviceId,
+    { maxDataPoints: 1000, throttleDelayMs: 500 }
+  );
 
-  const noData = values.length === 0;
+  const noData = series.every((item) => item.values.length === 0);
+
+  const seriesInfoSignature = proxies
+    .map((proxyCtx, index) =>
+      [
+        model.keys[index] ?? '',
+        proxyCtx.propertyPath ?? '',
+        proxyCtx.proxy?.binding?.displayedName ?? '',
+      ].join('\u001f')
+    )
+    .join('\u001e');
+
+  const seriesInfo = React.useMemo(
+    () => buildSeriesInfo(proxies, model.keys),
+    // Labels and hover text only change when schema-ish metadata changes.
+    // Live value updates replace `proxies`, but they should not rebuild this memo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [seriesInfoSignature]
+  );
 
   const data = React.useMemo<Data[]>(() => {
-    if (chartType === 'heatmap') {
-      return [
-        TraceFactory.heatmap({
-          kind: 'heatmap',
-          series: buildTimeValueHeatmap(timestamps, values, {
-            timeBins: 24,
-            valueBins: 10,
-          }),
-          name: 'Density',
-        }),
-      ];
-    }
+    const builder = TraceFactory.line as (input: any) => Data;
 
-    const traceBuilders: Record<
-      Exclude<ChartType, 'heatmap'>,
-      keyof typeof TraceFactory
-    > = {
-      line: 'line',
-      scatter: 'points',
-      area: 'area',
-      bar: 'bar',
-    };
+    return series.flatMap((item, index) => {
+      if (item.values.length === 0) return [];
 
-    const builderKey =
-      traceBuilders[chartType as Exclude<ChartType, 'heatmap'>];
-    const builder = TraceFactory[builderKey] as (input: any) => Data;
-
-    return [
-      builder({
+      const color = TRACE_COLORS[index % TRACE_COLORS.length];
+      const info = seriesInfo[index];
+      const trace = builder({
         kind: 'xy',
-        series: { x: timestamps, y: values },
-        name: 'Series',
-      }),
-    ];
-  }, [chartType, timestamps, values]);
+        series: { x: item.timestamps, y: item.values },
+        name: info?.label,
+      }) as Data;
+
+      return {
+        ...trace,
+        hovertemplate: info?.hoverTemplate ?? 'Value: %{y:.6f}<extra></extra>',
+        marker: { ...((trace as any).marker ?? {}), color },
+        line: { ...((trace as any).line ?? {}), color },
+      };
+    });
+  }, [series, seriesInfo]);
 
   const layout = React.useMemo<Partial<Layout>>(() => {
-    const isHeatmap = chartType === 'heatmap';
     const bgcolor =
       model.background && model.background !== 'transparent'
         ? model.background
@@ -92,26 +132,27 @@ const DisplayTrendGraph: React.FC<{
       title: model.title
         ? { text: model.title, font: { size: 13 } }
         : undefined,
-      margin: { t: model.title ? 48 : 36, r: 12, b: 36, l: 44 },
+      margin: { t: model.title ? 32 : 8, r: 40, b: 28, l: 36, pad: 2 },
       paper_bgcolor: bgcolor,
       plot_bgcolor: bgcolor,
       xaxis: {
         title: {
-          text: isHeatmap ? 'Time bins' : xLabel || 'Time',
+          text: xLabel || 'Time',
           standoff: 8,
         },
-        showgrid: !isHeatmap && model.x_grid,
-        type: isHeatmap ? undefined : 'date',
+        showgrid: model.x_grid,
+        type: 'date',
         autorange: model.x_invert ? 'reversed' : true,
+        hoverformat: '%b %d, %Y %H:%M:%S.%L',
         automargin: true,
       },
       yaxis: {
         title: {
-          text: isHeatmap ? 'Value bins' : yLabel || 'Value',
+          text: yLabel || 'Value',
           standoff: 8,
         },
-        showgrid: !isHeatmap && model.y_grid,
-        type: !isHeatmap && model.y_log ? 'log' : undefined,
+        showgrid: model.y_grid,
+        type: model.y_log ? 'log' : undefined,
         autorange: model.y_invert
           ? 'reversed'
           : model.y_autorange
@@ -120,48 +161,39 @@ const DisplayTrendGraph: React.FC<{
         range: yRange,
         automargin: true,
       },
-      hovermode: isHeatmap ? 'closest' : 'x unified',
+      hovermode: 'x unified',
+      hoverlabel: {
+        bgcolor: 'rgba(255, 255, 255, 0.78)',
+        bordercolor: 'rgba(148, 163, 184, 0.35)',
+        font: { color: '#111827' },
+      },
+      modebar: { bgcolor: '#ffffff' },
       showlegend: false,
     };
-  }, [chartType, model]);
+  }, [model]);
 
   if (isOffline || noData) {
     return (
-      <div
-        className="flex items-center justify-center w-full h-full border border-slate-200 bg-slate-50 text-xs text-slate-500 select-none"
-        title={ctx?.tooltipText ?? ctx?.disabledReason}
-      >
+      <div className="flex items-center justify-center w-full h-full border border-slate-200 bg-slate-50 text-xs text-slate-500 select-none">
         {isOffline ? 'Device offline' : 'Waiting for data…'}
       </div>
     );
   }
 
   return (
-    <div className="relative w-full h-full" title={ctx?.tooltipText}>
-      <div className="absolute top-1 right-1 z-10">
-        <Select
-          value={chartType}
-          onValueChange={(v) => setChartType(v as ChartType)}
-          disabled={isOffline}
-        >
-          <SelectTrigger className="w-[100px] h-7 text-xs bg-white/80">
-            <SelectValue placeholder="Chart type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="line">Line</SelectItem>
-            <SelectItem value="scatter">Scatter</SelectItem>
-            <SelectItem value="area">Area</SelectItem>
-            <SelectItem value="bar">Bar</SelectItem>
-            <SelectItem value="heatmap">Heatmap</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+    <div className="relative w-full h-full rounded-sm border border-slate-200">
       <Plot
+        className="kiwi-trend-chart"
         data={data}
         layout={layout}
-        config={{ responsive: true, displayModeBar: false, displaylogo: false }}
+        config={{
+          responsive: true,
+          scrollZoom: true,
+          displayModeBar: true,
+          displaylogo: false,
+        }}
         useResizeHandler
-        style={{ width: '100%', height: '100%', opacity: isOffline ? 0.45 : 1 }}
+        style={{ width: '100%', height: '100%' }}
       />
     </div>
   );
