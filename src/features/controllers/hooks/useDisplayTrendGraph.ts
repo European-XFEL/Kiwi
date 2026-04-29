@@ -1,10 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'lodash';
-import type { UsePropertyProxyUpdate } from '@/lib/binding/api';
+import type { PropertyProxyContext } from './usePropertyProxies';
 
 interface TrendDataPoint {
   timestamp: number; // epoch ms
   value: number;
+}
+
+export interface TrendSeries {
+  deviceId: string | undefined;
+  propertyPath: string | undefined;
+  timestamps: number[];
+  values: number[];
+  dataPoints: number;
 }
 
 export interface TrendConfig {
@@ -25,14 +33,22 @@ const toFiniteNumber = (raw: unknown): number | null => {
   return Number.isFinite(n) ? n : null;
 };
 
-const safeNowMs = (primary?: UsePropertyProxyUpdate): number => {
+const timestampSeconds = (
+  primary?: PropertyProxyContext
+): number | undefined => {
   try {
-    const seconds = primary?.timestamp?.toTimestamp();
-    // toTimestamp() returns seconds — convert to epoch milliseconds.
-    if (seconds != null && Number.isFinite(seconds)) return seconds * 1000;
+    const seconds = primary?.proxy?.timestamp?.toTimestamp();
+    if (seconds != null && Number.isFinite(seconds)) return seconds;
   } catch {
     // fall through
   }
+  return undefined;
+};
+
+const safeNowMs = (primary?: PropertyProxyContext): number => {
+  const seconds = timestampSeconds(primary);
+  // toTimestamp() returns seconds — convert to epoch milliseconds.
+  if (seconds != null) return seconds * 1000;
   return Date.now();
 };
 
@@ -52,7 +68,9 @@ const prune = (data: TrendDataPoint[], max: number, windowMs: number) => {
  * useDisplayTrendGraph
  */
 export const useDisplayTrendGraph = (
-  primary: UsePropertyProxyUpdate | undefined,
+  proxies: PropertyProxyContext[] = [],
+  isOffline: boolean,
+  deviceId: string | undefined,
   config: TrendConfig = {}
 ) => {
   const { maxDataPoints, timeWindowMs, throttleDelayMs } = {
@@ -60,90 +78,131 @@ export const useDisplayTrendGraph = (
     ...config,
   };
 
-  const isOffline = primary?.isOffline ?? false;
+  const seriesCount = proxies.length;
+  const bindingKey = proxies
+    .map(
+      (proxyContext) =>
+        `${proxyContext.proxy?.root.deviceId ?? ''}.${proxyContext.propertyPath ?? ''}`
+    )
+    .join(',');
+  const [trendData, setTrendData] = useState<TrendDataPoint[][]>([]);
+  const lastTsRef = useRef<number[]>([]);
+  const pendingRef = useRef<Map<number, TrendDataPoint>>(new Map());
+  const proxiesRef = useRef(proxies);
+  proxiesRef.current = proxies;
+  const sampleKey = proxies
+    .map((proxyContext) => {
+      const value = toFiniteNumber(proxyContext.proxy?.value);
+      const timestamp = timestampSeconds(proxyContext);
+      return [
+        proxyContext.proxy?.root.deviceId ?? '',
+        proxyContext.propertyPath ?? '',
+        value ?? '',
+        timestamp ?? '',
+      ].join(':');
+    })
+    .join(',');
 
-  const [trendData, setTrendData] = useState<TrendDataPoint[]>([]);
-  const lastTsRef = useRef<number>(-Infinity);
-
-  // Ref keeps the append function fresh without changing throttledUpdate's identity.
-  const appendPointRef = useRef((point: TrendDataPoint) => {
-    setTrendData((prev) =>
-      prune([...prev, point], maxDataPoints, timeWindowMs)
-    );
-  });
-
-  useEffect(() => {
-    appendPointRef.current = (point: TrendDataPoint) => {
-      setTrendData((prev) =>
-        prune([...prev, point], maxDataPoints, timeWindowMs)
-      );
-    };
-  }, [maxDataPoints, timeWindowMs]);
-
-  // throttledUpdate only re-creates when throttleDelayMs changes — not on prune config changes.
-  const throttledUpdate = useMemo(
+  const flushPending = useMemo(
     () =>
       throttle(
-        (point: TrendDataPoint) => appendPointRef.current(point),
+        () => {
+          const pending = pendingRef.current;
+          if (pending.size === 0) return;
+
+          pendingRef.current = new Map();
+          setTrendData((prev) => {
+            const next = Array.from(
+              { length: seriesCount },
+              (_, index) => prev[index] ?? []
+            );
+
+            pending.forEach((point, index) => {
+              next[index] = prune(
+                [...(next[index] ?? []), point],
+                maxDataPoints,
+                timeWindowMs
+              );
+            });
+
+            return next;
+          });
+        },
         throttleDelayMs,
         { leading: true, trailing: true }
       ),
-    [throttleDelayMs]
+    [maxDataPoints, seriesCount, throttleDelayMs, timeWindowMs]
   );
 
   // reset on binding identity change
   useEffect(() => {
-    throttledUpdate.cancel();
-    setTrendData([]);
-    lastTsRef.current = -Infinity;
-  }, [primary?.deviceId, primary?.propertyPath, throttledUpdate]);
+    flushPending.cancel();
+    pendingRef.current.clear();
+    setTrendData(Array.from({ length: seriesCount }, () => []));
+    lastTsRef.current = Array.from({ length: seriesCount }, () => -Infinity);
+  }, [deviceId, flushPending, seriesCount, bindingKey]);
 
   // clear on offline
   useEffect(() => {
     if (!isOffline) return;
 
-    throttledUpdate.cancel();
-    setTrendData([]);
-    lastTsRef.current = -Infinity;
-  }, [isOffline, throttledUpdate]);
+    flushPending.cancel();
+    pendingRef.current.clear();
+    setTrendData(Array.from({ length: seriesCount }, () => []));
+    lastTsRef.current = Array.from({ length: seriesCount }, () => -Infinity);
+  }, [flushPending, isOffline, seriesCount]);
 
   // append points on updates
   useEffect(() => {
-    if (!primary || isOffline) return;
+    if (isOffline) return;
 
-    const value = toFiniteNumber(primary.value);
-    if (value == null) return;
+    proxiesRef.current.forEach((proxyContext, index) => {
+      const value = toFiniteNumber(proxyContext.proxy?.value);
+      if (value == null) return;
 
-    const timestamp = safeNowMs(primary);
-    if (timestamp <= lastTsRef.current) return;
-    lastTsRef.current = timestamp;
+      const timestamp = safeNowMs(proxyContext);
+      if (timestamp <= (lastTsRef.current[index] ?? -Infinity)) return;
 
-    throttledUpdate({ timestamp, value });
-  }, [primary?.value, primary?.timestamp, primary, isOffline, throttledUpdate]);
+      lastTsRef.current[index] = timestamp;
+      pendingRef.current.set(index, { timestamp, value });
+    });
+
+    flushPending();
+  }, [flushPending, isOffline, sampleKey]);
 
   // periodic pruning
   useEffect(() => {
     const id = setInterval(() => {
-      setTrendData((prev) => prune(prev, maxDataPoints, timeWindowMs));
+      setTrendData((prev) =>
+        prev.map((series) => prune(series, maxDataPoints, timeWindowMs))
+      );
     }, 5000);
 
     return () => clearInterval(id);
   }, [maxDataPoints, timeWindowMs]);
 
   // cleanup
-  useEffect(() => () => throttledUpdate.cancel(), [throttledUpdate]);
+  useEffect(() => () => flushPending.cancel(), [flushPending]);
 
-  const timestamps = useMemo(
-    () => trendData.map((d) => d.timestamp),
-    [trendData]
+  const series = useMemo<TrendSeries[]>(
+    () =>
+      proxies.map((proxyContext, index) => {
+        const data = trendData[index] ?? [];
+
+        return {
+          deviceId: proxyContext.proxy?.root.deviceId,
+          propertyPath: proxyContext.propertyPath,
+          timestamps: data.map((d) => d.timestamp),
+          values: data.map((d) => d.value),
+          dataPoints: data.length,
+        };
+      }),
+    [proxies, trendData]
   );
-  const values = useMemo(() => trendData.map((d) => d.value), [trendData]);
 
   return {
-    timestamps,
-    values,
-    dataPoints: trendData.length,
-    graphType: 'line' as const,
+    series,
+    dataPoints: series.reduce((sum, item) => sum + item.dataPoints, 0),
     isOffline,
   };
 };

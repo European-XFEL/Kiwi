@@ -204,3 +204,40 @@ body {
     opacity: 0;
   }
 }
+
+/* Trend chart — vertical modebar sidebar */
+.kiwi-trend-chart .modebar-container {
+  top: 4px !important;
+  right: -36px !important;
+  bottom: auto !important;
+  height: max-content !important;
+  width: 32px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center;
+  padding: 2px 0;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 3px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+}
+.kiwi-trend-chart .modebar {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100%;
+}
+.kiwi-trend-chart .modebar-group {
+  display: flex !important;
+  flex-direction: column !important;
+  border-right: none !important;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18) !important;
+  padding: 1px 0 !important;
+  margin: 0 !important;
+}
+.kiwi-trend-chart .modebar-group:last-child {
+  border-bottom: none !important;
+}
+.kiwi-trend-chart .modebar-btn svg {
+  width: 18px !important;
+  height: 18px !important;
+  color: #e58a02 !important;
+}
