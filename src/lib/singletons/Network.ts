@@ -405,9 +405,9 @@ export class Network {
   public performLogin() {
     if (!this._session) return;
     if (this._session.isAuthSession) {
-      this.onLogin('KIWI', '3.0.0', this._session.oneTimeToken, undefined);
+      this.onLogin('KIWI', '3.1.0', this._session.oneTimeToken, undefined);
     } else {
-      this.onLogin('KIWI', '3.0.0', undefined, this._session.userId);
+      this.onLogin('KIWI', '3.1.0', undefined, this._session.userId);
     }
   }
 
