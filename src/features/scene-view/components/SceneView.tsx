@@ -67,17 +67,24 @@ const SceneView: React.FC = () => {
     [scene]
   );
 
-  // Stage wraps widgets with the current scale transform.
-  // Rebuilds on scale change but passes the same stable widgets reference,
-  // so React reconciles without re-rendering the widget subtree.
+  // Stage wraps the rendered scene layers with the current scale transform.
+  // Rebuilds on scale change but passes the same stable layer reference,
+  // so React reconciles without re-rendering the scene content.
+  // Key the stage by scene identity so loading another scene fully unmounts
+  // the previous render subtree and disposes widget-local controller state.
   const stage = React.useMemo(
     () =>
       scene ? (
-        <SceneStage width={scene.width} height={scene.height} scale={scale}>
+        <SceneStage
+          key={scene.uuid}
+          width={scene.width}
+          height={scene.height}
+          scale={scale}
+        >
           {layers}
         </SceneStage>
       ) : null,
-    [scene?.width, scene?.height, scale, layers]
+    [scene?.uuid, scene?.width, scene?.height, scale, layers]
   );
 
   if (!scene)
