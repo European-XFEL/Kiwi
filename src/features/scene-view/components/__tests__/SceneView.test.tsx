@@ -8,7 +8,7 @@ const mockWidgetUnmountSpy = jest.fn();
 const mockShapeMountSpy = jest.fn();
 const mockShapeUnmountSpy = jest.fn();
 
-// ElementRenderer is mocked to components that track phase mount/unmount.
+// KaraboSceneWidget is mocked to components that track phase mount/unmount.
 // Written without JSX so the factory doesn't reference the hoisted jsx_runtime.
 jest.mock('../../render/ElementRenderer', () => {
   const ReactActual = jest.requireActual<typeof React>('react');
@@ -33,7 +33,7 @@ jest.mock('../../render/ElementRenderer', () => {
   }
 
   return {
-    ElementRenderer: function MockElementRenderer({
+    KaraboSceneWidget: function MockKaraboSceneWidget({
       phase,
     }: {
       phase: 'shape' | 'widget';
