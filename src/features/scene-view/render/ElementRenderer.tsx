@@ -224,26 +224,16 @@ export function renderContent(
   return <Renderer model={model} />;
 }
 
-// ElementRenderer
+// KaraboSceneWidget
 // ----------------------------------------------------------------------------
-// Wraps renderContent in a PositionedShell.
+// Wraps renderContent in a layout that takes the size of the model and applies a layout.
+// The single absolute-positioned div that places an element in scene space.
 // Only used by SceneView — never inside layout wrapper divs.
 
-export const ElementRenderer: React.FC<{
+export const KaraboSceneWidget: React.FC<{
   model: BaseSceneObjectData;
   phase?: RenderPhase;
-}> = ({ model, phase = 'all' }) => (
-  <PositionedShell model={model}>{renderContent(model, phase)}</PositionedShell>
-);
-
-// PositionedShell
-// ----------------------------------------------------------------------------
-// The single absolute-positioned div that places an element in scene space.
-
-const PositionedShell: React.FC<{
-  model: BaseSceneObjectData;
-  children: React.ReactNode;
-}> = ({ model, children }) => {
+}> = ({ model, phase = 'all' }) => {
   const { x, y, width, height } = resolveBounds(model);
 
   return (
@@ -257,7 +247,7 @@ const PositionedShell: React.FC<{
         pointerEvents: containerPointerEvents(),
       }}
     >
-      {children}
+      {renderContent(model, phase)}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import { ElementRenderer } from '../render/ElementRenderer';
+import { KaraboSceneWidget } from '../render/ElementRenderer';
 import { useSceneLoader } from '../hooks/useSceneLoader';
 import {
   SceneFatalError,
@@ -57,10 +57,14 @@ const SceneView: React.FC = () => {
       scene ? (
         <>
           {scene.children.map((child, i) => (
-            <ElementRenderer key={`shape_${i}`} model={child} phase="shape" />
+            <KaraboSceneWidget key={`shape_${i}`} model={child} phase="shape" />
           ))}
           {scene.children.map((child, i) => (
-            <ElementRenderer key={`widget_${i}`} model={child} phase="widget" />
+            <KaraboSceneWidget
+              key={`widget_${i}`}
+              model={child}
+              phase="widget"
+            />
           ))}
         </>
       ) : null,
