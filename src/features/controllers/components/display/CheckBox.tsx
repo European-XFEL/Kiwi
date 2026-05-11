@@ -3,7 +3,7 @@
 import React from 'react';
 import type { ControllerContainerContext } from '../ControllerContainer';
 import { CheckBoxModel } from '@/karabo/common/api';
-import { registerRenderer } from '@/features/scene-view/registry';
+import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { Checkbox } from '@/components/checkbox';
 //import { Hash } from '@/karabo/data/hash';
 //import { getNetwork } from '@/lib/singletons/api';

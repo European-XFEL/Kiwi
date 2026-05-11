@@ -6,7 +6,7 @@ import {
   DisplayAlarmFloatModel,
   FONT_FAMILY_DEFAULT,
 } from '@/karabo/common/api';
-import { registerRenderer } from '@/features/scene-view/registry';
+import { registerRenderer } from '@/features/scene-view/renderRegistry';
 
 // DisplayAlarmFloat
 // ----------------------------------------------------------------------------

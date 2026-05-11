@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { RectangleModel } from '@/karabo/common/api';
-import { registerRenderer } from '../../render/registry';
+import { registerRenderer } from '../../renderRegistry';
 import { strokeFillAttrs } from './shapeUtils';
 
 // Rectangle

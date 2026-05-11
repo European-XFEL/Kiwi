@@ -9,7 +9,7 @@ import {
   WebLinkModel,
 } from '@/karabo/common/scenemodel/widgets/links';
 import type { ControllerContainerContext } from '@/features/controllers/components/ControllerContainer';
-import { registerRenderer } from '@/features/scene-view/registry';
+import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { getQFontTextStyle } from '@/features/controllers/utils/fonts';
 
 // useSceneNavigate

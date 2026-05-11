@@ -1,4 +1,4 @@
-import { KaraboSceneWidget } from '../render/ElementRenderer';
+import { KaraboSceneWidget } from '../KaraboSceneWidget';
 import { useSceneLoader } from '../hooks/useSceneLoader';
 import {
   SceneFatalError,

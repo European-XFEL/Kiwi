@@ -9,5 +9,3 @@ export { FitModeToolbar } from './components/FitModeToolbar';
 export { useSceneLoader } from './hooks/useSceneLoader';
 export { useSceneScale } from './hooks/useSceneScale';
 export type { FitMode, Dimensions } from './hooks/useSceneScale';
-export { registerRenderer, getRenderer } from './render/registry';
-export type { Renderer } from './render/registry';
