@@ -5,7 +5,7 @@ import Plot from 'react-plotly.js';
 import type { Data, Layout } from 'plotly.js';
 import type { ControllerContainerContext } from '../ControllerContainer';
 import { DisplayTrendGraphModel } from '@/karabo/common/api';
-import { registerRenderer } from '@/features/scene-view/registry';
+import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import type { PropertyProxyContext } from '@/features/controllers/hooks/usePropertyProxies';
 import { useDisplayTrendGraph } from '@/features/controllers/hooks/useDisplayTrendGraph';
 import { TraceFactory } from '../../utils/traceFactory';

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { PolygonModel } from '@/karabo/common/api';
-import { registerRenderer } from '../../render/registry';
+import { registerRenderer } from '../../renderRegistry';
 import { strokePad, shapeSvgProps, strokeFillAttrs } from './shapeUtils';
 
 // Polygon

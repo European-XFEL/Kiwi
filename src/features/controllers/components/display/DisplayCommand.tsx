@@ -9,7 +9,7 @@
 import React from 'react';
 import type { ControllerContainerContext } from '../ControllerContainer';
 import { DisplayCommandModel } from '@/karabo/common/api';
-import { registerRenderer } from '@/features/scene-view/registry';
+import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { AccessLevel } from '@/karabo/data/api';
 import { ProxyStatus } from '@/lib/binding/api';

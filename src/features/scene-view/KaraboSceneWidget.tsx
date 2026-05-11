@@ -20,12 +20,12 @@ import { AccessLevel, AccessMode } from '@/karabo/data/enums';
 import { LabelModel, StickerModel } from '@/karabo/common/api';
 import { SceneLinkModel, WebLinkModel } from '@/karabo/common/api';
 import { ControllerContainer, useController } from '@/features/controllers/api';
-import { containerPointerEvents } from '../utils/mode';
+import { containerPointerEvents } from './utils/mode';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tooltip';
 
-import { getRenderer } from './registry';
+import { getRenderer } from './renderRegistry';
 import { isInRenderPhase, resolveBounds, type RenderPhase } from './bounds';
-import { PropertyOverlay } from '../components/PropertyOverlay';
+import { PropertyOverlay } from './components/PropertyOverlay';
 
 export { resolveBounds, isLayout } from './bounds';
 

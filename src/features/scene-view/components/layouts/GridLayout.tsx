@@ -5,10 +5,10 @@
 import React from 'react';
 
 import { GridLayoutModel, GridLayoutChildData } from '@/karabo/common/api';
-import { renderContent } from '../../render/ElementRenderer';
-import { resolveBounds } from '../../render/bounds';
+import { renderContent } from '../../KaraboSceneWidget';
+import { resolveBounds } from '../../bounds';
 import { containerPointerEvents } from '../../utils/mode';
-import { registerRenderer } from '../../render/registry';
+import { registerRenderer } from '../../renderRegistry';
 
 type GridLayoutProps = {
   model: GridLayoutModel;

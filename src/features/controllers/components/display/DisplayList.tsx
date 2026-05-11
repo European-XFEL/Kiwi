@@ -3,7 +3,7 @@
 import React from 'react';
 import type { ControllerContainerContext } from '../ControllerContainer';
 import { DisplayListModel, FONT_FAMILY_DEFAULT } from '@/karabo/common/api';
-import { registerRenderer } from '@/features/scene-view/registry';
+import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { scalarToString } from '@/karabo/data/api';
 
 // DisplayList

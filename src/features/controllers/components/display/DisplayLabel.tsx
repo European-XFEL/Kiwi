@@ -3,7 +3,7 @@
 import React from 'react';
 import type { ControllerContainerContext } from '../ControllerContainer';
 import { DisplayLabelModel } from '@/karabo/common/api';
-import { registerRenderer } from '@/features/scene-view/registry';
+import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { scalarToString } from '@/karabo/data/api';
 import { getControllerFontStyle } from '../../utils/fonts';
 

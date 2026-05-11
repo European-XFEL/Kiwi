@@ -10,7 +10,7 @@ const mockShapeUnmountSpy = jest.fn();
 
 // KaraboSceneWidget is mocked to components that track phase mount/unmount.
 // Written without JSX so the factory doesn't reference the hoisted jsx_runtime.
-jest.mock('../../render/ElementRenderer', () => {
+jest.mock('../../KaraboSceneWidget', () => {
   const ReactActual = jest.requireActual<typeof React>('react');
 
   function LifecycleTracker({ phase }: { phase: 'shape' | 'widget' }) {

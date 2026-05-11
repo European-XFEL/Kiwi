@@ -3,7 +3,7 @@
 import React from 'react';
 import type { ControllerContainerContext } from '../ControllerContainer';
 import { StatefulIconWidgetModel } from '@/karabo/common/api';
-import { registerRenderer } from '@/features/scene-view/registry';
+import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { useGuiStateColor } from '../../hooks/useGuiStateColor';
 import { statefulIconModelsById } from '../../utils/bootstrapStatefulIcons';
 

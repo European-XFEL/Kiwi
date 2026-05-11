@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { ArrowPolygonModel } from '@/karabo/common/api';
-import { registerRenderer } from '@/features/scene-view/render/registry';
+import { registerRenderer } from '../../renderRegistry';
 import { strokePad, shapeSvgProps, strokeFillAttrs } from './shapeUtils';
 
 // ArrowPolygon
