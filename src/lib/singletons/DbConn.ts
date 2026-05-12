@@ -364,11 +364,24 @@ export class DbConnection {
               ? xmlObj.xml.root.project.scenes
               : xmlObj.xml.project.scenes;
           if (xmlScenes['KRB_Item'] !== undefined) {
-            for (let i = 0; i < xmlScenes.KRB_Item.length; i++) {
+            const krbItems = xmlScenes.KRB_Item;
+            if (typeof (krbItems as any).length === 'number') {
+              // The project has more than one scene - the XML parser has
+              // returned a collection with the length property
+              for (let i = 0; i < krbItems.length; i++) {
+                scenes.push({
+                  domain: domain,
+                  uuid: krbItems[i].uuid['#text'],
+                  item_type: 'scene',
+                });
+              }
+            } else {
+              // The project has a single scene - the XML parser returned a
+              // single object instead of a collection with one element
               scenes.push({
                 domain: domain,
-                uuid: xmlScenes.KRB_Item[i].uuid['#text'],
-                item_type: itemType,
+                uuid: krbItems.uuid['#text'],
+                item_type: 'scene',
               });
             }
           }
