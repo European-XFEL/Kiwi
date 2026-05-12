@@ -17,3 +17,5 @@ export {
   getQFontTextStyle,
   getControllerFontStyle,
 } from './utils/fonts';
+
+export * from './utils/controller_proxies';
