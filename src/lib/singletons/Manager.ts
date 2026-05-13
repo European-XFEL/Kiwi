@@ -188,12 +188,11 @@ export class Manager {
   }
 
   public handle_notification(hash: Hash): void {
-    const session = this._network.session;
-    // If a notification arrives before user is logged, it is interpreted as a login error.
-    if (session && !session.userLogged) {
-      const message = hash.getValue('message') as string;
-      session.startErrorHandler(message);
-    }
+    // A notification in the GUI Client is handled globally independently of a user session
+    // being active or not - it always triggers a modeless dialog that displays the message.
+    // Similarly, Kiwi will always display a toaster with the message, independently of being
+    // in logged in or in logged out state (even on top of an unrecoverable error)
+    broadcast_event(KaraboEvent.Notification, hash);
   }
 
   public handle_onSessionExpired(_: Hash): void {

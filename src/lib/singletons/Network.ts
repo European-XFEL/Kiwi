@@ -13,6 +13,7 @@ import { Websocket, WebsocketBuilder } from 'websocket-ts';
 
 const MAX_ITEM_PROCESSING = 5;
 const REQUEST_REPLY_TIMEOUT = 5;
+const KIWI_GUI_CLIENT_VERSION = '3.1.0';
 
 type BinHashItem = { bin: ArrayBuffer; time: number };
 
@@ -405,9 +406,19 @@ export class Network {
   public performLogin() {
     if (!this._session) return;
     if (this._session.isAuthSession) {
-      this.onLogin('KIWI', '3.1.0', this._session.oneTimeToken, undefined);
+      this.onLogin(
+        'KIWI',
+        KIWI_GUI_CLIENT_VERSION,
+        this._session.oneTimeToken,
+        undefined
+      );
     } else {
-      this.onLogin('KIWI', '3.1.0', undefined, this._session.userId);
+      this.onLogin(
+        'KIWI',
+        KIWI_GUI_CLIENT_VERSION,
+        undefined,
+        this._session.userId
+      );
     }
   }
 

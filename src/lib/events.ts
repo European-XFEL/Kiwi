@@ -13,6 +13,7 @@ enum KaraboEvent {
   SessionDropped = 'SessionDropped',
   SessionExpired = 'SessionExpired',
   SessionExpirationNotified = 'SessionExpirationNotified',
+  Notification = 'Notification',
 }
 
 function broadcast_event(sender: KaraboEvent, data: Hash) {

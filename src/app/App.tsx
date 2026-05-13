@@ -12,6 +12,7 @@ import { Toaster } from '@/components/sonner';
 import { AccessLevel } from '@/karabo/data/enums';
 import { KaraboEvent, useKaraboEvent } from '@/lib/events';
 import { Hash } from '@/karabo/data/hash';
+import { toast } from 'sonner';
 
 const App: React.FC = () => {
   const executedOnceRef = React.useRef('');
@@ -34,6 +35,27 @@ const App: React.FC = () => {
 
   useKaraboEvent(KaraboEvent.SessionExpirationNotified, (hash: Hash) => {
     setNotifiedSessionExpiration(hash.getValue('secondsToExpiration'));
+  });
+
+  useKaraboEvent(KaraboEvent.Notification, (hash: Hash) => {
+    // Note: The notification being a one time event that is then "kept-alive"
+    // for duration milliseconds (or until dismissal by a user) as a
+    // top-most UI element by the toast component, doesn't need to change the
+    // global state of the application.
+    toast(
+      <p style={{ fontSize: '1.25em' }}>
+        <b>{hash.getValue('message')}</b>
+        <br />
+        &nbsp;
+        <br />
+      </p>,
+      {
+        position: 'top-center',
+        duration: 20_000,
+        description: `notification from GUI Server`,
+        action: { label: 'Dismiss', onClick: () => {} },
+      }
+    );
   });
 
   useEffect(() => {
