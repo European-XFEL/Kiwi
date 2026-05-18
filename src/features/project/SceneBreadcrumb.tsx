@@ -80,9 +80,21 @@ export default function SceneBreadcrumb({
     if (!projectsInitializedRef.current) {
       projectsInitializedRef.current = true;
       setProjectsLoading(true);
+      // Selected project will be updated once the list of projects is retrieved
       getDbConn().listProjects(domain);
+    } else {
+      // As the project list has already been loaded,
+      // immediately sync the selected project
+      const selected = projects?.find((p) => p.name == projectName);
+      if (selected) {
+        setSelectedProject(selected);
+      }
+      // and the displaySceneName
+      if (displaySceneName !== sceneName) {
+        setDisplaySceneName(sceneName);
+      }
     }
-  }, []);
+  }, [domain, projectName, sceneName]);
 
   const handleProjectDropdownOpen = () => {
     setProjectsLoading(true);
@@ -171,6 +183,19 @@ export default function SceneBreadcrumb({
     }
   };
 
+  const handleSceneDropdownClose = () => {
+    if (!displaySceneName) {
+      // The scene selection dropdown was closed without any scene being
+      // selected. Have to synchronize the breadcrumb with the scene being
+      // displayed
+      const project = projects?.find((p) => p.name === projectName);
+      if (project) {
+        setSelectedProject(project);
+      }
+      setDisplaySceneName(sceneName);
+    }
+  };
+
   const handleSceneClick = (scene: ProjectSceneInfo) => {
     setDisplaySceneName(scene.name);
     setSceneOpen(false);
@@ -250,7 +275,11 @@ export default function SceneBreadcrumb({
             open={sceneOpen}
             onOpenChange={(open) => {
               setSceneOpen(open);
-              if (open) handleSceneDropdownOpen();
+              if (open) {
+                handleSceneDropdownOpen();
+              } else {
+                handleSceneDropdownClose();
+              }
             }}
           >
             <DropdownMenuTrigger asChild>
