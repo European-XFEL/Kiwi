@@ -3,6 +3,16 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import svgr from 'vite-plugin-svgr';
+import { execSync } from 'child_process';
+
+// Fetch the latest git tag. Falls back to '0.0.0' if no tag exists.
+const getGitVersion = () => {
+  try {
+    return execSync('git describe --tags --always').toString().trim();
+  } catch (e) {
+    return '0.0.0';
+  }
+};
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -34,6 +44,9 @@ export default defineConfig({
       include: '**/*.svg',
     }),
   ],
+  define: {
+    'import.meta.env.VITE_APP_VERSION': JSON.stringify(getGitVersion()),
+  },
   resolve: {
     alias: {
       path: 'path-browserify',
