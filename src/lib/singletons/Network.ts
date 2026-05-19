@@ -288,8 +288,23 @@ export class Network {
     this._hashDeque = new Deque();
     if (this._ws) this._ws.close();
 
-    this._ws = new WebsocketBuilder(this._wsProxyURL)
-      .onOpen((ws) => ws.send(JSON.stringify({ host, port })))
+    // Initialize the two possible connection modes: direct connection to a GUI
+    // server web socket port (empty wsProxyURL) or proxy-intermediated connection
+    // to an older GUI server with only a tcp port
+    const useWebSocketProxy = this._wsProxyURL && this._wsProxyURL.length > 0;
+    const websocketURL = useWebSocketProxy
+      ? this._wsProxyURL
+      : `ws://${host}:${port}`;
+
+    this._ws = new WebsocketBuilder(websocketURL)
+      .onOpen((ws) => {
+        if (useWebSocketProxy) {
+          // When the connection to the GUI server is intermediated by a web socket proxy,
+          // the target GUI Server host and port must be sent for the proxy to initialize
+          // the connection
+          ws.send(JSON.stringify({ host, port }));
+        }
+      })
       .onClose((ws, ev) => {
         if (!this._closeRequested && !this._sessionExpired) {
           // Outside normal session finishes (e.g. user logouts) and session

@@ -25,9 +25,22 @@ export function probeServer(
   onSuccess: (serverInfo: GuiServerInfo) => void,
   onError: (errMsg: string) => void
 ): void {
-  new WebsocketBuilder(useAppSettingsStore.getState().wsProxyURL)
+  const wsProxyURL = useAppSettingsStore.getState().wsProxyURL;
+
+  // Initialize the two possible connection modes: direct connection to a GUI
+  // server web socket port (empty wsProxyURL) or proxy-intermediated connection
+  // to an older GUI server with only a tcp port
+  const useWebSocketProxy = wsProxyURL && wsProxyURL.length > 0;
+  const websocketURL = useWebSocketProxy ? wsProxyURL : `ws://${host}:${port}`;
+
+  new WebsocketBuilder(websocketURL)
     .onOpen((ws) => {
-      ws.send(JSON.stringify({ host: host, port: port }));
+      if (useWebSocketProxy) {
+        // When the connection to the GUI server is intermediated by a web socket proxy,
+        // the target GUI Server host and port must be sent for the proxy to initialize
+        // the connection
+        ws.send(JSON.stringify({ host: host, port: port }));
+      }
     })
     .onMessage((ws, ev) => {
       if (typeof ev.data === 'string') {
