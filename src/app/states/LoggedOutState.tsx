@@ -9,7 +9,10 @@ const LoggedOutState = () => (
   >
     <Header className="w-full max-w-[580px] mx-auto mt-1 mb-3 px-4">
       <div className="flex items-baseline justify-between">
-        <div className="font-bold text-2xl tracking-tight">KIWI</div>
+        <div className="font-bold text-3xl tracking-tight">KIWI</div>
+        <div className="text-sm tracking-tight">
+          {import.meta.env.VITE_APP_VERSION}
+        </div>
         <img
           src="xfel_logo_128.png"
           alt="XFEL Logo"
