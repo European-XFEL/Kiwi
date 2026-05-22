@@ -19,13 +19,15 @@ import {
 import { AccessLevel, AccessMode } from '@/karabo/data/enums';
 import { LabelModel, StickerModel } from '@/karabo/common/api';
 import { SceneLinkModel, WebLinkModel } from '@/karabo/common/api';
-import { ControllerContainer, useController } from '@/features/controllers/api';
+import { ControllerContainer } from '@/features/controllers/api';
+import { useProxies } from '@/features/controllers/hooks/useProxies';
+import { useController } from '@/features/controllers/hooks/useController';
 import { containerPointerEvents } from './utils/mode';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tooltip';
 
 import { getRenderer } from './renderRegistry';
 import { isInRenderPhase, resolveBounds, type RenderPhase } from './bounds';
-import { PropertyOverlay } from './components/PropertyOverlay';
+import { OverlayWidget } from './components/OverlayWidget';
 
 export { resolveBounds, isLayout } from './bounds';
 
@@ -60,8 +62,7 @@ const isControllerWidget = (
 
 // ControllerView
 // ----------------------------------------------------------------------------
-// Calls useController for device binding, renders the widget and its overlay
-// as siblings — controller and overlay belong together.
+// Calls useProxies + useController for device binding, renders the widget inside its overlay wrapper — controller and overlay belong together.
 
 const ControllerView: React.FC<{
   model: BaseWidgetObjectData;
@@ -70,18 +71,20 @@ const ControllerView: React.FC<{
 }> = ({ model, Renderer }) => {
   const [isTooltipOpen, setIsTooltipOpen] = React.useState(false);
   const tooltipAutoCloseRef = React.useRef<number | null>(null);
-  const ctx = useController(model.keys);
+  const proxies = useProxies(model.keys);
+  const ctx = useController(proxies);
   const propertyTooltipText =
     model.keys.filter(Boolean).join(', ') ||
-    (ctx.tooltipText ?? ctx.disabledReason);
+    (ctx.primary.tooltipText ?? ctx.primary.disabledReason);
   const tooltipStatusText =
-    ctx.disabledReason && ctx.disabledReason !== propertyTooltipText
-      ? ctx.disabledReason
+    ctx.primary.disabledReason &&
+    ctx.primary.disabledReason !== propertyTooltipText
+      ? ctx.primary.disabledReason
       : undefined;
   const isEditableWidget = model.parent_component === EDITABLE_PARENT_COMPONENT;
   const hasEditAccess =
     ctx.primary.binding?.accessMode === AccessMode.RECONFIGURABLE &&
-    ctx.userAccessLevel >=
+    ctx.primary.userAccessLevel >=
       (ctx.primary.binding?.requiredAccessLevel ?? AccessLevel.OBSERVER);
   const tooltipBody =
     propertyTooltipText || tooltipStatusText ? (
@@ -93,7 +96,7 @@ const ControllerView: React.FC<{
   const tooltipContent = isEditableWidget ? (
     <div className="space-y-0.5">
       <p>
-        AccessLevel: {AccessLevel[ctx.userAccessLevel]} - Access:{' '}
+        AccessLevel: {AccessLevel[ctx.primary.userAccessLevel]} - Access:{' '}
         {hasEditAccess ? 'True' : 'False'}
       </p>
       {tooltipBody}
@@ -132,7 +135,7 @@ const ControllerView: React.FC<{
   React.useEffect(() => clearTooltipAutoClose, [clearTooltipAutoClose]);
 
   return (
-    <>
+    <OverlayWidget primary={ctx.primary} tooltipText={ctx.primary.tooltipText}>
       {tooltipContent ? (
         <Tooltip
           delayDuration={1500}
@@ -153,15 +156,7 @@ const ControllerView: React.FC<{
       ) : (
         controllerContent
       )}
-      <PropertyOverlay
-        primary={ctx.primary}
-        x={0}
-        y={0}
-        width={model.width}
-        height={model.height}
-        tooltipText={ctx.tooltipText}
-      />
-    </>
+    </OverlayWidget>
   );
 };
 

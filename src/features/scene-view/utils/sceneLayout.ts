@@ -66,22 +66,25 @@ export function isScrollableMode(mode: ZoomMode): boolean {
 
 // getOverflow
 // ---
-// Controls which axes scroll. Only the axis that can overflow gets 'auto'.
+// Only scrollable modes should expose scrollbars.
+// fit-page and fit-screen must keep the whole scene visible without entering a
+// scrollbar/measurement feedback loop when scale lands near the viewport edge.
 
 export function getOverflow(mode: ZoomMode): {
   overflowX: React.CSSProperties['overflowX'];
   overflowY: React.CSSProperties['overflowY'];
 } {
-  return {
-    overflowX:
-      mode === 'fit-height' || mode === 'actual' || mode === 'fit-screen'
-        ? 'auto'
-        : 'hidden',
-    overflowY:
-      mode === 'fit-width' || mode === 'actual' || mode === 'fit-screen'
-        ? 'auto'
-        : 'hidden',
-  };
+  switch (mode) {
+    case 'fit-width':
+      return { overflowX: 'hidden', overflowY: 'auto' };
+    case 'fit-height':
+      return { overflowX: 'auto', overflowY: 'hidden' };
+    case 'actual':
+      return { overflowX: 'auto', overflowY: 'auto' };
+    case 'fit-page':
+    case 'fit-screen':
+      return { overflowX: 'hidden', overflowY: 'hidden' };
+  }
 }
 
 // getSpacerSize

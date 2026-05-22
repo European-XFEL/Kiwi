@@ -13,26 +13,15 @@ const CONNECTING_STATUSES: ProxyStatus[] = [
 
 const PHASE_DURATION_MS = 800;
 
-export interface PropertyOverlayProps {
+export interface OverlayWidgetProps {
   primary: UsePropertyProxyUpdate;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+  children: React.ReactNode;
   tooltipText?: string;
   showMissingPropertyOverlay?: boolean;
 }
 
-export const PropertyOverlay: React.FC<PropertyOverlayProps> = React.memo(
-  ({
-    primary,
-    x,
-    y,
-    width,
-    height,
-    tooltipText,
-    showMissingPropertyOverlay = false,
-  }) => {
+export const OverlayWidget: React.FC<OverlayWidgetProps> = React.memo(
+  ({ primary, children, tooltipText, showMissingPropertyOverlay = false }) => {
     const { deviceId, propertyPath, proxyStatus, propertyStatus } = primary;
     const propertyIndicator =
       PROPERTY_INDICATORS.find((p) => p.status === propertyStatus) ?? undefined;
@@ -77,21 +66,9 @@ export const PropertyOverlay: React.FC<PropertyOverlayProps> = React.memo(
       !isOffline &&
       propertyStatus === PropertyStatus.MISSING &&
       propertyIndicator;
-
-    if (
-      !hasPropertyKey ||
-      (!isOffline && !isConnecting && phase === null && !showMissingBadge)
-    ) {
-      return null;
-    }
-
-    const wrapperStyle: React.CSSProperties = {
-      left: x,
-      top: y,
-      width,
-      height,
-      pointerEvents: 'none',
-    };
+    const shouldRenderOverlay =
+      hasPropertyKey &&
+      (isOffline || isConnecting || phase !== null || !!showMissingBadge);
 
     // Choose color class without nested ternary
     let indicatorColorClass: string | undefined;
@@ -104,10 +81,11 @@ export const PropertyOverlay: React.FC<PropertyOverlayProps> = React.memo(
     }
 
     return (
-      <div className="absolute" style={wrapperStyle}>
+      <div className="relative w-full h-full">
+        {children}
         {/* Healthy widgets keep their own hover target so the overlay does not shadow them. */}
         {/* OFFLINE — red glass with XIcon */}
-        {isOffline && (
+        {shouldRenderOverlay && isOffline && (
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="absolute inset-0 p-1 rounded bg-red-100/70 backdrop-blur-sm flex items-center justify-center pointer-events-auto cursor-help border border-red-300 shadow-sm">
@@ -136,35 +114,40 @@ export const PropertyOverlay: React.FC<PropertyOverlayProps> = React.memo(
         )}
 
         {/* CONNECTING ANIMATION — 3-phase pulse */}
-        {phase !== null && phase < 3 && indicatorColorClass && (
-          <div className="absolute top-2 right-2 pointer-events-auto">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div
-                  className={`h-3 w-3 rounded-full shadow-md ring-2 ring-white/50 ${indicatorColorClass} animate-pulse`}
-                  style={{
-                    animation:
-                      'pulse 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                  }}
-                />
-              </TooltipTrigger>
-              <TooltipContent
-                side="left"
-                className="bg-gray-900 text-white border-gray-800"
-              >
-                <p className="font-medium text-xs">{tooltipText ?? deviceId}</p>
-                <p className="text-xs opacity-90">
-                  {phase === 0 && 'Connecting...'}
-                  {phase === 1 && 'Loading configuration...'}
-                  {phase === 2 && 'Ready'}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        )}
+        {shouldRenderOverlay &&
+          phase !== null &&
+          phase < 3 &&
+          indicatorColorClass && (
+            <div className="absolute top-2 right-2 pointer-events-auto">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div
+                    className={`h-3 w-3 rounded-full shadow-md ring-2 ring-white/50 ${indicatorColorClass} animate-pulse`}
+                    style={{
+                      animation:
+                        'pulse 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }}
+                  />
+                </TooltipTrigger>
+                <TooltipContent
+                  side="left"
+                  className="bg-gray-900 text-white border-gray-800"
+                >
+                  <p className="font-medium text-xs">
+                    {tooltipText ?? deviceId}
+                  </p>
+                  <p className="text-xs opacity-90">
+                    {phase === 0 && 'Connecting...'}
+                    {phase === 1 && 'Loading configuration...'}
+                    {phase === 2 && 'Ready'}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          )}
 
         {/* PROPERTY MISSING — Amber badge */}
-        {showMissingBadge && propertyIndicator && (
+        {shouldRenderOverlay && showMissingBadge && propertyIndicator && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-auto z-10">
             <Tooltip>
               <TooltipTrigger asChild>
@@ -200,4 +183,4 @@ export const PropertyOverlay: React.FC<PropertyOverlayProps> = React.memo(
   }
 );
 
-PropertyOverlay.displayName = 'PropertyOverlay';
+OverlayWidget.displayName = 'OverlayWidget';

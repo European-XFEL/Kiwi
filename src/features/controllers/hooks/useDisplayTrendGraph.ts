@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'lodash';
-import type { PropertyProxyContext } from './usePropertyProxies';
+import { PropertyProxy } from '@/lib/binding/PropertyProxy';
+import type { PropertyProxyEntries } from './useController';
 
 interface TrendDataPoint {
   timestamp: number; // epoch ms
@@ -34,10 +35,10 @@ const toFiniteNumber = (raw: unknown): number | null => {
 };
 
 const timestampSeconds = (
-  primary?: PropertyProxyContext
+  propertyProxy?: PropertyProxy | null
 ): number | undefined => {
   try {
-    const seconds = primary?.proxy?.timestamp?.toTimestamp();
+    const seconds = propertyProxy?.timestamp?.toTimestamp();
     if (seconds != null && Number.isFinite(seconds)) return seconds;
   } catch {
     // fall through
@@ -45,8 +46,8 @@ const timestampSeconds = (
   return undefined;
 };
 
-const safeNowMs = (primary?: PropertyProxyContext): number => {
-  const seconds = timestampSeconds(primary);
+const safeNowMs = (propertyProxy?: PropertyProxy | null): number => {
+  const seconds = timestampSeconds(propertyProxy);
   // toTimestamp() returns seconds — convert to epoch milliseconds.
   if (seconds != null) return seconds * 1000;
   return Date.now();
@@ -68,7 +69,7 @@ const prune = (data: TrendDataPoint[], max: number, windowMs: number) => {
  * useDisplayTrendGraph
  */
 export const useDisplayTrendGraph = (
-  proxies: PropertyProxyContext[] = [],
+  proxies: PropertyProxyEntries = [],
   isOffline: boolean,
   deviceId: string | undefined,
   config: TrendConfig = {}
@@ -81,8 +82,8 @@ export const useDisplayTrendGraph = (
   const seriesCount = proxies.length;
   const bindingKey = proxies
     .map(
-      (proxyContext) =>
-        `${proxyContext.proxy?.root.deviceId ?? ''}.${proxyContext.propertyPath ?? ''}`
+      (propertyProxy) =>
+        `${propertyProxy?.root.deviceId ?? ''}.${propertyProxy?.path ?? ''}`
     )
     .join(',');
   const [trendData, setTrendData] = useState<TrendDataPoint[][]>([]);
@@ -91,12 +92,12 @@ export const useDisplayTrendGraph = (
   const proxiesRef = useRef(proxies);
   proxiesRef.current = proxies;
   const sampleKey = proxies
-    .map((proxyContext) => {
-      const value = toFiniteNumber(proxyContext.proxy?.value);
-      const timestamp = timestampSeconds(proxyContext);
+    .map((propertyProxy) => {
+      const value = toFiniteNumber(propertyProxy?.value);
+      const timestamp = timestampSeconds(propertyProxy);
       return [
-        proxyContext.proxy?.root.deviceId ?? '',
-        proxyContext.propertyPath ?? '',
+        propertyProxy?.root.deviceId ?? '',
+        propertyProxy?.path ?? '',
         value ?? '',
         timestamp ?? '',
       ].join(':');
@@ -156,11 +157,11 @@ export const useDisplayTrendGraph = (
   useEffect(() => {
     if (isOffline) return;
 
-    proxiesRef.current.forEach((proxyContext, index) => {
-      const value = toFiniteNumber(proxyContext.proxy?.value);
+    proxiesRef.current.forEach((propertyProxy, index) => {
+      const value = toFiniteNumber(propertyProxy?.value);
       if (value == null) return;
 
-      const timestamp = safeNowMs(proxyContext);
+      const timestamp = safeNowMs(propertyProxy);
       if (timestamp <= (lastTsRef.current[index] ?? -Infinity)) return;
 
       lastTsRef.current[index] = timestamp;
@@ -186,12 +187,12 @@ export const useDisplayTrendGraph = (
 
   const series = useMemo<TrendSeries[]>(
     () =>
-      proxies.map((proxyContext, index) => {
+      proxies.map((propertyProxy, index) => {
         const data = trendData[index] ?? [];
 
         return {
-          deviceId: proxyContext.proxy?.root.deviceId,
-          propertyPath: proxyContext.propertyPath,
+          deviceId: propertyProxy?.root.deviceId,
+          propertyPath: propertyProxy?.path,
           timestamps: data.map((d) => d.timestamp),
           values: data.map((d) => d.value),
           dataPoints: data.length,

@@ -4,9 +4,10 @@ import React from 'react';
 import Plot from 'react-plotly.js';
 import type { Data, Layout } from 'plotly.js';
 import type { ControllerContainerContext } from '../ControllerContainer';
+import { ProxyStatus } from '@/lib/binding/api';
 import { DisplayTrendGraphModel } from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/renderRegistry';
-import type { PropertyProxyContext } from '@/features/controllers/hooks/usePropertyProxies';
+import type { PropertyProxyEntries } from '@/features/controllers/hooks/useController';
 import { useDisplayTrendGraph } from '@/features/controllers/hooks/useDisplayTrendGraph';
 import { TraceFactory } from '../../utils/traceFactory';
 
@@ -28,13 +29,13 @@ type SeriesInfo = {
 };
 
 const buildSeriesInfo = (
-  proxies: PropertyProxyContext[],
+  proxies: PropertyProxyEntries,
   keys: string[]
 ): SeriesInfo[] =>
-  proxies.map((proxyCtx, index) => {
+  proxies.map((proxy, index) => {
     const key = keys[index];
-    const displayName = proxyCtx.proxy?.binding?.displayedName;
-    const propertyPath = proxyCtx.propertyPath;
+    const displayName = proxy?.binding?.displayedName;
+    const propertyPath = proxy?.path;
     const title = displayName || propertyPath || key || `Series ${index + 1}`;
     const subtitle = displayName && key ? key : undefined;
     const label = displayName
@@ -63,21 +64,26 @@ const DisplayTrendGraph: React.FC<{
   if (!ctx) return null;
 
   const proxies = ctx.proxies;
+  const rootDeviceContext = ctx.primary.rootDevice;
+  const rootDeviceId = rootDeviceContext?.deviceId;
+  const rootIsOffline =
+    (rootDeviceContext?.deviceStatus ?? ProxyStatus.OFFLINE) ===
+    ProxyStatus.OFFLINE;
   const { series, isOffline } = useDisplayTrendGraph(
     proxies,
-    ctx.root.isOffline,
-    ctx.root.deviceId,
+    rootIsOffline,
+    rootDeviceId,
     { maxDataPoints: 1000, throttleDelayMs: 500 }
   );
 
   const noData = series.every((item) => item.values.length === 0);
 
   const seriesInfoSignature = proxies
-    .map((proxyCtx, index) =>
+    .map((proxy, index) =>
       [
         model.keys[index] ?? '',
-        proxyCtx.propertyPath ?? '',
-        proxyCtx.proxy?.binding?.displayedName ?? '',
+        proxy?.path ?? '',
+        proxy?.binding?.displayedName ?? '',
       ].join('\u001f')
     )
     .join('\u001e');

@@ -1,4 +1,4 @@
-/** IntLineEdit — integer input, syncs from device, writes back on blur. */
+/** IntLineEdit — integer input, syncs from the primary proxy, normalizes local input on blur. */
 
 import React from 'react';
 import type { ControllerContainerContext } from '../ControllerContainer';
@@ -18,23 +18,23 @@ const IntLineEdit: React.FC<{
   model: IntLineEditModel;
   ctx?: ControllerContainerContext;
 }> = ({ model: _model, ctx }) => {
-  const proxyValue = ctx?.primary?.value;
+  const liveValue = ctx?.primary?.value;
   const unit = ctx?.primary?.binding?.unit_label;
-  const enabled = ctx?.isEnabled ?? false;
+  const enabled = ctx?.primary?.canEdit ?? false;
 
   const [localValue, setLocalValue] = React.useState<string>(() =>
-    toIntString(proxyValue, '0')
+    toIntString(liveValue, '0')
   );
   const [isEditing, setIsEditing] = React.useState(false);
 
-  // Sync from backend when it changes, but don't stomp user typing
+  // Sync from the primary proxy when the live value changes, but don't stomp user typing
   React.useEffect(() => {
     if (isEditing) return;
-    const next = toIntString(proxyValue, '0');
+    const next = toIntString(liveValue, '0');
     setLocalValue((prev) => (prev === next ? prev : next));
-  }, [proxyValue, isEditing]);
+  }, [liveValue, isEditing]);
 
-  const title = ctx?.tooltipText ?? ctx?.disabledReason;
+  const title = ctx?.primary?.tooltipText ?? ctx?.primary?.disabledReason;
 
   return (
     <div className="flex items-center gap-1 w-full h-full" title={title}>
@@ -50,11 +50,11 @@ const IntLineEdit: React.FC<{
           if (Number.isFinite(parsed)) {
             const normalized = String(parsed);
             setLocalValue((prev) => (prev === normalized ? prev : normalized));
-            // TODO: push value to backend
-          } else {
-            const fallback = toIntString(proxyValue, '0');
-            setLocalValue((prev) => (prev === fallback ? prev : fallback));
+            return;
           }
+
+          const fallback = toIntString(liveValue, '0');
+          setLocalValue((prev) => (prev === fallback ? prev : fallback));
         }}
         disabled={!enabled}
         className={`border border-solid rounded px-1 flex-1 min-w-0 ${

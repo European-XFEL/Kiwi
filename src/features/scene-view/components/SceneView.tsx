@@ -17,10 +17,25 @@ import {
   getOverflow,
   getSpacerSize,
   isScrollableMode,
+  type ZoomMode,
 } from '../utils/sceneLayout';
 
 // Bootstrap — triggers all registerRenderer() calls
 import '../renderers';
+
+const getScrollableAlignment = (fitMode: ZoomMode) => {
+  switch (fitMode) {
+    case 'fit-width':
+      return { justifyItems: 'start', alignItems: 'center' } as const;
+    case 'fit-height':
+      return { justifyItems: 'center', alignItems: 'start' } as const;
+    case 'actual':
+      return { justifyItems: 'start', alignItems: 'start' } as const;
+    case 'fit-page':
+    case 'fit-screen':
+      return { justifyItems: 'center', alignItems: 'center' } as const;
+  }
+};
 
 const SceneView: React.FC = () => {
   const { lastGlobalError } = useGlobalStore();
@@ -43,11 +58,25 @@ const SceneView: React.FC = () => {
     [fitMode]
   );
 
+  const scrollableAlignment = React.useMemo(
+    () => getScrollableAlignment(fitMode),
+    [fitMode]
+  );
+
+  // The browser needs the scaled footprint, not the authored scene size,
+  // whenever layout or centering depends on the visible scene bounds.
+  const scaledSize = React.useMemo(
+    () => ({
+      width: (scene?.width ?? 0) * scale,
+      height: (scene?.height ?? 0) * scale,
+    }),
+    [scene?.width, scene?.height, scale]
+  );
+
   // Spacer tracks scale changes, not mode changes
   const spacer = React.useMemo(
-    () =>
-      getSpacerSize((scene?.width ?? 0) * scale, (scene?.height ?? 0) * scale),
-    [scene?.width, scene?.height, scale]
+    () => getSpacerSize(scaledSize.width, scaledSize.height),
+    [scaledSize.width, scaledSize.height]
   );
 
   // Scene layers — rebuild only when scene changes so widget/controller subtree
@@ -71,24 +100,37 @@ const SceneView: React.FC = () => {
     [scene]
   );
 
-  // Stage wraps the rendered scene layers with the current scale transform.
-  // Rebuilds on scale change but passes the same stable layer reference,
-  // so React reconciles without re-rendering the scene content.
-  // Key the stage by scene identity so loading another scene fully unmounts
-  // the previous render subtree and disposes widget-local controller state.
+  // Scale the authored stage inside a wrapper that owns the scaled layout footprint.
+  // This keeps centering based on what the user actually sees instead of the
+  // unscaled authored scene box, because CSS transforms do not affect layout size.
   const stage = React.useMemo(
     () =>
       scene ? (
-        <SceneStage
+        <div
           key={scene.uuid}
-          width={scene.width}
-          height={scene.height}
-          scale={scale}
+          style={{
+            position: 'relative',
+            width: scaledSize.width,
+            height: scaledSize.height,
+            flex: '0 0 auto',
+          }}
         >
-          {layers}
-        </SceneStage>
+          <div style={{ position: 'absolute', left: 0, top: 0 }}>
+            <SceneStage width={scene.width} height={scene.height} scale={scale}>
+              {layers}
+            </SceneStage>
+          </div>
+        </div>
       ) : null,
-    [scene?.uuid, scene?.width, scene?.height, scale, layers]
+    [
+      scene?.uuid,
+      scene?.width,
+      scene?.height,
+      scale,
+      scaledSize.width,
+      scaledSize.height,
+      layers,
+    ]
   );
 
   if (!scene)
@@ -106,14 +148,16 @@ const SceneView: React.FC = () => {
           {scrollable ? (
             <div
               style={{
-                position: 'relative',
                 width: spacer.width,
                 height: spacer.height,
+                minWidth: '100%',
+                minHeight: '100%',
+                display: 'grid',
+                justifyItems: scrollableAlignment.justifyItems,
+                alignItems: scrollableAlignment.alignItems,
               }}
             >
-              <div style={{ position: 'absolute', left: 0, top: 0 }}>
-                {stage}
-              </div>
+              {stage}
             </div>
           ) : (
             <div className="grid min-h-full min-w-full place-items-center">
