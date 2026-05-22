@@ -28,7 +28,7 @@ export class PropertyProxy {
   }
 
   get key(): string {
-    return this.path;
+    return this.root.deviceId + '.' + this.path;
   }
 
   get root(): DeviceProxy {

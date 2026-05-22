@@ -1,59 +1,29 @@
+import type { BaseBinding } from '@/lib/binding/BaseBinding';
 import type { DeviceProxy } from '@/lib/binding/DeviceProxy';
 import { PropertyProxy } from '@/lib/binding/PropertyProxy';
 import { PropertyStatus, ProxyStatus } from '@/lib/binding/ProxyStatus';
 import { splitKaraboKeys } from '@/lib/binding/utils/splitKaraboKeys';
 import { getTopology } from '@/lib/singletons/api';
 
-// Key Validation
-// ---
-// Validates key shape only (not schema/property existence).
-// Invalid slots stay null so indices always align with the original keys array.
-// keys[0] is always the root proxy slot regardless of its validity.
-
-export type ValidKey = {
-  raw: string;
-  deviceId: string;
-  propertyPath: string;
-};
-
-export type KeyTarget = ValidKey | null;
-
-export const validateKey = (key: unknown): KeyTarget => {
-  if (typeof key !== 'string') return null;
-
-  const trimmed = key.trim();
-  if (!trimmed.includes('.')) return null;
-
-  const { deviceId, propertyPath } = splitKaraboKeys(trimmed);
-  if (!deviceId || !propertyPath) return null;
-
-  return { raw: trimmed, deviceId, propertyPath };
-};
-
-export const validateKeys = (keys: unknown): KeyTarget[] =>
-  Array.isArray(keys) ? keys.map(validateKey) : [];
-
 // Proxy Creation
 // ---
-// Equivalent to Python Karabo's get_proxy(deviceId, path).
-// Each valid key slot gets a PropertyProxy; invalid slots stay null.
-// Index alignment with the original keys array is preserved throughout.
+// Scene keys are assumed to be ordered and parseable as `deviceId.propertyPath`.
+// Runtime state such as offline devices or missing bindings stays on the proxy.
 
-export type PropertyProxyEntries = Array<PropertyProxy | null>;
+export type PropertyProxyEntries = PropertyProxy[];
 
-const createPropertyProxy = (target: ValidKey): PropertyProxy => {
-  const deviceProxy = getTopology().getDevice(target.deviceId);
-  return new PropertyProxy(deviceProxy, target.propertyPath);
+const createPropertyProxy = (key: string): PropertyProxy => {
+  const { deviceId, propertyPath } = splitKaraboKeys(key);
+  const deviceProxy = getTopology().getDevice(deviceId);
+  return new PropertyProxy(deviceProxy, propertyPath);
 };
 
-export const createPropertyProxies = (
-  targets: KeyTarget[]
-): PropertyProxyEntries =>
-  targets.map((target) => (target ? createPropertyProxy(target) : null));
+export const createPropertyProxies = (keys: string[]): PropertyProxyEntries =>
+  keys.map(createPropertyProxy);
 
 // Device Monitoring
 // ---
-// Starts monitoring for every valid property proxy entry.
+// Starts monitoring for every property proxy entry.
 // DeviceProxy.addMonitor() is reference-counted, matching Karabo's
 // PropertyProxy.start_monitoring() behavior: two properties on the same device
 // increment the monitor count twice and clean up twice.
@@ -81,8 +51,6 @@ export const startMonitoring = (
   const monitoredDeviceIds = new Set<string>();
 
   entries.forEach((propertyProxy, index) => {
-    if (!propertyProxy) return;
-
     const deviceProxy = propertyProxy.root;
     const deviceId = deviceProxy.deviceId;
 
@@ -125,7 +93,7 @@ export const startMonitoring = (
 // entries array.
 
 export const disposePropertyProxies = (entries: PropertyProxyEntries): void => {
-  entries.forEach((propertyProxy) => propertyProxy?.dispose());
+  entries.forEach((propertyProxy) => propertyProxy.dispose());
 };
 
 // PropertyProxyContext
@@ -137,40 +105,29 @@ export const disposePropertyProxies = (entries: PropertyProxyEntries): void => {
 // available for widget-level enabled/disabled logic.
 
 export type PropertyProxyContext = {
-  proxy: PropertyProxy | undefined;
-  deviceProxy: DeviceProxy | undefined;
-  deviceId: string | undefined;
-  propertyPath: string | undefined;
+  /** Canonical proxy key derived from the live proxy, used for tooltip/debug text. */
+  sourceKey: string;
+  proxy: PropertyProxy;
+  deviceProxy: DeviceProxy;
+  deviceId: string;
+  propertyPath: string;
   propertyStatus: PropertyStatus;
   deviceState: string | undefined;
   deviceStatus: ProxyStatus;
+  /** Monotonic identity for device state/status snapshot updates; distinct from the Karabo value timestamp below. */
+  rootRevision: number;
+  binding: BaseBinding | undefined;
+  value: any;
+  timestamp: any;
 };
 
-export const EMPTY_PROXY_CONTEXT: PropertyProxyContext = {
-  proxy: undefined,
-  deviceProxy: undefined,
-  deviceId: undefined,
-  propertyPath: undefined,
-  propertyStatus: PropertyStatus.MISSING,
-  deviceState: undefined,
-  deviceStatus: ProxyStatus.OFFLINE,
-};
-
-export const createEmptyProxyContext = (
-  target: KeyTarget
-): PropertyProxyContext => {
-  if (!target) return EMPTY_PROXY_CONTEXT;
-
-  return {
-    ...EMPTY_PROXY_CONTEXT,
-    deviceId: target.deviceId,
-    propertyPath: target.propertyPath,
-  };
-};
+const getProxySourceKey = (propertyProxy: PropertyProxy): string =>
+  `${propertyProxy.root.deviceId}.${propertyProxy.path}`;
 
 export const createPropertyProxyContext = (
   propertyProxy: PropertyProxy
 ): PropertyProxyContext => ({
+  sourceKey: getProxySourceKey(propertyProxy),
   proxy: propertyProxy,
   deviceProxy: propertyProxy.root,
   deviceId: propertyProxy.root.deviceId,
@@ -180,18 +137,43 @@ export const createPropertyProxyContext = (
     : PropertyStatus.MISSING,
   deviceState: propertyProxy.root.state,
   deviceStatus: propertyProxy.root.status,
+  rootRevision: propertyProxy.root.rootRevision,
+  binding: propertyProxy.binding,
+  value: propertyProxy.value,
+  timestamp: propertyProxy.timestamp,
 });
 
 export const createPropertyProxyContexts = (
-  entries: PropertyProxyEntries,
-  targets: KeyTarget[]
-): PropertyProxyContext[] =>
-  entries.map((propertyProxy, index) =>
-    propertyProxy
-      ? createPropertyProxyContext(propertyProxy)
-      : createEmptyProxyContext(targets[index] ?? null)
-  );
+  entries: PropertyProxyEntries
+): PropertyProxyContext[] => entries.map(createPropertyProxyContext);
 
-export const createEmptyProxyContexts = (
-  targets: KeyTarget[]
-): PropertyProxyContext[] => targets.map(createEmptyProxyContext);
+// Snapshot update helpers
+// ---
+// Keep snapshot rebuild logic beside createPropertyProxyContext so useProxies
+// only wires subscriptions and does not know which fields define a device snapshot.
+
+export const updateDeviceProxyContexts = (
+  prevContexts: PropertyProxyContext[],
+  entries: PropertyProxyEntries,
+  deviceId: string
+): PropertyProxyContext[] | null => {
+  let changed = false;
+  const next = prevContexts.map((ctx, i) => {
+    const proxy = entries[i];
+    if (proxy.root.deviceId != deviceId) return ctx;
+    if (ctx.rootRevision === proxy.root.rootRevision) return ctx;
+    changed = true;
+    return createPropertyProxyContext(proxy);
+  });
+  return changed ? next : null;
+};
+
+export const updatePropertyProxyContext = (
+  prevContexts: PropertyProxyContext[],
+  index: number,
+  proxy: PropertyProxy
+): PropertyProxyContext[] => {
+  const next = [...prevContexts];
+  next[index] = createPropertyProxyContext(proxy);
+  return next;
+};

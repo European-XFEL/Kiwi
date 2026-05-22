@@ -33,6 +33,7 @@ export class DeviceProxy {
   public isOnline: boolean = false;
 
   private monitorCount = 0;
+  private currentRootRevision = 0;
 
   config_update = new Signal<[]>();
   schema_update = new Signal<[]>();
@@ -46,6 +47,11 @@ export class DeviceProxy {
   static createDeviceProxy(deviceId: string): DeviceProxy {
     return new DeviceProxy(deviceId);
   }
+
+  public get rootRevision(): number {
+    return this.currentRootRevision;
+  }
+
   public get state(): string | undefined {
     return this.getBinding('state')?.value?.value_ as string | undefined;
   }
@@ -54,10 +60,15 @@ export class DeviceProxy {
     return this.binding.getBinding(path);
   }
 
+  private onRootUpdated(): void {
+    this.currentRootRevision += 1;
+  }
+
   private updateStatus(newStatus: ProxyStatus): void {
     const oldStatus = this.status;
     if (oldStatus !== newStatus) {
       this.status = newStatus;
+      this.onRootUpdated();
       this.status_update.fire(newStatus);
     }
   }
@@ -143,6 +154,7 @@ export class DeviceProxy {
   public handleDeviceConfiguration(config: Hash): void {
     applyConfiguration(config, this.binding);
     if (config.has('state')) {
+      this.onRootUpdated();
       this.state_update.fire(this.state);
     }
     this._config_update_fired();
