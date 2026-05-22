@@ -42,7 +42,6 @@ export default function ServerProbeForm({
             id="hostname"
             value={host}
             onChange={(e) => onHostChange(e.target.value)}
-            onBlur={() => onCommit?.(host, port)}
             onKeyDown={handleKeyDown}
             disabled={disabled}
             inputMode="text"
@@ -57,7 +56,6 @@ export default function ServerProbeForm({
               id="port"
               value={port}
               onChange={(e) => onPortChange(e.target.value)}
-              onBlur={() => onCommit?.(host, port)}
               onKeyDown={handleKeyDown}
               disabled={disabled}
               inputMode="numeric"

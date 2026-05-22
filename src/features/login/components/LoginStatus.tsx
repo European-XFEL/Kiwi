@@ -15,7 +15,7 @@ export default function LoginStatus({
 }: LoginStatusProps) {
   if (error) {
     return (
-      <Alert variant="destructive">
+      <Alert variant="destructive" className="border-0">
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>{error}</AlertDescription>
       </Alert>

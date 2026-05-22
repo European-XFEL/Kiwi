@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { ActivityStatus, GuiServerInfo } from '../auth.types';
 import { probeServer } from '@/features/login/utils';
 
@@ -38,10 +44,38 @@ export function useServerProbe({
   );
   const [errorMsg, setErrorMessage] = useState('');
 
+  // #region Focused control capture and restoration
+
+  const savedFocusIdRef = useRef<string>(null);
+
+  const captureFocusedControl = () => {
+    if (document.activeElement && document.activeElement.id) {
+      savedFocusIdRef.current = document.activeElement.id;
+    }
+  };
+
+  useLayoutEffect(() => {
+    restoreFocusedControl();
+    // Clear the focused control ref for the next capture/restore cycle
+    savedFocusIdRef.current = null;
+  }, [probedServerInfo]);
+
+  const restoreFocusedControl = () => {
+    if (savedFocusIdRef.current) {
+      const elementToFocus = document.getElementById(savedFocusIdRef.current);
+      if (elementToFocus && document.activeElement !== elementToFocus) {
+        elementToFocus.focus();
+      }
+    }
+  };
+
+  // #endregion
+
   const didInitialProbeRef = useRef(false);
 
   // Probe success callback
   const onProbeSuccess = useCallback((serverInfo: GuiServerInfo) => {
+    captureFocusedControl();
     setProbedServerInfo(serverInfo);
     setErrorMessage('');
     setActivityStatus(ActivityStatus.NO_ACTIVITY);
@@ -49,6 +83,7 @@ export function useServerProbe({
 
   // Probe failure callback
   const onProbeFailure = useCallback((errMsg: string) => {
+    captureFocusedControl();
     setErrorMessage(errMsg);
     setActivityStatus(ActivityStatus.NO_ACTIVITY);
     setProbedServerInfo(null);
@@ -58,6 +93,7 @@ export function useServerProbe({
   const doProbeServer = useCallback(
     (h: string, pNum: number) => {
       if (!h || !Number.isFinite(pNum) || pNum <= 0 || pNum > 65535) return;
+      captureFocusedControl();
       setActivityStatus(ActivityStatus.PROBING_SERVER);
       probeServer(h, pNum, onProbeSuccess, onProbeFailure);
     },
