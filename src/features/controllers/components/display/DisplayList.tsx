@@ -34,7 +34,6 @@ const DisplayList: React.FC<{
         fontSize: model.font_size,
         fontWeight: model.font_weight,
       }}
-      title={ctx?.tooltipText ?? ctx?.disabledReason}
     >
       {labelValue}
     </div>

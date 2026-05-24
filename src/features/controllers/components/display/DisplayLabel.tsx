@@ -35,10 +35,7 @@ const DisplayLabel: React.FC<{
       : '';
 
   return (
-    <div
-      className="overflow-hidden flex items-center justify-center border border-solid p-px w-full h-full"
-      title={ctx.tooltipText ?? ctx.disabledReason}
-    >
+    <div className="overflow-hidden flex items-center justify-center border border-solid p-px w-full h-full">
       <span
         className="block whitespace-nowrap overflow-hidden text-ellipsis max-w-full"
         style={{

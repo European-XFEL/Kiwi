@@ -45,16 +45,7 @@ export interface ControllerContainerContext {
   primary: ControllerPrimaryContext;
   primaryProxy: PropertyProxies[number] | undefined;
   proxies: PropertyProxies;
-
-  // Backward compatibility bridge:
-  // Keep these top-level aliases until the remaining widgets migrate so the
-  // contract change stays incremental instead of forcing a repo-wide rewrite.
   userAccessLevel: AccessLevel;
-  canEdit: boolean;
-  isEnabled: boolean;
-  isOffline: boolean;
-  disabledReason?: string;
-  tooltipText: string;
 }
 
 const getPrimaryProxy = (
@@ -199,10 +190,5 @@ export function useController(
     primaryProxy,
     proxies: propertyProxies,
     userAccessLevel,
-    canEdit,
-    isEnabled: canEdit,
-    isOffline,
-    disabledReason,
-    tooltipText,
   };
 }

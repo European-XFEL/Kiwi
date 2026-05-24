@@ -31,10 +31,7 @@ const DisplayCheckBox: React.FC<{
 }> = ({ model: _model, ctx }) => {
   const checked = toBool(ctx?.primary?.value);
   return (
-    <div
-      className="w-full h-full flex items-center justify-center"
-      title={ctx?.tooltipText ?? ctx?.disabledReason}
-    >
+    <div className="w-full h-full flex items-center justify-center">
       <Checkbox
         checked={checked}
         aria-readonly="true"
@@ -49,13 +46,10 @@ const EditableCheckBox: React.FC<{
   ctx?: ControllerContainerContext;
 }> = ({ model: _model, ctx }) => {
   const checked = toBool(ctx?.primary?.value);
-  const enabled = ctx?.isEnabled ?? false;
+  const enabled = ctx?.primary?.isEnabled ?? false;
 
   return (
-    <div
-      className="w-full h-full flex items-center justify-center"
-      title={ctx?.tooltipText ?? ctx?.disabledReason}
-    >
+    <div className="w-full h-full flex items-center justify-center">
       <Checkbox
         checked={checked}
         disabled={!enabled}

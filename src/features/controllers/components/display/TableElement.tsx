@@ -65,24 +65,16 @@ const TableElement: React.FC<{
     [rawValue, columnKeys]
   );
 
-  const title = ctx?.tooltipText ?? ctx?.disabledReason;
-
   if (!columns.length) {
     return (
-      <div
-        className="flex items-center justify-center w-full h-full border border-solid bg-white text-xs text-gray-400 select-none"
-        title={title}
-      >
+      <div className="flex items-center justify-center w-full h-full border border-solid bg-white text-xs text-gray-400 select-none">
         No data
       </div>
     );
   }
 
   return (
-    <div
-      className="border border-gray-300 bg-white overflow-hidden flex flex-col w-full h-full"
-      title={title}
-    >
+    <div className="border border-gray-300 bg-white overflow-hidden flex flex-col w-full h-full">
       <div className="flex-1 min-h-0 overflow-y-scroll overflow-x-auto">
         <Table className="w-full border-collapse text-xs">
           <TableHeader className="sticky top-0 z-10 bg-gray-100">

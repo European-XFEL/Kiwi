@@ -34,10 +34,8 @@ const IntLineEdit: React.FC<{
     setLocalValue((prev) => (prev === next ? prev : next));
   }, [liveValue, isEditing]);
 
-  const title = ctx?.primary?.tooltipText ?? ctx?.primary?.disabledReason;
-
   return (
-    <div className="flex items-center gap-1 w-full h-full" title={title}>
+    <div className="flex items-center gap-1 w-full h-full">
       <input
         type="text"
         inputMode="numeric"

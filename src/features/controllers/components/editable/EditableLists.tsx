@@ -43,7 +43,7 @@ const EditableList: React.FC<{
   ctx?: ControllerContainerContext;
 }> = ({ ctx }) => {
   const proxyValue = ctx?.primary?.value;
-  const enabled = ctx?.isEnabled ?? false;
+  const enabled = ctx?.primary?.isEnabled ?? false;
 
   const [localValue, setLocalValue] = React.useState(() =>
     formatListValue(proxyValue)
@@ -57,10 +57,8 @@ const EditableList: React.FC<{
     setLocalValue((prev) => (prev === next ? prev : next));
   }, [proxyValue, isEditing]);
 
-  const title = ctx?.tooltipText ?? ctx?.disabledReason;
-
   return (
-    <div className="flex items-center gap-1 w-full h-full" title={title}>
+    <div className="flex items-center gap-1 w-full h-full">
       <input
         type="text"
         value={localValue}
@@ -87,7 +85,6 @@ const EditableList: React.FC<{
           <Button
             variant="ghost"
             disabled={!enabled}
-            title={enabled ? 'Edit list' : ctx?.disabledReason}
             className="h-6 w-6 p-0 shrink-0"
           >
             <SquarePen className="h-3 w-3" />
@@ -122,7 +119,7 @@ const EditableRegexList: React.FC<{
   ctx?: ControllerContainerContext;
 }> = ({ ctx }) => {
   const proxyValue = ctx?.primary?.value;
-  const enabled = ctx?.isEnabled ?? false;
+  const enabled = ctx?.primary?.isEnabled ?? false;
 
   const [localValue, setLocalValue] = React.useState(() =>
     formatListValue(proxyValue)
@@ -148,10 +145,8 @@ const EditableRegexList: React.FC<{
     return '';
   };
 
-  const title = ctx?.tooltipText ?? ctx?.disabledReason;
-
   return (
-    <div className="flex flex-col w-full h-full" title={title}>
+    <div className="flex flex-col w-full h-full">
       <input
         type="text"
         value={localValue}
@@ -194,7 +189,7 @@ const EditableListElement: React.FC<{
   ctx?: ControllerContainerContext;
 }> = ({ ctx }) => {
   const proxyValue = ctx?.primary?.value;
-  const enabled = ctx?.isEnabled ?? false;
+  const enabled = ctx?.primary?.isEnabled ?? false;
 
   const [localValue, setLocalValue] = React.useState(
     proxyValue != null ? String(proxyValue) : ''
@@ -218,7 +213,6 @@ const EditableListElement: React.FC<{
         // TODO: push value to backend
       }}
       disabled={!enabled}
-      title={ctx?.tooltipText ?? ctx?.disabledReason}
       className={`w-full h-full border border-solid rounded px-1 text-xs ${
         enabled
           ? 'text-black bg-white cursor-text'
