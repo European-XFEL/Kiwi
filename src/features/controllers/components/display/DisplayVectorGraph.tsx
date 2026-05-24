@@ -115,17 +115,14 @@ const DisplayVectorGraph: React.FC<{
 
   if (isOffline || noData) {
     return (
-      <div
-        className="flex items-center justify-center w-full h-full border border-slate-200 bg-slate-50 text-xs text-slate-500 select-none"
-        title={ctx?.tooltipText ?? ctx?.disabledReason}
-      >
+      <div className="flex items-center justify-center w-full h-full border border-slate-200 bg-slate-50 text-xs text-slate-500 select-none">
         {isOffline ? 'Device offline' : 'No vector data'}
       </div>
     );
   }
 
   return (
-    <div className="w-full h-full" title={ctx?.tooltipText}>
+    <div className="w-full h-full">
       <Plot
         data={data}
         layout={layout}

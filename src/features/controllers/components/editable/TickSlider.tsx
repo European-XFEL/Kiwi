@@ -14,7 +14,7 @@ const TickSlider: React.FC<{
 }> = ({ model, ctx }) => {
   const proxyValue = ctx?.primary?.value;
   const binding = ctx?.primary?.binding as any;
-  const enabled = ctx?.isEnabled ?? false;
+  const enabled = ctx?.primary?.isEnabled ?? false;
 
   const min = binding?.minInc ?? 0;
   const max = binding?.maxInc ?? 100;
@@ -27,10 +27,7 @@ const TickSlider: React.FC<{
   }, [proxyValue, min]);
 
   return (
-    <div
-      className="w-full h-full flex flex-col items-center justify-center gap-1"
-      title={ctx?.tooltipText ?? ctx?.disabledReason}
-    >
+    <div className="w-full h-full flex flex-col items-center justify-center gap-1">
       <input
         type="range"
         min={min}

@@ -13,7 +13,7 @@ const EditableRegex: React.FC<{
   ctx?: ControllerContainerContext;
 }> = ({ model: _model, ctx }) => {
   const proxyValue = ctx?.primary?.value;
-  const enabled = ctx?.isEnabled ?? false;
+  const enabled = ctx?.primary?.isEnabled ?? false;
 
   const [localValue, setLocalValue] = React.useState(String(proxyValue ?? ''));
   const [isEditing, setIsEditing] = React.useState(false);
@@ -25,10 +25,7 @@ const EditableRegex: React.FC<{
   }, [proxyValue, isEditing]);
 
   return (
-    <div
-      className="w-full h-full flex items-center"
-      title={ctx?.tooltipText ?? ctx?.disabledReason}
-    >
+    <div className="w-full h-full flex items-center">
       <input
         type="text"
         value={localValue}

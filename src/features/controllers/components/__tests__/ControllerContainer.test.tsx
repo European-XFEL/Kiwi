@@ -66,13 +66,7 @@ describe('ControllerContainer', () => {
       },
       primaryProxy,
       proxies,
-      rootDevice: undefined,
       userAccessLevel: AccessLevel.OBSERVER,
-      canEdit: true,
-      isEnabled: true,
-      isOffline: false,
-      disabledReason: undefined,
-      tooltipText: 'DEVICE_A.speed',
     };
     const Renderer = jest.fn(({ ctx: rendererCtx }) => (
       <div data-testid="renderer">{rendererCtx.primary.tooltipText}</div>

@@ -21,10 +21,7 @@ const DisplayStateColor: React.FC<{
   const bgColor = colorValue ?? '#cccccc';
 
   return (
-    <div
-      className="flex items-center justify-center border border-solid overflow-hidden w-full h-full"
-      title={ctx?.tooltipText ?? ctx?.disabledReason}
-    >
+    <div className="flex items-center justify-center border border-solid overflow-hidden w-full h-full">
       <div
         className="w-full h-full flex items-center justify-center"
         style={{

@@ -23,7 +23,7 @@ const DoubleLineEdit: React.FC<{
 }> = ({ model, ctx }) => {
   const proxyValue = ctx?.primary?.value;
   const unit = ctx?.primary?.binding?.unit_label ?? '';
-  const enabled = ctx?.isEnabled ?? false;
+  const enabled = ctx?.primary?.isEnabled ?? false;
 
   const [localValue, setLocalValue] = React.useState(() =>
     toFloatString(proxyValue, model.decimals)
@@ -37,10 +37,7 @@ const DoubleLineEdit: React.FC<{
   }, [proxyValue, isEditing, model.decimals]);
 
   return (
-    <div
-      className="flex items-center gap-1 w-full h-full"
-      title={ctx?.tooltipText ?? ctx?.disabledReason}
-    >
+    <div className="flex items-center gap-1 w-full h-full">
       <input
         type="text"
         inputMode="decimal"

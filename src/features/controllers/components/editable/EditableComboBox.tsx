@@ -15,17 +15,15 @@ function ComboBox({
   value,
   options,
   enabled,
-  title,
 }: {
   value: unknown;
   options: string[];
   enabled: boolean;
-  title?: string;
 }) {
   const current = String(value ?? '');
 
   return (
-    <div className="w-full h-full flex items-center" title={title}>
+    <div className="w-full h-full flex items-center">
       {options.length > 0 ? (
         <select
           value={current}
@@ -69,15 +67,8 @@ const EditableComboBox: React.FC<{
 }> = ({ model: _model, ctx }) => {
   const value = ctx?.primary?.value;
   const options: string[] = (ctx?.primary?.binding as any)?.options ?? [];
-  const enabled = ctx?.isEnabled ?? false;
-  return (
-    <ComboBox
-      value={value}
-      options={options}
-      enabled={enabled}
-      title={ctx?.tooltipText ?? ctx?.disabledReason}
-    />
-  );
+  const enabled = ctx?.primary?.isEnabled ?? false;
+  return <ComboBox value={value} options={options} enabled={enabled} />;
 };
 
 registerRenderer('EditableComboBox', EditableComboBox);

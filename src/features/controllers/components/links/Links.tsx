@@ -126,7 +126,7 @@ const DeviceSceneLink: React.FC<{
       title={
         firstScene
           ? `Scene: ${firstScene}`
-          : (ctx?.disabledReason ?? 'No scene available')
+          : (ctx?.primary?.disabledReason ?? 'No scene available')
       }
       onClick={firstScene ? go : undefined}
       Icon={Cpu}

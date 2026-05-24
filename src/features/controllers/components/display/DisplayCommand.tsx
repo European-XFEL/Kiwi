@@ -57,24 +57,6 @@ const DisplayCommand: React.FC<{
   const isEnabled =
     hasCommandPermission && isDeviceOnline && stateAllowsCommand;
 
-  const disabledReason = React.useMemo(() => {
-    if (!ctx) return 'No device binding';
-    if (!deviceId) return 'No device selected for this command';
-    if (!isDeviceOnline) return `Device ${deviceId} is offline`;
-    if (!hasCommandPermission)
-      return `Requires access level ${AccessLevel[requiredAccessLevel]} or higher`;
-    if (!stateAllowsCommand)
-      return 'Command not allowed in current device state';
-    return undefined;
-  }, [
-    ctx,
-    deviceId,
-    isDeviceOnline,
-    hasCommandPermission,
-    requiredAccessLevel,
-    stateAllowsCommand,
-  ]);
-
   const onSubmitCommand = React.useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
@@ -98,7 +80,6 @@ const DisplayCommand: React.FC<{
       height={model.height}
       disabled={!isEnabled}
       ariaLabel={`Command: ${buttonCaption}`}
-      title={ctx?.tooltipText || disabledReason}
       style={getControllerFontStyle(model.font_size, model.font_weight)}
       onClick={onSubmitCommand}
     >

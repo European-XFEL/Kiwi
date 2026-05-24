@@ -59,7 +59,6 @@ const DisplayAlarmFloat: React.FC<{
         fontWeight: model.font_weight,
         backgroundColor: color,
       }}
-      title={ctx?.tooltipText ?? ctx?.disabledReason}
     >
       {labelValue}
     </div>
