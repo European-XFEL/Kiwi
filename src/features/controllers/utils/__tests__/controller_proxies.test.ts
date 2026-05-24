@@ -3,13 +3,13 @@ import { ProxyStatus } from '@/lib/binding/ProxyStatus';
 import { SingletonContext } from '@/testing';
 
 import {
-  createPropertyProxyContexts,
+  createPropertyProxySnapshots,
   createPropertyProxies,
   disposePropertyProxies,
   startMonitoring,
-  updateDeviceProxyContexts,
-  updatePropertyProxyContext,
-  type PropertyProxyEntries,
+  updateDeviceProxySnapshots,
+  updatePropertyProxySnapshot,
+  type PropertyProxies,
 } from '../controller_proxies';
 
 describe('controller proxy utilities', () => {
@@ -28,51 +28,51 @@ describe('controller proxy utilities', () => {
     };
 
     await SingletonContext.run({ topology }, () => {
-      const entries = createPropertyProxies([
+      const proxies = createPropertyProxies([
         'DEVICE_A.motor.speed.value',
         'DEVICE_B.temperature',
       ]);
 
-      expect(entries).toHaveLength(2);
-      expect(entries[0]).toBeInstanceOf(PropertyProxy);
-      expect(entries[0].root.deviceId).toBe('DEVICE_A');
-      expect(entries[0].path).toBe('motor.speed.value');
+      expect(proxies).toHaveLength(2);
+      expect(proxies[0]).toBeInstanceOf(PropertyProxy);
+      expect(proxies[0].root.deviceId).toBe('DEVICE_A');
+      expect(proxies[0].path).toBe('motor.speed.value');
 
-      expect(entries[1]).toBeInstanceOf(PropertyProxy);
-      expect(entries[1].root.deviceId).toBe('DEVICE_B');
-      expect(entries[1].path).toBe('temperature');
+      expect(proxies[1]).toBeInstanceOf(PropertyProxy);
+      expect(proxies[1].root.deviceId).toBe('DEVICE_B');
+      expect(proxies[1].path).toBe('temperature');
 
-      disposePropertyProxies(entries);
+      disposePropertyProxies(proxies);
     });
   });
 
-  it('creates property proxy contexts for every proxy slot', () => {
+  it('creates property proxy snapshots for every proxy slot', () => {
     const deviceA = new DeviceProxy('DEVICE_A');
     deviceA.binding = new BindingRoot();
     const deviceB = new DeviceProxy('DEVICE_B');
     deviceB.binding = new BindingRoot();
 
-    const entries: PropertyProxyEntries = [
+    const proxies: PropertyProxies = [
       new PropertyProxy(deviceA, 'speed'),
       new PropertyProxy(deviceB, 'temperature'),
     ];
-    const contexts = createPropertyProxyContexts(entries);
+    const snapshots = createPropertyProxySnapshots(proxies);
 
-    expect(contexts).toHaveLength(2);
-    expect(contexts[0]).toMatchObject({
+    expect(snapshots).toHaveLength(2);
+    expect(snapshots[0]).toMatchObject({
       sourceKey: 'DEVICE_A.speed',
       deviceId: 'DEVICE_A',
       propertyPath: 'speed',
       deviceStatus: ProxyStatus.OFFLINE,
     });
-    expect(contexts[1]).toMatchObject({
+    expect(snapshots[1]).toMatchObject({
       sourceKey: 'DEVICE_B.temperature',
       deviceId: 'DEVICE_B',
       propertyPath: 'temperature',
       deviceStatus: ProxyStatus.OFFLINE,
     });
 
-    disposePropertyProxies(entries);
+    disposePropertyProxies(proxies);
   });
 
   it('starts monitoring for every property proxy and deduplicates device subscriptions', () => {
@@ -102,14 +102,14 @@ describe('controller proxy utilities', () => {
     const proxyA2 = new PropertyProxy(deviceA, 'position');
     const proxyB = new PropertyProxy(deviceB, 'temperature');
 
-    const entries: PropertyProxyEntries = [proxyA1, proxyA2, proxyB];
+    const proxies: PropertyProxies = [proxyA1, proxyA2, proxyB];
 
     const onDeviceUpdate = jest.fn();
     const onProxyUpdate = jest.fn();
     const owner = {};
 
     const stopMonitoring = startMonitoring(
-      entries,
+      proxies,
       owner,
       onDeviceUpdate,
       onProxyUpdate
@@ -133,10 +133,10 @@ describe('controller proxy utilities', () => {
     expect(stopDeviceB).toHaveBeenCalledTimes(1);
     expect(onDeviceUpdate).not.toHaveBeenCalled();
 
-    disposePropertyProxies(entries);
+    disposePropertyProxies(proxies);
   });
 
-  it('updateDeviceProxyContexts rebuilds only matching slots and preserves sourceKey', () => {
+  it('updateDeviceProxySnapshots rebuilds only matching slots and preserves sourceKey', () => {
     const deviceA = new DeviceProxy('DEVICE_A');
     deviceA.binding = new BindingRoot();
     const deviceB = new DeviceProxy('DEVICE_B');
@@ -144,38 +144,38 @@ describe('controller proxy utilities', () => {
 
     const proxyA = new PropertyProxy(deviceA, 'speed');
     const proxyB = new PropertyProxy(deviceB, 'temperature');
-    const entries: PropertyProxyEntries = [proxyA, proxyB];
+    const proxies: PropertyProxies = [proxyA, proxyB];
 
-    const contexts = createPropertyProxyContexts(entries);
+    const snapshots = createPropertyProxySnapshots(proxies);
 
     deviceA.setOnlineFlag(true);
-    const next = updateDeviceProxyContexts(contexts, entries, 'DEVICE_A');
+    const next = updateDeviceProxySnapshots(snapshots, proxies, 'DEVICE_A');
 
     expect(next).not.toBeNull();
     expect(next![0].deviceStatus).toBe(ProxyStatus.ONLINE);
     expect(next![0].sourceKey).toBe('DEVICE_A.speed');
-    expect(next![1]).toBe(contexts[1]);
+    expect(next![1]).toBe(snapshots[1]);
 
-    disposePropertyProxies(entries);
+    disposePropertyProxies(proxies);
   });
 
-  it('updateDeviceProxyContexts returns null when deviceState and deviceStatus are unchanged', () => {
+  it('updateDeviceProxySnapshots returns null when deviceState and deviceStatus are unchanged', () => {
     const deviceA = new DeviceProxy('DEVICE_A');
     deviceA.binding = new BindingRoot();
 
     const proxyA = new PropertyProxy(deviceA, 'speed');
-    const entries: PropertyProxyEntries = [proxyA];
+    const proxies: PropertyProxies = [proxyA];
 
-    const contexts = createPropertyProxyContexts(entries);
+    const snapshots = createPropertyProxySnapshots(proxies);
 
-    const result = updateDeviceProxyContexts(contexts, entries, 'DEVICE_A');
+    const result = updateDeviceProxySnapshots(snapshots, proxies, 'DEVICE_A');
 
     expect(result).toBeNull();
 
-    disposePropertyProxies(entries);
+    disposePropertyProxies(proxies);
   });
 
-  it('updatePropertyProxyContext rewrites only the targeted index slot', () => {
+  it('updatePropertyProxySnapshot rewrites only the targeted index slot', () => {
     const deviceA = new DeviceProxy('DEVICE_A');
     deviceA.binding = new BindingRoot();
     const deviceB = new DeviceProxy('DEVICE_B');
@@ -183,16 +183,16 @@ describe('controller proxy utilities', () => {
 
     const proxyA = new PropertyProxy(deviceA, 'speed');
     const proxyB = new PropertyProxy(deviceB, 'temperature');
-    const entries: PropertyProxyEntries = [proxyA, proxyB];
+    const proxies: PropertyProxies = [proxyA, proxyB];
 
-    const contexts = createPropertyProxyContexts(entries);
+    const snapshots = createPropertyProxySnapshots(proxies);
 
-    const next = updatePropertyProxyContext(contexts, 0, proxyA);
+    const next = updatePropertyProxySnapshot(snapshots, 0, proxyA);
 
-    expect(next[0]).not.toBe(contexts[0]);
+    expect(next[0]).not.toBe(snapshots[0]);
     expect(next[0].sourceKey).toBe('DEVICE_A.speed');
-    expect(next[1]).toBe(contexts[1]);
+    expect(next[1]).toBe(snapshots[1]);
 
-    disposePropertyProxies(entries);
+    disposePropertyProxies(proxies);
   });
 });

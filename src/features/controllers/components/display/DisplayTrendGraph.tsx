@@ -7,7 +7,7 @@ import type { ControllerContainerContext } from '../ControllerContainer';
 import { ProxyStatus } from '@/lib/binding/api';
 import { DisplayTrendGraphModel } from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/renderRegistry';
-import type { PropertyProxyEntries } from '@/features/controllers/hooks/useController';
+import type { PropertyProxies } from '@/features/controllers/hooks/useController';
 import { useDisplayTrendGraph } from '@/features/controllers/hooks/useDisplayTrendGraph';
 import { TraceFactory } from '../../utils/traceFactory';
 
@@ -29,7 +29,7 @@ type SeriesInfo = {
 };
 
 const buildSeriesInfo = (
-  proxies: PropertyProxyEntries,
+  proxies: PropertyProxies,
   keys: string[]
 ): SeriesInfo[] =>
   proxies.map((proxy, index) => {

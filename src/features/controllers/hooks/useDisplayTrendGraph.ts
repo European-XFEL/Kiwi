@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'lodash';
 import { PropertyProxy } from '@/lib/binding/PropertyProxy';
-import type { PropertyProxyEntries } from './useController';
+import type { PropertyProxies } from './useController';
 
 interface TrendDataPoint {
   timestamp: number; // epoch ms
@@ -69,7 +69,7 @@ const prune = (data: TrendDataPoint[], max: number, windowMs: number) => {
  * useDisplayTrendGraph
  */
 export const useDisplayTrendGraph = (
-  proxies: PropertyProxyEntries = [],
+  proxies: PropertyProxies = [],
   isOffline: boolean,
   deviceId: string | undefined,
   config: TrendConfig = {}

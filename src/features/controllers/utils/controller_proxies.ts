@@ -10,7 +10,7 @@ import { getTopology } from '@/lib/singletons/api';
 // Scene keys are assumed to be ordered and parseable as `deviceId.propertyPath`.
 // Runtime state such as offline devices or missing bindings stays on the proxy.
 
-export type PropertyProxyEntries = PropertyProxy[];
+export type PropertyProxies = PropertyProxy[];
 
 const createPropertyProxy = (key: string): PropertyProxy => {
   const { deviceId, propertyPath } = splitKaraboKeys(key);
@@ -18,12 +18,12 @@ const createPropertyProxy = (key: string): PropertyProxy => {
   return new PropertyProxy(deviceProxy, propertyPath);
 };
 
-export const createPropertyProxies = (keys: string[]): PropertyProxyEntries =>
+export const createPropertyProxies = (keys: string[]): PropertyProxies =>
   keys.map(createPropertyProxy);
 
 // Device Monitoring
 // ---
-// Starts monitoring for every property proxy entry.
+// Starts monitoring for every property proxy.
 // DeviceProxy.addMonitor() is reference-counted, matching Karabo's
 // PropertyProxy.start_monitoring() behavior: two properties on the same device
 // increment the monitor count twice and clean up twice.
@@ -42,7 +42,7 @@ type DeviceUpdateCallback = (deviceId: string) => void;
 type ProxyUpdateCallback = (index: number, proxy: PropertyProxy) => void;
 
 export const startMonitoring = (
-  entries: PropertyProxyEntries,
+  proxies: PropertyProxies,
   owner: object,
   onDeviceUpdate: DeviceUpdateCallback,
   onProxyUpdate: ProxyUpdateCallback
@@ -50,7 +50,7 @@ export const startMonitoring = (
   const cleanups: Cleanup[] = [];
   const monitoredDeviceIds = new Set<string>();
 
-  entries.forEach((propertyProxy, index) => {
+  proxies.forEach((propertyProxy, index) => {
     const deviceProxy = propertyProxy.root;
     const deviceId = deviceProxy.deviceId;
 
@@ -90,13 +90,13 @@ export const startMonitoring = (
 // PropertyProxy subscribes to root_proxy.schema_update in its constructor,
 // so every created proxy must be disposed to release that subscription.
 // Paired with createPropertyProxies: call disposePropertyProxies on the same
-// entries array.
+// proxies array.
 
-export const disposePropertyProxies = (entries: PropertyProxyEntries): void => {
-  entries.forEach((propertyProxy) => propertyProxy.dispose());
+export const disposePropertyProxies = (proxies: PropertyProxies): void => {
+  proxies.forEach((propertyProxy) => propertyProxy.dispose());
 };
 
-// PropertyProxyContext
+// PropertyProxySnapshot
 // ---
 // A snapshot of one property proxy and the live state of the device it belongs to.
 // Each proxy carries its own device state and status so that per-proxy editability
@@ -104,7 +104,7 @@ export const disposePropertyProxies = (entries: PropertyProxyEntries): void => {
 // The root property proxy context is what the overlay reads; secondary contexts are
 // available for widget-level enabled/disabled logic.
 
-export type PropertyProxyContext = {
+export type PropertyProxySnapshot = {
   /** Canonical proxy key derived from the live proxy, used for tooltip/debug text. */
   sourceKey: string;
   proxy: PropertyProxy;
@@ -124,9 +124,9 @@ export type PropertyProxyContext = {
 const getProxySourceKey = (propertyProxy: PropertyProxy): string =>
   `${propertyProxy.root.deviceId}.${propertyProxy.path}`;
 
-export const createPropertyProxyContext = (
+export const createPropertyProxySnapshot = (
   propertyProxy: PropertyProxy
-): PropertyProxyContext => ({
+): PropertyProxySnapshot => ({
   sourceKey: getProxySourceKey(propertyProxy),
   proxy: propertyProxy,
   deviceProxy: propertyProxy.root,
@@ -143,37 +143,37 @@ export const createPropertyProxyContext = (
   timestamp: propertyProxy.timestamp,
 });
 
-export const createPropertyProxyContexts = (
-  entries: PropertyProxyEntries
-): PropertyProxyContext[] => entries.map(createPropertyProxyContext);
+export const createPropertyProxySnapshots = (
+  proxies: PropertyProxies
+): PropertyProxySnapshot[] => proxies.map(createPropertyProxySnapshot);
 
 // Snapshot update helpers
 // ---
-// Keep snapshot rebuild logic beside createPropertyProxyContext so useProxies
+// Keep snapshot rebuild logic beside createPropertyProxySnapshot so useProxies
 // only wires subscriptions and does not know which fields define a device snapshot.
 
-export const updateDeviceProxyContexts = (
-  prevContexts: PropertyProxyContext[],
-  entries: PropertyProxyEntries,
+export const updateDeviceProxySnapshots = (
+  prevSnapshots: PropertyProxySnapshot[],
+  proxies: PropertyProxies,
   deviceId: string
-): PropertyProxyContext[] | null => {
+): PropertyProxySnapshot[] | null => {
   let changed = false;
-  const next = prevContexts.map((ctx, i) => {
-    const proxy = entries[i];
-    if (proxy.root.deviceId != deviceId) return ctx;
-    if (ctx.rootRevision === proxy.root.rootRevision) return ctx;
+  const next = prevSnapshots.map((snapshot, i) => {
+    const proxy = proxies[i];
+    if (proxy.root.deviceId != deviceId) return snapshot;
+    if (snapshot.rootRevision === proxy.root.rootRevision) return snapshot;
     changed = true;
-    return createPropertyProxyContext(proxy);
+    return createPropertyProxySnapshot(proxy);
   });
   return changed ? next : null;
 };
 
-export const updatePropertyProxyContext = (
-  prevContexts: PropertyProxyContext[],
+export const updatePropertyProxySnapshot = (
+  prevSnapshots: PropertyProxySnapshot[],
   index: number,
   proxy: PropertyProxy
-): PropertyProxyContext[] => {
-  const next = [...prevContexts];
-  next[index] = createPropertyProxyContext(proxy);
+): PropertyProxySnapshot[] => {
+  const next = [...prevSnapshots];
+  next[index] = createPropertyProxySnapshot(proxy);
   return next;
 };
