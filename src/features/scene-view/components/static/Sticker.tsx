@@ -3,7 +3,7 @@
 import React from 'react';
 import { StickerModel } from '@/karabo/common/api';
 import { registerRenderer } from '../../renderRegistry';
-import { getQFontTextStyle } from '@/features/controllers/utils/fonts';
+import { getQFontTextStyle } from '@/features/controllers/api';
 
 // Sticker
 // ----------------------------------------------------------------------------

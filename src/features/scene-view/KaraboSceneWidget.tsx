@@ -16,18 +16,14 @@ import {
   UnknownWidgetDataModel,
   UnknownXMLDataModel,
 } from '@/karabo/common/api';
-import { AccessLevel, AccessMode } from '@/karabo/data/enums';
 import { LabelModel, StickerModel } from '@/karabo/common/api';
 import { SceneLinkModel, WebLinkModel } from '@/karabo/common/api';
 import { ControllerContainer } from '@/features/controllers/api';
-import { useProxies } from '@/features/controllers/hooks/useProxies';
-import { useController } from '@/features/controllers/hooks/useController';
 import { containerPointerEvents } from './utils/mode';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tooltip';
 
 import { getRenderer } from './renderRegistry';
 import { isInRenderPhase, resolveBounds, type RenderPhase } from './bounds';
-import { OverlayWidget } from './components/OverlayWidget';
 
 export { resolveBounds, isLayout } from './bounds';
 
@@ -52,113 +48,11 @@ const NON_CONTROLLER_WIDGETS = new Set<Function>([
   UnknownXMLDataModel,
 ]);
 
-const EDITABLE_PARENT_COMPONENT = 'EditableApplyLaterComponent';
-
 const isControllerWidget = (
   model: BaseSceneObjectData
 ): model is BaseWidgetObjectData =>
   model instanceof BaseWidgetObjectData &&
   !NON_CONTROLLER_WIDGETS.has(model.constructor);
-
-// ControllerView
-// ----------------------------------------------------------------------------
-// Calls useProxies + useController for device binding, renders the widget inside its overlay wrapper — controller and overlay belong together.
-
-const ControllerView: React.FC<{
-  model: BaseWidgetObjectData;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Renderer: React.ComponentType<any>;
-}> = ({ model, Renderer }) => {
-  const [isTooltipOpen, setIsTooltipOpen] = React.useState(false);
-  const tooltipAutoCloseRef = React.useRef<number | null>(null);
-  const proxies = useProxies(model.keys);
-  const ctx = useController(proxies);
-  const propertyTooltipText =
-    model.keys.filter(Boolean).join(', ') ||
-    (ctx.primary.tooltipText ?? ctx.primary.disabledReason);
-  const tooltipStatusText =
-    ctx.primary.disabledReason &&
-    ctx.primary.disabledReason !== propertyTooltipText
-      ? ctx.primary.disabledReason
-      : undefined;
-  const isEditableWidget = model.parent_component === EDITABLE_PARENT_COMPONENT;
-  const hasEditAccess =
-    ctx.primary.binding?.accessMode === AccessMode.RECONFIGURABLE &&
-    ctx.primary.userAccessLevel >=
-      (ctx.primary.binding?.requiredAccessLevel ?? AccessLevel.OBSERVER);
-  const tooltipBody =
-    propertyTooltipText || tooltipStatusText ? (
-      <>
-        {propertyTooltipText && <p>{propertyTooltipText}</p>}
-        {tooltipStatusText && <p>{tooltipStatusText}</p>}
-      </>
-    ) : null;
-  const tooltipContent = isEditableWidget ? (
-    <div className="space-y-0.5">
-      <p>
-        AccessLevel: {AccessLevel[ctx.primary.userAccessLevel]} - Access:{' '}
-        {hasEditAccess ? 'True' : 'False'}
-      </p>
-      {tooltipBody}
-    </div>
-  ) : (
-    tooltipBody
-  );
-  const controllerContent = (
-    <div className="w-full h-full">
-      <Renderer model={model} ctx={ctx} />
-    </div>
-  );
-
-  const clearTooltipAutoClose = React.useCallback(() => {
-    if (tooltipAutoCloseRef.current == null) return;
-
-    window.clearTimeout(tooltipAutoCloseRef.current);
-    tooltipAutoCloseRef.current = null;
-  }, []);
-
-  const handleTooltipOpenChange = React.useCallback(
-    (nextOpen: boolean) => {
-      clearTooltipAutoClose();
-      setIsTooltipOpen(nextOpen);
-
-      if (nextOpen) {
-        tooltipAutoCloseRef.current = window.setTimeout(() => {
-          setIsTooltipOpen(false);
-          tooltipAutoCloseRef.current = null;
-        }, 5000);
-      }
-    },
-    [clearTooltipAutoClose]
-  );
-
-  React.useEffect(() => clearTooltipAutoClose, [clearTooltipAutoClose]);
-
-  return (
-    <OverlayWidget primary={ctx.primary} tooltipText={ctx.primary.tooltipText}>
-      {tooltipContent ? (
-        <Tooltip
-          delayDuration={1500}
-          open={isTooltipOpen}
-          onOpenChange={handleTooltipOpenChange}
-        >
-          <TooltipTrigger asChild>{controllerContent}</TooltipTrigger>
-          <TooltipContent
-            hideArrow
-            side="bottom"
-            align="start"
-            sideOffset={4}
-            className="max-w-[420px] rounded-none border border-[#b88700] bg-[#fff7bf] px-1.5 py-0.5 text-[11px] leading-tight text-black shadow-sm"
-          >
-            {tooltipContent}
-          </TooltipContent>
-        </Tooltip>
-      ) : (
-        controllerContent
-      )}
-    </OverlayWidget>
-  );
-};
 
 // renderContent
 // ----------------------------------------------------------------------------
@@ -210,9 +104,12 @@ export function renderContent(
 
   if (isControllerWidget(model)) {
     return (
-      <ControllerContainer width={model.width} height={model.height}>
-        <ControllerView model={model} Renderer={Renderer} />
-      </ControllerContainer>
+      <ControllerContainer
+        width={model.width}
+        height={model.height}
+        model={model}
+        Renderer={Renderer}
+      />
     );
   }
 

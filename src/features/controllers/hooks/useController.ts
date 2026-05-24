@@ -10,15 +10,15 @@ import {
 import { DEVICE_INDICATORS, PROPERTY_INDICATORS } from '@/lib/OverlayIndicator';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import {
-  createPropertyProxyContexts,
-  type PropertyProxyContext,
-  type PropertyProxyEntries,
+  createPropertyProxySnapshots,
+  type PropertyProxySnapshot,
+  type PropertyProxies,
 } from '../utils/controller_proxies';
 
 // ControllerContainerContext
 // ---
 
-export type { PropertyProxyContext, PropertyProxyEntries };
+export type { PropertyProxies };
 
 export interface ControllerRootContext {
   deviceProxy: DeviceProxy | undefined;
@@ -37,17 +37,18 @@ export interface ControllerPrimaryContext extends UsePropertyProxyUpdate {
   tooltipText: string;
 }
 
+// Naming note:
+// `primary` currently means the enriched primary controller context, not `proxies[0]`.
+// If we align names later, `primary` may become the raw primary proxy and the
+// current `primary` object may be renamed to `primaryContext`.
 export interface ControllerContainerContext {
   primary: ControllerPrimaryContext;
-  proxies: PropertyProxyEntries;
+  primaryProxy: PropertyProxies[number] | undefined;
+  proxies: PropertyProxies;
 
   // Backward compatibility bridge:
-  // New code should read `ctx.primary` and `ctx.proxies`.
   // Keep these top-level aliases until the remaining widgets migrate so the
   // contract change stays incremental instead of forcing a repo-wide rewrite.
-  rootDevice: ControllerRootContext | undefined;
-  proxyContexts: PropertyProxyContext[];
-  rootProxy: PropertyProxyContext | undefined;
   userAccessLevel: AccessLevel;
   canEdit: boolean;
   isEnabled: boolean;
@@ -57,15 +58,15 @@ export interface ControllerContainerContext {
 }
 
 const getPrimaryProxy = (
-  propertyProxies: PropertyProxyEntries
-): PropertyProxyEntries[number] | undefined => propertyProxies[0];
+  propertyProxies: PropertyProxies
+): PropertyProxies[number] | undefined => propertyProxies[0];
 
-const getPrimaryContext = (
-  proxyContexts: PropertyProxyContext[]
-): PropertyProxyContext | undefined => proxyContexts[0];
+const getPrimarySnapshot = (
+  proxySnapshots: PropertyProxySnapshot[]
+): PropertyProxySnapshot | undefined => proxySnapshots[0];
 
-const getPrimaryKey = (proxyContexts: PropertyProxyContext[]): string =>
-  getPrimaryContext(proxyContexts)?.sourceKey ?? '';
+const getPrimaryKey = (proxySnapshots: PropertyProxySnapshot[]): string =>
+  getPrimarySnapshot(proxySnapshots)?.sourceKey ?? '';
 
 // useController
 // ---
@@ -73,20 +74,19 @@ const getPrimaryKey = (proxyContexts: PropertyProxyContext[]): string =>
 // Owns: root-slot semantics and the primary view context consumed by renderers.
 
 export function useController(
-  propertyProxies: PropertyProxyEntries
+  propertyProxies: PropertyProxies
 ): ControllerContainerContext {
   const userAccessLevel = useGlobalStore(
     (s) => s.sessionInfo?.accessLevel ?? AccessLevel.OBSERVER
   );
-  const proxyContexts = React.useMemo(
-    () => createPropertyProxyContexts(propertyProxies),
+  const proxySnapshots = React.useMemo(
+    () => createPropertyProxySnapshots(propertyProxies),
     [propertyProxies]
   );
 
-  const primaryContext = getPrimaryContext(proxyContexts);
-  const primaryKey = getPrimaryKey(proxyContexts);
-  const rootProxy = getPrimaryProxy(propertyProxies);
-  const rootDeviceProxy = rootProxy?.root;
+  const primaryKey = getPrimaryKey(proxySnapshots);
+  const primaryProxy = getPrimaryProxy(propertyProxies);
+  const rootDeviceProxy = primaryProxy?.root;
   const proxyStatus = rootDeviceProxy?.status ?? ProxyStatus.OFFLINE;
   const isOffline = proxyStatus === ProxyStatus.OFFLINE;
   const rootDevice = rootDeviceProxy
@@ -99,9 +99,9 @@ export function useController(
       }
     : undefined;
   const deviceId = rootDeviceProxy?.deviceId ?? '';
-  const propertyPath = rootProxy?.path ?? '';
-  const propertyMissing = !!rootProxy && !rootProxy.binding;
-  const proxyBinding = rootProxy?.binding;
+  const propertyPath = primaryProxy?.path ?? '';
+  const propertyMissing = !!primaryProxy && !primaryProxy.binding;
+  const proxyBinding = primaryProxy?.binding;
   const proxyIsEditable =
     !!proxyBinding &&
     proxyBinding.accessMode === AccessMode.RECONFIGURABLE &&
@@ -110,7 +110,7 @@ export function useController(
 
   const disabledReason = React.useMemo(() => {
     if (!primaryKey) return 'No property specified';
-    if (!rootProxy || !deviceId || !propertyPath) return undefined;
+    if (!primaryProxy || !deviceId || !propertyPath) return undefined;
     if (propertyMissing)
       return `${deviceId}.${propertyPath} missing from Schema`;
     if (proxyStatus === ProxyStatus.OFFLINE)
@@ -121,13 +121,13 @@ export function useController(
     primaryKey,
     propertyMissing,
     propertyPath,
-    rootProxy,
+    primaryProxy,
     proxyStatus,
   ]);
 
   const canEdit =
     !!primaryKey &&
-    !!rootProxy &&
+    !!primaryProxy &&
     !!deviceId &&
     !!propertyPath &&
     !propertyMissing &&
@@ -135,22 +135,20 @@ export function useController(
     proxyIsEditable;
 
   const tooltipText = React.useMemo(() => {
-    const nonEmptyLabels = proxyContexts
+    const nonEmptyLabels = proxySnapshots
       .map((ctx) => ctx.sourceKey)
       .filter(Boolean);
     return nonEmptyLabels.length > 0 ? nonEmptyLabels.join(', ') : primaryKey;
-  }, [primaryKey, proxyContexts]);
+  }, [primaryKey, proxySnapshots]);
 
-  const proxyValue = rootProxy?.value;
-  const proxyTimestamp = rootProxy?.timestamp;
+  const proxyValue = primaryProxy?.value;
+  const proxyTimestamp = primaryProxy?.timestamp;
   const proxyHashType = proxyBinding?.hashType;
-  const proxyPropertyStatus = rootProxy
+  const proxyPropertyStatus = primaryProxy
     ? proxyBinding
       ? PropertyStatus.NONE
       : PropertyStatus.MISSING
     : PropertyStatus.MISSING;
-
-  const rootProxyContext = primaryContext;
 
   const primary: ControllerPrimaryContext = React.useMemo(() => {
     const missing =
@@ -163,7 +161,7 @@ export function useController(
       hashType: proxyHashType,
       deviceState: rootDevice?.deviceState,
       deviceId: rootDevice?.deviceId,
-      propertyPath: rootProxy?.path,
+      propertyPath: primaryProxy?.path,
       isEditable: proxyIsEditable,
       proxyStatus,
       missing,
@@ -191,17 +189,15 @@ export function useController(
     proxyTimestamp,
     proxyValue,
     rootDevice,
-    rootProxy?.path,
+    primaryProxy?.path,
     tooltipText,
     userAccessLevel,
   ]);
 
   return {
     primary,
+    primaryProxy,
     proxies: propertyProxies,
-    rootDevice,
-    proxyContexts,
-    rootProxy: rootProxyContext,
     userAccessLevel,
     canEdit,
     isEnabled: canEdit,

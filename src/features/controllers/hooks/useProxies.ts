@@ -4,21 +4,21 @@ import {
   createPropertyProxies,
   disposePropertyProxies,
   startMonitoring,
-  type PropertyProxyEntries,
+  type PropertyProxies,
 } from '../utils/controller_proxies';
 
 type ProxiesState = {
   keysIdentity: string;
-  entries: PropertyProxyEntries;
+  proxies: PropertyProxies;
   deviceRevisions: Map<string, number>;
 };
 
 const buildDeviceRevisions = (
-  entries: PropertyProxyEntries
+  proxies: PropertyProxies
 ): Map<string, number> => {
   const revisions = new Map<string, number>();
 
-  entries.forEach((propertyProxy) => {
+  proxies.forEach((propertyProxy) => {
     revisions.set(propertyProxy.root.deviceId, propertyProxy.root.rootRevision);
   });
 
@@ -26,10 +26,10 @@ const buildDeviceRevisions = (
 };
 
 const getDeviceRevision = (
-  entries: PropertyProxyEntries,
+  proxies: PropertyProxies,
   deviceId: string
 ): number => {
-  const propertyProxy = entries.find(
+  const propertyProxy = proxies.find(
     (candidate) => candidate.root.deviceId === deviceId
   );
 
@@ -40,7 +40,7 @@ const getDeviceRevision = (
   return propertyProxy.root.rootRevision;
 };
 
-export function useProxies(keys: string[]): PropertyProxyEntries {
+export function useProxies(keys: string[]): PropertyProxies {
   const ownerRef = React.useRef({});
 
   const keysIdentity = React.useMemo(() => JSON.stringify(keys), [keys]);
@@ -48,24 +48,24 @@ export function useProxies(keys: string[]): PropertyProxyEntries {
 
   const [proxiesState, setProxiesState] = React.useState<ProxiesState>(() => ({
     keysIdentity,
-    entries: [],
+    proxies: [],
     deviceRevisions: new Map(),
   }));
 
-  const entries =
-    proxiesState.keysIdentity === keysIdentity ? proxiesState.entries : [];
+  const proxies =
+    proxiesState.keysIdentity === keysIdentity ? proxiesState.proxies : [];
 
   React.useEffect(() => {
-    const entries = createPropertyProxies(stableKeys);
+    const proxies = createPropertyProxies(stableKeys);
 
     const stopMonitoring = startMonitoring(
-      entries,
+      proxies,
       ownerRef.current,
       (deviceId) => {
         setProxiesState((prev) => {
           if (prev.keysIdentity !== keysIdentity) return prev;
 
-          const nextRevision = getDeviceRevision(entries, deviceId);
+          const nextRevision = getDeviceRevision(proxies, deviceId);
           if (prev.deviceRevisions.get(deviceId) === nextRevision) return prev;
 
           const nextDeviceRevisions = new Map(prev.deviceRevisions);
@@ -73,7 +73,7 @@ export function useProxies(keys: string[]): PropertyProxyEntries {
 
           return {
             keysIdentity: prev.keysIdentity,
-            entries: [...prev.entries],
+            proxies: [...prev.proxies],
             deviceRevisions: nextDeviceRevisions,
           };
         });
@@ -84,7 +84,7 @@ export function useProxies(keys: string[]): PropertyProxyEntries {
 
           return {
             keysIdentity: prev.keysIdentity,
-            entries: [...prev.entries],
+            proxies: [...prev.proxies],
             deviceRevisions: prev.deviceRevisions,
           };
         });
@@ -93,15 +93,15 @@ export function useProxies(keys: string[]): PropertyProxyEntries {
 
     setProxiesState({
       keysIdentity,
-      entries,
-      deviceRevisions: buildDeviceRevisions(entries),
+      proxies,
+      deviceRevisions: buildDeviceRevisions(proxies),
     });
 
     return () => {
       stopMonitoring();
-      disposePropertyProxies(entries);
+      disposePropertyProxies(proxies);
     };
   }, [keysIdentity, stableKeys]);
 
-  return entries;
+  return proxies;
 }

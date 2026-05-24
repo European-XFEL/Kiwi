@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tooltip';
-import type { UsePropertyProxyUpdate } from '@/lib/binding/api';
+import type { PropertyProxies } from '../utils/controller_proxies';
 import { ProxyStatus, PropertyStatus } from '@/lib/binding/api';
 import { PROPERTY_INDICATORS } from '@/lib/OverlayIndicator';
 import { XIcon } from 'lucide-react';
@@ -13,16 +13,28 @@ const CONNECTING_STATUSES: ProxyStatus[] = [
 
 const PHASE_DURATION_MS = 800;
 
-export interface OverlayWidgetProps {
-  primary: UsePropertyProxyUpdate;
+export interface ControllerOverlayProps {
+  primaryProxy: PropertyProxies[number] | undefined;
   children: React.ReactNode;
   tooltipText?: string;
   showMissingPropertyOverlay?: boolean;
 }
 
-export const OverlayWidget: React.FC<OverlayWidgetProps> = React.memo(
-  ({ primary, children, tooltipText, showMissingPropertyOverlay = false }) => {
-    const { deviceId, propertyPath, proxyStatus, propertyStatus } = primary;
+export const ControllerOverlay: React.FC<ControllerOverlayProps> = React.memo(
+  ({
+    primaryProxy,
+    children,
+    tooltipText,
+    showMissingPropertyOverlay = false,
+  }) => {
+    const deviceId = primaryProxy?.root.deviceId;
+    const propertyPath = primaryProxy?.path;
+    const proxyStatus = primaryProxy?.root.status ?? ProxyStatus.OFFLINE;
+    const propertyStatus = primaryProxy
+      ? primaryProxy.binding
+        ? PropertyStatus.NONE
+        : PropertyStatus.MISSING
+      : PropertyStatus.MISSING;
     const propertyIndicator =
       PROPERTY_INDICATORS.find((p) => p.status === propertyStatus) ?? undefined;
 
@@ -183,4 +195,4 @@ export const OverlayWidget: React.FC<OverlayWidgetProps> = React.memo(
   }
 );
 
-OverlayWidget.displayName = 'OverlayWidget';
+ControllerOverlay.displayName = 'ControllerOverlay';
