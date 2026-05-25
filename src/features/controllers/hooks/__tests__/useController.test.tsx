@@ -1,12 +1,16 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 
 import { AccessLevel, AccessMode } from '@/karabo/data/enums';
-import { DeviceProxy, PropertyProxy, PropertyStatus } from '@/lib/binding/api';
+import { DeviceProxy, PropertyProxy } from '@/lib/binding/api';
 import { ProxyStatus } from '@/lib/binding/ProxyStatus';
 import { SingletonContext } from '@/testing';
 
 import { useProxies } from '../useProxies';
 import { useController } from '../useController';
+import {
+  getControllerIndicator,
+  isProxyAllowed,
+} from '../../utils/controller_semantics';
 
 type MockDevice = DeviceProxy & {
   stopMonitoring: jest.Mock;
@@ -155,7 +159,7 @@ describe('useController', () => {
     });
   });
 
-  it('primary.propertyIndicator is derived from the property status', () => {
+  it('primary mirrors the shared controller indicator helper output', () => {
     const deviceProxy = new DeviceProxy('DEVICE_A');
     const propertyProxy = new PropertyProxy(deviceProxy, 'speed');
 
@@ -163,17 +167,23 @@ describe('useController', () => {
       useController([propertyProxy])
     );
 
-    expect(result.current.primary.propertyStatus).toBe(PropertyStatus.MISSING);
-    expect(result.current.primary.propertyIndicator).toMatchObject({
-      status: PropertyStatus.MISSING,
-      label: 'Property not found on device',
-    });
+    const indicator = getControllerIndicator(['DEVICE_A.speed'], propertyProxy);
+
+    expect(result.current.primary.tooltipText).toBe(indicator.bindingLabel);
+    expect(result.current.primary.disabledReason).toBe(indicator.statusText);
+    expect(result.current.primary.existing).toBe(propertyProxy.existing);
+    expect(result.current.primary.propertyStatus).toBe(
+      indicator.propertyStatus
+    );
+    expect(result.current.primary.propertyIndicator).toBe(
+      indicator.propertyIndicator
+    );
 
     unmount();
     propertyProxy.dispose();
   });
 
-  it('canEdit is derived from the live root proxy and binding gates', () => {
+  it('primary editability mirrors the shared proxy-allowed helper', () => {
     const deviceProxy = new DeviceProxy('TEST_DEVICE');
     (deviceProxy as any).status = ProxyStatus.MONITORING;
 
@@ -189,6 +199,9 @@ describe('useController', () => {
       useController([propertyProxy])
     );
 
+    expect(result.current.primary.isEditable).toBe(
+      isProxyAllowed(propertyProxy, AccessLevel.OBSERVER)
+    );
     expect(result.current.primary.canEdit).toBe(true);
 
     unmount();

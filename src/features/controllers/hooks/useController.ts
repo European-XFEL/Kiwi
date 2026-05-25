@@ -1,19 +1,19 @@
 import React from 'react';
 
-import { AccessLevel, AccessMode } from '@/karabo/data/enums';
+import { AccessLevel } from '@/karabo/data/enums';
 import type { DeviceProxy } from '@/lib/binding/DeviceProxy';
-import {
-  ProxyStatus,
-  PropertyStatus,
-  type UsePropertyProxyUpdate,
-} from '@/lib/binding/api';
-import { DEVICE_INDICATORS, PROPERTY_INDICATORS } from '@/lib/OverlayIndicator';
+import { ProxyStatus, type UsePropertyProxyUpdate } from '@/lib/binding/api';
+import { DEVICE_INDICATORS } from '@/lib/OverlayIndicator';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import {
   createPropertyProxySnapshots,
-  type PropertyProxySnapshot,
   type PropertyProxies,
 } from '../utils/controller_proxies';
+import {
+  getControllerIndicator,
+  getPrimaryControllerKey,
+  isProxyAllowed,
+} from '../utils/controller_semantics';
 
 // ControllerContainerContext
 // ---
@@ -38,26 +38,18 @@ export interface ControllerPrimaryContext extends UsePropertyProxyUpdate {
 }
 
 // Naming note:
-// `primary` currently means the enriched primary controller context, not `proxies[0]`.
-// If we align names later, `primary` may become the raw primary proxy and the
-// current `primary` object may be renamed to `primaryContext`.
+// `primary` is the enriched controller context.
+// `proxy` is the raw root proxy, i.e. `proxies[0]`.
 export interface ControllerContainerContext {
   primary: ControllerPrimaryContext;
-  primaryProxy: PropertyProxies[number] | undefined;
+  proxy: PropertyProxies[number] | undefined;
   proxies: PropertyProxies;
   userAccessLevel: AccessLevel;
 }
 
-const getPrimaryProxy = (
+const getProxy = (
   propertyProxies: PropertyProxies
 ): PropertyProxies[number] | undefined => propertyProxies[0];
-
-const getPrimarySnapshot = (
-  proxySnapshots: PropertyProxySnapshot[]
-): PropertyProxySnapshot | undefined => proxySnapshots[0];
-
-const getPrimaryKey = (proxySnapshots: PropertyProxySnapshot[]): string =>
-  getPrimarySnapshot(proxySnapshots)?.sourceKey ?? '';
 
 // useController
 // ---
@@ -75,9 +67,13 @@ export function useController(
     [propertyProxies]
   );
 
-  const primaryKey = getPrimaryKey(proxySnapshots);
-  const primaryProxy = getPrimaryProxy(propertyProxies);
-  const rootDeviceProxy = primaryProxy?.root;
+  const sourceKeys = React.useMemo(
+    () => proxySnapshots.map((snapshot) => snapshot.sourceKey),
+    [proxySnapshots]
+  );
+  const primaryKey = getPrimaryControllerKey(proxySnapshots);
+  const proxy = getProxy(propertyProxies);
+  const rootDeviceProxy = proxy?.root;
   const proxyStatus = rootDeviceProxy?.status ?? ProxyStatus.OFFLINE;
   const isOffline = proxyStatus === ProxyStatus.OFFLINE;
   const rootDevice = rootDeviceProxy
@@ -90,56 +86,24 @@ export function useController(
       }
     : undefined;
   const deviceId = rootDeviceProxy?.deviceId ?? '';
-  const propertyPath = primaryProxy?.path ?? '';
-  const propertyMissing = !!primaryProxy && !primaryProxy.binding;
-  const proxyBinding = primaryProxy?.binding;
-  const proxyIsEditable =
-    !!proxyBinding &&
-    proxyBinding.accessMode === AccessMode.RECONFIGURABLE &&
-    userAccessLevel >= proxyBinding.requiredAccessLevel &&
-    proxyBinding.is_allowed(rootDeviceProxy?.state ?? '');
-
-  const disabledReason = React.useMemo(() => {
-    if (!primaryKey) return 'No property specified';
-    if (!primaryProxy || !deviceId || !propertyPath) return undefined;
-    if (propertyMissing)
-      return `${deviceId}.${propertyPath} missing from Schema`;
-    if (proxyStatus === ProxyStatus.OFFLINE)
-      return `${deviceId}.${propertyPath} (offline)`;
-    return undefined;
-  }, [
-    deviceId,
-    primaryKey,
-    propertyMissing,
-    propertyPath,
-    primaryProxy,
-    proxyStatus,
-  ]);
+  const propertyPath = proxy?.path ?? '';
+  const proxyBinding = proxy?.binding;
+  const proxyIsEditable = isProxyAllowed(proxy, userAccessLevel);
+  const controllerIndicator = getControllerIndicator(sourceKeys, proxy);
 
   const canEdit =
     !!primaryKey &&
-    !!primaryProxy &&
+    !!proxy &&
     !!deviceId &&
     !!propertyPath &&
-    !propertyMissing &&
     !isOffline &&
     proxyIsEditable;
 
-  const tooltipText = React.useMemo(() => {
-    const nonEmptyLabels = proxySnapshots
-      .map((ctx) => ctx.sourceKey)
-      .filter(Boolean);
-    return nonEmptyLabels.length > 0 ? nonEmptyLabels.join(', ') : primaryKey;
-  }, [primaryKey, proxySnapshots]);
+  const tooltipText = controllerIndicator.bindingLabel ?? primaryKey;
 
-  const proxyValue = primaryProxy?.value;
-  const proxyTimestamp = primaryProxy?.timestamp;
+  const proxyValue = proxy?.value;
+  const proxyTimestamp = proxy?.timestamp;
   const proxyHashType = proxyBinding?.hashType;
-  const proxyPropertyStatus = primaryProxy
-    ? proxyBinding
-      ? PropertyStatus.NONE
-      : PropertyStatus.MISSING
-    : PropertyStatus.MISSING;
 
   const primary: ControllerPrimaryContext = React.useMemo(() => {
     const missing =
@@ -152,42 +116,40 @@ export function useController(
       hashType: proxyHashType,
       deviceState: rootDevice?.deviceState,
       deviceId: rootDevice?.deviceId,
-      propertyPath: primaryProxy?.path,
+      propertyPath: proxy?.path,
       isEditable: proxyIsEditable,
       proxyStatus,
       missing,
       isOffline,
-      propertyStatus: proxyPropertyStatus,
-      propertyIndicator:
-        PROPERTY_INDICATORS.find((p) => p.status === proxyPropertyStatus) ??
-        undefined,
+      existing: proxy?.existing ?? false,
+      propertyStatus: controllerIndicator.propertyStatus,
+      propertyIndicator: controllerIndicator.propertyIndicator,
       rootDevice,
       userAccessLevel,
       canEdit,
       isEnabled: canEdit,
-      disabledReason,
+      disabledReason: controllerIndicator.statusText,
       tooltipText,
     };
   }, [
     canEdit,
-    disabledReason,
+    controllerIndicator,
     isOffline,
     proxyBinding,
     proxyHashType,
     proxyIsEditable,
-    proxyPropertyStatus,
     proxyStatus,
     proxyTimestamp,
     proxyValue,
     rootDevice,
-    primaryProxy?.path,
+    proxy?.path,
     tooltipText,
     userAccessLevel,
   ]);
 
   return {
     primary,
-    primaryProxy,
+    proxy,
     proxies: propertyProxies,
     userAccessLevel,
   };

@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { DeviceProxy, PropertyProxy, ProxyStatus } from '@/lib/binding/api';
+import { getControllerIndicator } from '../../utils/controller_semantics';
 
 jest.mock('@/components/tooltip', () => {
   const ReactActual = jest.requireActual<typeof React>('react');
@@ -26,14 +27,17 @@ describe('ControllerOverlay', () => {
     jest.clearAllMocks();
   });
 
-  it('shows a missing-property badge from the raw primary proxy when requested', () => {
+  it('shows a missing-property badge from the raw proxy when requested', () => {
     const deviceProxy = new DeviceProxy('DEVICE_A');
     (deviceProxy as any).status = ProxyStatus.MONITORING;
-    const primaryProxy = new PropertyProxy(deviceProxy, 'speed');
+    const proxy = new PropertyProxy(deviceProxy, 'speed');
+
+    const indicator = getControllerIndicator(['DEVICE_A.speed'], proxy);
 
     render(
       <ControllerOverlay
-        primaryProxy={primaryProxy}
+        proxy={proxy}
+        indicator={indicator}
         tooltipText="DEVICE_A.speed"
         showMissingPropertyOverlay
       >
@@ -44,17 +48,20 @@ describe('ControllerOverlay', () => {
     expect(screen.getByText('child widget')).toBeInTheDocument();
     expect(screen.getByText('??')).toBeInTheDocument();
 
-    primaryProxy.dispose();
+    proxy.dispose();
   });
 
-  it('shows the offline tooltip from the raw primary proxy device status', () => {
+  it('shows the offline tooltip from the raw proxy device status', () => {
     const deviceProxy = new DeviceProxy('DEVICE_A');
     (deviceProxy as any).status = ProxyStatus.OFFLINE;
-    const primaryProxy = new PropertyProxy(deviceProxy, 'speed');
+    const proxy = new PropertyProxy(deviceProxy, 'speed');
+
+    const indicator = getControllerIndicator(['DEVICE_A.speed'], proxy);
 
     render(
       <ControllerOverlay
-        primaryProxy={primaryProxy}
+        proxy={proxy}
+        indicator={indicator}
         tooltipText="DEVICE_A.speed"
       >
         <div>child widget</div>
@@ -66,6 +73,6 @@ describe('ControllerOverlay', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('DEVICE_A.speed')).toBeInTheDocument();
 
-    primaryProxy.dispose();
+    proxy.dispose();
   });
 });

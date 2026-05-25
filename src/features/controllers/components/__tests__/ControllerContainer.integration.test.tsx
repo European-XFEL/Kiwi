@@ -14,8 +14,8 @@ jest.mock('../ControllerOverlay', () => {
   const mockReactActual = jest.requireActual<typeof React>('react');
 
   return {
-    ControllerOverlay: ({ primaryProxy, tooltipText, children }: any) => {
-      mockOverlaySpy({ primaryProxy, tooltipText });
+    ControllerOverlay: ({ proxy, indicator, tooltipText, children }: any) => {
+      mockOverlaySpy({ proxy, indicator, tooltipText });
       return mockReactActual.createElement(
         'div',
         { 'data-testid': 'controller-overlay' },
@@ -65,7 +65,7 @@ describe('ControllerContainer integration', () => {
     jest.restoreAllMocks();
   });
 
-  it('owns proxies, derives controller context, passes ctx to the widget, and drives the overlay from the same primary proxy', async () => {
+  it('owns proxies, derives controller context, passes ctx to the widget, and drives the overlay from the same proxy', async () => {
     const { devices, topology } = makeTopology();
     const disposeSpy = jest.spyOn(PropertyProxy.prototype, 'dispose');
     let lastCtx: any;
@@ -105,14 +105,19 @@ describe('ControllerContainer integration', () => {
       expect(devices.get('DEVICE_A')?.addMonitor).toHaveBeenCalledTimes(1);
       expect(devices.get('DEVICE_B')?.addMonitor).toHaveBeenCalledTimes(1);
 
-      expect(lastCtx.primaryProxy).toBe(lastCtx.proxies[0]);
+      expect(lastCtx.proxy).toBe(lastCtx.proxies[0]);
       expect(lastCtx.primary.deviceId).toBe('DEVICE_A');
       expect(lastCtx.primary.propertyPath).toBe('speed');
       expect(lastCtx.proxies[1].root.deviceId).toBe('DEVICE_B');
       expect(screen.getByTestId('controller-overlay')).toBeInTheDocument();
 
       const overlayCall = mockOverlaySpy.mock.calls.at(-1)?.[0];
-      expect(overlayCall.primaryProxy).toBe(lastCtx.primaryProxy);
+      expect(overlayCall.proxy).toBe(lastCtx.proxy);
+      expect(overlayCall.indicator).toEqual(
+        expect.objectContaining({
+          bindingLabel: 'DEVICE_A.speed, DEVICE_B.temperature',
+        })
+      );
       expect(overlayCall.tooltipText).toBe(
         'DEVICE_A.speed, DEVICE_B.temperature'
       );

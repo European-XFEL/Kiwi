@@ -24,3 +24,4 @@ export {
 } from './utils/fonts';
 
 export * from './utils/controller_proxies';
+export * from './utils/controller_semantics';
