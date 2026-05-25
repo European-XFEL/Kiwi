@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tooltip';
 import type { PropertyProxies } from '../utils/controller_proxies';
-import { ProxyStatus, PropertyStatus } from '@/lib/binding/api';
-import { PROPERTY_INDICATORS } from '@/lib/OverlayIndicator';
+import { ProxyStatus } from '@/lib/binding/api';
 import { XIcon } from 'lucide-react';
+import type { ControllerIndicator } from '../utils/controller_semantics';
 
 const CONNECTING_STATUSES: ProxyStatus[] = [
   ProxyStatus.ONLINEREQUESTED,
@@ -14,29 +14,27 @@ const CONNECTING_STATUSES: ProxyStatus[] = [
 const PHASE_DURATION_MS = 800;
 
 export interface ControllerOverlayProps {
-  primaryProxy: PropertyProxies[number] | undefined;
+  proxy: PropertyProxies[number] | undefined;
   children: React.ReactNode;
   tooltipText?: string;
+  indicator?: ControllerIndicator;
   showMissingPropertyOverlay?: boolean;
 }
 
 export const ControllerOverlay: React.FC<ControllerOverlayProps> = React.memo(
   ({
-    primaryProxy,
+    proxy,
     children,
     tooltipText,
+    indicator,
     showMissingPropertyOverlay = false,
   }) => {
-    const deviceId = primaryProxy?.root.deviceId;
-    const propertyPath = primaryProxy?.path;
-    const proxyStatus = primaryProxy?.root.status ?? ProxyStatus.OFFLINE;
-    const propertyStatus = primaryProxy
-      ? primaryProxy.binding
-        ? PropertyStatus.NONE
-        : PropertyStatus.MISSING
-      : PropertyStatus.MISSING;
-    const propertyIndicator =
-      PROPERTY_INDICATORS.find((p) => p.status === propertyStatus) ?? undefined;
+    const bindingLabel = indicator?.bindingLabel;
+    const missingPropertyIndicator = indicator?.missingPropertyIndicator;
+    const tooltipLabel = tooltipText ?? bindingLabel;
+    const deviceId = proxy?.root.deviceId;
+    const propertyPath = proxy?.path;
+    const proxyStatus = proxy?.root.status ?? ProxyStatus.OFFLINE;
 
     const isOffline = proxyStatus === ProxyStatus.OFFLINE;
     const isConnecting = CONNECTING_STATUSES.includes(proxyStatus);
@@ -76,8 +74,7 @@ export const ControllerOverlay: React.FC<ControllerOverlayProps> = React.memo(
       hasPropertyKey &&
       showMissingPropertyOverlay &&
       !isOffline &&
-      propertyStatus === PropertyStatus.MISSING &&
-      propertyIndicator;
+      !!missingPropertyIndicator;
     const shouldRenderOverlay =
       hasPropertyKey &&
       (isOffline || isConnecting || phase !== null || !!showMissingBadge);
@@ -115,7 +112,7 @@ export const ControllerOverlay: React.FC<ControllerOverlayProps> = React.memo(
             >
               <div className="text-center py-1">
                 <p className="font-semibold text-sm">
-                  {tooltipText ?? deviceId}
+                  {tooltipLabel ?? deviceId}
                 </p>
                 <p className="text-xs opacity-90 mt-1">
                   Device is offline — no live data
@@ -146,7 +143,7 @@ export const ControllerOverlay: React.FC<ControllerOverlayProps> = React.memo(
                   className="bg-gray-900 text-white border-gray-800"
                 >
                   <p className="font-medium text-xs">
-                    {tooltipText ?? deviceId}
+                    {tooltipLabel ?? deviceId}
                   </p>
                   <p className="text-xs opacity-90">
                     {phase === 0 && 'Connecting...'}
@@ -159,37 +156,39 @@ export const ControllerOverlay: React.FC<ControllerOverlayProps> = React.memo(
           )}
 
         {/* PROPERTY MISSING — Amber badge */}
-        {shouldRenderOverlay && showMissingBadge && propertyIndicator && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-auto z-10">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="px-3 py-1.5 bg-amber-50/95 border border-amber-600 rounded shadow-md cursor-help backdrop-blur-sm">
-                  <span className="text-amber-900 font-mono font-bold text-xs tracking-wider">
-                    {typeof propertyIndicator.indicator === 'string'
-                      ? propertyIndicator.indicator
-                      : '??'}
-                  </span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent
-                side="top"
-                className="bg-gray-900 text-white border-gray-800 max-w-xs"
-              >
-                {tooltipText ? (
-                  <p className="text-xs leading-relaxed">{tooltipText}</p>
-                ) : (
-                  <p className="text-xs leading-relaxed">
-                    Property{' '}
-                    <code className="font-mono bg-amber-900/30 px-1 rounded">
-                      {propertyPath}
-                    </code>{' '}
-                    not found in device configuration.
-                  </p>
-                )}
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        )}
+        {shouldRenderOverlay &&
+          showMissingBadge &&
+          missingPropertyIndicator && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-auto z-10">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="px-3 py-1.5 bg-amber-50/95 border border-amber-600 rounded shadow-md cursor-help backdrop-blur-sm">
+                    <span className="text-amber-900 font-mono font-bold text-xs tracking-wider">
+                      {typeof missingPropertyIndicator.indicator === 'string'
+                        ? missingPropertyIndicator.indicator
+                        : '??'}
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="top"
+                  className="bg-gray-900 text-white border-gray-800 max-w-xs"
+                >
+                  {tooltipLabel ? (
+                    <p className="text-xs leading-relaxed">{tooltipLabel}</p>
+                  ) : (
+                    <p className="text-xs leading-relaxed">
+                      Property{' '}
+                      <code className="font-mono bg-amber-900/30 px-1 rounded">
+                        {propertyPath}
+                      </code>{' '}
+                      not found in device configuration.
+                    </p>
+                  )}
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          )}
       </div>
     );
   }

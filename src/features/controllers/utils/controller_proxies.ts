@@ -132,7 +132,7 @@ export const createPropertyProxySnapshot = (
   deviceProxy: propertyProxy.root,
   deviceId: propertyProxy.root.deviceId,
   propertyPath: propertyProxy.path,
-  propertyStatus: propertyProxy.binding
+  propertyStatus: propertyProxy.existing
     ? PropertyStatus.NONE
     : PropertyStatus.MISSING,
   deviceState: propertyProxy.root.state,

@@ -4,6 +4,7 @@ import {
   StringBinding,
   PropertyProxy,
 } from '@/lib/binding/api';
+import { ProxyStatus } from '@/lib/binding/ProxyStatus';
 import { StringValue } from '@/karabo/data/api';
 
 describe('The basic proxy test', () => {
@@ -32,5 +33,28 @@ describe('The basic proxy test', () => {
     const not_property_proxy = new PropertyProxy(root_proxy, 'notAvailable');
     expect(not_property_proxy.binding).toBeUndefined();
     expect(not_property_proxy.edit_value).toBeUndefined();
+  });
+
+  it('PropertyProxy - Existing tracks schema confirmation explicitly', () => {
+    const rootBinding = new BindingRoot();
+    const rootProxy = new DeviceProxy('TEST_KIWI');
+    rootProxy.binding = rootBinding;
+    rootProxy.status = ProxyStatus.ONLINEREQUESTED;
+
+    const missingProxy = new PropertyProxy(rootProxy, 'missingProperty');
+    expect(missingProxy.existing).toBe(true);
+
+    rootProxy.schema_update.fire();
+    expect(missingProxy.existing).toBe(false);
+
+    rootBinding.value!.set(
+      'missingProperty',
+      new StringBinding({ value: 'now-here' })
+    );
+    rootProxy.schema_update.fire();
+    expect(missingProxy.binding).toBeInstanceOf(StringBinding);
+    expect(missingProxy.existing).toBe(true);
+
+    missingProxy.dispose();
   });
 });

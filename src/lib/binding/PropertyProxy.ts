@@ -2,12 +2,20 @@ import { BaseBinding } from './BaseBinding';
 import type { DeviceProxy } from './DeviceProxy';
 import { Signal } from '../utils';
 import { AccessLevel, AccessMode } from '@/karabo/data/enums';
+import { ProxyStatus } from './ProxyStatus';
 
 type Unsubscribe = () => void;
+
+const SCHEMA_LOADED_STATUSES = new Set<ProxyStatus>([
+  ProxyStatus.SCHEMA,
+  ProxyStatus.ALIVE,
+  ProxyStatus.MONITORING,
+]);
 
 export class PropertyProxy {
   public binding?: BaseBinding;
   private edit_binding?: BaseBinding;
+  private _existing = true;
 
   public readonly config_update = new Signal<[PropertyProxy]>();
   private readonly binding_update_signal = new Signal<[PropertyProxy]>();
@@ -20,6 +28,10 @@ export class PropertyProxy {
     public readonly path: string
   ) {
     this.setBinding(this.root_proxy.getBinding(this.path));
+
+    if (SCHEMA_LOADED_STATUSES.has(this.root_proxy.status)) {
+      this._existing = this.binding !== undefined;
+    }
 
     this.removeBindingUpdate = this.root_proxy.schema_update.subscribe(
       this,
@@ -45,6 +57,10 @@ export class PropertyProxy {
 
   get edit_value(): any {
     return this.edit_binding?.value;
+  }
+
+  get existing(): boolean {
+    return this._existing;
   }
 
   isEditable(userAccessLevel: AccessLevel): boolean {
@@ -85,6 +101,7 @@ export class PropertyProxy {
 
   private onSchemaUpdate(): void {
     this.setBinding(this.root_proxy.getBinding(this.path));
+    this._existing = this.binding !== undefined;
     this.binding_update_signal.fire(this);
   }
 

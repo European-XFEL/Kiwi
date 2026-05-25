@@ -11,6 +11,7 @@ import { useContainer } from '../hooks/useContainer';
 import type { ControllerContainerContext } from '../hooks/useController';
 import { useController } from '../hooks/useController';
 import { useProxies } from '../hooks/useProxies';
+import { getControllerIndicator } from '../utils/controller_semantics';
 import { ControllerOverlay } from './ControllerOverlay';
 
 export type { ControllerContainerContext };
@@ -36,14 +37,9 @@ export const ControllerContainer: React.FC<ControllerContainerProps> = ({
   const tooltipAutoCloseRef = React.useRef<number | null>(null);
   const proxies = useProxies(model.keys);
   const ctx = useController(proxies);
-  const propertyTooltipText =
-    model.keys.filter(Boolean).join(', ') ||
-    (ctx.primary.tooltipText ?? ctx.primary.disabledReason);
-  const tooltipStatusText =
-    ctx.primary.disabledReason &&
-    ctx.primary.disabledReason !== propertyTooltipText
-      ? ctx.primary.disabledReason
-      : undefined;
+  const indicator = getControllerIndicator(model.keys, ctx.proxy);
+  const { bindingLabel: propertyTooltipText, statusText: tooltipStatusText } =
+    indicator;
   const isEditableWidget = model.parent_component === EDITABLE_PARENT_COMPONENT;
   const hasEditAccess =
     ctx.primary.binding?.accessMode === AccessMode.RECONFIGURABLE &&
@@ -108,8 +104,9 @@ export const ControllerContainer: React.FC<ControllerContainerProps> = ({
     >
       <div style={contentsStyle}>
         <ControllerOverlay
-          primaryProxy={ctx.primaryProxy}
-          tooltipText={ctx.primary.tooltipText}
+          proxy={ctx.proxy}
+          indicator={indicator}
+          tooltipText={propertyTooltipText}
         >
           {tooltipContent ? (
             <Tooltip

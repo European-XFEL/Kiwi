@@ -28,6 +28,7 @@ export interface UsePropertyProxyUpdate {
   proxyStatus: ProxyStatus;
   missing: ProxyStatusIcon | undefined;
   isOffline: boolean;
+  existing: boolean;
 
   propertyStatus: PropertyStatus;
   propertyIndicator: ProxyBindingIcon | undefined;
@@ -37,6 +38,7 @@ interface ProxyValue {
   binding: BaseBinding | undefined;
   value: HashValues | undefined;
   timestamp: Timestamp | undefined;
+  existing: boolean;
 }
 
 interface RootProxyValue {
@@ -54,6 +56,7 @@ const EMPTY_PROXY: ProxyValue = {
   binding: undefined,
   value: undefined,
   timestamp: undefined,
+  existing: true,
 };
 
 const EMPTY_ROOT: RootProxyValue = {
@@ -105,6 +108,7 @@ export function usePropertyProxy(
       binding: proxy.binding,
       value: proxy.value,
       timestamp: proxy.timestamp,
+      existing: proxy.existing,
     });
 
     const updateRoot = () => {
@@ -125,6 +129,7 @@ export function usePropertyProxy(
           binding: p.binding,
           value: p.value,
           timestamp: p.timestamp,
+          existing: p.existing,
         });
       })
     );
@@ -132,9 +137,9 @@ export function usePropertyProxy(
     store.updaters.push(
       root.binding_update(() => {
         setProxyData((prev) =>
-          prev.binding === proxy.binding
+          prev.binding === proxy.binding && prev.existing === proxy.existing
             ? prev
-            : { ...prev, binding: proxy.binding }
+            : { ...prev, binding: proxy.binding, existing: proxy.existing }
         );
       })
     );
@@ -158,6 +163,7 @@ export function usePropertyProxy(
   const currentRootProxyData = storeMatchesKeys ? rootProxyData : EMPTY_ROOT;
 
   const binding = currentProxyData.binding;
+  const existing = currentProxyData.existing;
   const proxyStatus = currentRootProxyData.proxyStatus;
 
   const missing =
@@ -169,12 +175,17 @@ export function usePropertyProxy(
     binding?.accessMode === AccessMode.RECONFIGURABLE &&
     binding?.requiredAccessLevel < userAccessLevel;
 
-  const propertyStatus = !binding
-    ? PropertyStatus.MISSING
-    : PropertyStatus.NONE;
+  const propertyStatus = existing
+    ? PropertyStatus.NONE
+    : PropertyStatus.MISSING;
 
-  const propertyIndicator =
-    PROPERTY_INDICATORS.find((p) => p.status === propertyStatus) ?? undefined;
+  const propertyIndicator = !existing
+    ? (PROPERTY_INDICATORS.find((p) => p.status === PropertyStatus.MISSING) ??
+      undefined)
+    : binding
+      ? (PROPERTY_INDICATORS.find((p) => p.status === PropertyStatus.NONE) ??
+        undefined)
+      : undefined;
 
   const hashType = (binding?.hashType as HashType | undefined) ?? undefined;
 
@@ -192,6 +203,7 @@ export function usePropertyProxy(
     proxyStatus,
     missing,
     isOffline,
+    existing,
     propertyStatus,
     propertyIndicator,
   };
