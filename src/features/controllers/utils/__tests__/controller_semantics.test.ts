@@ -18,6 +18,7 @@ import {
   getProxyPropertyIndicator,
   getProxyBindingLabel,
   getProxyPropertyStatus,
+  isControllerEditable,
   isProxyAllowed,
 } from '../controller_semantics';
 
@@ -117,6 +118,28 @@ describe('controller semantics utilities', () => {
     expect(isProxyAllowed(proxy, AccessLevel.OPERATOR)).toBe(true);
     expect(isProxyAllowed(proxy, AccessLevel.OBSERVER)).toBe(false);
     expect(isProxyAllowed(undefined, AccessLevel.OPERATOR)).toBe(false);
+
+    proxy.dispose();
+  });
+
+  it('matches current controller-level canEdit semantics from proxy and access level', () => {
+    const deviceProxy = new DeviceProxy('DEVICE_A');
+    (deviceProxy as any).status = ProxyStatus.MONITORING;
+    jest.spyOn(deviceProxy, 'state', 'get').mockReturnValue('ACTIVE');
+
+    const proxy = new PropertyProxy(deviceProxy, 'speed');
+    proxy.binding = {
+      accessMode: AccessMode.RECONFIGURABLE,
+      requiredAccessLevel: AccessLevel.OPERATOR,
+      is_allowed: (state: string) => state === 'ACTIVE',
+    } as any;
+
+    expect(isControllerEditable(proxy, AccessLevel.OPERATOR)).toBe(true);
+    expect(isControllerEditable(proxy, AccessLevel.OBSERVER)).toBe(false);
+    expect(isControllerEditable(undefined, AccessLevel.OPERATOR)).toBe(false);
+
+    (deviceProxy as any).status = ProxyStatus.OFFLINE;
+    expect(isControllerEditable(proxy, AccessLevel.OPERATOR)).toBe(false);
 
     proxy.dispose();
   });

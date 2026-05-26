@@ -41,8 +41,8 @@ const DisplayAlarmFloat: React.FC<{
   model: DisplayAlarmFloatModel;
   ctx?: ControllerContainerContext;
 }> = ({ model, ctx }) => {
-  const value = ctx?.primary?.value;
-  const unit = ctx?.primary?.binding?.unit_label ?? '';
+  const value = ctx?.proxy?.value;
+  const unit = ctx?.proxy?.binding?.unit_label ?? '';
 
   const num = Number(value);
   const display =

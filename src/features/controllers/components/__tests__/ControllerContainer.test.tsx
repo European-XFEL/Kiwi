@@ -53,26 +53,23 @@ describe('ControllerContainer', () => {
       binding: {},
       value: 42,
     };
-    const proxies = [proxy];
-    const ctx = {
-      primary: {
-        indicator: expect.objectContaining({
-          bindingLabel: 'DEVICE_A.speed',
-        }),
-        tooltipText: 'DEVICE_A.speed',
-        disabledReason: undefined,
-        binding: {
-          accessMode: AccessMode.RECONFIGURABLE,
-          requiredAccessLevel: AccessLevel.OBSERVER,
-        },
-        userAccessLevel: AccessLevel.OBSERVER,
+    const ctxProxy = {
+      ...proxy,
+      binding: {
+        accessMode: AccessMode.RECONFIGURABLE,
+        requiredAccessLevel: AccessLevel.OBSERVER,
       },
-      proxy,
+    };
+    const proxies = [ctxProxy];
+    const ctx = {
+      proxy: ctxProxy,
       proxies,
       userAccessLevel: AccessLevel.OBSERVER,
     };
     const Renderer = jest.fn(({ ctx: rendererCtx }) => (
-      <div data-testid="renderer">{rendererCtx.primary.tooltipText}</div>
+      <div data-testid="renderer">
+        {rendererCtx.proxy.root.deviceId}.{rendererCtx.proxy.path}
+      </div>
     ));
     const model = {
       keys: ['DEVICE_A.speed'],
@@ -100,7 +97,7 @@ describe('ControllerContainer', () => {
     expect(screen.getByTestId('renderer')).toHaveTextContent('DEVICE_A.speed');
     expect(mockOverlaySpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        proxy,
+        proxy: ctxProxy,
         indicator: expect.objectContaining({
           bindingLabel: 'DEVICE_A.speed',
         }),

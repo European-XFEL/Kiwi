@@ -14,8 +14,7 @@ const StatefulIconWidget: React.FC<{
   model: StatefulIconWidgetModel;
   ctx?: ControllerContainerContext;
 }> = ({ model, ctx }) => {
-  const rawState =
-    (ctx?.primary?.deviceState as string | undefined) ?? 'UNKNOWN';
+  const rawState = (ctx?.proxy?.root.state as string | undefined) ?? 'UNKNOWN';
   const { colorValue } = useGuiStateColor(rawState);
   const iconModel = statefulIconModelsById[model.icon_name] ?? null;
 

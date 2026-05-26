@@ -50,8 +50,8 @@ const TableElement: React.FC<{
   model: TableElementModel;
   ctx?: ControllerContainerContext;
 }> = ({ ctx }) => {
-  const rawValue = ctx?.primary?.value;
-  const rowSchema = (ctx?.primary as any)?.binding?.rowSchema as
+  const rawValue = ctx?.proxy?.value;
+  const rowSchema = (ctx?.proxy?.binding as any)?.rowSchema as
     | RowSchema
     | undefined;
 

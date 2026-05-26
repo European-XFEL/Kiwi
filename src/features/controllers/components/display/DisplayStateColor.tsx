@@ -16,7 +16,7 @@ const DisplayStateColor: React.FC<{
   model: DisplayStateColorModel;
   ctx?: ControllerContainerContext;
 }> = ({ model, ctx }) => {
-  const rawState = (ctx?.primary?.deviceState as string | undefined) ?? '';
+  const rawState = (ctx?.proxy?.root.state as string | undefined) ?? '';
   const { colorValue } = useGuiStateColor(rawState);
   const bgColor = colorValue ?? '#cccccc';
 

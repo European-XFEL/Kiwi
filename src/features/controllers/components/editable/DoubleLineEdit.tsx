@@ -4,6 +4,7 @@ import React from 'react';
 import type { ControllerContainerContext } from '../ControllerContainer';
 import { DoubleLineEditModel, FONT_FAMILY_DEFAULT } from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/renderRegistry';
+import { isControllerEditable } from '../../utils/controller_semantics';
 
 // DoubleLineEdit
 // ----------------------------------------------------------------------------
@@ -21,9 +22,11 @@ const DoubleLineEdit: React.FC<{
   model: DoubleLineEditModel;
   ctx?: ControllerContainerContext;
 }> = ({ model, ctx }) => {
-  const proxyValue = ctx?.primary?.value;
-  const unit = ctx?.primary?.binding?.unit_label ?? '';
-  const enabled = ctx?.primary?.isEnabled ?? false;
+  const proxyValue = ctx?.proxy?.value;
+  const unit = ctx?.proxy?.binding?.unit_label ?? '';
+  const enabled = ctx
+    ? isControllerEditable(ctx.proxy, ctx.userAccessLevel)
+    : false;
 
   const [localValue, setLocalValue] = React.useState(() =>
     toFloatString(proxyValue, model.decimals)

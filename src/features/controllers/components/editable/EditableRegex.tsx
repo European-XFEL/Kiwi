@@ -4,6 +4,7 @@ import React from 'react';
 import type { ControllerContainerContext } from '../ControllerContainer';
 import { EditableRegexModel, FONT_FAMILY_DEFAULT } from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/renderRegistry';
+import { isControllerEditable } from '../../utils/controller_semantics';
 
 // EditableRegex
 // ----------------------------------------------------------------------------
@@ -11,9 +12,11 @@ import { registerRenderer } from '@/features/scene-view/renderRegistry';
 const EditableRegex: React.FC<{
   model: EditableRegexModel;
   ctx?: ControllerContainerContext;
-}> = ({ model: _model, ctx }) => {
-  const proxyValue = ctx?.primary?.value;
-  const enabled = ctx?.primary?.isEnabled ?? false;
+}> = ({ ctx }) => {
+  const proxyValue = ctx?.proxy?.value;
+  const enabled = ctx
+    ? isControllerEditable(ctx.proxy, ctx.userAccessLevel)
+    : false;
 
   const [localValue, setLocalValue] = React.useState(String(proxyValue ?? ''));
   const [isEditing, setIsEditing] = React.useState(false);

@@ -4,6 +4,7 @@ import React from 'react';
 import type { ControllerContainerContext } from '../ControllerContainer';
 import { TickSliderModel, FONT_FAMILY_DEFAULT } from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/renderRegistry';
+import { isControllerEditable } from '../../utils/controller_semantics';
 
 // TickSlider
 // ----------------------------------------------------------------------------
@@ -12,9 +13,11 @@ const TickSlider: React.FC<{
   model: TickSliderModel;
   ctx?: ControllerContainerContext;
 }> = ({ model, ctx }) => {
-  const proxyValue = ctx?.primary?.value;
-  const binding = ctx?.primary?.binding as any;
-  const enabled = ctx?.primary?.isEnabled ?? false;
+  const proxyValue = ctx?.proxy?.value;
+  const binding = ctx?.proxy?.binding as any;
+  const enabled = ctx
+    ? isControllerEditable(ctx.proxy, ctx.userAccessLevel)
+    : false;
 
   const min = binding?.minInc ?? 0;
   const max = binding?.maxInc ?? 100;

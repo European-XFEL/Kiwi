@@ -1,16 +1,11 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 
-import { AccessLevel, AccessMode } from '@/karabo/data/enums';
 import { DeviceProxy, PropertyProxy } from '@/lib/binding/api';
 import { ProxyStatus } from '@/lib/binding/ProxyStatus';
 import { SingletonContext } from '@/testing';
 
 import { useProxies } from '../useProxies';
 import { useController } from '../useController';
-import {
-  getControllerIndicator,
-  isProxyAllowed,
-} from '../../utils/controller_semantics';
 
 type MockDevice = DeviceProxy & {
   stopMonitoring: jest.Mock;
@@ -60,8 +55,9 @@ describe('useController', () => {
         (devices.get('DEVICE_B') as any).updateStatus(ProxyStatus.MONITORING);
       });
 
-      expect(result.current.primary.deviceId).toBe('DEVICE_A');
-      expect(result.current.primary.rootDevice?.deviceId).toBe('DEVICE_A');
+      expect(result.current.proxy).toBe(result.current.proxies[0]);
+      expect(result.current.proxy?.root.deviceId).toBe('DEVICE_A');
+      expect(result.current.proxy?.path).toBe('speed');
       expect(result.current.proxies[1].root.deviceId).toBe('DEVICE_B');
       expect(result.current.proxies[1].root.status).toBe(
         ProxyStatus.MONITORING
@@ -100,15 +96,9 @@ describe('useController', () => {
         (deviceB as any).updateStatus(ProxyStatus.MONITORING);
       });
 
-      expect(result.current.proxies[0].root.deviceId).toBe('DEVICE_A');
-      expect(result.current.primary.rootDevice?.deviceProxy).toBe(deviceA);
-      expect(result.current.primary.rootDevice?.deviceId).toBe('DEVICE_A');
-      expect(result.current.primary.rootDevice?.deviceStatus).toBe(
-        ProxyStatus.OFFLINE
-      );
-      expect(result.current.primary.deviceId).toBe('DEVICE_A');
-      expect(result.current.primary.propertyPath).toBe('speed');
-      expect(result.current.proxies[0].root.status).toBe(ProxyStatus.OFFLINE);
+      expect(result.current.proxy?.root.deviceId).toBe('DEVICE_A');
+      expect(result.current.proxy?.path).toBe('speed');
+      expect(result.current.proxy?.root.status).toBe(ProxyStatus.OFFLINE);
       expect(result.current.proxies[1].root.deviceId).toBe('DEVICE_B');
       expect(result.current.proxies[1].path).toBe('temperature');
       expect(result.current.proxies[1].root.status).toBe(
@@ -142,13 +132,10 @@ describe('useController', () => {
       });
 
       await waitFor(() => {
-        expect(result.current.proxies[0]).toBeInstanceOf(PropertyProxy);
+        expect(result.current.proxy).toBeInstanceOf(PropertyProxy);
       });
 
-      expect(result.current.primary.rootDevice?.deviceStatus).toBe(
-        ProxyStatus.ONLINEREQUESTED
-      );
-      expect(result.current.proxies[0].root.status).toBe(
+      expect(result.current.proxy?.root.status).toBe(
         ProxyStatus.ONLINEREQUESTED
       );
 
@@ -157,54 +144,5 @@ describe('useController', () => {
       expect(devices.get('DEVICE_A')?.addMonitor).toHaveBeenCalledTimes(1);
       expect(stopMonitoring).toHaveBeenCalledTimes(1);
     });
-  });
-
-  it('primary mirrors the shared controller indicator helper output', () => {
-    const deviceProxy = new DeviceProxy('DEVICE_A');
-    const propertyProxy = new PropertyProxy(deviceProxy, 'speed');
-
-    const { result, unmount } = renderHook(() =>
-      useController([propertyProxy])
-    );
-
-    const indicator = getControllerIndicator(['DEVICE_A.speed'], propertyProxy);
-
-    expect(result.current.primary.tooltipText).toBe(indicator.bindingLabel);
-    expect(result.current.primary.disabledReason).toBe(indicator.statusText);
-    expect(result.current.primary.existing).toBe(propertyProxy.existing);
-    expect(result.current.primary.propertyStatus).toBe(
-      indicator.propertyStatus
-    );
-    expect(result.current.primary.propertyIndicator).toBe(
-      indicator.propertyIndicator
-    );
-
-    unmount();
-    propertyProxy.dispose();
-  });
-
-  it('primary editability mirrors the shared proxy-allowed helper', () => {
-    const deviceProxy = new DeviceProxy('TEST_DEVICE');
-    (deviceProxy as any).status = ProxyStatus.MONITORING;
-
-    const propertyProxy = new PropertyProxy(deviceProxy, 'speed');
-    propertyProxy.binding = {
-      accessMode: AccessMode.RECONFIGURABLE,
-      requiredAccessLevel: AccessLevel.OBSERVER,
-      is_allowed: () => true,
-      hashType: undefined,
-    } as any;
-
-    const { result, unmount } = renderHook(() =>
-      useController([propertyProxy])
-    );
-
-    expect(result.current.primary.isEditable).toBe(
-      isProxyAllowed(propertyProxy, AccessLevel.OBSERVER)
-    );
-    expect(result.current.primary.canEdit).toBe(true);
-
-    unmount();
-    propertyProxy.dispose();
   });
 });

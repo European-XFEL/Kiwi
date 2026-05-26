@@ -5,6 +5,7 @@ import type { ControllerContainerContext } from '../ControllerContainer';
 import { CheckBoxModel } from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { Checkbox } from '@/components/checkbox';
+import { isControllerEditable } from '../../utils/controller_semantics';
 //import { Hash } from '@/karabo/data/hash';
 //import { getNetwork } from '@/lib/singletons/api';
 
@@ -28,8 +29,8 @@ function toBool(value: unknown): boolean {
 const DisplayCheckBox: React.FC<{
   model: CheckBoxModel;
   ctx?: ControllerContainerContext;
-}> = ({ model: _model, ctx }) => {
-  const checked = toBool(ctx?.primary?.value);
+}> = ({ ctx }) => {
+  const checked = toBool(ctx?.proxy?.value);
   return (
     <div className="w-full h-full flex items-center justify-center">
       <Checkbox
@@ -44,9 +45,11 @@ const DisplayCheckBox: React.FC<{
 const EditableCheckBox: React.FC<{
   model: CheckBoxModel;
   ctx?: ControllerContainerContext;
-}> = ({ model: _model, ctx }) => {
-  const checked = toBool(ctx?.primary?.value);
-  const enabled = ctx?.primary?.isEnabled ?? false;
+}> = ({ ctx }) => {
+  const checked = toBool(ctx?.proxy?.value);
+  const enabled = ctx
+    ? isControllerEditable(ctx.proxy, ctx.userAccessLevel)
+    : false;
 
   return (
     <div className="w-full h-full flex items-center justify-center">
@@ -54,8 +57,8 @@ const EditableCheckBox: React.FC<{
         checked={checked}
         disabled={!enabled}
         onCheckedChange={() => {
-          // const deviceId = ctx?.primary?.deviceId;
-          // const propertyPath = ctx?.primary?.propertyPath;
+          // const deviceId = ctx?.proxy?.root.deviceId;
+          // const propertyPath = ctx?.proxy?.path;
           // if (!deviceId || !propertyPath) return;
           // getNetwork().onReconfigure(
           //   deviceId,

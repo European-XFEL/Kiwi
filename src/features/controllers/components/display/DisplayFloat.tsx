@@ -22,8 +22,8 @@ const DisplayFloat: React.FC<{
   model: DisplayFloatModel;
   ctx?: ControllerContainerContext;
 }> = ({ model, ctx }) => {
-  const value = ctx?.primary?.value;
-  const unit = ctx?.primary?.binding?.unit_label ?? '';
+  const value = ctx?.proxy?.value;
+  const unit = ctx?.proxy?.binding?.unit_label ?? '';
 
   const display =
     value !== undefined ? formatFloat(value, model.fmt, model.decimals) : '';

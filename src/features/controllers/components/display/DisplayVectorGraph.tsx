@@ -22,9 +22,7 @@ const DisplayVectorGraph: React.FC<{
   model: DisplayVectorGraphModel;
   ctx?: ControllerContainerContext;
 }> = ({ model, ctx }) => {
-  const { vectorData, indices, isOffline } = useDisplayVectorGraph(
-    ctx?.primary
-  );
+  const { vectorData, indices, isOffline } = useDisplayVectorGraph(ctx?.proxy);
 
   const noData = vectorData.length === 0;
 
