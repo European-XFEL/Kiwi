@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
-import type { UsePropertyProxyUpdate } from '@/lib/binding/api';
+import { PropertyProxy, ProxyStatus } from '@/lib/binding/api';
 import { isHashVector } from '@/karabo/data/typenumIdentifier';
 import { downsampleArray } from '../utils/lttb';
 
-export type VectorPrimary = UsePropertyProxyUpdate | undefined;
+export type VectorProxy = PropertyProxy | undefined;
 
 export interface UseDisplayVectorGraphConfig {
   defaultThreshold?: number;
@@ -36,8 +36,8 @@ const chooseTargetPoints = (length: number, defaultThreshold: number) => {
   return Math.min(target, length);
 };
 
-const getSchemaValueType = (primary: VectorPrimary): any | undefined =>
-  (primary as any)?.valueType ?? primary?.binding?.hashType;
+const getSchemaValueType = (proxy: VectorProxy): any | undefined =>
+  proxy?.binding?.hashType;
 
 const toNumberSafe = (v: unknown): number | null => {
   if (typeof v === 'number') return Number.isFinite(v) ? v : null;
@@ -88,19 +88,17 @@ const downsampleVectorLTTB = (data: number[], defaultThreshold: number) => {
 };
 
 export const useDisplayVectorGraph = (
-  primary: VectorPrimary,
+  proxy: VectorProxy,
   cfg: UseDisplayVectorGraphConfig = {}
 ): UseDisplayVectorGraphResult => {
   const { defaultThreshold } = { ...DEFAULT_CONFIG, ...cfg };
 
-  const isOffline = primary?.isOffline ?? false;
+  const isOffline =
+    (proxy?.root.status ?? ProxyStatus.OFFLINE) === ProxyStatus.OFFLINE;
 
-  const schemaValueType = useMemo(
-    () => (primary ? getSchemaValueType(primary) : undefined),
-    [primary]
-  );
+  const schemaValueType = getSchemaValueType(proxy);
 
-  const rawValue = primary?.value;
+  const rawValue = proxy?.value;
 
   const baseVector = useMemo(
     () => normalizeVector(rawValue, schemaValueType),

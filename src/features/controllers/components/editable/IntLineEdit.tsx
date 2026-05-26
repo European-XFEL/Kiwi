@@ -4,6 +4,7 @@ import React from 'react';
 import type { ControllerContainerContext } from '../ControllerContainer';
 import { IntLineEditModel, FONT_FAMILY_DEFAULT } from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/renderRegistry';
+import { isControllerEditable } from '../../utils/controller_semantics';
 
 // IntLineEdit
 // ----------------------------------------------------------------------------
@@ -17,10 +18,12 @@ function toIntString(v: unknown, fallback = ''): string {
 const IntLineEdit: React.FC<{
   model: IntLineEditModel;
   ctx?: ControllerContainerContext;
-}> = ({ model: _model, ctx }) => {
-  const liveValue = ctx?.primary?.value;
-  const unit = ctx?.primary?.binding?.unit_label;
-  const enabled = ctx?.primary?.canEdit ?? false;
+}> = ({ ctx }) => {
+  const liveValue = ctx?.proxy?.value;
+  const unit = ctx?.proxy?.binding?.unit_label;
+  const enabled = ctx
+    ? isControllerEditable(ctx.proxy, ctx.userAccessLevel)
+    : false;
 
   const [localValue, setLocalValue] = React.useState<string>(() =>
     toIntString(liveValue, '0')

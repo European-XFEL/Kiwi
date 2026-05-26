@@ -42,9 +42,9 @@ export const ControllerContainer: React.FC<ControllerContainerProps> = ({
     indicator;
   const isEditableWidget = model.parent_component === EDITABLE_PARENT_COMPONENT;
   const hasEditAccess =
-    ctx.primary.binding?.accessMode === AccessMode.RECONFIGURABLE &&
-    ctx.primary.userAccessLevel >=
-      (ctx.primary.binding?.requiredAccessLevel ?? AccessLevel.OBSERVER);
+    ctx.proxy?.binding?.accessMode === AccessMode.RECONFIGURABLE &&
+    ctx.userAccessLevel >=
+      (ctx.proxy?.binding?.requiredAccessLevel ?? AccessLevel.OBSERVER);
   const tooltipBody =
     propertyTooltipText || tooltipStatusText ? (
       <>
@@ -55,7 +55,7 @@ export const ControllerContainer: React.FC<ControllerContainerProps> = ({
   const tooltipContent = isEditableWidget ? (
     <div className="space-y-0.5">
       <p>
-        AccessLevel: {AccessLevel[ctx.primary.userAccessLevel]} - Access:{' '}
+        AccessLevel: {AccessLevel[ctx.userAccessLevel]} - Access:{' '}
         {hasEditAccess ? 'True' : 'False'}
       </p>
       {tooltipBody}

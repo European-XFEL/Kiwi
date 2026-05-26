@@ -7,6 +7,7 @@ import {
   FONT_FAMILY_DEFAULT,
 } from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/renderRegistry';
+import { isControllerEditable } from '../../utils/controller_semantics';
 
 // ComboBox
 // ----------------------------------------------------------------------------
@@ -64,10 +65,12 @@ function ComboBox({
 const EditableComboBox: React.FC<{
   model: EditableComboBoxModel;
   ctx?: ControllerContainerContext;
-}> = ({ model: _model, ctx }) => {
-  const value = ctx?.primary?.value;
-  const options: string[] = (ctx?.primary?.binding as any)?.options ?? [];
-  const enabled = ctx?.primary?.isEnabled ?? false;
+}> = ({ ctx }) => {
+  const value = ctx?.proxy?.value;
+  const options: string[] = (ctx?.proxy?.binding as any)?.options ?? [];
+  const enabled = ctx
+    ? isControllerEditable(ctx.proxy, ctx.userAccessLevel)
+    : false;
   return <ComboBox value={value} options={options} enabled={enabled} />;
 };
 

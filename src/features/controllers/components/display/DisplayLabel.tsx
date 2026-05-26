@@ -21,8 +21,8 @@ const DisplayLabel: React.FC<{
         title="No device binding"
       />
     );
-  const value = ctx.primary?.value;
-  const binding = ctx.primary?.binding;
+  const value = ctx.proxy?.value;
+  const binding = ctx.proxy?.binding;
 
   const labelValue =
     value !== undefined

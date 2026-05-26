@@ -11,6 +11,7 @@ import {
 } from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { Button } from '@/components/button';
+import { isControllerEditable } from '../../utils/controller_semantics';
 import {
   Dialog,
   DialogContent,
@@ -42,8 +43,10 @@ const EditableList: React.FC<{
   model: EditableListModel;
   ctx?: ControllerContainerContext;
 }> = ({ ctx }) => {
-  const proxyValue = ctx?.primary?.value;
-  const enabled = ctx?.primary?.isEnabled ?? false;
+  const proxyValue = ctx?.proxy?.value;
+  const enabled = ctx
+    ? isControllerEditable(ctx.proxy, ctx.userAccessLevel)
+    : false;
 
   const [localValue, setLocalValue] = React.useState(() =>
     formatListValue(proxyValue)
@@ -118,8 +121,10 @@ const EditableRegexList: React.FC<{
   model: EditableRegexListModel;
   ctx?: ControllerContainerContext;
 }> = ({ ctx }) => {
-  const proxyValue = ctx?.primary?.value;
-  const enabled = ctx?.primary?.isEnabled ?? false;
+  const proxyValue = ctx?.proxy?.value;
+  const enabled = ctx
+    ? isControllerEditable(ctx.proxy, ctx.userAccessLevel)
+    : false;
 
   const [localValue, setLocalValue] = React.useState(() =>
     formatListValue(proxyValue)
@@ -188,8 +193,10 @@ const EditableListElement: React.FC<{
   model: EditableListElementModel;
   ctx?: ControllerContainerContext;
 }> = ({ ctx }) => {
-  const proxyValue = ctx?.primary?.value;
-  const enabled = ctx?.primary?.isEnabled ?? false;
+  const proxyValue = ctx?.proxy?.value;
+  const enabled = ctx
+    ? isControllerEditable(ctx.proxy, ctx.userAccessLevel)
+    : false;
 
   const [localValue, setLocalValue] = React.useState(
     proxyValue != null ? String(proxyValue) : ''

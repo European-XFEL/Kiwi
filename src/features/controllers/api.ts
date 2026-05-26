@@ -7,7 +7,6 @@
 
 export { ControllerContainer } from './components/ControllerContainer';
 export type { ControllerContainerContext } from './components/ControllerContainer';
-export type { ControllerPrimaryContext } from './hooks/useController';
 
 export { useController } from './hooks/useController';
 export { useProxies } from './hooks/useProxies';

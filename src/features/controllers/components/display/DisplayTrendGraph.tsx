@@ -64,11 +64,9 @@ const DisplayTrendGraph: React.FC<{
   if (!ctx) return null;
 
   const proxies = ctx.proxies;
-  const rootDeviceContext = ctx.primary.rootDevice;
-  const rootDeviceId = rootDeviceContext?.deviceId;
+  const rootDeviceId = ctx.proxy?.root.deviceId;
   const rootIsOffline =
-    (rootDeviceContext?.deviceStatus ?? ProxyStatus.OFFLINE) ===
-    ProxyStatus.OFFLINE;
+    (ctx.proxy?.root.status ?? ProxyStatus.OFFLINE) === ProxyStatus.OFFLINE;
   const { series, isOffline } = useDisplayTrendGraph(
     proxies,
     rootIsOffline,

@@ -72,9 +72,11 @@ describe('ControllerContainer integration', () => {
 
     const Renderer = jest.fn(({ ctx }) => {
       lastCtx = ctx;
+      const deviceId = ctx.proxy?.root.deviceId ?? '';
+      const propertyPath = ctx.proxy?.path ?? '';
       return (
         <div data-testid="renderer">
-          {ctx.primary.deviceId}:{ctx.primary.propertyPath}:{ctx.proxies.length}
+          {deviceId}:{propertyPath}:{ctx.proxies.length}
         </div>
       );
     });
@@ -106,8 +108,8 @@ describe('ControllerContainer integration', () => {
       expect(devices.get('DEVICE_B')?.addMonitor).toHaveBeenCalledTimes(1);
 
       expect(lastCtx.proxy).toBe(lastCtx.proxies[0]);
-      expect(lastCtx.primary.deviceId).toBe('DEVICE_A');
-      expect(lastCtx.primary.propertyPath).toBe('speed');
+      expect(lastCtx.proxy.root.deviceId).toBe('DEVICE_A');
+      expect(lastCtx.proxy.path).toBe('speed');
       expect(lastCtx.proxies[1].root.deviceId).toBe('DEVICE_B');
       expect(screen.getByTestId('controller-overlay')).toBeInTheDocument();
 

@@ -13,8 +13,8 @@ const Evaluator: React.FC<{
   model: EvaluatorModel;
   ctx?: ControllerContainerContext;
 }> = ({ model, ctx }) => {
-  const value = ctx?.primary?.value;
-  const binding = ctx?.primary?.binding;
+  const value = ctx?.proxy?.value;
+  const binding = ctx?.proxy?.binding;
 
   const labelValue =
     value !== undefined

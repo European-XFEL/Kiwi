@@ -11,6 +11,7 @@ import {
 import type { ControllerContainerContext } from '@/features/controllers/components/ControllerContainer';
 import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { getQFontTextStyle } from '@/features/controllers/utils/fonts';
+import { getControllerIndicator } from '@/features/controllers/utils/controller_semantics';
 
 // useSceneNavigate
 // ----------------------------------------------------------------------------
@@ -102,13 +103,17 @@ function LinkButton({
 // DeviceSceneLink
 // ----------------------------------------------------------------------------
 // target="scene" is a fixed label — the real scene identifier comes from
-// the device's availableScenes property (ctx.primary.value).
+// the device's availableScenes property (ctx.proxy.value).
 
 const DeviceSceneLink: React.FC<{
   model: DeviceSceneLinkModel;
   ctx?: ControllerContainerContext;
 }> = ({ model, ctx }) => {
-  const scenes = ctx?.primary?.value;
+  const scenes = ctx?.proxy?.value;
+  const disabledReason = getControllerIndicator(
+    model.keys,
+    ctx?.proxy
+  ).statusText;
   const firstScene: string =
     Array.isArray(scenes) && scenes.length > 0
       ? String(scenes[0])
@@ -126,7 +131,7 @@ const DeviceSceneLink: React.FC<{
       title={
         firstScene
           ? `Scene: ${firstScene}`
-          : (ctx?.primary?.disabledReason ?? 'No scene available')
+          : (disabledReason ?? 'No scene available')
       }
       onClick={firstScene ? go : undefined}
       Icon={Cpu}
