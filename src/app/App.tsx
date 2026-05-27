@@ -61,7 +61,13 @@ const App: React.FC = () => {
   useEffect(() => {
     const appSettings = initAppSettings();
     setWsProxyUrl(appSettings.wsProxyURL);
-    console.log(`Kiwi.App: using burrow at ${appSettings.wsProxyURL}`);
+    if (appSettings.wsProxyURL.length > 0) {
+      console.log(`Kiwi.App: using burrow at ${appSettings.wsProxyURL}`);
+    } else {
+      console.log(
+        'Kiwi.App: using direct connection to GUI Server websocket port'
+      );
+    }
 
     if (!executedOnceRef.current) {
       executedOnceRef.current = 'true';
