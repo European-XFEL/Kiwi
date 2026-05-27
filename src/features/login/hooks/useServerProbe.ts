@@ -32,8 +32,8 @@ interface UseServerProbeReturn {
  * Hook to manage server probing (checking if GUI server is available)
  */
 export function useServerProbe({
-  initialHost = 'localhost',
-  initialPort = '44444',
+  initialHost = '',
+  initialPort = '',
 }: UseServerProbeProps = {}): UseServerProbeReturn {
   const [host, setHost] = useState<string>(initialHost);
   const [port, setPort] = useState<string>(initialPort);

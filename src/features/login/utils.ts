@@ -30,8 +30,13 @@ export function probeServer(
   // Initialize the two possible connection modes: direct connection to a GUI
   // server web socket port (empty wsProxyURL) or proxy-intermediated connection
   // to an older GUI server with only a tcp port
-  const useWebSocketProxy = wsProxyURL && wsProxyURL.length > 0;
+  const useWebSocketProxy: boolean =
+    wsProxyURL !== undefined && wsProxyURL.length > 0;
   const websocketURL = useWebSocketProxy ? wsProxyURL : `ws://${host}:${port}`;
+
+  if (!useWebSocketProxy) {
+    console.log(`Probing server directly at URL '${websocketURL}'`);
+  }
 
   new WebsocketBuilder(websocketURL)
     .onOpen((ws) => {

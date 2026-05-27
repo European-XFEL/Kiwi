@@ -291,7 +291,8 @@ export class Network {
     // Initialize the two possible connection modes: direct connection to a GUI
     // server web socket port (empty wsProxyURL) or proxy-intermediated connection
     // to an older GUI server with only a tcp port
-    const useWebSocketProxy = this._wsProxyURL && this._wsProxyURL.length > 0;
+    const useWebSocketProxy: boolean =
+      this._wsProxyURL !== undefined && this._wsProxyURL.length > 0;
     const websocketURL = useWebSocketProxy
       ? this._wsProxyURL
       : `ws://${host}:${port}`;
