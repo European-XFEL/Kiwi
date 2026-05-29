@@ -7,7 +7,7 @@ import {
   FONT_FAMILY_DEFAULT,
 } from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/renderRegistry';
-import { useGuiStateColor } from '@/features/controllers/hooks/useGuiStateColor';
+import { getStateColor } from '@/lib/Indicators';
 
 // DisplayStateColor
 // ----------------------------------------------------------------------------
@@ -17,8 +17,7 @@ const DisplayStateColor: React.FC<{
   ctx?: ControllerContainerContext;
 }> = ({ model, ctx }) => {
   const rawState = (ctx?.proxy?.root.state as string | undefined) ?? '';
-  const { colorValue } = useGuiStateColor(rawState);
-  const bgColor = colorValue ?? '#cccccc';
+  const bgColor = getStateColor(rawState);
 
   return (
     <div className="flex items-center justify-center border border-solid overflow-hidden w-full h-full">
