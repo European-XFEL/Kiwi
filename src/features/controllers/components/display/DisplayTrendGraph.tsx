@@ -171,7 +171,7 @@ const DisplayTrendGraph: React.FC<{
         bordercolor: 'rgba(148, 163, 184, 0.35)',
         font: { color: '#111827' },
       },
-      modebar: { bgcolor: '#ffffff' },
+
       showlegend: false,
     };
   }, [model]);
@@ -193,7 +193,7 @@ const DisplayTrendGraph: React.FC<{
         config={{
           responsive: true,
           scrollZoom: true,
-          displayModeBar: true,
+          displayModeBar: false, // Temporarily hide the toolbar - it's outside the graph area (issue #264)
           displaylogo: false,
         }}
         useResizeHandler
