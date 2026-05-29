@@ -41,4 +41,3 @@ export {
   type UsePropertyProxyUpdate,
   usePropertyProxy,
 } from './useDeviceProperty';
-export { mapGuiStateColor } from './utils/mapStateColor';

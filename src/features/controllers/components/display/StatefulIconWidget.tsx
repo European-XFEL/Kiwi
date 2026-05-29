@@ -4,7 +4,7 @@ import React from 'react';
 import type { ControllerContainerContext } from '../ControllerContainer';
 import { StatefulIconWidgetModel } from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/renderRegistry';
-import { useGuiStateColor } from '../../hooks/useGuiStateColor';
+import { getStateColor } from '@/lib/Indicators';
 import { statefulIconModelsById } from '../../utils/bootstrapStatefulIcons';
 
 // StatefulIconWidget
@@ -14,8 +14,8 @@ const StatefulIconWidget: React.FC<{
   model: StatefulIconWidgetModel;
   ctx?: ControllerContainerContext;
 }> = ({ model, ctx }) => {
-  const rawState = (ctx?.proxy?.root.state as string | undefined) ?? 'UNKNOWN';
-  const { colorValue } = useGuiStateColor(rawState);
+  const rawState = (ctx?.proxy?.root.state as string | undefined) ?? '';
+  const colorValue = getStateColor(rawState);
   const iconModel = statefulIconModelsById[model.icon_name] ?? null;
 
   const recoloredSvg = React.useMemo(() => {
