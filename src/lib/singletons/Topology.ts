@@ -1,5 +1,5 @@
-import { Hash, Schema } from '@/karabo/data/api';
-import { DeviceProxy } from '@/lib/binding/api';
+import { Hash, Schema, Timestamp } from '@/karabo/data/api';
+import { applyConfiguration, DeviceProxy } from '@/lib/binding/api';
 
 export class SystemTopology {
   public _system_hash: Hash | null = null;
@@ -108,6 +108,26 @@ export class SystemTopology {
       return;
     }
     proxy.handleDeviceSchema(schema);
+  }
+
+  public handleNetworkData(name, data: Hash, meta: Hash): void {
+    const [deviceId, prop_path] = name.split(':');
+    console.log('Handling network data from', name);
+
+    const proxy = this.devices.get(deviceId);
+    if (!proxy) {
+      return;
+    }
+    // get output channel binding
+    const binding = proxy.getBinding(prop_path);
+    if (!binding) {
+      return;
+    }
+    const timestamp = Timestamp.fromHashAttributes(
+      meta.getAttributes('timestamp')
+    );
+    applyConfiguration(data, binding!.value.get('schema'), timestamp);
+    proxy.requestNetwork(prop_path);
   }
 
   private _ensureTopologyKeys(): void {

@@ -22,12 +22,18 @@ export class PropertyProxy {
 
   private removeConfigUpdate?: Unsubscribe;
   private removeBindingUpdate?: Unsubscribe;
+  private removeMonitor?: Unsubscribe;
+
+  public pipeline_parent_path = '';
+  public isMonitored = false;
 
   constructor(
     private readonly root_proxy: DeviceProxy,
     public readonly path: string
   ) {
     this.setBinding(this.root_proxy.getBinding(this.path));
+
+    this.pipeline_parent_path = this._set_pipeline_path();
 
     if (SCHEMA_LOADED_STATUSES.has(this.root_proxy.status)) {
       this._existing = this.binding !== undefined;
@@ -103,6 +109,20 @@ export class PropertyProxy {
     this.setBinding(this.root_proxy.getBinding(this.path));
     this._existing = this.binding !== undefined;
     this.binding_update_signal.fire(this);
+
+    const pipeline_parent_path = this._set_pipeline_path();
+    if (
+      this.isMonitored &&
+      pipeline_parent_path !== this.pipeline_parent_path
+    ) {
+      if (this.pipeline_parent_path !== '') {
+        this.root_proxy.disconnectPipeline(this.pipeline_parent_path);
+      }
+      if (pipeline_parent_path !== '') {
+        this.root_proxy.connectPipeline(pipeline_parent_path);
+      }
+    }
+    this.pipeline_parent_path = pipeline_parent_path;
   }
 
   public value_update(callback: (proxy: PropertyProxy) => void): Unsubscribe {
@@ -113,7 +133,61 @@ export class PropertyProxy {
     return this.binding_update_signal.subscribe(this, callback);
   }
 
+  private _set_pipeline_path(): string {
+    if (!this.binding) {
+      return '';
+    }
+
+    function* genParents(p: string): Generator<string> {
+      if (p.includes('.')) {
+        p = p.slice(0, p.lastIndexOf('.'));
+        yield p;
+        yield* genParents(p);
+      }
+    }
+    // Return the path of that parent if found.
+    for (const path of genParents(this.path)) {
+      const binding = this.root_proxy.getBinding(path);
+      if (binding?.displayType === 'OutputChannel') {
+        return path;
+      }
+    }
+    return '';
+  }
+
+  public startMonitoring(): () => void {
+    if (this.isMonitored) {
+      return () => this.stopMonitoring();
+    }
+
+    console.log('START monitoring', this.key);
+    this.isMonitored = true;
+    this.removeMonitor = this.root_proxy.addMonitor();
+    if (this.pipeline_parent_path !== '') {
+      this.root_proxy.connectPipeline(this.pipeline_parent_path);
+    }
+    return () => this.stopMonitoring();
+  }
+
+  public stopMonitoring(): void {
+    if (!this.isMonitored) {
+      return;
+    }
+
+    console.log('STOP monitoring', this.key);
+    this.isMonitored = false;
+    this.removeMonitor?.();
+    this.removeMonitor = undefined;
+    if (this.pipeline_parent_path !== '') {
+      this.root_proxy.disconnectPipeline(this.pipeline_parent_path);
+    }
+  }
+
   public dispose(): void {
+    console.log('Disposing the proxy and unsubscribing', this.key);
+    if (this.isMonitored) {
+      this.stopMonitoring();
+    }
     this.removeConfigUpdate?.();
     this.removeConfigUpdate = undefined;
 

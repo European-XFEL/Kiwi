@@ -6,17 +6,24 @@ import { getNetwork } from '@/lib/singletons/api';
 import { BaseBinding, BindingRoot, NodeBinding } from './BaseBinding';
 import { Signal } from '../utils';
 
-export function applyConfiguration(config: Hash, binding: any) {
+export function applyConfiguration(
+  config: Hash,
+  binding: any,
+  timestamp?: Timestamp
+) {
   const namespace = binding.value;
   for (const [key, value, attrs] of config.iterall()) {
-    if (!namespace.has(key)) continue;
+    if (!namespace.has(key)) {
+      continue;
+    }
 
     const binding = namespace.get(key);
     if (value instanceof Hash && binding instanceof NodeBinding) {
-      applyConfiguration(value, binding);
+      applyConfiguration(value, binding, timestamp);
     } else {
       // Set the timestamp no matter what, and take raw value
-      binding.setValue(value, Timestamp.fromHashAttributes(attrs));
+      const ts = timestamp ?? Timestamp.fromHashAttributes(attrs);
+      binding.setValue(value, ts);
     }
   }
 }
@@ -35,6 +42,8 @@ export class DeviceProxy {
   private monitorCount = 0;
   private currentRootRevision = 0;
 
+  private pipeline_subscriptions = new Map<string, number>();
+
   config_update = new Signal<[]>();
   schema_update = new Signal<[]>();
   state_update = new Signal<[string | undefined]>();
@@ -44,24 +53,23 @@ export class DeviceProxy {
     this.deviceId = deviceId;
   }
 
-  static createDeviceProxy(deviceId: string): DeviceProxy {
-    return new DeviceProxy(deviceId);
-  }
-
   public get rootRevision(): number {
     return this.currentRootRevision;
   }
 
+  private onRootUpdated(): void {
+    this.currentRootRevision += 1;
+  }
+
+  static createDeviceProxy(deviceId: string): DeviceProxy {
+    return new DeviceProxy(deviceId);
+  }
   public get state(): string | undefined {
     return this.getBinding('state')?.value?.value_ as string | undefined;
   }
 
   getBinding(path: string): BaseBinding | undefined {
     return this.binding.getBinding(path);
-  }
-
-  private onRootUpdated(): void {
-    this.currentRootRevision += 1;
   }
 
   private updateStatus(newStatus: ProxyStatus): void {
@@ -102,13 +110,46 @@ export class DeviceProxy {
         this._startMonitoringDevice();
       }
     }
-    return () => {
-      this.monitorCount -= 1;
+    return () => this.removeMonitor();
+  }
 
-      if (this.monitorCount === 0) {
-        this._stopMonitoringDevice();
-      }
-    };
+  public removeMonitor(): void {
+    this.monitorCount -= 1;
+    if (this.monitorCount === 0) {
+      this._stopMonitoringDevice();
+    }
+  }
+
+  public connectPipeline(path: string): void {
+    // Ask the GUI server to subscribe to a pipeline output
+    if (!this.pipeline_subscriptions.has(path)) {
+      console.log('Subscribing to pipeline data', this.deviceId, path);
+      getNetwork().onSubscribeToOutput(this.deviceId, path, true);
+    }
+    // We fill a counter object with the path, as we might be
+    // interested in multiple values from an output channel
+    this.pipeline_subscriptions.set(
+      path,
+      (this.pipeline_subscriptions.get(path) ?? 0) + 1
+    );
+  }
+
+  disconnectPipeline(path: string): void {
+    // Ask the GUI server to unsubscribe from a pipeline output
+    if (!this.pipeline_subscriptions.has(path)) {
+      throw new Error(`Expected pipeline subscription for path: ${path}`);
+    }
+
+    const count = (this.pipeline_subscriptions.get(path) ?? 0) - 1;
+    this.pipeline_subscriptions.set(path, count);
+
+    // Only if we fully removed all interested properties
+    // do we unsubscribe from the output channel
+    if (count === 0) {
+      console.log('Unsubscribing pipeline data', this.deviceId, path);
+      this.pipeline_subscriptions.delete(path);
+      getNetwork().onSubscribeToOutput(this.deviceId, path, false);
+    }
   }
 
   private _startMonitoringDevice(): void {
@@ -165,6 +206,11 @@ export class DeviceProxy {
     this._stopMonitoringDevice();
   }
 
+  public requestNetwork(path: string): void {
+    if (this.pipeline_subscriptions.has(path)) {
+      getNetwork().onRequestNetwork(this.deviceId + ':' + path);
+    }
+  }
   public refreshDeviceSchema(): void {
     // Only “request schema” once per in-flight request
     if (this.status !== ProxyStatus.ONLINEREQUESTED) {
@@ -176,7 +222,6 @@ export class DeviceProxy {
   public handleDeviceSchema = (schema: Schema): void => {
     // rebuild device-level binding
     this.binding = buildBinding(schema, this.binding);
-
     this._schema_update_fired();
   };
 }
