@@ -2,20 +2,15 @@ import { BaseBinding } from './BaseBinding';
 import type { DeviceProxy } from './DeviceProxy';
 import { Signal } from '../utils';
 import { AccessLevel, AccessMode } from '@/karabo/data/enums';
-import { ProxyStatus } from './ProxyStatus';
 
 type Unsubscribe = () => void;
-
-const SCHEMA_LOADED_STATUSES = new Set<ProxyStatus>([
-  ProxyStatus.SCHEMA,
-  ProxyStatus.ALIVE,
-  ProxyStatus.MONITORING,
-]);
 
 export class PropertyProxy {
   public binding?: BaseBinding;
   private edit_binding?: BaseBinding;
-  private _existing = true;
+  // By default we assume the binding is existing. This is evaluated on every
+  // schema update
+  public binding_existing = true;
 
   public readonly config_update = new Signal<[PropertyProxy]>();
   private readonly binding_update_signal = new Signal<[PropertyProxy]>();
@@ -34,15 +29,17 @@ export class PropertyProxy {
     this.setBinding(this.root_proxy.getBinding(this.path));
 
     this.pipeline_parent_path = this._set_pipeline_path();
-
-    if (SCHEMA_LOADED_STATUSES.has(this.root_proxy.status)) {
-      this._existing = this.binding !== undefined;
-    }
-
     this.removeBindingUpdate = this.root_proxy.schema_update.subscribe(
       this,
       this.onSchemaUpdate
     );
+  }
+
+  private _set_existing(): void {
+    const has_binding = this.root_proxy?.hasSchema();
+    if (has_binding) {
+      this.binding_existing = this.binding !== undefined;
+    }
   }
 
   get key(): string {
@@ -63,10 +60,6 @@ export class PropertyProxy {
 
   get edit_value(): any {
     return this.edit_binding?.value;
-  }
-
-  get existing(): boolean {
-    return this._existing;
   }
 
   isEditable(userAccessLevel: AccessLevel): boolean {
@@ -99,6 +92,7 @@ export class PropertyProxy {
         this.onBindingValueUpdate
       );
     }
+    this._set_existing();
   }
 
   private onBindingValueUpdate(): void {
@@ -107,7 +101,6 @@ export class PropertyProxy {
 
   private onSchemaUpdate(): void {
     this.setBinding(this.root_proxy.getBinding(this.path));
-    this._existing = this.binding !== undefined;
     this.binding_update_signal.fire(this);
 
     const pipeline_parent_path = this._set_pipeline_path();

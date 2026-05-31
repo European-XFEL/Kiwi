@@ -74,8 +74,13 @@ describe('controller semantics utilities', () => {
 
   it('returns missing-from-schema text once the device schema is loaded and the property is absent', () => {
     const deviceProxy = new DeviceProxy('DEVICE_A');
+    const rootBinding = new BindingRoot();
+    rootBinding.value!.set('other', new StringBinding({ value: 'present' }));
+    deviceProxy.binding = rootBinding;
     (deviceProxy as any).status = ProxyStatus.SCHEMA;
     const proxy = new PropertyProxy(deviceProxy, 'speed');
+
+    deviceProxy.schema_update.fire();
 
     expect(getControllerDisabledReason('DEVICE_A.speed', proxy)).toBe(
       'DEVICE_A.speed missing from Schema'
@@ -162,6 +167,8 @@ describe('controller semantics utilities', () => {
 
   it('keeps binding-unavailable properties neutral until the schema proves they are missing', () => {
     const deviceProxy = new DeviceProxy('DEVICE_A');
+    const rootBinding = new BindingRoot();
+    deviceProxy.binding = rootBinding;
     const proxy = new PropertyProxy(deviceProxy, 'speed');
 
     (deviceProxy as any).status = ProxyStatus.ONLINE;
@@ -169,6 +176,7 @@ describe('controller semantics utilities', () => {
     expect(getProxyPropertyIndicator(proxy)).toBeUndefined();
     expect(getMissingPropertyIndicator(proxy)).toBeUndefined();
 
+    rootBinding.value!.set('other', new StringBinding({ value: 'present' }));
     (deviceProxy as any).status = ProxyStatus.SCHEMA;
     deviceProxy.schema_update.fire();
     expect(getProxyPropertyStatus(proxy)).toBe(PropertyStatus.MISSING);

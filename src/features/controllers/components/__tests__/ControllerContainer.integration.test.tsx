@@ -14,8 +14,8 @@ jest.mock('../ControllerOverlay', () => {
   const mockReactActual = jest.requireActual<typeof React>('react');
 
   return {
-    ControllerOverlay: ({ proxy, indicator, tooltipText, children }: any) => {
-      mockOverlaySpy({ proxy, indicator, tooltipText });
+    ControllerOverlay: ({ proxies, children }: any) => {
+      mockOverlaySpy({ proxies });
       return mockReactActual.createElement(
         'div',
         { 'data-testid': 'controller-overlay' },
@@ -65,7 +65,7 @@ describe('ControllerContainer integration', () => {
     jest.restoreAllMocks();
   });
 
-  it('owns proxies, derives controller context, passes ctx to the widget, and drives the overlay from the same proxy', async () => {
+  it('owns proxies, derives controller context, passes ctx to the widget, and drives the overlay from the same proxies list', async () => {
     const { devices, topology } = makeTopology();
     const disposeSpy = jest.spyOn(PropertyProxy.prototype, 'dispose');
     let lastCtx: any;
@@ -114,15 +114,7 @@ describe('ControllerContainer integration', () => {
       expect(screen.getByTestId('controller-overlay')).toBeInTheDocument();
 
       const overlayCall = mockOverlaySpy.mock.calls.at(-1)?.[0];
-      expect(overlayCall.proxy).toBe(lastCtx.proxy);
-      expect(overlayCall.indicator).toEqual(
-        expect.objectContaining({
-          bindingLabel: 'DEVICE_A.speed, DEVICE_B.temperature',
-        })
-      );
-      expect(overlayCall.tooltipText).toBe(
-        'DEVICE_A.speed, DEVICE_B.temperature'
-      );
+      expect(overlayCall.proxies).toBe(lastCtx.proxies);
 
       unmount();
 

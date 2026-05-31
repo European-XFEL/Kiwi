@@ -11,7 +11,7 @@ import { useContainer } from '../hooks/useContainer';
 import type { ControllerContainerContext } from '../hooks/useController';
 import { useController } from '../hooks/useController';
 import { useProxies } from '../hooks/useProxies';
-import { getControllerIndicator } from '../utils/controller_semantics';
+import { getControllerBindingLabel } from '../utils/controller_semantics';
 import { ControllerOverlay } from './ControllerOverlay';
 
 export type { ControllerContainerContext };
@@ -37,21 +37,13 @@ export const ControllerContainer: React.FC<ControllerContainerProps> = ({
   const tooltipAutoCloseRef = React.useRef<number | null>(null);
   const proxies = useProxies(model.keys);
   const ctx = useController(proxies);
-  const indicator = getControllerIndicator(model.keys, ctx.proxy);
-  const { bindingLabel: propertyTooltipText, statusText: tooltipStatusText } =
-    indicator;
+  const propertyTooltipText = getControllerBindingLabel(model.keys);
   const isEditableWidget = model.parent_component === EDITABLE_PARENT_COMPONENT;
   const hasEditAccess =
     ctx.proxy?.binding?.accessMode === AccessMode.RECONFIGURABLE &&
     ctx.userAccessLevel >=
       (ctx.proxy?.binding?.requiredAccessLevel ?? AccessLevel.OBSERVER);
-  const tooltipBody =
-    propertyTooltipText || tooltipStatusText ? (
-      <>
-        {propertyTooltipText && <p>{propertyTooltipText}</p>}
-        {tooltipStatusText && <p>{tooltipStatusText}</p>}
-      </>
-    ) : null;
+  const tooltipBody = propertyTooltipText ? <p>{propertyTooltipText}</p> : null;
   const tooltipContent = isEditableWidget ? (
     <div className="space-y-0.5">
       <p>
@@ -103,11 +95,7 @@ export const ControllerContainer: React.FC<ControllerContainerProps> = ({
       }}
     >
       <div style={contentsStyle}>
-        <ControllerOverlay
-          proxy={ctx.proxy}
-          indicator={indicator}
-          tooltipText={propertyTooltipText}
-        >
+        <ControllerOverlay proxies={ctx.proxies}>
           {tooltipContent ? (
             <Tooltip
               delayDuration={1500}
