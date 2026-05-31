@@ -43,10 +43,14 @@ describe('The basic proxy test', () => {
     rootProxy.status = ProxyStatus.ONLINEREQUESTED;
 
     const missingProxy = new PropertyProxy(rootProxy, 'missingProperty');
-    expect(missingProxy.existing).toBe(true);
+    expect(missingProxy.binding_existing).toBe(true);
 
+    rootBinding.value!.set(
+      'otherProperty',
+      new StringBinding({ value: 'here' })
+    );
     rootProxy.schema_update.fire();
-    expect(missingProxy.existing).toBe(false);
+    expect(missingProxy.binding_existing).toBe(false);
 
     rootBinding.value!.set(
       'missingProperty',
@@ -54,7 +58,7 @@ describe('The basic proxy test', () => {
     );
     rootProxy.schema_update.fire();
     expect(missingProxy.binding).toBeInstanceOf(StringBinding);
-    expect(missingProxy.existing).toBe(true);
+    expect(missingProxy.binding_existing).toBe(true);
 
     missingProxy.dispose();
   });

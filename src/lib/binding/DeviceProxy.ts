@@ -72,6 +72,10 @@ export class DeviceProxy {
     return this.binding.getBinding(path);
   }
 
+  public hasSchema(): Boolean {
+    return this.binding?.value!.length > 0;
+  }
+
   private updateStatus(newStatus: ProxyStatus): void {
     const oldStatus = this.status;
     if (oldStatus !== newStatus) {
@@ -178,7 +182,6 @@ export class DeviceProxy {
 
   private _schema_update_fired(): void {
     this.schema_update.fire();
-
     if (this.status === ProxyStatus.ONLINEREQUESTED) {
       if (this.monitorCount > 0) {
         this._startMonitoringDevice();

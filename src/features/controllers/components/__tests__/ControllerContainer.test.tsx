@@ -24,8 +24,8 @@ jest.mock('../ControllerOverlay', () => {
   const ReactActual = jest.requireActual<typeof React>('react');
 
   return {
-    ControllerOverlay: ({ proxy, indicator, tooltipText, children }: any) => {
-      mockOverlaySpy({ proxy, indicator, tooltipText });
+    ControllerOverlay: ({ proxies, children }: any) => {
+      mockOverlaySpy({ proxies });
       return ReactActual.createElement(
         'div',
         { 'data-testid': 'controller-overlay' },
@@ -46,7 +46,7 @@ describe('ControllerContainer', () => {
     });
   });
 
-  it('renders the renderer with controller ctx and forwards proxy to the overlay', () => {
+  it('renders the renderer with controller ctx and forwards proxies to the overlay', () => {
     const proxy = {
       root: { deviceId: 'DEVICE_A', status: ProxyStatus.MONITORING },
       path: 'speed',
@@ -97,11 +97,7 @@ describe('ControllerContainer', () => {
     expect(screen.getByTestId('renderer')).toHaveTextContent('DEVICE_A.speed');
     expect(mockOverlaySpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        proxy: ctxProxy,
-        indicator: expect.objectContaining({
-          bindingLabel: 'DEVICE_A.speed',
-        }),
-        tooltipText: 'DEVICE_A.speed',
+        proxies,
       })
     );
   });

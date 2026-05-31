@@ -1,24 +1,5 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { DeviceProxy, PropertyProxy, ProxyStatus } from '@/lib/binding/api';
-import { getControllerIndicator } from '../../utils/controller_semantics';
-
-jest.mock('@/components/tooltip', () => {
-  const ReactActual = jest.requireActual<typeof React>('react');
-
-  return {
-    Tooltip: ({ children }: any) =>
-      ReactActual.createElement(ReactActual.Fragment, null, children),
-    TooltipTrigger: ({ children }: any) =>
-      ReactActual.createElement(ReactActual.Fragment, null, children),
-    TooltipContent: ({ children }: any) =>
-      ReactActual.createElement(
-        'div',
-        { 'data-testid': 'tooltip-content' },
-        children
-      ),
-  };
-});
 
 import { ControllerOverlay } from '../ControllerOverlay';
 
@@ -31,47 +12,32 @@ describe('ControllerOverlay', () => {
     const deviceProxy = new DeviceProxy('DEVICE_A');
     (deviceProxy as any).status = ProxyStatus.MONITORING;
     const proxy = new PropertyProxy(deviceProxy, 'speed');
-
-    const indicator = getControllerIndicator(['DEVICE_A.speed'], proxy);
+    (proxy as any).binding_existing = false;
 
     render(
-      <ControllerOverlay
-        proxy={proxy}
-        indicator={indicator}
-        tooltipText="DEVICE_A.speed"
-        showMissingPropertyOverlay
-      >
+      <ControllerOverlay proxies={[proxy]}>
         <div>child widget</div>
       </ControllerOverlay>
     );
 
     expect(screen.getByText('child widget')).toBeInTheDocument();
-    expect(screen.getByText('??')).toBeInTheDocument();
+    expect(screen.getByTestId('missing-property-badge')).toBeInTheDocument();
 
     proxy.dispose();
   });
 
-  it('shows the offline tooltip from the raw proxy device status', () => {
+  it('shows an offline overlay from the raw proxy device status', () => {
     const deviceProxy = new DeviceProxy('DEVICE_A');
     (deviceProxy as any).status = ProxyStatus.OFFLINE;
     const proxy = new PropertyProxy(deviceProxy, 'speed');
 
-    const indicator = getControllerIndicator(['DEVICE_A.speed'], proxy);
-
     render(
-      <ControllerOverlay
-        proxy={proxy}
-        indicator={indicator}
-        tooltipText="DEVICE_A.speed"
-      >
+      <ControllerOverlay proxies={[proxy]}>
         <div>child widget</div>
       </ControllerOverlay>
     );
 
-    expect(
-      screen.getByText('Device is offline — no live data')
-    ).toBeInTheDocument();
-    expect(screen.getByText('DEVICE_A.speed')).toBeInTheDocument();
+    expect(screen.getByTestId('offline-overlay')).toBeInTheDocument();
 
     proxy.dispose();
   });

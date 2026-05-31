@@ -39,7 +39,7 @@ export const getProxyPropertyStatus = (
   proxy: PropertyProxy | undefined
 ): PropertyStatus => {
   if (!proxy) return PropertyStatus.MISSING;
-  return proxy.existing ? PropertyStatus.NONE : PropertyStatus.MISSING;
+  return proxy.binding_existing ? PropertyStatus.NONE : PropertyStatus.MISSING;
 };
 
 // Maps confirmed property states to the shared indicator metadata. Temporary
@@ -47,7 +47,7 @@ export const getProxyPropertyStatus = (
 export const getProxyPropertyIndicator = (
   proxy: PropertyProxy | undefined
 ): ProxyBindingIcon | undefined => {
-  if (proxy && !proxy.binding && proxy.existing) {
+  if (proxy && !proxy.binding && proxy.binding_existing) {
     return undefined;
   }
 
@@ -85,7 +85,8 @@ export const getControllerDisabledReason = (
   if (!proxy || !deviceId || !propertyPath) return undefined;
   if (proxy.root.status === ProxyStatus.OFFLINE)
     return `${deviceId}.${propertyPath} (offline)`;
-  if (!proxy.existing) return `${deviceId}.${propertyPath} missing from Schema`;
+  if (!proxy.binding_existing)
+    return `${deviceId}.${propertyPath} missing from Schema`;
   if (!proxy.binding) return `${deviceId}.${propertyPath} binding unavailable`;
 
   return undefined;
@@ -113,7 +114,7 @@ export const getControllerIndicator = (
   const propertyStatus = getProxyPropertyStatus(proxy);
   const propertyIndicator = getProxyPropertyIndicator(proxy);
   const missingPropertyIndicator =
-    propertyStatus === PropertyStatus.MISSING ? propertyIndicator : undefined;
+    proxy?.binding_existing === false ? propertyIndicator : undefined;
   const statusText =
     disabledReason && disabledReason !== bindingLabel
       ? disabledReason
