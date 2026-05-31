@@ -565,4 +565,23 @@ export class Network {
     hash.set('args.items', itemsHashes);
     this.sendHash(hash);
   }
+
+  public onSubscribeToOutput(
+    deviceId: string,
+    path: string,
+    subscribe: boolean
+  ): void {
+    const channelName = deviceId + ':' + path;
+    // prettier-ignore
+    const h = new Hash(
+      'type', 'subscribeNetwork', 'deviceId', deviceId, 'channelName', channelName, 'subscribe', subscribe
+    );
+    this.sendHash(h);
+  }
+
+  public onRequestNetwork(channelName: string): void {
+    const h = new Hash('type', 'requestNetwork', 'channelName', channelName);
+    this.sendHash(h);
+    console.log('Requesting network data', channelName);
+  }
 }

@@ -68,7 +68,7 @@ export const startMonitoring = (
       cleanups.push(deviceProxy.status_update.subscribe(owner, syncDevice));
     }
 
-    cleanups.push(deviceProxy.addMonitor());
+    cleanups.push(propertyProxy.startMonitoring());
 
     // Each PropertyProxy tracks its own value and binding updates.
     cleanups.push(

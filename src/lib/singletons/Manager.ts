@@ -278,5 +278,13 @@ export class Manager {
       });
     }
   }
+
+  public handle_networkData(hash: Hash): void {
+    const name = hash.getValue<string>('name');
+    const data = hash.getValue<Hash>('data');
+    const meta = hash.getValue<Hash>('meta');
+    this._topology.handleNetworkData(name, data, meta);
+  }
+
   // #endregion
 }

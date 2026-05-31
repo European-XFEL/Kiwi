@@ -1,6 +1,7 @@
 import {
   BindingRoot,
   DeviceProxy,
+  NodeBinding,
   StringBinding,
   PropertyProxy,
 } from '@/lib/binding/api';
@@ -56,5 +57,203 @@ describe('The basic proxy test', () => {
     expect(missingProxy.existing).toBe(true);
 
     missingProxy.dispose();
+  });
+
+  it('PropertyProxy - schema update seeds pipeline parent path without subscribing when proxy is not monitored', () => {
+    const rootBinding = new BindingRoot();
+    const rootProxy = new DeviceProxy('TEST_KIWI');
+    rootProxy.binding = rootBinding;
+
+    const connectPipeline = jest.spyOn(rootProxy, 'connectPipeline');
+
+    const proxy = new PropertyProxy(rootProxy, 'channel.value');
+    expect(proxy.pipeline_parent_path).toBe('');
+
+    const outputBinding = new NodeBinding();
+    outputBinding.displayType = 'OutputChannel';
+    outputBinding.value.set('value', new StringBinding({ value: 'live' }));
+    rootBinding.value!.set('channel', outputBinding);
+
+    rootProxy.schema_update.fire();
+
+    expect(proxy.pipeline_parent_path).toBe('channel');
+    expect(connectPipeline).not.toHaveBeenCalled();
+
+    proxy.dispose();
+  });
+
+  it('PropertyProxy - schema update subscribes when a monitored proxy gains a pipeline parent path', () => {
+    const rootBinding = new BindingRoot();
+    const rootProxy = new DeviceProxy('TEST_KIWI');
+    rootProxy.binding = rootBinding;
+
+    const removeMonitor = jest.fn();
+    jest.spyOn(rootProxy, 'addMonitor').mockReturnValue(removeMonitor);
+    const connectPipeline = jest.spyOn(rootProxy, 'connectPipeline');
+
+    const proxy = new PropertyProxy(rootProxy, 'channel.value');
+    proxy.startMonitoring();
+
+    const outputBinding = new NodeBinding();
+    outputBinding.displayType = 'OutputChannel';
+    outputBinding.value.set('value', new StringBinding({ value: 'live' }));
+    rootBinding.value!.set('channel', outputBinding);
+
+    rootProxy.schema_update.fire();
+
+    expect(proxy.pipeline_parent_path).toBe('channel');
+    expect(connectPipeline).toHaveBeenCalledWith('channel');
+
+    proxy.stopMonitoring();
+    proxy.dispose();
+  });
+
+  it('PropertyProxy - schema update retargets pipeline subscription when a monitored proxy changes output channel parent', () => {
+    const rootBinding = new BindingRoot();
+    const channelBinding = new NodeBinding();
+    channelBinding.displayType = 'OutputChannel';
+    const innerBinding = new NodeBinding();
+    innerBinding.value.set('value', new StringBinding({ value: 'live' }));
+    channelBinding.value.set('inner', innerBinding);
+    rootBinding.value!.set('channel', channelBinding);
+
+    const rootProxy = new DeviceProxy('TEST_KIWI');
+    rootProxy.binding = rootBinding;
+
+    const removeMonitor = jest.fn();
+    jest.spyOn(rootProxy, 'addMonitor').mockReturnValue(removeMonitor);
+    const connectPipeline = jest.spyOn(rootProxy, 'connectPipeline');
+    const disconnectPipeline = jest.spyOn(rootProxy, 'disconnectPipeline');
+
+    const proxy = new PropertyProxy(rootProxy, 'channel.inner.value');
+    proxy.startMonitoring();
+    connectPipeline.mockClear();
+    disconnectPipeline.mockClear();
+
+    const nextChannelBinding = new NodeBinding();
+    const nextInnerBinding = new NodeBinding();
+    nextInnerBinding.displayType = 'OutputChannel';
+    nextInnerBinding.value.set('value', new StringBinding({ value: 'live' }));
+    nextChannelBinding.value.set('inner', nextInnerBinding);
+    rootBinding.value!.set('channel', nextChannelBinding);
+
+    rootProxy.schema_update.fire();
+
+    expect(proxy.pipeline_parent_path).toBe('channel.inner');
+    expect(disconnectPipeline).toHaveBeenCalledWith('channel');
+    expect(connectPipeline).toHaveBeenCalledWith('channel.inner');
+
+    proxy.stopMonitoring();
+    proxy.dispose();
+  });
+
+  it('PropertyProxy - schema update disconnects pipeline when a monitored proxy loses its output channel', () => {
+    const rootBinding = new BindingRoot();
+    const outputBinding = new NodeBinding();
+    outputBinding.displayType = 'OutputChannel';
+    outputBinding.value.set('value', new StringBinding({ value: 'live' }));
+    rootBinding.value!.set('channel', outputBinding);
+
+    const rootProxy = new DeviceProxy('TEST_KIWI');
+    rootProxy.binding = rootBinding;
+
+    const removeMonitor = jest.fn();
+    jest.spyOn(rootProxy, 'addMonitor').mockReturnValue(removeMonitor);
+    const connectPipeline = jest.spyOn(rootProxy, 'connectPipeline');
+    const disconnectPipeline = jest.spyOn(rootProxy, 'disconnectPipeline');
+
+    const proxy = new PropertyProxy(rootProxy, 'channel.value');
+    proxy.startMonitoring();
+    connectPipeline.mockClear();
+    disconnectPipeline.mockClear();
+
+    const nextChannelBinding = new NodeBinding();
+    nextChannelBinding.value.set('value', new StringBinding({ value: 'live' }));
+    rootBinding.value!.set('channel', nextChannelBinding);
+
+    rootProxy.schema_update.fire();
+
+    expect(proxy.pipeline_parent_path).toBe('');
+    expect(disconnectPipeline).toHaveBeenCalledWith('channel');
+    expect(connectPipeline).not.toHaveBeenCalled();
+
+    proxy.dispose();
+  });
+
+  it('PropertyProxy - dispose stops monitoring when the proxy is still monitored', () => {
+    const rootBinding = new BindingRoot();
+    const outputBinding = new NodeBinding();
+    outputBinding.displayType = 'OutputChannel';
+    outputBinding.value.set('value', new StringBinding({ value: 'live' }));
+    rootBinding.value!.set('channel', outputBinding);
+
+    const rootProxy = new DeviceProxy('TEST_KIWI');
+    rootProxy.binding = rootBinding;
+
+    const removeMonitor = jest.fn();
+    jest.spyOn(rootProxy, 'addMonitor').mockReturnValue(removeMonitor);
+    const disconnectPipeline = jest.spyOn(rootProxy, 'disconnectPipeline');
+
+    const proxy = new PropertyProxy(rootProxy, 'channel.value');
+    proxy.startMonitoring();
+    proxy.dispose();
+
+    expect(removeMonitor).toHaveBeenCalledTimes(1);
+    expect(disconnectPipeline).toHaveBeenCalledWith('channel');
+    expect(proxy.isMonitored).toBe(false);
+  });
+
+  it('PropertyProxy - stopMonitoring is idempotent for pipeline-backed proxies', () => {
+    const rootBinding = new BindingRoot();
+    const outputBinding = new NodeBinding();
+    outputBinding.displayType = 'OutputChannel';
+    outputBinding.value.set('value', new StringBinding({ value: 'live' }));
+    rootBinding.value!.set('channel', outputBinding);
+
+    const rootProxy = new DeviceProxy('TEST_KIWI');
+    rootProxy.binding = rootBinding;
+
+    const removeMonitor = jest.fn();
+    jest.spyOn(rootProxy, 'addMonitor').mockReturnValue(removeMonitor);
+    const disconnectPipeline = jest.spyOn(rootProxy, 'disconnectPipeline');
+
+    const proxy = new PropertyProxy(rootProxy, 'channel.value');
+    proxy.startMonitoring();
+
+    proxy.stopMonitoring();
+    proxy.stopMonitoring();
+
+    expect(removeMonitor).toHaveBeenCalledTimes(1);
+    expect(disconnectPipeline).toHaveBeenCalledTimes(1);
+    expect(proxy.isMonitored).toBe(false);
+
+    proxy.dispose();
+  });
+
+  it('PropertyProxy - startMonitoring is idempotent for pipeline-backed proxies', () => {
+    const rootBinding = new BindingRoot();
+    const outputBinding = new NodeBinding();
+    outputBinding.displayType = 'OutputChannel';
+    outputBinding.value.set('value', new StringBinding({ value: 'live' }));
+    rootBinding.value!.set('channel', outputBinding);
+
+    const rootProxy = new DeviceProxy('TEST_KIWI');
+    rootProxy.binding = rootBinding;
+
+    const removeMonitor = jest.fn();
+    jest.spyOn(rootProxy, 'addMonitor').mockReturnValue(removeMonitor);
+    const connectPipeline = jest.spyOn(rootProxy, 'connectPipeline');
+
+    const proxy = new PropertyProxy(rootProxy, 'channel.value');
+
+    proxy.startMonitoring();
+    proxy.startMonitoring();
+
+    expect(rootProxy.addMonitor).toHaveBeenCalledTimes(1);
+    expect(connectPipeline).toHaveBeenCalledTimes(1);
+    expect(proxy.isMonitored).toBe(true);
+
+    proxy.stopMonitoring();
+    proxy.dispose();
   });
 });
