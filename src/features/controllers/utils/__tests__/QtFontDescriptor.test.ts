@@ -62,7 +62,7 @@ describe('QtFontDescriptor constructor', () => {
     expect(qtFontDescriptor.css_fontFamily).toEqual(FONT_FAMILY_SERIF);
     expect(qtFontDescriptor.css_fontSize).toEqual('12px');
     expect(qtFontDescriptor.css_fontStyle).toEqual('normal');
-    expect(qtFontDescriptor.css_fontWeight).toEqual('bold');
+    expect(qtFontDescriptor.css_fontWeight).toEqual('bolder');
     expect(qtFontDescriptor.css_textDecoration).toEqual('underline');
   });
 
@@ -70,7 +70,7 @@ describe('QtFontDescriptor constructor', () => {
     expect(getControllerFontStyle(10, 'bold')).toMatchObject({
       fontFamily: FONT_FAMILY_DEFAULT,
       fontSize: '10pt',
-      fontWeight: 'bold',
+      fontWeight: 'bolder',
       fontStyle: 'normal',
       textDecoration: 'none',
     });

@@ -2,9 +2,10 @@
 
 import React from 'react';
 import type { ControllerContainerContext } from '../ControllerContainer';
-import { TickSliderModel, FONT_FAMILY_DEFAULT } from '@/karabo/common/api';
+import { TickSliderModel } from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { isControllerEditable } from '../../utils/controller_semantics';
+import { getControllerFontStyle } from '../../utils/fonts';
 
 // TickSlider
 // ----------------------------------------------------------------------------
@@ -48,7 +49,9 @@ const TickSlider: React.FC<{
       {model.show_value ? (
         <span
           className="text-xs text-black"
-          style={{ fontFamily: FONT_FAMILY_DEFAULT }}
+          style={{
+            ...getControllerFontStyle(),
+          }}
         >
           {localValue}
         </span>

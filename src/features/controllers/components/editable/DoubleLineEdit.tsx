@@ -2,9 +2,10 @@
 
 import React from 'react';
 import type { ControllerContainerContext } from '../ControllerContainer';
-import { DoubleLineEditModel, FONT_FAMILY_DEFAULT } from '@/karabo/common/api';
+import { DoubleLineEditModel } from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { isControllerEditable } from '../../utils/controller_semantics';
+import { getControllerFontStyle } from '../../utils/fonts';
 
 // DoubleLineEdit
 // ----------------------------------------------------------------------------
@@ -63,13 +64,17 @@ const DoubleLineEdit: React.FC<{
             ? 'text-black bg-white cursor-text'
             : 'text-gray-500 bg-gray-100 cursor-not-allowed'
         }`}
-        style={{ fontFamily: FONT_FAMILY_DEFAULT }}
+        style={{
+          ...getControllerFontStyle(),
+        }}
         placeholder={enabled ? '0.0' : 'Read-only'}
       />
       {unit ? (
         <span
           className="text-black"
-          style={{ fontFamily: FONT_FAMILY_DEFAULT }}
+          style={{
+            ...getControllerFontStyle(),
+          }}
         >
           {unit}
         </span>

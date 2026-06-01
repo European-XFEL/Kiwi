@@ -2,9 +2,10 @@
 
 import React from 'react';
 import type { ControllerContainerContext } from '../ControllerContainer';
-import { LineEditModel, FONT_FAMILY_DEFAULT } from '@/karabo/common/api';
+import { LineEditModel } from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { isControllerEditable } from '../../utils/controller_semantics';
+import { getControllerFontStyle } from '../../utils/fonts';
 
 // LineEdit
 // ----------------------------------------------------------------------------
@@ -22,7 +23,9 @@ const DisplayLineEdit: React.FC<{
         readOnly
         disabled
         className="w-full border border-solid rounded px-1 text-gray-500 bg-gray-100 cursor-not-allowed"
-        style={{ fontFamily: FONT_FAMILY_DEFAULT }}
+        style={{
+          ...getControllerFontStyle(),
+        }}
       />
     </div>
   );
@@ -63,7 +66,9 @@ const EditableLineEdit: React.FC<{
             ? 'text-black bg-white cursor-text'
             : 'text-gray-500 bg-gray-100 cursor-not-allowed'
         }`}
-        style={{ fontFamily: FONT_FAMILY_DEFAULT }}
+        style={{
+          ...getControllerFontStyle(),
+        }}
       />
     </div>
   );
