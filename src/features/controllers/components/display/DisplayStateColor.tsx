@@ -2,12 +2,10 @@
 
 import React from 'react';
 import type { ControllerContainerContext } from '../ControllerContainer';
-import {
-  DisplayStateColorModel,
-  FONT_FAMILY_DEFAULT,
-} from '@/karabo/common/api';
+import { DisplayStateColorModel } from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { getStateColor } from '@/lib/Indicators';
+import { getControllerFontStyle } from '../../utils/fonts';
 
 // DisplayStateColor
 // ----------------------------------------------------------------------------
@@ -24,16 +22,12 @@ const DisplayStateColor: React.FC<{
       <div
         className="w-full h-full flex items-center justify-center"
         style={{
+          ...getControllerFontStyle(model.font_size, model.font_weight),
           backgroundColor: bgColor,
-          fontFamily: FONT_FAMILY_DEFAULT,
-          fontSize: model.font_size,
-          fontWeight: model.font_weight,
         }}
       >
         {model.show_string && rawState ? (
-          <span className="text-xs" aria-live="polite">
-            {rawState}
-          </span>
+          <span aria-live="polite">{rawState}</span>
         ) : null}
       </div>
     </div>

@@ -165,7 +165,7 @@ export class QFont {
   }
 
   get css_fontWeight(): string {
-    return this.weight > 50 ? 'bold' : 'normal';
+    return this.weight > 50 ? 'bolder' : 'normal';
   }
 }
 
@@ -199,13 +199,14 @@ export function getQFontTextStyle(fontSource: string): CSSProperties {
 }
 
 export function getControllerFontStyle(
-  font_size: number,
-  font_weight: 'normal' | 'bold'
+  font_size: number = 10,
+  font_weight: 'normal' | 'bold' = 'normal'
 ): CSSProperties {
+  const fontWeight = font_weight === 'bold' ? 'bolder' : 'normal';
   return {
     fontFamily: FONT_FAMILY_DEFAULT,
     fontSize: qtPointSizeToCssPt(font_size),
-    fontWeight: font_weight,
+    fontWeight: fontWeight,
     fontStyle: 'normal',
     textDecoration: 'none',
   };

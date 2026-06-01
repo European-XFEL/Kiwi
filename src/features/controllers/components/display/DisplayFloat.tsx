@@ -2,8 +2,9 @@
 
 import React from 'react';
 import type { ControllerContainerContext } from '../ControllerContainer';
-import { DisplayFloatModel, FONT_FAMILY_DEFAULT } from '@/karabo/common/api';
+import { DisplayFloatModel } from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/renderRegistry';
+import { getControllerFontStyle } from '../../utils/fonts';
 
 // DisplayFloat
 // ----------------------------------------------------------------------------
@@ -33,9 +34,7 @@ const DisplayFloat: React.FC<{
     <div
       className="overflow-clip flex items-center justify-center border border-solid p-px w-full h-full"
       style={{
-        fontFamily: FONT_FAMILY_DEFAULT,
-        fontSize: model.font_size,
-        fontWeight: model.font_weight,
+        ...getControllerFontStyle(model.font_size, model.font_weight),
       }}
     >
       {labelValue}

@@ -7,11 +7,12 @@ import {
   EditableListModel,
   EditableRegexListModel,
   EditableListElementModel,
-  FONT_FAMILY_DEFAULT,
 } from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { Button } from '@/components/button';
 import { isControllerEditable } from '../../utils/controller_semantics';
+import { getControllerFontStyle } from '../../utils/fonts';
+
 import {
   Dialog,
   DialogContent,
@@ -80,7 +81,9 @@ const EditableList: React.FC<{
             ? 'text-black bg-white cursor-text'
             : 'text-gray-500 bg-gray-100 cursor-not-allowed'
         }`}
-        style={{ fontFamily: FONT_FAMILY_DEFAULT }}
+        style={{
+          ...getControllerFontStyle(),
+        }}
         placeholder={enabled ? 'item1, item2, …' : 'Read-only'}
       />
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -178,7 +181,9 @@ const EditableRegexList: React.FC<{
             ? 'text-black bg-white cursor-text'
             : 'text-gray-500 bg-gray-100 cursor-not-allowed'
         } ${error ? 'border-red-400' : ''}`}
-        style={{ fontFamily: 'monospace' }}
+        style={{
+          ...getControllerFontStyle(),
+        }}
         placeholder={enabled ? 'regex1, regex2, …' : 'Read-only'}
       />
       {error && <span className="text-[10px] text-red-500 px-1">{error}</span>}
@@ -225,7 +230,9 @@ const EditableListElement: React.FC<{
           ? 'text-black bg-white cursor-text'
           : 'text-gray-500 bg-gray-100 cursor-not-allowed'
       }`}
-      style={{ fontFamily: FONT_FAMILY_DEFAULT }}
+      style={{
+        ...getControllerFontStyle(),
+      }}
     />
   );
 };

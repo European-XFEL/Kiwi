@@ -216,6 +216,9 @@ registerReader('DisplayStateColor', (json) => {
   const state = new DisplayStateColorModel();
 
   readBaseWidgetData(json, state);
+  if (json['@_krb:font_size'] !== undefined)
+    state.font_size = toNum(json['@_krb:font_size'], state.font_size);
+  if (toStr(json['@_krb:font_weight']) === 'bold') state.font_weight = 'bold';
   state.show_string = toBool(json['@_krb:show_string']);
 
   return state;

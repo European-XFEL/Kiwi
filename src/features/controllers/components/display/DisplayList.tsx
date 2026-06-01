@@ -2,9 +2,10 @@
 
 import React from 'react';
 import type { ControllerContainerContext } from '../ControllerContainer';
-import { DisplayListModel, FONT_FAMILY_DEFAULT } from '@/karabo/common/api';
+import { DisplayListModel } from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { scalarToString } from '@/karabo/data/api';
+import { getControllerFontStyle } from '../../utils/fonts';
 
 // DisplayList
 // ----------------------------------------------------------------------------
@@ -30,9 +31,8 @@ const DisplayList: React.FC<{
     <div
       className="overflow-clip flex items-center justify-center border border-solid p-px w-full h-full"
       style={{
-        fontFamily: FONT_FAMILY_DEFAULT,
-        fontSize: model.font_size,
-        fontWeight: model.font_weight,
+        ...getControllerFontStyle(model.font_size, model.font_weight),
+        lineHeight: 1,
       }}
     >
       {labelValue}
