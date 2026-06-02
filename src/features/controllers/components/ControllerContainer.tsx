@@ -11,7 +11,7 @@ import { useContainer } from '../hooks/useContainer';
 import type { ControllerContainerContext } from '../hooks/useController';
 import { useController } from '../hooks/useController';
 import { useProxies } from '../hooks/useProxies';
-import { getControllerBindingLabel } from '../utils/controller_semantics';
+import { getModelKeys } from '../utils/controller_semantics';
 import { ControllerOverlay } from './ControllerOverlay';
 
 export type { ControllerContainerContext };
@@ -37,7 +37,7 @@ export const ControllerContainer: React.FC<ControllerContainerProps> = ({
   const tooltipAutoCloseRef = React.useRef<number | null>(null);
   const proxies = useProxies(model.keys);
   const ctx = useController(proxies);
-  const propertyTooltipText = getControllerBindingLabel(model.keys);
+  const propertyTooltipText = getModelKeys(model.keys);
   const isEditableWidget = model.parent_component === EDITABLE_PARENT_COMPONENT;
   const hasEditAccess =
     ctx.proxy?.binding?.accessMode === AccessMode.RECONFIGURABLE &&
