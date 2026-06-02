@@ -210,7 +210,7 @@ export class Manager {
     // waits at least 1 second and terminates the connection. We finish
     // the connection from Kiwi's side before that to avoid Kiwi
     // interpreting the terminated connection as a connection loss.
-    this._network.expireSession();
+    this._network.expireSession(session.host, session.port);
   }
 
   public handle_onEndSessionNotice(hash: Hash): void {

@@ -48,7 +48,10 @@ export default function AccessLevelSelector({
 
     // Persist the change to encrypted localStorage for non-auth sessions only
     try {
-      const storedSession = await getConfig().loadSession();
+      const storedSession = await getConfig().loadSession(
+        sessionInfo.guiServerHost,
+        sessionInfo.guiServerPort
+      );
 
       if (storedSession && !storedSession.refreshToken) {
         await getConfig().saveNonAuthSession(

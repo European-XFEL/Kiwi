@@ -154,6 +154,8 @@ export class Network {
   }
 
   public async resumeGuiSession(
+    host: string,
+    port: number,
     onResumedHandler: SessionStartedHandler,
     onNoSessionHandler: () => void,
     onErrorHandler: SessionStartErrorHandler
@@ -161,15 +163,15 @@ export class Network {
     if (this._session) return;
 
     try {
-      let sessionData = await getConfig().loadSession();
+      let sessionData = await getConfig().loadSession(host, port);
       if (!sessionData) {
         onNoSessionHandler();
         return;
       }
 
       probeServer(
-        sessionData.host,
-        sessionData.port,
+        host,
+        port,
         // onProbeSuccess
         async (serverInfo: GuiServerInfo) => {
           const authRequired = serverInfo['authRequired'] as boolean;
@@ -178,7 +180,7 @@ export class Network {
             sessionData!.refreshToken != undefined;
 
           if (isServerAuthenticated != sessionDataAuthenticated) {
-            getConfig().deleteSession();
+            getConfig().deleteSession(host, port);
             onErrorHandler(
               'Session authentication mode mismatch. Resume aborted.'
             );
@@ -188,8 +190,8 @@ export class Network {
           if (sessionData!.refreshToken == undefined) {
             // Non-auth resume
             this._session = {
-              host: sessionData!.host,
-              port: sessionData!.port,
+              host: host,
+              port: port,
               userId: sessionData!.userId,
               accessLevel: sessionData!.accessLevel!,
               isAuthSession: false,
@@ -206,14 +208,14 @@ export class Network {
             );
 
             if (!res.success) {
-              getConfig().deleteSession();
+              getConfig().deleteSession(host, port);
               onErrorHandler(res.error_msg!);
               return;
             }
 
             this._session = {
-              host: sessionData!.host,
-              port: sessionData!.port,
+              host: host,
+              port: port,
               userId: sessionData!.userId,
               oneTimeToken: res.once_token!,
               refreshToken: res.refresh_token!,
@@ -224,39 +226,39 @@ export class Network {
             };
 
             await getConfig().saveAuthSession(
-              sessionData!.host,
-              sessionData!.port,
+              host,
+              port,
               sessionData!.userId,
               res.refresh_token!
             );
           }
-          this._startWebsocketSession(sessionData!.host, sessionData!.port);
+          this._startWebsocketSession(host, port);
         },
         // onProbeError
         (error_msg: string) => {
-          getConfig().deleteSession();
+          getConfig().deleteSession(host, port);
           onErrorHandler(`Failed to probe server: "${error_msg}".`);
         }
       );
     } catch (error: any) {
-      getConfig().deleteSession();
+      getConfig().deleteSession(host, port);
       onErrorHandler(error.toString());
     }
   }
 
-  public expireSession(): void {
+  public expireSession(host: string, port: number): void {
     this._session = undefined;
     this._sessionExpired = true;
     this._stopWebsocketSession();
-    getConfig().deleteSession();
+    getConfig().deleteSession(host, port);
     useGlobalActivityStore.getState().reset();
   }
 
-  public finishSession(): void {
+  public finishSession(host: string, port: number): void {
     this._session = undefined;
     this._closeRequested = true;
     this._stopWebsocketSession();
-    getConfig().deleteSession();
+    getConfig().deleteSession(host, port);
     useGlobalActivityStore.getState().reset();
   }
 

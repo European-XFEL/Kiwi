@@ -3,8 +3,6 @@ import { AccessLevel } from '@/karabo/data/api';
 
 /**  Subset of data needed to resume a GUI Session when the app starts. */
 export interface SessionData {
-  host: string;
-  port: number;
   userId: string;
   refreshToken?: string; // Only for auth sessions.
   accessLevel?: AccessLevel; // Only for non-auth sessions.
@@ -23,9 +21,7 @@ export class ConfigurationStore {
     userId: string,
     refreshToken: string
   ): Promise<void> {
-    await this.saveSession({
-      host: host,
-      port: port,
+    await this.saveSession(host, port, {
       userId: userId,
       refreshToken: refreshToken,
     });
@@ -37,23 +33,30 @@ export class ConfigurationStore {
     userId: string,
     accessLevel: AccessLevel
   ): Promise<void> {
-    await this.saveSession({
-      host: host,
-      port: port,
+    await this.saveSession(host, port, {
       userId: userId,
       accessLevel: accessLevel,
     });
   }
 
-  private async saveSession(data: SessionData): Promise<void> {
+  private async saveSession(
+    host: string,
+    port: number,
+    data: SessionData
+  ): Promise<void> {
     const jsonData = JSON.stringify(data);
     const encryptedData = encryptData(jsonData);
-    localStorage.setItem(this.STORAGE_KEY, encryptedData);
+    localStorage.setItem(`${this.STORAGE_KEY}:${host}:${port}`, encryptedData);
   }
 
-  async loadSession(): Promise<SessionData | undefined> {
+  async loadSession(
+    host: string,
+    port: number
+  ): Promise<SessionData | undefined> {
     try {
-      const encryptedData = localStorage.getItem(this.STORAGE_KEY);
+      const encryptedData = localStorage.getItem(
+        `${this.STORAGE_KEY}:${host}:${port}`
+      );
       if (encryptedData) {
         const jsonData = decryptData(encryptedData);
         return JSON.parse(jsonData);
@@ -64,7 +67,7 @@ export class ConfigurationStore {
     return undefined;
   }
 
-  async deleteSession(): Promise<void> {
-    localStorage.removeItem(this.STORAGE_KEY);
+  async deleteSession(host: string, port: number): Promise<void> {
+    localStorage.removeItem(`${this.STORAGE_KEY}:${host}:${port}`);
   }
 }
