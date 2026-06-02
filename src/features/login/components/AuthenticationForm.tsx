@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import { Input } from '@/components/input';
-import { Label } from '@/components/label';
-import { Button } from '@/components/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/card';
+import { Input } from '@/components/api';
+import { Label } from '@/components/api';
+import { Button } from '@/components/api';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/api';
 
 export type AuthenticationFormProps = {
   onUserNameChange: (username: string) => void;

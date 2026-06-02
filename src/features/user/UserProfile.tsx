@@ -1,5 +1,5 @@
 import { LogOut } from 'lucide-react';
-import { Button } from '@/components/button';
+import { Button } from '@/components/api';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel,
-} from '@/components/dropdown-menu';
+} from '@/components/api';
 
 import { getNetwork } from '@/lib/singletons/api';
 import { useGlobalStore } from '@/store/globalAppStateStore';

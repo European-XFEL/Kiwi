@@ -1,11 +1,11 @@
-import { Button } from '@/components/button';
+import { Button } from '@/components/api';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/tooltip';
-import { cn } from '@/components/utils/cn';
+} from '@/components/api';
+import { cn } from '@/components/api';
 import { useLoadedSceneStore } from '@/store/loadedSceneStore';
 import type { FitMode } from '@/features/scene-view/hooks/useSceneScale';
 import {

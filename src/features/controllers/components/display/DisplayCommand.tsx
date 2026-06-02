@@ -16,7 +16,7 @@ import { ProxyStatus } from '@/lib/binding/api';
 import { getNetwork } from '@/lib/singletons/api';
 import { getControllerFontStyle } from '../../utils/fonts';
 import { getControllerIndicator } from '../../utils/controller_semantics';
-import CommandButton from '@/components/CommandButton';
+import { CommandButton } from '@/components/api';
 
 // DisplayCommand
 // ----------------------------------------------------------------------------

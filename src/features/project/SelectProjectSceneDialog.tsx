@@ -6,10 +6,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/dialog';
+} from '@/components/api';
 import { Hash, HashValues } from '@/karabo/data/api';
-import { Button } from '@/components/button';
-import { Separator } from '@/components/separator';
+import { Button } from '@/components/api';
+import { Separator } from '@/components/api';
 import { getDbConn } from '@/lib/singletons/api';
 import { ProjectItemInfo, ProjectSceneInfo } from '@/karabo/common/project/api';
 import { useGlobalStore } from '@/store/globalAppStateStore';

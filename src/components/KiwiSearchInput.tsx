@@ -1,5 +1,5 @@
-import { Input } from '@/components/input';
-import { Button } from '@/components/button';
+import { Input } from './input';
+import { Button } from './button';
 import { Search, X } from 'lucide-react';
 
 type KiwiSearchInputProps = {

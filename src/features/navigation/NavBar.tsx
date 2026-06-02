@@ -6,8 +6,8 @@ import NavToggle from './components/NavToggle';
 import { LoadProjectScene, SceneBreadcrumb } from '@/features/project/api';
 import Logo from './components/Logo';
 import { UserProfile, AccessLevelSelector } from '@/features/user';
-import { Button } from '@/components/button';
-import { Separator } from '@/components/separator';
+import { Button } from '@/components/api';
+import { Separator } from '@/components/api';
 import { GuiServerDisplay, ActiveIndicator } from '@/features/status';
 import { useLocation, useNavigate } from 'react-router-dom';
 

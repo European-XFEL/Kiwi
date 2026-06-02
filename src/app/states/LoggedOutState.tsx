@@ -1,4 +1,4 @@
-import { Separator } from '@/components/separator';
+import { Separator } from '@/components/api';
 import Header from '../layouts/Header';
 import { LoginPage } from '@/features/login';
 

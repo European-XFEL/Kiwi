@@ -1,6 +1,6 @@
-import { Separator } from '@/components/separator';
+import { Separator } from '@/components/api';
 import Header from '../layouts/Header';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/api';
 import { AlertTriangle } from 'lucide-react';
 
 const SessionExpiredState = () => (

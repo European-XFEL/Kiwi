@@ -1,5 +1,5 @@
-import { Separator } from '@/components/separator';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/card';
+import { Separator } from '@/components/api';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/api';
 
 export default function BookmarkInfo() {
   return (

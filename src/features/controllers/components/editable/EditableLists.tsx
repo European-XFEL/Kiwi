@@ -9,7 +9,7 @@ import {
   EditableListElementModel,
 } from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/renderRegistry';
-import { Button } from '@/components/button';
+import { Button } from '@/components/api';
 import { isControllerEditable } from '../../utils/controller_semantics';
 import { getControllerFontStyle } from '../../utils/fonts';
 
@@ -19,7 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/dialog';
+} from '@/components/api';
 
 // helpers
 // ----------------------------------------------------------------------------

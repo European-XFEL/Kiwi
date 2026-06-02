@@ -1,5 +1,5 @@
 import { Loader2 } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/alert';
+import { Alert, AlertDescription } from '@/components/api';
 import type { LoadingStatusProps } from '../types/status.types';
 
 export default function LoadingStatus({

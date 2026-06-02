@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { useGlobalActivityStore } from '@/store/globalActivityStore';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/api';
 import type { ConnectionTimerProps } from '../types/user.types';
 
 export default function ConnectionTimer({ className }: ConnectionTimerProps) {

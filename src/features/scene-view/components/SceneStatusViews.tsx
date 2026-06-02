@@ -1,7 +1,7 @@
-import { Alert, AlertDescription, AlertTitle } from '@/components/alert';
-import { Button } from '@/components/button';
-import { Card, CardContent } from '@/components/card';
-import { Spinner } from '@/components/spinner';
+import { Alert, AlertDescription, AlertTitle } from '@/components/api';
+import { Button } from '@/components/api';
+import { Card, CardContent } from '@/components/api';
+import { Spinner } from '@/components/api';
 import { AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 

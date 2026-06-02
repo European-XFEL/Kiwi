@@ -1,14 +1,14 @@
-import { Badge } from '@/components/badge';
-import { Button } from '@/components/button';
+import { Badge } from '@/components/api';
+import { Button } from '@/components/api';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/tooltip';
+} from '@/components/api';
 import { sceneParamsFromURL } from '@/features/navigation/utils';
 import { LoadProjectSceneResult } from '@/karabo/common/project/api';
-import { cn } from '@/components/utils/cn';
+import { cn } from '@/components/api';
 import { getDbConn } from '@/lib/singletons/api';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { Dot, FileText, XCircle } from 'lucide-react';

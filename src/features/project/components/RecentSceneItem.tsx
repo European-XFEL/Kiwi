@@ -1,4 +1,4 @@
-import { Button } from '@/components/button';
+import { Button } from '@/components/api';
 import { Folder, Trash2 } from 'lucide-react';
 import type { RecentSceneItemProps } from '../types/project.types';
 

@@ -1,4 +1,4 @@
-import { Separator } from '@/components/separator';
+import { Separator } from '@/components/api';
 import type { RecentScenesListProps } from '../types/project.types';
 import RecentSceneItem from './RecentSceneItem';
 

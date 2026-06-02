@@ -1,4 +1,4 @@
-import { ScrollArea } from '@/components/scroll-area';
+import { ScrollArea } from '@/components/api';
 import {
   Table,
   TableBody,
@@ -6,8 +6,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/table';
-import KiwiSearchInput from '@/components/KiwiSearchInput';
+} from '@/components/api';
+import { KiwiSearchInput } from '@/components/api';
 import { asLocalDateTimeString } from '@/karabo/common/project/api';
 import type { ProjectsTableProps } from '../types/project.types';
 
