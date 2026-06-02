@@ -15,27 +15,14 @@ import React from 'react';
 import { useSceneScale } from '../hooks/useSceneScale';
 import {
   getOverflow,
+  getScaledSceneSize,
+  getScrollableAlignment,
   getSpacerSize,
   isScrollableMode,
-  type ZoomMode,
 } from '../utils/sceneLayout';
 
 // Bootstrap — triggers all registerRenderer() calls
 import '../renderers';
-
-const getScrollableAlignment = (fitMode: ZoomMode) => {
-  switch (fitMode) {
-    case 'fit-width':
-      return { justifyItems: 'start', alignItems: 'center' } as const;
-    case 'fit-height':
-      return { justifyItems: 'center', alignItems: 'start' } as const;
-    case 'actual':
-      return { justifyItems: 'start', alignItems: 'start' } as const;
-    case 'fit-page':
-    case 'fit-screen':
-      return { justifyItems: 'center', alignItems: 'center' } as const;
-  }
-};
 
 const SceneView: React.FC = () => {
   const { lastGlobalError } = useGlobalStore();
@@ -66,11 +53,8 @@ const SceneView: React.FC = () => {
   // The browser needs the scaled footprint, not the authored scene size,
   // whenever layout or centering depends on the visible scene bounds.
   const scaledSize = React.useMemo(
-    () => ({
-      width: (scene?.width ?? 0) * scale,
-      height: (scene?.height ?? 0) * scale,
-    }),
-    [scene?.width, scene?.height, scale]
+    () => getScaledSceneSize(sceneDimensions, scale),
+    [sceneDimensions, scale]
   );
 
   // Spacer tracks scale changes, not mode changes
@@ -142,7 +126,7 @@ const SceneView: React.FC = () => {
       <SceneShell className="relative flex flex-1 min-h-0">
         <SceneViewport
           containerRef={containerRef}
-          className="flex-1 bg-muted [&::-webkit-scrollbar]:hidden"
+          className="flex-1 bg-muted"
           style={{ overflowX, overflowY }}
         >
           {scrollable ? (

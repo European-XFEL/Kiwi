@@ -127,7 +127,9 @@ describe('The basic proxy test', () => {
     const removeMonitor = jest.fn();
     jest.spyOn(rootProxy, 'addMonitor').mockReturnValue(removeMonitor);
     const connectPipeline = jest.spyOn(rootProxy, 'connectPipeline');
-    const disconnectPipeline = jest.spyOn(rootProxy, 'disconnectPipeline');
+    const disconnectPipeline = jest
+      .spyOn(rootProxy, 'disconnectPipeline')
+      .mockImplementation(() => undefined);
 
     const proxy = new PropertyProxy(rootProxy, 'channel.inner.value');
     proxy.startMonitoring();
@@ -164,7 +166,9 @@ describe('The basic proxy test', () => {
     const removeMonitor = jest.fn();
     jest.spyOn(rootProxy, 'addMonitor').mockReturnValue(removeMonitor);
     const connectPipeline = jest.spyOn(rootProxy, 'connectPipeline');
-    const disconnectPipeline = jest.spyOn(rootProxy, 'disconnectPipeline');
+    const disconnectPipeline = jest
+      .spyOn(rootProxy, 'disconnectPipeline')
+      .mockImplementation(() => undefined);
 
     const proxy = new PropertyProxy(rootProxy, 'channel.value');
     proxy.startMonitoring();
@@ -196,7 +200,9 @@ describe('The basic proxy test', () => {
 
     const removeMonitor = jest.fn();
     jest.spyOn(rootProxy, 'addMonitor').mockReturnValue(removeMonitor);
-    const disconnectPipeline = jest.spyOn(rootProxy, 'disconnectPipeline');
+    const disconnectPipeline = jest
+      .spyOn(rootProxy, 'disconnectPipeline')
+      .mockImplementation(() => undefined);
 
     const proxy = new PropertyProxy(rootProxy, 'channel.value');
     proxy.startMonitoring();
@@ -207,7 +213,7 @@ describe('The basic proxy test', () => {
     expect(proxy.isMonitored).toBe(false);
   });
 
-  it('PropertyProxy - stopMonitoring is idempotent for pipeline-backed proxies', () => {
+  it('PropertyProxy - repeated stopMonitoring attempts keep calling pipeline disconnect', () => {
     const rootBinding = new BindingRoot();
     const outputBinding = new NodeBinding();
     outputBinding.displayType = 'OutputChannel';
@@ -219,7 +225,9 @@ describe('The basic proxy test', () => {
 
     const removeMonitor = jest.fn();
     jest.spyOn(rootProxy, 'addMonitor').mockReturnValue(removeMonitor);
-    const disconnectPipeline = jest.spyOn(rootProxy, 'disconnectPipeline');
+    const disconnectPipeline = jest
+      .spyOn(rootProxy, 'disconnectPipeline')
+      .mockImplementation(() => undefined);
 
     const proxy = new PropertyProxy(rootProxy, 'channel.value');
     proxy.startMonitoring();
@@ -228,13 +236,13 @@ describe('The basic proxy test', () => {
     proxy.stopMonitoring();
 
     expect(removeMonitor).toHaveBeenCalledTimes(1);
-    expect(disconnectPipeline).toHaveBeenCalledTimes(1);
+    expect(disconnectPipeline).toHaveBeenCalledTimes(2);
     expect(proxy.isMonitored).toBe(false);
 
     proxy.dispose();
   });
 
-  it('PropertyProxy - startMonitoring is idempotent for pipeline-backed proxies', () => {
+  it('PropertyProxy - repeated startMonitoring increments monitor and pipeline subscriptions', () => {
     const rootBinding = new BindingRoot();
     const outputBinding = new NodeBinding();
     outputBinding.displayType = 'OutputChannel';
@@ -253,8 +261,8 @@ describe('The basic proxy test', () => {
     proxy.startMonitoring();
     proxy.startMonitoring();
 
-    expect(rootProxy.addMonitor).toHaveBeenCalledTimes(1);
-    expect(connectPipeline).toHaveBeenCalledTimes(1);
+    expect(rootProxy.addMonitor).toHaveBeenCalledTimes(2);
+    expect(connectPipeline).toHaveBeenCalledTimes(2);
     expect(proxy.isMonitored).toBe(true);
 
     proxy.stopMonitoring();

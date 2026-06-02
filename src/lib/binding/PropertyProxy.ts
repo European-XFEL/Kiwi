@@ -149,10 +149,6 @@ export class PropertyProxy {
   }
 
   public startMonitoring(): () => void {
-    if (this.isMonitored) {
-      return () => this.stopMonitoring();
-    }
-
     console.log('START monitoring', this.key);
     this.isMonitored = true;
     this.removeMonitor = this.root_proxy.addMonitor();
@@ -163,10 +159,6 @@ export class PropertyProxy {
   }
 
   public stopMonitoring(): void {
-    if (!this.isMonitored) {
-      return;
-    }
-
     console.log('STOP monitoring', this.key);
     this.isMonitored = false;
     this.removeMonitor?.();
