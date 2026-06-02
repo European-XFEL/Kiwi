@@ -20,11 +20,7 @@ export function SceneViewport({
   children,
 }: SceneViewportProps) {
   return (
-    <div
-      ref={containerRef}
-      className={className}
-      style={{ scrollbarWidth: 'none', ...style }}
-    >
+    <div ref={containerRef} className={className} style={style}>
       {children}
     </div>
   );

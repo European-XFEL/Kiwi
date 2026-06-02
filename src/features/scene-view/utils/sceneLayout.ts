@@ -87,6 +87,40 @@ export function getOverflow(mode: ZoomMode): {
   }
 }
 
+// getScrollableAlignment
+// ---
+// Scrollable modes pin one axis to the start while keeping the other centered
+// when possible. Non-scrollable modes center the scene on both axes.
+
+export function getScrollableAlignment(mode: ZoomMode): {
+  justifyItems: 'start' | 'center';
+  alignItems: 'start' | 'center';
+} {
+  switch (mode) {
+    case 'fit-width':
+      return { justifyItems: 'start', alignItems: 'center' };
+    case 'fit-height':
+      return { justifyItems: 'center', alignItems: 'start' };
+    case 'actual':
+      return { justifyItems: 'center', alignItems: 'center' };
+    case 'fit-page':
+    case 'fit-screen':
+      return { justifyItems: 'center', alignItems: 'center' };
+  }
+}
+
+// getScaledSceneSize
+// ---
+// The authored scene size multiplied by the active CSS scale. This gives layout
+// code the actual on-screen footprint instead of the authored size.
+
+export function getScaledSceneSize(scene: Size | null, scale: number): Size {
+  return {
+    width: (scene?.width ?? 0) * scale,
+    height: (scene?.height ?? 0) * scale,
+  };
+}
+
 // getSpacerSize
 // ---
 // Exact scaled dimensions — gives the browser real px to scroll against.
