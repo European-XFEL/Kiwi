@@ -15,7 +15,6 @@ import { AccessLevel } from '@/karabo/data/api';
 import { ProxyStatus } from '@/lib/binding/api';
 import { getNetwork } from '@/lib/singletons/api';
 import { getControllerFontStyle } from '../../utils/fonts';
-import { getControllerIndicator } from '../../utils/controller_semantics';
 import { CommandButton } from '@/components/api';
 
 // DisplayCommand
@@ -30,7 +29,6 @@ const DisplayCommand: React.FC<{
   const proxyStatus = ctx?.proxy?.root.status ?? ProxyStatus.OFFLINE;
   const deviceState = ctx?.proxy?.root.state;
   const binding = ctx?.proxy?.binding;
-  const indicator = getControllerIndicator(model.keys, ctx?.proxy);
 
   const userAccessLevel = useGlobalStore(
     (s) => s.sessionInfo?.accessLevel ?? AccessLevel.OBSERVER
@@ -48,11 +46,7 @@ const DisplayCommand: React.FC<{
     deviceState != null &&
     (binding?.is_allowed?.(deviceState) ?? false);
 
-  const buttonCaption =
-    binding?.displayedName ??
-    propertyPath ??
-    indicator.propertyIndicator?.label ??
-    '';
+  const buttonCaption = binding?.displayedName ?? propertyPath ?? '';
 
   const isEnabled =
     hasCommandPermission && isDeviceOnline && stateAllowsCommand;
