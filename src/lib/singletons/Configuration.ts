@@ -9,11 +9,9 @@ export interface SessionData {
 }
 
 export class ConfigurationStore {
-  private readonly STORAGE_KEY = 'gui_session_data';
+  // #region SessionData
 
-  public constructor() {
-    // No initialization needed for localStorage
-  }
+  private readonly SESSION_DATA_KEY_PREFIX = 'gui_session_data';
 
   async saveAuthSession(
     host: string,
@@ -46,7 +44,10 @@ export class ConfigurationStore {
   ): Promise<void> {
     const jsonData = JSON.stringify(data);
     const encryptedData = encryptData(jsonData);
-    localStorage.setItem(`${this.STORAGE_KEY}:${host}:${port}`, encryptedData);
+    localStorage.setItem(
+      `${this.SESSION_DATA_KEY_PREFIX}:${host}:${port}`,
+      encryptedData
+    );
   }
 
   async loadSession(
@@ -55,7 +56,7 @@ export class ConfigurationStore {
   ): Promise<SessionData | undefined> {
     try {
       const encryptedData = localStorage.getItem(
-        `${this.STORAGE_KEY}:${host}:${port}`
+        `${this.SESSION_DATA_KEY_PREFIX}:${host}:${port}`
       );
       if (encryptedData) {
         const jsonData = decryptData(encryptedData);
@@ -68,6 +69,32 @@ export class ConfigurationStore {
   }
 
   async deleteSession(host: string, port: number): Promise<void> {
-    localStorage.removeItem(`${this.STORAGE_KEY}:${host}:${port}`);
+    localStorage.removeItem(`${this.SESSION_DATA_KEY_PREFIX}:${host}:${port}`);
   }
+
+  // #endregion
+
+  // #region LastHost and LastPort
+
+  private readonly LAST_HOST_KEY = 'lastHost';
+
+  public get lastHost() {
+    return localStorage.getItem(this.LAST_HOST_KEY) || '';
+  }
+
+  public set lastHost(host: string) {
+    localStorage.setItem(this.LAST_HOST_KEY, host);
+  }
+
+  private readonly LAST_PORT_KEY = 'lastPort';
+
+  public get lastPort() {
+    return Number.parseInt(localStorage.getItem(this.LAST_PORT_KEY) || '0');
+  }
+
+  public set lastPort(port: number) {
+    localStorage.setItem(this.LAST_PORT_KEY, `${port}`);
+  }
+
+  // #endregion
 }
