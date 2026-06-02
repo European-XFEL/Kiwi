@@ -28,7 +28,7 @@
       "@/app/*": ["./src/app/*"],
       "@/features/*": ["./src/features/*"],
       "@/lib/*": ["./src/lib/*"],
-      "@/components/*": ["./src/components/*"],
+      "@/components/*": ["./src/components/api"],
       "@/shared/*": ["./src/shared/*"]
     }
   },

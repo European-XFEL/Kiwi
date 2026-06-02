@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/api';
 import { BaseWidgetObjectData } from '@/karabo/common/api';
 import { AccessLevel, AccessMode } from '@/karabo/data/enums';
 import { useContainer } from '../hooks/useContainer';

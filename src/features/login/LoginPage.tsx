@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { Card, CardContent, CardFooter } from '@/components/card';
-import { Button } from '@/components/button';
+import { Card, CardContent, CardFooter } from '@/components/api';
+import { Button } from '@/components/api';
 import ServerProbeForm from './components/ServerProbeForm';
 import AuthenticationForm from './components/AuthenticationForm';
 import AccessLevelForm from './components/AccesslevelForm';

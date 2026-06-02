@@ -1,4 +1,4 @@
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/api';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import type { GuiServerDisplayProps } from '../types/status.types';
 

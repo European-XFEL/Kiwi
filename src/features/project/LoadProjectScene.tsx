@@ -1,4 +1,4 @@
-import { Button } from '@/components/button';
+import { Button } from '@/components/api';
 import { ProjectSceneInfo } from '@/karabo/common/project/api';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { FolderOpen } from 'lucide-react';

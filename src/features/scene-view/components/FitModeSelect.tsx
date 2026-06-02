@@ -4,7 +4,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/select';
+} from '@/components/api';
 import { useLoadedSceneStore } from '@/store/loadedSceneStore';
 
 /** Fit mode dropdown — only renders when a scene is loaded. */

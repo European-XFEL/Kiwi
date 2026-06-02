@@ -1,7 +1,7 @@
 import * as React from 'react';
 import type { PropertyProxies } from '../utils/controller_proxies';
 import { ProxyStatus } from '@/lib/binding/api';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/api';
 import { XIcon } from 'lucide-react';
 
 const STATUS_INDICATOR_ICON: Partial<Record<ProxyStatus, string>> = {

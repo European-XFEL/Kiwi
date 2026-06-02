@@ -4,8 +4,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/select';
-import { Label } from '@/components/label';
+} from '@/components/api';
+import { Label } from '@/components/api';
 import type { DomainSelectorProps } from '../types/project.types';
 
 export default function DomainSelector({

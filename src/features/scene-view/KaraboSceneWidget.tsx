@@ -20,7 +20,7 @@ import { LabelModel, StickerModel } from '@/karabo/common/api';
 import { SceneLinkModel, WebLinkModel } from '@/karabo/common/api';
 import { ControllerContainer } from '@/features/controllers/api';
 import { containerPointerEvents } from './utils/mode';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/api';
 
 import { getRenderer } from './renderRegistry';
 import { isInRenderPhase, resolveBounds, type RenderPhase } from './bounds';

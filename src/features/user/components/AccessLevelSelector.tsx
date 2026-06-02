@@ -6,13 +6,13 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-} from '@/components/dropdown-menu';
-import { Button } from '@/components/button';
-import { Badge } from '@/components/badge';
+} from '@/components/api';
+import { Button } from '@/components/api';
+import { Badge } from '@/components/api';
 import { useAccessLevel } from '@/features/user/hooks/useAccessLevel';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { AccessLevel } from '@/karabo/data/api';
-import { getAccessLevelDisplay } from '@/components/utils/getAccessLevelDisplay';
+import { getAccessLevelDisplay } from '@/components/api';
 import { getConfig } from '@/lib/singletons/api';
 import type { AccessLevelSelectorProps } from '../types/user.types';
 

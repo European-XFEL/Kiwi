@@ -5,15 +5,15 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from '@/components/breadcrumb';
+} from '@/components/api';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from '@/components/dropdown-menu';
+} from '@/components/api';
 import { Hash, HashValues } from '@/karabo/data/api';
 import { ProjectItemInfo, ProjectSceneInfo } from '@/karabo/common/project/api';
-import { cn } from '@/components/utils/cn';
+import { cn } from '@/components/api';
 import { getDbConn } from '@/lib/singletons/api';
 import { useGlobalStore } from '@/store/globalAppStateStore';
 import { Loader2 } from 'lucide-react';

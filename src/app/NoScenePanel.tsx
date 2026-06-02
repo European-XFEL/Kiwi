@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { RecentSceneInfo, useRecentStore, useGlobalStore } from '@/store/api';
 import { RecentScenesList } from '@/features/project/api';
 import BookmarkInfo from './components/BookmarkInfo';
-import { Separator } from '@/components/separator';
+import { Separator } from '@/components/api';
 
 const NoScenePanel: React.FC = () => {
   const { sessionInfo } = useGlobalStore();
