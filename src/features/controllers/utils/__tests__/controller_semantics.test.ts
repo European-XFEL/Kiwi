@@ -24,7 +24,7 @@ describe('controller semantics utilities', () => {
       new PropertyProxy(deviceB, 'temperature'),
     ];
     const snapshots = createPropertyProxySnapshots(proxies);
-    const sourceKeys = snapshots.map((snapshot) => snapshot.sourceKey);
+    const sourceKeys = snapshots.map((snapshot) => snapshot.proxy.key);
 
     expect(getModelKeys(sourceKeys)).toBe(
       'DEVICE_A.speed, DEVICE_B.temperature'
