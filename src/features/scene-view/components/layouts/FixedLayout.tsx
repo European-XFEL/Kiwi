@@ -6,15 +6,19 @@ import React from 'react';
 
 import { FixedLayoutModel } from '@/karabo/common/api';
 import { renderContent } from '../../KaraboSceneWidget';
-import { resolveBounds } from '../../bounds';
+import { resolveBounds, type RenderPhase } from '../../bounds';
 import { containerPointerEvents } from '../../utils/mode';
 import { registerRenderer } from '../../renderRegistry';
 
 type FixedLayoutProps = {
   model: FixedLayoutModel;
+  phase?: RenderPhase;
 };
 
-export const FixedLayout: React.FC<FixedLayoutProps> = ({ model }) => {
+export const FixedLayout: React.FC<FixedLayoutProps> = ({
+  model,
+  phase = 'all',
+}) => {
   const { x, y, children } = model;
 
   return (
@@ -46,7 +50,8 @@ export const FixedLayout: React.FC<FixedLayoutProps> = ({ model }) => {
               pointerEvents: containerPointerEvents(),
             }}
           >
-            {renderContent(child)}
+            {/* Preserve the active pass through layout recursion. */}
+            {renderContent(child, phase)}
           </div>
         );
       })}

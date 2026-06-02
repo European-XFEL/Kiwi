@@ -113,7 +113,9 @@ export function renderContent(
     );
   }
 
-  return <Renderer model={model} />;
+  // Layout renderers must see the active phase so nested children stay in the
+  // same pass and do not reach controller widgets during the shape traversal.
+  return <Renderer model={model} phase={phase} />;
 }
 
 // KaraboSceneWidget

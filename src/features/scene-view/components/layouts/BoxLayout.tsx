@@ -8,12 +8,13 @@ import React from 'react';
 
 import { BoxLayoutModel, Direction } from '@/karabo/common/api';
 import { renderContent } from '../../KaraboSceneWidget';
-import { resolveBounds } from '../../bounds';
+import { resolveBounds, type RenderPhase } from '../../bounds';
 import { containerPointerEvents } from '../../utils/mode';
 import { registerRenderer } from '../../renderRegistry';
 
 type BoxLayoutProps = {
   model: BoxLayoutModel;
+  phase?: RenderPhase;
 };
 
 const FLEX_DIRECTION_BY_DIRECTION: Record<
@@ -26,7 +27,10 @@ const FLEX_DIRECTION_BY_DIRECTION: Record<
   [Direction.BottomToTop]: 'column-reverse',
 };
 
-export const BoxLayout: React.FC<BoxLayoutProps> = ({ model }) => {
+export const BoxLayout: React.FC<BoxLayoutProps> = ({
+  model,
+  phase = 'all',
+}) => {
   const { direction, children } = model;
 
   return (
@@ -54,7 +58,8 @@ export const BoxLayout: React.FC<BoxLayoutProps> = ({ model }) => {
               pointerEvents: containerPointerEvents(),
             }}
           >
-            {renderContent(child)}
+            {/* Preserve the active pass through layout recursion. */}
+            {renderContent(child, phase)}
           </div>
         );
       })}
