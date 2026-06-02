@@ -4,7 +4,7 @@ import { bootstrapStatefulIcons } from '@/features/controllers/api';
 import { initAppSettings } from './AppSettings';
 import { useAppSettingsStore } from '@/store/appSettingsStore';
 import { useGlobalStore } from '@/store/globalAppStateStore';
-import { getNetwork, getManager } from '@/lib/singletons/api';
+import { getNetwork, getManager, getConfig } from '@/lib/singletons/api';
 import { TooltipProvider } from '@/components/api';
 import { Toaster } from '@/components/api';
 import { AccessLevel } from '@/karabo/data/enums';
@@ -87,8 +87,8 @@ const App: React.FC = () => {
         host = sceneParams.host;
         port = sceneParams.port;
       } else {
-        host = localStorage.getItem('lastHost') || '';
-        port = Number.parseInt(localStorage.getItem('lastPort') || '0');
+        host = getConfig().lastHost;
+        port = getConfig().lastPort;
       }
       getNetwork().resumeGuiSession(
         host,

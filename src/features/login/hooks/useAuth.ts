@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { getNetwork } from '@/lib/singletons/api';
+import { getConfig, getNetwork } from '@/lib/singletons/api';
 import { AccessLevel } from '@/karabo/data/api';
 import AuthServerClient from '@/lib/http/AuthServerClient';
 import { useGlobalStore } from '@/store/globalAppStateStore';
@@ -51,8 +51,8 @@ export function useAuth({
       topic: string,
       serverVersion: string
     ) => {
-      localStorage.setItem('lastHost', host);
-      localStorage.setItem('lastPort', `${port}`);
+      getConfig().lastHost = host;
+      getConfig().lastPort = port;
       setActivityStatus(ActivityStatus.NO_ACTIVITY);
 
       setLoggedIn({
