@@ -10,7 +10,7 @@ import { sceneParamsFromURL } from '@/features/navigation/utils';
 import { LoadProjectSceneResult } from '@/karabo/common/project/api';
 import { cn } from '@/components/api';
 import { getDbConn } from '@/lib/singletons/api';
-import { useGlobalStore } from '@/store/globalAppStateStore';
+import { useGlobalStore } from '@/store/api';
 import { Dot, FileText, XCircle } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';

@@ -10,7 +10,7 @@ import {
 } from '@/components/api';
 
 import { getNetwork } from '@/lib/singletons/api';
-import { useGlobalStore } from '@/store/globalAppStateStore';
+import { useGlobalStore } from '@/store/api';
 
 const getInitials = (text?: string): string => {
   if (!text) return '?';

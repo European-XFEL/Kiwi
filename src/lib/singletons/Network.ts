@@ -7,8 +7,7 @@ import { encodeBinary, AccessLevel, Hash, HashList } from '@/karabo/data/api';
 import { Deque } from '@datastructures-js/deque';
 
 import { getConfig } from '@/lib/singletons/api';
-import { useAppSettingsStore } from '@/store/appSettingsStore';
-import { useGlobalActivityStore } from '@/store/globalActivityStore';
+import { useAppSettingsStore, useGlobalActivityStore } from '@/store/api';
 import { Websocket, WebsocketBuilder } from 'websocket-ts';
 
 const MAX_ITEM_PROCESSING = 5;

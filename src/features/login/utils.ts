@@ -1,6 +1,6 @@
 import { Hash, decodeBinary } from '@/karabo/data/api';
 import { getNetwork } from '@/lib/singletons/api';
-import { useAppSettingsStore } from '@/store/appSettingsStore';
+import { useAppSettingsStore } from '@/store/api';
 import { WebsocketBuilder } from 'websocket-ts';
 import { GuiServerInfo } from './auth.types';
 

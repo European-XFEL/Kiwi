@@ -48,13 +48,11 @@ jest.mock('../../renderers', () => ({}));
 
 jest.mock('../../hooks/useSceneLoader');
 jest.mock('../../hooks/useSceneScale');
-jest.mock('@/store/globalAppStateStore');
-jest.mock('@/store/loadedSceneStore');
+jest.mock('@/store/api');
 
 import { useSceneLoader } from '../../hooks/useSceneLoader';
 import { useSceneScale } from '../../hooks/useSceneScale';
-import { useGlobalStore } from '@/store/globalAppStateStore';
-import { useLoadedSceneStore } from '@/store/loadedSceneStore';
+import { useGlobalStore, useLoadedSceneStore } from '@/store/api';
 
 const mockUseSceneLoader = jest.mocked(useSceneLoader);
 const mockUseSceneScale = jest.mocked(useSceneScale);

@@ -10,7 +10,7 @@ import React from 'react';
 import type { ControllerContainerContext } from '../ControllerContainer';
 import { DisplayCommandModel } from '@/karabo/common/api';
 import { registerRenderer } from '@/features/scene-view/renderRegistry';
-import { useGlobalStore } from '@/store/globalAppStateStore';
+import { useGlobalStore } from '@/store/api';
 import { AccessLevel } from '@/karabo/data/api';
 import { ProxyStatus } from '@/lib/binding/api';
 import { getNetwork } from '@/lib/singletons/api';

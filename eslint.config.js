@@ -35,6 +35,19 @@ export default tseslint.config(
       // React Hooks rules
       ...reactHooks.configs.recommended.rules,
 
+      // Enforce imports through the barrel file only
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@/store/*', '!@/store/api'],
+              message: 'Import store modules only from "@/store/api".',
+            },
+          ],
+        },
+      ],
+
       // Vite / Fast Refresh safety
       'react-refresh/only-export-components': [
         'warn',

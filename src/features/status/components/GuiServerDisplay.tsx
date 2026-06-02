@@ -1,5 +1,5 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/api';
-import { useGlobalStore } from '@/store/globalAppStateStore';
+import { useGlobalStore } from '@/store/api';
 import type { GuiServerDisplayProps } from '../types/status.types';
 
 export default function GuiServerDisplay({ className }: GuiServerDisplayProps) {

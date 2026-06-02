@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { getConfig, getNetwork } from '@/lib/singletons/api';
 import { AccessLevel } from '@/karabo/data/api';
 import AuthServerClient from '@/lib/http/AuthServerClient';
-import { useGlobalStore } from '@/store/globalAppStateStore';
+import { useGlobalStore } from '@/store/api';
 import { ActivityStatus, GuiServerInfo } from '../auth.types';
 import { sceneParamsFromURL } from '@/features/navigation/utils';
 

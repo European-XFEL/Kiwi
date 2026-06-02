@@ -5,7 +5,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/api';
-import { useLoadedSceneStore } from '@/store/loadedSceneStore';
+import { useLoadedSceneStore } from '@/store/api';
 
 /** Fit mode dropdown — only renders when a scene is loaded. */
 export default function FitModeSelect() {

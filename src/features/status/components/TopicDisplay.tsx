@@ -1,4 +1,4 @@
-import { useGlobalStore } from '@/store/globalAppStateStore';
+import { useGlobalStore } from '@/store/api';
 import type { TopicDisplayProps } from '../types/status.types';
 
 export default function TopicDisplay({ className }: TopicDisplayProps) {

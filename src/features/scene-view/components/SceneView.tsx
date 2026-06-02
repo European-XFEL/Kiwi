@@ -9,8 +9,7 @@ import { SceneShell } from './SceneShell';
 import { SceneStage } from './SceneStage';
 import { SceneViewport } from './SceneViewport';
 import { SceneWindow } from './SceneWindow';
-import { useGlobalStore } from '@/store/globalAppStateStore';
-import { useLoadedSceneStore } from '@/store/loadedSceneStore';
+import { useGlobalStore, useLoadedSceneStore } from '@/store/api';
 import React from 'react';
 import { useSceneScale } from '../hooks/useSceneScale';
 import {

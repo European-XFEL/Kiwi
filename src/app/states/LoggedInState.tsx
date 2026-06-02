@@ -3,7 +3,7 @@ import KiwiFooter from '../layouts/KiwiFooter';
 import Layout from '../layouts/Layout';
 import { NavBar } from '@/features/navigation';
 import { useEffect } from 'react';
-import { useGlobalStore } from '@/store/globalAppStateStore';
+import { useGlobalStore } from '@/store/api';
 import { toast } from 'sonner';
 
 const LoggedInState = () => {

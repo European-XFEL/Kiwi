@@ -1,6 +1,6 @@
 import { Button } from '@/components/api';
 import { ProjectSceneInfo } from '@/karabo/common/project/api';
-import { useGlobalStore } from '@/store/globalAppStateStore';
+import { useGlobalStore } from '@/store/api';
 import { FolderOpen } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
