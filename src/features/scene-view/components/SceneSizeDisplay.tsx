@@ -1,4 +1,4 @@
-import { useLoadedSceneStore } from '@/store/loadedSceneStore';
+import { useLoadedSceneStore } from '@/store/api';
 
 export type SceneSizeDisplayProps = {
   className?: string;

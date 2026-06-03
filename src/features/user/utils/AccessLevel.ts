@@ -1,5 +1,5 @@
 import { AccessLevel } from '@/karabo/data/api';
-import { useGlobalStore } from '@/store/globalAppStateStore';
+import { useGlobalStore } from '@/store/api';
 
 export class AccessControlManager {
   private static _instance?: AccessControlManager;

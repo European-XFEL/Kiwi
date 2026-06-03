@@ -15,7 +15,7 @@ import { Hash, HashValues } from '@/karabo/data/api';
 import { ProjectItemInfo, ProjectSceneInfo } from '@/karabo/common/project/api';
 import { cn } from '@/components/api';
 import { getDbConn } from '@/lib/singletons/api';
-import { useGlobalStore } from '@/store/globalAppStateStore';
+import { useGlobalStore } from '@/store/api';
 import { Loader2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';

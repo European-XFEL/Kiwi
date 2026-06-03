@@ -1,5 +1,5 @@
 import { AccessLevel } from '@/karabo/data/enums';
-import { useGlobalStore } from '@/store/globalAppStateStore';
+import { useGlobalStore } from '@/store/api';
 import type { PropertyProxies } from '../utils/controller_proxies';
 
 // ControllerContainerContext

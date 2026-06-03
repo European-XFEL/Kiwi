@@ -6,7 +6,7 @@ import {
   TooltipTrigger,
 } from '@/components/api';
 import { cn } from '@/components/api';
-import { useLoadedSceneStore } from '@/store/loadedSceneStore';
+import { useLoadedSceneStore } from '@/store/api';
 import type { FitMode } from '@/features/scene-view/hooks/useSceneScale';
 import {
   ArrowLeftRight,

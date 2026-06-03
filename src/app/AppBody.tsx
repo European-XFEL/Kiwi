@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { GlobalState, useGlobalStore } from '@/store/globalAppStateStore';
+import { GlobalState, useGlobalStore } from '@/store/api';
 import InitializingState from './states/InitializingState';
 import LoggedInState from './states/LoggedInState';
 import LoggedOutState from './states/LoggedOutState';

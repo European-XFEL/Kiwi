@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useGlobalActivityStore } from '@/store/globalActivityStore';
+import { useGlobalActivityStore } from '@/store/api';
 
 export const ActiveIndicator: React.FC = () => {
   const lastActivity = useGlobalActivityStore((s) => s.lastActivity);

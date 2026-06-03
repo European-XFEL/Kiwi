@@ -12,7 +12,7 @@ import { Button } from '@/components/api';
 import { Separator } from '@/components/api';
 import { getDbConn } from '@/lib/singletons/api';
 import { ProjectItemInfo, ProjectSceneInfo } from '@/karabo/common/project/api';
-import { useGlobalStore } from '@/store/globalAppStateStore';
+import { useGlobalStore } from '@/store/api';
 import DomainSelector from './components/DomainSelector';
 import ProjectsTable from './components/ProjectTable';
 import ScenesTable from './components/ScenesTable';
