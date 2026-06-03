@@ -1,7 +1,6 @@
 import type { BaseBinding } from '@/lib/binding/BaseBinding';
-import type { DeviceProxy } from '@/lib/binding/DeviceProxy';
 import { PropertyProxy } from '@/lib/binding/PropertyProxy';
-import { PropertyStatus, ProxyStatus } from '@/lib/binding/ProxyStatus';
+import { ProxyStatus } from '@/lib/binding/ProxyStatus';
 import { splitKaraboKeys } from '@/lib/binding/utils/splitKaraboKeys';
 import { getTopology } from '@/lib/singletons/api';
 
@@ -105,13 +104,7 @@ export const disposePropertyProxies = (proxies: PropertyProxies): void => {
 // available for widget-level enabled/disabled logic.
 
 export type PropertyProxySnapshot = {
-  /** Canonical proxy key derived from the live proxy, used for tooltip/debug text. */
-  sourceKey: string;
   proxy: PropertyProxy;
-  deviceProxy: DeviceProxy;
-  deviceId: string;
-  propertyPath: string;
-  propertyStatus: PropertyStatus;
   deviceState: string | undefined;
   deviceStatus: ProxyStatus;
   /** Monotonic identity for device state/status snapshot updates; distinct from the Karabo value timestamp below. */
@@ -121,20 +114,10 @@ export type PropertyProxySnapshot = {
   timestamp: any;
 };
 
-const getProxySourceKey = (propertyProxy: PropertyProxy): string =>
-  `${propertyProxy.root.deviceId}.${propertyProxy.path}`;
-
 export const createPropertyProxySnapshot = (
   propertyProxy: PropertyProxy
 ): PropertyProxySnapshot => ({
-  sourceKey: getProxySourceKey(propertyProxy),
   proxy: propertyProxy,
-  deviceProxy: propertyProxy.root,
-  deviceId: propertyProxy.root.deviceId,
-  propertyPath: propertyProxy.path,
-  propertyStatus: propertyProxy.binding_existing
-    ? PropertyStatus.NONE
-    : PropertyStatus.MISSING,
   deviceState: propertyProxy.root.state,
   deviceStatus: propertyProxy.root.status,
   rootRevision: propertyProxy.root.rootRevision,

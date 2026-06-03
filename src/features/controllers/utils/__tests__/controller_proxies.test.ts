@@ -60,15 +60,11 @@ describe('controller proxy utilities', () => {
 
     expect(snapshots).toHaveLength(2);
     expect(snapshots[0]).toMatchObject({
-      sourceKey: 'DEVICE_A.speed',
-      deviceId: 'DEVICE_A',
-      propertyPath: 'speed',
+      proxy: proxies[0],
       deviceStatus: ProxyStatus.OFFLINE,
     });
     expect(snapshots[1]).toMatchObject({
-      sourceKey: 'DEVICE_B.temperature',
-      deviceId: 'DEVICE_B',
-      propertyPath: 'temperature',
+      proxy: proxies[1],
       deviceStatus: ProxyStatus.OFFLINE,
     });
 
@@ -136,7 +132,7 @@ describe('controller proxy utilities', () => {
     disposePropertyProxies(proxies);
   });
 
-  it('updateDeviceProxySnapshots rebuilds only matching slots and preserves sourceKey', () => {
+  it('updateDeviceProxySnapshots rebuilds only matching slots and preserves proxy identity', () => {
     const deviceA = new DeviceProxy('DEVICE_A');
     deviceA.binding = new BindingRoot();
     const deviceB = new DeviceProxy('DEVICE_B');
@@ -153,7 +149,7 @@ describe('controller proxy utilities', () => {
 
     expect(next).not.toBeNull();
     expect(next![0].deviceStatus).toBe(ProxyStatus.ONLINE);
-    expect(next![0].sourceKey).toBe('DEVICE_A.speed');
+    expect(next![0].proxy).toBe(proxyA);
     expect(next![1]).toBe(snapshots[1]);
 
     disposePropertyProxies(proxies);
@@ -190,7 +186,7 @@ describe('controller proxy utilities', () => {
     const next = updatePropertyProxySnapshot(snapshots, 0, proxyA);
 
     expect(next[0]).not.toBe(snapshots[0]);
-    expect(next[0].sourceKey).toBe('DEVICE_A.speed');
+    expect(next[0].proxy).toBe(proxyA);
     expect(next[1]).toBe(snapshots[1]);
 
     disposePropertyProxies(proxies);
