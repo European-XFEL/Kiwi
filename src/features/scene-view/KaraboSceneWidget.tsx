@@ -15,9 +15,9 @@ import {
   UnknownWidgetDataModel,
   UnknownXMLDataModel,
 } from '@/karabo/common/api';
-import { ControllerContainer } from '@/features/controllers/api';
 import { containerPointerEvents } from './utils/mode';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/api';
+import { ControllerContainer } from './components/widgets/ControllerContainer';
 
 import { getRenderer, type Renderer } from './renderRegistry';
 import { resolveBounds, type SceneLayer } from './bounds';

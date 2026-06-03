@@ -7,7 +7,7 @@ import {
 } from '@/components/api';
 import { cn } from '@/components/api';
 import { useLoadedSceneStore } from '@/store/api';
-import type { FitMode } from '@/features/scene-view/hooks/useSceneScale';
+import type { FitMode } from '../hooks/useSceneScale';
 import {
   ArrowLeftRight,
   ArrowUpDown,

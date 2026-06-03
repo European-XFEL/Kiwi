@@ -6,11 +6,18 @@ import { SingletonContext } from '@/testing';
 const mockUseContainer = jest.fn();
 const mockOverlaySpy = jest.fn();
 
-jest.mock('../../hooks/useContainer', () => ({
+jest.mock('@/features/controllers/api', () => ({
+  getModelKeys: jest.fn(() => ''),
   useContainer: () => mockUseContainer(),
+  useController: jest.requireActual<
+    typeof import('@/features/controllers/hooks/useController')
+  >('@/features/controllers/hooks/useController').useController,
+  useProxies: jest.requireActual<
+    typeof import('@/features/controllers/hooks/useProxies')
+  >('@/features/controllers/hooks/useProxies').useProxies,
 }));
 
-jest.mock('../ControllerOverlay', () => {
+jest.mock('@/features/scene-view/components/widgets/ControllerOverlay', () => {
   const mockReactActual = jest.requireActual<typeof React>('react');
 
   return {
@@ -25,7 +32,7 @@ jest.mock('../ControllerOverlay', () => {
   };
 });
 
-import { ControllerContainer } from '../ControllerContainer';
+import { ControllerContainer } from '../widgets/ControllerContainer';
 
 type MockDevice = DeviceProxy & {
   stopMonitoring: jest.Mock;

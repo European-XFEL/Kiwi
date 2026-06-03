@@ -7,11 +7,13 @@ import React from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/api';
 import { BaseWidgetObjectData } from '@/karabo/common/api';
 import { AccessLevel, AccessMode } from '@/karabo/data/enums';
-import { useContainer } from '../hooks/useContainer';
-import type { ControllerContainerContext } from '../hooks/useController';
-import { useController } from '../hooks/useController';
-import { useProxies } from '../hooks/useProxies';
-import { getModelKeys } from '../utils/controller_semantics';
+import {
+  getModelKeys,
+  useContainer,
+  useController,
+  useProxies,
+  type ControllerContainerContext,
+} from '@/features/controllers/api';
 import { ControllerOverlay } from './ControllerOverlay';
 
 export type { ControllerContainerContext };

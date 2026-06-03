@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { DeviceProxy, PropertyProxy, ProxyStatus } from '@/lib/binding/api';
 
-import { ControllerOverlay } from '../ControllerOverlay';
+import { ControllerOverlay } from '../widgets/ControllerOverlay';
 
 describe('ControllerOverlay', () => {
   afterEach(() => {

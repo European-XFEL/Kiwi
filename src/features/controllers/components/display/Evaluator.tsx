@@ -1,9 +1,8 @@
 /** Evaluator — shows device value (expression evaluation deferred). */
 
 import React from 'react';
-import type { ControllerContainerContext } from '../ControllerContainer';
+import type { ControllerContainerContext } from '@/features/scene-view/api';
 import { EvaluatorModel } from '@/karabo/common/api';
-import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { scalarToString } from '@/karabo/data/api';
 import { getControllerFontStyle } from '../../utils/fonts';
 
@@ -38,7 +37,5 @@ const Evaluator: React.FC<{
     </div>
   );
 };
-
-registerRenderer('Evaluator', Evaluator);
 
 export default Evaluator;

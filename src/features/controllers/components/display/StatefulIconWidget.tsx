@@ -1,9 +1,8 @@
 /** StatefulIconWidget — SVG icon recolored by device state. */
 
 import React from 'react';
-import type { ControllerContainerContext } from '../ControllerContainer';
+import type { ControllerContainerContext } from '@/features/scene-view/api';
 import { StatefulIconWidgetModel } from '@/karabo/common/api';
-import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { getStateColor } from '@/lib/Indicators';
 import { statefulIconModelsById } from '../../utils/bootstrapStatefulIcons';
 
@@ -38,7 +37,5 @@ const StatefulIconWidget: React.FC<{
     </div>
   );
 };
-
-registerRenderer('StatefulIconWidget', StatefulIconWidget);
 
 export default StatefulIconWidget;

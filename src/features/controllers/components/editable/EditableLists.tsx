@@ -2,13 +2,12 @@
 
 import React from 'react';
 import { SquarePen } from 'lucide-react';
-import type { ControllerContainerContext } from '../ControllerContainer';
+import type { ControllerContainerContext } from '@/features/scene-view/api';
 import {
   EditableListModel,
   EditableRegexListModel,
   EditableListElementModel,
 } from '@/karabo/common/api';
-import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { Button } from '@/components/api';
 import { isControllerEditable } from '../../utils/controller_semantics';
 import { getControllerFontStyle } from '../../utils/fonts';
@@ -40,7 +39,7 @@ function parseListString(s: string): string[] {
 // EditableList
 // ----------------------------------------------------------------------------
 
-const EditableList: React.FC<{
+export const EditableList: React.FC<{
   model: EditableListModel;
   ctx?: ControllerContainerContext;
 }> = ({ ctx }) => {
@@ -120,7 +119,7 @@ const EditableList: React.FC<{
 // EditableRegexList
 // ----------------------------------------------------------------------------
 
-const EditableRegexList: React.FC<{
+export const EditableRegexList: React.FC<{
   model: EditableRegexListModel;
   ctx?: ControllerContainerContext;
 }> = ({ ctx }) => {
@@ -194,7 +193,7 @@ const EditableRegexList: React.FC<{
 // EditableListElement
 // ----------------------------------------------------------------------------
 
-const EditableListElement: React.FC<{
+export const EditableListElement: React.FC<{
   model: EditableListElementModel;
   ctx?: ControllerContainerContext;
 }> = ({ ctx }) => {
@@ -236,7 +235,3 @@ const EditableListElement: React.FC<{
     />
   );
 };
-
-registerRenderer('EditableList', EditableList);
-registerRenderer('EditableRegexList', EditableRegexList);
-registerRenderer('EditableListElement', EditableListElement);

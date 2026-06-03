@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { PropertyProxies } from '../utils/controller_proxies';
+import type { PropertyProxies } from '@/features/controllers/api';
 import { ProxyStatus } from '@/lib/binding/api';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/api';
 import { XIcon } from 'lucide-react';

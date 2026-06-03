@@ -8,19 +8,14 @@ const mockUseProxies = jest.fn();
 const mockUseController = jest.fn();
 const mockOverlaySpy = jest.fn();
 
-jest.mock('../../hooks/useContainer', () => ({
+jest.mock('@/features/controllers/api', () => ({
+  getModelKeys: jest.fn(() => ''),
   useContainer: () => mockUseContainer(),
-}));
-
-jest.mock('../../hooks/useProxies', () => ({
   useProxies: (keys: string[]) => mockUseProxies(keys),
-}));
-
-jest.mock('../../hooks/useController', () => ({
   useController: (proxies: unknown[]) => mockUseController(proxies),
 }));
 
-jest.mock('../ControllerOverlay', () => {
+jest.mock('@/features/scene-view/components/widgets/ControllerOverlay', () => {
   const ReactActual = jest.requireActual<typeof React>('react');
 
   return {
@@ -35,7 +30,7 @@ jest.mock('../ControllerOverlay', () => {
   };
 });
 
-import { ControllerContainer } from '../ControllerContainer';
+import { ControllerContainer } from '../widgets/ControllerContainer';
 
 describe('ControllerContainer', () => {
   beforeEach(() => {

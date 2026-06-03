@@ -1,9 +1,8 @@
 /** TickSlider — range slider with optional value label. */
 
 import React from 'react';
-import type { ControllerContainerContext } from '../ControllerContainer';
+import type { ControllerContainerContext } from '@/features/scene-view/api';
 import { TickSliderModel } from '@/karabo/common/api';
-import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { isControllerEditable } from '../../utils/controller_semantics';
 import { getControllerFontStyle } from '../../utils/fonts';
 
@@ -59,7 +58,5 @@ const TickSlider: React.FC<{
     </div>
   );
 };
-
-registerRenderer('TickSlider', TickSlider);
 
 export default TickSlider;

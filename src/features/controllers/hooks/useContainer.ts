@@ -1,16 +1,11 @@
 /**
  * useContainer — shell state for ControllerContainer.
  *
- * Returns pointer-events and contents wrapper style driven by the scene
- * interaction mode. When the mode is wired to context this hook will call
- * useContext internally — making it a hook from day one keeps that change local.
+ * Returns pointer-events and contents wrapper style for the current
+ * view-only scene runtime.
  */
 
 import type React from 'react';
-import {
-  containerPointerEvents,
-  contentsWrapperStyle,
-} from '../../scene-view/utils/mode';
 
 // ContainerState
 // ---
@@ -25,7 +20,10 @@ export interface ContainerState {
 
 export function useContainer(): ContainerState {
   return {
-    containerStyle: { pointerEvents: containerPointerEvents() },
-    contentsStyle: contentsWrapperStyle(),
+    containerStyle: { pointerEvents: 'none' },
+    contentsStyle: {
+      display: 'contents',
+      pointerEvents: 'auto',
+    },
   };
 }

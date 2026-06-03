@@ -1,9 +1,8 @@
 /** DisplayList — displays a list/scalar value as a string. Same layout as DisplayLabel. */
 
 import React from 'react';
-import type { ControllerContainerContext } from '../ControllerContainer';
+import type { ControllerContainerContext } from '@/features/scene-view/api';
 import { DisplayListModel } from '@/karabo/common/api';
-import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { scalarToString } from '@/karabo/data/api';
 import { getControllerFontStyle } from '../../utils/fonts';
 
@@ -39,7 +38,5 @@ const DisplayList: React.FC<{
     </div>
   );
 };
-
-registerRenderer('DisplayList', DisplayList);
 
 export default DisplayList;

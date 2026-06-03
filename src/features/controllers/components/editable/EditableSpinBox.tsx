@@ -1,9 +1,8 @@
 /** EditableSpinBox — integer spin box, syncs from device. */
 
 import React from 'react';
-import type { ControllerContainerContext } from '../ControllerContainer';
+import type { ControllerContainerContext } from '@/features/scene-view/api';
 import { EditableSpinBoxModel, FONT_FAMILY_DEFAULT } from '@/karabo/common/api';
-import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { isControllerEditable } from '../../utils/controller_semantics';
 
 // EditableSpinBox
@@ -62,7 +61,5 @@ const EditableSpinBox: React.FC<{
     </div>
   );
 };
-
-registerRenderer('EditableSpinBox', EditableSpinBox);
 
 export default EditableSpinBox;
