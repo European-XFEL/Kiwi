@@ -6,17 +6,23 @@ import {
   FixedLayoutModel,
   GridLayoutModel,
 } from '@/karabo/common/api';
+import DisplayLabel from '@/features/controllers/components/display/DisplayLabel';
 import { renderLayerContent } from '../../../KaraboSceneWidget';
+import { registerRenderer } from '../../../renderRegistry';
 import '../BoxLayout';
 import '../FixedLayout';
 import '../GridLayout';
-import '@/features/controllers/components/display/DisplayLabel';
+
+registerRenderer('DisplayLabel', DisplayLabel);
 
 const mockControllerContainer = jest.fn<null, [unknown]>(() => null);
 
-jest.mock('@/features/controllers/api', () => ({
-  ControllerContainer: (props: unknown) => mockControllerContainer(props),
-}));
+jest.mock(
+  '@/features/scene-view/components/widgets/ControllerContainer',
+  () => ({
+    ControllerContainer: (props: unknown) => mockControllerContainer(props),
+  })
+);
 
 describe('layout render layer propagation', () => {
   beforeEach(() => {

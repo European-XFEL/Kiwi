@@ -7,9 +7,8 @@
  */
 
 import React from 'react';
-import type { ControllerContainerContext } from '../ControllerContainer';
+import type { ControllerContainerContext } from '@/features/scene-view/api';
 import { DisplayCommandModel } from '@/karabo/common/api';
-import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { useGlobalStore } from '@/store/api';
 import { AccessLevel } from '@/karabo/data/api';
 import { ProxyStatus } from '@/lib/binding/api';
@@ -83,7 +82,5 @@ const DisplayCommand: React.FC<{
     </CommandButton>
   );
 };
-
-registerRenderer('DisplayCommand', DisplayCommand);
 
 export default DisplayCommand;

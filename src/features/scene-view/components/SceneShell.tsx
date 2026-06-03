@@ -1,5 +1,5 @@
 import React from 'react';
-import { FitModeToolbar } from '@/features/scene-view/components/FitModeToolbar';
+import { FitModeToolbar } from './FitModeToolbar';
 
 interface SceneShellProps {
   className?: string;

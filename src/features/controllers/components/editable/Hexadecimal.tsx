@@ -1,9 +1,8 @@
 /** Hexadecimal — integer input displayed and entered in hexadecimal. */
 
 import React from 'react';
-import type { ControllerContainerContext } from '../ControllerContainer';
+import type { ControllerContainerContext } from '@/features/scene-view/api';
 import { HexadecimalModel } from '@/karabo/common/api';
-import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { isControllerEditable } from '../../utils/controller_semantics';
 import { getControllerFontStyle } from '../../utils/fonts';
 
@@ -69,7 +68,5 @@ const Hexadecimal: React.FC<{
     </div>
   );
 };
-
-registerRenderer('Hexadecimal', Hexadecimal);
 
 export default Hexadecimal;

@@ -1,9 +1,8 @@
 /** EditableRegex — text input. */
 
 import React from 'react';
-import type { ControllerContainerContext } from '../ControllerContainer';
+import type { ControllerContainerContext } from '@/features/scene-view/api';
 import { EditableRegexModel } from '@/karabo/common/api';
-import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { isControllerEditable } from '../../utils/controller_semantics';
 import { getControllerFontStyle } from '../../utils/fonts';
 
@@ -52,7 +51,5 @@ const EditableRegex: React.FC<{
     </div>
   );
 };
-
-registerRenderer('EditableRegex', EditableRegex);
 
 export default EditableRegex;

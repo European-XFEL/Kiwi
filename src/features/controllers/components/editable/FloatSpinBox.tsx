@@ -1,9 +1,8 @@
 /** FloatSpinBox — float spin box with configurable step and decimals. */
 
 import React from 'react';
-import type { ControllerContainerContext } from '../ControllerContainer';
+import type { ControllerContainerContext } from '@/features/scene-view/api';
 import { FloatSpinBoxModel, FONT_FAMILY_DEFAULT } from '@/karabo/common/api';
-import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { isControllerEditable } from '../../utils/controller_semantics';
 
 // FloatSpinBox
@@ -68,7 +67,5 @@ const FloatSpinBox: React.FC<{
     </div>
   );
 };
-
-registerRenderer('FloatSpinBox', FloatSpinBox);
 
 export default FloatSpinBox;

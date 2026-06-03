@@ -5,11 +5,13 @@
  * Internal controller files may still use direct relative imports.
  */
 
-export { ControllerContainer } from './components/ControllerContainer';
-export type { ControllerContainerContext } from './components/ControllerContainer';
-
 export { useController } from './hooks/useController';
+export type { ControllerContainerContext } from './hooks/useController';
 export { useProxies } from './hooks/useProxies';
+export { useContainer } from './hooks/useContainer';
+export { useDisplayTrendGraph } from './hooks/useDisplayTrendGraph';
+export { useDisplayVectorGraph } from './hooks/useDisplayVectorGraph';
+export { bootstrapControllerRenderers } from './controllerRenderers';
 
 export {
   bootstrapStatefulIcons,

@@ -17,34 +17,60 @@ jest.mock('../../hooks/useSceneScale');
 jest.mock('@/store/globalAppStateStore');
 jest.mock('@/store/loadedSceneStore');
 
-jest.mock('@/features/controllers/api', () => {
-  const ReactActual = jest.requireActual<typeof React>('react');
-  const actualContainer = jest.requireActual<
-    typeof import('@/features/controllers/components/ControllerContainer')
-  >('@/features/controllers/components/ControllerContainer');
+jest.mock('@/features/controllers/api', () => ({
+  bootstrapControllerRenderers: jest.fn(),
+  bootstrapStatefulIcons: jest.fn(),
+  statefulIconModelsById: {},
+  getModelKeys: jest.requireActual<
+    typeof import('@/features/controllers/utils/controller_semantics')
+  >('@/features/controllers/utils/controller_semantics').getModelKeys,
+  getQFontTextStyle: jest.fn(() => ({})),
+  useContainer: jest.requireActual<
+    typeof import('@/features/controllers/hooks/useContainer')
+  >('@/features/controllers/hooks/useContainer').useContainer,
+  useController: jest.requireActual<
+    typeof import('@/features/controllers/hooks/useController')
+  >('@/features/controllers/hooks/useController').useController,
+  useProxies: jest.requireActual<
+    typeof import('@/features/controllers/hooks/useProxies')
+  >('@/features/controllers/hooks/useProxies').useProxies,
+}));
 
-  return {
-    ControllerContainer: (
-      props: React.ComponentProps<typeof actualContainer.ControllerContainer>
-    ) =>
-      ReactActual.createElement(
-        'div',
-        { 'data-testid': 'controller-container' },
-        ReactActual.createElement(actualContainer.ControllerContainer, props)
-      ),
-    getQFontTextStyle: jest.fn(() => ({})),
-    statefulIconModelsById: {},
-    bootstrapStatefulIcons: jest.fn(),
-  };
-});
+jest.mock(
+  '@/features/scene-view/components/widgets/ControllerContainer',
+  () => {
+    const ReactActual = jest.requireActual<typeof React>('react');
+    const actualContainer = jest.requireActual<
+      typeof import('@/features/scene-view/components/widgets/ControllerContainer')
+    >('@/features/scene-view/components/widgets/ControllerContainer');
+
+    return {
+      ControllerContainer: (
+        props: React.ComponentProps<typeof actualContainer.ControllerContainer>
+      ) =>
+        ReactActual.createElement(
+          'div',
+          { 'data-testid': 'controller-container' },
+          ReactActual.createElement(actualContainer.ControllerContainer, props)
+        ),
+    };
+  }
+);
 
 // Register only the renderers needed for these tests to avoid importing the
 // full renderer bootstrap, which includes stateful icon setup via import.meta.
 jest.mock('../../renderers', () => {
   jest.requireActual('@/features/scene-view/components/layouts/BoxLayout');
-  jest.requireActual('@/features/scene-view/components/static/Label');
+  jest.requireActual('@/features/scene-view/components/widgets/Label');
   jest.requireActual('@/features/scene-view/components/shapes/Rectangle');
-  jest.requireActual('@/features/controllers/components/display/DisplayLabel');
+  const { registerRenderer } = jest.requireActual<
+    typeof import('@/features/scene-view/renderRegistry')
+  >('@/features/scene-view/renderRegistry');
+  const DisplayLabel = jest.requireActual<
+    typeof import('@/features/controllers/components/display/DisplayLabel')
+  >('@/features/controllers/components/display/DisplayLabel').default;
+
+  registerRenderer('DisplayLabel', DisplayLabel);
   return {};
 });
 

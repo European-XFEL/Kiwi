@@ -1,12 +1,11 @@
 /** EditableComboBox and EditableChoiceElement — dropdown select from allowed values. */
 
 import React from 'react';
-import type { ControllerContainerContext } from '../ControllerContainer';
+import type { ControllerContainerContext } from '@/features/scene-view/api';
 import {
   EditableComboBoxModel,
   FONT_FAMILY_DEFAULT,
 } from '@/karabo/common/api';
-import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { isControllerEditable } from '../../utils/controller_semantics';
 
 // ComboBox
@@ -74,4 +73,4 @@ const EditableComboBox: React.FC<{
   return <ComboBox value={value} options={options} enabled={enabled} />;
 };
 
-registerRenderer('EditableComboBox', EditableComboBox);
+export default EditableComboBox;

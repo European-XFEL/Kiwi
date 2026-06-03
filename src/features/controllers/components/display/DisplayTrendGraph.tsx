@@ -3,12 +3,11 @@
 import React from 'react';
 import Plot from 'react-plotly.js';
 import type { Data, Layout } from 'plotly.js';
-import type { ControllerContainerContext } from '../ControllerContainer';
+import type { ControllerContainerContext } from '@/features/scene-view/api';
 import { ProxyStatus } from '@/lib/binding/api';
 import { DisplayTrendGraphModel } from '@/karabo/common/api';
-import { registerRenderer } from '@/features/scene-view/renderRegistry';
-import type { PropertyProxies } from '@/features/controllers/hooks/useController';
-import { useDisplayTrendGraph } from '@/features/controllers/hooks/useDisplayTrendGraph';
+import type { PropertyProxies } from '../../hooks/useController';
+import { useDisplayTrendGraph } from '../../hooks/useDisplayTrendGraph';
 import { TraceFactory } from '../../utils/traceFactory';
 
 // DisplayTrendGraph
@@ -204,7 +203,5 @@ const DisplayTrendGraph: React.FC<{
 });
 
 DisplayTrendGraph.displayName = 'DisplayTrendGraph';
-
-registerRenderer('DisplayTrendGraph', DisplayTrendGraph);
 
 export default DisplayTrendGraph;

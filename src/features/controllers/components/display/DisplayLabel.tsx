@@ -1,9 +1,8 @@
 /** DisplayLabel — display controller. Config from model, device data from ctx. */
 
 import React from 'react';
-import type { ControllerContainerContext } from '../ControllerContainer';
+import type { ControllerContainerContext } from '@/features/scene-view/api';
 import { DisplayLabelModel } from '@/karabo/common/api';
-import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { scalarToString } from '@/karabo/data/api';
 import { getControllerFontStyle } from '../../utils/fonts';
 
@@ -48,7 +47,5 @@ const DisplayLabel: React.FC<{
     </div>
   );
 };
-
-registerRenderer('DisplayLabel', DisplayLabel);
 
 export default DisplayLabel;

@@ -1,9 +1,8 @@
 /** DisplayStateColor — colour box reflecting device state, optional state string. */
 
 import React from 'react';
-import type { ControllerContainerContext } from '../ControllerContainer';
+import type { ControllerContainerContext } from '@/features/scene-view/api';
 import { DisplayStateColorModel } from '@/karabo/common/api';
-import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { getStateColor } from '@/lib/Indicators';
 import { getControllerFontStyle } from '../../utils/fonts';
 
@@ -33,7 +32,5 @@ const DisplayStateColor: React.FC<{
     </div>
   );
 };
-
-registerRenderer('DisplayStateColor', DisplayStateColor);
 
 export default DisplayStateColor;

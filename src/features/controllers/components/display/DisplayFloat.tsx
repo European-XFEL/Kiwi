@@ -1,9 +1,8 @@
 /** DisplayFloat — displays a float value with fmt/decimals formatting. */
 
 import React from 'react';
-import type { ControllerContainerContext } from '../ControllerContainer';
+import type { ControllerContainerContext } from '@/features/scene-view/api';
 import { DisplayFloatModel } from '@/karabo/common/api';
-import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { getControllerFontStyle } from '../../utils/fonts';
 
 // DisplayFloat
@@ -41,7 +40,5 @@ const DisplayFloat: React.FC<{
     </div>
   );
 };
-
-registerRenderer('DisplayFloat', DisplayFloat);
 
 export default DisplayFloat;

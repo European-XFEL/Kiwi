@@ -7,22 +7,42 @@ import {
   GridLayoutModel,
 } from '@/karabo/common/api';
 import { DeviceProxy } from '@/lib/binding/api';
+import DisplayLabel from '@/features/controllers/components/display/DisplayLabel';
 import { SingletonContext } from '@/testing';
 
 jest.mock('@/features/controllers/api', () => ({
-  ControllerContainer: jest.requireActual<
-    typeof import('@/features/controllers/components/ControllerContainer')
-  >('@/features/controllers/components/ControllerContainer')
-    .ControllerContainer,
-  statefulIconModelsById: {},
-  bootstrapStatefulIcons: jest.fn(),
+  bootstrapControllerRenderers: jest.fn(),
+  getModelKeys: jest.requireActual<
+    typeof import('@/features/controllers/utils/controller_semantics')
+  >('@/features/controllers/utils/controller_semantics').getModelKeys,
+  useContainer: jest.requireActual<
+    typeof import('@/features/controllers/hooks/useContainer')
+  >('@/features/controllers/hooks/useContainer').useContainer,
+  useController: jest.requireActual<
+    typeof import('@/features/controllers/hooks/useController')
+  >('@/features/controllers/hooks/useController').useController,
+  useProxies: jest.requireActual<
+    typeof import('@/features/controllers/hooks/useProxies')
+  >('@/features/controllers/hooks/useProxies').useProxies,
 }));
 
+jest.mock(
+  '@/features/scene-view/components/widgets/ControllerContainer',
+  () => ({
+    ControllerContainer: jest.requireActual<
+      typeof import('@/features/scene-view/components/widgets/ControllerContainer')
+    >('@/features/scene-view/components/widgets/ControllerContainer')
+      .ControllerContainer,
+  })
+);
+
 import { renderLayerContent } from '../../../KaraboSceneWidget';
+import { registerRenderer } from '../../../renderRegistry';
 import '../BoxLayout';
 import '../FixedLayout';
 import '../GridLayout';
-import '@/features/controllers/components/display/DisplayLabel';
+
+registerRenderer('DisplayLabel', DisplayLabel);
 
 const mockStopMonitoring = jest.fn();
 const mockStartMonitoring = jest.fn<

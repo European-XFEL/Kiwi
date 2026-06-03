@@ -1,9 +1,8 @@
 /** IntLineEdit — integer input, syncs from the primary proxy, normalizes local input on blur. */
 
 import React from 'react';
-import type { ControllerContainerContext } from '../ControllerContainer';
+import type { ControllerContainerContext } from '@/features/scene-view/api';
 import { IntLineEditModel } from '@/karabo/common/api';
-import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { isControllerEditable } from '../../utils/controller_semantics';
 import { getControllerFontStyle } from '../../utils/fonts';
 
@@ -82,7 +81,5 @@ const IntLineEdit: React.FC<{
     </div>
   );
 };
-
-registerRenderer('IntLineEdit', IntLineEdit);
 
 export default IntLineEdit;

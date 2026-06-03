@@ -1,16 +1,15 @@
 /** LineEdit — DisplayLineEdit (read-only) and EditableLineEdit (interactive). */
 
 import React from 'react';
-import type { ControllerContainerContext } from '../ControllerContainer';
+import type { ControllerContainerContext } from '@/features/scene-view/api';
 import { LineEditModel } from '@/karabo/common/api';
-import { registerRenderer } from '@/features/scene-view/renderRegistry';
 import { isControllerEditable } from '../../utils/controller_semantics';
 import { getControllerFontStyle } from '../../utils/fonts';
 
 // LineEdit
 // ----------------------------------------------------------------------------
 
-const DisplayLineEdit: React.FC<{
+export const DisplayLineEdit: React.FC<{
   model: LineEditModel;
   ctx?: ControllerContainerContext;
 }> = ({ ctx }) => {
@@ -31,7 +30,7 @@ const DisplayLineEdit: React.FC<{
   );
 };
 
-const EditableLineEdit: React.FC<{
+export const EditableLineEdit: React.FC<{
   model: LineEditModel;
   ctx?: ControllerContainerContext;
 }> = ({ ctx }) => {
@@ -73,6 +72,3 @@ const EditableLineEdit: React.FC<{
     </div>
   );
 };
-
-registerRenderer('DisplayLineEdit', DisplayLineEdit);
-registerRenderer('EditableLineEdit', EditableLineEdit);
