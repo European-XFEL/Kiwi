@@ -4,7 +4,24 @@ import { useAppSettingsStore } from '@/store/api';
 import { WebsocketBuilder } from 'websocket-ts';
 import { GuiServerInfo } from './auth.types';
 
-export function extractGuiServerInfo(hash: Hash) {
+export function extractGuiServerInfo(hash: Hash):
+  | {
+      deviceId: string;
+      hostname: string;
+      hostport: number;
+      authRequired: boolean;
+      authServer: string;
+      readOnly: boolean;
+      topic: string;
+      version: string;
+    }
+  | undefined {
+  if (hash.getValue('type') !== 'serverInformation') {
+    console.warn(
+      `extractGuiServerInfo called for hash of type "${hash.getValue('type')}": decoding won't proceed`
+    );
+    return undefined;
+  }
   const authServer = hash.getValue('authServer') as string;
 
   return {
@@ -58,7 +75,12 @@ export function probeServer(
             new Uint8Array(binHash, 4, binHash.byteLength - 4)
           );
           const guiServerInfo = extractGuiServerInfo(hash);
-          onSuccess(guiServerInfo);
+          if (guiServerInfo) {
+            // The message received via the websocket was not of the GuiServerInfo
+            // That is possible, for example, if the GUI Server has a banner configured.
+            // The banner is sent right away, not only after the login.
+            onSuccess(guiServerInfo);
+          }
           ws.close();
         });
       }
