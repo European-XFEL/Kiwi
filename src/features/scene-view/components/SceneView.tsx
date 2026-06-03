@@ -1,16 +1,7 @@
-import { KaraboSceneWidget } from '../KaraboSceneWidget';
-import { useSceneLoader } from '../hooks/useSceneLoader';
-import {
-  SceneFatalError,
-  SceneLoadError,
-  SceneLoading,
-} from './SceneStatusViews';
-import { SceneShell } from './SceneShell';
-import { SceneStage } from './SceneStage';
-import { SceneViewport } from './SceneViewport';
-import { SceneWindow } from './SceneWindow';
-import { useGlobalStore, useLoadedSceneStore } from '@/store/api';
+import { SceneModel } from '@/karabo/common/api';
+import { useLoadedSceneStore } from '@/store/api';
 import React from 'react';
+import { KaraboSceneWidget } from '../KaraboSceneWidget';
 import { useSceneScale } from '../hooks/useSceneScale';
 import {
   getOverflow,
@@ -20,19 +11,25 @@ import {
   isScrollableMode,
 } from '../utils/sceneLayout';
 import { collectSceneLayers } from '../utils/visitor';
+import { SceneShell } from './SceneShell';
+import { SceneStage } from './SceneStage';
+import { SceneViewport } from './SceneViewport';
+import { SceneWindow } from './SceneWindow';
 
 // Bootstrap — triggers all registerRenderer() calls
 import '../renderers';
 
-const SceneView: React.FC = () => {
-  const { lastGlobalError } = useGlobalStore();
+export interface SceneViewProps {
+  sceneModel: SceneModel;
+}
+
+const SceneView: React.FC<SceneViewProps> = ({ sceneModel }) => {
   const { fitMode } = useLoadedSceneStore();
-  const { scene, error } = useSceneLoader();
 
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const sceneDimensions = React.useMemo(
-    () => (scene ? { width: scene.width, height: scene.height } : null),
-    [scene?.width, scene?.height]
+    () => ({ width: sceneModel.width, height: sceneModel.height }),
+    [sceneModel.height, sceneModel.width]
   );
   const scale = useSceneScale(containerRef, sceneDimensions, fitMode);
 
@@ -66,9 +63,7 @@ const SceneView: React.FC = () => {
   // Build root scene layers through the shared collector so the stage keeps
   // the global shape-then-widget ordering while nested traversal stays shared.
   const layers = React.useMemo(() => {
-    if (!scene) return null;
-
-    const entriesByLayer = collectSceneLayers(scene.children);
+    const entriesByLayer = collectSceneLayers(sceneModel.children);
 
     const orderedEntries = [...entriesByLayer.shape, ...entriesByLayer.widget];
 
@@ -83,44 +78,43 @@ const SceneView: React.FC = () => {
         ))}
       </>
     );
-  }, [scene]);
+  }, [sceneModel]);
 
   // Scale the authored stage inside a wrapper that owns the scaled layout footprint.
   // This keeps centering based on what the user actually sees instead of the
   // unscaled authored scene box, because CSS transforms do not affect layout size.
   const stage = React.useMemo(
-    () =>
-      scene ? (
-        <div
-          key={scene.uuid}
-          style={{
-            position: 'relative',
-            width: scaledSize.width,
-            height: scaledSize.height,
-            flex: '0 0 auto',
-          }}
-        >
-          <div style={{ position: 'absolute', left: 0, top: 0 }}>
-            <SceneStage width={scene.width} height={scene.height} scale={scale}>
-              {layers}
-            </SceneStage>
-          </div>
+    () => (
+      <div
+        key={sceneModel.uuid}
+        style={{
+          position: 'relative',
+          width: scaledSize.width,
+          height: scaledSize.height,
+          flex: '0 0 auto',
+        }}
+      >
+        <div style={{ position: 'absolute', left: 0, top: 0 }}>
+          <SceneStage
+            width={sceneModel.width}
+            height={sceneModel.height}
+            scale={scale}
+          >
+            {layers}
+          </SceneStage>
         </div>
-      ) : null,
+      </div>
+    ),
     [
-      scene?.uuid,
-      scene?.width,
-      scene?.height,
+      sceneModel.uuid,
+      sceneModel.width,
+      sceneModel.height,
       scale,
       scaledSize.width,
       scaledSize.height,
       layers,
     ]
   );
-
-  if (!scene)
-    return error ? <SceneLoadError message={error} /> : <SceneLoading />;
-  if (lastGlobalError) return <SceneFatalError message={lastGlobalError} />;
 
   return (
     <SceneWindow className="w-full h-full flex flex-col">

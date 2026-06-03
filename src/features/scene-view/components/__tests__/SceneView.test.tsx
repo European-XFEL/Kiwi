@@ -57,17 +57,13 @@ jest.mock('../../KaraboSceneWidget', () => {
 // Bootstrap side-effect import
 jest.mock('../../renderers', () => ({}));
 
-jest.mock('../../hooks/useSceneLoader');
 jest.mock('../../hooks/useSceneScale');
 jest.mock('@/store/api');
 
-import { useSceneLoader } from '../../hooks/useSceneLoader';
 import { useSceneScale } from '../../hooks/useSceneScale';
-import { useGlobalStore, useLoadedSceneStore } from '@/store/api';
+import { useLoadedSceneStore } from '@/store/api';
 
-const mockUseSceneLoader = jest.mocked(useSceneLoader);
 const mockUseSceneScale = jest.mocked(useSceneScale);
-const mockUseGlobalStore = jest.mocked(useGlobalStore);
 const mockUseLoadedSceneStore = jest.mocked(useLoadedSceneStore);
 
 function makeShapeChild() {
@@ -105,7 +101,6 @@ describe('SceneView — scene uuid keying', () => {
     jest.clearAllMocks();
     mockRenderedEntries.length = 0;
     mockUseSceneScale.mockReturnValue(1);
-    mockUseGlobalStore.mockReturnValue({ lastGlobalError: null } as any);
     mockUseLoadedSceneStore.mockReturnValue({
       fitMode: 'fit-page',
       loadedSceneRef: undefined,
@@ -113,17 +108,16 @@ describe('SceneView — scene uuid keying', () => {
   });
 
   it('renders root layers as shape pass first, then widget pass, while preserving order within each layer', () => {
-    mockUseSceneLoader.mockReturnValue({
-      scene: makeScene('scene-1', [
-        makeWidgetChild(),
-        makeShapeChild(),
-        makeWidgetChild(),
-        makeShapeChild(),
-      ]),
-      error: '',
-    });
-
-    render(<SceneView />);
+    render(
+      <SceneView
+        sceneModel={makeScene('scene-1', [
+          makeWidgetChild(),
+          makeShapeChild(),
+          makeWidgetChild(),
+          makeShapeChild(),
+        ])}
+      />
+    );
 
     expect(mockRenderedEntries).toEqual([
       { layer: 'shape', kind: 'RectangleModel' },
@@ -134,16 +128,15 @@ describe('SceneView — scene uuid keying', () => {
   });
 
   it('renders layout roots in both passes without interleaving the root layer order', () => {
-    mockUseSceneLoader.mockReturnValue({
-      scene: makeScene('scene-1', [
-        makeWidgetChild(),
-        makeLayoutChild(),
-        makeShapeChild(),
-      ]),
-      error: '',
-    });
-
-    render(<SceneView />);
+    render(
+      <SceneView
+        sceneModel={makeScene('scene-1', [
+          makeWidgetChild(),
+          makeLayoutChild(),
+          makeShapeChild(),
+        ])}
+      />
+    );
 
     expect(mockRenderedEntries).toEqual([
       { layer: 'shape', kind: 'BoxLayoutModel' },
@@ -154,36 +147,27 @@ describe('SceneView — scene uuid keying', () => {
   });
 
   it('unmounts and remounts the widget subtree when the scene uuid changes', () => {
-    mockUseSceneLoader.mockReturnValue({
-      scene: makeScene('scene-1', [makeWidgetChild()]),
-      error: '',
-    });
-
-    const { rerender } = render(<SceneView />);
+    const { rerender } = render(
+      <SceneView sceneModel={makeScene('scene-1', [makeWidgetChild()])} />
+    );
 
     expect(mockWidgetMountSpy).toHaveBeenCalledTimes(1);
     expect(mockWidgetUnmountSpy).toHaveBeenCalledTimes(0);
 
     // Same scene uuid, fresh scene object — no remount expected
-    mockUseSceneLoader.mockReturnValue({
-      scene: makeScene('scene-1', [makeWidgetChild()]),
-      error: '',
-    });
-
     act(() => {
-      rerender(<SceneView />);
+      rerender(
+        <SceneView sceneModel={makeScene('scene-1', [makeWidgetChild()])} />
+      );
     });
 
     expect(mockWidgetUnmountSpy).toHaveBeenCalledTimes(0);
 
     // Different uuid — SceneStage key changes → full unmount + remount
-    mockUseSceneLoader.mockReturnValue({
-      scene: makeScene('scene-2', [makeWidgetChild()]),
-      error: '',
-    });
-
     act(() => {
-      rerender(<SceneView />);
+      rerender(
+        <SceneView sceneModel={makeScene('scene-2', [makeWidgetChild()])} />
+      );
     });
 
     expect(mockWidgetUnmountSpy).toHaveBeenCalledTimes(1);
@@ -191,35 +175,26 @@ describe('SceneView — scene uuid keying', () => {
   });
 
   it('unmounts and remounts the shape subtree when the scene uuid changes', () => {
-    mockUseSceneLoader.mockReturnValue({
-      scene: makeScene('scene-1', [makeShapeChild()]),
-      error: '',
-    });
-
-    const { rerender } = render(<SceneView />);
+    const { rerender } = render(
+      <SceneView sceneModel={makeScene('scene-1', [makeShapeChild()])} />
+    );
 
     expect(mockShapeMountSpy).toHaveBeenCalledTimes(1);
     expect(mockShapeUnmountSpy).toHaveBeenCalledTimes(0);
 
     // Same scene uuid, fresh scene object — no remount expected
-    mockUseSceneLoader.mockReturnValue({
-      scene: makeScene('scene-1', [makeShapeChild()]),
-      error: '',
-    });
-
     act(() => {
-      rerender(<SceneView />);
+      rerender(
+        <SceneView sceneModel={makeScene('scene-1', [makeShapeChild()])} />
+      );
     });
 
     expect(mockShapeUnmountSpy).toHaveBeenCalledTimes(0);
 
-    mockUseSceneLoader.mockReturnValue({
-      scene: makeScene('scene-2', [makeShapeChild()]),
-      error: '',
-    });
-
     act(() => {
-      rerender(<SceneView />);
+      rerender(
+        <SceneView sceneModel={makeScene('scene-2', [makeShapeChild()])} />
+      );
     });
 
     expect(mockShapeUnmountSpy).toHaveBeenCalledTimes(1);
@@ -227,25 +202,26 @@ describe('SceneView — scene uuid keying', () => {
   });
 
   it('unmounts and remounts the whole rendered scene subtree when the scene uuid changes', () => {
-    mockUseSceneLoader.mockReturnValue({
-      scene: makeScene('scene-1', [makeShapeChild(), makeWidgetChild()]),
-      error: '',
-    });
-
-    const { rerender } = render(<SceneView />);
+    const { rerender } = render(
+      <SceneView
+        sceneModel={makeScene('scene-1', [makeShapeChild(), makeWidgetChild()])}
+      />
+    );
 
     expect(mockShapeMountSpy).toHaveBeenCalledTimes(1);
     expect(mockWidgetMountSpy).toHaveBeenCalledTimes(1);
     expect(mockShapeUnmountSpy).toHaveBeenCalledTimes(0);
     expect(mockWidgetUnmountSpy).toHaveBeenCalledTimes(0);
 
-    mockUseSceneLoader.mockReturnValue({
-      scene: makeScene('scene-2', [makeShapeChild(), makeWidgetChild()]),
-      error: '',
-    });
-
     act(() => {
-      rerender(<SceneView />);
+      rerender(
+        <SceneView
+          sceneModel={makeScene('scene-2', [
+            makeShapeChild(),
+            makeWidgetChild(),
+          ])}
+        />
+      );
     });
 
     expect(mockShapeUnmountSpy).toHaveBeenCalledTimes(1);

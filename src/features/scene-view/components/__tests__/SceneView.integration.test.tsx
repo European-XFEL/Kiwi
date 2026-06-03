@@ -12,9 +12,7 @@ import {
 import { DeviceProxy, PropertyProxy } from '@/lib/binding/api';
 import { SingletonContext } from '@/testing';
 
-jest.mock('../../hooks/useSceneLoader');
 jest.mock('../../hooks/useSceneScale');
-jest.mock('@/store/globalAppStateStore');
 jest.mock('@/store/loadedSceneStore');
 
 jest.mock('@/features/controllers/api', () => ({
@@ -75,14 +73,10 @@ jest.mock('../../renderers', () => {
 });
 
 import SceneView from '../SceneView';
-import { useSceneLoader } from '../../hooks/useSceneLoader';
 import { useSceneScale } from '../../hooks/useSceneScale';
-import { useGlobalStore } from '@/store/globalAppStateStore';
 import { useLoadedSceneStore } from '@/store/loadedSceneStore';
 
-const mockUseSceneLoader = jest.mocked(useSceneLoader);
 const mockUseSceneScale = jest.mocked(useSceneScale);
-const mockUseGlobalStore = jest.mocked(useGlobalStore);
 const mockUseLoadedSceneStore = jest.mocked(useLoadedSceneStore);
 
 const makeNestedLayoutScene = (uuid: string) => {
@@ -201,7 +195,6 @@ describe('SceneView integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseSceneScale.mockReturnValue(1);
-    mockUseGlobalStore.mockReturnValue({ lastGlobalError: null } as any);
     mockUseLoadedSceneStore.mockReturnValue({
       fitMode: 'fit-page',
       loadedSceneRef: undefined,
@@ -220,13 +213,10 @@ describe('SceneView integration', () => {
     );
     const disposeSpy = jest.spyOn(PropertyProxy.prototype, 'dispose');
 
-    mockUseSceneLoader.mockReturnValue({
-      scene: makeNestedLayoutScene('scene-1'),
-      error: '',
-    });
-
     await SingletonContext.run({ topology }, async () => {
-      const { rerender, unmount } = render(<SceneView />);
+      const { rerender, unmount } = render(
+        <SceneView sceneModel={makeNestedLayoutScene('scene-1')} />
+      );
 
       await waitFor(() => {
         expect(stopMonitors.get('DEV')).toHaveLength(1);
@@ -235,13 +225,8 @@ describe('SceneView integration', () => {
       expect(stopMonitoringSpy).toHaveBeenCalledTimes(0);
       expect(disposeSpy).toHaveBeenCalledTimes(0);
 
-      mockUseSceneLoader.mockReturnValue({
-        scene: makeNestedLayoutScene('scene-2'),
-        error: '',
-      });
-
       act(() => {
-        rerender(<SceneView />);
+        rerender(<SceneView sceneModel={makeNestedLayoutScene('scene-2')} />);
       });
 
       await waitFor(() => {
@@ -264,13 +249,10 @@ describe('SceneView integration', () => {
   it('renders each mixed root model in its eligible layer without duplicates', async () => {
     const { topology } = makeTopology();
 
-    mockUseSceneLoader.mockReturnValue({
-      scene: makeMixedScene('scene-mixed'),
-      error: '',
-    });
-
     await SingletonContext.run({ topology }, async () => {
-      const { container } = render(<SceneView />);
+      const { container } = render(
+        <SceneView sceneModel={makeMixedScene('scene-mixed')} />
+      );
 
       await waitFor(() => {
         expect(screen.getAllByTestId('controller-container')).toHaveLength(2);
