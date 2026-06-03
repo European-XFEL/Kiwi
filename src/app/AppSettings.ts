@@ -16,7 +16,9 @@ export const initAppSettings = (): AppSettings => {
     if (!url.startsWith('ws') && !url.startsWith('http')) {
       // The URL doesn't specify a protocol and hence is not absolute; derive
       // an absolute URL from the current browser location
-      const wsProtocol = window.location.protocol === 'https' ? 'wss' : 'ws';
+      const wsProtocol = window.location.protocol.startsWith('https')
+        ? 'wss'
+        : 'ws';
       url = `${wsProtocol}://${window.location.host}${url}}`;
     }
     return {
