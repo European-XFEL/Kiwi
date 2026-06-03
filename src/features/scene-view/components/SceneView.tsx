@@ -20,6 +20,7 @@ import {
   getSpacerSize,
   isScrollableMode,
 } from '../utils/sceneLayout';
+import { collectSceneLayers } from '../utils/visitor';
 
 // Bootstrap — triggers all registerRenderer() calls
 import '../renderers';
@@ -63,26 +64,27 @@ const SceneView: React.FC = () => {
     [scaledSize.width, scaledSize.height]
   );
 
-  // Scene layers — rebuild only when scene changes so widget/controller subtree
-  // does not re-render on scale or mode changes.
-  const layers = React.useMemo(
-    () =>
-      scene ? (
-        <>
-          {scene.children.map((child, i) => (
-            <KaraboSceneWidget key={`shape_${i}`} model={child} phase="shape" />
-          ))}
-          {scene.children.map((child, i) => (
-            <KaraboSceneWidget
-              key={`widget_${i}`}
-              model={child}
-              phase="widget"
-            />
-          ))}
-        </>
-      ) : null,
-    [scene]
-  );
+  // Build root scene layers through the shared collector so the stage keeps
+  // the global shape-then-widget ordering while nested traversal stays shared.
+  const layers = React.useMemo(() => {
+    if (!scene) return null;
+
+    const entriesByLayer = collectSceneLayers(scene.children);
+
+    const orderedEntries = [...entriesByLayer.shape, ...entriesByLayer.widget];
+
+    return (
+      <>
+        {orderedEntries.map(({ model, context }) => (
+          <KaraboSceneWidget
+            key={`${context.layer}_${context.layerIndex}`}
+            model={model}
+            layer={context.layer}
+          />
+        ))}
+      </>
+    );
+  }, [scene]);
 
   // Scale the authored stage inside a wrapper that owns the scaled layout footprint.
   // This keeps centering based on what the user actually sees instead of the

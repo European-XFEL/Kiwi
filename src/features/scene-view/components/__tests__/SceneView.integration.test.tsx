@@ -1,9 +1,13 @@
-import { act, render, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
 import {
   BoxLayoutModel,
   Direction,
   DisplayLabelModel,
+  LabelModel,
+  RectangleModel,
   SceneModel,
+  UnknownWidgetDataModel,
 } from '@/karabo/common/api';
 import { DeviceProxy, PropertyProxy } from '@/lib/binding/api';
 import { SingletonContext } from '@/testing';
@@ -13,19 +17,33 @@ jest.mock('../../hooks/useSceneScale');
 jest.mock('@/store/globalAppStateStore');
 jest.mock('@/store/loadedSceneStore');
 
-jest.mock('@/features/controllers/api', () => ({
-  ControllerContainer: jest.requireActual<
+jest.mock('@/features/controllers/api', () => {
+  const ReactActual = jest.requireActual<typeof React>('react');
+  const actualContainer = jest.requireActual<
     typeof import('@/features/controllers/components/ControllerContainer')
-  >('@/features/controllers/components/ControllerContainer')
-    .ControllerContainer,
-  statefulIconModelsById: {},
-  bootstrapStatefulIcons: jest.fn(),
-}));
+  >('@/features/controllers/components/ControllerContainer');
 
-// Register only the renderers needed for this test to avoid importing the
+  return {
+    ControllerContainer: (
+      props: React.ComponentProps<typeof actualContainer.ControllerContainer>
+    ) =>
+      ReactActual.createElement(
+        'div',
+        { 'data-testid': 'controller-container' },
+        ReactActual.createElement(actualContainer.ControllerContainer, props)
+      ),
+    getQFontTextStyle: jest.fn(() => ({})),
+    statefulIconModelsById: {},
+    bootstrapStatefulIcons: jest.fn(),
+  };
+});
+
+// Register only the renderers needed for these tests to avoid importing the
 // full renderer bootstrap, which includes stateful icon setup via import.meta.
 jest.mock('../../renderers', () => {
   jest.requireActual('@/features/scene-view/components/layouts/BoxLayout');
+  jest.requireActual('@/features/scene-view/components/static/Label');
+  jest.requireActual('@/features/scene-view/components/shapes/Rectangle');
   jest.requireActual('@/features/controllers/components/display/DisplayLabel');
   return {};
 });
@@ -67,6 +85,62 @@ const makeNestedLayoutScene = (uuid: string) => {
   innerLayout.children = [child];
   outerLayout.children = [innerLayout];
   scene.children = [outerLayout];
+
+  return scene;
+};
+
+const makeMixedScene = (uuid: string) => {
+  const scene = new SceneModel();
+  scene.uuid = uuid;
+  scene.width = 800;
+  scene.height = 600;
+
+  const shape = new RectangleModel();
+  shape.x = 10;
+  shape.y = 20;
+  shape.width = 30;
+  shape.height = 20;
+
+  const staticLabel = new LabelModel();
+  staticLabel.x = 50;
+  staticLabel.y = 20;
+  staticLabel.width = 120;
+  staticLabel.height = 30;
+  staticLabel.text = 'Static root';
+
+  const controller = new DisplayLabelModel();
+  controller.x = 190;
+  controller.y = 20;
+  controller.width = 120;
+  controller.height = 30;
+  controller.keys = ['DEV.speed'];
+
+  const unknownWidget = new UnknownWidgetDataModel();
+  unknownWidget.x = 330;
+  unknownWidget.y = 20;
+  unknownWidget.width = 80;
+  unknownWidget.height = 30;
+  unknownWidget.klass = 'MissingWidget';
+
+  const layout = new BoxLayoutModel();
+  layout.x = 10;
+  layout.y = 80;
+  layout.width = 260;
+  layout.height = 40;
+  layout.direction = Direction.LeftToRight;
+
+  const nestedStatic = new LabelModel();
+  nestedStatic.width = 120;
+  nestedStatic.height = 30;
+  nestedStatic.text = 'Nested static';
+
+  const nestedController = new DisplayLabelModel();
+  nestedController.width = 120;
+  nestedController.height = 30;
+  nestedController.keys = ['DEV.temperature'];
+
+  layout.children = [nestedStatic, nestedController];
+  scene.children = [shape, staticLabel, controller, unknownWidget, layout];
 
   return scene;
 };
@@ -155,6 +229,30 @@ describe('SceneView integration', () => {
       expect(stopMonitors.get('DEV')?.[1]).toHaveBeenCalledTimes(1);
       expect(stopMonitoringSpy).toHaveBeenCalledTimes(2);
       expect(disposeSpy).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('renders each mixed root model in its eligible layer without duplicates', async () => {
+    const { topology } = makeTopology();
+
+    mockUseSceneLoader.mockReturnValue({
+      scene: makeMixedScene('scene-mixed'),
+      error: '',
+    });
+
+    await SingletonContext.run({ topology }, async () => {
+      const { container } = render(<SceneView />);
+
+      await waitFor(() => {
+        expect(screen.getAllByTestId('controller-container')).toHaveLength(2);
+      });
+
+      expect(screen.getAllByText('Static root')).toHaveLength(1);
+      expect(screen.getAllByText('Nested static')).toHaveLength(1);
+      expect(screen.getAllByText('Unknown widget: MissingWidget')).toHaveLength(
+        1
+      );
+      expect(container.querySelectorAll('rect')).toHaveLength(1);
     });
   });
 });

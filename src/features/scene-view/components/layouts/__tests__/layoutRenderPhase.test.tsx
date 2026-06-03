@@ -6,7 +6,7 @@ import {
   FixedLayoutModel,
   GridLayoutModel,
 } from '@/karabo/common/api';
-import { renderContent } from '../../../KaraboSceneWidget';
+import { renderLayerContent } from '../../../KaraboSceneWidget';
 import '../BoxLayout';
 import '../FixedLayout';
 import '../GridLayout';
@@ -18,7 +18,7 @@ jest.mock('@/features/controllers/api', () => ({
   ControllerContainer: (props: unknown) => mockControllerContainer(props),
 }));
 
-describe('layout render phase propagation', () => {
+describe('layout render layer propagation', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -56,7 +56,7 @@ describe('layout render phase propagation', () => {
   ])(
     'does not mount nested controller widgets in the shape pass for %s',
     (_, makeLayout) => {
-      render(<>{renderContent(makeLayout(), 'shape')}</>);
+      render(<>{renderLayerContent(makeLayout(), 'shape')}</>);
 
       expect(mockControllerContainer).not.toHaveBeenCalled();
     }
@@ -69,7 +69,7 @@ describe('layout render phase propagation', () => {
   ])(
     'mounts nested controller widgets once in the widget pass for %s',
     (_, makeLayout) => {
-      render(<>{renderContent(makeLayout(), 'widget')}</>);
+      render(<>{renderLayerContent(makeLayout(), 'widget')}</>);
 
       expect(mockControllerContainer).toHaveBeenCalledTimes(1);
     }

@@ -18,7 +18,7 @@ jest.mock('@/features/controllers/api', () => ({
   bootstrapStatefulIcons: jest.fn(),
 }));
 
-import { renderContent } from '../../../KaraboSceneWidget';
+import { renderLayerContent } from '../../../KaraboSceneWidget';
 import '../BoxLayout';
 import '../FixedLayout';
 import '../GridLayout';
@@ -98,7 +98,7 @@ const makeNestedLayout = (
   return outerLayout;
 };
 
-describe('layout monitoring phase propagation', () => {
+describe('layout monitoring layer propagation', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockStartMonitoring.mockImplementation(() => mockStopMonitoring);
@@ -114,7 +114,9 @@ describe('layout monitoring phase propagation', () => {
       const { topology } = makeTopology();
 
       await SingletonContext.run({ topology }, async () => {
-        const { unmount } = render(<>{renderContent(makeLayout(), 'shape')}</>);
+        const { unmount } = render(
+          <>{renderLayerContent(makeLayout(), 'shape')}</>
+        );
 
         expect(mockStartMonitoring).not.toHaveBeenCalled();
 
@@ -136,7 +138,7 @@ describe('layout monitoring phase propagation', () => {
 
       await SingletonContext.run({ topology }, async () => {
         const { unmount } = render(
-          <>{renderContent(makeLayout(), 'widget')}</>
+          <>{renderLayerContent(makeLayout(), 'widget')}</>
         );
 
         await waitFor(() => {
@@ -163,7 +165,7 @@ describe('layout monitoring phase propagation', () => {
 
       await SingletonContext.run({ topology }, async () => {
         const { unmount } = render(
-          <>{renderContent(makeNestedLayout(makeOuterLayout), 'shape')}</>
+          <>{renderLayerContent(makeNestedLayout(makeOuterLayout), 'shape')}</>
         );
 
         expect(mockStartMonitoring).not.toHaveBeenCalled();
@@ -186,7 +188,7 @@ describe('layout monitoring phase propagation', () => {
 
       await SingletonContext.run({ topology }, async () => {
         const { unmount } = render(
-          <>{renderContent(makeNestedLayout(makeOuterLayout), 'widget')}</>
+          <>{renderLayerContent(makeNestedLayout(makeOuterLayout), 'widget')}</>
         );
 
         await waitFor(() => {
