@@ -19,7 +19,7 @@ export const initAppSettings = (): AppSettings => {
       const wsProtocol = window.location.protocol.startsWith('https')
         ? 'wss'
         : 'ws';
-      url = `${wsProtocol}://${window.location.host}${url}}`;
+      url = `${wsProtocol}://${window.location.host}${url}`;
     }
     return {
       wsProxyURL: url,
