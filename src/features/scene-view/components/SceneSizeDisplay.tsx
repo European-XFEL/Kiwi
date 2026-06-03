@@ -5,12 +5,14 @@ export type SceneSizeDisplayProps = {
 };
 
 export default function SceneSizeDisplay({ className }: SceneSizeDisplayProps) {
-  const scene = useLoadedSceneStore((state) => state.scene);
+  const loadedSceneRef = useLoadedSceneStore((state) => state.loadedSceneRef);
 
-  if (!scene || !scene.width || !scene.height) return null;
+  if (!loadedSceneRef || !loadedSceneRef.width || !loadedSceneRef.height) {
+    return null;
+  }
 
-  const formattedWidth = scene.width.toLocaleString('de-DE');
-  const formattedHeight = scene.height.toLocaleString('de-DE');
+  const formattedWidth = loadedSceneRef.width.toLocaleString('de-DE');
+  const formattedHeight = loadedSceneRef.height.toLocaleString('de-DE');
 
   return (
     <div className={className}>

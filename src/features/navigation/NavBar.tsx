@@ -6,53 +6,30 @@ import NavToggle from './components/NavToggle';
 import { LoadProjectScene, SceneBreadcrumb } from '@/features/project/api';
 import Logo from './components/Logo';
 import { UserProfile, AccessLevelSelector } from '@/features/user';
-import { Button } from '@/components/api';
-import { Separator } from '@/components/api';
+import { Button, Separator } from '@/components/api';
 import { GuiServerDisplay, ActiveIndicator } from '@/features/status';
 import { useLocation, useNavigate } from 'react-router-dom';
-
-import {
-  LoadProjectSceneResult,
-  ProjectSceneInfo,
-} from '@/karabo/common/project/api';
-import { useEffect, useState } from 'react';
-import { getDbConn } from '@/lib/singletons/api';
+import { useLoadedSceneStore } from '@/store/api';
 import { sceneParamsFromURL } from './utils';
 
 export function NavBar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [sceneInfo, setSceneInfo] = useState<ProjectSceneInfo | null>(null);
+  const sceneParams = sceneParamsFromURL(location.search);
+  const { loadedSceneRef, setLoadedSceneRef } = useLoadedSceneStore();
+  const activeLoadedSceneRef =
+    sceneParams && loadedSceneRef?.uuid === sceneParams.uuid
+      ? loadedSceneRef
+      : null;
 
   const handleHome = () => {
-    setSceneInfo(null);
+    setLoadedSceneRef(undefined);
     navigate('/no_scene');
   };
-
-  useEffect(() => {
-    const sceneParams = sceneParamsFromURL(location.search);
-    if (sceneParams) {
-      getDbConn().getScene(
-        sceneParams?.domain,
-        sceneParams?.projectName,
-        sceneParams?.uuid,
-        (result: LoadProjectSceneResult) => {
-          if (result.scene) {
-            setSceneInfo(result.scene);
-          } else {
-            console.error(
-              `Error retrieving scene '${sceneParams?.uuid}' from project '${sceneParams?.domain}:${sceneParams?.projectName}': ${result.error_msg}`
-            );
-          }
-        }
-      );
-    }
-  }, [location.search]);
 
   return (
     <KiwiHeader className="border-b">
       <NavigationMenu className="justify-between px-2 py-2 w-full">
-        {/* Mobile/Tablet Layout */}
         <div className="flex items-center justify-between w-full xl:hidden gap-2">
           <NavToggle
             trigger={
@@ -75,7 +52,7 @@ export function NavBar() {
                 variant="outline"
                 className="w-full justify-start"
               />
-              {sceneInfo && (
+              {activeLoadedSceneRef && (
                 <>
                   <Separator />
                   <Button
@@ -91,14 +68,13 @@ export function NavBar() {
             </nav>
           </NavToggle>
 
-          {/* Breadcrumb or Logo based on scene state */}
           <div className="flex-1 min-w-0 overflow-hidden flex justify-center items-center">
-            {sceneInfo ? (
+            {activeLoadedSceneRef ? (
               <div className="max-w-full min-w-0 overflow-hidden">
                 <SceneBreadcrumb
-                  domain={sceneInfo.domain}
-                  projectName={sceneInfo.projectName}
-                  sceneName={sceneInfo.name}
+                  domain={activeLoadedSceneRef.domain}
+                  projectName={activeLoadedSceneRef.projectName}
+                  sceneName={activeLoadedSceneRef.name}
                 />
               </div>
             ) : (
@@ -119,7 +95,6 @@ export function NavBar() {
           </div>
         </div>
 
-        {/* Desktop Navigation */}
         <div className="hidden xl:flex xl:items-center xl:gap-4 xl:w-full">
           <NavItem>
             <Logo
@@ -142,7 +117,7 @@ export function NavBar() {
 
           <NavItem className="flex-1 min-w-0 overflow-hidden">
             <div className="flex items-center gap-2 overflow-hidden w-full">
-              {sceneInfo && (
+              {activeLoadedSceneRef && (
                 <>
                   <Button
                     variant="ghost"
@@ -156,15 +131,15 @@ export function NavBar() {
                   <Separator orientation="vertical" className="h-6 shrink-0" />
                   <div className="min-w-0 flex-1 overflow-hidden">
                     <SceneBreadcrumb
-                      domain={sceneInfo.domain}
-                      projectName={sceneInfo.projectName}
-                      sceneName={sceneInfo.name}
+                      domain={activeLoadedSceneRef.domain}
+                      projectName={activeLoadedSceneRef.projectName}
+                      sceneName={activeLoadedSceneRef.name}
                     />
                   </div>
                 </>
               )}
 
-              {!sceneInfo && (
+              {!activeLoadedSceneRef && (
                 <span className="text-sm text-muted-foreground italic">
                   No scene loaded
                 </span>
