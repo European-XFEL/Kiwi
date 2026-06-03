@@ -18,3 +18,12 @@ export interface SceneSize {
   height: number;
   width: number;
 }
+
+export interface LoadedSceneRef {
+  height: number;
+  width: number;
+  domain: string;
+  projectName: string;
+  uuid: string;
+  name: string;
+}

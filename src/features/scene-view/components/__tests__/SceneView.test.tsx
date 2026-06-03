@@ -106,7 +106,10 @@ describe('SceneView — scene uuid keying', () => {
     mockRenderedEntries.length = 0;
     mockUseSceneScale.mockReturnValue(1);
     mockUseGlobalStore.mockReturnValue({ lastGlobalError: null } as any);
-    mockUseLoadedSceneStore.mockReturnValue({ fitMode: 'fit-page' } as any);
+    mockUseLoadedSceneStore.mockReturnValue({
+      fitMode: 'fit-page',
+      loadedSceneRef: undefined,
+    } as any);
   });
 
   it('renders root layers as shape pass first, then widget pass, while preserving order within each layer', () => {

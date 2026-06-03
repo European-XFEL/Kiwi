@@ -9,9 +9,9 @@ import { useLoadedSceneStore } from '@/store/api';
 
 /** Fit mode dropdown — only renders when a scene is loaded. */
 export default function FitModeSelect() {
-  const { scene, fitMode, setFitMode } = useLoadedSceneStore();
+  const { loadedSceneRef, fitMode, setFitMode } = useLoadedSceneStore();
 
-  if (!scene) return null;
+  if (!loadedSceneRef) return null;
 
   return (
     <Select

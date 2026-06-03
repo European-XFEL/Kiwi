@@ -176,7 +176,10 @@ describe('SceneView integration', () => {
     jest.clearAllMocks();
     mockUseSceneScale.mockReturnValue(1);
     mockUseGlobalStore.mockReturnValue({ lastGlobalError: null } as any);
-    mockUseLoadedSceneStore.mockReturnValue({ fitMode: 'fit-page' } as any);
+    mockUseLoadedSceneStore.mockReturnValue({
+      fitMode: 'fit-page',
+      loadedSceneRef: undefined,
+    } as any);
   });
 
   afterEach(() => {

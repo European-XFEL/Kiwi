@@ -1,18 +1,16 @@
-import { Badge } from '@/components/api';
-import { Button } from '@/components/api';
 import {
+  Badge,
+  Button,
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
+  cn,
 } from '@/components/api';
 import { sceneParamsFromURL } from '@/features/navigation/utils';
-import { LoadProjectSceneResult } from '@/karabo/common/project/api';
-import { cn } from '@/components/api';
-import { getDbConn } from '@/lib/singletons/api';
-import { useGlobalStore } from '@/store/api';
+import { useLoadedSceneStore } from '@/store/api';
 import { Dot, FileText, XCircle } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 export type SceneStatusProps = {
@@ -26,52 +24,29 @@ export default function SceneStatus({
 }: SceneStatusProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { setLoadedScene } = useGlobalStore();
-  const [sceneInfo, setSceneInfo] = useState<{
-    domain: string;
-    projectName: string;
-    name: string;
-  } | null>(null);
-
-  const hasScene = useMemo(() => sceneInfo !== null, [sceneInfo]);
+  const sceneParams = sceneParamsFromURL(location.search);
+  const { loadedSceneRef, setLoadedSceneRef } = useLoadedSceneStore();
+  const activeLoadedSceneRef =
+    sceneParams && loadedSceneRef?.uuid === sceneParams.uuid
+      ? loadedSceneRef
+      : null;
+  const hasScene = activeLoadedSceneRef !== null;
 
   const handleUnloadScene = useCallback(() => {
     if (!hasScene) return;
-    setLoadedScene(undefined);
-    setSceneInfo(null);
+    setLoadedSceneRef(undefined);
     navigate('/no_scene');
-  }, [hasScene, navigate, setLoadedScene]);
+  }, [hasScene, navigate, setLoadedSceneRef]);
 
-  useEffect(() => {
-    const sceneParams = sceneParamsFromURL(location.search);
-    if (sceneParams) {
-      getDbConn().getScene(
-        sceneParams?.domain,
-        sceneParams?.projectName,
-        sceneParams?.uuid,
-        (result: LoadProjectSceneResult) => {
-          if (result.scene) {
-            setSceneInfo(result.scene);
-          } else {
-            setSceneInfo(null);
-            console.error(
-              `Error retrieving scene '${sceneParams?.uuid}' from project '${sceneParams?.domain}:${sceneParams?.projectName}': ${result.error_msg}`
-            );
-          }
-        }
-      );
-    }
-  }, [location.search]);
-
-  const fullSceneName = sceneInfo
-    ? `${sceneInfo.domain} :: ${sceneInfo.projectName} :: ${sceneInfo.name}`
+  const fullSceneName = activeLoadedSceneRef
+    ? `${activeLoadedSceneRef.domain} :: ${activeLoadedSceneRef.projectName} :: ${activeLoadedSceneRef.name}`
     : '';
 
   if (variant === 'compact') {
     return (
       <TooltipProvider>
         <div className={cn('flex items-center gap-2', className)}>
-          {hasScene && sceneInfo && (
+          {hasScene && activeLoadedSceneRef && (
             <>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -91,9 +66,11 @@ export default function SceneStatus({
               </Tooltip>
 
               <div className="text-xs">
-                <span className="font-semibold">{sceneInfo.projectName}</span>
+                <span className="font-semibold">
+                  {activeLoadedSceneRef.projectName}
+                </span>
                 <span className="text-muted-foreground mx-1">·</span>
-                <span>{sceneInfo.name}</span>
+                <span>{activeLoadedSceneRef.name}</span>
               </div>
             </>
           )}
@@ -109,7 +86,6 @@ export default function SceneStatus({
     );
   }
 
-  // Full variant
   return (
     <TooltipProvider>
       <div className={cn('flex items-center gap-3', className)}>
@@ -134,18 +110,19 @@ export default function SceneStatus({
           </TooltipContent>
         </Tooltip>
 
-        {/* Scene info */}
         <div className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md bg-muted/50">
-          {hasScene && sceneInfo ? (
+          {hasScene && activeLoadedSceneRef ? (
             <>
               <FileText
                 className="h-4 w-4 shrink-0 text-primary"
                 aria-hidden="true"
               />
               <div className="text-sm">
-                <span className="font-semibold">{sceneInfo.projectName}</span>
+                <span className="font-semibold">
+                  {activeLoadedSceneRef.projectName}
+                </span>
                 <span className="text-muted-foreground mx-1.5">·</span>
-                <span>{sceneInfo.name}</span>
+                <span>{activeLoadedSceneRef.name}</span>
               </div>
             </>
           ) : (

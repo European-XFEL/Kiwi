@@ -29,7 +29,7 @@ export function useSceneLoader(): SceneLoaderResult {
   const location = useLocation();
   const { sessionInfo } = useGlobalStore();
   const { setRecentScene } = useRecentStore();
-  const { setScene: setLoadedScene } = useLoadedSceneStore();
+  const { setLoadedSceneRef } = useLoadedSceneStore();
 
   const loggedUser = sessionInfo?.loggedUser;
 
@@ -39,6 +39,8 @@ export function useSceneLoader(): SceneLoaderResult {
   React.useEffect(() => {
     const sceneParams = sceneParamsFromURL(location.search);
     if (!sceneParams) return;
+    const currentSceneParams = sceneParams;
+
     let cancelled = false;
     let poll: ReturnType<typeof setInterval> | null = null;
 
@@ -49,8 +51,6 @@ export function useSceneLoader(): SceneLoaderResult {
       }
     };
 
-    // Defer rendering until the topology is initialized.
-    // Widgets need the device registry to be ready before subscribing.
     function applyWhenReady(model: SceneModel) {
       if (getTopology().initialized) {
         if (cancelled) return;
@@ -58,6 +58,7 @@ export function useSceneLoader(): SceneLoaderResult {
         setError('');
         return;
       }
+
       poll = setInterval(() => {
         if (getTopology().initialized) {
           clearPoll();
@@ -69,12 +70,14 @@ export function useSceneLoader(): SceneLoaderResult {
     }
 
     getDbConn().getScene(
-      sceneParams.domain,
-      sceneParams.projectName,
-      sceneParams.uuid,
+      currentSceneParams.domain,
+      currentSceneParams.projectName,
+      currentSceneParams.uuid,
       (result: LoadProjectSceneResult) => {
         if (cancelled) return;
+
         if (result.error_msg) {
+          setLoadedSceneRef(undefined);
           setError(
             `Couldn't retrieve scene data.\nPlease check Project Database availability.\nDetails: ${result.error_msg}`
           );
@@ -84,7 +87,14 @@ export function useSceneLoader(): SceneLoaderResult {
         }
 
         const model = result.model!;
-        setLoadedScene({ width: model.width, height: model.height });
+        setLoadedSceneRef({
+          width: model.width,
+          height: model.height,
+          domain: result.scene!.domain,
+          projectName: result.scene!.projectName,
+          uuid: result.scene!.uuid,
+          name: result.scene!.name,
+        });
 
         if (loggedUser) {
           const recentScene: UserRecentSceneInfo = {
@@ -106,7 +116,7 @@ export function useSceneLoader(): SceneLoaderResult {
       cancelled = true;
       clearPoll();
     };
-  }, [location.search, loggedUser, setLoadedScene, setRecentScene]);
+  }, [location.search, loggedUser, setLoadedSceneRef, setRecentScene]);
 
   return { scene, error };
 }
