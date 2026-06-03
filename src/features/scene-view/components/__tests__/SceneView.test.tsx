@@ -1,5 +1,11 @@
 import React from 'react';
 import { act, render } from '@testing-library/react';
+import {
+  BoxLayoutModel,
+  Direction,
+  DisplayLabelModel,
+  RectangleModel,
+} from '@/karabo/common/api';
 import SceneView from '../SceneView';
 
 // Prefixed with "mock" so Jest allows them inside the mock factory below.
@@ -7,38 +13,43 @@ const mockWidgetMountSpy = jest.fn();
 const mockWidgetUnmountSpy = jest.fn();
 const mockShapeMountSpy = jest.fn();
 const mockShapeUnmountSpy = jest.fn();
+const mockRenderedEntries: Array<{ layer: 'shape' | 'widget'; kind: string }> =
+  [];
 
-// KaraboSceneWidget is mocked to components that track phase mount/unmount.
+// KaraboSceneWidget is mocked to components that track layer mount/unmount.
 // Written without JSX so the factory doesn't reference the hoisted jsx_runtime.
 jest.mock('../../KaraboSceneWidget', () => {
   const ReactActual = jest.requireActual<typeof React>('react');
 
-  function LifecycleTracker({ phase }: { phase: 'shape' | 'widget' }) {
+  function LifecycleTracker({ layer }: { layer: 'shape' | 'widget' }) {
     ReactActual.useEffect(() => {
-      if (phase === 'widget') {
+      if (layer === 'widget') {
         mockWidgetMountSpy();
       } else {
         mockShapeMountSpy();
       }
 
       return () => {
-        if (phase === 'widget') {
+        if (layer === 'widget') {
           mockWidgetUnmountSpy();
         } else {
           mockShapeUnmountSpy();
         }
       };
-    }, [phase]);
-    return null;
+    }, [layer]);
+    return ReactActual.createElement('div', { 'data-layer': layer });
   }
 
   return {
     KaraboSceneWidget: function MockKaraboSceneWidget({
-      phase,
+      layer,
+      model,
     }: {
-      phase: 'shape' | 'widget';
+      layer: 'shape' | 'widget';
+      model: { constructor: { name: string } };
     }) {
-      return ReactActual.createElement(LifecycleTracker, { phase });
+      mockRenderedEntries.push({ layer, kind: model.constructor.name });
+      return ReactActual.createElement(LifecycleTracker, { layer });
     },
   };
 });
@@ -61,26 +72,89 @@ const mockUseSceneScale = jest.mocked(useSceneScale);
 const mockUseGlobalStore = jest.mocked(useGlobalStore);
 const mockUseLoadedSceneStore = jest.mocked(useLoadedSceneStore);
 
-function makeScene(uuid: string) {
+function makeShapeChild() {
+  const shape = new RectangleModel();
+  shape.width = 10;
+  shape.height = 10;
+  return shape;
+}
+
+function makeWidgetChild() {
+  const widget = new DisplayLabelModel();
+  widget.width = 10;
+  widget.height = 10;
+  return widget;
+}
+
+function makeLayoutChild() {
+  const layout = new BoxLayoutModel();
+  layout.direction = Direction.LeftToRight;
+  layout.children = [makeShapeChild(), makeWidgetChild()];
+  return layout;
+}
+
+function makeScene(uuid: string, children: unknown[]) {
   return {
     uuid,
     width: 800,
     height: 600,
-    children: [{}],
+    children,
   } as any;
 }
 
 describe('SceneView — scene uuid keying', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockRenderedEntries.length = 0;
     mockUseSceneScale.mockReturnValue(1);
     mockUseGlobalStore.mockReturnValue({ lastGlobalError: null } as any);
     mockUseLoadedSceneStore.mockReturnValue({ fitMode: 'fit-page' } as any);
   });
 
+  it('renders root layers as shape pass first, then widget pass, while preserving order within each layer', () => {
+    mockUseSceneLoader.mockReturnValue({
+      scene: makeScene('scene-1', [
+        makeWidgetChild(),
+        makeShapeChild(),
+        makeWidgetChild(),
+        makeShapeChild(),
+      ]),
+      error: '',
+    });
+
+    render(<SceneView />);
+
+    expect(mockRenderedEntries).toEqual([
+      { layer: 'shape', kind: 'RectangleModel' },
+      { layer: 'shape', kind: 'RectangleModel' },
+      { layer: 'widget', kind: 'DisplayLabelModel' },
+      { layer: 'widget', kind: 'DisplayLabelModel' },
+    ]);
+  });
+
+  it('renders layout roots in both passes without interleaving the root layer order', () => {
+    mockUseSceneLoader.mockReturnValue({
+      scene: makeScene('scene-1', [
+        makeWidgetChild(),
+        makeLayoutChild(),
+        makeShapeChild(),
+      ]),
+      error: '',
+    });
+
+    render(<SceneView />);
+
+    expect(mockRenderedEntries).toEqual([
+      { layer: 'shape', kind: 'BoxLayoutModel' },
+      { layer: 'shape', kind: 'RectangleModel' },
+      { layer: 'widget', kind: 'DisplayLabelModel' },
+      { layer: 'widget', kind: 'BoxLayoutModel' },
+    ]);
+  });
+
   it('unmounts and remounts the widget subtree when the scene uuid changes', () => {
     mockUseSceneLoader.mockReturnValue({
-      scene: makeScene('scene-1'),
+      scene: makeScene('scene-1', [makeWidgetChild()]),
       error: '',
     });
 
@@ -91,7 +165,7 @@ describe('SceneView — scene uuid keying', () => {
 
     // Same scene uuid, fresh scene object — no remount expected
     mockUseSceneLoader.mockReturnValue({
-      scene: makeScene('scene-1'),
+      scene: makeScene('scene-1', [makeWidgetChild()]),
       error: '',
     });
 
@@ -103,7 +177,7 @@ describe('SceneView — scene uuid keying', () => {
 
     // Different uuid — SceneStage key changes → full unmount + remount
     mockUseSceneLoader.mockReturnValue({
-      scene: makeScene('scene-2'),
+      scene: makeScene('scene-2', [makeWidgetChild()]),
       error: '',
     });
 
@@ -117,7 +191,7 @@ describe('SceneView — scene uuid keying', () => {
 
   it('unmounts and remounts the shape subtree when the scene uuid changes', () => {
     mockUseSceneLoader.mockReturnValue({
-      scene: makeScene('scene-1'),
+      scene: makeScene('scene-1', [makeShapeChild()]),
       error: '',
     });
 
@@ -128,7 +202,7 @@ describe('SceneView — scene uuid keying', () => {
 
     // Same scene uuid, fresh scene object — no remount expected
     mockUseSceneLoader.mockReturnValue({
-      scene: makeScene('scene-1'),
+      scene: makeScene('scene-1', [makeShapeChild()]),
       error: '',
     });
 
@@ -139,7 +213,7 @@ describe('SceneView — scene uuid keying', () => {
     expect(mockShapeUnmountSpy).toHaveBeenCalledTimes(0);
 
     mockUseSceneLoader.mockReturnValue({
-      scene: makeScene('scene-2'),
+      scene: makeScene('scene-2', [makeShapeChild()]),
       error: '',
     });
 
@@ -153,7 +227,7 @@ describe('SceneView — scene uuid keying', () => {
 
   it('unmounts and remounts the whole rendered scene subtree when the scene uuid changes', () => {
     mockUseSceneLoader.mockReturnValue({
-      scene: makeScene('scene-1'),
+      scene: makeScene('scene-1', [makeShapeChild(), makeWidgetChild()]),
       error: '',
     });
 
@@ -165,7 +239,7 @@ describe('SceneView — scene uuid keying', () => {
     expect(mockWidgetUnmountSpy).toHaveBeenCalledTimes(0);
 
     mockUseSceneLoader.mockReturnValue({
-      scene: makeScene('scene-2'),
+      scene: makeScene('scene-2', [makeShapeChild(), makeWidgetChild()]),
       error: '',
     });
 

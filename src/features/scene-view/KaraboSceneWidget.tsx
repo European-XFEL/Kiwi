@@ -1,11 +1,10 @@
 /**
- * ElementRenderer — resolves a scene model to a renderer component.
+ * ElementRenderer — resolves scene models to renderer components.
  *
- * Two exports:
- *  - renderContent: resolves model → component, zero positioning.
- *    Used by layouts for their children (the layout's wrapper div is the shell).
- *  - ElementRenderer: PositionedShell + renderContent.
- *    Used by SceneView for top-level children.
+ * Main exports:
+ *  - renderContent: direct render path for one model, without scene-layer filtering.
+ *  - renderLayerContent: layered render path for one model in the shape/widget scene passes.
+ *  - KaraboSceneWidget: positioned shell for one top-level rendered scene entry.
  */
 
 import React from 'react';
@@ -16,118 +15,139 @@ import {
   UnknownWidgetDataModel,
   UnknownXMLDataModel,
 } from '@/karabo/common/api';
-import { LabelModel, StickerModel } from '@/karabo/common/api';
-import { SceneLinkModel, WebLinkModel } from '@/karabo/common/api';
 import { ControllerContainer } from '@/features/controllers/api';
 import { containerPointerEvents } from './utils/mode';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/api';
 
-import { getRenderer } from './renderRegistry';
-import { isInRenderPhase, resolveBounds, type RenderPhase } from './bounds';
+import { getRenderer, type Renderer } from './renderRegistry';
+import { resolveBounds, type SceneLayer } from './bounds';
+import { isControllerWidget } from './utils/sceneNodePredicates';
+import { isVisibleInLayer } from './utils/visitor';
 
-export { resolveBounds, isLayout } from './bounds';
+export { resolveBounds } from './bounds';
+export { isLayout } from './utils/sceneNodePredicates';
 
-const _warnedKlasses = new Set<string>();
+const warnedKlasses = new Set<string>();
+
 function warnOnce(key: string, msg: string) {
-  if (_warnedKlasses.has(key)) return;
-  _warnedKlasses.add(key);
+  if (warnedKlasses.has(key)) return;
+  warnedKlasses.add(key);
   console.warn(msg);
 }
 
-// NON_CONTROLLER_WIDGETS
-// ----------------------------------------------------------------------------
-// Widgets that render directly — no device subscription needed.
-// Mirrors Python's _SCENE_OBJ_FACTORIES.
-
-const NON_CONTROLLER_WIDGETS = new Set<Function>([
-  LabelModel,
-  StickerModel,
-  SceneLinkModel,
-  WebLinkModel,
-  UnknownWidgetDataModel,
-  UnknownXMLDataModel,
-]);
-
-const isControllerWidget = (
+const isUnknownWidget = (
   model: BaseSceneObjectData
-): model is BaseWidgetObjectData =>
-  model instanceof BaseWidgetObjectData &&
-  !NON_CONTROLLER_WIDGETS.has(model.constructor);
+): model is UnknownWidgetDataModel => model instanceof UnknownWidgetDataModel;
 
-// renderContent
-// ----------------------------------------------------------------------------
-// Resolves a model to its component and renders it — zero positioning.
-// Layouts call this for their children after the wrapper div sets position.
+const isUnknownXml = (
+  model: BaseSceneObjectData
+): model is UnknownXMLDataModel => model instanceof UnknownXMLDataModel;
 
-export function renderContent(
-  model: BaseSceneObjectData,
-  phase: RenderPhase = 'all'
-): React.ReactNode {
-  if (!isInRenderPhase(model, phase)) return null;
+// Handles missing renderer registrations without leaking unknown-model checks
+// into the shared node predicates or traversal helpers.
+const renderMissingContent = (model: BaseSceneObjectData): React.ReactNode => {
+  if (isUnknownXml(model)) return null;
 
-  const Renderer = getRenderer(model);
-
-  if (!Renderer) {
-    if (model instanceof UnknownXMLDataModel) return null;
-
-    if (model instanceof UnknownWidgetDataModel) {
-      warnOnce(
-        model.klass,
-        `[Scene] Unknown widget: "${model.klass}" — no builder registered for this klass`
-      );
-      return (
-        <Placeholder
-          width={model.width}
-          height={model.height}
-          label={`Unknown widget: ${model.klass}`}
-        />
-      );
-    }
-
-    const unregistered = model as Partial<BaseWidgetObjectData> & {
-      klass?: string;
-    };
-    const klass = unregistered.klass ?? model.constructor.name;
+  if (isUnknownWidget(model)) {
     warnOnce(
-      klass,
-      `[Scene] No renderer registered for "${klass}" — add a registerRenderer() call`
+      model.klass,
+      `[Scene] Unknown widget: "${model.klass}" — no builder registered for this klass`
     );
-
     return (
       <Placeholder
-        width={unregistered.width ?? 60}
-        height={unregistered.height ?? 20}
-        label={`No renderer: ${klass}`}
-      />
-    );
-  }
-
-  if (isControllerWidget(model)) {
-    return (
-      <ControllerContainer
         width={model.width}
         height={model.height}
-        model={model}
-        Renderer={Renderer}
+        label={`Unknown widget: ${model.klass}`}
       />
     );
   }
 
-  // Layout renderers must see the active phase so nested children stay in the
-  // same pass and do not reach controller widgets during the shape traversal.
-  return <Renderer model={model} phase={phase} />;
+  const widgetLike = model as Partial<BaseWidgetObjectData> & {
+    klass?: string;
+  };
+  const klass = widgetLike.klass ?? model.constructor.name;
+  warnOnce(
+    klass,
+    `[Scene] No renderer registered for "${klass}" — add a registerRenderer() call`
+  );
+
+  return (
+    <Placeholder
+      width={widgetLike.width ?? 60}
+      height={widgetLike.height ?? 20}
+      label={`No renderer: ${klass}`}
+    />
+  );
+};
+
+// Resolves the registered renderer first so the controller/direct paths can
+// share the same fallback behavior for unknown or unregistered models.
+const renderWithRenderer = (
+  model: BaseSceneObjectData,
+  render: (Renderer: Renderer) => React.ReactNode
+): React.ReactNode => {
+  const Renderer = getRenderer(model);
+  if (!Renderer) return renderMissingContent(model);
+  return render(Renderer);
+};
+
+// Controller widgets stay on the subscribed rendering path through
+// ControllerContainer so proxy lifetime and context stay centralized.
+const renderControllerContent = (
+  model: BaseSceneObjectData & BaseWidgetObjectData
+): React.ReactNode =>
+  renderWithRenderer(model, (Renderer) => (
+    <ControllerContainer
+      width={model.width}
+      height={model.height}
+      model={model}
+      Renderer={Renderer}
+    />
+  ));
+
+// Direct-render content covers shapes, layouts, static widgets, and any other
+// non-controller renderer that can render without controller context.
+const renderDirectContent = (model: BaseSceneObjectData): React.ReactNode =>
+  renderWithRenderer(model, (Renderer) => <Renderer model={model} />);
+
+// Render a model in one real scene layer only.
+// SceneView uses this path when building the shape and widget layers, so
+// visibility is checked first and the active layer is forwarded into layouts.
+export const renderLayerContent = (
+  model: BaseSceneObjectData,
+  layer: SceneLayer
+): React.ReactNode => {
+  if (!isVisibleInLayer(model, layer)) return null;
+
+  if (isControllerWidget(model)) {
+    return renderControllerContent(model);
+  }
+
+  return renderWithRenderer(model, (Renderer) => (
+    <Renderer model={model} layer={layer} />
+  ));
+};
+
+// Render one model directly, without shape/widget layer filtering.
+// This is the unsplit path used for single-object rendering outside SceneView.
+export function renderContent(model: BaseSceneObjectData): React.ReactNode {
+  if (isControllerWidget(model)) {
+    return renderControllerContent(model);
+  }
+
+  return renderDirectContent(model);
 }
 
 // KaraboSceneWidget
 // ----------------------------------------------------------------------------
-// Wraps renderContent in a layout that takes the size of the model and applies a layout.
+// Wraps the render helper in a layout that takes the size of the model and applies a layout.
 // The single absolute-positioned div that places an element in scene space.
 // Only used by SceneView — never inside layout wrapper divs.
 
 export const KaraboSceneWidget: React.FC<{
   model: BaseSceneObjectData;
-  phase?: RenderPhase;
-}> = ({ model, phase = 'all' }) => {
+  layer?: SceneLayer;
+}> = ({ model, layer }) => {
   const { x, y, width, height } = resolveBounds(model);
 
   return (
@@ -141,7 +161,7 @@ export const KaraboSceneWidget: React.FC<{
         pointerEvents: containerPointerEvents(),
       }}
     >
-      {renderContent(model, phase)}
+      {layer ? renderLayerContent(model, layer) : renderContent(model)}
     </div>
   );
 };
@@ -162,11 +182,11 @@ export const Placeholder: React.FC<{
         className="border border-dashed border-red-300 bg-red-50/60 flex items-center justify-center overflow-hidden cursor-help"
         aria-label={label}
       >
-        <span className="text-red-600 text-sm font-semibold leading-none">
-          ?
+        <span className="text-[10px] leading-tight text-red-700 px-1 text-center select-none">
+          {label}
         </span>
       </div>
     </TooltipTrigger>
-    <TooltipContent className="max-w-[320px] text-xs">{label}</TooltipContent>
+    <TooltipContent>{label}</TooltipContent>
   </Tooltip>
 );

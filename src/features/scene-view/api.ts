@@ -8,4 +8,27 @@ export { default as FitModeSelect } from './components/FitModeSelect';
 export { FitModeToolbar } from './components/FitModeToolbar';
 export { useSceneLoader } from './hooks/useSceneLoader';
 export { useSceneScale } from './hooks/useSceneScale';
+export {
+  KaraboSceneWidget,
+  renderContent,
+  renderLayerContent,
+} from './KaraboSceneWidget';
+export {
+  collectSceneLayers,
+  createRootVisitContext,
+  getChildVisitContext,
+  isVisibleInLayer,
+  visitSceneLayers,
+  visitSceneTree,
+  type SceneLayerContext,
+  type SceneLayerEntry,
+  type SceneTreeVisitor,
+  type SceneVisitContext,
+} from './utils/visitor';
+export {
+  isControllerWidget,
+  isLayout,
+  isShape,
+} from './utils/sceneNodePredicates';
 export type { FitMode, Dimensions } from './hooks/useSceneScale';
+export type { SceneLayer } from './bounds';

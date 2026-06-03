@@ -5,20 +5,17 @@
 import React from 'react';
 
 import { FixedLayoutModel } from '@/karabo/common/api';
-import { renderContent } from '../../KaraboSceneWidget';
-import { resolveBounds, type RenderPhase } from '../../bounds';
+import { renderContent, renderLayerContent } from '../../KaraboSceneWidget';
+import { resolveBounds, type SceneLayer } from '../../bounds';
 import { containerPointerEvents } from '../../utils/mode';
 import { registerRenderer } from '../../renderRegistry';
 
 type FixedLayoutProps = {
   model: FixedLayoutModel;
-  phase?: RenderPhase;
+  layer?: SceneLayer;
 };
 
-export const FixedLayout: React.FC<FixedLayoutProps> = ({
-  model,
-  phase = 'all',
-}) => {
+export const FixedLayout: React.FC<FixedLayoutProps> = ({ model, layer }) => {
   const { x, y, children } = model;
 
   return (
@@ -50,8 +47,8 @@ export const FixedLayout: React.FC<FixedLayoutProps> = ({
               pointerEvents: containerPointerEvents(),
             }}
           >
-            {/* Preserve the active pass through layout recursion. */}
-            {renderContent(child, phase)}
+            {/* Preserve the active layer through layout recursion. */}
+            {layer ? renderLayerContent(child, layer) : renderContent(child)}
           </div>
         );
       })}

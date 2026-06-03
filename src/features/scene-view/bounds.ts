@@ -36,23 +36,10 @@ export const isShape = (sceneElement: BaseSceneObjectData): boolean =>
 export const isLayout = (sceneElement: BaseSceneObjectData): boolean =>
   sceneElement instanceof BaseLayoutModel;
 
-// RenderPhase
+// SceneLayer
 // ---
 
-export type RenderPhase = 'all' | 'shape' | 'widget';
-
-/**
- * Returns true if `el` should render in `phase`.
- * Layouts always render in both passes so their children can be reached.
- */
-export const isInRenderPhase = (
-  el: BaseSceneObjectData,
-  phase: RenderPhase
-): boolean => {
-  if (phase === 'all') return true;
-  if (isLayout(el)) return true;
-  return phase === 'shape' ? isShape(el) : !isShape(el);
-};
+export type SceneLayer = 'shape' | 'widget';
 
 // resolveBounds
 // ---

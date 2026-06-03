@@ -2,7 +2,7 @@
 
 import type React from 'react';
 import { BaseSceneObjectData, BaseWidgetObjectData } from '@/karabo/common/api';
-import type { RenderPhase } from './bounds';
+import type { SceneLayer } from './bounds';
 import {
   BoxLayoutModel,
   FixedLayoutModel,
@@ -22,7 +22,7 @@ import {
 export type Renderer = React.FC<{
   model: any;
   ctx?: any;
-  phase?: RenderPhase;
+  layer?: SceneLayer;
 }>;
 
 const entries = new Map<string, Renderer>();
