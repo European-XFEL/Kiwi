@@ -70,7 +70,7 @@ export function getHashTypeFromValue(value: any): HashType {
             return HashType.VectorBool;
           }
           case 'bigint': {
-            return HashType.VectorInt32;
+            return HashType.VectorInt64;
           }
           default: {
             break;

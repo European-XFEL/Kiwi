@@ -4,13 +4,15 @@ import {
   hashTypeFromString,
   stringFromHashType,
 } from '@/karabo/data/string_converter';
+import { unwrap } from '@/karabo/data/utils';
 
 describe('string_converter parity tests', () => {
   test('string roundtrip', () => {
     const d = 'string';
     const hashD = hashTypeFromString(HashType.String, d);
 
-    expect(hashD).toBe('string');
+    expect((hashD as { type_: HashType }).type_).toBe(HashType.String);
+    expect(unwrap(hashD)).toBe('string');
     expect(stringFromHashType(hashD, HashType.String)).toBe(d);
   });
 
@@ -28,7 +30,8 @@ describe('string_converter parity tests', () => {
 
     for (const [hashType, value, expected] of cases) {
       const hashD = hashTypeFromString(hashType, value);
-      expect(hashD).toBe(expected);
+      expect((hashD as { type_: HashType }).type_).toBe(hashType);
+      expect(unwrap(hashD)).toBe(expected);
       expect(stringFromHashType(hashD, hashType)).toBe(value);
     }
   });
@@ -36,18 +39,26 @@ describe('string_converter parity tests', () => {
   test('floats roundtrip', () => {
     const cases: Array<[HashType, string, string[]]> = [
       [HashType.Float, '1231231', ['1.231231e+6', '1231231', '1231231.0']],
-      [HashType.Float, '76233.233', ['76233.233', '76233.234', '76233.2']],
+
+      [
+        HashType.Float,
+        '76233.233',
+        ['76233.233', '76233.234', '76233.2', '76233.234375'],
+      ],
       [HashType.Double, '1231231', ['1.231231e+6', '1231231', '1231231.0']],
       [HashType.Double, '76233.233', ['76233.233', '76233.234', '76233.2']],
     ];
 
     for (const [hashType, value, accepted] of cases) {
       const hashD = hashTypeFromString(hashType, value);
-      expect(typeof hashD).toBe('number');
+      expect((hashD as { type_: HashType }).type_).toBe(hashType);
+      expect(typeof unwrap(hashD)).toBe('number');
 
       const stringD = stringFromHashType(hashD, hashType);
       expect(accepted).toContain(stringD);
-      expect(Number(stringD)).toBeCloseTo(Number(value), 3);
+
+      const precision = hashType === HashType.Float ? 2 : 3;
+      expect(Number(stringD)).toBeCloseTo(Number(value), precision);
     }
   });
 
