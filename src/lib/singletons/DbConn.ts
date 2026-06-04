@@ -146,8 +146,7 @@ export class DbConnection {
       console.error(`Error loading project items: ${e}`);
     }
     if (itemsInfo !== undefined) {
-      // Iterates through the retrieved project items, collecting the scenes and
-      // dispatching new loadProjectItems requests for subprojects.
+      // Iterates through the retrieved project items, collecting the scenes
       const itemsToQuery: DbItemInfo[] = [];
       for (const item of itemsInfo.projectItems) {
         if (isProjectContentsInfo(item)) {
@@ -159,13 +158,13 @@ export class DbConnection {
               item_type: 'scene',
             });
           }
-          for (const subproject of item.subprojects) {
-            itemsToQuery.push({
-              domain: subproject.domain,
-              uuid: subproject.uuid,
-              item_type: 'project',
-            });
-          }
+          //   for (const subproject of item.subprojects) {
+          //     itemsToQuery.push({
+          //       domain: subproject.domain,
+          //       uuid: subproject.uuid,
+          //       item_type: 'project',
+          //     });
+          //   }
           if (itemsToQuery.length > 0) {
             this._pendingLoadItems += 1;
             getNetwork().onProjectLoadItems(
