@@ -12,9 +12,6 @@ import {
 import { DeviceProxy, PropertyProxy } from '@/lib/binding/api';
 import { SingletonContext } from '@/testing';
 
-jest.mock('../../hooks/useSceneScale');
-jest.mock('@/store/loadedSceneStore');
-
 jest.mock('@/features/controllers/api', () => ({
   bootstrapControllerRenderers: jest.fn(),
   bootstrapStatefulIcons: jest.fn(),
@@ -73,11 +70,6 @@ jest.mock('../../renderers', () => {
 });
 
 import SceneView from '../SceneView';
-import { useSceneScale } from '../../hooks/useSceneScale';
-import { useLoadedSceneStore } from '@/store/loadedSceneStore';
-
-const mockUseSceneScale = jest.mocked(useSceneScale);
-const mockUseLoadedSceneStore = jest.mocked(useLoadedSceneStore);
 
 const makeNestedLayoutScene = (uuid: string) => {
   const scene = new SceneModel();
@@ -194,11 +186,6 @@ const makeTopology = () => {
 describe('SceneView integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseSceneScale.mockReturnValue(1);
-    mockUseLoadedSceneStore.mockReturnValue({
-      fitMode: 'fit-page',
-      loadedSceneRef: undefined,
-    } as any);
   });
 
   afterEach(() => {
@@ -215,7 +202,11 @@ describe('SceneView integration', () => {
 
     await SingletonContext.run({ topology }, async () => {
       const { rerender, unmount } = render(
-        <SceneView sceneModel={makeNestedLayoutScene('scene-1')} />
+        <SceneView
+          sceneModel={makeNestedLayoutScene('scene-1')}
+          scale={1}
+          fitMode="fit-page"
+        />
       );
 
       await waitFor(() => {
@@ -226,7 +217,13 @@ describe('SceneView integration', () => {
       expect(disposeSpy).toHaveBeenCalledTimes(0);
 
       act(() => {
-        rerender(<SceneView sceneModel={makeNestedLayoutScene('scene-2')} />);
+        rerender(
+          <SceneView
+            sceneModel={makeNestedLayoutScene('scene-2')}
+            scale={1}
+            fitMode="fit-page"
+          />
+        );
       });
 
       await waitFor(() => {
@@ -251,7 +248,11 @@ describe('SceneView integration', () => {
 
     await SingletonContext.run({ topology }, async () => {
       const { container } = render(
-        <SceneView sceneModel={makeMixedScene('scene-mixed')} />
+        <SceneView
+          sceneModel={makeMixedScene('scene-mixed')}
+          scale={1}
+          fitMode="fit-page"
+        />
       );
 
       await waitFor(() => {

@@ -57,15 +57,6 @@ jest.mock('../../KaraboSceneWidget', () => {
 // Bootstrap side-effect import
 jest.mock('../../renderers', () => ({}));
 
-jest.mock('../../hooks/useSceneScale');
-jest.mock('@/store/api');
-
-import { useSceneScale } from '../../hooks/useSceneScale';
-import { useLoadedSceneStore } from '@/store/api';
-
-const mockUseSceneScale = jest.mocked(useSceneScale);
-const mockUseLoadedSceneStore = jest.mocked(useLoadedSceneStore);
-
 function makeShapeChild() {
   const shape = new RectangleModel();
   shape.width = 10;
@@ -100,11 +91,6 @@ describe('SceneView — scene uuid keying', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockRenderedEntries.length = 0;
-    mockUseSceneScale.mockReturnValue(1);
-    mockUseLoadedSceneStore.mockReturnValue({
-      fitMode: 'fit-page',
-      loadedSceneRef: undefined,
-    } as any);
   });
 
   it('renders root layers as shape pass first, then widget pass, while preserving order within each layer', () => {
@@ -116,6 +102,8 @@ describe('SceneView — scene uuid keying', () => {
           makeWidgetChild(),
           makeShapeChild(),
         ])}
+        scale={1}
+        fitMode="fit-page"
       />
     );
 
@@ -135,6 +123,8 @@ describe('SceneView — scene uuid keying', () => {
           makeLayoutChild(),
           makeShapeChild(),
         ])}
+        scale={1}
+        fitMode="fit-page"
       />
     );
 
@@ -148,7 +138,11 @@ describe('SceneView — scene uuid keying', () => {
 
   it('unmounts and remounts the widget subtree when the scene uuid changes', () => {
     const { rerender } = render(
-      <SceneView sceneModel={makeScene('scene-1', [makeWidgetChild()])} />
+      <SceneView
+        sceneModel={makeScene('scene-1', [makeWidgetChild()])}
+        scale={1}
+        fitMode="fit-page"
+      />
     );
 
     expect(mockWidgetMountSpy).toHaveBeenCalledTimes(1);
@@ -157,16 +151,24 @@ describe('SceneView — scene uuid keying', () => {
     // Same scene uuid, fresh scene object — no remount expected
     act(() => {
       rerender(
-        <SceneView sceneModel={makeScene('scene-1', [makeWidgetChild()])} />
+        <SceneView
+          sceneModel={makeScene('scene-1', [makeWidgetChild()])}
+          scale={1}
+          fitMode="fit-page"
+        />
       );
     });
 
     expect(mockWidgetUnmountSpy).toHaveBeenCalledTimes(0);
 
-    // Different uuid — SceneStage key changes → full unmount + remount
+    // Different uuid — rendered scene key changes → full unmount + remount
     act(() => {
       rerender(
-        <SceneView sceneModel={makeScene('scene-2', [makeWidgetChild()])} />
+        <SceneView
+          sceneModel={makeScene('scene-2', [makeWidgetChild()])}
+          scale={1}
+          fitMode="fit-page"
+        />
       );
     });
 
@@ -176,7 +178,11 @@ describe('SceneView — scene uuid keying', () => {
 
   it('unmounts and remounts the shape subtree when the scene uuid changes', () => {
     const { rerender } = render(
-      <SceneView sceneModel={makeScene('scene-1', [makeShapeChild()])} />
+      <SceneView
+        sceneModel={makeScene('scene-1', [makeShapeChild()])}
+        scale={1}
+        fitMode="fit-page"
+      />
     );
 
     expect(mockShapeMountSpy).toHaveBeenCalledTimes(1);
@@ -185,7 +191,11 @@ describe('SceneView — scene uuid keying', () => {
     // Same scene uuid, fresh scene object — no remount expected
     act(() => {
       rerender(
-        <SceneView sceneModel={makeScene('scene-1', [makeShapeChild()])} />
+        <SceneView
+          sceneModel={makeScene('scene-1', [makeShapeChild()])}
+          scale={1}
+          fitMode="fit-page"
+        />
       );
     });
 
@@ -193,7 +203,11 @@ describe('SceneView — scene uuid keying', () => {
 
     act(() => {
       rerender(
-        <SceneView sceneModel={makeScene('scene-2', [makeShapeChild()])} />
+        <SceneView
+          sceneModel={makeScene('scene-2', [makeShapeChild()])}
+          scale={1}
+          fitMode="fit-page"
+        />
       );
     });
 
@@ -205,6 +219,8 @@ describe('SceneView — scene uuid keying', () => {
     const { rerender } = render(
       <SceneView
         sceneModel={makeScene('scene-1', [makeShapeChild(), makeWidgetChild()])}
+        scale={1}
+        fitMode="fit-page"
       />
     );
 
@@ -220,6 +236,8 @@ describe('SceneView — scene uuid keying', () => {
             makeShapeChild(),
             makeWidgetChild(),
           ])}
+          scale={1}
+          fitMode="fit-page"
         />
       );
     });

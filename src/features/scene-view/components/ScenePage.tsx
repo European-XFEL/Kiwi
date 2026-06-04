@@ -1,4 +1,5 @@
 import React from 'react';
+import { ScenePanel } from '@/features/scenepanel/api';
 import { useGlobalStore, useLoadedSceneStore } from '@/store/api';
 import { useSceneLoader } from '../hooks/useSceneLoader';
 import {
@@ -6,7 +7,6 @@ import {
   SceneLoadError,
   SceneLoading,
 } from './SceneStatusViews';
-import ScenePanel from './ScenePanel';
 
 const ScenePage: React.FC = () => {
   const { lastGlobalError } = useGlobalStore();

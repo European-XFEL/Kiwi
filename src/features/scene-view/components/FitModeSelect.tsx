@@ -16,17 +16,45 @@ export default function FitModeSelect() {
   return (
     <Select
       value={fitMode}
-      onValueChange={(v) => setFitMode(v as typeof fitMode)}
+      onValueChange={(value) => setFitMode(value as typeof fitMode)}
     >
-      <SelectTrigger size="sm" className="w-36">
+      <SelectTrigger
+        size="sm"
+        className="h-7 w-[130px] rounded-[2px] border border-[#8f8f8f] bg-[#eeeeee] px-2 text-xs text-[#111111] shadow-none focus-visible:border-[#777777] focus-visible:ring-1 focus-visible:ring-[#777777]"
+      >
         <SelectValue />
       </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="fit-page">Fit to Page</SelectItem>
-        <SelectItem value="fit-screen">Fit to Screen</SelectItem>
-        <SelectItem value="fit-width">Fit to Width</SelectItem>
-        <SelectItem value="fit-height">Fit to Height</SelectItem>
-        <SelectItem value="actual">Actual Size</SelectItem>
+      <SelectContent className="rounded-[2px] border border-[#8f8f8f] bg-[#eeeeee] text-xs text-[#111111] shadow-none">
+        <SelectItem
+          value="fit-page"
+          className="rounded-[2px] text-xs focus:bg-[#dcdcdc] focus:text-[#111111]"
+        >
+          Fit to Page
+        </SelectItem>
+        <SelectItem
+          value="fit-screen"
+          className="rounded-[2px] text-xs focus:bg-[#dcdcdc] focus:text-[#111111]"
+        >
+          Fit to Screen
+        </SelectItem>
+        <SelectItem
+          value="fit-width"
+          className="rounded-[2px] text-xs focus:bg-[#dcdcdc] focus:text-[#111111]"
+        >
+          Fit to Width
+        </SelectItem>
+        <SelectItem
+          value="fit-height"
+          className="rounded-[2px] text-xs focus:bg-[#dcdcdc] focus:text-[#111111]"
+        >
+          Fit to Height
+        </SelectItem>
+        <SelectItem
+          value="actual"
+          className="rounded-[2px] text-xs focus:bg-[#dcdcdc] focus:text-[#111111]"
+        >
+          Actual Size
+        </SelectItem>
       </SelectContent>
     </Select>
   );
