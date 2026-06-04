@@ -27,9 +27,9 @@ export {
 } from './enums';
 export { decodeBinary, decodeBinarySchema } from './bin_reader';
 export { encodeBinary, encodeBinarySchema } from './bin_writer';
-export { unwrap } from './utils';
+export { unwrap, dictToHash, hashToDict, toBase64, fromBase64 } from './utils';
 export { State } from './State';
 export { type SimpleValueTypes } from './types';
 export { StringValue } from './types';
 export * from './const';
-export { scalarToString } from './string_converter';
+export { stringFromHashType, hashTypeFromString } from './string_converter';
