@@ -6,12 +6,12 @@ import ScenePage from '../ScenePage';
 
 jest.mock('../../hooks/useSceneLoader');
 jest.mock('@/store/api');
-jest.mock('../ScenePanel', () => {
+jest.mock('@/features/scenepanel/api', () => {
   const ReactActual = jest.requireActual<typeof React>('react');
 
   return {
     __esModule: true,
-    default: ({
+    ScenePanel: ({
       sceneModel,
       sceneRef,
     }: {
