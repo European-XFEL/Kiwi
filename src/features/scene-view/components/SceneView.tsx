@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { SceneModel } from '@/karabo/common/api';
 import { KaraboSceneWidget } from '../KaraboSceneWidget';
 import type { FitMode } from '../hooks/useSceneScale';
@@ -52,6 +52,7 @@ const SceneView: React.FC<SceneViewProps> = ({
 
   const scene = (
     <div
+      id={`SceneView-Scene-Outer-${useId()}`}
       key={sceneModel.uuid}
       style={{
         position: 'relative',
@@ -61,6 +62,7 @@ const SceneView: React.FC<SceneViewProps> = ({
       }}
     >
       <div
+        id={`SceneView-Scene-Inner-${useId()}`}
         className="overflow-hidden rounded-md bg-[#eeeeee] shadow-lg"
         style={{
           position: 'absolute',
@@ -79,6 +81,7 @@ const SceneView: React.FC<SceneViewProps> = ({
 
   return scrollable ? (
     <div
+      id={`SceneView-Scrollable-${useId()}`}
       style={{
         width: spacer.width,
         height: spacer.height,
@@ -92,7 +95,12 @@ const SceneView: React.FC<SceneViewProps> = ({
       {scene}
     </div>
   ) : (
-    <div className="grid min-h-full min-w-full place-items-center">{scene}</div>
+    <div
+      id={`SceneView-${useId()}`}
+      className="grid min-h-full min-w-full place-items-center"
+    >
+      {scene}
+    </div>
   );
 };
 
