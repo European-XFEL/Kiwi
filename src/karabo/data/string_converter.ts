@@ -1,5 +1,6 @@
-import { Hash, HashList, Schema } from './hash';
+import { Hash, HashList, Schema, wrap } from './hash';
 import { HashType } from './typenums';
+import { KaraboValue, wrapValue } from './types';
 import { decodeXML } from './xml_reader';
 import { encodeXML } from './xml_writer';
 import { unwrap, hashToDict, dictToHash, toBase64, fromBase64 } from './utils';
@@ -168,19 +169,42 @@ const schemaFromString = (s: string): Schema => {
   return new Schema(name, decodeXML(xml) as Hash);
 };
 
+const wrapFromStringValue = (type: HashType, value: unknown): unknown => {
+  if (type === HashType.None_) {
+    return value;
+  }
+
+  if (
+    value instanceof Hash ||
+    value instanceof HashList ||
+    value instanceof Schema
+  ) {
+    return wrap(value);
+  }
+
+  const castType = type === HashType.ByteArray ? HashType.VectorChar : type;
+  const typedValue = wrapValue(value as any, castType) as KaraboValue;
+
+  return wrap(typedValue);
+};
+
 export function hashTypeFromString(
   hashType: HashType | number,
   data: string
 ): unknown {
   const type = Number(hashType) as HashType;
 
+  let parsed: unknown;
+
   switch (type) {
     case HashType.Bool:
-      return boolFromString(data);
+      parsed = boolFromString(data);
+      break;
 
     case HashType.Char:
     case HashType.String:
-      return passFromString(data);
+      parsed = passFromString(data);
+      break;
 
     case HashType.Int8:
     case HashType.Int16:
@@ -190,17 +214,21 @@ export function hashTypeFromString(
     case HashType.UInt32:
     case HashType.Float:
     case HashType.Double:
-      return numberFromString(data);
+      parsed = numberFromString(data);
+      break;
 
     case HashType.Int64:
     case HashType.UInt64:
-      return bigintFromString(data);
+      parsed = bigintFromString(data);
+      break;
 
     case HashType.VectorBool:
-      return vectorFromString(data, (x) => boolFromString(x));
+      parsed = vectorFromString(data, (x) => boolFromString(x));
+      break;
 
     case HashType.VectorChar:
-      return vectorCharFromString(data);
+      parsed = vectorCharFromString(data);
+      break;
 
     case HashType.VectorInt8:
     case HashType.VectorInt16:
@@ -210,31 +238,42 @@ export function hashTypeFromString(
     case HashType.VectorUInt32:
     case HashType.VectorFloat:
     case HashType.VectorDouble:
-      return vectorFromString(data, (x) => numberFromString(x));
+      parsed = vectorFromString(data, (x) => numberFromString(x));
+      break;
 
     case HashType.VectorInt64:
     case HashType.VectorUInt64:
-      return vectorFromString(data, (x) => bigintFromString(x));
+      parsed = vectorFromString(data, (x) => bigintFromString(x));
+      break;
 
     case HashType.Hash:
-      return hashFromString(data);
+      parsed = hashFromString(data);
+      break;
 
     case HashType.VectorHash:
-      return vectorHashFromString(data);
+      parsed = vectorHashFromString(data);
+      break;
 
     case HashType.VectorString:
-      return listFromString(data);
+      parsed = listFromString(data);
+      break;
 
     case HashType.Schema:
-      return schemaFromString(data);
+      parsed = schemaFromString(data);
+      break;
 
     case HashType.None_:
-      return noneFromString(data);
+      parsed = noneFromString(data);
+      break;
 
     case HashType.ByteArray:
-      return vectorCharFromString(data);
+      parsed = vectorCharFromString(data);
+      break;
 
     default:
-      return passFromString(data);
+      parsed = passFromString(data);
+      break;
   }
+
+  return wrapFromStringValue(type, parsed);
 }

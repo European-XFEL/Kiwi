@@ -264,10 +264,7 @@ function getValuefromHashType(type_: HashType): Ctor<KaraboValue> | null {
   return TYPE_TO_CLASS[type_] ?? null;
 }
 
-export function castKaraboValue(
-  type_: HashType,
-  value: ValueTypes
-): KaraboValue {
+export function wrapValue(value: ValueTypes, type_: HashType): KaraboValue {
   const C = getValuefromHashType(type_);
   if (!C) {
     throw new Error(`Unsupported Karabo type: ${HashType[type_] ?? type_}`);

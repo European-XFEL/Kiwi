@@ -1,5 +1,5 @@
 import { HashType, getHashTypeFromValue } from './typenums';
-import { KaraboValue, castKaraboValue } from './types';
+import { KaraboValue, wrapValue } from './types';
 
 const SEPARATOR = '.' as const;
 
@@ -40,7 +40,7 @@ export class HashAttributes extends Map<string, HashValues> {
   }
 
   override set(key: string, value: any): this {
-    return super.set(key, wrapKaraboValue(value));
+    return super.set(key, wrap(value));
   }
 
   // * This is solely used for the deserializer
@@ -221,7 +221,7 @@ export class Hash extends Map<string, HashElement> {
     const key = String(path);
     const elementAttrs =
       attrs instanceof HashAttributes ? attrs : new HashAttributes(attrs);
-    const element = new HashElement(wrapKaraboValue(value), elementAttrs);
+    const element = new HashElement(wrap(value), elementAttrs);
 
     if (!key.includes(SEPARATOR)) {
       Map.prototype.set.call(this, key, element);
@@ -240,11 +240,7 @@ export class Hash extends Map<string, HashElement> {
         | HashElement
         | undefined;
       const attrs = existing ? existing.attrs : new HashAttributes();
-      Map.prototype.set.call(
-        this,
-        key,
-        new HashElement(wrapKaraboValue(value), attrs)
-      );
+      Map.prototype.set.call(this, key, new HashElement(wrap(value), attrs));
       return this;
     }
 
@@ -253,11 +249,7 @@ export class Hash extends Map<string, HashElement> {
       | HashElement
       | undefined;
     const attrs = existing ? existing.attrs : new HashAttributes();
-    Map.prototype.set.call(
-      hash,
-      leaf,
-      new HashElement(wrapKaraboValue(value), attrs)
-    );
+    Map.prototype.set.call(hash, leaf, new HashElement(wrap(value), attrs));
 
     return this;
   }
@@ -426,12 +418,14 @@ export class Hash extends Map<string, HashElement> {
   }
 }
 
-export function wrapKaraboValue(value: any): HashValues {
+// * Wrap a value into a KaraboValue
+//
+export function wrap(value: any): HashValues {
   if (isKaraboValue(value)) {
     return value;
   }
   const ktype = getHashTypeFromValue(value);
-  return castKaraboValue(ktype, value);
+  return wrapValue(value, ktype);
 }
 
 export class Schema {
