@@ -32,6 +32,7 @@ export function useSceneLoader(): SceneLoaderResult {
   const { setLoadedSceneRef } = useLoadedSceneStore();
 
   const loggedUser = sessionInfo?.loggedUser;
+  const topic = sessionInfo?.guiServerTopic;
 
   const [scene, setScene] = React.useState<SceneModel | null>(null);
   const [error, setError] = React.useState('');
@@ -96,9 +97,10 @@ export function useSceneLoader(): SceneLoaderResult {
           name: result.scene!.name,
         });
 
-        if (loggedUser) {
+        if (loggedUser && topic) {
           const recentScene: UserRecentSceneInfo = {
             userId: loggedUser,
+            topic: topic,
             domain: result.scene!.domain,
             uuid: result.scene!.uuid,
             name: result.scene!.name,

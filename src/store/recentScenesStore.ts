@@ -1,5 +1,5 @@
 import {
-  RecentScenesByUser,
+  RecentScenesByUserTopic,
   UserRecentSceneInfo,
   RecentSceneInfo,
 } from './store.types';
@@ -7,7 +7,7 @@ import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 
 const MRU_SCENES_SIZE = 6;
-const MRU_SCENES_KEY = 'MRU_SCENES_';
+const MRU_SCENES_KEY_PREFIX = 'MRU_SCENES_';
 
 function moveFront<T>(arr: readonly T[], index: number): T[] {
   const len = arr.length;
@@ -21,21 +21,21 @@ function moveFront<T>(arr: readonly T[], index: number): T[] {
 }
 
 // Confirm from local storage if there are recent scenes
-const loadRecentScenes = (): RecentScenesByUser[] | null => {
+const loadRecentScenes = (): RecentScenesByUserTopic[] | null => {
   try {
     const recentScenesKeys = Object.keys(localStorage).filter((key: string) =>
-      key.startsWith(MRU_SCENES_KEY)
+      key.startsWith(MRU_SCENES_KEY_PREFIX)
     );
     if (recentScenesKeys.length === 0) return null;
 
     const recentScenes: any[] = [];
     for (const key of recentScenesKeys) {
       // The keys of the localStorage are of the form: ${MRU_SCENES_KEY}${userId}
-      const userId = key.substring(MRU_SCENES_KEY.length);
+      const userIdTopic = key.substring(MRU_SCENES_KEY_PREFIX.length);
       const storedData = localStorage.getItem(key);
       if (storedData) {
         recentScenes.push({
-          userId: userId,
+          userIdTopic: userIdTopic,
           scenes: JSON.parse(storedData),
         });
       }
@@ -57,9 +57,10 @@ export interface RecentSceneStoreActions {
   setRecentScene: (scene: UserRecentSceneInfo) => void;
   removeRecentScene: (
     userId: string,
+    topic: string,
     sceneId: { domain: string; uuid: string }
   ) => void;
-  getRecentScenesForUser: (userId: string) => RecentSceneInfo[];
+  getRecentScenesForUser: (userId: string, topic: string) => RecentSceneInfo[];
 }
 
 // Store type
@@ -73,7 +74,7 @@ const createInitialState = (): RecentSceneStoreState => {
   if (loadedScenes) {
     // Load all users' scenes, not just the first one
     loadedScenes.forEach((userScenes) => {
-      recentScenesMap.set(userScenes.userId, userScenes.scenes);
+      recentScenesMap.set(userScenes.userIdTopic, userScenes.scenes);
     });
   }
 
@@ -96,10 +97,12 @@ export const useRecentStore = create<TRecentStore>()(
         const newRecentScenes = new Map(state.recentScenes);
 
         // Destructure the payload
-        const { userId, uuid, domain, name, projectName } = userScene;
+        const { userId, topic, uuid, domain, name, projectName } = userScene;
+
+        const recentSceneKey = `${userId}_${topic}`;
 
         // Load the scenes in the state if any
-        let scenes = newRecentScenes.get(userId) ?? [];
+        let scenes = newRecentScenes.get(recentSceneKey) ?? [];
         // Create a copy of the scenes array to avoid mutation
         scenes = [...scenes];
 
@@ -131,11 +134,11 @@ export const useRecentStore = create<TRecentStore>()(
         }
 
         // Update the map with the new scenes
-        newRecentScenes.set(userId, scenes);
+        newRecentScenes.set(recentSceneKey, scenes);
 
         // Save to localStorage
         localStorage.setItem(
-          `${MRU_SCENES_KEY}${userId}`,
+          `${MRU_SCENES_KEY_PREFIX}${recentSceneKey}`,
           JSON.stringify(scenes)
         );
 
@@ -147,11 +150,13 @@ export const useRecentStore = create<TRecentStore>()(
 
     removeRecentScene: (
       userId: string,
+      topic: string,
       sceneId: { domain: string; uuid: string }
     ) =>
       set((state) => {
+        const recentSceneKey = `${userId}_${topic}`;
         const newRecentScenes = new Map(state.recentScenes);
-        let scenes = newRecentScenes.get(userId) ?? [];
+        let scenes = newRecentScenes.get(recentSceneKey) ?? [];
 
         // Filter out the scene to remove
         scenes = scenes.filter(
@@ -159,9 +164,9 @@ export const useRecentStore = create<TRecentStore>()(
             !(scene.domain === sceneId.domain && scene.uuid === sceneId.uuid)
         );
 
-        newRecentScenes.set(userId, scenes);
+        newRecentScenes.set(recentSceneKey, scenes);
         localStorage.setItem(
-          `${MRU_SCENES_KEY}${userId}`,
+          `${MRU_SCENES_KEY_PREFIX}${recentSceneKey}`,
           JSON.stringify(scenes)
         );
 
@@ -170,9 +175,10 @@ export const useRecentStore = create<TRecentStore>()(
         };
       }),
 
-    getRecentScenesForUser: (userId: string) => {
+    getRecentScenesForUser: (userId: string, topic: string) => {
       const state = get();
-      return state.recentScenes.get(userId) ?? [];
+      const recentScenesKey = `${userId}_${topic}`;
+      return state.recentScenes.get(recentScenesKey) ?? [];
     },
   }))
 );
