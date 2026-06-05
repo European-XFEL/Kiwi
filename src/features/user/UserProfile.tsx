@@ -40,10 +40,7 @@ export default function UserInfo() {
   const initials = getInitials(displayName);
 
   const handleLogout = () => {
-    getNetwork().finishSession(
-      sessionInfo.guiServerHost,
-      sessionInfo.guiServerPort
-    );
+    getNetwork().finishSession();
     setLoggedOut();
   };
 
