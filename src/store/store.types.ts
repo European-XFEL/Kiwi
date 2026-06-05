@@ -1,5 +1,4 @@
-export interface UserRecentSceneInfo extends RecentSceneInfo {
-  userId: string;
+export interface TopicRecentSceneInfo extends RecentSceneInfo {
   topic: string;
 }
 
@@ -8,11 +7,6 @@ export interface RecentSceneInfo {
   uuid: string;
   name: string;
   projectName: string;
-}
-
-export interface RecentScenesByUserTopic {
-  userIdTopic: string;
-  scenes: RecentSceneInfo[];
 }
 
 export interface SceneSize {

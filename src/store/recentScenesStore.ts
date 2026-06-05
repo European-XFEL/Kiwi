@@ -1,51 +1,7 @@
-import {
-  RecentScenesByUserTopic,
-  UserRecentSceneInfo,
-  RecentSceneInfo,
-} from './store.types';
+import { getConfig } from '@/lib/singletons/api';
+import { RecentSceneInfo, TopicRecentSceneInfo } from './store.types';
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
-
-const MRU_SCENES_SIZE = 6;
-const MRU_SCENES_KEY_PREFIX = 'MRU_SCENES_';
-
-function moveFront<T>(arr: readonly T[], index: number): T[] {
-  const len = arr.length;
-  if (index < 0 || index >= len) {
-    throw new Error('index out of bounds');
-  }
-  if (index === 0) {
-    return arr.slice();
-  }
-  return [arr[index], ...arr.slice(0, index), ...arr.slice(index + 1)];
-}
-
-// Confirm from local storage if there are recent scenes
-const loadRecentScenes = (): RecentScenesByUserTopic[] | null => {
-  try {
-    const recentScenesKeys = Object.keys(localStorage).filter((key: string) =>
-      key.startsWith(MRU_SCENES_KEY_PREFIX)
-    );
-    if (recentScenesKeys.length === 0) return null;
-
-    const recentScenes: any[] = [];
-    for (const key of recentScenesKeys) {
-      // The keys of the localStorage are of the form: ${MRU_SCENES_KEY}${userId}
-      const userIdTopic = key.substring(MRU_SCENES_KEY_PREFIX.length);
-      const storedData = localStorage.getItem(key);
-      if (storedData) {
-        recentScenes.push({
-          userIdTopic: userIdTopic,
-          scenes: JSON.parse(storedData),
-        });
-      }
-    }
-    return recentScenes.length > 0 ? recentScenes : null;
-  } catch (error) {
-    console.warn('Failed to load recent scenes from localStorage:', error);
-    return null;
-  }
-};
 
 // State types
 export interface RecentSceneStoreState {
@@ -54,13 +10,12 @@ export interface RecentSceneStoreState {
 
 // Action types
 export interface RecentSceneStoreActions {
-  setRecentScene: (scene: UserRecentSceneInfo) => void;
+  setRecentScene: (scene: TopicRecentSceneInfo) => void;
   removeRecentScene: (
-    userId: string,
     topic: string,
     sceneId: { domain: string; uuid: string }
   ) => void;
-  getRecentScenesForUser: (userId: string, topic: string) => RecentSceneInfo[];
+  getRecentScenesForTopic: (topic: string) => RecentSceneInfo[];
 }
 
 // Store type
@@ -68,18 +23,8 @@ type TRecentStore = RecentSceneStoreState & RecentSceneStoreActions;
 
 // Helper function to return a map
 const createInitialState = (): RecentSceneStoreState => {
-  const loadedScenes = loadRecentScenes();
-  const recentScenesMap = new Map<string, RecentSceneInfo[]>();
-
-  if (loadedScenes) {
-    // Load all users' scenes, not just the first one
-    loadedScenes.forEach((userScenes) => {
-      recentScenesMap.set(userScenes.userIdTopic, userScenes.scenes);
-    });
-  }
-
   return {
-    recentScenes: recentScenesMap,
+    recentScenes: new Map<string, RecentSceneInfo[]>(),
   };
 };
 
@@ -88,97 +33,59 @@ const initialState: RecentSceneStoreState = createInitialState();
 
 export const useRecentStore = create<TRecentStore>()(
   subscribeWithSelector((set, get) => ({
-    // Spread the initial state
     ...initialState,
 
-    setRecentScene: (userScene: UserRecentSceneInfo) =>
+    setRecentScene: (scene: TopicRecentSceneInfo) =>
       set((state) => {
-        // Create a new Map to ensure immutability
         const newRecentScenes = new Map(state.recentScenes);
 
-        // Destructure the payload
-        const { userId, topic, uuid, domain, name, projectName } = userScene;
+        const config = getConfig();
 
-        const recentSceneKey = `${userId}_${topic}`;
+        config.setRecentScene(scene.topic, {
+          domain: scene.domain,
+          uuid: scene.uuid,
+          name: scene.name,
+          projectName: scene.projectName,
+        });
 
-        // Load the scenes in the state if any
-        let scenes = newRecentScenes.get(recentSceneKey) ?? [];
-        // Create a copy of the scenes array to avoid mutation
-        scenes = [...scenes];
+        newRecentScenes.set(scene.topic, config.getRecentScenes(scene.topic));
 
-        // Check if the scene already exists
-        const index = scenes.findIndex(
-          (scene) => scene.domain === domain && scene.uuid === uuid
-        );
-
-        if (index >= 0) {
-          // Ensure the name of the scene is updated - it might have been edited externally
-          scenes[index].name = name;
-          // Move existing scene to the top
-          const rearrangedArray = moveFront<RecentSceneInfo>(scenes, index);
-          scenes = rearrangedArray;
-        } else {
-          // Add new scene to the beginning
-          const newScene: RecentSceneInfo = {
-            domain,
-            uuid,
-            name,
-            projectName,
-          };
-          scenes.unshift(newScene);
-
-          // Remove excess scenes if we exceed the limit
-          if (scenes.length > MRU_SCENES_SIZE) {
-            scenes = scenes.slice(0, MRU_SCENES_SIZE);
-          }
-        }
-
-        // Update the map with the new scenes
-        newRecentScenes.set(recentSceneKey, scenes);
-
-        // Save to localStorage
-        localStorage.setItem(
-          `${MRU_SCENES_KEY_PREFIX}${recentSceneKey}`,
-          JSON.stringify(scenes)
-        );
-
-        // Return the new state
         return {
           recentScenes: newRecentScenes,
         };
       }),
 
     removeRecentScene: (
-      userId: string,
       topic: string,
       sceneId: { domain: string; uuid: string }
     ) =>
       set((state) => {
-        const recentSceneKey = `${userId}_${topic}`;
         const newRecentScenes = new Map(state.recentScenes);
-        let scenes = newRecentScenes.get(recentSceneKey) ?? [];
 
-        // Filter out the scene to remove
-        scenes = scenes.filter(
-          (scene) =>
-            !(scene.domain === sceneId.domain && scene.uuid === sceneId.uuid)
-        );
+        const config = getConfig();
 
-        newRecentScenes.set(recentSceneKey, scenes);
-        localStorage.setItem(
-          `${MRU_SCENES_KEY_PREFIX}${recentSceneKey}`,
-          JSON.stringify(scenes)
-        );
+        config.removeRecentScene(topic, sceneId);
+
+        const updatedScenes = config.getRecentScenes(topic);
+        if (updatedScenes.length === 0) {
+          newRecentScenes.delete(topic);
+        } else {
+          newRecentScenes.set(topic, updatedScenes);
+        }
 
         return {
           recentScenes: newRecentScenes,
         };
       }),
 
-    getRecentScenesForUser: (userId: string, topic: string) => {
+    getRecentScenesForTopic: (topic: string) => {
       const state = get();
-      const recentScenesKey = `${userId}_${topic}`;
-      return state.recentScenes.get(recentScenesKey) ?? [];
+      const inMemoryScenes = state.recentScenes.get(topic);
+      if (inMemoryScenes) {
+        return inMemoryScenes;
+      }
+
+      return getConfig().getRecentScenes(topic);
     },
   }))
 );
