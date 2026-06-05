@@ -7,15 +7,15 @@ import { Separator } from '@/components/api';
 
 const NoScenePanel: React.FC = () => {
   const { sessionInfo } = useGlobalStore();
-  const { getRecentScenesForUser, removeRecentScene } = useRecentStore();
+  const { getRecentScenesForTopic, removeRecentScene } = useRecentStore();
   const navigate = useNavigate();
 
   document.title = 'Kiwi';
 
-  const loggedUser = sessionInfo?.loggedUser ?? null;
   const topic = sessionInfo?.guiServerTopic ?? null;
-  const userScenes: RecentSceneInfo[] =
-    loggedUser && topic ? getRecentScenesForUser(loggedUser, topic) : [];
+  const recentScenes: RecentSceneInfo[] = topic
+    ? getRecentScenesForTopic(topic)
+    : [];
 
   const handleSceneClick = (recentScene: RecentSceneInfo) => {
     navigate(
@@ -30,8 +30,8 @@ const NoScenePanel: React.FC = () => {
   };
 
   const handleRemoveScene = (recentScene: RecentSceneInfo) => {
-    if (loggedUser && topic) {
-      removeRecentScene(loggedUser, topic, {
+    if (topic) {
+      removeRecentScene(topic, {
         domain: recentScene.domain,
         uuid: recentScene.uuid,
       });
@@ -53,7 +53,7 @@ const NoScenePanel: React.FC = () => {
 
         {/* Recent Scenes */}
         <RecentScenesList
-          scenes={userScenes}
+          scenes={recentScenes}
           onSceneOpen={handleSceneClick}
           onSceneRemove={handleRemoveScene}
           disabled={!sessionInfo}

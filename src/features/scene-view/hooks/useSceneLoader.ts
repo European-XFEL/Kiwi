@@ -12,7 +12,7 @@ import type { LoadProjectSceneResult } from '@/karabo/common/project/api';
 import { sceneParamsFromURL } from '@/features/navigation/utils';
 import { getDbConn, getTopology } from '@/lib/singletons/api';
 import {
-  type UserRecentSceneInfo,
+  type TopicRecentSceneInfo,
   useRecentStore,
   useGlobalStore,
   useLoadedSceneStore,
@@ -31,7 +31,6 @@ export function useSceneLoader(): SceneLoaderResult {
   const { setRecentScene } = useRecentStore();
   const { setLoadedSceneRef } = useLoadedSceneStore();
 
-  const loggedUser = sessionInfo?.loggedUser;
   const topic = sessionInfo?.guiServerTopic;
 
   const [scene, setScene] = React.useState<SceneModel | null>(null);
@@ -97,10 +96,9 @@ export function useSceneLoader(): SceneLoaderResult {
           name: result.scene!.name,
         });
 
-        if (loggedUser && topic) {
-          const recentScene: UserRecentSceneInfo = {
-            userId: loggedUser,
-            topic: topic,
+        if (topic) {
+          const recentScene: TopicRecentSceneInfo = {
+            topic,
             domain: result.scene!.domain,
             uuid: result.scene!.uuid,
             name: result.scene!.name,
@@ -118,7 +116,7 @@ export function useSceneLoader(): SceneLoaderResult {
       cancelled = true;
       clearPoll();
     };
-  }, [location.search, loggedUser, setLoadedSceneRef, setRecentScene]);
+  }, [location.search, topic, setLoadedSceneRef, setRecentScene]);
 
   return { scene, error };
 }
