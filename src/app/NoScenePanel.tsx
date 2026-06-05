@@ -13,9 +13,9 @@ const NoScenePanel: React.FC = () => {
   document.title = 'Kiwi';
 
   const loggedUser = sessionInfo?.loggedUser ?? null;
-  const userScenes: RecentSceneInfo[] = loggedUser
-    ? getRecentScenesForUser(loggedUser)
-    : [];
+  const topic = sessionInfo?.guiServerTopic ?? null;
+  const userScenes: RecentSceneInfo[] =
+    loggedUser && topic ? getRecentScenesForUser(loggedUser, topic) : [];
 
   const handleSceneClick = (recentScene: RecentSceneInfo) => {
     navigate(
@@ -30,8 +30,8 @@ const NoScenePanel: React.FC = () => {
   };
 
   const handleRemoveScene = (recentScene: RecentSceneInfo) => {
-    if (loggedUser) {
-      removeRecentScene(loggedUser, {
+    if (loggedUser && topic) {
+      removeRecentScene(loggedUser, topic, {
         domain: recentScene.domain,
         uuid: recentScene.uuid,
       });
