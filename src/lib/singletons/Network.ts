@@ -162,7 +162,7 @@ export class Network {
     if (this._session) return;
 
     try {
-      let sessionData = await getConfig().loadSession(host, port);
+      let sessionData = await getConfig().loadSession();
       if (!sessionData) {
         onNoSessionHandler();
         return;
@@ -179,7 +179,7 @@ export class Network {
             sessionData!.refreshToken != undefined;
 
           if (isServerAuthenticated != sessionDataAuthenticated) {
-            getConfig().deleteSession(host, port);
+            getConfig().deleteSession();
             onErrorHandler(
               'Session authentication mode mismatch. Resume aborted.'
             );
@@ -207,7 +207,7 @@ export class Network {
             );
 
             if (!res.success) {
-              getConfig().deleteSession(host, port);
+              getConfig().deleteSession();
               onErrorHandler(res.error_msg!);
               return;
             }
@@ -225,8 +225,6 @@ export class Network {
             };
 
             await getConfig().saveAuthSession(
-              host,
-              port,
               sessionData!.userId,
               res.refresh_token!
             );
@@ -235,29 +233,29 @@ export class Network {
         },
         // onProbeError
         (error_msg: string) => {
-          getConfig().deleteSession(host, port);
+          getConfig().deleteSession();
           onErrorHandler(`Failed to probe server: "${error_msg}".`);
         }
       );
     } catch (error: any) {
-      getConfig().deleteSession(host, port);
+      getConfig().deleteSession();
       onErrorHandler(error.toString());
     }
   }
 
-  public expireSession(host: string, port: number): void {
+  public expireSession(): void {
     this._session = undefined;
     this._sessionExpired = true;
     this._stopWebsocketSession();
-    getConfig().deleteSession(host, port);
+    getConfig().deleteSession();
     useGlobalActivityStore.getState().reset();
   }
 
-  public finishSession(host: string, port: number): void {
+  public finishSession(): void {
     this._session = undefined;
     this._closeRequested = true;
     this._stopWebsocketSession();
-    getConfig().deleteSession(host, port);
+    getConfig().deleteSession();
     useGlobalActivityStore.getState().reset();
   }
 

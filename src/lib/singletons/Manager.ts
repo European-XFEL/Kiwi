@@ -72,12 +72,7 @@ export class Manager {
     // Check for Non-Auth session logic
     const session = this._network.session;
     if (session && !session.isAuthSession) {
-      getConfig().saveNonAuthSession(
-        session.host,
-        session.port,
-        session.userId!,
-        session.accessLevel!
-      );
+      getConfig().saveNonAuthSession(session.userId!, session.accessLevel!);
 
       AccessControlManager.instance.initFromLogin({
         accessLevel: session.accessLevel!,
@@ -162,12 +157,7 @@ export class Manager {
 
     if (!session) return;
 
-    getConfig().saveAuthSession(
-      session.host,
-      session.port,
-      session.userId!,
-      session.refreshToken!
-    );
+    getConfig().saveAuthSession(session.userId!, session.refreshToken!);
 
     AccessControlManager.instance.initFromLogin({
       accessLevel: accessLevel,

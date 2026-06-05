@@ -11,53 +11,34 @@ export interface SessionData {
 export class ConfigurationStore {
   // #region SessionData
 
-  private readonly SESSION_DATA_KEY_PREFIX = 'gui_session_data';
+  private readonly SESSION_DATA_KEY = 'gui_session_data';
 
-  async saveAuthSession(
-    host: string,
-    port: number,
-    userId: string,
-    refreshToken: string
-  ): Promise<void> {
-    await this.saveSession(host, port, {
+  async saveAuthSession(userId: string, refreshToken: string): Promise<void> {
+    await this.saveSession({
       userId: userId,
       refreshToken: refreshToken,
     });
   }
 
   async saveNonAuthSession(
-    host: string,
-    port: number,
     userId: string,
     accessLevel: AccessLevel
   ): Promise<void> {
-    await this.saveSession(host, port, {
+    await this.saveSession({
       userId: userId,
       accessLevel: accessLevel,
     });
   }
 
-  private async saveSession(
-    host: string,
-    port: number,
-    data: SessionData
-  ): Promise<void> {
+  private async saveSession(data: SessionData): Promise<void> {
     const jsonData = JSON.stringify(data);
     const encryptedData = encryptData(jsonData);
-    localStorage.setItem(
-      `${this.SESSION_DATA_KEY_PREFIX}:${host}:${port}`,
-      encryptedData
-    );
+    localStorage.setItem(this.SESSION_DATA_KEY, encryptedData);
   }
 
-  async loadSession(
-    host: string,
-    port: number
-  ): Promise<SessionData | undefined> {
+  async loadSession(): Promise<SessionData | undefined> {
     try {
-      const encryptedData = localStorage.getItem(
-        `${this.SESSION_DATA_KEY_PREFIX}:${host}:${port}`
-      );
+      const encryptedData = localStorage.getItem(this.SESSION_DATA_KEY);
       if (encryptedData) {
         const jsonData = decryptData(encryptedData);
         return JSON.parse(jsonData);
@@ -68,8 +49,8 @@ export class ConfigurationStore {
     return undefined;
   }
 
-  async deleteSession(host: string, port: number): Promise<void> {
-    localStorage.removeItem(`${this.SESSION_DATA_KEY_PREFIX}:${host}:${port}`);
+  async deleteSession(): Promise<void> {
+    localStorage.removeItem(this.SESSION_DATA_KEY);
   }
 
   // #endregion
