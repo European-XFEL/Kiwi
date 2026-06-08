@@ -1,4 +1,5 @@
 import { LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/api';
 import {
   DropdownMenu,
@@ -30,6 +31,7 @@ const getInitials = (text?: string): string => {
 
 export default function UserInfo() {
   const { sessionInfo, setLoggedOut } = useGlobalStore();
+  const navigate = useNavigate();
 
   if (!sessionInfo) {
     return null;
@@ -42,6 +44,7 @@ export default function UserInfo() {
   const handleLogout = () => {
     getNetwork().finishSession();
     setLoggedOut();
+    navigate('/', { replace: true });
   };
 
   return (
