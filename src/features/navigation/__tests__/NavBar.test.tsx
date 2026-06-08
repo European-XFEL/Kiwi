@@ -1,6 +1,5 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { useLoadedSceneStore } from '@/store/loadedSceneStore';
 
 const mockNavigate = jest.fn();
 const mockGetScene = jest.fn();
@@ -25,6 +24,26 @@ jest.mock('@/lib/singletons/api', () => ({
     setRecentScene: jest.fn(),
     removeRecentScene: jest.fn(),
   }),
+}));
+
+const mockSceneStoreState: {
+  loadedSceneRef?: {
+    width: number;
+    height: number;
+    domain: string;
+    projectName: string;
+    uuid: string;
+    name: string;
+  };
+  setLoadedSceneRef: jest.Mock;
+} = {
+  loadedSceneRef: undefined,
+  setLoadedSceneRef: jest.fn(),
+};
+
+jest.mock('@/features/scene-view/api', () => ({
+  useActiveSceneStore: (selector?: (state: unknown) => unknown) =>
+    selector ? selector(mockSceneStoreState) : mockSceneStoreState,
 }));
 
 jest.mock('@/app/api', () => {
@@ -126,17 +145,15 @@ import { NavBar } from '../NavBar';
 describe('NavBar', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    useLoadedSceneStore.setState({
-      loadedSceneRef: {
-        width: 800,
-        height: 600,
-        domain: 'CONTROLS',
-        projectName: 'David_test',
-        uuid: 'scene-123',
-        name: 'beckhoff',
-      },
-      fitMode: 'fit-page',
-    });
+    mockSceneStoreState.loadedSceneRef = {
+      width: 800,
+      height: 600,
+      domain: 'CONTROLS',
+      projectName: 'David_test',
+      uuid: 'scene-123',
+      name: 'beckhoff',
+    };
+    mockSceneStoreState.setLoadedSceneRef.mockReset();
   });
 
   it('renders the loaded scene breadcrumb without fetching scene info again', () => {

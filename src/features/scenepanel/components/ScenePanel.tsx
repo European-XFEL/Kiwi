@@ -2,9 +2,10 @@ import { SceneModel } from '@/karabo/common/api';
 import {
   getOverflow,
   SceneView,
+  useActiveSceneStore,
   useSceneScale,
 } from '@/features/scene-view/api';
-import { LoadedSceneRef, useLoadedSceneStore } from '@/store/api';
+import { LoadedSceneRef } from '@/store/api';
 import React from 'react';
 import ScenePanelShell from './ScenePanelShell';
 import ScenePanelViewport from './ScenePanelViewport';
@@ -16,7 +17,7 @@ export interface ScenePanelProps {
 }
 
 const ScenePanel: React.FC<ScenePanelProps> = ({ sceneRef, sceneModel }) => {
-  const { fitMode } = useLoadedSceneStore();
+  const fitMode = useActiveSceneStore((state) => state.fitMode);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const sceneDimensions = React.useMemo(
     () => ({ width: sceneModel.width, height: sceneModel.height }),

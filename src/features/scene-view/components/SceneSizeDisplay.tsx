@@ -1,11 +1,11 @@
-import { useLoadedSceneStore } from '@/store/api';
+import { useActiveSceneStore } from '@/features/scene-view/api';
 
 export type SceneSizeDisplayProps = {
   className?: string;
 };
 
 export default function SceneSizeDisplay({ className }: SceneSizeDisplayProps) {
-  const loadedSceneRef = useLoadedSceneStore((state) => state.loadedSceneRef);
+  const loadedSceneRef = useActiveSceneStore((state) => state.loadedSceneRef);
 
   if (!loadedSceneRef || !loadedSceneRef.width || !loadedSceneRef.height) {
     return null;

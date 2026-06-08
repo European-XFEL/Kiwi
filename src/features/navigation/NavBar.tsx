@@ -9,14 +9,17 @@ import { UserProfile, AccessLevelSelector } from '@/features/user';
 import { Button, Separator } from '@/components/api';
 import { GuiServerDisplay, ActiveIndicator } from '@/features/status';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useLoadedSceneStore } from '@/store/api';
+import { useActiveSceneStore } from '@/features/scene-view/api';
 import { sceneParamsFromURL } from './utils';
 
 export function NavBar() {
   const location = useLocation();
   const navigate = useNavigate();
   const sceneParams = sceneParamsFromURL(location.search);
-  const { loadedSceneRef, setLoadedSceneRef } = useLoadedSceneStore();
+  const loadedSceneRef = useActiveSceneStore((state) => state.loadedSceneRef);
+  const setLoadedSceneRef = useActiveSceneStore(
+    (state) => state.setLoadedSceneRef
+  );
   const activeLoadedSceneRef =
     sceneParams && loadedSceneRef?.uuid === sceneParams.uuid
       ? loadedSceneRef
@@ -24,7 +27,7 @@ export function NavBar() {
 
   const handleHome = () => {
     setLoadedSceneRef(undefined);
-    navigate('/no_scene');
+    navigate('/home');
   };
 
   return (

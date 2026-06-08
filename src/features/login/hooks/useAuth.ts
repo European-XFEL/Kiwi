@@ -67,7 +67,7 @@ export function useAuth({
 
       const sceneParams = sceneParamsFromURL(location.search);
       if (!sceneParams) {
-        navigate('no_scene');
+        navigate('home');
       }
       // else (there's are scene params in the location bar):  it means
       // the user activated some previously saved scene bookmark. Just let

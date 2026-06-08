@@ -23,7 +23,7 @@ const AppBody: React.FC = () => {
       NOTIFIED_SESSION_EXPIRATION: <LoggedInState />,
       SESSION_EXPIRED: <SessionExpiredState />,
       SCENE_OPEN_ERROR: <ErrorState error={lastError} />,
-      SCENE_DISPLAY_ERROR: null,
+      SCENE_DISPLAY_ERROR: <LoggedInState />,
     }),
     [lastError]
   );

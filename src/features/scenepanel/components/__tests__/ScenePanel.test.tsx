@@ -21,20 +21,17 @@ jest.mock('@/features/scene-view/api', () => {
         sceneModel.uuid
       ),
     useSceneScale: () => 1,
+    useActiveSceneStore: (selector?: (state: unknown) => unknown) => {
+      const state = {
+        fitMode: 'fit-page',
+        loadedSceneRef: undefined,
+        setFitMode: jest.fn(),
+      };
+      return selector ? selector(state) : state;
+    },
     getOverflow: () => ({ overflowX: 'hidden', overflowY: 'hidden' }),
   };
 });
-
-jest.mock('@/store/api', () => ({
-  useLoadedSceneStore: (selector?: (state: unknown) => unknown) => {
-    const state = {
-      fitMode: 'fit-page',
-      loadedSceneRef: undefined,
-      setFitMode: jest.fn(),
-    };
-    return selector ? selector(state) : state;
-  },
-}));
 
 const makeScene = (uuid: string) => {
   const scene = new SceneModel();

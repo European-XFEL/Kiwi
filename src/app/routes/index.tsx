@@ -1,6 +1,5 @@
 import AppBody from '../AppBody';
-import NoScenePanel from '../NoScenePanel';
-import { ScenePage } from '@/features/scene-view/api';
+import { LandingPage, PanelWrangler } from '@/features/scene-view/api';
 import { RouteProp } from '../router/types';
 
 export const appRoutes: RouteProp[] = [
@@ -10,11 +9,11 @@ export const appRoutes: RouteProp[] = [
     children: [
       {
         path: 'scene',
-        element: <ScenePage />,
+        element: <PanelWrangler />,
       },
       {
-        path: 'no_scene',
-        element: <NoScenePanel />,
+        path: 'home',
+        element: <LandingPage />,
       },
     ],
   },
