@@ -31,16 +31,7 @@ function useSceneNavigate(target: string, targetWindow: 'mainwin' | 'dialog') {
     if (projectName) {
       next = next.replace(/([?&]projectName=)[^&]*/, `$1${projectName}`);
     }
-
-    if (targetWindow === 'dialog') {
-      window.open(
-        `${location.pathname}${next}`,
-        '_blank',
-        'noopener,noreferrer'
-      );
-    } else {
-      navigate({ pathname: location.pathname, search: next });
-    }
+    navigate({ pathname: location.pathname, search: next });
   }, [target, targetWindow, location, navigate]);
 }
 
@@ -75,6 +66,9 @@ function LinkButton({
       onClick={onClick}
       style={{
         position: 'relative',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
         width: '100%',
         height: '100%',
         backgroundColor: background,
