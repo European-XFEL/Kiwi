@@ -5,11 +5,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/api';
-import { useLoadedSceneStore } from '@/store/api';
+import { useActiveSceneStore } from '@/features/scene-view/api';
 
 /** Fit mode dropdown — only renders when a scene is loaded. */
 export default function FitModeSelect() {
-  const { loadedSceneRef, fitMode, setFitMode } = useLoadedSceneStore();
+  const loadedSceneRef = useActiveSceneStore((state) => state.loadedSceneRef);
+  const fitMode = useActiveSceneStore((state) => state.fitMode);
+  const setFitMode = useActiveSceneStore((state) => state.setFitMode);
 
   if (!loadedSceneRef) return null;
 

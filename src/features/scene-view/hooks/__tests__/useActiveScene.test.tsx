@@ -2,7 +2,6 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 
 const mockGetScene = jest.fn();
 const mockSetRecentScene = jest.fn();
-const mockSetLoadedSceneRef = jest.fn();
 
 let mockLocationSearch =
   '?host=test-host&port=44444&domain=CONTROLS&projectName=David_test&uuid=scene-a';
@@ -25,12 +24,9 @@ jest.mock('@/store/api', () => ({
   useRecentStore: () => ({
     setRecentScene: mockSetRecentScene,
   }),
-  useLoadedSceneStore: () => ({
-    setLoadedSceneRef: mockSetLoadedSceneRef,
-  }),
 }));
 
-import { useSceneLoader } from '../useSceneLoader';
+import { useActiveScene, useActiveSceneStore } from '../useActiveScene';
 
 const makeSceneResult = (uuid: string) => ({
   error_msg: '',
@@ -47,9 +43,13 @@ const makeSceneResult = (uuid: string) => ({
   },
 });
 
-describe('useSceneLoader', () => {
+describe('useActiveScene', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    useActiveSceneStore.setState({
+      loadedSceneRef: undefined,
+      fitMode: 'fit-page',
+    });
     mockLocationSearch =
       '?host=test-host&port=44444&domain=CONTROLS&projectName=David_test&uuid=scene-a';
 
@@ -66,7 +66,7 @@ describe('useSceneLoader', () => {
   });
 
   it('loads one new scene once when the URL scene changes', async () => {
-    const { result, rerender } = renderHook(() => useSceneLoader());
+    const { result, rerender } = renderHook(() => useActiveScene());
 
     await waitFor(() => {
       expect(result.current.scene).toEqual(
@@ -81,7 +81,9 @@ describe('useSceneLoader', () => {
       'scene-a',
       expect.any(Function)
     );
-    expect(mockSetLoadedSceneRef).toHaveBeenCalledTimes(1);
+    expect(useActiveSceneStore.getState().loadedSceneRef).toEqual(
+      expect.objectContaining({ uuid: 'scene-a' })
+    );
 
     mockLocationSearch =
       '?host=test-host&port=44444&domain=CONTROLS&projectName=David_test&uuid=scene-b';
@@ -103,8 +105,7 @@ describe('useSceneLoader', () => {
       'scene-b',
       expect.any(Function)
     );
-    expect(mockSetLoadedSceneRef).toHaveBeenCalledTimes(2);
-    expect(mockSetLoadedSceneRef).toHaveBeenLastCalledWith({
+    expect(useActiveSceneStore.getState().loadedSceneRef).toEqual({
       width: 1024,
       height: 768,
       domain: 'CONTROLS',
@@ -126,13 +127,13 @@ describe('useSceneLoader', () => {
       }
     );
 
-    const { result } = renderHook(() => useSceneLoader());
+    const { result } = renderHook(() => useActiveScene());
 
     await waitFor(() => {
       expect(result.current.error).toContain('backend down');
     });
 
-    expect(mockSetLoadedSceneRef).toHaveBeenCalledWith(undefined);
+    expect(useActiveSceneStore.getState().loadedSceneRef).toBeUndefined();
     expect(result.current.scene).toBeNull();
   });
 });

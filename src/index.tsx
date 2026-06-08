@@ -16,8 +16,8 @@ root.render(
     <BrowserRouter>
       <AppRouter
         routes={appRoutes}
-        indexRedirect="no_scene"
-        fallbackRedirect="no_scene"
+        indexRedirect="home"
+        fallbackRedirect="home"
       />
       <KiwiApp />
     </BrowserRouter>

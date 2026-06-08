@@ -8,13 +8,14 @@ export {
   contentsWrapperStyle,
 } from './utils/mode';
 export type { SceneInteractionMode } from './utils/mode';
-export { default as ScenePage } from './components/ScenePage';
+export { default as PanelWrangler } from './components/PanelWrangler';
+export { default as LandingPage } from './components/LandingPage';
 export { default as SceneView } from './components/SceneView';
 export { default as SceneStatus } from './components/SceneStatus';
 export { default as SceneSizeDisplay } from './components/SceneSizeDisplay';
 export { default as FitModeSelect } from './components/FitModeSelect';
 export { ControllerContainer } from './components/widgets/ControllerContainer';
-export { useSceneLoader } from './hooks/useSceneLoader';
+export { useActiveScene, useActiveSceneStore } from './hooks/useActiveScene';
 export { useSceneScale } from './hooks/useSceneScale';
 export { getOverflow } from './utils/sceneLayout';
 export {

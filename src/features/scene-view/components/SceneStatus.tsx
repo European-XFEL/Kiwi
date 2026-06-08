@@ -8,7 +8,7 @@ import {
   cn,
 } from '@/components/api';
 import { sceneParamsFromURL } from '@/features/navigation/utils';
-import { useLoadedSceneStore } from '@/store/api';
+import { useActiveSceneStore } from '@/features/scene-view/api';
 import { Dot, FileText, XCircle } from 'lucide-react';
 import { useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -25,7 +25,10 @@ export default function SceneStatus({
   const navigate = useNavigate();
   const location = useLocation();
   const sceneParams = sceneParamsFromURL(location.search);
-  const { loadedSceneRef, setLoadedSceneRef } = useLoadedSceneStore();
+  const loadedSceneRef = useActiveSceneStore((state) => state.loadedSceneRef);
+  const setLoadedSceneRef = useActiveSceneStore(
+    (state) => state.setLoadedSceneRef
+  );
   const activeLoadedSceneRef =
     sceneParams && loadedSceneRef?.uuid === sceneParams.uuid
       ? loadedSceneRef
@@ -35,7 +38,7 @@ export default function SceneStatus({
   const handleUnloadScene = useCallback(() => {
     if (!hasScene) return;
     setLoadedSceneRef(undefined);
-    navigate('/no_scene');
+    navigate('/home');
   }, [hasScene, navigate, setLoadedSceneRef]);
 
   const fullSceneName = activeLoadedSceneRef
