@@ -84,6 +84,7 @@ function LinkButton({
         borderColor: foreground,
         ...getQFontTextStyle(font),
         cursor: onClick ? 'pointer' : 'default',
+        pointerEvents: 'auto',
         overflow: 'hidden',
         whiteSpace: 'nowrap',
         textOverflow: 'ellipsis',
@@ -135,7 +136,15 @@ const DeviceSceneLink: React.FC<{
 // ----------------------------------------------------------------------------
 
 const SceneLink: React.FC<{ model: SceneLinkModel }> = ({ model }) => {
-  const go = useSceneNavigate(model.target, model.target_window);
+  const parts = model.target.split(':');
+  if (parts.length !== 2) {
+    return;
+  }
+  // target format => "simple_name:UUID"
+  const name = parts[0];
+  const target = parts[1];
+
+  const go = useSceneNavigate(target, model.target_window);
   return (
     <LinkButton
       text={model.text}
@@ -143,7 +152,7 @@ const SceneLink: React.FC<{ model: SceneLinkModel }> = ({ model }) => {
       foreground={model.foreground}
       background={model.background}
       frame_width={model.frame_width}
-      title={`Scene: ${model.target}`}
+      title={`Scene: ${name}`}
       onClick={go}
       Icon={Film}
       iconColor="#64748b"
