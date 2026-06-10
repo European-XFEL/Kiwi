@@ -3,12 +3,14 @@ import {
   ListProjectScenesResult,
   LoadProjectItemsResult,
   LoadProjectSceneResult,
-  ProjectSceneInfo,
   ProjectSceneCache,
   BaseProjectObjectModel,
 } from '@/karabo/common/project/api';
 import { XMLParser } from 'fast-xml-parser';
-import { readSceneFromSvgJson } from '@/karabo/common/scenemodel/api';
+import {
+  readSceneFromSvgJson,
+  SceneModel,
+} from '@/karabo/common/scenemodel/api';
 import { getNetwork } from '@/lib/singletons/api';
 
 import {
@@ -96,6 +98,7 @@ export class DbConnection {
     // Differently from the listDomains and listProjects operations, listScenes
     // requires multiple round-trips of "loadItems" operations.
     this._collectedScenes = [];
+    this._domain = domain;
     this._projectName = projectName;
     this._loadItemsErr = undefined;
     this._pendingLoadItems = 1;
@@ -113,8 +116,9 @@ export class DbConnection {
   // Internal data to keep track of the sequence of projectLoadItems operations
   // involved in a listScenes operation.
   private _pendingLoadItems: number = 0;
+  private _domain: string = '';
   private _projectName: string = '';
-  private _collectedScenes?: ProjectSceneInfo[];
+  private _collectedScenes?: SceneModel[];
   private _loadItemsErr?: string;
 
   // The internal callback for all the intermediary projectLoadItems operations invoked
@@ -131,7 +135,7 @@ export class DbConnection {
     }
     let itemsInfo: LoadProjectItemsResult | undefined = undefined;
     try {
-      itemsInfo = this._loadProjectItemsResultFromHash(this._projectName, hash);
+      itemsInfo = this._loadProjectItemsResultFromHash(hash);
       if (itemsInfo.error_msg !== undefined) {
         // An error occurred; store the message and interrupt the operation.
         this._loadItemsErr = itemsInfo.error_msg;
@@ -170,15 +174,14 @@ export class DbConnection {
             (scene) => scene.uuid === item.uuid
           );
           if (sceneIdx === -1) {
-            this._collectedScenes?.push({
-              domain: item['domain'],
-              uuid: item['uuid'],
-              simple_name: item['simple_name'],
-              project_name: item['projectName'],
-              svg: item['svg'] as string,
-              date: item['date'],
-              item_type: 'scene',
-            });
+            this._collectedScenes?.push(
+              new SceneModel({
+                uuid: item['uuid'],
+                simple_name: item['simple_name'],
+                svg: item['svg'] as string,
+                date: item['date'],
+              })
+            );
           }
         }
       }
@@ -189,11 +192,15 @@ export class DbConnection {
       let listScenesResult: ListProjectScenesResult;
       if (this._loadItemsErr !== undefined) {
         listScenesResult = {
+          domain: this._domain,
+          projectName: this._projectName,
           scenes: [],
           error_msg: this._loadItemsErr,
         };
       } else {
         listScenesResult = {
+          domain: this._domain,
+          projectName: this._projectName,
           scenes: this._collectedScenes!.sort((a, b) =>
             a.simple_name.localeCompare(b.simple_name)
           ),
@@ -221,10 +228,10 @@ export class DbConnection {
   ): void {
     //cache lookup - note that the cache is only for scenes, so we don't need to check the projectName
     const sceneInfo = this._sceneCache.getSceneInfo(domain, uuid);
-    if (sceneInfo) {
+    if (sceneInfo && sceneInfo.svg) {
       // Scene was found in cache - rebuild model from cached JSON and return
       const model = readSceneFromSvgJson(JSON.parse(sceneInfo.svg));
-      onScene({ scene: sceneInfo, model, error_msg: undefined });
+      onScene({ sceneModel: model, error_msg: undefined });
       return;
     }
     // Stores the callback to be called when the GUI Server sends back the scene.
@@ -241,6 +248,7 @@ export class DbConnection {
     this._activeLoadItemsHandler = this._onLoadSceneHash;
 
     this._onGetSceneCallback = onScene;
+    this._domain = domain;
     this._projectName = projectName;
     getNetwork().onProjectLoadItems(
       this._loadItemsHashList([
@@ -256,7 +264,7 @@ export class DbConnection {
     let itemsInfo: LoadProjectItemsResult | undefined = undefined;
     let loadSceneErr: string | undefined = undefined;
     try {
-      itemsInfo = this._loadProjectItemsResultFromHash(this._projectName, hash);
+      itemsInfo = this._loadProjectItemsResultFromHash(hash);
       if (itemsInfo.error_msg !== undefined) {
         // An error occurred
         loadSceneErr = itemsInfo.error_msg;
@@ -284,7 +292,7 @@ export class DbConnection {
     if (loadSceneErr !== undefined) {
       // An error occurred
       this._onGetSceneCallback?.({
-        scene: undefined,
+        sceneModel: undefined,
         error_msg: loadSceneErr,
       });
     } else {
@@ -302,10 +310,9 @@ export class DbConnection {
       sceneModel.date = sceneInfo['date'];
       sceneModel.simple_name = sceneInfo['simple_name'];
       sceneModel.uuid = sceneInfo['uuid'];
-      this._sceneCache.storeSceneInfo(sceneInfo);
+      this._sceneCache.storeSceneInfo(sceneData['domain'], sceneModel);
       this._onGetSceneCallback?.({
-        scene: { ...sceneInfo },
-        model: sceneModel,
+        sceneModel: sceneModel,
         error_msg: undefined,
       });
     }
@@ -345,7 +352,6 @@ export class DbConnection {
   // #region Hash decoding utilities
 
   private _loadProjectItemsResultFromHash = (
-    projectName: string,
     hash: Hash
   ): LoadProjectItemsResult => {
     const reason = hash.getValue('reason') as string;
@@ -412,10 +418,8 @@ export class DbConnection {
           };
           items.push(item);
         } else if (itemType === 'scene') {
-          // Build a ProjectSceneInfo object
+          // Build a SceneModel object
           const item = {
-            domain: domain,
-            projectName: projectName,
             uuid: uuid,
             simple_name: xmlObj.xml['@_simple_name'],
             description: xmlObj.xml['@_description'],
@@ -424,8 +428,6 @@ export class DbConnection {
               xmlObj.xml['svg:svg'] != undefined
                 ? JSON.stringify(xmlObj.xml['svg:svg'])
                 : JSON.stringify(xmlObj.xml['svg']),
-            // svg: xml,
-            item_type: itemType,
           };
           //console.log(item);
           items.push(item);

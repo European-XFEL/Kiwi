@@ -1,11 +1,11 @@
 import { Button } from '@/components/api';
-import { ProjectSceneInfo } from '@/karabo/common/project/api';
 import { useGlobalStore } from '@/store/api';
 import { FolderOpen } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SelectProjectSceneDialog from './SelectProjectSceneDialog';
 import type { LoadProjectSceneProps } from './types/project.types';
+import { SceneModel } from '@/karabo/common/scenemodel/api';
 
 export default function LoadProjectScene({
   className,
@@ -24,19 +24,20 @@ export default function LoadProjectScene({
     setOpenDialog(false);
   };
 
-  const handleSceneSelected = (selectedScene: ProjectSceneInfo) => {
+  const handleSceneSelected = (
+    domain: string,
+    projectName: string,
+    selectedScene: SceneModel
+  ) => {
     setOpenDialog(false);
 
     if (!sessionInfo) return;
 
     navigate(
-      // `/scene_v2?host=${sessionInfo.guiServerHost}&port=${
       `/scene?host=${sessionInfo.guiServerHost}&port=${
         sessionInfo.guiServerPort
-      }&domain=${encodeURIComponent(
-        selectedScene.domain
-      )}&projectName=${encodeURIComponent(
-        selectedScene.project_name
+      }&domain=${encodeURIComponent(domain)}&projectName=${encodeURIComponent(
+        projectName
       )}&uuid=${encodeURIComponent(selectedScene.uuid)}`
     );
   };

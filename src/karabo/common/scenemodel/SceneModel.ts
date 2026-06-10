@@ -8,6 +8,11 @@ import { ATTR_KRB_VERSION, SCENE_FILE_VERSION, SVG_SVG } from './constants';
 import { toNum } from './util';
 
 export class SceneModel extends BaseSceneObjectData {
+  constructor(init?: Partial<SceneModel>) {
+    super();
+    Object.assign(this, init);
+  }
+  svg = '';
   width = 1024;
   height = 768;
   file_format_version = 2;

@@ -113,7 +113,7 @@ export function useActiveScene(): ActiveSceneResult {
       const result = await fetchScene(sceneParams);
       if (isCancelled()) return;
 
-      if (result.error_msg || !result.model || !result.scene) {
+      if (result.error_msg || !result.sceneModel) {
         setLoadedSceneRef(undefined);
         setScene(null);
         setError(
@@ -125,12 +125,12 @@ export function useActiveScene(): ActiveSceneResult {
       }
 
       const nextLoadedSceneRef: LoadedSceneRef = {
-        width: result.model.width,
-        height: result.model.height,
-        domain: result.scene.domain,
-        projectName: result.scene.project_name,
-        uuid: result.scene.uuid,
-        name: result.scene.simple_name,
+        width: result.sceneModel.width,
+        height: result.sceneModel.height,
+        domain: sceneParams.domain,
+        projectName: sceneParams.projectName,
+        uuid: result.sceneModel.uuid,
+        name: result.sceneModel.simple_name,
       };
 
       setLoadedSceneRef(nextLoadedSceneRef);
@@ -138,10 +138,10 @@ export function useActiveScene(): ActiveSceneResult {
       if (topic) {
         const recentScene: TopicRecentSceneInfo = {
           topic,
-          domain: result.scene.domain,
-          uuid: result.scene.uuid,
-          name: result.scene.simple_name,
-          projectName: result.scene.project_name,
+          domain: sceneParams.domain,
+          uuid: result.sceneModel.uuid,
+          name: result.sceneModel.simple_name,
+          projectName: sceneParams.projectName,
         };
         setRecentScene(recentScene);
       }
@@ -149,7 +149,7 @@ export function useActiveScene(): ActiveSceneResult {
       const topologyReady = await waitForTopologyReady(isCancelled);
       if (!topologyReady || isCancelled()) return;
 
-      setScene(result.model);
+      setScene(result.sceneModel);
       setError('');
     })();
 

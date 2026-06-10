@@ -1,18 +1,5 @@
 import type { SceneModel } from '../scenemodel/SceneModel';
 import { BaseProjectObjectModel } from './bases';
-import { ProjectQueryableItem } from './ProjectModel';
-
-// #region Data structures for project entities
-
-export interface ProjectSceneInfo extends ProjectQueryableItem {
-  simple_name: string;
-  project_name: string;
-  svg: string;
-  /// Last modification date in 'YYYY-MM-DD HH:MM:SS' format (UTC)
-  date: string;
-}
-
-// #endregion
 
 // #region Results for List operations for project entities
 
@@ -22,13 +9,14 @@ export interface LoadProjectItemsResult {
 }
 
 export interface LoadProjectSceneResult {
-  scene?: ProjectSceneInfo; // undefined if error
-  model?: SceneModel; // built by connector, never cached
+  sceneModel?: SceneModel; // built by connector, never cached
   error_msg?: string; // undefined if no error
 }
 
 export interface ListProjectScenesResult {
-  scenes: ProjectSceneInfo[];
+  domain: string;
+  projectName: string;
+  scenes: SceneModel[];
   error_msg?: string; // undefined if no error
 }
 

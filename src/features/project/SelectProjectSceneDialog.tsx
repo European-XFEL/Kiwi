@@ -11,7 +11,7 @@ import { Hash, HashValues } from '@/karabo/data/api';
 import { Button } from '@/components/api';
 import { Separator } from '@/components/api';
 import { getDbConn } from '@/lib/singletons/api';
-import { ProjectModel, ProjectSceneInfo } from '@/karabo/common/project/api';
+import { ProjectModel } from '@/karabo/common/project/api';
 import { useGlobalStore } from '@/store/api';
 import DomainSelector from './components/DomainSelector';
 import ProjectsTable from './components/ProjectTable';
@@ -22,6 +22,7 @@ import { useKaraboEvent, KaraboEvent } from '@/lib/events';
 import { getDomains } from './utils/getDomains';
 import { useDeferredSearch } from './hooks/useDeferredSearch';
 import { filterByQuery } from './utils/filterByQuery';
+import { SceneModel } from '@/karabo/common/scenemodel/api';
 
 enum ActivityStatus {
   NO_ACTIVITY,
@@ -46,10 +47,10 @@ export default function SelectProjectSceneDialog({
   const [selectedProject, setSelectedProject] = useState<
     ProjectModel | undefined
   >(undefined);
-  const [scenes, setScenes] = useState<ProjectSceneInfo[]>([]);
-  const [selectedScene, setSelectedScene] = useState<
-    ProjectSceneInfo | undefined
-  >(undefined);
+  const [scenes, setScenes] = useState<SceneModel[]>([]);
+  const [selectedScene, setSelectedScene] = useState<SceneModel | undefined>(
+    undefined
+  );
   const executedOnceRef = useRef('');
 
   const projectSearch = useDeferredSearch();
@@ -101,18 +102,22 @@ export default function SelectProjectSceneDialog({
     setSelectedScene(undefined);
   };
 
-  const handleSceneClick = (scene: ProjectSceneInfo) => {
+  const handleSceneClick = (scene: SceneModel) => {
     setSelectedScene(scene);
   };
 
-  const handleSceneDoubleClick = (scene: ProjectSceneInfo) => {
+  const handleSceneDoubleClick = (scene: SceneModel) => {
     setSelectedScene(scene);
-    onSceneSelected(scene);
+    onSceneSelected(selectedDomain, selectedProject!.simple_name, scene);
   };
 
   const handleSelectScene = () => {
     if (selectedScene) {
-      onSceneSelected(selectedScene);
+      onSceneSelected(
+        selectedDomain,
+        selectedProject!.simple_name,
+        selectedScene
+      );
     }
   };
 

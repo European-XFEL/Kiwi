@@ -30,15 +30,10 @@ import { useActiveScene, useActiveSceneStore } from '../useActiveScene';
 
 const makeSceneResult = (uuid: string) => ({
   error_msg: '',
-  model: {
+  sceneModel: {
     width: uuid === 'scene-a' ? 800 : 1024,
     height: uuid === 'scene-a' ? 600 : 768,
     uuid: `model-${uuid}`,
-  },
-  scene: {
-    domain: 'CONTROLS',
-    project_name: 'David_test',
-    uuid,
     simple_name: `name-${uuid}`,
   },
 });
@@ -82,7 +77,7 @@ describe('useActiveScene', () => {
       expect.any(Function)
     );
     expect(useActiveSceneStore.getState().loadedSceneRef).toEqual(
-      expect.objectContaining({ uuid: 'scene-a' })
+      expect.objectContaining({ uuid: 'model-scene-a' })
     );
 
     mockLocationSearch =
@@ -110,7 +105,7 @@ describe('useActiveScene', () => {
       height: 768,
       domain: 'CONTROLS',
       projectName: 'David_test',
-      uuid: 'scene-b',
+      uuid: 'model-scene-b',
       name: 'name-scene-b',
     });
   });
