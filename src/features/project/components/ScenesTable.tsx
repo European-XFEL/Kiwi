@@ -59,10 +59,10 @@ export default function ScenesTable({
                   }`}
                 >
                   <TableCell className="font-medium truncate max-w-xs">
-                    {scene.name}
+                    {scene.simple_name}
                   </TableCell>
                   <TableCell className="truncate">
-                    {asLocalDateTimeString(scene.dateModified)}
+                    {asLocalDateTimeString(scene.date)}
                   </TableCell>
                 </TableRow>
               ))

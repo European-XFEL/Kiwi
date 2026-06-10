@@ -2,7 +2,7 @@
  * Project Feature - Type Definitions
  */
 
-import { ProjectItemInfo, ProjectSceneInfo } from '@/karabo/common/project/api';
+import { ProjectModel, ProjectSceneInfo } from '@/karabo/common/project/api';
 import { RecentSceneInfo } from '@/store/api';
 
 // Main component props
@@ -40,9 +40,9 @@ export type DomainSelectorProps = {
 };
 
 export type ProjectsTableProps = {
-  projects: ProjectItemInfo[];
-  selectedProject?: ProjectItemInfo;
-  onProjectClick: (project: ProjectItemInfo) => void;
+  projects: ProjectModel[];
+  selectedProject?: ProjectModel;
+  onProjectClick: (project: ProjectModel) => void;
   query?: string;
   onQueryChange?: (q: string) => void;
 };

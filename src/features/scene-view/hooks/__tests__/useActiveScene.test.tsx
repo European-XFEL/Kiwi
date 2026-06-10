@@ -37,9 +37,9 @@ const makeSceneResult = (uuid: string) => ({
   },
   scene: {
     domain: 'CONTROLS',
-    projectName: 'David_test',
+    project_name: 'David_test',
     uuid,
-    name: `name-${uuid}`,
+    simple_name: `name-${uuid}`,
   },
 });
 

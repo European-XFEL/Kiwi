@@ -4,18 +4,8 @@
 
 import { FONT_DEFAULT, FONT_SIZE_DEFAULT } from './constants';
 
-// BaseSavableModel
-/** Root marker class for all serializable scene objects. */
-export abstract class BaseSavableModel {}
+import { BaseProjectObjectModel, BaseSavableModel } from '../api';
 
-// BaseProjectObjectModel
-//
-
-/** Base class for project-managed objects (scenes, macros, etc.). */
-export class BaseProjectObjectModel extends BaseSavableModel {
-  simple_name = '';
-  uuid = '';
-}
 // BaseLayoutData
 //
 
@@ -42,7 +32,7 @@ export class GridLayoutChildData extends BaseLayoutData {
 //
 
 /** Base class for everything that can appear in a scene. */
-export abstract class BaseSceneObjectData extends BaseSavableModel {
+export abstract class BaseSceneObjectData extends BaseProjectObjectModel {
   /** Positioning metadata set by the parent layout (if any). */
   layout_data?: BaseLayoutData;
 }

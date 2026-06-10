@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/api';
 import { Hash, HashValues } from '@/karabo/data/api';
-import { ProjectItemInfo, ProjectSceneInfo } from '@/karabo/common/project/api';
+import { ProjectSceneInfo } from '@/karabo/common/project/api';
 import { cn } from '@/components/api';
 import { getDbConn } from '@/lib/singletons/api';
 import { useGlobalStore } from '@/store/api';
@@ -25,6 +25,7 @@ import { useDeferredSearch } from './hooks/useDeferredSearch';
 import { useKaraboEvent, KaraboEvent } from '@/lib/events';
 import type { SceneBreadcrumbProps } from './types/project.types';
 import { filterByQuery } from './utils/filterByQuery';
+import { ProjectModel } from '@/karabo/common/project/ProjectModel';
 
 export default function SceneBreadcrumb({
   domain,
@@ -43,8 +44,8 @@ export default function SceneBreadcrumb({
 
   const projectsInitializedRef = useRef(false);
   const [projectsLoading, setProjectsLoading] = useState(false);
-  const [projects, setProjects] = useState<ProjectItemInfo[]>([]);
-  const [selectedProject, setSelectedProject] = useState<ProjectItemInfo>();
+  const [projects, setProjects] = useState<ProjectModel[]>([]);
+  const [selectedProject, setSelectedProject] = useState<ProjectModel>();
 
   const [scenesLoading, setScenesLoading] = useState(false);
   const [scenes, setScenes] = useState<ProjectSceneInfo[]>([]);
@@ -64,13 +65,13 @@ export default function SceneBreadcrumb({
   const filteredProjects = filterByQuery(
     projects,
     projectSearch.deferredQuery,
-    (project) => project.name
+    (project) => project.simple_name
   );
 
   const filteredScenes = filterByQuery(
     scenes,
     sceneSearch.deferredQuery,
-    (scene) => scene.name
+    (scene) => scene.simple_name
   );
 
   useEffect(() => {
@@ -85,7 +86,7 @@ export default function SceneBreadcrumb({
     } else {
       // As the project list has already been loaded,
       // immediately sync the selected project
-      const selected = projects?.find((p) => p.name == projectName);
+      const selected = projects?.find((p) => p.simple_name == projectName);
       if (selected) {
         setSelectedProject(selected);
       }
@@ -106,25 +107,22 @@ export default function SceneBreadcrumb({
     if (reason.length == 0) {
       // Project retrieval was successful
       const itemsHashes = hash.getValue('reply.items') as HashValues[];
-      const domain = hash.getValue('request.args.domain') as string;
-      const projects: ProjectItemInfo[] = itemsHashes.map((hv: HashValues) => {
+      const projects: ProjectModel[] = itemsHashes.map((hv: HashValues) => {
         const item = new Hash(hv);
-        return {
-          domain: domain,
-          uuid: item.getValue('uuid') as string,
-          name: item.getValue('simple_name') as string,
-          dateModified: item.getValue('date') as string,
-          isTrashed: item.getValue('is_trashed') as boolean,
-          item_type: 'project',
-        };
+        return new ProjectModel({
+          uuid: item.getValue('uuid'),
+          date: item.getValue('date'),
+          simple_name: item.getValue('simple_name'),
+          is_trashed: item.getValue('is_trashed'),
+        });
       });
-      const nonTrashed = projects.filter((pInf) => !pInf.isTrashed);
+      const nonTrashed = projects.filter((pInf) => !pInf.is_trashed);
       const nonTrashedSorted = nonTrashed.sort((a, b) =>
-        a.name.localeCompare(b.name)
+        a.simple_name.localeCompare(b.simple_name)
       );
       setProjects(nonTrashedSorted);
       if (!selectedProject) {
-        const selected = projects.find((p) => p.name == projectName);
+        const selected = projects.find((p) => p.simple_name == projectName);
         if (selected) {
           setSelectedProject(selected);
         }
@@ -133,7 +131,7 @@ export default function SceneBreadcrumb({
     }
   });
 
-  const loadScenes = (project: ProjectItemInfo) => {
+  const loadScenes = (project: ProjectModel) => {
     // Cache hit — reuse immediately, no fetch
     const cached = scenesCache.current.get(project.uuid);
     if (cached) {
@@ -151,8 +149,8 @@ export default function SceneBreadcrumb({
     setScenesError('');
 
     getDbConn().listScenes(
-      project.domain,
-      project.name,
+      domain,
+      project.simple_name,
       project.uuid,
       (scenesInfo) => {
         loadingForUuid.current = null;
@@ -167,7 +165,7 @@ export default function SceneBreadcrumb({
     );
   };
 
-  const handleProjectClick = (project: ProjectItemInfo) => {
+  const handleProjectClick = (project: ProjectModel) => {
     setSelectedProject(project);
     setDisplaySceneName(null); // project changed — hide stale scene name
     sceneSearch.clear();
@@ -188,7 +186,7 @@ export default function SceneBreadcrumb({
       // The scene selection dropdown was closed without any scene being
       // selected. Have to synchronize the breadcrumb with the scene being
       // displayed
-      const project = projects?.find((p) => p.name === projectName);
+      const project = projects?.find((p) => p.simple_name === projectName);
       if (project) {
         setSelectedProject(project);
       }
@@ -197,19 +195,19 @@ export default function SceneBreadcrumb({
   };
 
   const handleSceneClick = (scene: ProjectSceneInfo) => {
-    setDisplaySceneName(scene.name);
+    setDisplaySceneName(scene.simple_name);
     setSceneOpen(false);
     navigate(
       `/scene?host=${sessionInfo!.guiServerHost}&port=${
         sessionInfo!.guiServerPort
       }` +
         `&domain=${encodeURIComponent(scene.domain)}` +
-        `&projectName=${encodeURIComponent(scene.projectName)}` +
+        `&projectName=${encodeURIComponent(scene.project_name)}` +
         `&uuid=${encodeURIComponent(scene.uuid)}`
     );
   };
 
-  const displayProjectName = selectedProject?.name ?? projectName;
+  const displayProjectName = selectedProject?.simple_name ?? projectName;
   // undefined → show route prop; null → project changed, show placeholder; string → selected scene
   const shownSceneName =
     displaySceneName === undefined

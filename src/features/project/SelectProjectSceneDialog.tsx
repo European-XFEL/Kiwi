@@ -11,7 +11,7 @@ import { Hash, HashValues } from '@/karabo/data/api';
 import { Button } from '@/components/api';
 import { Separator } from '@/components/api';
 import { getDbConn } from '@/lib/singletons/api';
-import { ProjectItemInfo, ProjectSceneInfo } from '@/karabo/common/project/api';
+import { ProjectModel, ProjectSceneInfo } from '@/karabo/common/project/api';
 import { useGlobalStore } from '@/store/api';
 import DomainSelector from './components/DomainSelector';
 import ProjectsTable from './components/ProjectTable';
@@ -42,9 +42,9 @@ export default function SelectProjectSceneDialog({
   const [errorMsg, setErrorMessage] = useState('');
   const [domains, setDomains] = useState<string[]>([]);
   const [selectedDomain, setSelectedDomain] = useState('');
-  const [projects, setProjects] = useState<ProjectItemInfo[]>([]);
+  const [projects, setProjects] = useState<ProjectModel[]>([]);
   const [selectedProject, setSelectedProject] = useState<
-    ProjectItemInfo | undefined
+    ProjectModel | undefined
   >(undefined);
   const [scenes, setScenes] = useState<ProjectSceneInfo[]>([]);
   const [selectedScene, setSelectedScene] = useState<
@@ -58,13 +58,13 @@ export default function SelectProjectSceneDialog({
   const filteredProjects = filterByQuery(
     projects,
     projectSearch.deferredQuery,
-    (project) => project.name
+    (project) => project.simple_name
   );
 
   const filteredScenes = filterByQuery(
     scenes,
     sceneSearch.deferredQuery,
-    (scene) => scene.name
+    (scene) => scene.simple_name
   );
 
   const updateProjects = (domain: string) => {
@@ -95,9 +95,9 @@ export default function SelectProjectSceneDialog({
     });
   };
 
-  const handleProjectClick = (project: ProjectItemInfo) => {
+  const handleProjectClick = (project: ProjectModel) => {
     setSelectedProject(project);
-    updateScenes(project.domain, project.name, project.uuid);
+    updateScenes(selectedDomain, project.simple_name, project.uuid);
     setSelectedScene(undefined);
   };
 
@@ -172,27 +172,24 @@ export default function SelectProjectSceneDialog({
     } else {
       // Projects were retrieved successfully
       const itemsHashes = hash.getValue('reply.items') as HashValues[];
-      const domain = hash.getValue('request.args.domain') as string;
-      const projects: ProjectItemInfo[] = itemsHashes.map((hv: HashValues) => {
+      const projects: ProjectModel[] = itemsHashes.map((hv: HashValues) => {
         const item = new Hash(hv);
-        return {
-          domain: domain,
-          uuid: item.getValue('uuid') as string,
-          name: item.getValue('simple_name') as string,
-          dateModified: item.getValue('date') as string,
-          isTrashed: item.getValue('is_trashed') as boolean,
-          item_type: 'project',
-        };
+        return new ProjectModel({
+          uuid: item.getValue('uuid'),
+          date: item.getValue('date'),
+          simple_name: item.getValue('simple_name'),
+          is_trashed: item.getValue('is_trashed'),
+        });
       });
-      const nonTrashed = projects.filter((pInf) => !pInf.isTrashed);
+      const nonTrashed = projects.filter((pInf) => !pInf.is_trashed);
       const nonTrashedSorted = nonTrashed.sort((a, b) =>
-        a.name.localeCompare(b.name)
+        a.simple_name.localeCompare(b.simple_name)
       );
       setProjects(nonTrashedSorted);
       if (nonTrashedSorted.length > 0) {
         const selProject = nonTrashedSorted[0];
         setSelectedProject(selProject);
-        updateScenes(selProject.domain, selProject.name, selProject.uuid);
+        updateScenes(selectedDomain, selProject.simple_name, selProject.uuid);
       }
     }
     setActivityStatus(ActivityStatus.NO_ACTIVITY);
@@ -252,7 +249,7 @@ export default function SelectProjectSceneDialog({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">
-                Scenes on Project "{selectedProject?.name ?? ''}"
+                Scenes on Project "{selectedProject?.simple_name ?? ''}"
               </h3>
               <span className="text-xs text-muted-foreground">
                 (
