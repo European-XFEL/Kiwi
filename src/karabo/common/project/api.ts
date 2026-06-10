@@ -1,5 +1,4 @@
 export {
-  type ProjectSceneInfo,
   type ListProjectScenesResult,
   type LoadProjectItemsResult,
   type LoadProjectSceneResult,

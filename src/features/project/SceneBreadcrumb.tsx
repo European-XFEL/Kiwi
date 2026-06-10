@@ -12,7 +12,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/api';
 import { Hash, HashValues } from '@/karabo/data/api';
-import { ProjectSceneInfo } from '@/karabo/common/project/api';
 import { cn } from '@/components/api';
 import { getDbConn } from '@/lib/singletons/api';
 import { useGlobalStore } from '@/store/api';
@@ -26,6 +25,7 @@ import { useKaraboEvent, KaraboEvent } from '@/lib/events';
 import type { SceneBreadcrumbProps } from './types/project.types';
 import { filterByQuery } from './utils/filterByQuery';
 import { ProjectModel } from '@/karabo/common/project/ProjectModel';
+import { SceneModel } from '@/karabo/common/scenemodel/api';
 
 export default function SceneBreadcrumb({
   domain,
@@ -48,7 +48,7 @@ export default function SceneBreadcrumb({
   const [selectedProject, setSelectedProject] = useState<ProjectModel>();
 
   const [scenesLoading, setScenesLoading] = useState(false);
-  const [scenes, setScenes] = useState<ProjectSceneInfo[]>([]);
+  const [scenes, setScenes] = useState<SceneModel[]>([]);
   const [scenesError, setScenesError] = useState('');
   // undefined = not yet interacted, show route prop
   // null      = project changed, show placeholder
@@ -58,7 +58,7 @@ export default function SceneBreadcrumb({
   >(undefined);
 
   // Cache: project UUID → scene list. Stable ref, writes don't trigger re-renders.
-  const scenesCache = useRef<Map<string, ProjectSceneInfo[]>>(new Map());
+  const scenesCache = useRef<Map<string, SceneModel[]>>(new Map());
   // Track which project UUID is currently being fetched to prevent duplicate requests.
   const loadingForUuid = useRef<string | null>(null);
 
@@ -194,15 +194,15 @@ export default function SceneBreadcrumb({
     }
   };
 
-  const handleSceneClick = (scene: ProjectSceneInfo) => {
+  const handleSceneClick = (scene: SceneModel) => {
     setDisplaySceneName(scene.simple_name);
     setSceneOpen(false);
     navigate(
       `/scene?host=${sessionInfo!.guiServerHost}&port=${
         sessionInfo!.guiServerPort
       }` +
-        `&domain=${encodeURIComponent(scene.domain)}` +
-        `&projectName=${encodeURIComponent(scene.project_name)}` +
+        `&domain=${encodeURIComponent(domain)}` +
+        `&projectName=${encodeURIComponent(projectName)}` +
         `&uuid=${encodeURIComponent(scene.uuid)}`
     );
   };

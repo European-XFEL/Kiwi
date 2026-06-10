@@ -1,4 +1,4 @@
-import { ProjectSceneInfo } from './ProjectDbInfo';
+import { SceneModel } from '../scenemodel/api';
 
 export class ProjectSceneCache {
   static readonly ITEM_PREFIX = 'prjScene';
@@ -18,10 +18,7 @@ export class ProjectSceneCache {
 
   // #region Store and Get scene info
 
-  public getSceneInfo = (
-    domain: string,
-    uuid: string
-  ): ProjectSceneInfo | null => {
+  public getSceneInfo = (domain: string, uuid: string): SceneModel | null => {
     const infoValue = localStorage.getItem(this._getInfoKey(domain, uuid));
     if (infoValue) {
       // The scene has been found in the cache
@@ -32,9 +29,9 @@ export class ProjectSceneCache {
     }
   };
 
-  public storeSceneInfo(info: ProjectSceneInfo): void {
+  public storeSceneInfo(domain: string, info: SceneModel): void {
     localStorage.setItem(
-      this._getInfoKey(info.domain, info.uuid),
+      this._getInfoKey(domain, info.uuid),
       JSON.stringify({ info: info, savedAt: new Date() })
     );
   }

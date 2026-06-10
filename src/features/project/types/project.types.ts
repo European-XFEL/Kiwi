@@ -2,7 +2,8 @@
  * Project Feature - Type Definitions
  */
 
-import { ProjectModel, ProjectSceneInfo } from '@/karabo/common/project/api';
+import { ProjectModel } from '@/karabo/common/project/api';
+import { SceneModel } from '@/karabo/common/scenemodel/api';
 import { RecentSceneInfo } from '@/store/api';
 
 // Main component props
@@ -27,7 +28,11 @@ export type SceneBreadcrumbProps = {
 
 export type SelectProjectSceneDialogProps = {
   open: boolean;
-  onSceneSelected: (scene: ProjectSceneInfo) => void;
+  onSceneSelected: (
+    domain: string,
+    projectName: string,
+    scene: SceneModel
+  ) => void;
   onCancel: () => void;
 };
 
@@ -48,10 +53,10 @@ export type ProjectsTableProps = {
 };
 
 export type ScenesTableProps = {
-  scenes: ProjectSceneInfo[];
-  selectedScene?: ProjectSceneInfo;
-  onSceneClick: (scene: ProjectSceneInfo) => void;
-  onSceneDoubleClick: (scene: ProjectSceneInfo) => void;
+  scenes: SceneModel[];
+  selectedScene?: SceneModel;
+  onSceneClick: (scene: SceneModel) => void;
+  onSceneDoubleClick: (scene: SceneModel) => void;
   query?: string;
   onQueryChange?: (q: string) => void;
 };
