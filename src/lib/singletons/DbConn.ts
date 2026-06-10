@@ -1,13 +1,11 @@
 import { Hash, HashList, HashValues } from '@/karabo/data/api';
 import {
-  DbItemInfo,
-  isProjectContentsInfo,
-  isSceneInfo,
   ListProjectScenesResult,
   LoadProjectItemsResult,
   LoadProjectSceneResult,
   ProjectSceneInfo,
   ProjectSceneCache,
+  BaseProjectObjectModel,
 } from '@/karabo/common/project/api';
 import { XMLParser } from 'fast-xml-parser';
 import { readSceneFromSvgJson } from '@/karabo/common/scenemodel/api';
@@ -20,6 +18,7 @@ import {
   register_for_broadcasts,
   unregister_for_broadcasts,
 } from '@/lib/events';
+import { ProjectQueryableItem } from '@/karabo/common/project/ProjectModel';
 
 enum DbConnectionState {
   IDLE,
@@ -147,36 +146,39 @@ export class DbConnection {
     }
     if (itemsInfo !== undefined) {
       // Iterates through the retrieved project items, collecting the scenes
-      const itemsToQuery: DbItemInfo[] = [];
+      const itemsToQuery: ProjectQueryableItem[] = [];
       for (const item of itemsInfo.projectItems) {
-        if (isProjectContentsInfo(item)) {
-          // For a project, load its contained scenes and subprojects
-          for (const scene of item.scenes) {
+        if (item != null && 'scenes' in item) {
+          // Project contains multiple scenes; loads them
+          const projectScenes = item['scenes'] as Object[];
+          for (const scene of projectScenes) {
             itemsToQuery.push({
-              domain: scene.domain,
-              uuid: scene.uuid,
+              domain: scene['domain'],
+              uuid: scene['uuid'],
               item_type: 'scene',
             });
           }
-          //   for (const subproject of item.subprojects) {
-          //     itemsToQuery.push({
-          //       domain: subproject.domain,
-          //       uuid: subproject.uuid,
-          //       item_type: 'project',
-          //     });
-          //   }
           if (itemsToQuery.length > 0) {
             this._pendingLoadItems += 1;
             getNetwork().onProjectLoadItems(
               this._loadItemsHashList(itemsToQuery)
             );
           }
-        } else if (isSceneInfo(item)) {
+        } else if (item != null && 'svg' in item) {
+          // Project contains a single scene, collect it
           const sceneIdx = this._collectedScenes?.findIndex(
             (scene) => scene.uuid === item.uuid
           );
           if (sceneIdx === -1) {
-            this._collectedScenes?.push(item);
+            this._collectedScenes?.push({
+              domain: item['domain'],
+              uuid: item['uuid'],
+              simple_name: item['simple_name'],
+              project_name: item['projectName'],
+              svg: item['svg'] as string,
+              date: item['date'],
+              item_type: 'scene',
+            });
           }
         }
       }
@@ -193,7 +195,7 @@ export class DbConnection {
       } else {
         listScenesResult = {
           scenes: this._collectedScenes!.sort((a, b) =>
-            a.name.localeCompare(b.name)
+            a.simple_name.localeCompare(b.simple_name)
           ),
         };
       }
@@ -272,7 +274,10 @@ export class DbConnection {
     } else if (itemsInfo!.projectItems.length !== 1) {
       // An error occurred - only one item should have been returned.
       loadSceneErr = 'Error loading project scene - multiple items returned';
-    } else if (!isSceneInfo(itemsInfo!.projectItems[0])) {
+    } else if (
+      itemsInfo!.projectItems[0] != null &&
+      !('svg' in itemsInfo!.projectItems[0])
+    ) {
       // An error occurred - the returned item is not a scene.
       loadSceneErr = 'Error loading project scene - no scene returned';
     }
@@ -283,12 +288,24 @@ export class DbConnection {
         error_msg: loadSceneErr,
       });
     } else {
-      const sceneInfo = itemsInfo!.projectItems[0] as ProjectSceneInfo;
-      const model = readSceneFromSvgJson(JSON.parse(sceneInfo.svg));
+      const sceneData = itemsInfo!.projectItems[0];
+      const sceneInfo = {
+        domain: sceneData['domain'],
+        project_name: this._projectName,
+        uuid: sceneData['uuid'],
+        item_type: 'scene',
+        simple_name: sceneData['simple_name'],
+        svg: sceneData['svg'],
+        date: sceneData['date'],
+      };
+      const sceneModel = readSceneFromSvgJson(JSON.parse(sceneInfo.svg));
+      sceneModel.date = sceneInfo['date'];
+      sceneModel.simple_name = sceneInfo['simple_name'];
+      sceneModel.uuid = sceneInfo['uuid'];
       this._sceneCache.storeSceneInfo(sceneInfo);
       this._onGetSceneCallback?.({
-        scene: { ...sceneInfo, projectName: this._projectName },
-        model,
+        scene: { ...sceneInfo },
+        model: sceneModel,
         error_msg: undefined,
       });
     }
@@ -310,7 +327,7 @@ export class DbConnection {
 
   // #region Hash building utilities
 
-  private _loadItemsHashList = (items: DbItemInfo[]): HashList => {
+  private _loadItemsHashList = (items: ProjectQueryableItem[]): HashList => {
     let itemsHashes: Hash[] = [];
     for (const item of items) {
       const itemHash = new Hash({
@@ -336,7 +353,7 @@ export class DbConnection {
       // An error occurred
       return { error_msg: reason, projectItems: [] };
     } else {
-      const items: DbItemInfo[] = [];
+      const items: BaseProjectObjectModel[] = [];
       const itemHashes = hash.getValue(
         'reply.items'
       ) as unknown as HashValues[];
@@ -356,7 +373,7 @@ export class DbConnection {
         const itemType = xmlObj.xml['@_item_type'];
         if (itemType === 'project') {
           // Build a ProjectContentsInfo object
-          const scenes: DbItemInfo[] = [];
+          const scenes: ProjectQueryableItem[] = [];
           const xmlScenes =
             // Some XML's have an "artificial" root and some not
             xmlObj.xml['root'] !== undefined
@@ -384,29 +401,13 @@ export class DbConnection {
               });
             }
           }
-          const subprojects: DbItemInfo[] = [];
-          const xmlSubprojects =
-            // Some XML's have an "artificial" root and some not
-            xmlObj.xml['root'] !== undefined
-              ? xmlObj.xml.root.project.subprojects
-              : xmlObj.xml.project.subprojects;
-          if (xmlSubprojects['KRB_Item'] !== undefined) {
-            for (let i = 0; i < xmlSubprojects.KRB_Item.length; i++) {
-              subprojects.push({
-                domain: domain,
-                uuid: xmlSubprojects.KRB_Item[i].uuid['#text'],
-                item_type: 'project', // A subproject is a project
-              });
-            }
-          }
           const item = {
             domain: domain,
             uuid: uuid,
-            name: xmlObj.xml['@_simple_name'],
-            isTrashed: xmlObj.xml['@_is_trashed'],
-            dateModified: xmlObj.xml['@_date'],
+            simple_name: xmlObj.xml['@_simple_name'],
+            is_trashed: xmlObj.xml['@_is_trashed'],
+            date: xmlObj.xml['@_date'],
             scenes: scenes,
-            subprojects: subprojects,
             item_type: itemType,
           };
           items.push(item);
@@ -416,9 +417,9 @@ export class DbConnection {
             domain: domain,
             projectName: projectName,
             uuid: uuid,
-            name: xmlObj.xml['@_simple_name'],
+            simple_name: xmlObj.xml['@_simple_name'],
             description: xmlObj.xml['@_description'],
-            dateModified: xmlObj.xml['@_date'],
+            date: xmlObj.xml['@_date'],
             svg:
               xmlObj.xml['svg:svg'] != undefined
                 ? JSON.stringify(xmlObj.xml['svg:svg'])

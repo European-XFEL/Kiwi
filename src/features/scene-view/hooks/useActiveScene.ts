@@ -128,9 +128,9 @@ export function useActiveScene(): ActiveSceneResult {
         width: result.model.width,
         height: result.model.height,
         domain: result.scene.domain,
-        projectName: result.scene.projectName,
+        projectName: result.scene.project_name,
         uuid: result.scene.uuid,
-        name: result.scene.name,
+        name: result.scene.simple_name,
       };
 
       setLoadedSceneRef(nextLoadedSceneRef);
@@ -140,8 +140,8 @@ export function useActiveScene(): ActiveSceneResult {
           topic,
           domain: result.scene.domain,
           uuid: result.scene.uuid,
-          name: result.scene.name,
-          projectName: result.scene.projectName,
+          name: result.scene.simple_name,
+          projectName: result.scene.project_name,
         };
         setRecentScene(recentScene);
       }

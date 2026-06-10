@@ -36,7 +36,7 @@ export default function LoadProjectScene({
       }&domain=${encodeURIComponent(
         selectedScene.domain
       )}&projectName=${encodeURIComponent(
-        selectedScene.projectName
+        selectedScene.project_name
       )}&uuid=${encodeURIComponent(selectedScene.uuid)}`
     );
   };

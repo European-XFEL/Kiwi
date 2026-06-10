@@ -57,10 +57,10 @@ export default function ProjectsTable({
                   }`}
                 >
                   <TableCell className="font-medium truncate max-w-xs">
-                    {project.name}
+                    {project.simple_name}
                   </TableCell>
                   <TableCell className="truncate">
-                    {asLocalDateTimeString(project.dateModified)}
+                    {asLocalDateTimeString(project.date)}
                   </TableCell>
                 </TableRow>
               ))
