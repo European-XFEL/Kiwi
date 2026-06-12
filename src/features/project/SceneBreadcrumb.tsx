@@ -16,7 +16,7 @@ import { cn } from '@/components/api';
 import { getDbConn } from '@/lib/singletons/api';
 import { useGlobalStore } from '@/store/api';
 import { Loader2 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProjectsTable from './components/ProjectTable';
 import ScenesTable from './components/ScenesTable';
@@ -42,7 +42,6 @@ export default function SceneBreadcrumb({
   const projectSearch = useDeferredSearch();
   const sceneSearch = useDeferredSearch();
 
-  const projectsInitializedRef = useRef(false);
   const [projectsLoading, setProjectsLoading] = useState(false);
   const [projects, setProjects] = useState<ProjectModel[]>([]);
   const [selectedProject, setSelectedProject] = useState<ProjectModel>();
@@ -73,29 +72,6 @@ export default function SceneBreadcrumb({
     sceneSearch.deferredQuery,
     (scene) => scene.simple_name
   );
-
-  useEffect(() => {
-    // Load the domains project at initialization time to avoid
-    // the extra time when the user goes directly to the scene
-    // selection in the breadcrumb.
-    if (!projectsInitializedRef.current) {
-      projectsInitializedRef.current = true;
-      setProjectsLoading(true);
-      // Selected project will be updated once the list of projects is retrieved
-      getDbConn().listProjects(domain);
-    } else {
-      // As the project list has already been loaded,
-      // immediately sync the selected project
-      const selected = projects?.find((p) => p.simple_name == projectName);
-      if (selected) {
-        setSelectedProject(selected);
-      }
-      // and the displaySceneName
-      if (displaySceneName !== sceneName) {
-        setDisplaySceneName(sceneName);
-      }
-    }
-  }, [domain, projectName, sceneName]);
 
   const handleProjectDropdownOpen = () => {
     setProjectsLoading(true);
