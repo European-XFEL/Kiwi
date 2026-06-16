@@ -51,7 +51,7 @@ export default function SelectProjectSceneDialog({
   const [selectedScene, setSelectedScene] = useState<SceneModel | undefined>(
     undefined
   );
-  const executedOnceRef = useRef('');
+  const domainsInitializedRef = useRef(false);
 
   const projectSearch = useDeferredSearch();
   const sceneSearch = useDeferredSearch();
@@ -135,17 +135,18 @@ export default function SelectProjectSceneDialog({
   };
 
   React.useEffect(() => {
-    if (!executedOnceRef.current) {
-      executedOnceRef.current = 'true';
-    }
-
-    if (open) {
+    if (open && !domainsInitializedRef.current) {
+      domainsInitializedRef.current = true;
       setActivityStatus(ActivityStatus.GETTING_DOMAINS);
       getDbConn().listDomains();
     }
   }, [open]);
 
   useKaraboEvent(KaraboEvent.ListDomains, (hash: Hash) => {
+    if (!open) {
+      // Don't handle ListDomains events when closed
+      return;
+    }
     let domains: string[] = [];
     try {
       domains = getDomains(hash);
@@ -171,6 +172,10 @@ export default function SelectProjectSceneDialog({
   });
 
   useKaraboEvent(KaraboEvent.ListProjects, (hash: Hash) => {
+    if (!open) {
+      // Don't handle ListProjects events when closed
+      return;
+    }
     const reason = hash.getValue('reason');
     if (reason.length > 0) {
       setErrorMessage(reason);
