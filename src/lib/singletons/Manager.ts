@@ -237,6 +237,12 @@ export class Manager {
     broadcast_event(KaraboEvent.LoadProjectItems, hash);
   }
 
+  public handle_projectUpdated(hash: Hash): void {
+    // No need to check if the clientId of the client that triggered the
+    // update matches the Kiwi instance - Kiwi never saves projects.
+    broadcast_event(KaraboEvent.ProjectUpdated, hash.getValue('info.uuids'));
+  }
+
   public handle_deviceConfigurations(hash: Hash): void {
     const configurations = hash.getValue('configurations') as Hash;
     for (const [deviceId, properties] of configurations.items()) {

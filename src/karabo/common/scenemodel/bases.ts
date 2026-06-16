@@ -4,7 +4,8 @@
 
 import { FONT_DEFAULT, FONT_SIZE_DEFAULT } from './constants';
 
-import { BaseProjectObjectModel, BaseSavableModel } from '../api';
+import { BaseProjectObjectModel } from '../project/bases';
+import { BaseSavableModel } from '../bases';
 
 // BaseLayoutData
 //
