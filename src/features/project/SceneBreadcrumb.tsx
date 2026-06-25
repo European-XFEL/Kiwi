@@ -14,10 +14,8 @@ import {
 import { Hash, HashValues } from '@/karabo/data/api';
 import { cn } from '@/components/api';
 import { getDbConn } from '@/lib/singletons/api';
-import { useGlobalStore } from '@/store/api';
 import { Loader2 } from 'lucide-react';
-import { useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
 import ProjectsTable from './components/ProjectTable';
 import ScenesTable from './components/ScenesTable';
 import { useDeferredSearch } from './hooks/useDeferredSearch';
@@ -26,6 +24,7 @@ import type { SceneBreadcrumbProps } from './types/project.types';
 import { filterByQuery } from './utils/filterByQuery';
 import { ProjectModel } from '@/karabo/common/project/ProjectModel';
 import { SceneModel } from '@/karabo/common/scenemodel/api';
+import { openSceneInWorkspace } from './utils/openSceneInWorkspace';
 
 export default function SceneBreadcrumb({
   domain,
@@ -33,15 +32,14 @@ export default function SceneBreadcrumb({
   sceneName,
   className,
 }: SceneBreadcrumbProps) {
-  const navigate = useNavigate();
-  const { sessionInfo } = useGlobalStore();
-
   // Controlled open state for both menus
   const [projectOpen, setProjectOpen] = useState(false);
   const [sceneOpen, setSceneOpen] = useState(false);
   const projectSearch = useDeferredSearch();
   const sceneSearch = useDeferredSearch();
 
+  const projectsInitializedRef = useRef(false);
+  const lastDomainRef = useRef<string | null>(null);
   const [projectsLoading, setProjectsLoading] = useState(false);
   const [projects, setProjects] = useState<ProjectModel[]>([]);
   const [selectedProject, setSelectedProject] = useState<ProjectModel>();
@@ -60,6 +58,8 @@ export default function SceneBreadcrumb({
   const scenesCache = useRef<Map<string, SceneModel[]>>(new Map());
   // Track which project UUID is currently being fetched to prevent duplicate requests.
   const loadingForUuid = useRef<string | null>(null);
+  // Track which project's scenes should currently be shown to avoid async race mismatches.
+  const scenesTargetProjectUuid = useRef<string | null>(null);
 
   const filteredProjects = filterByQuery(
     projects,
@@ -72,6 +72,28 @@ export default function SceneBreadcrumb({
     sceneSearch.deferredQuery,
     (scene) => scene.simple_name
   );
+
+  useEffect(() => {
+    if (
+      !projectsInitializedRef.current ||
+      lastDomainRef.current === null ||
+      lastDomainRef.current !== domain
+    ) {
+      projectsInitializedRef.current = true;
+      lastDomainRef.current = domain;
+      setProjectsLoading(true);
+      setSelectedProject(undefined);
+      getDbConn().listProjects(domain);
+      return;
+    }
+
+    const selected = projects.find((p) => p.simple_name === projectName);
+    if (selected) {
+      setSelectedProject(selected);
+    }
+
+    setDisplaySceneName(sceneName);
+  }, [domain, projectName, sceneName, projects]);
 
   const handleProjectDropdownOpen = () => {
     setProjectsLoading(true);
@@ -108,11 +130,16 @@ export default function SceneBreadcrumb({
   });
 
   const loadScenes = (project: ProjectModel) => {
+    scenesTargetProjectUuid.current = project.uuid;
+
     // Cache hit — reuse immediately, no fetch
     const cached = scenesCache.current.get(project.uuid);
     if (cached) {
-      setScenes(cached);
-      setScenesError('');
+      if (scenesTargetProjectUuid.current === project.uuid) {
+        setScenes(cached);
+        setScenesError('');
+        setScenesLoading(false);
+      }
       return;
     }
 
@@ -129,7 +156,15 @@ export default function SceneBreadcrumb({
       project.simple_name,
       project.uuid,
       (scenesInfo) => {
-        loadingForUuid.current = null;
+        if (loadingForUuid.current === project.uuid) {
+          loadingForUuid.current = null;
+        }
+
+        // Ignore stale responses for projects that are no longer selected.
+        if (scenesTargetProjectUuid.current !== project.uuid) {
+          return;
+        }
+
         if (scenesInfo.error_msg) {
           setScenesError(scenesInfo.error_msg);
         } else {
@@ -173,14 +208,13 @@ export default function SceneBreadcrumb({
   const handleSceneClick = (scene: SceneModel) => {
     setDisplaySceneName(scene.simple_name);
     setSceneOpen(false);
-    navigate(
-      `/scene?host=${sessionInfo!.guiServerHost}&port=${
-        sessionInfo!.guiServerPort
-      }` +
-        `&domain=${encodeURIComponent(domain)}` +
-        `&projectName=${encodeURIComponent(projectName)}` +
-        `&uuid=${encodeURIComponent(scene.uuid)}`
-    );
+
+    openSceneInWorkspace({
+      domain,
+      projectName: selectedProject?.simple_name ?? projectName,
+      uuid: scene.uuid,
+      name: scene.simple_name,
+    });
   };
 
   const displayProjectName = selectedProject?.simple_name ?? projectName;

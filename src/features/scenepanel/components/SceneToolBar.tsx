@@ -2,18 +2,28 @@ import { Button, Separator } from '@/components/api';
 import declineIcon from '@/assets/icons/general/no.png';
 import applyIcon from '@/assets/icons/general/yes.png';
 import { FitModeSelect } from '@/features/scene-view/api';
+import { Maximize, Minimize } from 'lucide-react';
 
 export interface SceneToolBarProps {
   width: number;
   height: number;
   scale: number;
+  isFullscreen?: boolean;
+  // When omitted (e.g. fullscreen unsupported), the toggle is not rendered.
+  onToggleFullscreen?: () => void;
 }
 
 const toolbarButtonClassName =
   'h-7 w-7 cursor-pointer rounded-[2px] border border-transparent bg-transparent p-1 shadow-none ' +
   'hover:border-[#8f8f8f] hover:bg-[#e2e2e2] aria-disabled:opacity-100';
 
-export function SceneToolBar({ width, height, scale }: SceneToolBarProps) {
+export function SceneToolBar({
+  width,
+  height,
+  scale,
+  isFullscreen = false,
+  onToggleFullscreen,
+}: SceneToolBarProps) {
   const safeScale = Number.isFinite(scale) ? scale : 1;
   const scalePercent = `${Math.round(safeScale * 100)}%`;
   const formattedWidth = width.toLocaleString('de-DE');
@@ -60,7 +70,30 @@ export function SceneToolBar({ width, height, scale }: SceneToolBarProps) {
         <span className="text-[#3f3f3f]">Scale:</span>
         <span className="font-semibold tabular-nums">{scalePercent}</span>
         <Separator orientation="vertical" className="h-5 bg-[#9a9a9a]" />
-        <FitModeSelect />
+        <FitModeSelect isFullscreen={isFullscreen} />
+        {onToggleFullscreen ? (
+          <>
+            <Separator orientation="vertical" className="h-5 bg-[#9a9a9a]" />
+            <Button
+              variant="ghost"
+              size="icon"
+              type="button"
+              onClick={onToggleFullscreen}
+              aria-pressed={isFullscreen}
+              aria-label={
+                isFullscreen ? 'Exit full screen' : 'View full screen'
+              }
+              title={isFullscreen ? 'Exit full screen' : 'View full screen'}
+              className={toolbarButtonClassName}
+            >
+              {isFullscreen ? (
+                <Minimize className="h-4 w-4" aria-hidden="true" />
+              ) : (
+                <Maximize className="h-4 w-4" aria-hidden="true" />
+              )}
+            </Button>
+          </>
+        ) : null}
       </div>
     </div>
   );

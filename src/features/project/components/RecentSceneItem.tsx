@@ -9,7 +9,14 @@ export default function RecentSceneItem({
   disabled = false,
 }: RecentSceneItemProps) {
   return (
-    <div className="flex items-center gap-2 group hover:bg-accent/50 p-2 rounded-md transition-colors">
+    <div className="group flex items-center gap-3 rounded-md p-2 transition-colors hover:bg-accent/50">
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium">{scene.name}</p>
+        <p className="truncate text-xs text-muted-foreground">
+          {scene.domain}::{scene.projectName}
+        </p>
+      </div>
+
       <Button
         variant="ghost"
         size="icon"
@@ -18,7 +25,7 @@ export default function RecentSceneItem({
         title="Open scene"
         className="shrink-0"
       >
-        <Folder className="h-5 w-5 text-primary" />
+        <Folder className="h-4 w-4 text-primary" />
       </Button>
 
       <Button
@@ -26,17 +33,11 @@ export default function RecentSceneItem({
         size="icon"
         onClick={() => onRemove(scene)}
         title="Remove from recent scenes"
-        className="shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+        disabled={disabled}
+        className="shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
       >
         <Trash2 className="h-4 w-4" />
       </Button>
-
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{scene.name}</p>
-        <p className="text-xs text-muted-foreground truncate">
-          Project: {scene.domain}::{scene.projectName}
-        </p>
-      </div>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { SystemTopology } from './Topology';
 import { Manager, RequestHandler } from './Manager';
 import { Mediator } from './Mediator';
 import { ConfigurationStore } from './Configuration';
+import { PanelWrangler } from './PanelWrangler';
 
 export type { RequestHandler };
 
@@ -40,3 +41,4 @@ export const getTopology = buildGetter('topology', SystemTopology);
 export const getManager = buildGetter('manager', Manager);
 export const getMediator = buildGetter('mediator', Mediator);
 export const getConfig = buildGetter('config', ConfigurationStore);
+export const getPanelWrangler = buildGetter('panel_wrangler', PanelWrangler);

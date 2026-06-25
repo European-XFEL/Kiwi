@@ -1,5 +1,6 @@
+import { Navigate } from 'react-router-dom';
 import AppBody from '../AppBody';
-import { LandingPage, PanelWrangler } from '@/features/scene-view/api';
+import { WorkspacePage, SceneRouteRedirect } from '@/features/workspace/api';
 import { RouteProp } from '../router/types';
 
 export const appRoutes: RouteProp[] = [
@@ -9,11 +10,15 @@ export const appRoutes: RouteProp[] = [
     children: [
       {
         path: 'scene',
-        element: <PanelWrangler />,
+        element: <SceneRouteRedirect />,
       },
       {
         path: 'home',
-        element: <LandingPage />,
+        element: <Navigate to="/main" replace />,
+      },
+      {
+        path: 'main/*',
+        element: <WorkspacePage />,
       },
     ],
   },

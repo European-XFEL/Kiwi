@@ -9,21 +9,17 @@ export interface SceneURLParams {
 export function sceneParamsFromURL(
   queryParams: string
 ): SceneURLParams | undefined {
-  const sceneData = queryParams.match(
-    /^.*\?host=([^&]+)&port=([^&]+)&domain=([^&]+)&projectName=([^&]+)&uuid=([^&]+).*$/
-  );
-  let params: SceneURLParams | undefined = undefined;
-  if (sceneData) {
-    const portParam = Number.parseInt(sceneData[2]);
-    if (!Number.isNaN(portParam)) {
-      params = {
-        host: sceneData[1],
-        port: portParam,
-        domain: sceneData[3],
-        projectName: sceneData[4],
-        uuid: sceneData[5],
-      };
-    }
-  }
-  return params;
+  const search = new URLSearchParams(queryParams);
+  const host = search.get('host');
+  const portStr = search.get('port');
+  const domain = search.get('domain');
+  const projectName = search.get('projectName');
+  const uuid = search.get('uuid');
+
+  if (!host || !portStr || !domain || !projectName || !uuid) return undefined;
+
+  const port = Number.parseInt(portStr, 10);
+  if (Number.isNaN(port)) return undefined;
+
+  return { host, port, domain, projectName, uuid };
 }

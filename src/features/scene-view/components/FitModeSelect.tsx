@@ -5,58 +5,79 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/api';
-import { useActiveSceneStore } from '@/features/scene-view/api';
+import { ChevronDownIcon } from 'lucide-react';
+import { useActiveSceneStore } from '../hooks/useActiveScene';
+import type { FitMode } from '../hooks/useSceneScale';
 
-/** Fit mode dropdown — only renders when a scene is loaded. */
-export default function FitModeSelect() {
+const FIT_MODE_OPTIONS = [
+  { value: 'fit-page', label: 'Fit to Page' },
+  { value: 'fit-screen', label: 'Fit to Screen' },
+  { value: 'fit-width', label: 'Fit to Width' },
+  { value: 'fit-height', label: 'Fit to Height' },
+  { value: 'actual', label: 'Actual Size' },
+] as const;
+
+export interface FitModeSelectProps {
+  isFullscreen?: boolean;
+}
+
+/**
+ * Fit mode dropdown — only renders when a scene is loaded.
+ */
+export default function FitModeSelect({
+  isFullscreen = false,
+}: FitModeSelectProps) {
   const loadedSceneRef = useActiveSceneStore((state) => state.loadedSceneRef);
   const fitMode = useActiveSceneStore((state) => state.fitMode);
   const setFitMode = useActiveSceneStore((state) => state.setFitMode);
 
   if (!loadedSceneRef) return null;
 
+  if (isFullscreen) {
+    return (
+      <div className="relative inline-flex">
+        <select
+          aria-label="Fit mode"
+          value={fitMode}
+          onChange={(event) => setFitMode(event.target.value as FitMode)}
+          className="h-7 w-[130px] cursor-pointer appearance-none rounded-[2px] border border-[#8f8f8f] bg-[#eeeeee] py-0 pr-7 pl-2 text-xs text-[#111111] shadow-none outline-none focus-visible:border-[#777777] focus-visible:ring-1 focus-visible:ring-[#777777]"
+        >
+          {FIT_MODE_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <ChevronDownIcon
+          aria-hidden="true"
+          className="pointer-events-none absolute top-1/2 right-2 size-4 -translate-y-1/2 text-[#111111] opacity-50"
+        />
+      </div>
+    );
+  }
+
   return (
     <Select
       value={fitMode}
-      onValueChange={(value) => setFitMode(value as typeof fitMode)}
+      onValueChange={(value) => setFitMode(value as FitMode)}
     >
       <SelectTrigger
+        aria-label="Fit mode"
         size="sm"
-        className="h-7 w-[130px] rounded-[2px] border border-[#8f8f8f] bg-[#eeeeee] px-2 text-xs text-[#111111] shadow-none focus-visible:border-[#777777] focus-visible:ring-1 focus-visible:ring-[#777777]"
+        className="h-7 w-[130px] rounded-[2px] border-[#8f8f8f] bg-[#eeeeee] px-2 py-0 text-xs text-[#111111] shadow-none focus-visible:border-[#777777] focus-visible:ring-1 focus-visible:ring-[#777777] data-[size=sm]:h-7 [&_svg]:size-4"
       >
         <SelectValue />
       </SelectTrigger>
-      <SelectContent className="rounded-[2px] border border-[#8f8f8f] bg-[#eeeeee] text-xs text-[#111111] shadow-none">
-        <SelectItem
-          value="fit-page"
-          className="rounded-[2px] text-xs focus:bg-[#dcdcdc] focus:text-[#111111]"
-        >
-          Fit to Page
-        </SelectItem>
-        <SelectItem
-          value="fit-screen"
-          className="rounded-[2px] text-xs focus:bg-[#dcdcdc] focus:text-[#111111]"
-        >
-          Fit to Screen
-        </SelectItem>
-        <SelectItem
-          value="fit-width"
-          className="rounded-[2px] text-xs focus:bg-[#dcdcdc] focus:text-[#111111]"
-        >
-          Fit to Width
-        </SelectItem>
-        <SelectItem
-          value="fit-height"
-          className="rounded-[2px] text-xs focus:bg-[#dcdcdc] focus:text-[#111111]"
-        >
-          Fit to Height
-        </SelectItem>
-        <SelectItem
-          value="actual"
-          className="rounded-[2px] text-xs focus:bg-[#dcdcdc] focus:text-[#111111]"
-        >
-          Actual Size
-        </SelectItem>
+      <SelectContent className="min-w-[130px] rounded-[2px] text-xs">
+        {FIT_MODE_OPTIONS.map((option) => (
+          <SelectItem
+            key={option.value}
+            value={option.value}
+            className="text-xs"
+          >
+            {option.label}
+          </SelectItem>
+        ))}
       </SelectContent>
     </Select>
   );

@@ -6,6 +6,7 @@ export type HeaderProps = React.HTMLAttributes<HTMLElement> & {
 };
 
 export default function Header({
+  id,
   children,
   position,
   className,
@@ -13,6 +14,7 @@ export default function Header({
 }: HeaderProps) {
   return (
     <header
+      id={id}
       role="banner"
       className={[
         'w-full border-b bg-white/80 dark:bg-neutral-900/80 backdrop-blur',

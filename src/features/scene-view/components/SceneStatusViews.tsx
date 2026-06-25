@@ -1,8 +1,7 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/api';
 import { Button } from '@/components/api';
-import { Card, CardContent } from '@/components/api';
 import { Spinner } from '@/components/api';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 // ScenePending
@@ -10,13 +9,11 @@ import { useNavigate } from 'react-router-dom';
 
 export function ScenePending() {
   return (
-    <div className="w-full h-full flex items-center justify-center">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardContent className="flex items-center gap-4 p-6">
-          <Spinner className="text-primary" variant="default" size={32} />
-          <div className="flex-1">Opening scene...</div>
-        </CardContent>
-      </Card>
+    <div className="flex h-full w-full items-center justify-center bg-muted/20">
+      <div className="flex items-center gap-3 rounded-md border border-border bg-background px-4 py-3 text-sm text-muted-foreground">
+        <Spinner className="text-primary" variant="default" size={20} />
+        <span>Opening scene...</span>
+      </div>
     </div>
   );
 }
@@ -29,8 +26,8 @@ export function ScenePending() {
 export function SceneOpenError({ message }: { message: string }) {
   const navigate = useNavigate();
   return (
-    <div className="w-full h-full flex items-center justify-center p-4">
-      <div className="flex flex-col gap-4 max-w-2xl">
+    <div className="flex h-full w-full items-center justify-center bg-muted/20 p-4">
+      <div className="flex w-full max-w-2xl flex-col gap-3">
         <Alert variant="destructive" className="border-destructive/50">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Couldn't open scene</AlertTitle>
@@ -38,7 +35,14 @@ export function SceneOpenError({ message }: { message: string }) {
             {message}
           </AlertDescription>
         </Alert>
-        <Button onClick={() => navigate('/home')}>Back to Start</Button>
+        <Button
+          className="self-start"
+          variant="outline"
+          onClick={() => navigate('/home')}
+        >
+          <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+          Back to Start
+        </Button>
       </div>
     </div>
   );
@@ -51,8 +55,8 @@ export function SceneOpenError({ message }: { message: string }) {
 
 export function SceneSystemError({ message }: { message: string }) {
   return (
-    <div className="w-full h-full flex items-center justify-center p-4">
-      <div className="flex flex-col gap-4 max-w-2xl">
+    <div className="flex h-full w-full items-center justify-center bg-muted/20 p-4">
+      <div className="w-full max-w-2xl">
         <Alert variant="destructive" className="border-destructive/50">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Unrecoverable Error</AlertTitle>

@@ -58,6 +58,12 @@ export {
 export { Input } from './input';
 export { Label } from './label';
 export {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+  type GroupImperativeHandle,
+} from './resizable';
+export {
   Pagination,
   PaginationContent,
   PaginationEllipsis,
