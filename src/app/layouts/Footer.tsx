@@ -7,6 +7,7 @@ export type FooterProps = React.HTMLAttributes<HTMLElement> & {
 };
 
 export default function Footer({
+  id,
   position,
   className,
   children,
@@ -14,9 +15,10 @@ export default function Footer({
 }: FooterProps) {
   return (
     <footer
+      id={id}
       role="contentinfo"
       className={[
-        'border-t bg-white/80 dark:bg-neutral-900/80 w-full h-full px-4',
+        'border-t bg-white/80 dark:bg-neutral-900/80 w-full px-4',
         className,
       ]
         .filter(Boolean)

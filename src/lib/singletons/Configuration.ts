@@ -130,6 +130,11 @@ export class ConfigurationStore {
       group: PROJECT,
       dtype: 'json',
     }),
+    currentDomain: new Item({
+      defaultValue: '',
+      group: PROJECT,
+      dtype: 'string',
+    }),
   };
 
   constructor() {
@@ -384,6 +389,14 @@ export class ConfigurationStore {
 
   public set lastPort(port: number) {
     this.setItem(this.storage_items.port, port);
+  }
+
+  public get currentDomain(): string {
+    return this.getItem(this.storage_items.currentDomain);
+  }
+
+  public set currentDomain(domain: string) {
+    this.setItem(this.storage_items.currentDomain, domain);
   }
 
   // #endregion

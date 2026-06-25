@@ -10,7 +10,7 @@ import {
 import { Hash, HashValues } from '@/karabo/data/api';
 import { Button } from '@/components/api';
 import { Separator } from '@/components/api';
-import { getDbConn } from '@/lib/singletons/api';
+import { getConfig, getDbConn } from '@/lib/singletons/api';
 import { ProjectModel } from '@/karabo/common/project/api';
 import { useGlobalStore } from '@/store/api';
 import DomainSelector from './components/DomainSelector';
@@ -159,11 +159,15 @@ export default function SelectProjectSceneDialog({
     domains.sort((a, b) => a.localeCompare(b));
     setDomains(domains);
     if (selectedDomain.length === 0 || !domains.includes(selectedDomain)) {
+      const storedDomain = getConfig().currentDomain;
       const currentTopic = sessionInfo?.guiServerTopic as string;
-      const startupDomain = domains.includes(currentTopic)
-        ? currentTopic
-        : domains[0];
+      const startupDomain = domains.includes(storedDomain)
+        ? storedDomain
+        : domains.includes(currentTopic)
+          ? currentTopic
+          : domains[0];
       setSelectedDomain(startupDomain);
+      getConfig().currentDomain = startupDomain;
       updateProjects(startupDomain);
     } else {
       updateProjects(selectedDomain);
@@ -226,6 +230,7 @@ export default function SelectProjectSceneDialog({
               selectedDomain={selectedDomain}
               onDomainChange={(domain) => {
                 setSelectedDomain(domain);
+                getConfig().currentDomain = domain;
                 updateProjects(domain);
               }}
               disabled={activityStatus !== ActivityStatus.NO_ACTIVITY}

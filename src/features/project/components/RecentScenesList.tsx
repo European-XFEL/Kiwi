@@ -12,10 +12,6 @@ export default function RecentScenesList({
     <div className="space-y-4">
       <div>
         <h2 className="text-lg font-semibold mb-2">Recent Scenes</h2>
-        <p className="text-sm text-muted-foreground">
-          To reload a recent scene, click on the folder icon. To remove a scene
-          from this list, click the delete icon.
-        </p>
       </div>
 
       <Separator />

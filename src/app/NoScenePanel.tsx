@@ -1,16 +1,18 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { RecentSceneInfo, useRecentStore, useGlobalStore } from '@/store/api';
 import { RecentScenesList } from '@/features/project/api';
 import BookmarkInfo from './components/BookmarkInfo';
 import { Separator } from '@/components/api';
+import { Hash } from '@/karabo/data/hash';
+import { broadcast_event, KaraboEvent } from '@/lib/events';
 
 const NoScenePanel: React.FC = () => {
   const { sessionInfo } = useGlobalStore();
   const { getRecentScenesForTopic, removeRecentScene } = useRecentStore();
-  const navigate = useNavigate();
 
-  document.title = 'Kiwi';
+  React.useEffect(() => {
+    document.title = 'Kiwi';
+  }, []);
 
   const topic = sessionInfo?.guiServerTopic ?? null;
   const recentScenes: RecentSceneInfo[] = topic
@@ -18,15 +20,14 @@ const NoScenePanel: React.FC = () => {
     : [];
 
   const handleSceneClick = (recentScene: RecentSceneInfo) => {
-    navigate(
-      // `/scene_v2?host=${sessionInfo!.guiServerHost}` +
-      `/scene?host=${sessionInfo!.guiServerHost}` +
-        `&port=${sessionInfo!.guiServerPort}` +
-        `&domain=${encodeURIComponent(recentScene.domain)}` +
-        `&projectName=${encodeURIComponent(recentScene.projectName)}` +
-        `&uuid=${encodeURIComponent(recentScene.uuid)}`,
-      { replace: true }
-    );
+    if (!sessionInfo) return;
+
+    const hash = new Hash();
+    hash.set('uuid', recentScene.uuid);
+    hash.set('domain', recentScene.domain);
+    hash.set('project', recentScene.projectName);
+    hash.set('name', recentScene.name);
+    broadcast_event(KaraboEvent.OpenScene, hash);
   };
 
   const handleRemoveScene = (recentScene: RecentSceneInfo) => {

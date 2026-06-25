@@ -21,6 +21,21 @@ jest.mock('@/lib/crypto', () => ({
   decryptData: jest.fn((text: string) => text.replace('encrypted_', '')),
 }));
 
+// Mock ESM-only react-resizable-panels package for Jest (CJS runtime).
+// Mirrors the v4 API surface (Group/Panel/Separator) used by resizable.tsx.
+jest.mock('react-resizable-panels', () => {
+  const React = require('react');
+
+  const passthrough = ({ children, ...props }: any) =>
+    React.createElement('div', props, children);
+
+  return {
+    Group: passthrough,
+    Panel: passthrough,
+    Separator: passthrough,
+  };
+});
+
 // -----------------------------------------------------------------------------
 // 3. Console Warning Suppression
 // -----------------------------------------------------------------------------

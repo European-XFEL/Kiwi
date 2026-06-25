@@ -1,7 +1,6 @@
 /** Links — DeviceSceneLink (controller), SceneLink, WebLink. */
 
 import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { Cpu, ExternalLink, Film } from 'lucide-react';
 import {
   DeviceSceneLinkModel,
@@ -11,28 +10,39 @@ import {
 import type { ControllerContainerContext } from './ControllerContainer';
 import { registerRenderer } from '../../renderRegistry';
 import { getQFontTextStyle } from '@/features/controllers/api';
+import { Hash } from '@/karabo/data/hash';
+import { broadcast_event, KaraboEvent } from '@/lib/events';
 
 // useSceneNavigate
 // ----------------------------------------------------------------------------
-// target may be "projectName:uuid" (SceneLink) or just "uuid" (DeviceSceneLink).
-// Replaces only the parts that are present, preserving host/port/domain.
+// Fires KaraboEvent.OpenScene instead of calling navigate().
+// PanelWrangler can inherit host/port/domain/project from the active scene,
+// so widget clicks should not depend on the current browser URL state.
 
-function useSceneNavigate(target: string, targetWindow: 'mainwin' | 'dialog') {
-  const location = useLocation();
-  const navigate = useNavigate();
-
+function useSceneNavigate(
+  target: string,
+  _targetWindow: 'mainwin' | 'dialog',
+  title?: string
+) {
   return React.useCallback(() => {
     if (!target) return;
-    const colonIdx = target.indexOf(':');
-    const projectName = colonIdx >= 0 ? target.slice(0, colonIdx) : null;
-    const uuid = colonIdx >= 0 ? target.slice(colonIdx + 1) : target;
 
-    let next = location.search.replace(/([?&]uuid=)[^&]*/, `$1${uuid}`);
+    const colonIdx = target.indexOf(':');
+    const projectName = colonIdx >= 0 ? target.slice(0, colonIdx) : undefined;
+    const uuid = colonIdx >= 0 ? target.slice(colonIdx + 1) : target;
+    if (!uuid) return;
+
+    const hash = new Hash();
+    hash.set('uuid', uuid);
     if (projectName) {
-      next = next.replace(/([?&]projectName=)[^&]*/, `$1${projectName}`);
+      hash.set('project', projectName);
     }
-    navigate({ pathname: location.pathname, search: next });
-  }, [target, targetWindow, location, navigate]);
+    if (title) {
+      hash.set('name', title);
+    }
+
+    broadcast_event(KaraboEvent.OpenScene, hash);
+  }, [target, title]);
 }
 
 // LinkButton — shared layout for all link types
@@ -96,8 +106,6 @@ function LinkButton({
 
 // DeviceSceneLink
 // ----------------------------------------------------------------------------
-// target="scene" is a fixed label — the real scene identifier comes from
-// the device's availableScenes property (ctx.proxy.value).
 
 const DeviceSceneLink: React.FC<{
   model: DeviceSceneLinkModel;
@@ -134,11 +142,10 @@ const SceneLink: React.FC<{ model: SceneLinkModel }> = ({ model }) => {
   if (parts.length !== 2) {
     return;
   }
-  // target format => "simple_name:UUID"
   const name = parts[0];
   const target = parts[1];
 
-  const go = useSceneNavigate(target, model.target_window);
+  const go = useSceneNavigate(target, model.target_window, name);
   return (
     <LinkButton
       text={model.text}
