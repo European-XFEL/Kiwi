@@ -6,7 +6,7 @@ import { Separator } from '@/components/api';
 import { Hash } from '@/karabo/data/hash';
 import { broadcast_event, KaraboEvent } from '@/lib/events';
 
-const NoScenePanel: React.FC = () => {
+const HomePanel: React.FC = () => {
   const { sessionInfo } = useGlobalStore();
   const { getRecentScenesForTopic, removeRecentScene } = useRecentStore();
 
@@ -67,4 +67,4 @@ const NoScenePanel: React.FC = () => {
   );
 };
 
-export default NoScenePanel;
+export default HomePanel;

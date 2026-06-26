@@ -127,7 +127,7 @@ jest.mock('@/lib/singletons/api', () => ({
   }),
 }));
 
-jest.mock('@/app/NoScenePanel', () => {
+jest.mock('@/app/HomePanel', () => {
   const React = jest.requireActual<typeof import('react')>('react');
 
   return {
