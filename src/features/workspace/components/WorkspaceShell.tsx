@@ -5,7 +5,7 @@ import {
 } from '@/features/scene-view/components/SceneStatusViews';
 import { getPanelWrangler } from '@/lib/singletons/api';
 import { HOME_TAB_ID } from '@/lib/singletons/PanelWrangler';
-import NoScenePanel from '@/app/NoScenePanel';
+import HomePanel from '@/app/HomePanel';
 import type { PanelTab, WorkspaceModel, WorkspaceRuntime } from '../types';
 import WorkspaceBody from './WorkspaceBody';
 import WorkspaceFooter from './WorkspaceFooter';
@@ -14,7 +14,7 @@ import WorkspaceHeader from './WorkspaceHeader';
 // TODO: renderLeftPanel — Topology panel (device/instance tree)
 
 function renderCenterPanel(tab: PanelTab) {
-  if (tab.id === HOME_TAB_ID) return <NoScenePanel />;
+  if (tab.id === HOME_TAB_ID) return <HomePanel />;
   const content = getPanelWrangler().getContent(tab.id);
   if (content?.error) return <SceneOpenError message={content.error} />;
   if (!content?.sceneRef || !content?.sceneModel) return <ScenePending />;
