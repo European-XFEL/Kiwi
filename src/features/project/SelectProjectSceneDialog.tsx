@@ -237,63 +237,65 @@ export default function SelectProjectSceneDialog({
             />
           </div>
 
-          {/* Projects */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">
-                Projects on Domain "{selectedDomain}"
-              </h3>
-              <span className="text-xs text-muted-foreground">
-                (
-                {filteredProjects.length === projects.length
-                  ? projects.length
-                  : `${filteredProjects.length} of ${projects.length}`}
-                )
-              </span>
+          <div className="grid gap-4 lg:grid-cols-2">
+            {/* Projects */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold">
+                  Projects on Domain "{selectedDomain}"
+                </h3>
+                <span className="text-xs text-muted-foreground">
+                  (
+                  {filteredProjects.length === projects.length
+                    ? projects.length
+                    : `${filteredProjects.length} of ${projects.length}`}
+                  )
+                </span>
+              </div>
+              <ProjectsTable
+                projects={filteredProjects}
+                selectedProject={selectedProject}
+                onProjectClick={handleProjectClick}
+                query={projectSearch.query}
+                onQueryChange={projectSearch.setQuery}
+              />
             </div>
-            <ProjectsTable
-              projects={filteredProjects}
-              selectedProject={selectedProject}
-              onProjectClick={handleProjectClick}
-              query={projectSearch.query}
-              onQueryChange={projectSearch.setQuery}
-            />
-          </div>
 
-          {/* Scenes */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">
-                Scenes on Project "{selectedProject?.simple_name ?? ''}"
-              </h3>
-              <span className="text-xs text-muted-foreground">
-                (
-                {filteredScenes.length === scenes.length
-                  ? scenes.length
-                  : `${filteredScenes.length} of ${scenes.length}`}
-                )
-              </span>
+            {/* Scenes */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold">
+                  Scenes on Project "{selectedProject?.simple_name ?? ''}"
+                </h3>
+                <span className="text-xs text-muted-foreground">
+                  (
+                  {filteredScenes.length === scenes.length
+                    ? scenes.length
+                    : `${filteredScenes.length} of ${scenes.length}`}
+                  )
+                </span>
+              </div>
+              <ScenesTable
+                scenes={filteredScenes}
+                selectedScene={selectedScene}
+                onSceneClick={handleSceneClick}
+                onSceneDoubleClick={handleSceneDoubleClick}
+                query={sceneSearch.query}
+                onQueryChange={sceneSearch.setQuery}
+              />
             </div>
-            <ScenesTable
-              scenes={filteredScenes}
-              selectedScene={selectedScene}
-              onSceneClick={handleSceneClick}
-              onSceneDoubleClick={handleSceneDoubleClick}
-              query={sceneSearch.query}
-              onQueryChange={sceneSearch.setQuery}
-            />
           </div>
         </div>
 
         <Separator />
 
-        <DialogFooter className="flex items-center justify-between sm:justify-between">
+        <DialogFooter className="flex-row items-center justify-between">
           <LoadingStatus
             isLoading={activityStatus !== ActivityStatus.NO_ACTIVITY}
             loadingText={getStatusText()}
             error={errorMsg}
           />
-          <div className="flex gap-2">
+          <div className="ml-auto flex gap-2">
             <Button variant="outline" onClick={onCancel}>
               Cancel
             </Button>
