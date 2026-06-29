@@ -93,13 +93,9 @@ export function readBaseShapeData(
   model.stroke_opacity = toNum(json['@_stroke-opacity'], 1.0);
   model.stroke_width = toNum(json['@_stroke-width'], 1.0);
   model.stroke_linecap = toStr(json['@_stroke-linecap'], 'butt') as
-    | 'butt'
-    | 'square'
-    | 'round';
+    'butt' | 'square' | 'round';
   model.stroke_linejoin = toStr(json['@_stroke-linejoin'], 'miter') as
-    | 'miter'
-    | 'round'
-    | 'bevel';
+    'miter' | 'round' | 'bevel';
   model.stroke_miterlimit = toNum(json['@_stroke-miterlimit'], 4.0);
   model.stroke_dashoffset = toNum(json['@_stroke-dashoffset'], 0.0);
   model.stroke_dasharray = toStr(json['@_stroke-dasharray'])

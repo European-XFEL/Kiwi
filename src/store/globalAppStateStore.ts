@@ -16,6 +16,7 @@ import { AccessLevel } from '@/karabo/data/enums';
 export interface GuiServerSessionInfo {
   loggedUser: string;
   accessLevel: number;
+  isReadOnly: boolean;
   guiServerHost: string;
   guiServerPort: number;
   guiServerTopic: string;

@@ -48,8 +48,7 @@ const TableElement: React.FC<{
 }> = ({ ctx }) => {
   const rawValue = ctx?.proxy?.value;
   const rowSchema = (ctx?.proxy?.binding as any)?.rowSchema as
-    | RowSchema
-    | undefined;
+    RowSchema | undefined;
 
   const columns = React.useMemo(() => toColumns(rowSchema), [rowSchema]);
   const columnKeys = React.useMemo(

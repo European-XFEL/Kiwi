@@ -11,12 +11,7 @@ export type LoadProjectSceneProps = {
   className?: string;
   size?: 'default' | 'sm' | 'lg' | 'icon';
   variant?:
-    | 'default'
-    | 'destructive'
-    | 'outline'
-    | 'secondary'
-    | 'ghost'
-    | 'link';
+    'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
 };
 
 export type SceneBreadcrumbProps = {

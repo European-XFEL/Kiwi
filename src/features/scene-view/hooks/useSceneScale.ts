@@ -2,11 +2,7 @@ import React from 'react';
 import { computeScale } from '../utils/sceneLayout';
 
 export type FitMode =
-  | 'fit-page'
-  | 'fit-screen'
-  | 'fit-width'
-  | 'fit-height'
-  | 'actual';
+  'fit-page' | 'fit-screen' | 'fit-width' | 'fit-height' | 'actual';
 
 /** Width and height of any rectangular content to be scaled. */
 export type Dimensions = { width: number; height: number } | null;

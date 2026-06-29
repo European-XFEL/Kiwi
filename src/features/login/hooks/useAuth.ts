@@ -48,6 +48,7 @@ export function useAuth({
       host: string,
       port: number,
       userId: string,
+      isReadOnly: boolean,
       topic: string,
       serverVersion: string
     ) => {
@@ -58,6 +59,7 @@ export function useAuth({
       setLoggedIn({
         accessLevel: accessLevel,
         loggedUser: userId,
+        isReadOnly,
         guiServerHost: host,
         guiServerPort: port,
         guiServerTopic: topic,
@@ -120,6 +122,7 @@ export function useAuth({
             userName,
             authResult.once_token!,
             authResult.refresh_token!,
+            probedServerInfo.readOnly,
             onAuthSessionStarted,
             onSessionStartFailure
           );
@@ -136,6 +139,7 @@ export function useAuth({
           portNum,
           userName,
           accessLevel,
+          probedServerInfo?.readOnly ?? false,
           onAuthSessionStarted,
           onSessionStartFailure
         );
