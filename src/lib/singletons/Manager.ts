@@ -87,6 +87,7 @@ export class Manager {
         session.host,
         session.port,
         session.userId!,
+        session.isReadOnly ?? false,
         session.topic!,
         session.serverVersion!
       );
@@ -172,6 +173,7 @@ export class Manager {
       session.host,
       session.port,
       session.userId!,
+      session.isReadOnly ?? false,
       session.topic!,
       session.serverVersion!
     );

@@ -82,6 +82,14 @@ export default function useWorkspaceRuntime(): WorkspaceRuntime {
     navigate('/main');
   }, [navigate]);
 
+  let guiServerDesc: string | undefined = undefined;
+  if (sessionInfo?.guiServerHost && sessionInfo?.guiServerPort) {
+    guiServerDesc = `${sessionInfo.guiServerHost}:${sessionInfo.guiServerPort}`;
+    if (sessionInfo?.isReadOnly) {
+      guiServerDesc = `${guiServerDesc} (read-only)`;
+    }
+  }
+
   return {
     accessLevelLabel: accessLevelInfo?.label,
     activeScene,
@@ -89,10 +97,7 @@ export default function useWorkspaceRuntime(): WorkspaceRuntime {
       globalState === 'LOGGED_IN' ||
       globalState === 'NOTIFIED_SESSION_EXPIRATION',
     connectedFor,
-    guiServer:
-      sessionInfo?.guiServerHost && sessionInfo?.guiServerPort
-        ? `${sessionInfo.guiServerHost}:${sessionInfo.guiServerPort}`
-        : undefined,
+    guiServer: guiServerDesc,
     guiServerVersion: sessionInfo?.guiServerVersion,
     latestLatency,
     onGoHome,

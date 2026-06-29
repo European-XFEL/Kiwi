@@ -99,12 +99,14 @@ const App: React.FC = () => {
           host: string,
           port: number,
           userId: string,
+          isReadOnly: boolean,
           topic: string,
           serverVersion: string
         ) => {
           setLoggedIn({
             accessLevel,
             loggedUser: userId,
+            isReadOnly,
             guiServerHost: host,
             guiServerPort: port,
             guiServerTopic: topic,

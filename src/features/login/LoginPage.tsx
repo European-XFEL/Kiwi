@@ -8,6 +8,7 @@ import LoginStatus from './components/LoginStatus';
 import { useServerProbe } from './hooks/useServerProbe';
 import { useAuth } from './hooks/useAuth';
 import { ActivityStatus } from './auth.types';
+import ReadOnlyAccessForm from './components/ReadOnlyAccessForm';
 
 /**
  * LoginPage - Main login interface
@@ -87,7 +88,7 @@ export function LoginPage() {
         disabled={activityStatus !== ActivityStatus.NO_ACTIVITY}
       />
     );
-  } else if (probedServerInfo) {
+  } else if (probedServerInfo && !probedServerInfo.readOnly) {
     formContent = (
       <AccessLevelForm
         onUserNameChange={(v) => {
@@ -95,6 +96,16 @@ export function LoginPage() {
           clearError();
         }}
         onAccessLevelChange={setAccessLevel}
+        disabled={activityStatus !== ActivityStatus.NO_ACTIVITY}
+      />
+    );
+  } else if (probedServerInfo) {
+    formContent = (
+      <ReadOnlyAccessForm
+        onUserNameChange={(v) => {
+          setUserName(v);
+          clearError();
+        }}
         disabled={activityStatus !== ActivityStatus.NO_ACTIVITY}
       />
     );

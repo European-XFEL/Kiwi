@@ -21,6 +21,7 @@ export type SessionStartedHandler = (
   host: string,
   port: number,
   userId: string,
+  isReadOnly: boolean,
   topic: string,
   serverVersion: string
 ) => void;
@@ -36,6 +37,7 @@ export interface GuiServerSession {
   userLogged: boolean;
   userId?: string;
   accessLevel?: AccessLevel;
+  isReadOnly?: boolean;
   oneTimeToken?: string;
   refreshToken?: string;
   startHandler: SessionStartedHandler;
@@ -112,6 +114,7 @@ export class Network {
     userId: string,
     oneTimeToken: string,
     refreshToken: string,
+    isReadOnly: boolean,
     onStartedHandler: SessionStartedHandler,
     onErrorHandler: SessionStartErrorHandler
   ): void {
@@ -122,6 +125,7 @@ export class Network {
       userId,
       oneTimeToken,
       refreshToken,
+      isReadOnly,
       isAuthSession: true,
       userLogged: false,
       startHandler: onStartedHandler,
@@ -135,6 +139,7 @@ export class Network {
     port: number,
     userId: string,
     accessLevel: AccessLevel,
+    isReadOnly: boolean,
     onStartedHandler: SessionStartedHandler,
     onErrorHandler: SessionStartErrorHandler
   ): void {
@@ -144,6 +149,7 @@ export class Network {
       port,
       userId,
       accessLevel,
+      isReadOnly,
       isAuthSession: false,
       userLogged: false,
       startHandler: onStartedHandler,
@@ -193,6 +199,7 @@ export class Network {
               port: port,
               userId: sessionData!.userId,
               accessLevel: sessionData!.accessLevel!,
+              isReadOnly: serverInfo.readOnly,
               isAuthSession: false,
               userLogged: false,
               startHandler: onResumedHandler,
@@ -218,6 +225,7 @@ export class Network {
               userId: sessionData!.userId,
               oneTimeToken: res.once_token!,
               refreshToken: res.refresh_token!,
+              isReadOnly: serverInfo.readOnly,
               isAuthSession: true,
               userLogged: false,
               startHandler: onResumedHandler,

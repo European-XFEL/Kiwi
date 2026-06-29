@@ -118,10 +118,7 @@ export class Hash extends Map<string, HashElement> {
   constructor();
   constructor(
     init:
-      | Hash
-      | Map<string, any>
-      | Iterable<[string, any]>
-      | Record<string, any>
+      Hash | Map<string, any> | Iterable<[string, any]> | Record<string, any>
   );
   constructor(...args: (string | any)[]);
   constructor(...args: any[]) {
@@ -237,8 +234,7 @@ export class Hash extends Map<string, HashElement> {
 
     if (!key.includes(SEPARATOR)) {
       const existing = Map.prototype.get.call(this, key) as
-        | HashElement
-        | undefined;
+        HashElement | undefined;
       const attrs = existing ? existing.attrs : new HashAttributes();
       Map.prototype.set.call(this, key, new HashElement(wrap(value), attrs));
       return this;
@@ -246,8 +242,7 @@ export class Hash extends Map<string, HashElement> {
 
     const { hash, key: leaf } = this._path(key, true);
     const existing = Map.prototype.get.call(hash, leaf) as
-      | HashElement
-      | undefined;
+      HashElement | undefined;
     const attrs = existing ? existing.attrs : new HashAttributes();
     Map.prototype.set.call(hash, leaf, new HashElement(wrap(value), attrs));
 
