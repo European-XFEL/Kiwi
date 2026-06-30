@@ -6,6 +6,7 @@ import { Manager, RequestHandler } from './Manager';
 import { Mediator } from './Mediator';
 import { ConfigurationStore } from './Configuration';
 import { PanelWrangler } from './PanelWrangler';
+import { ProjectItemModel } from './ProjectItemModel';
 
 export type { RequestHandler };
 
@@ -42,3 +43,4 @@ export const getManager = buildGetter('manager', Manager);
 export const getMediator = buildGetter('mediator', Mediator);
 export const getConfig = buildGetter('config', ConfigurationStore);
 export const getPanelWrangler = buildGetter('panel_wrangler', PanelWrangler);
+export const getProjectModel = buildGetter('project_model', ProjectItemModel);
