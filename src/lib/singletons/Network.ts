@@ -28,6 +28,16 @@ export type SessionStartedHandler = (
 
 export type SessionStartErrorHandler = (errMsg: string) => void;
 
+export interface SessionStartData {
+  accessLevel: AccessLevel;
+  host: string;
+  port: number;
+  userId: string;
+  isReadOnly: boolean;
+  topic: string;
+  serverVersion: string;
+}
+
 export interface GuiServerSession {
   host: string;
   port: number;
@@ -40,8 +50,13 @@ export interface GuiServerSession {
   isReadOnly?: boolean;
   oneTimeToken?: string;
   refreshToken?: string;
-  startHandler: SessionStartedHandler;
-  startErrorHandler: SessionStartErrorHandler;
+  startHandler?: SessionStartedHandler;
+  startErrorHandler?: SessionStartErrorHandler;
+}
+
+interface SessionStartResolvers {
+  resolve: (session: SessionStartData) => void;
+  reject: (error: Error) => void;
 }
 
 export class Network {
@@ -54,6 +69,7 @@ export class Network {
   private _sessionExpired = false; //
   private _ws?: Websocket;
   private _hashDeque = new Deque<BinHashItem>();
+  private _sessionStartResolvers?: SessionStartResolvers;
   private _timer: ReturnType<typeof setInterval> | null = null;
 
   public constructor() {}
@@ -108,17 +124,18 @@ export class Network {
 
   // #region Session Lifecycle
 
-  public startAuthSession(
+  public async startAuthSession(
     host: string,
     port: number,
     userId: string,
     oneTimeToken: string,
     refreshToken: string,
-    isReadOnly: boolean,
-    onStartedHandler: SessionStartedHandler,
-    onErrorHandler: SessionStartErrorHandler
-  ): void {
-    if (this._session) return;
+    isReadOnly: boolean
+  ): Promise<SessionStartData> {
+    if (this._session) {
+      throw new Error('GUI session already active.');
+    }
+
     this._session = {
       host,
       port,
@@ -128,22 +145,23 @@ export class Network {
       isReadOnly,
       isAuthSession: true,
       userLogged: false,
-      startHandler: onStartedHandler,
-      startErrorHandler: onErrorHandler,
     };
+    const startPromise = this._createSessionStartPromise();
     this._startWebsocketSession(host, port);
+    return startPromise;
   }
 
-  public startNonAuthSession(
+  public async startNonAuthSession(
     host: string,
     port: number,
     userId: string,
     accessLevel: AccessLevel,
-    isReadOnly: boolean,
-    onStartedHandler: SessionStartedHandler,
-    onErrorHandler: SessionStartErrorHandler
-  ): void {
-    if (this._session) return;
+    isReadOnly: boolean
+  ): Promise<SessionStartData> {
+    if (this._session) {
+      throw new Error('GUI session already active.');
+    }
+
     this._session = {
       host,
       port,
@@ -152,10 +170,10 @@ export class Network {
       isReadOnly,
       isAuthSession: false,
       userLogged: false,
-      startHandler: onStartedHandler,
-      startErrorHandler: onErrorHandler,
     };
+    const startPromise = this._createSessionStartPromise();
     this._startWebsocketSession(host, port);
+    return startPromise;
   }
 
   public async resumeGuiSession(
@@ -377,6 +395,15 @@ export class Network {
   }
 
   private _handleSessionError(message: string) {
+    const session = this._session;
+    if (session && !session.userLogged) {
+      this._rejectSessionStart(message);
+      session.startErrorHandler?.(message);
+      this._session = undefined;
+      this._stopWebsocketSession();
+      return;
+    }
+
     broadcast_event(KaraboEvent.SessionDropped, new Hash('message', message));
     this._stopWebsocketSession();
   }
@@ -463,6 +490,51 @@ export class Network {
     });
 
     this.sendHash(h);
+  }
+
+  public completeSessionStart(accessLevel: AccessLevel): SessionStartData {
+    const session = this._session;
+    if (!session) {
+      throw new Error(
+        'Cannot complete session start without an active session.'
+      );
+    }
+
+    const sessionData: SessionStartData = {
+      accessLevel,
+      host: session.host,
+      port: session.port,
+      userId: session.userId!,
+      isReadOnly: session.isReadOnly ?? false,
+      topic: session.topic!,
+      serverVersion: session.serverVersion!,
+    };
+
+    session.startHandler?.(
+      sessionData.accessLevel,
+      sessionData.host,
+      sessionData.port,
+      sessionData.userId,
+      sessionData.isReadOnly,
+      sessionData.topic,
+      sessionData.serverVersion
+    );
+
+    this._sessionStartResolvers?.resolve(sessionData);
+    this._sessionStartResolvers = undefined;
+
+    return sessionData;
+  }
+
+  private _createSessionStartPromise(): Promise<SessionStartData> {
+    return new Promise<SessionStartData>((resolve, reject) => {
+      this._sessionStartResolvers = { resolve, reject };
+    });
+  }
+
+  private _rejectSessionStart(message: string) {
+    this._sessionStartResolvers?.reject(new Error(message));
+    this._sessionStartResolvers = undefined;
   }
 
   public onGetDeviceConfiguration(deviceId: string): void {

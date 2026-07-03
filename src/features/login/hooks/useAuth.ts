@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getConfig, getNetwork } from '@/lib/singletons/api';
-import { AccessLevel } from '@/karabo/data/api';
+import type { SessionStartData } from '@/lib/singletons/Network';
 import AuthServerClient from '@/lib/http/AuthServerClient';
 import { useGlobalStore } from '@/store/api';
 import { ActivityStatus, GuiServerInfo } from '../auth.types';
@@ -43,15 +43,15 @@ export function useAuth({
 
   // Auth session started callback
   const onAuthSessionStarted = useCallback(
-    (
-      accessLevel: AccessLevel,
-      host: string,
-      port: number,
-      userId: string,
-      isReadOnly: boolean,
-      topic: string,
-      serverVersion: string
-    ) => {
+    ({
+      accessLevel,
+      host,
+      port,
+      userId,
+      isReadOnly,
+      topic,
+      serverVersion,
+    }: SessionStartData) => {
       getConfig().lastHost = host;
       getConfig().lastPort = port;
       setActivityStatus(ActivityStatus.NO_ACTIVITY);
@@ -75,16 +75,7 @@ export function useAuth({
       // the user activated some previously saved scene bookmark. Just let
       // the router handle the route and the scene will be loaded.
     },
-    [userName, setLoggedIn, navigate, setActivityStatus]
-  );
-
-  // Session start failure callback
-  const onSessionStartFailure = useCallback(
-    (errMsg: string) => {
-      setActivityStatus(ActivityStatus.NO_ACTIVITY);
-      setErrorMessage(`Login error: ${errMsg}`);
-    },
-    [setActivityStatus, setErrorMessage]
+    [setLoggedIn, navigate, location.search, setActivityStatus]
   );
 
   // Update auth server URL ref
@@ -116,16 +107,20 @@ export function useAuth({
           }
 
           setActivityStatus(ActivityStatus.CONNECTING_SERVER);
-          getNetwork().startAuthSession(
-            host.trim(),
-            portNum,
-            userName,
-            authResult.once_token!,
-            authResult.refresh_token!,
-            probedServerInfo.readOnly,
-            onAuthSessionStarted,
-            onSessionStartFailure
-          );
+          try {
+            const session = await getNetwork().startAuthSession(
+              host.trim(),
+              portNum,
+              userName,
+              authResult.once_token!,
+              authResult.refresh_token!,
+              probedServerInfo.readOnly
+            );
+            onAuthSessionStarted(session);
+          } catch (error: any) {
+            setActivityStatus(ActivityStatus.NO_ACTIVITY);
+            setErrorMessage(`Login error: ${error.message || 'Unknown error'}`);
+          }
         } catch (error: any) {
           setActivityStatus(ActivityStatus.NO_ACTIVITY);
           setErrorMessage(`Auth error: ${error.message || 'Unknown error'}`);
@@ -134,15 +129,19 @@ export function useAuth({
       // Case B: No Authentication
       else {
         setActivityStatus(ActivityStatus.CONNECTING_SERVER);
-        getNetwork().startNonAuthSession(
-          host.trim(),
-          portNum,
-          userName,
-          accessLevel,
-          probedServerInfo?.readOnly ?? false,
-          onAuthSessionStarted,
-          onSessionStartFailure
-        );
+        try {
+          const session = await getNetwork().startNonAuthSession(
+            host.trim(),
+            portNum,
+            userName,
+            accessLevel,
+            probedServerInfo?.readOnly ?? false
+          );
+          onAuthSessionStarted(session);
+        } catch (error: any) {
+          setActivityStatus(ActivityStatus.NO_ACTIVITY);
+          setErrorMessage(`Login error: ${error.message || 'Unknown error'}`);
+        }
       }
     },
     [
@@ -151,7 +150,6 @@ export function useAuth({
       accessLevel,
       probedServerInfo,
       onAuthSessionStarted,
-      onSessionStartFailure,
       setActivityStatus,
       setErrorMessage,
     ]

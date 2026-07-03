@@ -69,7 +69,6 @@ export class Manager {
     this._network.updateSessionServerInfo(topic, version);
     this._network.performLogin();
 
-    // Check for Non-Auth session logic
     const session = this._network.session;
     if (session && !session.isAuthSession) {
       getConfig().saveNonAuthSession(session.userId!, session.accessLevel!);
@@ -81,16 +80,7 @@ export class Manager {
       });
 
       this._network.updateSessionAuth(session.accessLevel!);
-
-      session.startHandler(
-        session.accessLevel!,
-        session.host,
-        session.port,
-        session.userId!,
-        session.isReadOnly ?? false,
-        session.topic!,
-        session.serverVersion!
-      );
+      this._network.completeSessionStart(session.accessLevel!);
     }
   }
 
@@ -153,10 +143,12 @@ export class Manager {
   }
 
   public handle_loginInformation(hash: Hash): void {
-    const accessLevel = hash.getValue('accessLevel') as number;
     const session = this._network.session;
 
     if (!session) return;
+    if (!session.isAuthSession) return;
+
+    const accessLevel = hash.getValue('accessLevel') as number;
 
     getConfig().saveAuthSession(session.userId!, session.refreshToken!);
 
@@ -167,16 +159,7 @@ export class Manager {
     });
 
     this._network.updateSessionAuth(accessLevel);
-
-    session.startHandler(
-      accessLevel,
-      session.host,
-      session.port,
-      session.userId!,
-      session.isReadOnly ?? false,
-      session.topic!,
-      session.serverVersion!
-    );
+    this._network.completeSessionStart(accessLevel);
   }
 
   public handle_notification(hash: Hash): void {
