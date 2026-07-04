@@ -1,5 +1,4 @@
 import { Hash, decodeBinary } from '@/karabo/data/api';
-import { getNetwork } from '@/lib/singletons/api';
 import { useAppSettingsStore } from '@/store/api';
 import { WebsocketBuilder } from 'websocket-ts';
 import { GuiServerInfo } from './auth.types';
@@ -36,12 +35,10 @@ export function extractGuiServerInfo(hash: Hash):
   };
 }
 
-export function probeServer(
+export async function probeServer(
   host: string,
-  port: number,
-  onSuccess: (serverInfo: GuiServerInfo) => void,
-  onError: (errMsg: string) => void
-): void {
+  port: number
+): Promise<GuiServerInfo> {
   const wsProxyURL = useAppSettingsStore.getState().wsProxyURL;
 
   // Initialize the two possible connection modes: direct connection to a GUI
@@ -55,40 +52,66 @@ export function probeServer(
     console.log(`Probing server directly at URL '${websocketURL}'`);
   }
 
-  new WebsocketBuilder(websocketURL)
-    .onOpen((ws) => {
-      if (useWebSocketProxy) {
-        // When the connection to the GUI server is intermediated by a web socket proxy,
-        // the target GUI Server host and port must be sent for the proxy to initialize
-        // the connection
-        ws.send(JSON.stringify({ host: host, port: port }));
-      }
-    })
-    .onMessage((ws, ev) => {
-      if (typeof ev.data === 'string') {
-        onError(`No GUI server available at "${host}:${port}"`);
-        ws.close();
-      } else {
-        const msgBlob = ev.data as Blob;
-        msgBlob.arrayBuffer().then((binHash: ArrayBuffer) => {
-          const hash = decodeBinary(
-            new Uint8Array(binHash, 4, binHash.byteLength - 4)
-          );
-          const guiServerInfo = extractGuiServerInfo(hash);
-          if (guiServerInfo) {
-            // The message received via the websocket was not of the GuiServerInfo
-            // That is possible, for example, if the GUI Server has a banner configured.
-            // The banner is sent right away, not only after the login.
-            onSuccess(guiServerInfo);
-          }
+  const _unavailableGuiServerMsg = `No GUI server available at "${host}:${port}"`;
+
+  return new Promise<GuiServerInfo>((resolve, reject) => {
+    let isSettled = false;
+    const resolveProbe = (serverInfo: GuiServerInfo) => {
+      if (isSettled) return;
+      isSettled = true;
+      resolve(serverInfo);
+    };
+    const rejectProbe = (errMsg: string) => {
+      if (isSettled) return;
+      isSettled = true;
+      reject(errMsg);
+    };
+
+    new WebsocketBuilder(websocketURL)
+      .onOpen((ws) => {
+        if (useWebSocketProxy) {
+          // When the connection to the GUI server is intermediated by a web socket proxy,
+          // the target GUI Server host and port must be sent for the proxy to initialize
+          // the connection
+          ws.send(JSON.stringify({ host: host, port: port }));
+        }
+      })
+      .onMessage((ws, ev) => {
+        if (typeof ev.data === 'string') {
+          rejectProbe(_unavailableGuiServerMsg);
           ws.close();
-        });
-      }
-    })
-    .onError((ws, ev) => {
-      let message = getNetwork().websocketEventMessage(ws, ev);
-      onError(message);
-      ws.close();
-    })
-    .build();
+          return;
+        }
+
+        const msgBlob = ev.data as Blob;
+        msgBlob
+          .arrayBuffer()
+          .then((binHash: ArrayBuffer) => {
+            const hash = decodeBinary(
+              new Uint8Array(binHash, 4, binHash.byteLength - 4)
+            );
+            const guiServerInfo = extractGuiServerInfo(hash);
+            if (!guiServerInfo) {
+              return;
+            }
+
+            // A banner may arrive before the actual server information, so only
+            // resolve once the expected payload is decoded.
+            resolveProbe(guiServerInfo);
+            ws.close();
+          })
+          .catch((error: unknown) => {
+            rejectProbe(String(error));
+            ws.close();
+          });
+      })
+      .onClose(() => {
+        rejectProbe(_unavailableGuiServerMsg);
+      })
+      .onError((ws) => {
+        rejectProbe(_unavailableGuiServerMsg);
+        ws.close();
+      })
+      .build();
+  });
 }

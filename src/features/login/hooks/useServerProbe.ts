@@ -100,7 +100,7 @@ export function useServerProbe({
       if (!h || !Number.isFinite(pNum) || pNum <= 0 || pNum > 65535) return;
       captureFocusedControl();
       setActivityStatus(ActivityStatus.PROBING_SERVER);
-      probeServer(h, pNum, onProbeSuccess, onProbeFailure);
+      probeServer(h, pNum).then(onProbeSuccess).catch(onProbeFailure);
     },
     [onProbeSuccess, onProbeFailure]
   );
