@@ -6,7 +6,6 @@ import { useAppSettingsStore, useGlobalStore } from '@/store/api';
 import { getNetwork, getManager, getConfig } from '@/lib/singletons/api';
 import { TooltipProvider } from '@/components/api';
 import { Toaster } from '@/components/api';
-import { AccessLevel } from '@/karabo/data/enums';
 import { KaraboEvent, useKaraboEvent } from '@/lib/events';
 import { Hash } from '@/karabo/data/hash';
 import { toast } from 'sonner';
@@ -91,18 +90,25 @@ const App: React.FC = () => {
         host = getConfig().lastHost;
         port = getConfig().lastPort;
       }
-      getNetwork().resumeGuiSession(
-        host,
-        port,
-        (
-          accessLevel: AccessLevel,
-          host: string,
-          port: number,
-          userId: string,
-          isReadOnly: boolean,
-          topic: string,
-          serverVersion: string
-        ) => {
+      getNetwork()
+        .resumeGuiSession(host, port)
+        .then((sessionData) => {
+          if (!sessionData) {
+            // There was no session to be resumed
+            setLoggedOut();
+            return;
+          }
+          // Session was resumed successfully
+          const {
+            accessLevel,
+            host,
+            port,
+            userId,
+            isReadOnly,
+            topic,
+            serverVersion,
+          } = sessionData;
+
           setLoggedIn({
             accessLevel,
             loggedUser: userId,
@@ -113,10 +119,13 @@ const App: React.FC = () => {
             guiServerVersion: serverVersion,
             sessionStartEpoc: Date.now(),
           });
-        },
-        () => setLoggedOut(),
-        (errorMsg: string) => setError(errorMsg)
-      );
+        })
+        .catch((error: unknown) => {
+          // An error happened during the attempt to resume a session
+          const errorMsg =
+            error instanceof Error ? error.message : String(error);
+          setError(errorMsg);
+        });
     }
   }, [setWsProxyUrl, setError, setLoggedIn, setLoggedOut]);
 

@@ -16,18 +16,6 @@ const KIWI_GUI_CLIENT_VERSION = '3.1.0';
 
 type BinHashItem = { bin: ArrayBuffer; time: number };
 
-export type SessionStartedHandler = (
-  accessLevel: AccessLevel,
-  host: string,
-  port: number,
-  userId: string,
-  isReadOnly: boolean,
-  topic: string,
-  serverVersion: string
-) => void;
-
-export type SessionStartErrorHandler = (errMsg: string) => void;
-
 export interface SessionStartData {
   accessLevel: AccessLevel;
   host: string;
@@ -50,8 +38,6 @@ export interface GuiServerSession {
   isReadOnly?: boolean;
   oneTimeToken?: string;
   refreshToken?: string;
-  startHandler?: SessionStartedHandler;
-  startErrorHandler?: SessionStartErrorHandler;
 }
 
 interface SessionStartResolvers {
@@ -178,94 +164,93 @@ export class Network {
 
   public async resumeGuiSession(
     host: string,
-    port: number,
-    onResumedHandler: SessionStartedHandler,
-    onNoSessionHandler: () => void,
-    onErrorHandler: SessionStartErrorHandler
-  ): Promise<void> {
-    if (this._session) return;
+    port: number
+  ): Promise<SessionStartData | undefined> {
+    if (this._session) {
+      return Promise.reject('GUI session already active.');
+    }
 
     try {
-      let sessionData = await getConfig().loadSession();
+      const sessionData = await getConfig().loadSession();
       if (!sessionData) {
-        onNoSessionHandler();
-        return;
+        return undefined;
       }
 
-      probeServer(
-        host,
-        port,
-        // onProbeSuccess
-        async (serverInfo: GuiServerInfo) => {
-          const authRequired = serverInfo['authRequired'] as boolean;
-          const isServerAuthenticated = authRequired;
-          const sessionDataAuthenticated =
-            sessionData!.refreshToken != undefined;
+      let serverInfo: GuiServerInfo;
+      try {
+        serverInfo = await probeServer(host, port);
+      } catch (error: unknown) {
+        getConfig().deleteSession();
+        return Promise.reject(`Failed to probe server: "${String(error)}".`);
+      }
 
-          if (isServerAuthenticated != sessionDataAuthenticated) {
-            getConfig().deleteSession();
-            onErrorHandler(
-              'Session authentication mode mismatch. Resume aborted.'
-            );
-            return;
-          }
+      const authRequired = serverInfo['authRequired'] as boolean;
+      const isServerAuthenticated = authRequired;
+      const sessionDataAuthenticated = sessionData.refreshToken != undefined;
 
-          if (sessionData!.refreshToken == undefined) {
-            // Non-auth resume
-            this._session = {
-              host: host,
-              port: port,
-              userId: sessionData!.userId,
-              accessLevel: sessionData!.accessLevel!,
-              isReadOnly: serverInfo.readOnly,
-              isAuthSession: false,
-              userLogged: false,
-              startHandler: onResumedHandler,
-              startErrorHandler: onErrorHandler,
-            };
-          } else {
-            // Auth resume
-            const authServerCli = new AuthServerClient(serverInfo.authServer);
-            const res = await authServerCli.refreshTokens(
-              sessionData!.refreshToken!,
-              sessionData!.userId
-            );
+      if (isServerAuthenticated != sessionDataAuthenticated) {
+        getConfig().deleteSession();
+        return Promise.reject(
+          'Session authentication mode mismatch. Resume aborted.'
+        );
+      }
 
-            if (!res.success) {
-              getConfig().deleteSession();
-              onErrorHandler(res.error_msg!);
-              return;
-            }
+      if (sessionData.refreshToken == undefined) {
+        // Non-auth resume
+        this._session = {
+          host,
+          port,
+          userId: sessionData.userId,
+          accessLevel: sessionData.accessLevel!,
+          isReadOnly: serverInfo.readOnly,
+          isAuthSession: false,
+          userLogged: false,
+        };
+      } else {
+        // Auth resume
+        const authServerCli = new AuthServerClient(serverInfo.authServer);
+        const res = await authServerCli.refreshTokens(
+          sessionData.refreshToken,
+          sessionData.userId
+        );
 
-            this._session = {
-              host: host,
-              port: port,
-              userId: sessionData!.userId,
-              oneTimeToken: res.once_token!,
-              refreshToken: res.refresh_token!,
-              isReadOnly: serverInfo.readOnly,
-              isAuthSession: true,
-              userLogged: false,
-              startHandler: onResumedHandler,
-              startErrorHandler: onErrorHandler,
-            };
-
-            await getConfig().saveAuthSession(
-              sessionData!.userId,
-              res.refresh_token!
-            );
-          }
-          this._startWebsocketSession(host, port);
-        },
-        // onProbeError
-        (error_msg: string) => {
+        if (!res.success) {
           getConfig().deleteSession();
-          onErrorHandler(`Failed to probe server: "${error_msg}".`);
+          return Promise.reject(res.error_msg!);
         }
-      );
-    } catch (error: any) {
+
+        this._session = {
+          host,
+          port,
+          userId: sessionData.userId,
+          oneTimeToken: res.once_token!,
+          refreshToken: res.refresh_token!,
+          isReadOnly: serverInfo.readOnly,
+          isAuthSession: true,
+          userLogged: false,
+        };
+
+        await getConfig().saveAuthSession(
+          sessionData.userId,
+          res.refresh_token!
+        );
+      }
+
+      const startPromise = this._createSessionStartPromise();
+      this._startWebsocketSession(host, port);
+      try {
+        return await startPromise;
+      } catch (error: unknown) {
+        return Promise.reject(
+          error instanceof Error ? error.message : String(error)
+        );
+      }
+    } catch (error: unknown) {
       getConfig().deleteSession();
-      onErrorHandler(error.toString());
+      this._sessionStartResolvers = undefined;
+      return Promise.reject(
+        error instanceof Error ? error.message : String(error)
+      );
     }
   }
 
@@ -296,7 +281,7 @@ export class Network {
    * @param ev the websocket event
    * @returns the message corresponding to the event
    */
-  public websocketEventMessage(ws: Websocket, ev: Event): string {
+  private _websocketEventMessage(ws: Websocket, ev: Event): string {
     let message: string | undefined;
     if (!ws.underlyingWebsocket)
       message = 'Websocket client initialization error';
@@ -389,7 +374,7 @@ export class Network {
     ev: Event,
     callback: (msg: string) => void
   ) {
-    let message = this.websocketEventMessage(ws, ev);
+    let message = this._websocketEventMessage(ws, ev);
     ws.close();
     if (callback && message) callback(message);
   }
@@ -398,7 +383,6 @@ export class Network {
     const session = this._session;
     if (session && !session.userLogged) {
       this._rejectSessionStart(message);
-      session.startErrorHandler?.(message);
       this._session = undefined;
       this._stopWebsocketSession();
       return;
@@ -509,16 +493,6 @@ export class Network {
       topic: session.topic!,
       serverVersion: session.serverVersion!,
     };
-
-    session.startHandler?.(
-      sessionData.accessLevel,
-      sessionData.host,
-      sessionData.port,
-      sessionData.userId,
-      sessionData.isReadOnly,
-      sessionData.topic,
-      sessionData.serverVersion
-    );
 
     this._sessionStartResolvers?.resolve(sessionData);
     this._sessionStartResolvers = undefined;
