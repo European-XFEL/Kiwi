@@ -1,8 +1,6 @@
 /** SceneModel — root container for a Karabo scene. */
 
 import { BaseSceneObjectData } from './bases';
-
-import { XMLParser } from 'fast-xml-parser';
 import { readElement, readerRegistry } from './Registry';
 import { ATTR_KRB_VERSION, SCENE_FILE_VERSION, SVG_SVG } from './constants';
 import { toNum } from './util';
@@ -12,6 +10,7 @@ export class SceneModel extends BaseSceneObjectData {
     super();
     Object.assign(this, init);
   }
+
   svg = '';
   width = 1024;
   height = 768;
@@ -24,28 +23,63 @@ export class SceneModel extends BaseSceneObjectData {
   children: BaseSceneObjectData[] = [];
 }
 
-const xmlParser = new XMLParser({
-  ignoreAttributes: false,
-  attributeNamePrefix: '@_',
-  allowBooleanAttributes: true,
-});
+type ParsedSceneElement = Record<string, unknown> & {
+  __tag__: string;
+};
 
-/** Locate the svg root in the parsed XML object and return it with its tag. */
-function extractSvgRoot(
-  xmlObj: Record<string, unknown>
-): { root: Record<string, unknown>; tag: string } | undefined {
-  // Direct root
-  for (const tag of [SVG_SVG, 'svg']) {
-    if (xmlObj[tag])
-      return { root: xmlObj[tag] as Record<string, unknown>, tag };
+function normalizeTagName(element: Element): string {
+  const localName = element.localName || element.tagName;
+  return element.prefix ? `${element.prefix}:${localName}` : localName;
+}
+
+function isSvgElement(element: Element | null | undefined): element is Element {
+  if (!element) return false;
+  const tag = normalizeTagName(element);
+  return tag === SVG_SVG || tag === 'svg';
+}
+
+function elementToParsedSceneElement(
+  element: Element,
+  tag = normalizeTagName(element)
+): ParsedSceneElement {
+  const parsed: ParsedSceneElement = { __tag__: tag };
+
+  const attributes = element.attributes;
+  for (let i = 0; i < attributes.length; i++) {
+    const attribute = attributes[i];
+    parsed[`@_${attribute.name}`] = attribute.value;
   }
 
-  // Wrapped roots (e.g. project DB xml)
-  const inner = xmlObj['xml'] as Record<string, unknown> | undefined;
-  if (inner) {
-    for (const tag of [SVG_SVG, 'svg']) {
-      if (inner[tag])
-        return { root: inner[tag] as Record<string, unknown>, tag };
+  const children = element.children;
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i];
+    const childTag = normalizeTagName(child);
+    const parsedChild = elementToParsedSceneElement(child, childTag);
+    const existing = parsed[childTag];
+
+    if (existing === undefined) {
+      parsed[childTag] = parsedChild;
+    } else if (Array.isArray(existing)) {
+      existing.push(parsedChild);
+    } else {
+      parsed[childTag] = [existing, parsedChild];
+    }
+  }
+
+  return parsed;
+}
+
+function extractSvgRoot(doc: Document): Element | undefined {
+  const root = doc.documentElement;
+  if (isSvgElement(root)) {
+    return root;
+  }
+
+  const allElements = doc.getElementsByTagName('*');
+  for (let i = 0; i < allElements.length; i++) {
+    const element = allElements[i];
+    if (isSvgElement(element)) {
+      return element;
     }
   }
 
@@ -53,27 +87,23 @@ function extractSvgRoot(
 }
 
 export function readScene(xml: string): SceneModel {
-  const xmlObj = xmlParser.parse(xml) as Record<string, unknown>;
-  const result = extractSvgRoot(xmlObj);
+  const doc = new DOMParser().parseFromString(xml, 'application/xml');
+  const docElement = doc.documentElement;
 
-  if (!result) {
+  if (!docElement || docElement.localName === 'parsererror') {
+    console.warn('[readScene] Unable to parse xml');
+    return new SceneModel();
+  }
+
+  const root = extractSvgRoot(doc);
+  if (!root) {
     console.warn('[readScene] Unable to locate svg root');
     return new SceneModel();
   }
 
-  const { root, tag } = result;
+  const element = elementToParsedSceneElement(root);
+  const tag = element.__tag__ || SVG_SVG;
 
-  // Set scene version before reading — readers use this for version dispatch
-  readerRegistry.version = toNum(root[ATTR_KRB_VERSION], SCENE_FILE_VERSION);
-
-  return readElement(root, tag) as SceneModel;
-}
-
-/** Build a SceneModel from an already-parsed SVG JSON object.
- *  Used by ProjectDBConnector to avoid re-parsing XML on cache hits. */
-export function readSceneFromSvgJson(
-  svgJson: Record<string, unknown>
-): SceneModel {
-  readerRegistry.version = toNum(svgJson[ATTR_KRB_VERSION], SCENE_FILE_VERSION);
-  return readElement(svgJson, SVG_SVG) as SceneModel;
+  readerRegistry.version = toNum(element[ATTR_KRB_VERSION], SCENE_FILE_VERSION);
+  return readElement(element, tag) as SceneModel;
 }

@@ -23,21 +23,21 @@ export class LabelModel extends BaseWidgetObjectData {
   alignh: 1 | 2 | 4 = 1;
 }
 
-registerReader('Label', (json) => {
+registerReader('Label', (element) => {
   const label = new LabelModel();
 
-  readBaseWidgetData(json, label);
+  readBaseWidgetData(element, label);
 
   // Content and appearance
-  label.text = toStr(json['@_krb:text']);
-  label.foreground = toStr(json['@_krb:foreground'], '#000000');
-  label.background = toStr(json['@_krb:background'], '#FFFFFF');
-  label.frame_width = toNum(json['@_krb:frameWidth']);
+  label.text = toStr(element['@_krb:text']);
+  label.foreground = toStr(element['@_krb:foreground'], '#000000');
+  label.background = toStr(element['@_krb:background'], '#FFFFFF');
+  label.frame_width = toNum(element['@_krb:frameWidth']);
 
-  const alignh = toNum(json['@_krb:alignh'], 1);
+  const alignh = toNum(element['@_krb:alignh'], 1);
   if (alignh === 2 || alignh === 4) label.alignh = alignh;
 
-  label.font = toStr(json['@_krb:font'], label.font);
+  label.font = toStr(element['@_krb:font'], label.font);
 
   return label;
 });
@@ -54,14 +54,14 @@ export class StickerModel extends BaseWidgetObjectData {
   background = 'white';
 }
 
-registerReader('Sticker', (json) => {
+registerReader('Sticker', (element) => {
   const sticker = new StickerModel();
 
-  readBaseWidgetData(json, sticker);
-  sticker.text = toStr(json['@_krb:text']);
-  sticker.foreground = toStr(json['@_krb:foreground']);
-  sticker.background = toStr(json['@_krb:background'], sticker.background);
-  sticker.font = toStr(json['@_krb:font'], sticker.font);
+  readBaseWidgetData(element, sticker);
+  sticker.text = toStr(element['@_krb:text']);
+  sticker.foreground = toStr(element['@_krb:foreground']);
+  sticker.background = toStr(element['@_krb:background'], sticker.background);
+  sticker.font = toStr(element['@_krb:font'], sticker.font);
 
   return sticker;
 });
