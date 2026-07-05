@@ -18,10 +18,10 @@ export class EditableComboBoxModel extends BaseEditWidget {
   klass = 'EditableComboBox';
 }
 
-registerReader('EditableComboBox', (json) => {
+registerReader('EditableComboBox', (element) => {
   const combo = new EditableComboBoxModel();
 
-  readBaseWidgetData(json, combo);
+  readBaseWidgetData(element, combo);
 
   return combo;
 });
@@ -33,10 +33,10 @@ export class EditableListModel extends BaseEditWidget {
   klass = 'EditableList';
 }
 
-registerReader('EditableList', (json) => {
+registerReader('EditableList', (element) => {
   const list = new EditableListModel();
 
-  readBaseWidgetData(json, list);
+  readBaseWidgetData(element, list);
 
   return list;
 });
@@ -48,10 +48,10 @@ export class EditableRegexListModel extends BaseEditWidget {
   klass = 'EditableRegexList';
 }
 
-registerReader('EditableRegexList', (json) => {
+registerReader('EditableRegexList', (element) => {
   const list = new EditableRegexListModel();
 
-  readBaseWidgetData(json, list);
+  readBaseWidgetData(element, list);
 
   return list;
 });
@@ -63,12 +63,12 @@ export class EditableListElementModel extends BaseEditWidget {
   klass = 'EditableListElement';
 }
 
-registerReader('EditableListElement', (json) => {
-  const element = new EditableListElementModel();
+registerReader('EditableListElement', (element) => {
+  const model = new EditableListElementModel();
 
-  readBaseWidgetData(json, element);
+  readBaseWidgetData(element, model);
 
-  return element;
+  return model;
 });
 
 // EditableSpinBox
@@ -80,10 +80,10 @@ export class EditableSpinBoxModel extends BaseEditWidget {
   font_weight: 'normal' | 'bold' = 'normal';
 }
 
-registerReader('EditableSpinBox', (json) => {
+registerReader('EditableSpinBox', (element) => {
   const spinbox = new EditableSpinBoxModel();
 
-  readBaseWidgetData(json, spinbox);
+  readBaseWidgetData(element, spinbox);
 
   return spinbox;
 });
@@ -95,10 +95,10 @@ export class EditableRegexModel extends BaseEditWidget {
   klass = 'EditableRegex';
 }
 
-registerReader('EditableRegex', (json) => {
+registerReader('EditableRegex', (element) => {
   const regex = new EditableRegexModel();
 
-  readBaseWidgetData(json, regex);
+  readBaseWidgetData(element, regex);
 
   return regex;
 });
@@ -110,10 +110,10 @@ export class HexadecimalModel extends BaseEditWidget {
   klass = 'Hexadecimal';
 }
 
-registerReader('Hexadecimal', (json) => {
+registerReader('Hexadecimal', (element) => {
   const hex = new HexadecimalModel();
 
-  readBaseWidgetData(json, hex);
+  readBaseWidgetData(element, hex);
 
   return hex;
 });
@@ -125,10 +125,10 @@ export class IntLineEditModel extends BaseEditWidget {
   klass = 'IntLineEdit';
 }
 
-registerReader('IntLineEdit', (json) => {
+registerReader('IntLineEdit', (element) => {
   const intEdit = new IntLineEditModel();
 
-  readBaseWidgetData(json, intEdit);
+  readBaseWidgetData(element, intEdit);
 
   return intEdit;
 });
@@ -141,11 +141,11 @@ export class DoubleLineEditModel extends BaseEditWidget {
   decimals = -1;
 }
 
-registerReader('DoubleLineEdit', (json) => {
+registerReader('DoubleLineEdit', (element) => {
   const doubleEdit = new DoubleLineEditModel();
 
-  readBaseWidgetData(json, doubleEdit);
-  doubleEdit.decimals = toNum(json['@_krb:decimals'], -1);
+  readBaseWidgetData(element, doubleEdit);
+  doubleEdit.decimals = toNum(element['@_krb:decimals'], -1);
 
   return doubleEdit;
 });
@@ -159,12 +159,12 @@ export class TickSliderModel extends BaseEditWidget {
   show_value = true;
 }
 
-registerReader('TickSlider', (json) => {
+registerReader('TickSlider', (element) => {
   const slider = new TickSliderModel();
 
-  readBaseWidgetData(json, slider);
-  slider.ticks = toNum(json['@_krb:ticks'], 1);
-  slider.show_value = toBool(json['@_krb:show_value'], true);
+  readBaseWidgetData(element, slider);
+  slider.ticks = toNum(element['@_krb:ticks'], 1);
+  slider.show_value = toBool(element['@_krb:show_value'], true);
 
   return slider;
 });
@@ -180,12 +180,12 @@ export class FloatSpinBoxModel extends BaseEditWidget {
   font_weight: 'normal' | 'bold' = 'normal';
 }
 
-registerReader('FloatSpinBox', (json) => {
+registerReader('FloatSpinBox', (element) => {
   const spinbox = new FloatSpinBoxModel();
 
-  readBaseWidgetData(json, spinbox);
-  spinbox.step = toNum(json['@_krb:step']);
-  spinbox.decimals = toNum(json['@_krb:decimals'], 3);
+  readBaseWidgetData(element, spinbox);
+  spinbox.step = toNum(element['@_krb:step']);
+  spinbox.decimals = toNum(element['@_krb:decimals'], 3);
 
   return spinbox;
 });

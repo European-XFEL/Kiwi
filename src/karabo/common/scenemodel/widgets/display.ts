@@ -23,13 +23,14 @@ export class DisplayLabelModel extends BaseLabelModel {
   klass = 'DisplayLabel';
 }
 
-registerReader('DisplayLabel', (json) => {
+registerReader('DisplayLabel', (element) => {
   const label = new DisplayLabelModel();
 
-  readBaseWidgetData(json, label);
-  if (json['@_krb:font_size'] !== undefined)
-    label.font_size = toNum(json['@_krb:font_size'], label.font_size);
-  if (toStr(json['@_krb:font_weight']) === 'bold') label.font_weight = 'bold';
+  readBaseWidgetData(element, label);
+  if (element['@_krb:font_size'] !== undefined)
+    label.font_size = toNum(element['@_krb:font_size'], label.font_size);
+  if (toStr(element['@_krb:font_weight']) === 'bold')
+    label.font_weight = 'bold';
 
   return label;
 });
@@ -41,13 +42,13 @@ export class DisplayListModel extends BaseLabelModel {
   klass = 'DisplayList';
 }
 
-registerReader('DisplayList', (json) => {
+registerReader('DisplayList', (element) => {
   const list = new DisplayListModel();
 
-  readBaseWidgetData(json, list);
-  if (json['@_krb:font_size'] !== undefined)
-    list.font_size = toNum(json['@_krb:font_size'], list.font_size);
-  if (toStr(json['@_krb:font_weight']) === 'bold') list.font_weight = 'bold';
+  readBaseWidgetData(element, list);
+  if (element['@_krb:font_size'] !== undefined)
+    list.font_size = toNum(element['@_krb:font_size'], list.font_size);
+  if (toStr(element['@_krb:font_weight']) === 'bold') list.font_weight = 'bold';
 
   return list;
 });
@@ -61,15 +62,16 @@ export class DisplayFloatModel extends BaseLabelModel {
   decimals = '8';
 }
 
-registerReader('DisplayFloat', (json) => {
+registerReader('DisplayFloat', (element) => {
   const float = new DisplayFloatModel();
 
-  readBaseWidgetData(json, float);
-  if (json['@_krb:font_size'] !== undefined)
-    float.font_size = toNum(json['@_krb:font_size'], float.font_size);
-  if (toStr(json['@_krb:font_weight']) === 'bold') float.font_weight = 'bold';
-  float.fmt = toStr(json['@_krb:fmt'], 'g');
-  float.decimals = toStr(json['@_krb:decimals'], '8');
+  readBaseWidgetData(element, float);
+  if (element['@_krb:font_size'] !== undefined)
+    float.font_size = toNum(element['@_krb:font_size'], float.font_size);
+  if (toStr(element['@_krb:font_weight']) === 'bold')
+    float.font_weight = 'bold';
+  float.fmt = toStr(element['@_krb:fmt'], 'g');
+  float.decimals = toStr(element['@_krb:decimals'], '8');
 
   return float;
 });
@@ -85,17 +87,17 @@ export class DisplayAlarmFloatModel extends DisplayFloatModel {
   warnLow?: number;
 }
 
-registerReader('DisplayAlarmFloat', (json) => {
+registerReader('DisplayAlarmFloat', (element) => {
   const alarm = new DisplayAlarmFloatModel();
 
-  readBaseWidgetData(json, alarm);
-  alarm.fmt = toStr(json['@_krb:fmt'], 'g');
-  alarm.decimals = toStr(json['@_krb:decimals'], '8');
+  readBaseWidgetData(element, alarm);
+  alarm.fmt = toStr(element['@_krb:fmt'], 'g');
+  alarm.decimals = toStr(element['@_krb:decimals'], '8');
 
-  const alarmHigh = json['@_krb:alarmHigh'];
-  const alarmLow = json['@_krb:alarmLow'];
-  const warnHigh = json['@_krb:warnHigh'];
-  const warnLow = json['@_krb:warnLow'];
+  const alarmHigh = element['@_krb:alarmHigh'];
+  const alarmLow = element['@_krb:alarmLow'];
+  const warnHigh = element['@_krb:warnHigh'];
+  const warnLow = element['@_krb:warnLow'];
   if (alarmHigh !== undefined) alarm.alarmHigh = toNum(alarmHigh);
   if (alarmLow !== undefined) alarm.alarmLow = toNum(alarmLow);
   if (warnHigh !== undefined) alarm.warnHigh = toNum(warnHigh);
@@ -111,20 +113,20 @@ export class CheckBoxModel extends BaseDisplayEditableWidget {
   klass: 'DisplayCheckBox' | 'EditableCheckBox' = 'DisplayCheckBox';
 }
 
-registerReader('DisplayCheckBox', (json) => {
+registerReader('DisplayCheckBox', (element) => {
   const checkbox = new CheckBoxModel();
 
   checkbox.klass = 'DisplayCheckBox';
-  readBaseWidgetData(json, checkbox);
+  readBaseWidgetData(element, checkbox);
 
   return checkbox;
 });
 
-registerReader('EditableCheckBox', (json) => {
+registerReader('EditableCheckBox', (element) => {
   const checkbox = new CheckBoxModel();
 
   checkbox.klass = 'EditableCheckBox';
-  readBaseWidgetData(json, checkbox);
+  readBaseWidgetData(element, checkbox);
 
   return checkbox;
 });
@@ -136,20 +138,20 @@ export class LineEditModel extends BaseDisplayEditableWidget {
   klass: 'DisplayLineEdit' | 'EditableLineEdit' = 'DisplayLineEdit';
 }
 
-registerReader('DisplayLineEdit', (json) => {
+registerReader('DisplayLineEdit', (element) => {
   const lineEdit = new LineEditModel();
 
   lineEdit.klass = 'DisplayLineEdit';
-  readBaseWidgetData(json, lineEdit);
+  readBaseWidgetData(element, lineEdit);
 
   return lineEdit;
 });
 
-registerReader('EditableLineEdit', (json) => {
+registerReader('EditableLineEdit', (element) => {
   const lineEdit = new LineEditModel();
 
   lineEdit.klass = 'EditableLineEdit';
-  readBaseWidgetData(json, lineEdit);
+  readBaseWidgetData(element, lineEdit);
 
   return lineEdit;
 });
@@ -162,22 +164,22 @@ export class TableElementModel extends BaseDisplayEditableWidget {
   resizeToContents = false;
 }
 
-registerReader('DisplayTableElement', (json) => {
+registerReader('DisplayTableElement', (element) => {
   const table = new TableElementModel();
 
   table.klass = 'DisplayTableElement';
-  readBaseWidgetData(json, table);
-  table.resizeToContents = toBool(json['@_krb:resizeToContents']);
+  readBaseWidgetData(element, table);
+  table.resizeToContents = toBool(element['@_krb:resizeToContents']);
 
   return table;
 });
 
-registerReader('EditableTableElement', (json) => {
+registerReader('EditableTableElement', (element) => {
   const table = new TableElementModel();
 
   table.klass = 'EditableTableElement';
-  readBaseWidgetData(json, table);
-  table.resizeToContents = toBool(json['@_krb:resizeToContents']);
+  readBaseWidgetData(element, table);
+  table.resizeToContents = toBool(element['@_krb:resizeToContents']);
 
   return table;
 });
@@ -192,14 +194,17 @@ export class DisplayCommandModel extends BaseWidgetObjectData {
   font_weight: 'normal' | 'bold' = 'normal';
 }
 
-registerReader('DisplayCommand', (json) => {
+registerReader('DisplayCommand', (element) => {
   const command = new DisplayCommandModel();
 
-  readBaseWidgetData(json, command);
-  if (json['@_krb:font_size'] !== undefined)
-    command.font_size = toNum(json['@_krb:font_size'], command.font_size);
-  if (toStr(json['@_krb:font_weight']) === 'bold') command.font_weight = 'bold';
-  command.requires_confirmation = toBool(json['@_krb:requires_confirmation']);
+  readBaseWidgetData(element, command);
+  if (element['@_krb:font_size'] !== undefined)
+    command.font_size = toNum(element['@_krb:font_size'], command.font_size);
+  if (toStr(element['@_krb:font_weight']) === 'bold')
+    command.font_weight = 'bold';
+  command.requires_confirmation = toBool(
+    element['@_krb:requires_confirmation']
+  );
 
   return command;
 });
@@ -212,14 +217,15 @@ export class DisplayStateColorModel extends DisplayLabelModel {
   show_string = false;
 }
 
-registerReader('DisplayStateColor', (json) => {
+registerReader('DisplayStateColor', (element) => {
   const state = new DisplayStateColorModel();
 
-  readBaseWidgetData(json, state);
-  if (json['@_krb:font_size'] !== undefined)
-    state.font_size = toNum(json['@_krb:font_size'], state.font_size);
-  if (toStr(json['@_krb:font_weight']) === 'bold') state.font_weight = 'bold';
-  state.show_string = toBool(json['@_krb:show_string']);
+  readBaseWidgetData(element, state);
+  if (element['@_krb:font_size'] !== undefined)
+    state.font_size = toNum(element['@_krb:font_size'], state.font_size);
+  if (toStr(element['@_krb:font_weight']) === 'bold')
+    state.font_weight = 'bold';
+  state.show_string = toBool(element['@_krb:show_string']);
 
   return state;
 });
@@ -232,11 +238,11 @@ export class StatefulIconWidgetModel extends BaseWidgetObjectData {
   icon_name = '';
 }
 
-registerReader('StatefulIconWidget', (json) => {
+registerReader('StatefulIconWidget', (element) => {
   const icon = new StatefulIconWidgetModel();
 
-  readBaseWidgetData(json, icon);
-  icon.icon_name = toStr(json['@_krb:icon_name']);
+  readBaseWidgetData(element, icon);
+  icon.icon_name = toStr(element['@_krb:icon_name']);
 
   return icon;
 });
@@ -249,11 +255,11 @@ export class EvaluatorModel extends DisplayLabelModel {
   expression = 'x';
 }
 
-registerReader('Evaluator', (json) => {
+registerReader('Evaluator', (element) => {
   const evaluator = new EvaluatorModel();
 
-  readBaseWidgetData(json, evaluator);
-  evaluator.expression = toStr(json['@_krb:expression'], 'x');
+  readBaseWidgetData(element, evaluator);
+  evaluator.expression = toStr(element['@_krb:expression'], 'x');
 
   return evaluator;
 });
@@ -265,28 +271,28 @@ export class DisplayTrendGraphModel extends BasePlotModel {
   klass = 'DisplayTrendGraph';
 }
 
-const readTrendGraph = (json: Record<string, unknown>) => {
+const readTrendGraph = (element: Record<string, unknown>) => {
   const graph = new DisplayTrendGraphModel();
 
-  readBaseWidgetData(json, graph);
-  graph.x_label = toStr(json['@_krb:x_label']);
-  graph.y_label = toStr(json['@_krb:y_label']);
-  graph.x_units = toStr(json['@_krb:x_units']);
-  graph.y_units = toStr(json['@_krb:y_units']);
-  graph.x_grid = toBool(json['@_krb:x_grid']);
-  graph.y_grid = toBool(json['@_krb:y_grid']);
-  graph.x_log = toBool(json['@_krb:x_log']);
-  graph.y_log = toBool(json['@_krb:y_log']);
-  graph.x_invert = toBool(json['@_krb:x_invert']);
-  graph.y_invert = toBool(json['@_krb:y_invert']);
-  graph.x_autorange = toBool(json['@_krb:x_autorange'], true);
-  graph.y_autorange = toBool(json['@_krb:y_autorange'], true);
-  graph.x_min = toNum(json['@_krb:x_min']);
-  graph.x_max = toNum(json['@_krb:x_max']);
-  graph.y_min = toNum(json['@_krb:y_min']);
-  graph.y_max = toNum(json['@_krb:y_max']);
-  graph.title = toStr(json['@_krb:title']);
-  graph.background = toStr(json['@_krb:background'], 'transparent');
+  readBaseWidgetData(element, graph);
+  graph.x_label = toStr(element['@_krb:x_label']);
+  graph.y_label = toStr(element['@_krb:y_label']);
+  graph.x_units = toStr(element['@_krb:x_units']);
+  graph.y_units = toStr(element['@_krb:y_units']);
+  graph.x_grid = toBool(element['@_krb:x_grid']);
+  graph.y_grid = toBool(element['@_krb:y_grid']);
+  graph.x_log = toBool(element['@_krb:x_log']);
+  graph.y_log = toBool(element['@_krb:y_log']);
+  graph.x_invert = toBool(element['@_krb:x_invert']);
+  graph.y_invert = toBool(element['@_krb:y_invert']);
+  graph.x_autorange = toBool(element['@_krb:x_autorange'], true);
+  graph.y_autorange = toBool(element['@_krb:y_autorange'], true);
+  graph.x_min = toNum(element['@_krb:x_min']);
+  graph.x_max = toNum(element['@_krb:x_max']);
+  graph.y_min = toNum(element['@_krb:y_min']);
+  graph.y_max = toNum(element['@_krb:y_max']);
+  graph.title = toStr(element['@_krb:title']);
+  graph.background = toStr(element['@_krb:background'], 'transparent');
 
   return graph;
 };
@@ -303,31 +309,31 @@ export class DisplayVectorGraphModel extends BasePlotModel {
   roi_tool = 0;
 }
 
-const readVectorGraph = (json: Record<string, unknown>) => {
+const readVectorGraph = (element: Record<string, unknown>) => {
   const graph = new DisplayVectorGraphModel();
 
-  readBaseWidgetData(json, graph);
-  graph.x_label = toStr(json['@_krb:x_label']);
-  graph.y_label = toStr(json['@_krb:y_label']);
-  graph.x_units = toStr(json['@_krb:x_units']);
-  graph.y_units = toStr(json['@_krb:y_units']);
-  graph.x_grid = toBool(json['@_krb:x_grid']);
-  graph.y_grid = toBool(json['@_krb:y_grid']);
-  graph.x_log = toBool(json['@_krb:x_log']);
-  graph.y_log = toBool(json['@_krb:y_log']);
-  graph.x_invert = toBool(json['@_krb:x_invert']);
-  graph.y_invert = toBool(json['@_krb:y_invert']);
-  graph.x_autorange = toBool(json['@_krb:x_autorange'], true);
-  graph.y_autorange = toBool(json['@_krb:y_autorange'], true);
-  graph.x_min = toNum(json['@_krb:x_min']);
-  graph.x_max = toNum(json['@_krb:x_max']);
-  graph.y_min = toNum(json['@_krb:y_min']);
-  graph.y_max = toNum(json['@_krb:y_max']);
-  graph.title = toStr(json['@_krb:title']);
-  graph.background = toStr(json['@_krb:background'], 'transparent');
-  graph.offset = toNum(json['@_krb:offset']);
-  graph.step = toNum(json['@_krb:step'], 1.0);
-  graph.roi_tool = toNum(json['@_krb:roi_tool']);
+  readBaseWidgetData(element, graph);
+  graph.x_label = toStr(element['@_krb:x_label']);
+  graph.y_label = toStr(element['@_krb:y_label']);
+  graph.x_units = toStr(element['@_krb:x_units']);
+  graph.y_units = toStr(element['@_krb:y_units']);
+  graph.x_grid = toBool(element['@_krb:x_grid']);
+  graph.y_grid = toBool(element['@_krb:y_grid']);
+  graph.x_log = toBool(element['@_krb:x_log']);
+  graph.y_log = toBool(element['@_krb:y_log']);
+  graph.x_invert = toBool(element['@_krb:x_invert']);
+  graph.y_invert = toBool(element['@_krb:y_invert']);
+  graph.x_autorange = toBool(element['@_krb:x_autorange'], true);
+  graph.y_autorange = toBool(element['@_krb:y_autorange'], true);
+  graph.x_min = toNum(element['@_krb:x_min']);
+  graph.x_max = toNum(element['@_krb:x_max']);
+  graph.y_min = toNum(element['@_krb:y_min']);
+  graph.y_max = toNum(element['@_krb:y_max']);
+  graph.title = toStr(element['@_krb:title']);
+  graph.background = toStr(element['@_krb:background'], 'transparent');
+  graph.offset = toNum(element['@_krb:offset']);
+  graph.step = toNum(element['@_krb:step'], 1.0);
+  graph.roi_tool = toNum(element['@_krb:roi_tool']);
 
   return graph;
 };

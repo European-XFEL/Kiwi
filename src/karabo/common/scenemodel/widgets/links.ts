@@ -14,9 +14,9 @@ export class DeviceSceneLinkModel extends BaseLinkModel {
   target_window: 'mainwin' | 'dialog' = 'dialog';
 }
 
-registerReader('DeviceSceneLink', (json) => {
+registerReader('DeviceSceneLink', (element) => {
   const model = new DeviceSceneLinkModel();
-  readBaseLinkData(json, model);
+  readBaseLinkData(element, model);
   return model;
 });
 
@@ -29,10 +29,10 @@ export class SceneLinkModel extends BaseLinkModel {
   target_window: 'mainwin' | 'dialog' = 'dialog';
 }
 
-registerReader('SceneLink', (json) => {
+registerReader('SceneLink', (element) => {
   const model = new SceneLinkModel();
-  readBaseLinkData(json, model);
-  const tw = toStr(json['@_krb:target_window']);
+  readBaseLinkData(element, model);
+  const tw = toStr(element['@_krb:target_window']);
   if (tw === 'mainwin' || tw === 'dialog') model.target_window = tw;
   return model;
 });
@@ -45,8 +45,8 @@ export class WebLinkModel extends BaseLinkModel {
   klass = 'WebLink';
 }
 
-registerReader('WebLink', (json) => {
+registerReader('WebLink', (element) => {
   const model = new WebLinkModel();
-  readBaseLinkData(json, model);
+  readBaseLinkData(element, model);
   return model;
 });
