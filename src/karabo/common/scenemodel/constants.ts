@@ -16,7 +16,7 @@ export const NS_INKSCAPE = 'http://www.inkscape.org/namespaces/inkscape';
 // ---------------------------------------------------------------------------
 // Karabo attribute names — raw XML (for writing) vs parsed JSON (for reading)
 //
-// fast-xml-parser prefixes all attributes with @_ on parse.
+// Parsed scene data prefixes attributes with @_.
 // The krb: namespace prefix is preserved as-is.
 // ---------------------------------------------------------------------------
 

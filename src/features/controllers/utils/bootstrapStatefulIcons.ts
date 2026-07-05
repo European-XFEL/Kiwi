@@ -1,6 +1,5 @@
 /// <reference types="vite/client" />
 
-import { XMLBuilder } from 'fast-xml-parser';
 import { ColorIcon, asArray } from './ColorIcon';
 
 const svgModules = import.meta.glob<string>(
@@ -119,16 +118,10 @@ function measureViewBoxFromGeometry(
   }
 }
 
-const svgBuilder = new XMLBuilder({
-  ignoreAttributes: false,
-  attributeNamePrefix: '@_',
-  format: false,
-  suppressEmptyNode: false,
-  suppressBooleanAttributes: false,
-});
-
 function parseSvgNodeToDom(svgNode: Record<string, unknown>): Document | null {
-  const svgString = svgBuilder.build({ svg: svgNode });
+  const svgString = ColorIcon.serialize({ svg: svgNode });
+  if (!svgString) return null;
+
   const svgDocument = new DOMParser().parseFromString(
     svgString,
     'image/svg+xml'
