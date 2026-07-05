@@ -1,4 +1,5 @@
 import { ProjectModel } from './model';
+import { BaseProjectObjectModel } from './bases';
 import { SceneModel, readScene } from '../scenemodel/api';
 import { decodeXML, Hash } from '@/karabo/data/api';
 import {
@@ -21,7 +22,6 @@ function _scene_reader(
 ): SceneModel {
   const meta = db_metadata_reader(metadata);
   const scene = readScene(xml);
-
   Object.assign(existing, meta);
   existing.file_format_version = scene.file_format_version;
   existing.extra_attributes = scene.extra_attributes; // needs copy
@@ -97,14 +97,13 @@ function _unwrap_child_element_xml(xml: string): [string, string] {
  * @param existing Optional preexisting object to fill
  * @returns A project data model object
  */
-export function readProjectItemModel(xml: string, existing: any = null): any {
+export function readProjectItemModel(
+  xml: string,
+  existing: BaseProjectObjectModel
+): any {
   const factories: Record<string, any> = {
     [PROJECT_DB_TYPE_PROJECT]: _project_reader,
     [PROJECT_DB_TYPE_SCENE]: _scene_reader,
-  };
-  const constructors: Record<string, () => any> = {
-    [PROJECT_DB_TYPE_PROJECT]: () => new ProjectModel({}),
-    [PROJECT_DB_TYPE_SCENE]: () => new SceneModel(),
   };
 
   // Unwrap the model XML into parent and child elements
@@ -130,12 +129,11 @@ export function readProjectItemModel(xml: string, existing: any = null): any {
 
   const itemType = metadata['item_type'];
   const factory = itemType ? factories[itemType] : undefined;
-  const target = existing ?? (itemType ? constructors[itemType]?.() : null);
 
   if (!factory) {
     throw new Error(`No factory found for item_type: ${itemType}`);
   }
 
   // Construct from the child data + metadata
-  return factory(childXml, target, metadata);
+  return factory(childXml, existing, metadata);
 }

@@ -4,7 +4,7 @@
 
 import { BaseLinkModel } from '../bases';
 import { registerReader } from '../Registry';
-import { readBaseLinkData, toStr } from '../util';
+import { krbAttr, readBaseLinkData, toStr } from '../util';
 
 // DeviceSceneLink
 // ----------------------------------------------------------------------------
@@ -32,7 +32,7 @@ export class SceneLinkModel extends BaseLinkModel {
 registerReader('SceneLink', (element) => {
   const model = new SceneLinkModel();
   readBaseLinkData(element, model);
-  const tw = toStr(element['@_krb:target_window']);
+  const tw = toStr(krbAttr(element, 'target_window'));
   if (tw === 'mainwin' || tw === 'dialog') model.target_window = tw;
   return model;
 });

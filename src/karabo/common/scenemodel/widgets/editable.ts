@@ -9,7 +9,7 @@ import { BaseEditWidget } from '../bases';
 import { FONT_SIZE_DEFAULT } from '../constants';
 import { registerReader } from '../Registry';
 
-import { readBaseWidgetData, toBool, toNum } from '../util';
+import { krbAttr, readBaseWidgetData, toBool, toNum } from '../util';
 
 // EditableComboBox
 // ----------------------------------------------------------------------------
@@ -145,7 +145,7 @@ registerReader('DoubleLineEdit', (element) => {
   const doubleEdit = new DoubleLineEditModel();
 
   readBaseWidgetData(element, doubleEdit);
-  doubleEdit.decimals = toNum(element['@_krb:decimals'], -1);
+  doubleEdit.decimals = toNum(krbAttr(element, 'decimals'), -1);
 
   return doubleEdit;
 });
@@ -163,8 +163,8 @@ registerReader('TickSlider', (element) => {
   const slider = new TickSliderModel();
 
   readBaseWidgetData(element, slider);
-  slider.ticks = toNum(element['@_krb:ticks'], 1);
-  slider.show_value = toBool(element['@_krb:show_value'], true);
+  slider.ticks = toNum(krbAttr(element, 'ticks'), 1);
+  slider.show_value = toBool(krbAttr(element, 'show_value'), true);
 
   return slider;
 });
@@ -184,8 +184,8 @@ registerReader('FloatSpinBox', (element) => {
   const spinbox = new FloatSpinBoxModel();
 
   readBaseWidgetData(element, spinbox);
-  spinbox.step = toNum(element['@_krb:step']);
-  spinbox.decimals = toNum(element['@_krb:decimals'], 3);
+  spinbox.step = toNum(krbAttr(element, 'step'));
+  spinbox.decimals = toNum(krbAttr(element, 'decimals'), 3);
 
   return spinbox;
 });

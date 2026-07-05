@@ -13,6 +13,7 @@ import {
   GridLayoutChildData,
 } from './bases';
 import {
+  krbAttr,
   readBaseLayoutData,
   readChildren,
   collectSvgChildren,
@@ -38,12 +39,12 @@ export class BoxLayoutModel extends BaseLayoutModel {
   direction: Direction = Direction.LeftToRight;
 }
 
-registerReader('BoxLayout', (json) => {
+registerReader('BoxLayout', (element) => {
   const layout = new BoxLayoutModel();
 
-  readBaseLayoutData(json, layout);
-  layout.direction = toNum(json['@_krb:direction']) as Direction;
-  layout.children = readChildren(json);
+  readBaseLayoutData(element, layout);
+  layout.direction = toNum(krbAttr(element, 'direction')) as Direction;
+  layout.children = readChildren(element);
 
   return layout;
 });
@@ -56,11 +57,11 @@ export class FixedLayoutModel extends BaseLayoutModel {
   entire?: BaseSceneObjectData;
 }
 
-registerReader('FixedLayout', (json) => {
+registerReader('FixedLayout', (element) => {
   const layout = new FixedLayoutModel();
 
-  readBaseLayoutData(json, layout);
-  layout.children = readChildren(json);
+  readBaseLayoutData(element, layout);
+  layout.children = readChildren(element);
 
   return layout;
 });
@@ -71,21 +72,23 @@ registerReader('FixedLayout', (json) => {
 /** Arranges children in a grid pattern. */
 export class GridLayoutModel extends BaseLayoutModel {}
 
-registerReader('GridLayout', (json) => {
+registerReader('GridLayout', (element) => {
   const layout = new GridLayoutModel();
 
-  readBaseLayoutData(json, layout);
+  readBaseLayoutData(element, layout);
 
-  layout.children = collectSvgChildren(json).map(({ element, tag }) => {
-    const child = readElement(element, tag);
-    const ld = new GridLayoutChildData();
-    ld.row = toNum(element['@_krb:row']);
-    ld.col = toNum(element['@_krb:col']);
-    ld.rowspan = toNum(element['@_krb:rowspan']) || 1;
-    ld.colspan = toNum(element['@_krb:colspan']) || 1;
-    child.layout_data = ld;
-    return child;
-  });
+  layout.children = collectSvgChildren(element).map(
+    ({ element: childElement, tag }) => {
+      const child = readElement(childElement, tag);
+      const ld = new GridLayoutChildData();
+      ld.row = toNum(krbAttr(childElement, 'row'));
+      ld.col = toNum(krbAttr(childElement, 'col'));
+      ld.rowspan = toNum(krbAttr(childElement, 'rowspan')) || 1;
+      ld.colspan = toNum(krbAttr(childElement, 'colspan')) || 1;
+      child.layout_data = ld;
+      return child;
+    }
+  );
 
   return layout;
 });
