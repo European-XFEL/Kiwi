@@ -11,9 +11,12 @@ import type {
 } from './bases';
 import { readElement } from './Registry';
 import { ATTR_KRB_CLASS, ATTR_KRB_WIDGET } from './constants';
+import { krbAttr, xmlAttr } from './xml';
 
 import { FixedLayoutChildData, GridLayoutChildData } from './bases';
 import type { FixedLayoutModel } from './layouts';
+
+export { krbAttr, xmlAttr } from './xml';
 
 export function toNum(value: unknown, fallback = 0): number {
   const parsed = parseFloat(String(value ?? ''));
@@ -32,113 +35,102 @@ export function toBool(value: unknown, fallback = false): boolean {
 
 export interface ParsedChildElement {
   tag: string;
-  element: Record<string, unknown>;
+  element: Element;
 }
 
-function isElement(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
+export function childElements(element: Element): Element[] {
+  return Array.from(element.children);
 }
 
-/** Collect direct nested SVG children from a parsed element. */
-export function collectSvgChildren(
-  json: Record<string, unknown>
-): ParsedChildElement[] {
-  const children: ParsedChildElement[] = [];
-
-  for (const [tag, value] of Object.entries(json)) {
-    if (!tag.startsWith('svg:')) continue;
-
-    // Multiple siblings with the same tag come as an array
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        if (isElement(item)) children.push({ tag, element: item });
-      }
-      continue;
-    }
-
-    // Single child comes as a plain object
-    if (isElement(value)) {
-      children.push({ tag, element: value });
-    }
-  }
-
-  return children;
+/** Collect direct nested SVG children from an XML element. */
+export function collectSvgChildren(element: Element): ParsedChildElement[] {
+  return childElements(element)
+    .filter((child) => child.tagName.startsWith('svg:'))
+    .map((child) => ({ tag: child.tagName, element: child }));
 }
 
 /** Collect and read all nested SVG children into model instances. */
-export function readChildren(
-  json: Record<string, unknown>
-): BaseSceneObjectData[] {
-  return collectSvgChildren(json).map((child) =>
+export function readChildren(element: Element): BaseSceneObjectData[] {
+  return collectSvgChildren(element).map((child) =>
     readElement(child.element, child.tag)
   );
 }
 
 export function readBaseLayoutData(
-  json: Record<string, unknown>,
+  element: Element,
   model: BaseLayoutModel
 ): void {
-  model.x = toNum(json['@_krb:x']);
-  model.y = toNum(json['@_krb:y']);
-  model.width = toNum(json['@_krb:width']);
-  model.height = toNum(json['@_krb:height']);
+  model.x = toNum(krbAttr(element, 'x'));
+  model.y = toNum(krbAttr(element, 'y'));
+  model.width = toNum(krbAttr(element, 'width'));
+  model.height = toNum(krbAttr(element, 'height'));
 }
 
 export function readBaseShapeData(
-  json: Record<string, unknown>,
+  element: Element,
   model: BaseShapeObjectData
 ): void {
   // Stroke
-  model.stroke = toStr(json['@_stroke'], 'none');
-  model.stroke_opacity = toNum(json['@_stroke-opacity'], 1.0);
-  model.stroke_width = toNum(json['@_stroke-width'], 1.0);
-  model.stroke_linecap = toStr(json['@_stroke-linecap'], 'butt') as
+  model.stroke = toStr(xmlAttr(element, 'stroke'), 'none');
+  model.stroke_opacity = toNum(xmlAttr(element, 'stroke-opacity'), 1.0);
+  model.stroke_width = toNum(xmlAttr(element, 'stroke-width'), 1.0);
+  model.stroke_linecap = toStr(xmlAttr(element, 'stroke-linecap'), 'butt') as
     'butt' | 'square' | 'round';
-  model.stroke_linejoin = toStr(json['@_stroke-linejoin'], 'miter') as
-    'miter' | 'round' | 'bevel';
-  model.stroke_miterlimit = toNum(json['@_stroke-miterlimit'], 4.0);
-  model.stroke_dashoffset = toNum(json['@_stroke-dashoffset'], 0.0);
-  model.stroke_dasharray = toStr(json['@_stroke-dasharray'])
+  model.stroke_linejoin = toStr(
+    xmlAttr(element, 'stroke-linejoin'),
+    'miter'
+  ) as 'miter' | 'round' | 'bevel';
+  model.stroke_miterlimit = toNum(xmlAttr(element, 'stroke-miterlimit'), 4.0);
+  model.stroke_dashoffset = toNum(xmlAttr(element, 'stroke-dashoffset'), 0.0);
+  model.stroke_dasharray = toStr(xmlAttr(element, 'stroke-dasharray'))
     .split(/\s+/)
     .filter(Boolean)
     .map(Number);
-  model.stroke_style = toNum(json['@_stroke-style'], 1);
+  model.stroke_style = toNum(xmlAttr(element, 'stroke-style'), 1);
 
   // Fill
-  model.fill = toStr(json['@_fill'], 'none');
-  model.fill_opacity = toNum(json['@_fill-opacity'], 1.0);
+  model.fill = toStr(xmlAttr(element, 'fill'), 'none');
+  model.fill_opacity = toNum(xmlAttr(element, 'fill-opacity'), 1.0);
 }
 
 export function readBaseWidgetData(
-  json: Record<string, unknown>,
+  element: Element,
   model: BaseWidgetObjectData
 ): void {
-  model.x = toNum(json['@_x']);
-  model.y = toNum(json['@_y']);
-  model.width = toNum(json['@_width']);
-  model.height = toNum(json['@_height']);
-  model.keys = toStr(json['@_krb:keys'])
+  model.x = toNum(xmlAttr(element, 'x'));
+  model.y = toNum(xmlAttr(element, 'y'));
+  model.width = toNum(xmlAttr(element, 'width'));
+  model.height = toNum(xmlAttr(element, 'height'));
+  model.keys = toStr(krbAttr(element, 'keys'))
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
 
-  model.klass = toStr(json[ATTR_KRB_WIDGET]) || toStr(json[ATTR_KRB_CLASS]);
-  const parentComponent = json[ATTR_KRB_CLASS];
-  if (parentComponent !== undefined) {
-    model.parent_component = toStr(parentComponent);
+  model.klass =
+    toStr(krbAttr(element, ATTR_KRB_WIDGET)) ||
+    toStr(krbAttr(element, ATTR_KRB_CLASS));
+  const parentComponent = krbAttr(element, ATTR_KRB_CLASS);
+  if (parentComponent !== null) {
+    model.parent_component = parentComponent;
   }
 }
-export function readBaseLinkData(
-  json: Record<string, unknown>,
-  model: BaseLinkModel
-): void {
-  readBaseWidgetData(json, model);
-  model.target = toStr(json['@_krb:target']);
-  model.text = toStr(json['@_krb:text']);
-  model.font = toStr(json['@_krb:font'], model.font);
-  model.foreground = toStr(json['@_krb:foreground']);
-  model.background = toStr(json['@_krb:background'], model.background);
-  model.frame_width = toNum(json['@_krb:frameWidth'], model.frame_width);
+
+export function readBaseLinkData(element: Element, model: BaseLinkModel): void {
+  readBaseWidgetData(element, model);
+  model.target = toStr(krbAttr(element, 'target'));
+  model.text = toStr(krbAttr(element, 'text'));
+  model.font = toStr(krbAttr(element, 'font'), model.font);
+  model.foreground = toStr(krbAttr(element, 'foreground'));
+  model.background = toStr(krbAttr(element, 'background'), model.background);
+  model.frame_width = toNum(krbAttr(element, 'frameWidth'), model.frame_width);
+}
+
+export function attributesToRecord(element: Element): Record<string, string> {
+  const attributes: Record<string, string> = {};
+  for (const attribute of Array.from(element.attributes)) {
+    attributes[attribute.name] = attribute.value;
+  }
+  return attributes;
 }
 
 // createModel

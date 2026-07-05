@@ -17,20 +17,31 @@ import {
   SVG_SVG,
   UNKNOWN_WIDGET_CLASS,
 } from './constants';
-import { readChildren, toNum, toStr, readBaseWidgetData } from './util';
+import {
+  krbAttr,
+  xmlAttr,
+  attributesToRecord,
+  readBaseWidgetData,
+  readChildren,
+  toNum,
+  toStr,
+} from './util';
 import { UnknownWidgetDataModel, UnknownXMLDataModel } from './bases';
 
 // Scene
 // ----------------------------------------------------------------------------
 
-function sceneReader(json: Record<string, unknown>): SceneModel {
+function sceneReader(element: Element): SceneModel {
   const scene = new SceneModel();
 
-  scene.file_format_version = toNum(json[ATTR_KRB_VERSION], SCENE_FILE_VERSION);
-  scene.uuid = toStr(json[ATTR_KRB_UUID]);
-  scene.width = toNum(json[ATTR_WIDTH], scene.width);
-  scene.height = toNum(json[ATTR_HEIGHT], scene.height);
-  scene.children = readChildren(json);
+  scene.file_format_version = toNum(
+    krbAttr(element, ATTR_KRB_VERSION),
+    SCENE_FILE_VERSION
+  );
+  scene.uuid = toStr(krbAttr(element, ATTR_KRB_UUID));
+  scene.width = toNum(xmlAttr(element, ATTR_WIDTH), scene.width);
+  scene.height = toNum(xmlAttr(element, ATTR_HEIGHT), scene.height);
+  scene.children = readChildren(element);
 
   return scene;
 }
@@ -42,21 +53,11 @@ registerReader('Scene', sceneReader, 'svg');
 // Unknown Widget
 // ----------------------------------------------------------------------------
 
-registerReader(UNKNOWN_WIDGET_CLASS, (json) => {
+registerReader(UNKNOWN_WIDGET_CLASS, (element) => {
   const model = new UnknownWidgetDataModel();
 
-  readBaseWidgetData(json, model);
-
-  // Preserve all raw XML attributes for round-trip.
-  // Keys with "@_" prefix are attributes (from attributeNamePrefix config),
-  // other keys are child elements (svg:rect, svg:g, etc.) or parser internals.
-  const attributes: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(json)) {
-    if (key.startsWith('@_')) {
-      attributes[key] = value;
-    }
-  }
-  model.attributes = attributes;
+  readBaseWidgetData(element, model);
+  model.attributes = attributesToRecord(element);
 
   return model;
 });
@@ -64,19 +65,12 @@ registerReader(UNKNOWN_WIDGET_CLASS, (json) => {
 // Unknown XML Element (wildcard catch-all)
 // ----------------------------------------------------------------------------
 
-registerReader('*', (json) => {
+registerReader('*', (element) => {
   const model = new UnknownXMLDataModel();
 
-  model.tag = toStr(json.__tag__);
-
-  // Only XML attributes — child elements and parser keys are excluded.
-  const attributes: Record<string, string> = {};
-  for (const [key, value] of Object.entries(json)) {
-    if (key.startsWith('@_')) {
-      attributes[key] = String(value);
-    }
-  }
-  model.attributes = attributes;
+  model.tag = element.tagName;
+  model.attributes = attributesToRecord(element);
+  model.children = readChildren(element);
 
   return model;
 });

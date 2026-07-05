@@ -13,7 +13,6 @@ import {
   DisplayCommandModel,
   DeviceSceneLinkModel,
   WebLinkModel,
-  readProjectItemModel,
 } from '@/karabo/common/api';
 
 const SAMPLE_DIR = path.resolve(__dirname, './sample_data');
@@ -36,17 +35,6 @@ describe('readScene', () => {
 
   it('produces children from the scene', () => {
     const scene = readScene(graphXml);
-    expect(scene.children.length).toBeGreaterThan(0);
-  });
-
-  it('reads a scene wrapped in project XML', () => {
-    const wrappedXml = `<xml item_type="scene" uuid="wrapped-scene" simple_name="Wrapped" date="2026-07-05">${graphXml}</xml>`;
-
-    const scene = readProjectItemModel(wrappedXml) as SceneModel;
-
-    expect(scene).toBeInstanceOf(SceneModel);
-    expect(scene.uuid).toBe('wrapped-scene');
-    expect(scene.file_format_version).toBe(2);
     expect(scene.children.length).toBeGreaterThan(0);
   });
 

@@ -205,8 +205,8 @@ export abstract class XMLElementModel extends BaseSceneObjectData {
 
 /** Catch-all for widgets with unrecognized krb:widget or krb:class. */
 export class UnknownWidgetDataModel extends BaseWidgetObjectData {
-  /** All raw attributes from the JSON element, preserved for round-trip. */
-  attributes: Record<string, unknown> = {};
+  /** All raw XML attributes, preserved for round-trip. */
+  attributes: Record<string, string> = {};
 }
 
 // UnknownXMLDataModel

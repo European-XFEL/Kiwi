@@ -7,7 +7,7 @@ import { BaseWidgetObjectData } from '../bases';
 import { FONT_DEFAULT } from '../constants';
 
 import { registerReader } from '../Registry';
-import { readBaseWidgetData, toNum, toStr } from '../util';
+import { krbAttr, readBaseWidgetData, toNum, toStr } from '../util';
 
 // Label
 // ----------------------------------------------------------------------------
@@ -29,15 +29,15 @@ registerReader('Label', (element) => {
   readBaseWidgetData(element, label);
 
   // Content and appearance
-  label.text = toStr(element['@_krb:text']);
-  label.foreground = toStr(element['@_krb:foreground'], '#000000');
-  label.background = toStr(element['@_krb:background'], '#FFFFFF');
-  label.frame_width = toNum(element['@_krb:frameWidth']);
+  label.text = toStr(krbAttr(element, 'text'));
+  label.foreground = toStr(krbAttr(element, 'foreground'), '#000000');
+  label.background = toStr(krbAttr(element, 'background'), '#FFFFFF');
+  label.frame_width = toNum(krbAttr(element, 'frameWidth'));
 
-  const alignh = toNum(element['@_krb:alignh'], 1);
+  const alignh = toNum(krbAttr(element, 'alignh'), 1);
   if (alignh === 2 || alignh === 4) label.alignh = alignh;
 
-  label.font = toStr(element['@_krb:font'], label.font);
+  label.font = toStr(krbAttr(element, 'font'), label.font);
 
   return label;
 });
@@ -58,10 +58,13 @@ registerReader('Sticker', (element) => {
   const sticker = new StickerModel();
 
   readBaseWidgetData(element, sticker);
-  sticker.text = toStr(element['@_krb:text']);
-  sticker.foreground = toStr(element['@_krb:foreground']);
-  sticker.background = toStr(element['@_krb:background'], sticker.background);
-  sticker.font = toStr(element['@_krb:font'], sticker.font);
+  sticker.text = toStr(krbAttr(element, 'text'));
+  sticker.foreground = toStr(krbAttr(element, 'foreground'));
+  sticker.background = toStr(
+    krbAttr(element, 'background'),
+    sticker.background
+  );
+  sticker.font = toStr(krbAttr(element, 'font'), sticker.font);
 
   return sticker;
 });

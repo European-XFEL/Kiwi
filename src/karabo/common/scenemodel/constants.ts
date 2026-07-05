@@ -14,27 +14,22 @@ export const NS_XLINK = 'http://www.w3.org/1999/xlink';
 export const NS_INKSCAPE = 'http://www.inkscape.org/namespaces/inkscape';
 
 // ---------------------------------------------------------------------------
-// Karabo attribute names — raw XML (for writing) vs parsed JSON (for reading)
-//
-// Parsed scene data prefixes attributes with @_.
-// The krb: namespace prefix is preserved as-is.
+// XML attribute names
 // ---------------------------------------------------------------------------
 
-// Raw XML (writing)
-export const KRB_CLASS = 'krb:class';
-export const KRB_WIDGET = 'krb:widget';
-export const KRB_KEYS = 'krb:keys';
-export const KRB_VERSION = 'krb:version';
-export const KRB_UUID = 'krb:uuid';
+export const KRB_CLASS = 'class';
+export const KRB_WIDGET = 'widget';
+export const KRB_KEYS = 'keys';
+export const KRB_VERSION = 'version';
+export const KRB_UUID = 'uuid';
 
-// Parsed JSON (reading)
-export const ATTR_KRB_CLASS = '@_krb:class';
-export const ATTR_KRB_WIDGET = '@_krb:widget';
-export const ATTR_KRB_KEYS = '@_krb:keys';
-export const ATTR_KRB_VERSION = '@_krb:version';
-export const ATTR_KRB_UUID = '@_krb:uuid';
-export const ATTR_WIDTH = '@_width';
-export const ATTR_HEIGHT = '@_height';
+export const ATTR_KRB_CLASS = KRB_CLASS;
+export const ATTR_KRB_WIDGET = KRB_WIDGET;
+export const ATTR_KRB_KEYS = KRB_KEYS;
+export const ATTR_KRB_VERSION = KRB_VERSION;
+export const ATTR_KRB_UUID = KRB_UUID;
+export const ATTR_WIDTH = 'width';
+export const ATTR_HEIGHT = 'height';
 
 // ---------------------------------------------------------------------------
 // Scene file version
@@ -44,7 +39,7 @@ export const SCENE_FILE_VERSION = 2;
 export const UNKNOWN_WIDGET_CLASS = '__unknown_widget__';
 
 // ---------------------------------------------------------------------------
-// SVG element tags — the JSON keys when walking parsed scene data
+// SVG element tags
 //
 // svg:rect  — widgets (Label, DisplayCommand, etc.) and simple shapes (Rectangle)
 // svg:g     — containers: layouts (BoxLayout, FixedLayout) and compound shapes (ArrowPolygon)

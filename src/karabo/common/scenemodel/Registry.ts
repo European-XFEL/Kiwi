@@ -7,11 +7,12 @@ import {
   SCENE_FILE_VERSION,
   UNKNOWN_WIDGET_CLASS,
 } from './constants';
+import { krbAttr } from './xml';
 
 // Types
 // ----------------------------------------------------------------------------
 
-export type ReaderFn = (json: Record<string, unknown>) => BaseSceneObjectData;
+export type ReaderFn = (element: Element) => BaseSceneObjectData;
 
 // ReaderEntry
 // ----------------------------------------------------------------------------
@@ -83,26 +84,20 @@ class ReaderRegistry {
   }
 
   /** Resolve klass, find versioned reader, call it, return model. */
-  read(json: Record<string, unknown>, tag?: string): BaseSceneObjectData {
-    const klass = this.fetchKlass(json, this.fetchTag(json, tag));
+  read(element: Element, tag?: string): BaseSceneObjectData {
+    const klass = this.fetchKlass(element, tag ?? element.tagName);
     const reader = this.entries.get(klass)?.getFunction(this.version);
     if (!reader) {
       throw new Error(`No reader found for "${klass}" v${this.version}`);
     }
-    return reader(json);
+    return reader(element);
   }
 
   has(name: string): boolean {
     return this.entries.has(name);
   }
 
-  private fetchTag(json: Record<string, unknown>, tag?: string): string {
-    if (tag) return tag;
-    const parsedTag = json.__tag__;
-    return typeof parsedTag === 'string' ? parsedTag : '';
-  }
-
-  /** Resolve which name to look up for a parsed JSON element.
+  /** Resolve which name to look up for an XML element.
    *
    * Fallback chain:
    * 1. krb:widget — most specific (e.g. "DisplayLabel")
@@ -110,13 +105,13 @@ class ReaderRegistry {
    * 3. tag        — SVG element name (e.g. "svg:rect", "svg:g")
    * 4. "*"        — wildcard catch-all
    */
-  private fetchKlass(json: Record<string, unknown>, tag: string): string {
-    const widget = json[ATTR_KRB_WIDGET] as string | undefined;
+  private fetchKlass(element: Element, tag: string): string {
+    const widget = krbAttr(element, ATTR_KRB_WIDGET);
     if (widget) {
       return this.has(widget) ? widget : UNKNOWN_WIDGET_CLASS;
     }
 
-    const klass = json[ATTR_KRB_CLASS] as string | undefined;
+    const klass = krbAttr(element, ATTR_KRB_CLASS);
     if (klass) {
       return this.has(klass) ? klass : UNKNOWN_WIDGET_CLASS;
     }
@@ -142,7 +137,7 @@ class ReaderRegistry {
 export const readerRegistry = ReaderRegistry.getInstance();
 
 export function readElement(
-  element: Record<string, unknown>,
+  element: Element,
   tag?: string
 ): BaseSceneObjectData {
   return readerRegistry.read(element, tag);
@@ -152,7 +147,7 @@ export function readElement(
  * Register a reader function in the ReaderRegistry.
  *
  * @param name    — Lookup key, typically the krb:widget or krb:class value (e.g. "DisplayLabel", "BoxLayout").
- * @param readerFn — Factory that receives parsed JSON and returns a model instance.
+ * @param readerFn — Factory that receives an XML element and returns a model instance.
  * @param xmltag  — Optional SVG tag to double-register under (e.g. SVG_RECT, SVG_SVG).
  *                   Only needed for elements identified by tag alone (shapes, scene root).
  * @param version — Scene file version this reader targets. Defaults to SCENE_FILE_VERSION.

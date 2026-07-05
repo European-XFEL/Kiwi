@@ -13,7 +13,7 @@ import {
   BasePlotModel,
 } from '../bases';
 import { FONT_SIZE_DEFAULT } from '../constants';
-import { readBaseWidgetData, toBool, toNum, toStr } from '../util';
+import { krbAttr, readBaseWidgetData, toBool, toNum, toStr } from '../util';
 import { registerReader } from '../Registry';
 
 // DisplayLabel
@@ -27,9 +27,9 @@ registerReader('DisplayLabel', (element) => {
   const label = new DisplayLabelModel();
 
   readBaseWidgetData(element, label);
-  if (element['@_krb:font_size'] !== undefined)
-    label.font_size = toNum(element['@_krb:font_size'], label.font_size);
-  if (toStr(element['@_krb:font_weight']) === 'bold')
+  if (krbAttr(element, 'font_size') !== null)
+    label.font_size = toNum(krbAttr(element, 'font_size'), label.font_size);
+  if (toStr(krbAttr(element, 'font_weight')) === 'bold')
     label.font_weight = 'bold';
 
   return label;
@@ -46,9 +46,10 @@ registerReader('DisplayList', (element) => {
   const list = new DisplayListModel();
 
   readBaseWidgetData(element, list);
-  if (element['@_krb:font_size'] !== undefined)
-    list.font_size = toNum(element['@_krb:font_size'], list.font_size);
-  if (toStr(element['@_krb:font_weight']) === 'bold') list.font_weight = 'bold';
+  if (krbAttr(element, 'font_size') !== null)
+    list.font_size = toNum(krbAttr(element, 'font_size'), list.font_size);
+  if (toStr(krbAttr(element, 'font_weight')) === 'bold')
+    list.font_weight = 'bold';
 
   return list;
 });
@@ -66,12 +67,12 @@ registerReader('DisplayFloat', (element) => {
   const float = new DisplayFloatModel();
 
   readBaseWidgetData(element, float);
-  if (element['@_krb:font_size'] !== undefined)
-    float.font_size = toNum(element['@_krb:font_size'], float.font_size);
-  if (toStr(element['@_krb:font_weight']) === 'bold')
+  if (krbAttr(element, 'font_size') !== null)
+    float.font_size = toNum(krbAttr(element, 'font_size'), float.font_size);
+  if (toStr(krbAttr(element, 'font_weight')) === 'bold')
     float.font_weight = 'bold';
-  float.fmt = toStr(element['@_krb:fmt'], 'g');
-  float.decimals = toStr(element['@_krb:decimals'], '8');
+  float.fmt = toStr(krbAttr(element, 'fmt'), 'g');
+  float.decimals = toStr(krbAttr(element, 'decimals'), '8');
 
   return float;
 });
@@ -91,17 +92,17 @@ registerReader('DisplayAlarmFloat', (element) => {
   const alarm = new DisplayAlarmFloatModel();
 
   readBaseWidgetData(element, alarm);
-  alarm.fmt = toStr(element['@_krb:fmt'], 'g');
-  alarm.decimals = toStr(element['@_krb:decimals'], '8');
+  alarm.fmt = toStr(krbAttr(element, 'fmt'), 'g');
+  alarm.decimals = toStr(krbAttr(element, 'decimals'), '8');
 
-  const alarmHigh = element['@_krb:alarmHigh'];
-  const alarmLow = element['@_krb:alarmLow'];
-  const warnHigh = element['@_krb:warnHigh'];
-  const warnLow = element['@_krb:warnLow'];
-  if (alarmHigh !== undefined) alarm.alarmHigh = toNum(alarmHigh);
-  if (alarmLow !== undefined) alarm.alarmLow = toNum(alarmLow);
-  if (warnHigh !== undefined) alarm.warnHigh = toNum(warnHigh);
-  if (warnLow !== undefined) alarm.warnLow = toNum(warnLow);
+  const alarmHigh = krbAttr(element, 'alarmHigh');
+  const alarmLow = krbAttr(element, 'alarmLow');
+  const warnHigh = krbAttr(element, 'warnHigh');
+  const warnLow = krbAttr(element, 'warnLow');
+  if (alarmHigh !== null) alarm.alarmHigh = toNum(alarmHigh);
+  if (alarmLow !== null) alarm.alarmLow = toNum(alarmLow);
+  if (warnHigh !== null) alarm.warnHigh = toNum(warnHigh);
+  if (warnLow !== null) alarm.warnLow = toNum(warnLow);
 
   return alarm;
 });
@@ -169,7 +170,7 @@ registerReader('DisplayTableElement', (element) => {
 
   table.klass = 'DisplayTableElement';
   readBaseWidgetData(element, table);
-  table.resizeToContents = toBool(element['@_krb:resizeToContents']);
+  table.resizeToContents = toBool(krbAttr(element, 'resizeToContents'));
 
   return table;
 });
@@ -179,7 +180,7 @@ registerReader('EditableTableElement', (element) => {
 
   table.klass = 'EditableTableElement';
   readBaseWidgetData(element, table);
-  table.resizeToContents = toBool(element['@_krb:resizeToContents']);
+  table.resizeToContents = toBool(krbAttr(element, 'resizeToContents'));
 
   return table;
 });
@@ -198,12 +199,12 @@ registerReader('DisplayCommand', (element) => {
   const command = new DisplayCommandModel();
 
   readBaseWidgetData(element, command);
-  if (element['@_krb:font_size'] !== undefined)
-    command.font_size = toNum(element['@_krb:font_size'], command.font_size);
-  if (toStr(element['@_krb:font_weight']) === 'bold')
+  if (krbAttr(element, 'font_size') !== null)
+    command.font_size = toNum(krbAttr(element, 'font_size'), command.font_size);
+  if (toStr(krbAttr(element, 'font_weight')) === 'bold')
     command.font_weight = 'bold';
   command.requires_confirmation = toBool(
-    element['@_krb:requires_confirmation']
+    krbAttr(element, 'requires_confirmation')
   );
 
   return command;
@@ -221,11 +222,11 @@ registerReader('DisplayStateColor', (element) => {
   const state = new DisplayStateColorModel();
 
   readBaseWidgetData(element, state);
-  if (element['@_krb:font_size'] !== undefined)
-    state.font_size = toNum(element['@_krb:font_size'], state.font_size);
-  if (toStr(element['@_krb:font_weight']) === 'bold')
+  if (krbAttr(element, 'font_size') !== null)
+    state.font_size = toNum(krbAttr(element, 'font_size'), state.font_size);
+  if (toStr(krbAttr(element, 'font_weight')) === 'bold')
     state.font_weight = 'bold';
-  state.show_string = toBool(element['@_krb:show_string']);
+  state.show_string = toBool(krbAttr(element, 'show_string'));
 
   return state;
 });
@@ -242,7 +243,7 @@ registerReader('StatefulIconWidget', (element) => {
   const icon = new StatefulIconWidgetModel();
 
   readBaseWidgetData(element, icon);
-  icon.icon_name = toStr(element['@_krb:icon_name']);
+  icon.icon_name = toStr(krbAttr(element, 'icon_name'));
 
   return icon;
 });
@@ -259,7 +260,7 @@ registerReader('Evaluator', (element) => {
   const evaluator = new EvaluatorModel();
 
   readBaseWidgetData(element, evaluator);
-  evaluator.expression = toStr(element['@_krb:expression'], 'x');
+  evaluator.expression = toStr(krbAttr(element, 'expression'), 'x');
 
   return evaluator;
 });
@@ -271,28 +272,28 @@ export class DisplayTrendGraphModel extends BasePlotModel {
   klass = 'DisplayTrendGraph';
 }
 
-const readTrendGraph = (element: Record<string, unknown>) => {
+const readTrendGraph = (element: Element) => {
   const graph = new DisplayTrendGraphModel();
 
   readBaseWidgetData(element, graph);
-  graph.x_label = toStr(element['@_krb:x_label']);
-  graph.y_label = toStr(element['@_krb:y_label']);
-  graph.x_units = toStr(element['@_krb:x_units']);
-  graph.y_units = toStr(element['@_krb:y_units']);
-  graph.x_grid = toBool(element['@_krb:x_grid']);
-  graph.y_grid = toBool(element['@_krb:y_grid']);
-  graph.x_log = toBool(element['@_krb:x_log']);
-  graph.y_log = toBool(element['@_krb:y_log']);
-  graph.x_invert = toBool(element['@_krb:x_invert']);
-  graph.y_invert = toBool(element['@_krb:y_invert']);
-  graph.x_autorange = toBool(element['@_krb:x_autorange'], true);
-  graph.y_autorange = toBool(element['@_krb:y_autorange'], true);
-  graph.x_min = toNum(element['@_krb:x_min']);
-  graph.x_max = toNum(element['@_krb:x_max']);
-  graph.y_min = toNum(element['@_krb:y_min']);
-  graph.y_max = toNum(element['@_krb:y_max']);
-  graph.title = toStr(element['@_krb:title']);
-  graph.background = toStr(element['@_krb:background'], 'transparent');
+  graph.x_label = toStr(krbAttr(element, 'x_label'));
+  graph.y_label = toStr(krbAttr(element, 'y_label'));
+  graph.x_units = toStr(krbAttr(element, 'x_units'));
+  graph.y_units = toStr(krbAttr(element, 'y_units'));
+  graph.x_grid = toBool(krbAttr(element, 'x_grid'));
+  graph.y_grid = toBool(krbAttr(element, 'y_grid'));
+  graph.x_log = toBool(krbAttr(element, 'x_log'));
+  graph.y_log = toBool(krbAttr(element, 'y_log'));
+  graph.x_invert = toBool(krbAttr(element, 'x_invert'));
+  graph.y_invert = toBool(krbAttr(element, 'y_invert'));
+  graph.x_autorange = toBool(krbAttr(element, 'x_autorange'), true);
+  graph.y_autorange = toBool(krbAttr(element, 'y_autorange'), true);
+  graph.x_min = toNum(krbAttr(element, 'x_min'));
+  graph.x_max = toNum(krbAttr(element, 'x_max'));
+  graph.y_min = toNum(krbAttr(element, 'y_min'));
+  graph.y_max = toNum(krbAttr(element, 'y_max'));
+  graph.title = toStr(krbAttr(element, 'title'));
+  graph.background = toStr(krbAttr(element, 'background'), 'transparent');
 
   return graph;
 };
@@ -309,31 +310,31 @@ export class DisplayVectorGraphModel extends BasePlotModel {
   roi_tool = 0;
 }
 
-const readVectorGraph = (element: Record<string, unknown>) => {
+const readVectorGraph = (element: Element) => {
   const graph = new DisplayVectorGraphModel();
 
   readBaseWidgetData(element, graph);
-  graph.x_label = toStr(element['@_krb:x_label']);
-  graph.y_label = toStr(element['@_krb:y_label']);
-  graph.x_units = toStr(element['@_krb:x_units']);
-  graph.y_units = toStr(element['@_krb:y_units']);
-  graph.x_grid = toBool(element['@_krb:x_grid']);
-  graph.y_grid = toBool(element['@_krb:y_grid']);
-  graph.x_log = toBool(element['@_krb:x_log']);
-  graph.y_log = toBool(element['@_krb:y_log']);
-  graph.x_invert = toBool(element['@_krb:x_invert']);
-  graph.y_invert = toBool(element['@_krb:y_invert']);
-  graph.x_autorange = toBool(element['@_krb:x_autorange'], true);
-  graph.y_autorange = toBool(element['@_krb:y_autorange'], true);
-  graph.x_min = toNum(element['@_krb:x_min']);
-  graph.x_max = toNum(element['@_krb:x_max']);
-  graph.y_min = toNum(element['@_krb:y_min']);
-  graph.y_max = toNum(element['@_krb:y_max']);
-  graph.title = toStr(element['@_krb:title']);
-  graph.background = toStr(element['@_krb:background'], 'transparent');
-  graph.offset = toNum(element['@_krb:offset']);
-  graph.step = toNum(element['@_krb:step'], 1.0);
-  graph.roi_tool = toNum(element['@_krb:roi_tool']);
+  graph.x_label = toStr(krbAttr(element, 'x_label'));
+  graph.y_label = toStr(krbAttr(element, 'y_label'));
+  graph.x_units = toStr(krbAttr(element, 'x_units'));
+  graph.y_units = toStr(krbAttr(element, 'y_units'));
+  graph.x_grid = toBool(krbAttr(element, 'x_grid'));
+  graph.y_grid = toBool(krbAttr(element, 'y_grid'));
+  graph.x_log = toBool(krbAttr(element, 'x_log'));
+  graph.y_log = toBool(krbAttr(element, 'y_log'));
+  graph.x_invert = toBool(krbAttr(element, 'x_invert'));
+  graph.y_invert = toBool(krbAttr(element, 'y_invert'));
+  graph.x_autorange = toBool(krbAttr(element, 'x_autorange'), true);
+  graph.y_autorange = toBool(krbAttr(element, 'y_autorange'), true);
+  graph.x_min = toNum(krbAttr(element, 'x_min'));
+  graph.x_max = toNum(krbAttr(element, 'x_max'));
+  graph.y_min = toNum(krbAttr(element, 'y_min'));
+  graph.y_max = toNum(krbAttr(element, 'y_max'));
+  graph.title = toStr(krbAttr(element, 'title'));
+  graph.background = toStr(krbAttr(element, 'background'), 'transparent');
+  graph.offset = toNum(krbAttr(element, 'offset'));
+  graph.step = toNum(krbAttr(element, 'step'), 1.0);
+  graph.roi_tool = toNum(krbAttr(element, 'roi_tool'));
 
   return graph;
 };

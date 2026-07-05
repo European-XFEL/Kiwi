@@ -8,7 +8,13 @@ import { BaseShapeObjectData } from './bases';
 
 import { registerReader } from './Registry';
 import { SVG_LINE, SVG_POLYGON, SVG_RECT } from './constants';
-import { readBaseShapeData, toNum, toStr } from './util';
+import {
+  xmlAttr,
+  childElements,
+  readBaseShapeData,
+  toNum,
+  toStr,
+} from './util';
 
 // Line
 // ----------------------------------------------------------------------------
@@ -48,14 +54,14 @@ export class LineModel extends BaseShapeObjectData {
 
 registerReader(
   'Line',
-  (json) => {
+  (element) => {
     const line = new LineModel();
 
-    line.x1 = toNum(json['@_x1']);
-    line.y1 = toNum(json['@_y1']);
-    line.x2 = toNum(json['@_x2']);
-    line.y2 = toNum(json['@_y2']);
-    readBaseShapeData(json, line);
+    line.x1 = toNum(xmlAttr(element, 'x1'));
+    line.y1 = toNum(xmlAttr(element, 'y1'));
+    line.x2 = toNum(xmlAttr(element, 'x2'));
+    line.y2 = toNum(xmlAttr(element, 'y2'));
+    readBaseShapeData(element, line);
 
     return line;
   },
@@ -75,14 +81,14 @@ export class RectangleModel extends BaseShapeObjectData {
 
 registerReader(
   'Rectangle',
-  (json) => {
+  (element) => {
     const rect = new RectangleModel();
 
-    rect.x = toNum(json['@_x']);
-    rect.y = toNum(json['@_y']);
-    rect.width = toNum(json['@_width']);
-    rect.height = toNum(json['@_height']);
-    readBaseShapeData(json, rect);
+    rect.x = toNum(xmlAttr(element, 'x'));
+    rect.y = toNum(xmlAttr(element, 'y'));
+    rect.width = toNum(xmlAttr(element, 'width'));
+    rect.height = toNum(xmlAttr(element, 'height'));
+    readBaseShapeData(element, rect);
 
     return rect;
   },
@@ -173,21 +179,22 @@ export class ArrowPolygonModel extends BaseShapeObjectData {
   }
 }
 
-registerReader('ArrowPolygonModel', (json) => {
+registerReader('ArrowPolygonModel', (element) => {
   const arrow = new ArrowPolygonModel();
 
   // ArrowPolygon is a compound shape: svg:g containing svg:line + svg:polygon
-  const lineJson = (json[SVG_LINE] ?? {}) as Record<string, unknown>;
-  const polyJson = (json[SVG_POLYGON] ?? {}) as Record<string, unknown>;
+  const children = childElements(element);
+  const lineElement = children.find((child) => child.tagName === SVG_LINE);
+  const polyElement = children.find((child) => child.tagName === SVG_POLYGON);
 
   // Line endpoints
-  arrow.x1 = toNum(lineJson['@_x1']);
-  arrow.y1 = toNum(lineJson['@_y1']);
-  arrow.x2 = toNum(lineJson['@_x2']);
-  arrow.y2 = toNum(lineJson['@_y2']);
+  arrow.x1 = toNum(lineElement ? xmlAttr(lineElement, 'x1') : null);
+  arrow.y1 = toNum(lineElement ? xmlAttr(lineElement, 'y1') : null);
+  arrow.x2 = toNum(lineElement ? xmlAttr(lineElement, 'x2') : null);
+  arrow.y2 = toNum(lineElement ? xmlAttr(lineElement, 'y2') : null);
 
   // Arrow head points from polygon "x1,y1 x2,y2 x3,y3"
-  const points = toStr(polyJson['@_points'])
+  const points = toStr(polyElement ? xmlAttr(polyElement, 'points') : null)
     .trim()
     .split(/\s+/)
     .map((pair) => pair.split(',').map(Number));
@@ -199,7 +206,7 @@ registerReader('ArrowPolygonModel', (json) => {
   }
 
   // Stroke/fill from the line child
-  readBaseShapeData(lineJson, arrow);
+  if (lineElement) readBaseShapeData(lineElement, arrow);
 
   return arrow;
 });
@@ -211,11 +218,11 @@ export class PathModel extends BaseShapeObjectData {
 
 registerReader(
   'Polygon',
-  (json) => {
+  (element) => {
     const polygon = new PolygonModel();
 
-    polygon.points = toStr(json['@_points']);
-    readBaseShapeData(json, polygon);
+    polygon.points = toStr(xmlAttr(element, 'points'));
+    readBaseShapeData(element, polygon);
 
     return polygon;
   },
