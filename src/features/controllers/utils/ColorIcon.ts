@@ -1,22 +1,14 @@
-import { XMLParser, XMLBuilder } from 'fast-xml-parser';
-
-// Shared builder instance
-const builder = new XMLBuilder({
-  ignoreAttributes: false,
-  attributeNamePrefix: '@_',
-  format: false,
-  suppressEmptyNode: false,
-  suppressBooleanAttributes: false,
-});
-
 /** Input color accepted by recolor methods: hex/css string or RGB tuple. */
 type ColorInput = string | [number, number, number];
+
+const REQUIRED_BROWSER_JS_RUNTIME =
+  'ColorIcon class requires a web browser compatible Javascript runtime';
 
 // ColorIcon
 // ----------------------------------------------------------------------------
 
 export class ColorIcon {
-  /** Parsed SVG document as a plain JS object (fast-xml-parser output). */
+  /** Parsed SVG document as a plain JS object. */
   readonly parsed: Record<string, unknown>;
 
   private constructor(parsed: Record<string, unknown>) {
@@ -24,7 +16,7 @@ export class ColorIcon {
   }
 
   static fromSvgText(svgText: string): ColorIcon | null {
-    const parsed = ColorIcon.parse(svgText);
+    const parsed = ColorIcon._parse(svgText);
     return parsed ? new ColorIcon(parsed) : null;
   }
 
@@ -32,26 +24,12 @@ export class ColorIcon {
     return new ColorIcon(deepClone(parsed));
   }
 
-  static parse(svgText: string): Record<string, unknown> | null {
-    if (!svgText?.trim()) return null;
-
-    const parser = new XMLParser({
-      ignoreAttributes: false,
-      attributeNamePrefix: '@_',
-      removeNSPrefix: false,
-      trimValues: false,
-      parseAttributeValue: false,
-    });
-
-    try {
-      return parser.parse(svgText) as Record<string, unknown>;
-    } catch {
-      return null;
-    }
+  private static _parse(svgText: string): Record<string, unknown> | null {
+    return parseXml(svgText);
   }
 
   static serialize(parsed: Record<string, unknown>): string {
-    return builder.build(parsed);
+    return serializeXml(parsed);
   }
 
   /** Returns a new ColorIcon with the viewBox baked into its parsed node. */
@@ -79,7 +57,7 @@ export class ColorIcon {
     svgNode['@_width'] = '100%';
     svgNode['@_height'] = '100%';
 
-    return builder.build({ svg: svgNode });
+    return ColorIcon.serialize({ svg: svgNode });
   }
 
   withColor(color: ColorInput): ColorIcon {
@@ -172,7 +150,117 @@ function deepClone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value));
 }
 
-/** Normalises fast-xml-parser output: single child → array, missing → []. */
+function parseXml(xmlText: string): Record<string, unknown> | null {
+  if (typeof DOMParser === 'undefined') {
+    throw new Error(REQUIRED_BROWSER_JS_RUNTIME);
+  }
+  if (!xmlText?.trim()) return null;
+
+  const document = new DOMParser().parseFromString(xmlText, 'image/svg+xml');
+  if (document.querySelector('parsererror')) return null;
+
+  const root = document.documentElement;
+  if (!root) return null;
+
+  return { [root.nodeName]: elementToObject(root) };
+}
+
+function elementToObject(element: Element): Record<string, unknown> {
+  const parsedNode: Record<string, unknown> = {};
+
+  for (const attribute of Array.from(element.attributes)) {
+    parsedNode[`@_${attribute.name}`] = attribute.value;
+  }
+
+  const childElementsByName = new Map<string, Record<string, unknown>[]>();
+  const textChunks: string[] = [];
+  let hasElementChild = false;
+
+  for (const childNode of Array.from(element.childNodes)) {
+    if (childNode.nodeType === Node.ELEMENT_NODE) {
+      hasElementChild = true;
+      const childElement = childNode as Element;
+      const siblings = childElementsByName.get(childElement.nodeName) ?? [];
+      siblings.push(elementToObject(childElement));
+      childElementsByName.set(childElement.nodeName, siblings);
+      continue;
+    }
+
+    if (
+      childNode.nodeType === Node.TEXT_NODE ||
+      childNode.nodeType === Node.CDATA_SECTION_NODE
+    ) {
+      textChunks.push(childNode.nodeValue ?? '');
+    }
+  }
+
+  for (const [childName, childNodes] of childElementsByName) {
+    parsedNode[childName] =
+      childNodes.length === 1 ? childNodes[0] : childNodes;
+  }
+
+  const textContent = textChunks.join('');
+  if (textContent && (textContent.trim() || !hasElementChild)) {
+    parsedNode['#text'] = textContent;
+  }
+
+  return parsedNode;
+}
+
+function serializeXml(parsed: Record<string, unknown>): string {
+  if (typeof document === 'undefined' || typeof XMLSerializer === 'undefined') {
+    throw new Error(REQUIRED_BROWSER_JS_RUNTIME);
+  }
+
+  const [rootName, rootValue] = Object.entries(parsed)[0] ?? [];
+  if (!rootName || !rootValue || typeof rootValue !== 'object') return '';
+
+  const xmlDocument = document.implementation.createDocument(null, '', null);
+  const root = buildElement(
+    xmlDocument,
+    rootName,
+    rootValue as Record<string, unknown>
+  );
+
+  const placeholder = xmlDocument.documentElement;
+  if (placeholder) {
+    xmlDocument.replaceChild(root, placeholder);
+  } else {
+    xmlDocument.appendChild(root);
+  }
+  return new XMLSerializer().serializeToString(xmlDocument);
+}
+
+function buildElement(
+  xmlDocument: XMLDocument,
+  tagName: string,
+  parsedNode: Record<string, unknown>
+): Element {
+  const element = xmlDocument.createElement(tagName);
+
+  for (const [key, value] of Object.entries(parsedNode)) {
+    if (key === '#text') continue;
+    if (key.startsWith('@_')) {
+      element.setAttribute(key.slice(2), String(value));
+      continue;
+    }
+
+    for (const childNode of asArray(
+      value as Record<string, unknown> | Record<string, unknown>[]
+    )) {
+      if (!childNode || typeof childNode !== 'object') continue;
+      element.appendChild(buildElement(xmlDocument, key, childNode));
+    }
+  }
+
+  if (typeof parsedNode['#text'] === 'string') {
+    element.appendChild(xmlDocument.createTextNode(parsedNode['#text']));
+  }
+
+  return element;
+}
+
+/** Normalises parsed child nodes: single child → array, missing → []. */
 export function asArray<T>(v: T | T[] | undefined): T[] {
   if (v == null) return [];
   return Array.isArray(v) ? v : [v];
