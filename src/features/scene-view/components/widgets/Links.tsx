@@ -10,14 +10,11 @@ import {
 import type { ControllerContainerContext } from './ControllerContainer';
 import { registerRenderer } from '../../renderRegistry';
 import { getQFontTextStyle } from '@/features/controllers/api';
-import { Hash } from '@/karabo/data/hash';
-import { broadcast_event, KaraboEvent } from '@/lib/events';
+import { openSceneLinkInWorkspace } from '@/features/project/api';
 
 // useSceneNavigate
 // ----------------------------------------------------------------------------
-// Fires KaraboEvent.OpenScene instead of calling navigate().
-// PanelWrangler can inherit host/port/domain/project from the active scene,
-// so widget clicks should not depend on the current browser URL state.
+// Resolves links through the current project model before opening a scene.
 
 function useSceneNavigate(
   target: string,
@@ -27,21 +24,7 @@ function useSceneNavigate(
   return React.useCallback(() => {
     if (!target) return;
 
-    const colonIdx = target.indexOf(':');
-    const projectName = colonIdx >= 0 ? target.slice(0, colonIdx) : undefined;
-    const uuid = colonIdx >= 0 ? target.slice(colonIdx + 1) : target;
-    if (!uuid) return;
-
-    const hash = new Hash();
-    hash.set('uuid', uuid);
-    if (projectName) {
-      hash.set('project', projectName);
-    }
-    if (title) {
-      hash.set('name', title);
-    }
-
-    broadcast_event(KaraboEvent.OpenScene, hash);
+    openSceneLinkInWorkspace(target);
   }, [target, title]);
 }
 

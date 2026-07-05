@@ -1,58 +1,5 @@
 import { Hash } from '@/karabo/data/api';
-import type { LoadProjectSceneResult } from '@/karabo/common/project/api';
-import type { SceneModel } from '@/karabo/common/scenemodel/api';
-import {
-  getDbConn,
-  getManager,
-  getTopology,
-  RequestHandler,
-} from './singletons/api';
-
-function waitForTopology(isCancelled: () => boolean): Promise<boolean> {
-  if (getTopology().initialized) {
-    return Promise.resolve(true);
-  }
-
-  return new Promise((resolve) => {
-    const poll = setInterval(() => {
-      if (isCancelled()) {
-        clearInterval(poll);
-        resolve(false);
-        return;
-      }
-
-      if (getTopology().initialized) {
-        clearInterval(poll);
-        resolve(true);
-      }
-    }, 100);
-  });
-}
-
-export async function fetchSceneContent(
-  domain: string,
-  projectName: string,
-  uuid: string
-): Promise<SceneModel> {
-  const result = await new Promise<LoadProjectSceneResult>((resolve) =>
-    getDbConn().getScene(domain, projectName, uuid, resolve)
-  );
-
-  if (result.error_msg) {
-    throw new Error(result.error_msg);
-  }
-
-  if (!result.sceneModel) {
-    throw new Error('The scene could not be loaded.');
-  }
-
-  const ready = await waitForTopology(() => false);
-  if (!ready) {
-    throw new Error('The scene could not be loaded.');
-  }
-
-  return result.sceneModel;
-}
+import { getManager, RequestHandler } from './singletons/api';
 
 export function callDeviceSlot(
   handler: RequestHandler,

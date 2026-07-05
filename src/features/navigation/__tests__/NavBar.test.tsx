@@ -11,7 +11,7 @@ const mockSceneBreadcrumb = jest.fn<
 jest.mock('react-router-dom', () => ({
   useLocation: () => ({
     search:
-      '?host=test-host&port=44444&domain=CONTROLS&projectName=David_test&uuid=scene-123',
+      '?host=test-host&port=44444&domain=CONTROLS&projectUuid=project-1&sceneUuid=scene-123',
   }),
   useNavigate: () => mockNavigate,
 }));
@@ -31,6 +31,7 @@ const mockSceneStoreState: {
     width: number;
     height: number;
     domain: string;
+    projectUuid: string;
     projectName: string;
     uuid: string;
     name: string;
@@ -149,6 +150,7 @@ describe('NavBar', () => {
       width: 800,
       height: 600,
       domain: 'CONTROLS',
+      projectUuid: 'project-1',
       projectName: 'David_test',
       uuid: 'scene-123',
       name: 'beckhoff',

@@ -1,16 +1,16 @@
 import type { SceneModel } from '@/karabo/common/scenemodel/api';
-import type { LoadProjectSceneResult } from '@/karabo/common/project/api';
 import {
   sceneParamsFromURL,
   type SceneURLParams,
 } from '@/features/navigation/utils';
-import { getDbConn, getTopology } from '@/lib/singletons/api';
+import { getDbConn, getProjectModel } from '@/lib/singletons/api';
 import {
   type TopicRecentSceneInfo,
   type LoadedSceneRef,
   useRecentStore,
   useGlobalStore,
 } from '@/store/api';
+import { waitForTopology } from '@/lib/topology/api';
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { create } from 'zustand';
@@ -19,6 +19,8 @@ import type { FitMode } from './useSceneScale';
 export interface ActiveSceneStore {
   loadedSceneRef?: LoadedSceneRef;
   setLoadedSceneRef: (loadedSceneRef?: LoadedSceneRef) => void;
+  sceneLoadPending: boolean;
+  setSceneLoadPending: (sceneLoadPending: boolean) => void;
   fitMode: FitMode;
   setFitMode: (mode: FitMode) => void;
 }
@@ -27,6 +29,8 @@ export const useActiveSceneStore = create<ActiveSceneStore>((set) => ({
   loadedSceneRef: undefined,
   setLoadedSceneRef: (loadedSceneRef) =>
     set({ loadedSceneRef, fitMode: 'fit-page' }),
+  sceneLoadPending: false,
+  setSceneLoadPending: (sceneLoadPending) => set({ sceneLoadPending }),
   fitMode: 'fit-page',
   setFitMode: (fitMode) => set({ fitMode }),
 }));
@@ -38,39 +42,12 @@ export interface ActiveSceneResult {
   loadedSceneRef?: LoadedSceneRef;
 }
 
-function fetchScene(params: SceneURLParams): Promise<LoadProjectSceneResult> {
-  return new Promise((resolve) => {
-    getDbConn().getScene(
-      params.domain,
-      params.projectName,
-      params.uuid,
-      resolve
-    );
-  });
-}
-
-function waitForTopologyReady(
-  isCancelled: () => boolean,
-  intervalMs = 100
-): Promise<boolean> {
-  if (getTopology().initialized) {
-    return Promise.resolve(true);
-  }
-
-  return new Promise((resolve) => {
-    const poll = setInterval(() => {
-      if (isCancelled()) {
-        clearInterval(poll);
-        resolve(false);
-        return;
-      }
-
-      if (getTopology().initialized) {
-        clearInterval(poll);
-        resolve(true);
-      }
-    }, intervalMs);
-  });
+function fetchScene(params: SceneURLParams): SceneModel {
+  return getDbConn().getScene(
+    params.domain,
+    params.projectUuid,
+    params.sceneUuid
+  );
 }
 
 export function useActiveScene(): ActiveSceneResult {
@@ -81,6 +58,9 @@ export function useActiveScene(): ActiveSceneResult {
   const loadedSceneRef = useActiveSceneStore((state) => state.loadedSceneRef);
   const setLoadedSceneRef = useActiveSceneStore(
     (state) => state.setLoadedSceneRef
+  );
+  const setSceneLoadPending = useActiveSceneStore(
+    (state) => state.setSceneLoadPending
   );
 
   const topic = sessionInfo?.guiServerTopic;
@@ -98,6 +78,7 @@ export function useActiveScene(): ActiveSceneResult {
       setScene(null);
       setError('');
       setLoadedSceneRef(undefined);
+      setSceneLoadPending(false);
       return;
     }
 
@@ -108,55 +89,71 @@ export function useActiveScene(): ActiveSceneResult {
     setScene(null);
     setError('');
     setLoadedSceneRef(undefined);
+    setSceneLoadPending(true);
 
     (async () => {
-      const result = await fetchScene(sceneParams);
-      if (isCancelled()) return;
+      try {
+        const sceneModel = fetchScene(sceneParams);
+        if (isCancelled()) return;
 
-      if (result.error_msg || !result.sceneModel) {
+        const projectName = getProjectModel().root?.simple_name ?? '';
+
+        const nextLoadedSceneRef: LoadedSceneRef = {
+          width: sceneModel.width,
+          height: sceneModel.height,
+          domain: sceneParams.domain,
+          projectUuid: sceneParams.projectUuid,
+          projectName,
+          uuid: sceneModel.uuid,
+          name: sceneModel.simple_name,
+        };
+
+        setLoadedSceneRef(nextLoadedSceneRef);
+
+        if (topic && projectName) {
+          const recentScene: TopicRecentSceneInfo = {
+            topic,
+            domain: sceneParams.domain,
+            projectUuid: sceneParams.projectUuid,
+            uuid: sceneModel.uuid,
+            name: sceneModel.simple_name,
+            projectName,
+          };
+          setRecentScene(recentScene);
+        }
+
+        const topologyReady = await waitForTopology(isCancelled);
+        if (!topologyReady || isCancelled()) return;
+
+        setScene(sceneModel);
+        setError('');
+      } catch (error) {
+        if (isCancelled()) return;
+
         setLoadedSceneRef(undefined);
         setScene(null);
         setError(
-          `Couldn't retrieve scene data.\nPlease check Project Database availability.\nDetails: ${
-            result.error_msg ?? 'Unknown error'
-          }`
+          `Couldn't retrieve scene data.
+Details: ${error instanceof Error ? error.message : 'Unknown error'}`
         );
-        return;
+      } finally {
+        if (!isCancelled()) {
+          setSceneLoadPending(false);
+        }
       }
-
-      const nextLoadedSceneRef: LoadedSceneRef = {
-        width: result.sceneModel.width,
-        height: result.sceneModel.height,
-        domain: sceneParams.domain,
-        projectName: sceneParams.projectName,
-        uuid: result.sceneModel.uuid,
-        name: result.sceneModel.simple_name,
-      };
-
-      setLoadedSceneRef(nextLoadedSceneRef);
-
-      if (topic) {
-        const recentScene: TopicRecentSceneInfo = {
-          topic,
-          domain: sceneParams.domain,
-          uuid: result.sceneModel.uuid,
-          name: result.sceneModel.simple_name,
-          projectName: sceneParams.projectName,
-        };
-        setRecentScene(recentScene);
-      }
-
-      const topologyReady = await waitForTopologyReady(isCancelled);
-      if (!topologyReady || isCancelled()) return;
-
-      setScene(result.sceneModel);
-      setError('');
     })();
 
     return () => {
       cancelled = true;
+      setSceneLoadPending(false);
     };
-  }, [sceneParams, topic, setLoadedSceneRef, setRecentScene]);
+  }, [
+    sceneParams,
+    topic,
+    setLoadedSceneRef,
+    setRecentScene,
+    setSceneLoadPending,
+  ]);
 
   React.useEffect(() => {
     document.title = loadedSceneRef

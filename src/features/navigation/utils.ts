@@ -2,8 +2,8 @@ export interface SceneURLParams {
   host: string;
   port: number;
   domain: string;
-  projectName: string;
-  uuid: string;
+  projectUuid: string;
+  sceneUuid: string;
 }
 
 export function sceneParamsFromURL(
@@ -13,13 +13,26 @@ export function sceneParamsFromURL(
   const host = search.get('host');
   const portStr = search.get('port');
   const domain = search.get('domain');
-  const projectName = search.get('projectName');
-  const uuid = search.get('uuid');
+  const projectUuid = search.get('projectUuid');
+  const sceneUuid = search.get('sceneUuid') ?? search.get('uuid');
 
-  if (!host || !portStr || !domain || !projectName || !uuid) return undefined;
+  if (!host || !portStr || !domain || !projectUuid || !sceneUuid)
+    return undefined;
 
   const port = Number.parseInt(portStr, 10);
   if (Number.isNaN(port)) return undefined;
 
-  return { host, port, domain, projectName, uuid };
+  return { host, port, domain, projectUuid, sceneUuid };
+}
+
+export function scenePathFromParams(params: SceneURLParams): string {
+  const search = new URLSearchParams({
+    host: params.host,
+    port: String(params.port),
+    domain: params.domain,
+    projectUuid: params.projectUuid,
+    sceneUuid: params.sceneUuid,
+  });
+
+  return `/scene?${search.toString()}`;
 }

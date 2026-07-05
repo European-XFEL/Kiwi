@@ -1,7 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { createDefaultWorkspaceModel } from '../../utils';
+import type { WorkspaceRuntime } from '../../types';
 import WorkspaceShell from '../WorkspaceShell';
+import { useActiveSceneStore } from '@/features/scene-view/hooks/useActiveScene';
 
 const mockHeader = jest.fn();
 const mockFooter = jest.fn();
@@ -159,15 +161,24 @@ jest.mock('@/features/scene-view/components/SceneStatusViews', () => {
   };
 });
 
+function renderWorkspaceShell(
+  workspace = createDefaultWorkspaceModel(),
+  runtime: WorkspaceRuntime = { connected: true, topic: 'oludedav' }
+) {
+  return render(<WorkspaceShell workspace={workspace} runtime={runtime} />);
+}
+
 describe('WorkspaceShell', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    useActiveSceneStore.setState({ sceneLoadPending: false });
     mockGetContent.mockImplementation((tabId: string) => {
       if (tabId === 'scene:scene-42') {
         return {
           sceneRef: {
             uuid: 'scene-42',
             domain: 'CONTROLS',
+            projectUuid: 'project-1',
             projectName: 'David_test',
             name: 'box_layout',
           },
@@ -183,7 +194,7 @@ describe('WorkspaceShell', () => {
     const workspace = createDefaultWorkspaceModel();
     const runtime = { connected: true, topic: 'oludedav' };
 
-    render(<WorkspaceShell workspace={workspace} runtime={runtime} />);
+    renderWorkspaceShell(workspace, runtime);
 
     expect(screen.getByTestId('workspace-header')).toBeInTheDocument();
     expect(screen.getByTestId('workspace-body')).toBeInTheDocument();
@@ -210,13 +221,22 @@ describe('WorkspaceShell', () => {
     );
   });
 
+  it('shows the pending scene state immediately for scene URLs', () => {
+    const workspace = createDefaultWorkspaceModel();
+
+    useActiveSceneStore.setState({ sceneLoadPending: true });
+
+    renderWorkspaceShell(workspace, { connected: true });
+
+    expect(screen.queryByTestId('home-panel')).not.toBeInTheDocument();
+    expect(screen.getByTestId('center-home')).toHaveTextContent('pending');
+  });
+
   it('omits the header when the workspace model marks it as hidden', () => {
     const workspace = createDefaultWorkspaceModel();
     workspace.header.visible = false;
 
-    render(
-      <WorkspaceShell workspace={workspace} runtime={{ connected: true }} />
-    );
+    renderWorkspaceShell(workspace, { connected: true });
 
     expect(screen.queryByTestId('workspace-header')).not.toBeInTheDocument();
     expect(screen.getByTestId('workspace-body')).toBeInTheDocument();

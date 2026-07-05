@@ -1,14 +1,18 @@
 import React from 'react';
 import { RecentSceneInfo, useRecentStore, useGlobalStore } from '@/store/api';
-import { RecentScenesList } from '@/features/project/api';
+import { RecentScenesList, startSceneFromRoute } from '@/features/project/api';
+import type { SceneRouteLoadHandle } from '@/features/project/api';
 import BookmarkInfo from './components/BookmarkInfo';
 import { Separator } from '@/components/api';
-import { Hash } from '@/karabo/data/hash';
-import { broadcast_event, KaraboEvent } from '@/lib/events';
+import { useActiveSceneStore } from '@/features/scene-view/hooks/useActiveScene';
 
 const HomePanel: React.FC = () => {
   const { sessionInfo } = useGlobalStore();
   const { getRecentScenesForTopic, removeRecentScene } = useRecentStore();
+  const setSceneLoadPending = useActiveSceneStore(
+    (state) => state.setSceneLoadPending
+  );
+  const sceneLoadHandleRef = React.useRef<SceneRouteLoadHandle | null>(null);
 
   React.useEffect(() => {
     document.title = 'Kiwi';
@@ -22,12 +26,28 @@ const HomePanel: React.FC = () => {
   const handleSceneClick = (recentScene: RecentSceneInfo) => {
     if (!sessionInfo) return;
 
-    const hash = new Hash();
-    hash.set('uuid', recentScene.uuid);
-    hash.set('domain', recentScene.domain);
-    hash.set('project', recentScene.projectName);
-    hash.set('name', recentScene.name);
-    broadcast_event(KaraboEvent.OpenScene, hash);
+    sceneLoadHandleRef.current?.abort();
+    const handle = startSceneFromRoute({
+      host: sessionInfo.guiServerHost,
+      port: sessionInfo.guiServerPort,
+      domain: recentScene.domain,
+      projectUuid: recentScene.projectUuid,
+      sceneUuid: recentScene.uuid,
+    });
+    sceneLoadHandleRef.current = handle;
+    setSceneLoadPending(true);
+
+    handle.promise
+      .catch(() => {})
+      .finally(() => {
+        if (sceneLoadHandleRef.current === handle) {
+          sceneLoadHandleRef.current = null;
+        }
+
+        if (!handle.controller.signal.aborted) {
+          setSceneLoadPending(false);
+        }
+      });
   };
 
   const handleRemoveScene = (recentScene: RecentSceneInfo) => {

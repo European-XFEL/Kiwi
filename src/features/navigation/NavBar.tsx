@@ -21,7 +21,7 @@ export function NavBar() {
     (state) => state.setLoadedSceneRef
   );
   const activeLoadedSceneRef =
-    sceneParams && loadedSceneRef?.uuid === sceneParams.uuid
+    sceneParams && loadedSceneRef?.uuid === sceneParams.sceneUuid
       ? loadedSceneRef
       : null;
 

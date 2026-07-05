@@ -30,7 +30,7 @@ export default function SceneStatus({
     (state) => state.setLoadedSceneRef
   );
   const activeLoadedSceneRef =
-    sceneParams && loadedSceneRef?.uuid === sceneParams.uuid
+    sceneParams && loadedSceneRef?.uuid === sceneParams.sceneUuid
       ? loadedSceneRef
       : null;
   const hasScene = activeLoadedSceneRef !== null;

@@ -13,7 +13,7 @@ import {
 } from '@/components/api';
 import { Hash, HashValues } from '@/karabo/data/api';
 import { cn } from '@/components/api';
-import { getDbConn } from '@/lib/singletons/api';
+import { getDbConn, getProjectModel } from '@/lib/singletons/api';
 import { Loader2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import ProjectsTable from './components/ProjectTable';
@@ -22,9 +22,31 @@ import { useDeferredSearch } from './hooks/useDeferredSearch';
 import { useKaraboEvent, KaraboEvent } from '@/lib/events';
 import type { SceneBreadcrumbProps } from './types/project.types';
 import { filterByQuery } from './utils/filterByQuery';
-import { ProjectModel } from '@/karabo/common/project/ProjectModel';
+import { ProjectModel } from '@/karabo/common/project/model';
 import { SceneModel } from '@/karabo/common/scenemodel/api';
 import { openSceneInWorkspace } from './utils/openSceneInWorkspace';
+
+type PendingSelection = {
+  project: ProjectModel;
+  sceneName: string | null;
+};
+
+function readProjects(hash: Hash): ProjectModel[] {
+  const itemsHashes = hash.getValue('reply.items') as HashValues[];
+  const projects = itemsHashes.map((hv: HashValues) => {
+    const item = new Hash(hv);
+    return new ProjectModel({
+      uuid: item.getValue('uuid'),
+      date: item.getValue('date'),
+      simple_name: item.getValue('simple_name'),
+      is_trashed: item.getValue('is_trashed'),
+    });
+  });
+
+  return projects
+    .filter((project) => !project.is_trashed)
+    .sort((a, b) => a.simple_name.localeCompare(b.simple_name));
+}
 
 export default function SceneBreadcrumb({
   domain,
@@ -32,34 +54,27 @@ export default function SceneBreadcrumb({
   sceneName,
   className,
 }: SceneBreadcrumbProps) {
-  // Controlled open state for both menus
   const [projectOpen, setProjectOpen] = useState(false);
   const [sceneOpen, setSceneOpen] = useState(false);
   const projectSearch = useDeferredSearch();
   const sceneSearch = useDeferredSearch();
 
-  const projectsInitializedRef = useRef(false);
-  const lastDomainRef = useRef<string | null>(null);
   const [projectsLoading, setProjectsLoading] = useState(false);
   const [projects, setProjects] = useState<ProjectModel[]>([]);
-  const [selectedProject, setSelectedProject] = useState<ProjectModel>();
+  const [pendingSelection, setPendingSelection] =
+    useState<PendingSelection | null>(null);
 
   const [scenesLoading, setScenesLoading] = useState(false);
   const [scenes, setScenes] = useState<SceneModel[]>([]);
   const [scenesError, setScenesError] = useState('');
-  // undefined = not yet interacted, show route prop
-  // null      = project changed, show placeholder
-  // string   = scene was selected, show that name
-  const [displaySceneName, setDisplaySceneName] = useState<
-    string | null | undefined
-  >(undefined);
 
-  // Cache: project UUID → scene list. Stable ref, writes don't trigger re-renders.
-  const scenesCache = useRef<Map<string, SceneModel[]>>(new Map());
-  // Track which project UUID is currently being fetched to prevent duplicate requests.
-  const loadingForUuid = useRef<string | null>(null);
-  // Track which project's scenes should currently be shown to avoid async race mismatches.
-  const scenesTargetProjectUuid = useRef<string | null>(null);
+  const loadingProjectRef = useRef<ProjectModel | null>(null);
+  const scenesProjectRef = useRef<ProjectModel | null>(null);
+
+  const routeProject = projects.find(
+    (project) => project.simple_name === projectName
+  );
+  const activeProject = pendingSelection?.project ?? routeProject;
 
   const filteredProjects = filterByQuery(
     projects,
@@ -74,160 +89,142 @@ export default function SceneBreadcrumb({
   );
 
   useEffect(() => {
-    if (
-      !projectsInitializedRef.current ||
-      lastDomainRef.current === null ||
-      lastDomainRef.current !== domain
-    ) {
-      projectsInitializedRef.current = true;
-      lastDomainRef.current = domain;
-      setProjectsLoading(true);
-      setSelectedProject(undefined);
-      getDbConn().listProjects(domain);
-      return;
-    }
+    loadingProjectRef.current = null;
+    scenesProjectRef.current = null;
+    setPendingSelection(null);
+    setProjectsLoading(true);
+    setProjects([]);
+    setScenes([]);
+    setScenesLoading(false);
+    setScenesError('');
+    getDbConn().listProjects(domain);
+  }, [domain]);
 
-    const selected = projects.find((p) => p.simple_name === projectName);
-    if (selected) {
-      setSelectedProject(selected);
-    }
-
-    setDisplaySceneName(sceneName);
-  }, [domain, projectName, sceneName, projects]);
+  useEffect(() => {
+    setPendingSelection(null);
+  }, [projectName, sceneName]);
 
   const handleProjectDropdownOpen = () => {
     setProjectsLoading(true);
     getDbConn().listProjects(domain);
   };
 
-  useKaraboEvent(KaraboEvent.ListProjects, (hash: Hash) => {
-    const reason = hash.getValue('reason');
-    if (reason.length == 0) {
-      // Project retrieval was successful
-      const itemsHashes = hash.getValue('reply.items') as HashValues[];
-      const projects: ProjectModel[] = itemsHashes.map((hv: HashValues) => {
-        const item = new Hash(hv);
-        return new ProjectModel({
-          uuid: item.getValue('uuid'),
-          date: item.getValue('date'),
-          simple_name: item.getValue('simple_name'),
-          is_trashed: item.getValue('is_trashed'),
-        });
-      });
-      const nonTrashed = projects.filter((pInf) => !pInf.is_trashed);
-      const nonTrashedSorted = nonTrashed.sort((a, b) =>
-        a.simple_name.localeCompare(b.simple_name)
-      );
-      setProjects(nonTrashedSorted);
-      if (!selectedProject) {
-        const selected = projects.find((p) => p.simple_name == projectName);
-        if (selected) {
-          setSelectedProject(selected);
-        }
-      }
-      setProjectsLoading(false);
-    }
-  });
-
   const loadScenes = (project: ProjectModel) => {
-    scenesTargetProjectUuid.current = project.uuid;
+    scenesProjectRef.current = project;
+    setScenesError('');
 
-    // Cache hit — reuse immediately, no fetch
-    const cached = scenesCache.current.get(project.uuid);
-    if (cached) {
-      if (scenesTargetProjectUuid.current === project.uuid) {
-        setScenes(cached);
-        setScenesError('');
-        setScenesLoading(false);
-      }
+    if (project.scenes) {
+      setScenes(project.scenes);
+      setScenesLoading(false);
       return;
     }
 
-    // Already fetching for this project — don't start a duplicate request
-    if (loadingForUuid.current === project.uuid) return;
-
-    loadingForUuid.current = project.uuid;
     setScenes([]);
     setScenesLoading(true);
-    setScenesError('');
 
-    getDbConn().listScenes(
-      domain,
-      project.simple_name,
-      project.uuid,
-      (scenesInfo) => {
-        if (loadingForUuid.current === project.uuid) {
-          loadingForUuid.current = null;
-        }
+    if (loadingProjectRef.current) {
+      return;
+    }
 
-        // Ignore stale responses for projects that are no longer selected.
-        if (scenesTargetProjectUuid.current !== project.uuid) {
-          return;
-        }
-
-        if (scenesInfo.error_msg) {
-          setScenesError(scenesInfo.error_msg);
-        } else {
-          scenesCache.current.set(project.uuid, scenesInfo.scenes);
-          setScenes(scenesInfo.scenes);
-        }
-        setScenesLoading(false);
-      }
-    );
+    loadingProjectRef.current = project;
+    getDbConn().loadProject(domain, project);
   };
 
+  useKaraboEvent(KaraboEvent.ListProjects, (hash: Hash) => {
+    const reason = hash.getValue('reason');
+    if (reason.length !== 0) {
+      setProjectsLoading(false);
+      return;
+    }
+
+    setProjects(readProjects(hash));
+    setProjectsLoading(false);
+  });
+
+  useKaraboEvent(KaraboEvent.DatabaseBusy, (hash: Hash) => {
+    const loadedProject = loadingProjectRef.current;
+    if (!loadedProject) {
+      return;
+    }
+
+    const isProcessing = hash.getValue('is_processing');
+    if (isProcessing) {
+      return;
+    }
+
+    const targetProject = scenesProjectRef.current;
+    loadingProjectRef.current = null;
+
+    if (targetProject && targetProject.uuid !== loadedProject.uuid) {
+      loadScenes(targetProject);
+      return;
+    }
+
+    if (!targetProject) {
+      setScenesLoading(false);
+      return;
+    }
+
+    const loadingFailed = hash.has('loading_failed')
+      ? hash.getValue<boolean>('loading_failed')
+      : false;
+    if (loadingFailed) {
+      setScenesError(
+        `Could not load scenes for project "${loadedProject.simple_name}".`
+      );
+      setScenesLoading(false);
+      return;
+    }
+
+    setScenes(loadedProject.scenes ?? []);
+    setScenesError('');
+    setScenesLoading(false);
+  });
+
   const handleProjectClick = (project: ProjectModel) => {
-    setSelectedProject(project);
-    setDisplaySceneName(null); // project changed — hide stale scene name
+    setPendingSelection({ project, sceneName: null });
     sceneSearch.clear();
     setProjectOpen(false);
-    // Kick off scene fetch before opening the menu so it's ready (or loading) immediately
     loadScenes(project);
     setSceneOpen(true);
   };
 
   const handleSceneDropdownOpen = () => {
-    if (selectedProject) {
-      loadScenes(selectedProject);
+    if (activeProject) {
+      loadScenes(activeProject);
     }
   };
 
   const handleSceneDropdownClose = () => {
-    if (!displaySceneName) {
-      // The scene selection dropdown was closed without any scene being
-      // selected. Have to synchronize the breadcrumb with the scene being
-      // displayed
-      const project = projects?.find((p) => p.simple_name === projectName);
-      if (project) {
-        setSelectedProject(project);
-      }
-      setDisplaySceneName(sceneName);
+    if (pendingSelection?.sceneName === null) {
+      setPendingSelection(null);
     }
   };
 
   const handleSceneClick = (scene: SceneModel) => {
-    setDisplaySceneName(scene.simple_name);
+    const sceneProject = scenesProjectRef.current ?? activeProject;
+    if (!sceneProject) {
+      return;
+    }
+
+    setPendingSelection({
+      project: sceneProject,
+      sceneName: scene.simple_name,
+    });
     setSceneOpen(false);
 
-    openSceneInWorkspace({
-      domain,
-      projectName: selectedProject?.simple_name ?? projectName,
-      uuid: scene.uuid,
-      name: scene.simple_name,
-    });
+    getProjectModel().setRoot(domain, sceneProject);
+    openSceneInWorkspace({ model: scene });
   };
 
-  const displayProjectName = selectedProject?.simple_name ?? projectName;
-  // undefined → show route prop; null → project changed, show placeholder; string → selected scene
-  const shownSceneName =
-    displaySceneName === undefined
-      ? sceneName
-      : (displaySceneName ?? 'Select a scene...');
+  const displayProjectName = activeProject?.simple_name ?? projectName;
+  const shownSceneName = pendingSelection
+    ? (pendingSelection.sceneName ?? 'Select a scene...')
+    : sceneName;
 
   return (
     <Breadcrumb className={cn('min-w-0 max-w-full', className)}>
       <BreadcrumbList className="flex-nowrap min-w-0 overflow-hidden">
-        {/* Domain */}
         <BreadcrumbItem className="shrink-0 max-w-[20%]">
           <BreadcrumbPage className="font-medium truncate">
             {domain}
@@ -236,13 +233,15 @@ export default function SceneBreadcrumb({
 
         <BreadcrumbSeparator className="shrink-0" />
 
-        {/* Project (dropdown) */}
         <BreadcrumbItem className="min-w-0 max-w-[40%]">
           <DropdownMenu
             open={projectOpen}
             onOpenChange={(open) => {
               setProjectOpen(open);
-              if (open) handleProjectDropdownOpen();
+              if (open) {
+                setSceneOpen(false);
+                handleProjectDropdownOpen();
+              }
             }}
           >
             <DropdownMenuTrigger asChild>
@@ -265,7 +264,7 @@ export default function SceneBreadcrumb({
               ) : (
                 <ProjectsTable
                   projects={filteredProjects}
-                  selectedProject={selectedProject}
+                  selectedProject={activeProject}
                   onProjectClick={handleProjectClick}
                   query={projectSearch.query}
                   onQueryChange={projectSearch.setQuery}
@@ -277,13 +276,13 @@ export default function SceneBreadcrumb({
 
         <BreadcrumbSeparator className="shrink-0" />
 
-        {/* Scene (dropdown) */}
         <BreadcrumbItem className="min-w-0 max-w-[40%]">
           <DropdownMenu
             open={sceneOpen}
             onOpenChange={(open) => {
               setSceneOpen(open);
               if (open) {
+                setProjectOpen(false);
                 handleSceneDropdownOpen();
               } else {
                 handleSceneDropdownClose();

@@ -18,6 +18,11 @@ export { default as RecentSceneItem } from './components/RecentSceneItem';
 export { useDeferredSearch } from './hooks/useDeferredSearch';
 export { filterByQuery } from './utils/filterByQuery';
 
+// Route / scene-loading helpers
+export { startSceneFromRoute } from './utils/openSceneFromRoute';
+export type { SceneRouteLoadHandle } from './utils/openSceneFromRoute';
+export { openSceneLinkInWorkspace } from './utils/openSceneLinkInWorkspace';
+
 // Types
 export type {
   LoadProjectSceneProps,
