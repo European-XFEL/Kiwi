@@ -7,12 +7,14 @@ const scenes: RecentSceneInfo[] = [
   {
     domain: 'CONTROLS',
     projectName: 'David_test',
+    projectUuid: 'project-1',
     uuid: 'scene-a',
     name: 'beckhoff',
   },
   {
     domain: 'CONTROLS',
     projectName: 'David_test',
+    projectUuid: 'project-1',
     uuid: 'scene-b',
     name: 'box_layout',
   },

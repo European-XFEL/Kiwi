@@ -59,6 +59,7 @@ describe('ConfigurationStore', () => {
 
     config.setRecentScene('TOPIC_A', {
       domain: 'DOM',
+      projectUuid: 'project-1',
       uuid: '1',
       name: 'Scene 1',
       projectName: 'Project',
@@ -67,6 +68,7 @@ describe('ConfigurationStore', () => {
     expect(config.getRecentScenes('TOPIC_A')).toEqual([
       {
         domain: 'DOM',
+        projectUuid: 'project-1',
         uuid: '1',
         name: 'Scene 1',
         projectName: 'Project',
@@ -80,18 +82,21 @@ describe('ConfigurationStore', () => {
 
     config.setRecentScene('TOPIC_A', {
       domain: 'DOM',
+      projectUuid: 'project-1',
       uuid: '1',
       name: 'Scene 1',
       projectName: 'Project',
     });
     config.setRecentScene('TOPIC_A', {
       domain: 'DOM',
+      projectUuid: 'project-2',
       uuid: '2',
       name: 'Scene 2',
       projectName: 'Project',
     });
     config.setRecentScene('TOPIC_A', {
       domain: 'DOM',
+      projectUuid: 'project-1b',
       uuid: '1',
       name: 'Scene 1 renamed',
       projectName: 'Project X',
@@ -100,12 +105,14 @@ describe('ConfigurationStore', () => {
     expect(config.getRecentScenes('TOPIC_A')).toEqual([
       {
         domain: 'DOM',
+        projectUuid: 'project-1b',
         uuid: '1',
         name: 'Scene 1 renamed',
         projectName: 'Project X',
       },
       {
         domain: 'DOM',
+        projectUuid: 'project-2',
         uuid: '2',
         name: 'Scene 2',
         projectName: 'Project',
@@ -118,6 +125,7 @@ describe('ConfigurationStore', () => {
 
     config.setRecentScene('TOPIC_A', {
       domain: 'DOM',
+      projectUuid: 'project-1',
       uuid: '1',
       name: 'Scene 1',
       projectName: 'Project',

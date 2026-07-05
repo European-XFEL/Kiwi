@@ -43,6 +43,7 @@ export const useRecentStore = create<TRecentStore>()(
 
         config.setRecentScene(scene.topic, {
           domain: scene.domain,
+          projectUuid: scene.projectUuid,
           uuid: scene.uuid,
           name: scene.name,
           projectName: scene.projectName,

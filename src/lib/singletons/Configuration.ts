@@ -17,6 +17,7 @@ export const USER = 'user';
 
 export interface StoredRecentSceneInfo {
   domain: string;
+  projectUuid: string;
   uuid: string;
   name: string;
   projectName: string;
@@ -61,6 +62,23 @@ function serialize(value: any): string {
 
 function deserialize(rawValue: string): any {
   return JSON.parse(rawValue);
+}
+
+function isStoredRecentSceneInfo(
+  value: unknown
+): value is StoredRecentSceneInfo {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const scene = value as Record<string, unknown>;
+  return (
+    typeof scene.domain === 'string' &&
+    typeof scene.projectUuid === 'string' &&
+    typeof scene.uuid === 'string' &&
+    typeof scene.name === 'string' &&
+    typeof scene.projectName === 'string'
+  );
 }
 
 function coerceByDtype(value: any, configItem: Item): any {
@@ -269,7 +287,18 @@ export class ConfigurationStore {
       return {};
     }
 
-    return recentScenes as Record<string, StoredRecentSceneInfo[]>;
+    return Object.fromEntries(
+      Object.entries(recentScenes as Record<string, unknown>).flatMap(
+        ([topic, scenes]) => {
+          if (!Array.isArray(scenes)) {
+            return [];
+          }
+
+          const validScenes = scenes.filter(isStoredRecentSceneInfo);
+          return validScenes.length > 0 ? [[topic, validScenes]] : [];
+        }
+      )
+    );
   }
 
   public getRecentScenes(topic: string): StoredRecentSceneInfo[] {
@@ -302,6 +331,7 @@ export class ConfigurationStore {
     if (index >= 0) {
       scenes[index] = {
         ...scenes[index],
+        projectUuid: scene.projectUuid,
         name: scene.name,
         projectName: scene.projectName,
       };

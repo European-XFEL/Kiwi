@@ -73,32 +73,29 @@ export default function SelectProjectSceneDialog({
     setScenes([]);
     setSelectedScene(undefined);
     sceneSearch.clear();
-
     getDbConn().listProjects(domain);
   };
 
-  const updateScenes = (
-    domain: string,
-    projectName: string,
-    uuidProject: string
-  ) => {
+  const updateScenes = (domain: string, projectModel: ProjectModel) => {
     setActivityStatus(ActivityStatus.GETTING_SCENES);
-    getDbConn().listScenes(domain, projectName, uuidProject, (scenesInfo) => {
-      if (scenesInfo.error_msg) {
-        setErrorMessage(scenesInfo.error_msg);
-      } else {
-        setScenes(scenesInfo.scenes);
-        if (scenesInfo.scenes.length > 0) {
-          setSelectedScene(scenesInfo.scenes[0]);
-        }
-      }
-      setActivityStatus(ActivityStatus.NO_ACTIVITY);
-    });
+    getDbConn().loadProject(domain, projectModel);
   };
+
+  useKaraboEvent(KaraboEvent.DatabaseBusy, (hash: Hash) => {
+    const is_processing = hash.getValue('is_processing');
+    if (!is_processing && activityStatus === ActivityStatus.GETTING_SCENES) {
+      setActivityStatus(ActivityStatus.NO_ACTIVITY);
+      const scenes = selectedProject!.scenes ?? [];
+      setScenes(scenes);
+      if (scenes.length > 0) {
+        setSelectedScene(scenes[0]);
+      }
+    }
+  });
 
   const handleProjectClick = (project: ProjectModel) => {
     setSelectedProject(project);
-    updateScenes(selectedDomain, project.simple_name, project.uuid);
+    updateScenes(selectedDomain, project);
     setSelectedScene(undefined);
   };
 
@@ -108,16 +105,12 @@ export default function SelectProjectSceneDialog({
 
   const handleSceneDoubleClick = (scene: SceneModel) => {
     setSelectedScene(scene);
-    onSceneSelected(selectedDomain, selectedProject!.simple_name, scene);
+    onSceneSelected(selectedDomain, selectedProject!, scene);
   };
 
   const handleSelectScene = () => {
     if (selectedScene) {
-      onSceneSelected(
-        selectedDomain,
-        selectedProject!.simple_name,
-        selectedScene
-      );
+      onSceneSelected(selectedDomain, selectedProject!, selectedScene);
     }
   };
 
@@ -203,7 +196,7 @@ export default function SelectProjectSceneDialog({
       if (nonTrashedSorted.length > 0) {
         const selProject = nonTrashedSorted[0];
         setSelectedProject(selProject);
-        updateScenes(selectedDomain, selProject.simple_name, selProject.uuid);
+        updateScenes(selectedDomain, selProject);
       }
     }
     setActivityStatus(ActivityStatus.NO_ACTIVITY);

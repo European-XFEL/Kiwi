@@ -81,6 +81,7 @@ describe('FitModeSelect', () => {
     useActiveSceneStore.setState({
       loadedSceneRef: {
         domain: 'MID',
+        projectUuid: 'project-1',
         projectName: 'project',
         name: 'scene',
         uuid: 'scene-1',
@@ -101,6 +102,7 @@ describe('FitModeSelect', () => {
     useActiveSceneStore.setState({
       loadedSceneRef: {
         domain: 'MID',
+        projectUuid: 'project-1',
         projectName: 'project',
         name: 'scene',
         uuid: 'scene-1',

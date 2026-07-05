@@ -1,17 +1,15 @@
-import { Hash, HashList, HashValues } from '@/karabo/data/api';
+import { Hash, HashList } from '@/karabo/data/api';
 import {
-  ListProjectScenesResult,
-  LoadProjectItemsResult,
-  LoadProjectSceneResult,
-  ProjectSceneCache,
+  ProjectModel,
+  readProjectItemModel,
+  MemCacheWrapper,
+  read_lazy_object,
+  get_item_type,
   BaseProjectObjectModel,
+  ProjectDBCache,
 } from '@/karabo/common/project/api';
-import { XMLParser } from 'fast-xml-parser';
-import {
-  readSceneFromSvgJson,
-  SceneModel,
-} from '@/karabo/common/scenemodel/api';
-import { getNetwork } from '@/lib/singletons/api';
+import { SceneModel } from '@/karabo/common/scenemodel/api';
+import { getNetwork, getProjectModel } from '@/lib/singletons/api';
 
 import {
   broadcast_event,
@@ -20,23 +18,21 @@ import {
   register_for_broadcasts,
   unregister_for_broadcasts,
 } from '@/lib/events';
-import { ProjectQueryableItem } from '@/karabo/common/project/ProjectModel';
 
 enum DbConnectionState {
   IDLE,
-  GETTING_PROJECTS,
-  GETTING_PROJECT_SCENES,
-  GETTING_SCENE,
+  LIST_PROJECTS,
+  LOAD_PROJECT,
 }
 
 export class DbConnection {
   private readonly eventMap: KaraboEventMap;
-  // The active loadItemHandler: onLoadItemsHash during a listScenes operation,
-  // onLoadSceneHash during a getScene operation or undefined while none of
-  // those operations are taking place
-  private _activeLoadItemsHandler?: (hash: Hash) => void;
-  private _sceneCache = new ProjectSceneCache();
+  private _cache = new ProjectDBCache();
+  private _waiting_for_read = new Map<string, any>();
+  private _read_items_buffer = new HashList();
+
   private _state = DbConnectionState.IDLE;
+  private ignore_cache = true;
 
   public constructor() {
     this.eventMap = {
@@ -51,22 +47,44 @@ export class DbConnection {
     unregister_for_broadcasts(this.eventMap);
   }
 
+  private is_processing(): boolean {
+    return this._waiting_for_read.size > 0;
+  }
+
   private _onEventLoadProjectItems = (data: Hash): void => {
-    if (this._activeLoadItemsHandler) {
-      this._activeLoadItemsHandler(data);
+    const success = data.getValue<boolean>('success');
+    if (!success) {
+      this._waiting_for_read.clear();
+      this._read_items_buffer.length = 0;
+      const reason = data.getValue<string>('reason');
+      console.log(`Not successful reading project items. Error: ${reason}`);
+      this._broadcast_is_processing(false, true, true);
+      return;
     }
+    const items = data.getValue<HashList>('reply.items');
+    for (const item of items) {
+      const domain = item.getValue('domain') as string;
+      const uuid = item.getValue('uuid') as string;
+      const xml = item.getValue('xml') as string;
+      this._cache.store(domain, uuid, xml);
+    }
+    // memCache enables bulk
+    const memCache = this.buildMemcache(items);
+    for (const item of items) {
+      const domain = item.getValue('domain') as string;
+      const uuid = item.getValue('uuid') as string;
+      this._popReading(domain, uuid, success, memCache);
+    }
+    this.flush();
   };
 
   // #region List Projects
 
   public listProjects(domain: string): void {
-    this._state = DbConnectionState.GETTING_PROJECTS;
+    this._state = DbConnectionState.LIST_PROJECTS;
     getNetwork().onProjectListItems(domain);
   }
 
-  // The internal callback registered to handle projectListItems messages
-  // received from the GUI Server. Responsible for dispatching the call to the
-  // callback registered by the external caller of listProjects.
   private _onEventListItems = (hash: Hash): void => {
     this._state = DbConnectionState.IDLE;
     broadcast_event(KaraboEvent.ListProjects, hash);
@@ -74,253 +92,156 @@ export class DbConnection {
 
   // #endregion
 
-  // #region List Scenes
-  public listScenes(
+  public retrieve(
     domain: string,
-    projectName: string,
-    uuidProject: string,
-    onScenes: (scenesInfo: ListProjectScenesResult) => void
-  ): void {
+    uuid: string,
+    existing: BaseProjectObjectModel
+  ): string | null {
+    let data;
+    if (!this.ignore_cache) {
+      data = this._cache.retrieve(domain, uuid, existing);
+    } else {
+      data = null;
+    }
+    if (data === null) {
+      this._pushReading(domain, uuid, existing);
+    }
+    return data;
+  }
+
+  private _pushReading(
+    domain: string,
+    uuid: string,
+    existing: BaseProjectObjectModel
+  ) {
+    const is_processing = this.is_processing();
+    if (!this._waiting_for_read.has(uuid)) {
+      this._waiting_for_read.set(uuid, existing);
+      const item_type = get_item_type(existing!);
+      const projectItem = new Hash({
+        domain: domain,
+        uuid: uuid,
+        item_type: item_type,
+      });
+      this._read_items_buffer.push(projectItem);
+      if (this._read_items_buffer.length >= 50) {
+        this.flush();
+      }
+    }
+    this._broadcast_is_processing(is_processing);
+  }
+
+  public flush() {
+    if (this._read_items_buffer.length > 0) {
+      const items = this._read_items_buffer;
+      getNetwork().onProjectLoadItems(items);
+      this._read_items_buffer.length = 0;
+    }
+  }
+
+  private _broadcast_is_processing(
+    previous_processing: boolean,
+    bail: boolean = false,
+    loading_failed: boolean = false
+  ) {
+    if (bail) {
+      // Tell the world reading or writing project failed
+      broadcast_event(
+        KaraboEvent.DatabaseBusy,
+        new Hash('is_processing', false, 'loading_failed', loading_failed)
+      );
+    }
+    const is_processing = this.is_processing();
+    if (!is_processing) {
+      this._state = DbConnectionState.IDLE;
+    }
+    if (is_processing === previous_processing) {
+      return;
+    }
+    broadcast_event(
+      KaraboEvent.DatabaseBusy,
+      new Hash('is_processing', is_processing)
+    );
+  }
+
+  // #region Load Project
+  public loadProject(domain: string, project: ProjectModel): void {
     if (this._state != DbConnectionState.IDLE) {
-      // Only starts a listScenes operation while idle
+      // Only starts a loadProject operation while idle
       console.warn(
-        "Cannot start a 'listScenes' operation while not in IDLE state"
+        "Cannot start a 'loadProject' operation while not in IDLE state"
       );
       return;
     }
-    this._state = DbConnectionState.GETTING_PROJECT_SCENES;
-    this._onListScenesCallback = onScenes;
-    // Registers the handler for handling projectLoadItems messages from the GUI Server
-    // for the duration of the listScenes operation.
-    this._activeLoadItemsHandler = this._onLoadItemsHash;
-
-    // Starts the sequence of operations to get the list of scenes of a project.
-    // Differently from the listDomains and listProjects operations, listScenes
-    // requires multiple round-trips of "loadItems" operations.
-    this._collectedScenes = [];
-    this._domain = domain;
-    this._projectName = projectName;
-    this._loadItemsErr = undefined;
-    this._pendingLoadItems = 1;
-    const projectItem = {
-      domain: domain,
-      uuid: uuidProject,
-      item_type: 'project',
-    };
-    getNetwork().onProjectLoadItems(this._loadItemsHashList([projectItem]));
+    this._state = DbConnectionState.LOAD_PROJECT;
+    read_lazy_object(domain, project.uuid, this, readProjectItemModel, project);
+    // On load project we need to flush
+    this.flush();
   }
 
-  // The callback to be registered by an external caller for the listScenes operation.
-  private _onListScenesCallback?: (scenesInfo: ListProjectScenesResult) => void;
+  private _popReading(
+    domain: string,
+    uuid: string,
+    success: boolean,
+    storage: MemCacheWrapper
+  ) {
+    const is_processing = this.is_processing();
+    const obj = this._waiting_for_read.get(uuid);
+    if (obj && success) {
+      this._waiting_for_read.delete(uuid);
+      // Find a way for recursive loading
+      read_lazy_object(domain, uuid, storage, readProjectItemModel, obj);
+    }
+    this._broadcast_is_processing(is_processing);
+  }
 
-  // Internal data to keep track of the sequence of projectLoadItems operations
-  // involved in a listScenes operation.
-  private _pendingLoadItems: number = 0;
-  private _domain: string = '';
-  private _projectName: string = '';
-  private _collectedScenes?: SceneModel[];
-  private _loadItemsErr?: string;
-
-  // The internal callback for all the intermediary projectLoadItems operations invoked
-  // by the ProjectDBConnector - responsible for keeping track of when the sequence of
-  // projectLoadItems operations has been completed and dispatch the call to
-  // _onListScenesCallback
-  _onLoadItemsHash = (data: Hash): void => {
-    const hash = data as unknown as Hash;
-    this._pendingLoadItems -= 1;
-    if (this._loadItemsErr !== undefined) {
-      // An error has already happened during one of the loadProjectItems
-      // operation; don't go ahead.
-      return;
+  private buildMemcache(items: HashList): MemCacheWrapper {
+    const data: Record<string, Record<string, any>> = {};
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      const domain = item.getValue('domain') as string;
+      const uuid = item.getValue('uuid') as string;
+      const xml = item.getValue('xml') as string;
+      // Initialize
+      data[domain] ??= {};
+      data[domain][uuid] = xml;
     }
-    let itemsInfo: LoadProjectItemsResult | undefined = undefined;
-    try {
-      itemsInfo = this._loadProjectItemsResultFromHash(hash);
-      if (itemsInfo.error_msg !== undefined) {
-        // An error occurred; store the message and interrupt the operation.
-        this._loadItemsErr = itemsInfo.error_msg;
-      }
-    } catch (e) {
-      if (e instanceof Error) {
-        this._loadItemsErr = (e as Error).message;
-      } else {
-        this._loadItemsErr = 'Error loading project items';
-      }
-      console.error(`Error loading project items: ${e}`);
-    }
-    if (itemsInfo !== undefined) {
-      // Iterates through the retrieved project items, collecting the scenes
-      const itemsToQuery: ProjectQueryableItem[] = [];
-      for (const item of itemsInfo.projectItems) {
-        if (item != null && 'scenes' in item) {
-          // Project contains multiple scenes; loads them
-          const projectScenes = item['scenes'] as Object[];
-          for (const scene of projectScenes) {
-            itemsToQuery.push({
-              domain: scene['domain'],
-              uuid: scene['uuid'],
-              item_type: 'scene',
-            });
-          }
-          if (itemsToQuery.length > 0) {
-            this._pendingLoadItems += 1;
-            getNetwork().onProjectLoadItems(
-              this._loadItemsHashList(itemsToQuery)
-            );
-          }
-        } else if (item != null && 'svg' in item) {
-          // Project contains a single scene, collect it
-          const sceneIdx = this._collectedScenes?.findIndex(
-            (scene) => scene.uuid === item.uuid
-          );
-          if (sceneIdx === -1) {
-            this._collectedScenes?.push(
-              new SceneModel({
-                uuid: item['uuid'],
-                simple_name: item['simple_name'],
-                svg: item['svg'] as string,
-                date: item['date'],
-              })
-            );
-          }
-        }
-      }
-    }
-    // If there's no more pending LoadProjectItems operation we can call the
-    // external listScenes callback with the listScenes result.
-    if (this._pendingLoadItems === 0 || this._loadItemsErr !== undefined) {
-      let listScenesResult: ListProjectScenesResult;
-      if (this._loadItemsErr !== undefined) {
-        listScenesResult = {
-          domain: this._domain,
-          projectName: this._projectName,
-          scenes: [],
-          error_msg: this._loadItemsErr,
-        };
-      } else {
-        listScenesResult = {
-          domain: this._domain,
-          projectName: this._projectName,
-          scenes: this._collectedScenes!.sort((a, b) =>
-            a.simple_name.localeCompare(b.simple_name)
-          ),
-        };
-      }
-      this._state = DbConnectionState.IDLE;
-      this._onListScenesCallback?.(listScenesResult);
-      this._onListScenesCallback = undefined;
-      // Avoid retaining the set of collected scenes for more time than needed.
-      // If not here, they would be retained until another listScenes operation
-      // is launched.
-      this._collectedScenes = undefined;
-      this._activeLoadItemsHandler = undefined;
-    }
-  };
+    return new MemCacheWrapper(data, this);
+  }
 
   // #endregion
 
   // #region GetScene
   public getScene(
     domain: string,
-    projectName: string,
-    uuid: string,
-    onScene: (loadSceneResult: LoadProjectSceneResult) => void
-  ): void {
-    //cache lookup - note that the cache is only for scenes, so we don't need to check the projectName
-    const sceneInfo = this._sceneCache.getSceneInfo(domain, uuid);
-    if (sceneInfo && sceneInfo.svg) {
-      // Scene was found in cache - rebuild model from cached JSON and return
-      const model = readSceneFromSvgJson(JSON.parse(sceneInfo.svg));
-      onScene({ sceneModel: model, error_msg: undefined });
-      return;
-    }
-    // Stores the callback to be called when the GUI Server sends back the scene.
-    if (this._state != DbConnectionState.IDLE) {
-      // There's already a pending operation. Postpone the request.
-      // Those operations can't be concurrently executed because they handle "projectLoadItems"
-      // hashes sent by the GUI Server differently.
-      setTimeout(() => this.getScene(domain, projectName, uuid, onScene), 100);
-      return;
-    }
-    this._state = DbConnectionState.GETTING_SCENE;
-    // Registers the handler for handling projectLoadItems messages from the GUI Server
-    // for the duration of the getScene operation.
-    this._activeLoadItemsHandler = this._onLoadSceneHash;
+    projectUuid: string,
+    sceneUuid: string
+  ): SceneModel {
+    const projectModel = getProjectModel();
+    const project = projectModel.root;
 
-    this._onGetSceneCallback = onScene;
-    this._domain = domain;
-    this._projectName = projectName;
-    getNetwork().onProjectLoadItems(
-      this._loadItemsHashList([
-        { domain: domain, uuid: uuid, item_type: 'scene' },
-      ])
-    );
-  }
-
-  // The callback to be registered by an external caller of the getScene operation.
-  _onGetSceneCallback?: (scenesInfo: LoadProjectSceneResult) => void;
-
-  private _onLoadSceneHash = (hash: Hash): void => {
-    let itemsInfo: LoadProjectItemsResult | undefined = undefined;
-    let loadSceneErr: string | undefined = undefined;
-    try {
-      itemsInfo = this._loadProjectItemsResultFromHash(hash);
-      if (itemsInfo.error_msg !== undefined) {
-        // An error occurred
-        loadSceneErr = itemsInfo.error_msg;
-      }
-    } catch (e) {
-      if (e instanceof Error) {
-        loadSceneErr = (e as Error).message;
-      } else {
-        loadSceneErr = 'Error getting project scene';
-      }
-      console.error(`Error loading project scene: ${loadSceneErr}`);
-    }
-    if (itemsInfo === undefined) {
-      loadSceneErr = 'Error loading project scene - no scene returned';
-    } else if (itemsInfo!.projectItems.length !== 1) {
-      // An error occurred - only one item should have been returned.
-      loadSceneErr = 'Error loading project scene - multiple items returned';
-    } else if (
-      itemsInfo!.projectItems[0] != null &&
-      !('svg' in itemsInfo!.projectItems[0])
+    if (
+      projectModel.domain !== domain ||
+      !project ||
+      project.uuid !== projectUuid ||
+      !Array.isArray(project.scenes)
     ) {
-      // An error occurred - the returned item is not a scene.
-      loadSceneErr = 'Error loading project scene - no scene returned';
+      throw new Error('The project model is not loaded for this scene.');
     }
-    if (loadSceneErr !== undefined) {
-      // An error occurred
-      this._onGetSceneCallback?.({
-        sceneModel: undefined,
-        error_msg: loadSceneErr,
-      });
-    } else {
-      const sceneData = itemsInfo!.projectItems[0];
-      const sceneInfo = {
-        domain: sceneData['domain'],
-        project_name: this._projectName,
-        uuid: sceneData['uuid'],
-        item_type: 'scene',
-        simple_name: sceneData['simple_name'],
-        svg: sceneData['svg'],
-        date: sceneData['date'],
-      };
-      const sceneModel = readSceneFromSvgJson(JSON.parse(sceneInfo.svg));
-      sceneModel.date = sceneInfo['date'];
-      sceneModel.simple_name = sceneInfo['simple_name'];
-      sceneModel.uuid = sceneInfo['uuid'];
-      this._sceneCache.storeSceneInfo(sceneData['domain'], sceneModel);
-      this._onGetSceneCallback?.({
-        sceneModel: sceneModel,
-        error_msg: undefined,
-      });
+
+    const scene = project.scenes.find(
+      (item): item is SceneModel =>
+        item instanceof SceneModel && item.uuid === sceneUuid
+    );
+
+    if (!scene) {
+      throw new Error(
+        `Scene "${sceneUuid}" was not found in the current project model.`
+      );
     }
-    this._state = DbConnectionState.IDLE;
-    this._onGetSceneCallback = undefined;
-    // Unregister the hash handler for the duration of the getScene operation.
-    this._activeLoadItemsHandler = undefined;
-  };
+
+    return scene;
+  }
 
   // #endregion
 
@@ -331,113 +252,4 @@ export class DbConnection {
   }
 
   // #endregion
-
-  // #region Hash building utilities
-
-  private _loadItemsHashList = (items: ProjectQueryableItem[]): HashList => {
-    let itemsHashes: Hash[] = [];
-    for (const item of items) {
-      const itemHash = new Hash({
-        domain: item.domain,
-        uuid: item.uuid,
-        item_type: item.item_type,
-      });
-      itemsHashes.push(itemHash);
-    }
-    return new HashList(itemsHashes);
-  };
-
-  // #endregion
-
-  // #region Hash decoding utilities
-
-  private _loadProjectItemsResultFromHash = (
-    hash: Hash
-  ): LoadProjectItemsResult => {
-    const reason = hash.getValue('reason') as string;
-    if (reason.length > 0) {
-      // An error occurred
-      return { error_msg: reason, projectItems: [] };
-    } else {
-      const items: BaseProjectObjectModel[] = [];
-      const itemHashes = hash.getValue(
-        'reply.items'
-      ) as unknown as HashValues[];
-      //console.log(itemHashes);
-      for (let i = 0; i < itemHashes.length; i++) {
-        const item = new Hash(itemHashes[i]);
-        const domain = item.getValue('domain') as string;
-        const uuid = item.getValue('uuid') as string;
-        const xml = item.getValue('xml') as string;
-        const parser = new XMLParser({
-          ignoreAttributes: false,
-          attributeNamePrefix: '@_',
-          allowBooleanAttributes: true,
-        });
-        //console.log(xml);
-        const xmlObj = parser.parse(xml);
-        const itemType = xmlObj.xml['@_item_type'];
-        if (itemType === 'project') {
-          // Build a ProjectContentsInfo object
-          const scenes: ProjectQueryableItem[] = [];
-          const xmlScenes =
-            // Some XML's have an "artificial" root and some not
-            xmlObj.xml['root'] !== undefined
-              ? xmlObj.xml.root.project.scenes
-              : xmlObj.xml.project.scenes;
-          if (xmlScenes['KRB_Item'] !== undefined) {
-            const krbItems = xmlScenes.KRB_Item;
-            if (typeof (krbItems as any).length === 'number') {
-              // The project has more than one scene - the XML parser has
-              // returned a collection with the length property
-              for (let i = 0; i < krbItems.length; i++) {
-                scenes.push({
-                  domain: domain,
-                  uuid: krbItems[i].uuid['#text'],
-                  item_type: 'scene',
-                });
-              }
-            } else {
-              // The project has a single scene - the XML parser returned a
-              // single object instead of a collection with one element
-              scenes.push({
-                domain: domain,
-                uuid: krbItems.uuid['#text'],
-                item_type: 'scene',
-              });
-            }
-          }
-          const item = {
-            domain: domain,
-            uuid: uuid,
-            simple_name: xmlObj.xml['@_simple_name'],
-            is_trashed: xmlObj.xml['@_is_trashed'],
-            date: xmlObj.xml['@_date'],
-            scenes: scenes,
-            item_type: itemType,
-          };
-          items.push(item);
-        } else if (itemType === 'scene') {
-          // Build a SceneModel object
-          const item = {
-            uuid: uuid,
-            simple_name: xmlObj.xml['@_simple_name'],
-            description: xmlObj.xml['@_description'],
-            date: xmlObj.xml['@_date'],
-            svg:
-              xmlObj.xml['svg:svg'] != undefined
-                ? JSON.stringify(xmlObj.xml['svg:svg'])
-                : JSON.stringify(xmlObj.xml['svg']),
-          };
-          //console.log(item);
-          items.push(item);
-        }
-      }
-      return {
-        projectItems: items,
-      };
-    }
-  };
-
-  // #endregion
-} // class ProjectDBConnector
+}

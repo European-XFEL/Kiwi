@@ -4,6 +4,7 @@ import { RecentSceneInfo, useRecentStore, useGlobalStore } from '@/store/api';
 import { RecentScenesList } from '@/features/project/api';
 import { Separator } from '@/components/api';
 import BookmarkInfo from '@/app/components/BookmarkInfo';
+import { scenePathFromParams } from '@/features/navigation/utils';
 
 const LandingPage: React.FC = () => {
   const { sessionInfo } = useGlobalStore();
@@ -18,12 +19,16 @@ const LandingPage: React.FC = () => {
     : [];
 
   const handleSceneClick = (recentScene: RecentSceneInfo) => {
+    if (!sessionInfo) return;
+
     navigate(
-      `/scene?host=${sessionInfo!.guiServerHost}` +
-        `&port=${sessionInfo!.guiServerPort}` +
-        `&domain=${encodeURIComponent(recentScene.domain)}` +
-        `&projectName=${encodeURIComponent(recentScene.projectName)}` +
-        `&uuid=${encodeURIComponent(recentScene.uuid)}`,
+      scenePathFromParams({
+        host: sessionInfo.guiServerHost,
+        port: sessionInfo.guiServerPort,
+        domain: recentScene.domain,
+        projectUuid: recentScene.projectUuid,
+        sceneUuid: recentScene.uuid,
+      }),
       { replace: true }
     );
   };

@@ -90,7 +90,7 @@ describe('WorkspacePage', () => {
     jest.clearAllMocks();
     mockUseLocation.mockReturnValue({
       search:
-        '?host=exflqr35160.desy.de&port=44444&domain=CONTROLS&projectName=David_test&uuid=scene-1',
+        '?host=exflqr35160.desy.de&port=44444&domain=CONTROLS&projectUuid=project-1&sceneUuid=scene-1',
     });
     mockUseWorkspaceRuntime.mockReturnValue({
       connected: true,
@@ -102,6 +102,7 @@ describe('WorkspacePage', () => {
       sceneRef: {
         uuid: 'scene-1',
         domain: 'CONTROLS',
+        projectUuid: 'project-1',
         projectName: 'David_test',
         name: 'box_layout',
       },

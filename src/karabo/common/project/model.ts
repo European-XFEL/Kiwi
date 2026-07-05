@@ -4,6 +4,7 @@ import { BaseProjectObjectModel } from './bases';
 export class ProjectModel extends BaseProjectObjectModel {
   scenes: SceneModel[] | null = null;
   is_trashed: boolean = false;
+  initialized: boolean = false;
 
   constructor({
     uuid,

@@ -16,7 +16,8 @@ export class SceneModel extends BaseSceneObjectData {
   width = 1024;
   height = 768;
   file_format_version = 2;
-
+  /** True when the scene has been initialized. */
+  initialized = false;
   /** Preserves unknown SVG attributes for round-trip fidelity. */
   extra_attributes: Record<string, string> = {};
 

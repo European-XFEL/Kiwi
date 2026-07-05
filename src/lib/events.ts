@@ -16,7 +16,9 @@ enum KaraboEvent {
   SessionExpirationNotified = 'SessionExpirationNotified',
   Notification = 'Notification',
   OpenScene = 'OpenScene',
+  OpenSceneLink = 'OpenSceneLink',
   OpenSceneBrowser = 'OpenSceneBrowser',
+  DatabaseBusy = 'DatabaseBusy',
 }
 
 function broadcast_event(sender: KaraboEvent, data: Hash) {

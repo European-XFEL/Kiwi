@@ -129,9 +129,8 @@ export interface PanelAreaState {
 export interface SceneTabSnapshot {
   id: PanelTabId;
   title: string;
-  host: string;
-  port: number;
   domain: string;
+  projectUuid: string;
   projectName: string;
   uuid: string;
 }

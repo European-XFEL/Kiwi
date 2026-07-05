@@ -25,7 +25,7 @@ export type SelectProjectSceneDialogProps = {
   open: boolean;
   onSceneSelected: (
     domain: string,
-    projectName: string,
+    project: ProjectModel,
     scene: SceneModel
   ) => void;
   onCancel: () => void;

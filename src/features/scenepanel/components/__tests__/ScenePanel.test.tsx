@@ -43,6 +43,7 @@ const makeScene = (uuid: string) => {
 
 const sceneRef = {
   domain: 'SA1',
+  projectUuid: 'project-demo',
   projectName: 'Demo',
   uuid: 'scene-1',
   name: 'Beamline',

@@ -4,7 +4,9 @@ import { useState } from 'react';
 import SelectProjectSceneDialog from './SelectProjectSceneDialog';
 import type { LoadProjectSceneProps } from './types/project.types';
 import { SceneModel } from '@/karabo/common/scenemodel/api';
+import { ProjectModel } from '@/karabo/common/project/api';
 import { openSceneInWorkspace } from './utils/openSceneInWorkspace';
+import { getProjectModel } from '@/lib/singletons/api';
 
 export default function LoadProjectScene({
   className,
@@ -23,16 +25,15 @@ export default function LoadProjectScene({
 
   const handleSceneSelected = (
     domain: string,
-    projectName: string,
+    project: ProjectModel,
     selectedScene: SceneModel
   ) => {
     setOpenDialog(false);
 
+    // We have an active project
+    getProjectModel().setRoot(domain, project);
     openSceneInWorkspace({
-      domain,
-      projectName,
-      uuid: selectedScene.uuid,
-      name: selectedScene.simple_name,
+      model: selectedScene,
     });
   };
 
