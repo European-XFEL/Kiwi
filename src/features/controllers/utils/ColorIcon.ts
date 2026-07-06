@@ -2,266 +2,358 @@
 type ColorInput = string | [number, number, number];
 
 const REQUIRED_BROWSER_JS_RUNTIME =
-  'ColorIcon class requires a web browser compatible Javascript runtime';
+  'ColorIcon.fromSvgText requires a web browser compatible Javascript runtime';
 
-// ColorIcon
-// ----------------------------------------------------------------------------
+const ATTR_PREFIX = '@_';
+const TEXT_KEY = '#text';
+const COLOR_SLOT = '\uE000';
+const RECOLORABLE_WHITES = new Set(['#fff', '#ffffff', 'rgb(255,255,255)']);
+
+type ParsedNode = Record<string, unknown>;
+
+type SharedState = {
+  root: SVGSVGElement;
+  fillPaths: number[][];
+  strokePaths: number[][];
+  stylePatches: { path: number[]; original: string; templated: string }[];
+  svgCache: Map<string, string>;
+};
 
 export class ColorIcon {
-  /** Parsed SVG document as a plain JS object. */
-  readonly parsed: Record<string, unknown>;
+  private constructor(
+    private readonly shared: SharedState,
+    private readonly color?: string,
+    private readonly cachedViewBox?: string
+  ) {}
 
-  private constructor(parsed: Record<string, unknown>) {
-    this.parsed = parsed;
+  get parsed(): ParsedNode {
+    return parseParsedSvg(this.toSvg()) ?? {};
   }
 
   static fromSvgText(svgText: string): ColorIcon | null {
-    const parsed = ColorIcon._parse(svgText);
-    return parsed ? new ColorIcon(parsed) : null;
+    const root = parseSvgRoot(svgText);
+    return root ? new ColorIcon(compileSvg(root)) : null;
   }
 
-  static fromParsed(parsed: Record<string, unknown>): ColorIcon {
-    return new ColorIcon(deepClone(parsed));
+  static fromParsed(parsed: ParsedNode): ColorIcon {
+    const icon = ColorIcon.fromSvgText(ColorIcon.serialize(parsed));
+    if (!icon) throw new Error('Invalid parsed SVG structure');
+    return icon;
   }
 
-  private static _parse(svgText: string): Record<string, unknown> | null {
-    return parseXml(svgText);
-  }
-
-  static serialize(parsed: Record<string, unknown>): string {
-    return serializeXml(parsed);
-  }
-
-  /** Returns a new ColorIcon with the viewBox baked into its parsed node. */
-  withCachedViewBox(viewBox: string): ColorIcon {
-    const cloned = deepClone(this.parsed);
-    const svgNode = cloned['svg'] as Record<string, unknown> | undefined;
-    if (svgNode) svgNode['@_viewBox'] = viewBox;
-    return new ColorIcon(cloned);
-  }
-
-  toSvg(): string {
-    return ColorIcon.serialize(this.parsed);
-  }
-
-  toSvgWithViewBox(): string {
-    const svgNode = { ...(this.parsed['svg'] as Record<string, unknown>) };
-
-    // viewBox is pre-baked at bootstrap — fall back to authored dimensions if missing.
-    if (!svgNode['@_viewBox']) {
-      const w = svgNode['@_width'];
-      const h = svgNode['@_height'];
-      if (w && h) svgNode['@_viewBox'] = `0 0 ${w} ${h}`;
+  static serialize(parsed: ParsedNode): string {
+    if (
+      typeof document === 'undefined' ||
+      typeof XMLSerializer === 'undefined'
+    ) {
+      throw new Error(REQUIRED_BROWSER_JS_RUNTIME);
     }
 
-    svgNode['@_width'] = '100%';
-    svgNode['@_height'] = '100%';
+    const [tagName, value] = Object.entries(parsed)[0] ?? [];
+    if (!tagName || !value || typeof value !== 'object') return '';
 
-    return ColorIcon.serialize({ svg: svgNode });
+    const xml = document.implementation.createDocument(null, '', null);
+    const root = buildElement(xml, tagName, value as ParsedNode);
+
+    if (xml.documentElement) xml.replaceChild(root, xml.documentElement);
+    else xml.appendChild(root);
+
+    return new XMLSerializer().serializeToString(xml);
+  }
+
+  withCachedViewBox(viewBox: string): ColorIcon {
+    return viewBox === this.cachedViewBox
+      ? this
+      : new ColorIcon(this.shared, this.color, viewBox);
   }
 
   withColor(color: ColorInput): ColorIcon {
-    const cloned = deepClone(this.parsed);
-    const svgNode = cloned['svg'] as Record<string, unknown> | undefined;
-    if (!svgNode) return new ColorIcon(cloned);
+    const nextColor = toHexColor(color);
+    return nextColor === this.color
+      ? this
+      : new ColorIcon(this.shared, nextColor, this.cachedViewBox);
+  }
 
-    recolorNodeTree(svgNode, toHexColor(color));
-    return new ColorIcon(cloned);
+  toSvg(): string {
+    return this.stringify(false);
+  }
+
+  toSvgWithViewBox(): string {
+    return this.stringify(true);
+  }
+
+  private stringify(responsive: boolean): string {
+    const cacheKey = `${responsive ? 1 : 0}|${this.color || ''}|${this.cachedViewBox || ''}`;
+    const cached = this.shared.svgCache.get(cacheKey);
+    if (cached != null) return cached;
+
+    const svg = renderSvg(
+      this.shared,
+      this.color,
+      this.cachedViewBox,
+      responsive
+    );
+
+    this.shared.svgCache.set(cacheKey, svg);
+    return svg;
   }
 }
 
-// Recolor helpers
-// ----------------------------------------------------------------------------
-
-/** Colors treated as recolorable state placeholders. */
-const RECOLORABLE = new Set([
-  '#fff',
-  '#ffffff',
-  'rgb(255,255,255)',
-  'rgb(255, 255, 255)',
-]);
-
-/** Walk the full SVG tree and recolor fill/stroke attributes and inline style values. */
-function recolorNodeTree(node: Record<string, unknown>, color: string): void {
-  if (typeof node['@_fill'] === 'string' && shouldRecolor(node['@_fill'])) {
-    node['@_fill'] = color;
-  }
-  if (typeof node['@_stroke'] === 'string' && shouldRecolor(node['@_stroke'])) {
-    node['@_stroke'] = color;
-  }
-  if (typeof node['@_style'] === 'string') {
-    node['@_style'] = recolorStyle(node['@_style'], color);
+function renderSvg(
+  shared: SharedState,
+  color: string | undefined,
+  cachedViewBox: string | undefined,
+  responsive: boolean
+): string {
+  if (typeof XMLSerializer === 'undefined') {
+    throw new Error(REQUIRED_BROWSER_JS_RUNTIME);
   }
 
-  for (const [key, value] of Object.entries(node)) {
-    if (key.startsWith('@_') || key === '#text') continue;
-    for (const item of asArray(value as unknown[] | undefined)) {
-      if (item && typeof item === 'object') {
-        recolorNodeTree(item as Record<string, unknown>, color);
-      }
+  const svg = shared.root.cloneNode(true) as SVGSVGElement;
+  applyRootAttrs(svg, cachedViewBox, responsive);
+
+  if (color) {
+    for (const path of shared.fillPaths) {
+      getElementAtPath(svg, path)?.setAttribute('fill', color);
+    }
+
+    for (const path of shared.strokePaths) {
+      getElementAtPath(svg, path)?.setAttribute('stroke', color);
+    }
+
+    for (const patch of shared.stylePatches) {
+      getElementAtPath(svg, patch.path)?.setAttribute(
+        'style',
+        patch.templated.split(COLOR_SLOT).join(color)
+      );
     }
   }
+
+  return new XMLSerializer().serializeToString(svg);
 }
 
-/** Rewrites `fill`/`stroke` style declarations when they match recolorable values. */
-function recolorStyle(styleText: string, color: string): string {
-  const styleMap = new Map<string, string>();
+function compileSvg(root: SVGSVGElement): SharedState {
+  const fillPaths: number[][] = [];
+  const strokePaths: number[][] = [];
+  const stylePatches: {
+    path: number[];
+    original: string;
+    templated: string;
+  }[] = [];
 
-  for (const chunk of styleText.split(';')) {
-    const pair = chunk.trim();
-    if (!pair) continue;
-    const idx = pair.indexOf(':');
-    if (idx < 0) continue;
-    styleMap.set(pair.slice(0, idx).trim(), pair.slice(idx + 1).trim());
+  collectTargets(root, [], fillPaths, strokePaths, stylePatches);
+
+  return {
+    root,
+    fillPaths,
+    strokePaths,
+    stylePatches,
+    svgCache: new Map(),
+  };
+}
+
+function collectTargets(
+  element: Element,
+  path: number[],
+  fillPaths: number[][],
+  strokePaths: number[][],
+  stylePatches: { path: number[]; original: string; templated: string }[]
+): void {
+  const fill = element.getAttribute('fill');
+  if (fill && isRecolorableWhite(fill)) fillPaths.push([...path]);
+
+  const stroke = element.getAttribute('stroke');
+  if (stroke && isRecolorableWhite(stroke)) strokePaths.push([...path]);
+
+  const style = element.getAttribute('style');
+  if (style) {
+    const templated = compileStyleTemplate(style);
+    if (templated) {
+      stylePatches.push({ path: [...path], original: style, templated });
+    }
   }
 
-  const fill = styleMap.get('fill');
-  if (fill && shouldRecolor(fill)) styleMap.set('fill', color);
-
-  const stroke = styleMap.get('stroke');
-  if (stroke && shouldRecolor(stroke)) styleMap.set('stroke', color);
-
-  return Array.from(styleMap.entries())
-    .map(([k, v]) => `${k}:${v}`)
-    .join(';');
+  for (let index = 0; index < element.children.length; index++) {
+    collectTargets(
+      element.children[index],
+      [...path, index],
+      fillPaths,
+      strokePaths,
+      stylePatches
+    );
+  }
 }
 
-/** True when a color string belongs to the recolorable placeholder palette. */
-function shouldRecolor(value: string): boolean {
-  return RECOLORABLE.has(value.trim());
+function getElementAtPath(root: Element, path: number[]): Element | null {
+  let element: Element = root;
+  for (const index of path) {
+    const child = element.children[index];
+    if (!child) return null;
+    element = child;
+  }
+  return element;
 }
 
-/** Normalizes `ColorInput` into a hex string. */
-function toHexColor(color: ColorInput): string {
-  if (typeof color === 'string') return color;
-  const [r, g, b] = color;
-  return `#${byte(r)}${byte(g)}${byte(b)}`;
+function applyRootAttrs(
+  svg: SVGSVGElement,
+  cachedViewBox: string | undefined,
+  responsive: boolean
+): void {
+  svg.setAttribute('preserveAspectRatio', 'none');
+
+  if (cachedViewBox) {
+    svg.setAttribute('viewBox', cachedViewBox);
+  } else if (responsive && !svg.hasAttribute('viewBox')) {
+    const width = svg.getAttribute('width');
+    const height = svg.getAttribute('height');
+    if (width && height) svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  }
+
+  if (responsive) {
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('height', '100%');
+  }
 }
 
-/** Clamp and convert a single 0..255 channel to two-digit hex. */
-function byte(n: number): string {
-  return Math.max(0, Math.min(255, Math.round(n)))
-    .toString(16)
-    .padStart(2, '0');
+function compileStyleTemplate(styleText: string): string | null {
+  const parts: string[] = [];
+  let changed = false;
+
+  for (const chunk of styleText.split(';')) {
+    const trimmed = chunk.trim();
+    if (!trimmed) continue;
+
+    const colonIndex = trimmed.indexOf(':');
+    if (colonIndex < 0) continue;
+
+    const propertyName = trimmed.slice(0, colonIndex).trim();
+    let propertyValue = trimmed.slice(colonIndex + 1).trim();
+
+    if (
+      (propertyName === 'fill' || propertyName === 'stroke') &&
+      isRecolorableWhite(propertyValue)
+    ) {
+      propertyValue = COLOR_SLOT;
+      changed = true;
+    }
+
+    parts.push(`${propertyName}:${propertyValue}`);
+  }
+
+  return changed ? parts.join(';') : null;
 }
 
-/** Simple deep clone for parsed JSON-like SVG objects. */
-function deepClone<T>(value: T): T {
-  return JSON.parse(JSON.stringify(value));
-}
-
-function parseXml(xmlText: string): Record<string, unknown> | null {
+function parseXmlRoot(svgText: string): Element | null {
   if (typeof DOMParser === 'undefined') {
     throw new Error(REQUIRED_BROWSER_JS_RUNTIME);
   }
-  if (!xmlText?.trim()) return null;
+  if (!svgText.trim()) return null;
 
-  const document = new DOMParser().parseFromString(xmlText, 'image/svg+xml');
-  if (document.querySelector('parsererror')) return null;
-
-  const root = document.documentElement;
-  if (!root) return null;
-
-  return { [root.nodeName]: elementToObject(root) };
+  const xml = new DOMParser().parseFromString(svgText, 'image/svg+xml');
+  return xml.querySelector('parsererror') ? null : xml.documentElement;
 }
 
-function elementToObject(element: Element): Record<string, unknown> {
-  const parsedNode: Record<string, unknown> = {};
+function parseSvgRoot(svgText: string): SVGSVGElement | null {
+  const root = parseXmlRoot(svgText);
+  if (!root) return null;
+  if (root instanceof SVGSVGElement) return root;
+  return root.tagName.toLowerCase() === 'svg'
+    ? (root as unknown as SVGSVGElement)
+    : null;
+}
 
-  for (const attribute of Array.from(element.attributes)) {
-    parsedNode[`@_${attribute.name}`] = attribute.value;
+function parseParsedSvg(svgText: string): ParsedNode | null {
+  const root = parseXmlRoot(svgText);
+  return root ? { [root.nodeName]: elementToParsedNode(root) } : null;
+}
+
+function elementToParsedNode(element: Element): ParsedNode {
+  const parsed: ParsedNode = {};
+  const groupedChildren: Record<string, ParsedNode[]> = {};
+  const textParts: string[] = [];
+  let hasElementChildren = false;
+
+  for (let index = 0; index < element.attributes.length; index++) {
+    const attr = element.attributes[index];
+    parsed[ATTR_PREFIX + attr.name] = attr.value;
   }
 
-  const childElementsByName = new Map<string, Record<string, unknown>[]>();
-  const textChunks: string[] = [];
-  let hasElementChild = false;
+  for (let index = 0; index < element.childNodes.length; index++) {
+    const childNode = element.childNodes[index];
 
-  for (const childNode of Array.from(element.childNodes)) {
     if (childNode.nodeType === Node.ELEMENT_NODE) {
-      hasElementChild = true;
-      const childElement = childNode as Element;
-      const siblings = childElementsByName.get(childElement.nodeName) ?? [];
-      siblings.push(elementToObject(childElement));
-      childElementsByName.set(childElement.nodeName, siblings);
-      continue;
-    }
-
-    if (
+      hasElementChildren = true;
+      const child = childNode as Element;
+      (groupedChildren[child.nodeName] ||= []).push(elementToParsedNode(child));
+    } else if (
       childNode.nodeType === Node.TEXT_NODE ||
       childNode.nodeType === Node.CDATA_SECTION_NODE
     ) {
-      textChunks.push(childNode.nodeValue ?? '');
+      textParts.push(childNode.nodeValue ?? '');
     }
   }
 
-  for (const [childName, childNodes] of childElementsByName) {
-    parsedNode[childName] =
-      childNodes.length === 1 ? childNodes[0] : childNodes;
+  for (const tagName in groupedChildren) {
+    const group = groupedChildren[tagName];
+    parsed[tagName] = group.length === 1 ? group[0] : group;
   }
 
-  const textContent = textChunks.join('');
-  if (textContent && (textContent.trim() || !hasElementChild)) {
-    parsedNode['#text'] = textContent;
-  }
+  const text = textParts.join('');
+  if (text && (text.trim() || !hasElementChildren)) parsed[TEXT_KEY] = text;
 
-  return parsedNode;
-}
-
-function serializeXml(parsed: Record<string, unknown>): string {
-  if (typeof document === 'undefined' || typeof XMLSerializer === 'undefined') {
-    throw new Error(REQUIRED_BROWSER_JS_RUNTIME);
-  }
-
-  const [rootName, rootValue] = Object.entries(parsed)[0] ?? [];
-  if (!rootName || !rootValue || typeof rootValue !== 'object') return '';
-
-  const xmlDocument = document.implementation.createDocument(null, '', null);
-  const root = buildElement(
-    xmlDocument,
-    rootName,
-    rootValue as Record<string, unknown>
-  );
-
-  const placeholder = xmlDocument.documentElement;
-  if (placeholder) {
-    xmlDocument.replaceChild(root, placeholder);
-  } else {
-    xmlDocument.appendChild(root);
-  }
-  return new XMLSerializer().serializeToString(xmlDocument);
+  return parsed;
 }
 
 function buildElement(
-  xmlDocument: XMLDocument,
+  xml: XMLDocument,
   tagName: string,
-  parsedNode: Record<string, unknown>
+  parsed: ParsedNode
 ): Element {
-  const element = xmlDocument.createElement(tagName);
+  const element = xml.createElement(tagName);
 
-  for (const [key, value] of Object.entries(parsedNode)) {
-    if (key === '#text') continue;
-    if (key.startsWith('@_')) {
+  for (const key in parsed) {
+    const value = parsed[key];
+
+    if (key === TEXT_KEY) continue;
+
+    if (key.startsWith(ATTR_PREFIX)) {
       element.setAttribute(key.slice(2), String(value));
       continue;
     }
 
-    for (const childNode of asArray(
-      value as Record<string, unknown> | Record<string, unknown>[]
+    for (const child of asArray(
+      value as ParsedNode | ParsedNode[] | undefined
     )) {
-      if (!childNode || typeof childNode !== 'object') continue;
-      element.appendChild(buildElement(xmlDocument, key, childNode));
+      if (child && typeof child === 'object') {
+        element.appendChild(buildElement(xml, key, child as ParsedNode));
+      }
     }
   }
 
-  if (typeof parsedNode['#text'] === 'string') {
-    element.appendChild(xmlDocument.createTextNode(parsedNode['#text']));
+  if (typeof parsed[TEXT_KEY] === 'string') {
+    element.appendChild(xml.createTextNode(parsed[TEXT_KEY]));
   }
 
   return element;
 }
 
+function isRecolorableWhite(value: string): boolean {
+  return RECOLORABLE_WHITES.has(value.trim().toLowerCase().replace(/\s+/g, ''));
+}
+
+function toHexColor(color: ColorInput): string {
+  if (typeof color === 'string') return color;
+  const [red, green, blue] = color;
+  return `#${toHexByte(red)}${toHexByte(green)}${toHexByte(blue)}`;
+}
+
+function toHexByte(value: number): string {
+  return Math.max(0, Math.min(255, Math.round(value)))
+    .toString(16)
+    .padStart(2, '0');
+}
+
 /** Normalises parsed child nodes: single child → array, missing → []. */
-export function asArray<T>(v: T | T[] | undefined): T[] {
-  if (v == null) return [];
-  return Array.isArray(v) ? v : [v];
+export function asArray<T>(value: T | T[] | undefined): T[] {
+  return value == null ? [] : Array.isArray(value) ? value : [value];
 }
