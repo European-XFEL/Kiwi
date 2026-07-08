@@ -30,101 +30,142 @@ export interface ControllerContainerProps {
   Renderer: Renderer;
 }
 
-export const ControllerContainer: React.FC<ControllerContainerProps> = ({
-  width,
-  height,
-  objectId,
-  model,
-  Renderer,
-}) => {
-  const { containerStyle, contentsStyle } = useContainer();
-  const [isTooltipOpen, setIsTooltipOpen] = React.useState(false);
-  const tooltipAutoCloseRef = React.useRef<number | null>(null);
-  const proxies = useProxies(model.keys);
-  const ctx = useController(proxies);
-  const propertyTooltipText = getModelKeys(model.keys);
-  const isEditableWidget = model.parent_component === EDITABLE_PARENT_COMPONENT;
-  const hasEditAccess =
-    ctx.proxy?.binding?.accessMode === AccessMode.RECONFIGURABLE &&
-    ctx.userAccessLevel >=
-      (ctx.proxy?.binding?.requiredAccessLevel ?? AccessLevel.OBSERVER);
-  const tooltipBody = propertyTooltipText ? <p>{propertyTooltipText}</p> : null;
-  const tooltipContent = isEditableWidget ? (
-    <div className="space-y-0.5">
-      <p>
-        AccessLevel: {AccessLevel[ctx.userAccessLevel]} - Access:{' '}
-        {hasEditAccess ? 'True' : 'False'}
-      </p>
-      {tooltipBody}
-    </div>
-  ) : (
-    tooltipBody
-  );
-  const controllerContent = (
+interface ControllerRendererHostProps {
+  model: BaseWidgetObjectData;
+  objectId: string;
+  Renderer: Renderer;
+  ctx: ControllerContainerContext;
+}
+
+const ControllerRendererHost = React.memo<ControllerRendererHostProps>(
+  ({ model, objectId, Renderer, ctx }) => (
     <div className="w-full h-full">
       <Renderer model={model} ctx={ctx} objectId={objectId} />
     </div>
-  );
+  )
+);
 
-  useRegisterSceneControllerWidget(objectId, model, ctx);
+ControllerRendererHost.displayName = 'ControllerRendererHost';
 
-  const clearTooltipAutoClose = React.useCallback(() => {
-    if (tooltipAutoCloseRef.current == null) return;
+interface ControllerTooltipProps {
+  children: React.ReactNode;
+  tooltipContent: React.ReactNode;
+}
 
-    window.clearTimeout(tooltipAutoCloseRef.current);
-    tooltipAutoCloseRef.current = null;
-  }, []);
+const ControllerTooltip = React.memo<ControllerTooltipProps>(
+  ({ children, tooltipContent }) => {
+    const [isTooltipOpen, setIsTooltipOpen] = React.useState(false);
+    const tooltipAutoCloseRef = React.useRef<number | null>(null);
 
-  const handleTooltipOpenChange = React.useCallback(
-    (nextOpen: boolean) => {
-      clearTooltipAutoClose();
-      setIsTooltipOpen(nextOpen);
+    const clearTooltipAutoClose = React.useCallback(() => {
+      if (tooltipAutoCloseRef.current == null) return;
 
-      if (nextOpen) {
-        tooltipAutoCloseRef.current = window.setTimeout(() => {
-          setIsTooltipOpen(false);
-          tooltipAutoCloseRef.current = null;
-        }, 5000);
-      }
-    },
-    [clearTooltipAutoClose]
-  );
+      window.clearTimeout(tooltipAutoCloseRef.current);
+      tooltipAutoCloseRef.current = null;
+    }, []);
 
-  React.useEffect(() => clearTooltipAutoClose, [clearTooltipAutoClose]);
+    const handleTooltipOpenChange = React.useCallback(
+      (nextOpen: boolean) => {
+        clearTooltipAutoClose();
+        setIsTooltipOpen(nextOpen);
 
-  return (
-    <div
-      style={{
-        position: 'relative',
-        width,
-        height,
-        ...containerStyle,
-      }}
-    >
-      <div style={contentsStyle}>
-        <ControllerOverlay proxies={ctx.proxies}>
-          {tooltipContent ? (
-            <Tooltip
-              delayDuration={1500}
-              open={isTooltipOpen}
-              onOpenChange={handleTooltipOpenChange}
-            >
-              <TooltipTrigger asChild>{controllerContent}</TooltipTrigger>
-              <TooltipContent
-                hideArrow
-                side="bottom"
-                align="start"
-                sideOffset={4}
-                className="max-w-[420px] rounded-none border border-[#b88700] bg-[#fff7bf] px-1.5 py-0.5 text-[11px] leading-tight text-black shadow-sm"
-              >
-                {tooltipContent}
-              </TooltipContent>
-            </Tooltip>
-          ) : (
-            controllerContent
-          )}
-        </ControllerOverlay>
+        if (nextOpen) {
+          tooltipAutoCloseRef.current = window.setTimeout(() => {
+            setIsTooltipOpen(false);
+            tooltipAutoCloseRef.current = null;
+          }, 5000);
+        }
+      },
+      [clearTooltipAutoClose]
+    );
+
+    React.useEffect(() => clearTooltipAutoClose, [clearTooltipAutoClose]);
+
+    return (
+      <Tooltip
+        delayDuration={1500}
+        open={isTooltipOpen}
+        onOpenChange={handleTooltipOpenChange}
+      >
+        <TooltipTrigger asChild>{children}</TooltipTrigger>
+        <TooltipContent
+          hideArrow
+          side="bottom"
+          align="start"
+          sideOffset={4}
+          className="max-w-[420px] rounded-none border border-[#b88700] bg-[#fff7bf] px-1.5 py-0.5 text-[11px] leading-tight text-black shadow-sm"
+        >
+          {tooltipContent}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+);
+
+ControllerTooltip.displayName = 'ControllerTooltip';
+
+export const ControllerContainer: React.FC<ControllerContainerProps> =
+  React.memo(({ width, height, objectId, model, Renderer }) => {
+    const { containerStyle, contentsStyle } = useContainer();
+    const proxies = useProxies(model.keys);
+    const ctx = useController(proxies);
+    const propertyTooltipText = getModelKeys(model.keys);
+    const isEditableWidget =
+      model.parent_component === EDITABLE_PARENT_COMPONENT;
+    const hasEditAccess =
+      ctx.proxy?.binding?.accessMode === AccessMode.RECONFIGURABLE &&
+      ctx.userAccessLevel >=
+        (ctx.proxy?.binding?.requiredAccessLevel ?? AccessLevel.OBSERVER);
+    const tooltipBody = propertyTooltipText ? (
+      <p>{propertyTooltipText}</p>
+    ) : null;
+    const tooltipContent = isEditableWidget ? (
+      <div className="space-y-0.5">
+        <p>
+          AccessLevel: {AccessLevel[ctx.userAccessLevel]} - Access:{' '}
+          {hasEditAccess ? 'True' : 'False'}
+        </p>
+        {tooltipBody}
       </div>
-    </div>
-  );
-};
+    ) : (
+      tooltipBody
+    );
+    const controllerContent = React.useMemo(
+      () => (
+        <ControllerRendererHost
+          model={model}
+          objectId={objectId}
+          Renderer={Renderer}
+          ctx={ctx}
+        />
+      ),
+      [Renderer, ctx, model, objectId]
+    );
+
+    useRegisterSceneControllerWidget(objectId, model, ctx);
+
+    return (
+      <div
+        style={{
+          position: 'relative',
+          width,
+          height,
+          ...containerStyle,
+        }}
+      >
+        <div style={contentsStyle}>
+          <ControllerOverlay proxies={ctx.proxies}>
+            {tooltipContent ? (
+              <ControllerTooltip tooltipContent={tooltipContent}>
+                {controllerContent}
+              </ControllerTooltip>
+            ) : (
+              controllerContent
+            )}
+          </ControllerOverlay>
+        </div>
+      </div>
+    );
+  });
+
+ControllerContainer.displayName = 'ControllerContainer';

@@ -160,7 +160,7 @@ export const KaraboSceneWidget: React.FC<{
   model: BaseSceneObjectData;
   objectId: string;
   layer?: SceneLayer;
-}> = ({ model, objectId, layer }) => {
+}> = React.memo(({ model, objectId, layer }) => {
   const { x, y, width, height } = resolveBounds(model);
   const reactId = React.useId();
 
@@ -189,7 +189,9 @@ export const KaraboSceneWidget: React.FC<{
         : renderContent(model, objectId)}
     </div>
   );
-};
+});
+
+KaraboSceneWidget.displayName = 'KaraboSceneWidget';
 
 // Placeholder
 // ----------------------------------------------------------------------------
