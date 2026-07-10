@@ -15,14 +15,15 @@ import {
   UnknownWidgetDataModel,
   UnknownXMLDataModel,
 } from '@/karabo/common/api';
-import { containerPointerEvents } from './utils/mode';
+import { containerPointerEvents, objectPointerEvents } from './utils/mode';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/api';
 import { ControllerContainer } from './components/widgets/ControllerContainer';
 
 import { getRenderer, type Renderer } from './renderRegistry';
 import { resolveBounds, type SceneLayer } from './bounds';
-import { isControllerWidget } from './utils/sceneNodePredicates';
+import { isControllerWidget, isLayout } from './utils/sceneNodePredicates';
 import { isVisibleInLayer } from './utils/visitor';
+import { getSceneObjectDomId, sceneObjectIdAttr } from './utils/objectId';
 
 export { resolveBounds } from './bounds';
 export { isLayout } from './utils/sceneNodePredicates';
@@ -94,48 +95,59 @@ const renderWithRenderer = (
 // Controller widgets stay on the subscribed rendering path through
 // ControllerContainer so proxy lifetime and context stay centralized.
 const renderControllerContent = (
-  model: BaseSceneObjectData & BaseWidgetObjectData
+  model: BaseSceneObjectData & BaseWidgetObjectData,
+  objectId: string
 ): React.ReactNode =>
   renderWithRenderer(model, (Renderer) => (
     <ControllerContainer
       width={model.width}
       height={model.height}
       model={model}
+      objectId={objectId}
       Renderer={Renderer}
     />
   ));
 
 // Direct-render content covers shapes, layouts, static widgets, and any other
 // non-controller renderer that can render without controller context.
-const renderDirectContent = (model: BaseSceneObjectData): React.ReactNode =>
-  renderWithRenderer(model, (Renderer) => <Renderer model={model} />);
+const renderDirectContent = (
+  model: BaseSceneObjectData,
+  objectId: string
+): React.ReactNode =>
+  renderWithRenderer(model, (Renderer) => (
+    <Renderer model={model} objectId={objectId} />
+  ));
 
 // Render a model in one real scene layer only.
 // SceneView uses this path when building the shape and widget layers, so
 // visibility is checked first and the active layer is forwarded into layouts.
 export const renderLayerContent = (
   model: BaseSceneObjectData,
-  layer: SceneLayer
+  layer: SceneLayer,
+  objectId: string
 ): React.ReactNode => {
   if (!isVisibleInLayer(model, layer)) return null;
 
-  if (isControllerWidget(model)) {
-    return renderControllerContent(model);
-  }
+  const content = isControllerWidget(model)
+    ? renderControllerContent(model, objectId)
+    : renderWithRenderer(model, (Renderer) => (
+        <Renderer model={model} layer={layer} objectId={objectId} />
+      ));
 
-  return renderWithRenderer(model, (Renderer) => (
-    <Renderer model={model} layer={layer} />
-  ));
+  return content;
 };
 
 // Render one model directly, without shape/widget layer filtering.
 // This is the unsplit path used for single-object rendering outside SceneView.
-export function renderContent(model: BaseSceneObjectData): React.ReactNode {
-  if (isControllerWidget(model)) {
-    return renderControllerContent(model);
-  }
+export function renderContent(
+  model: BaseSceneObjectData,
+  objectId: string
+): React.ReactNode {
+  const content = isControllerWidget(model)
+    ? renderControllerContent(model, objectId)
+    : renderDirectContent(model, objectId);
 
-  return renderDirectContent(model);
+  return content;
 }
 
 // KaraboSceneWidget
@@ -146,22 +158,35 @@ export function renderContent(model: BaseSceneObjectData): React.ReactNode {
 
 export const KaraboSceneWidget: React.FC<{
   model: BaseSceneObjectData;
+  objectId: string;
   layer?: SceneLayer;
-}> = ({ model, layer }) => {
+}> = ({ model, objectId, layer }) => {
   const { x, y, width, height } = resolveBounds(model);
+  const reactId = React.useId();
+
+  // A layout shell stays transparent so clicks fall through its empty area to
+  // the inner item (or the layer below). A leaf object is a hit target so it —
+  // including static widgets like Label — resolves on click.
+  const pointerEvents = isLayout(model)
+    ? containerPointerEvents()
+    : objectPointerEvents();
 
   return (
     <div
+      id={getSceneObjectDomId('SceneObject', reactId, objectId)}
+      {...sceneObjectIdAttr(objectId)}
       style={{
         position: 'absolute',
         left: x,
         top: y,
         width,
         height,
-        pointerEvents: containerPointerEvents(),
+        pointerEvents,
       }}
     >
-      {layer ? renderLayerContent(model, layer) : renderContent(model)}
+      {layer
+        ? renderLayerContent(model, layer, objectId)
+        : renderContent(model, objectId)}
     </div>
   );
 };

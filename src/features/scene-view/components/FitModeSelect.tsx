@@ -6,7 +6,6 @@ import {
   SelectValue,
 } from '@/components/api';
 import { ChevronDownIcon } from 'lucide-react';
-import { useActiveSceneStore } from '../hooks/useActiveScene';
 import type { FitMode } from '../hooks/useSceneScale';
 
 const FIT_MODE_OPTIONS = [
@@ -18,28 +17,27 @@ const FIT_MODE_OPTIONS = [
 ] as const;
 
 export interface FitModeSelectProps {
+  fitMode: FitMode;
+  onFitModeChange: (mode: FitMode) => void;
   isFullscreen?: boolean;
 }
 
 /**
- * Fit mode dropdown — only renders when a scene is loaded.
+ * Controlled fit-mode dropdown. The owning scene tab supplies the current
+ * `fitMode` and receives changes via `onFitModeChange`.
  */
 export default function FitModeSelect({
+  fitMode,
+  onFitModeChange,
   isFullscreen = false,
 }: FitModeSelectProps) {
-  const loadedSceneRef = useActiveSceneStore((state) => state.loadedSceneRef);
-  const fitMode = useActiveSceneStore((state) => state.fitMode);
-  const setFitMode = useActiveSceneStore((state) => state.setFitMode);
-
-  if (!loadedSceneRef) return null;
-
   if (isFullscreen) {
     return (
       <div className="relative inline-flex">
         <select
           aria-label="Fit mode"
           value={fitMode}
-          onChange={(event) => setFitMode(event.target.value as FitMode)}
+          onChange={(event) => onFitModeChange(event.target.value as FitMode)}
           className="h-7 w-[130px] cursor-pointer appearance-none rounded-[2px] border border-[#8f8f8f] bg-[#eeeeee] py-0 pr-7 pl-2 text-xs text-[#111111] shadow-none outline-none focus-visible:border-[#777777] focus-visible:ring-1 focus-visible:ring-[#777777]"
         >
           {FIT_MODE_OPTIONS.map((option) => (
@@ -59,7 +57,7 @@ export default function FitModeSelect({
   return (
     <Select
       value={fitMode}
-      onValueChange={(value) => setFitMode(value as FitMode)}
+      onValueChange={(value) => onFitModeChange(value as FitMode)}
     >
       <SelectTrigger
         aria-label="Fit mode"

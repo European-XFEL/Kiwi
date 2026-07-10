@@ -22,17 +22,33 @@ jest.mock('@/lib/crypto', () => ({
 }));
 
 // Mock ESM-only react-resizable-panels package for Jest (CJS runtime).
-// Mirrors the v4 API surface (Group/Panel/Separator) used by resizable.tsx.
+// Mirrors the v4 API surface (Group/Panel/Separator/useDefaultLayout) used by
+// resizable.tsx.
 jest.mock('react-resizable-panels', () => {
   const React = require('react');
 
   const passthrough = ({ children, ...props }: any) =>
     React.createElement('div', props, children);
 
+  // Layout props are library-specific, not DOM attributes — drop them so the
+  // div passthrough doesn't trigger unknown-prop warnings.
+  const group = ({
+    defaultLayout,
+    onLayoutChange,
+    onLayoutChanged,
+    ...props
+  }: any) => passthrough(props);
+
   return {
-    Group: passthrough,
+    Group: group,
     Panel: passthrough,
     Separator: passthrough,
+    // No persistence in tests: never a stored layout, saves are dropped.
+    useDefaultLayout: () => ({
+      defaultLayout: undefined,
+      onLayoutChange: () => {},
+      onLayoutChanged: () => {},
+    }),
   };
 });
 

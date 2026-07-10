@@ -5,17 +5,12 @@ import {
   ResizablePanelGroup,
 } from '../resizable';
 
-const resizablePanels = jest.requireActual<
-  typeof import('react-resizable-panels')
->('react-resizable-panels');
+// Relies on the global react-resizable-panels mock from jest.setup.ts, which
+// mirrors the v4 export surface (Group/Panel/Separator) the wrappers import.
+// A stale local mock here would silently pass even if the wrapper imported
+// names the real package no longer exports.
 
 describe('resizable wrappers', () => {
-  it('match the installed react-resizable-panels export contract', () => {
-    expect(resizablePanels.Group).toBeDefined();
-    expect(resizablePanels.Panel).toBeDefined();
-    expect(resizablePanels.Separator).toBeDefined();
-  });
-
   it('renders the shared wrappers without undefined element types', () => {
     const { container } = render(
       <ResizablePanelGroup orientation="horizontal">

@@ -1,7 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import FitModeSelect from '../FitModeSelect';
-import { useActiveSceneStore } from '../../hooks/useActiveScene';
 
 jest.mock('@/components/api', () => {
   const React = jest.requireActual<typeof import('react')>('react');
@@ -64,60 +63,39 @@ jest.mock('@/components/api', () => {
 });
 
 describe('FitModeSelect', () => {
-  beforeEach(() => {
-    useActiveSceneStore.setState({
-      loadedSceneRef: undefined,
-      fitMode: 'fit-page',
-    });
+  it('reflects the controlled fit mode value', () => {
+    render(<FitModeSelect fitMode="fit-width" onFitModeChange={jest.fn()} />);
+
+    expect(screen.getByText('Fit to Width')).toBeInTheDocument();
   });
 
-  it('does not render without a loaded scene', () => {
-    render(<FitModeSelect />);
+  it('reports changes made through the shared select control', () => {
+    const onFitModeChange = jest.fn();
 
-    expect(screen.queryByTestId('fit-mode-select')).not.toBeInTheDocument();
-  });
-
-  it('updates the fit mode through the shared select control', () => {
-    useActiveSceneStore.setState({
-      loadedSceneRef: {
-        domain: 'MID',
-        projectUuid: 'project-1',
-        projectName: 'project',
-        name: 'scene',
-        uuid: 'scene-1',
-        width: 800,
-        height: 600,
-      },
-      fitMode: 'fit-page',
-    });
-
-    render(<FitModeSelect />);
+    render(
+      <FitModeSelect fitMode="fit-page" onFitModeChange={onFitModeChange} />
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Fit to Width' }));
 
-    expect(useActiveSceneStore.getState().fitMode).toBe('fit-width');
+    expect(onFitModeChange).toHaveBeenCalledWith('fit-width');
   });
 
   it('uses the native select while fullscreen so browser popup handling is preserved', () => {
-    useActiveSceneStore.setState({
-      loadedSceneRef: {
-        domain: 'MID',
-        projectUuid: 'project-1',
-        projectName: 'project',
-        name: 'scene',
-        uuid: 'scene-1',
-        width: 800,
-        height: 600,
-      },
-      fitMode: 'fit-page',
-    });
+    const onFitModeChange = jest.fn();
 
-    render(<FitModeSelect isFullscreen />);
+    render(
+      <FitModeSelect
+        fitMode="fit-page"
+        onFitModeChange={onFitModeChange}
+        isFullscreen
+      />
+    );
 
     const select = screen.getByRole('combobox', { name: 'Fit mode' });
     fireEvent.change(select, { target: { value: 'fit-height' } });
 
-    expect(useActiveSceneStore.getState().fitMode).toBe('fit-height');
+    expect(onFitModeChange).toHaveBeenCalledWith('fit-height');
     expect(screen.queryByTestId('fit-mode-select')).not.toBeInTheDocument();
   });
 });

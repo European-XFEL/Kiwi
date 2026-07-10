@@ -135,7 +135,7 @@ describe('layout monitoring layer propagation', () => {
 
       await SingletonContext.run({ topology }, async () => {
         const { unmount } = render(
-          <>{renderLayerContent(makeLayout(), 'shape')}</>
+          <>{renderLayerContent(makeLayout(), 'shape', 'scene')}</>
         );
 
         expect(mockStartMonitoring).not.toHaveBeenCalled();
@@ -158,7 +158,7 @@ describe('layout monitoring layer propagation', () => {
 
       await SingletonContext.run({ topology }, async () => {
         const { unmount } = render(
-          <>{renderLayerContent(makeLayout(), 'widget')}</>
+          <>{renderLayerContent(makeLayout(), 'widget', 'scene')}</>
         );
 
         await waitFor(() => {
@@ -185,7 +185,13 @@ describe('layout monitoring layer propagation', () => {
 
       await SingletonContext.run({ topology }, async () => {
         const { unmount } = render(
-          <>{renderLayerContent(makeNestedLayout(makeOuterLayout), 'shape')}</>
+          <>
+            {renderLayerContent(
+              makeNestedLayout(makeOuterLayout),
+              'shape',
+              'scene'
+            )}
+          </>
         );
 
         expect(mockStartMonitoring).not.toHaveBeenCalled();
@@ -208,7 +214,13 @@ describe('layout monitoring layer propagation', () => {
 
       await SingletonContext.run({ topology }, async () => {
         const { unmount } = render(
-          <>{renderLayerContent(makeNestedLayout(makeOuterLayout), 'widget')}</>
+          <>
+            {renderLayerContent(
+              makeNestedLayout(makeOuterLayout),
+              'widget',
+              'scene'
+            )}
+          </>
         );
 
         await waitFor(() => {

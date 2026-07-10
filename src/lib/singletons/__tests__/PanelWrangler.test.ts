@@ -4,6 +4,7 @@ import { Hash } from '@/karabo/data/hash';
 import { HashType } from '@/karabo/data/typenums';
 import { KaraboEvent, broadcast_event } from '@/lib/events';
 import { getProjectModel } from '../api';
+import { SceneControllerRegistry } from '@/features/scenepanel/SceneControllerRegistry';
 import { HOME_TAB_ID, PanelWrangler } from '../PanelWrangler';
 
 const mockSetRecentScene = jest.fn();
@@ -91,7 +92,8 @@ describe('PanelWrangler', () => {
       { id: 'scene:scene-a', title: 'Scene A', closable: true },
     ]);
     expect(wrangler.getSnapshot().center.activeTabId).toBe('scene:scene-a');
-    expect(wrangler.getContent('scene:scene-a')).toEqual({
+    const content = wrangler.getContent('scene:scene-a');
+    expect(content).toMatchObject({
       sceneRef: {
         width: 800,
         height: 600,
@@ -102,7 +104,13 @@ describe('PanelWrangler', () => {
         name: 'Scene A',
       },
       sceneModel: scene,
+      fitMode: 'fit-page',
     });
+    // A scene opened via broadcast must carry a registry, otherwise
+    // WorkspaceShell's loading gate never clears.
+    expect(content?.sceneControllerRegistry).toBeInstanceOf(
+      SceneControllerRegistry
+    );
     expect(mockSetRecentScene).toHaveBeenCalledWith({
       topic: 'TOPIC_A',
       domain: 'CONTROLS',
@@ -110,6 +118,130 @@ describe('PanelWrangler', () => {
       uuid: 'scene-a',
       name: 'Scene A',
       projectName: 'ProjectA',
+    });
+  });
+
+  it('reuses the existing SceneControllerRegistry when setContent targets the same scene', () => {
+    const tabId = 'scene:scene-a';
+    const sceneRef = {
+      uuid: 'scene-a',
+      domain: 'CONTROLS',
+      projectUuid: 'project-ProjectA',
+      projectName: 'ProjectA',
+      name: 'Scene A',
+      width: 800,
+      height: 600,
+    };
+
+    wrangler.setContent(tabId, { sceneRef });
+    const first = wrangler.getContent(tabId)?.sceneControllerRegistry;
+    expect(first).toBeDefined();
+
+    wrangler.setContent(tabId, { sceneRef: { ...sceneRef, name: 'Renamed' } });
+
+    expect(wrangler.getContent(tabId)?.sceneControllerRegistry).toBe(first);
+  });
+
+  it('reuses the existing SceneControllerRegistry when the uuid stays the same but metadata changes', () => {
+    const tabId = 'scene:scene-a';
+    const sceneRef = {
+      uuid: 'scene-a',
+      domain: 'CONTROLS',
+      projectUuid: 'project-ProjectA',
+      projectName: 'ProjectA',
+      name: 'Scene A',
+      width: 800,
+      height: 600,
+    };
+
+    wrangler.setContent(tabId, { sceneRef });
+    wrangler.setFitMode(tabId, 'fit-width');
+    const first = wrangler.getContent(tabId)?.sceneControllerRegistry;
+    expect(first).toBeDefined();
+
+    wrangler.setContent(tabId, {
+      sceneRef: {
+        ...sceneRef,
+        domain: 'MID',
+        projectUuid: 'project-ProjectB',
+        projectName: 'ProjectB',
+        name: 'Renamed',
+      },
+    });
+
+    expect(wrangler.getContent(tabId)?.sceneControllerRegistry).toBe(first);
+    expect(wrangler.getContent(tabId)?.fitMode).toBe('fit-width');
+  });
+
+  it('replaces the SceneControllerRegistry when setContent targets a different scene', () => {
+    const tabId = 'scene:scene-a';
+    const sceneRef = {
+      uuid: 'scene-a',
+      domain: 'CONTROLS',
+      projectUuid: 'project-ProjectA',
+      projectName: 'ProjectA',
+      name: 'Scene A',
+      width: 800,
+      height: 600,
+    };
+
+    wrangler.setContent(tabId, { sceneRef });
+    const first = wrangler.getContent(tabId)?.sceneControllerRegistry;
+    expect(first).toBeDefined();
+
+    wrangler.setContent(tabId, {
+      sceneRef: { ...sceneRef, uuid: 'scene-b' },
+    });
+
+    const second = wrangler.getContent(tabId)?.sceneControllerRegistry;
+    expect(second).toBeDefined();
+    expect(second).not.toBe(first);
+  });
+
+  describe('fit mode', () => {
+    const sceneRef = {
+      uuid: 'scene-a',
+      domain: 'CONTROLS',
+      projectUuid: 'project-ProjectA',
+      projectName: 'ProjectA',
+      name: 'Scene A',
+      width: 800,
+      height: 600,
+    };
+
+    it('defaults a new tab to fit-page', () => {
+      wrangler.setContent('scene:scene-a', { sceneRef });
+
+      expect(wrangler.getContent('scene:scene-a')?.fitMode).toBe('fit-page');
+    });
+
+    it('persists each tab fit mode independently', () => {
+      wrangler.setContent('scene:scene-a', { sceneRef });
+      wrangler.setContent('scene:scene-b', {
+        sceneRef: { ...sceneRef, uuid: 'scene-b' },
+      });
+
+      wrangler.setFitMode('scene:scene-a', 'fit-width');
+
+      expect(wrangler.getContent('scene:scene-a')?.fitMode).toBe('fit-width');
+      expect(wrangler.getContent('scene:scene-b')?.fitMode).toBe('fit-page');
+    });
+
+    it('preserves the fit mode across a same-scene content update', () => {
+      wrangler.setContent('scene:scene-a', { sceneRef });
+      wrangler.setFitMode('scene:scene-a', 'fit-height');
+
+      wrangler.setContent('scene:scene-a', {
+        sceneRef: { ...sceneRef, name: 'Renamed' },
+      });
+
+      expect(wrangler.getContent('scene:scene-a')?.fitMode).toBe('fit-height');
+    });
+
+    it('ignores setFitMode for an unknown tab', () => {
+      wrangler.setFitMode('scene:missing', 'fit-width');
+
+      expect(wrangler.getContent('scene:missing')).toBeUndefined();
     });
   });
 

@@ -6,18 +6,28 @@ import React from 'react';
 
 import { GridLayoutModel, GridLayoutChildData } from '@/karabo/common/api';
 import { renderContent, renderLayerContent } from '../../KaraboSceneWidget';
-import { resolveBounds, type SceneLayer } from '../../bounds';
-import { containerPointerEvents } from '../../utils/mode';
+import { isLayout, resolveBounds, type SceneLayer } from '../../bounds';
+import { containerPointerEvents, objectPointerEvents } from '../../utils/mode';
+import {
+  getChildObjectId,
+  getSceneObjectDomId,
+  sceneObjectIdAttr,
+} from '../../utils/objectId';
 import { registerRenderer } from '../../renderRegistry';
 
 type GridLayoutProps = {
   model: GridLayoutModel;
+  objectId: string;
   layer?: SceneLayer;
 };
 
-export const GridLayout: React.FC<GridLayoutProps> = ({ model, layer }) => {
+export const GridLayout: React.FC<GridLayoutProps> = ({
+  model,
+  objectId,
+  layer,
+}) => {
   const { children } = model;
-
+  const reactId = React.useId();
   // Compute grid dimensions from layout_data so CSS grid auto-sizing works.
   let maxRow = 0;
   let maxCol = 0;
@@ -38,6 +48,8 @@ export const GridLayout: React.FC<GridLayoutProps> = ({ model, layer }) => {
 
   return (
     <div
+      id={getSceneObjectDomId('GridLayout', reactId, objectId)}
+      {...sceneObjectIdAttr(objectId)}
       style={{
         display: 'grid',
         gridTemplateRows: hasGrid ? `repeat(${maxRow}, auto)` : undefined,
@@ -48,6 +60,7 @@ export const GridLayout: React.FC<GridLayoutProps> = ({ model, layer }) => {
       }}
     >
       {children.map((child, index) => {
+        const childObjectId = getChildObjectId(objectId, index);
         const ld =
           child.layout_data instanceof GridLayoutChildData
             ? child.layout_data
@@ -58,6 +71,8 @@ export const GridLayout: React.FC<GridLayoutProps> = ({ model, layer }) => {
         return (
           <div
             key={index}
+            id={getSceneObjectDomId('GridLayout-child', reactId, childObjectId)}
+            {...sceneObjectIdAttr(childObjectId)}
             style={{
               position: 'relative',
               gridRow: ld
@@ -68,11 +83,17 @@ export const GridLayout: React.FC<GridLayoutProps> = ({ model, layer }) => {
                 : undefined,
               width: childWidth || undefined,
               height: childHeight || undefined,
-              pointerEvents: containerPointerEvents(),
+              // A leaf child is a hit target; a nested layout child stays
+              // transparent so its own children win the hit.
+              pointerEvents: isLayout(child)
+                ? containerPointerEvents()
+                : objectPointerEvents(),
             }}
           >
             {/* Preserve the active layer through layout recursion. */}
-            {layer ? renderLayerContent(child, layer) : renderContent(child)}
+            {layer
+              ? renderLayerContent(child, layer, childObjectId)
+              : renderContent(child, childObjectId)}
           </div>
         );
       })}

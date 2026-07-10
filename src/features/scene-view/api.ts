@@ -1,7 +1,18 @@
 // Public API for the scene-view feature.
 // External consumers import from '@/features/scene-view/api'.
 
-export { registerRenderer, type Renderer } from './renderRegistry';
+export {
+  registerRenderer,
+  type Renderer,
+  type RendererProps,
+} from './renderRegistry';
+export {
+  SceneControllerRegistryProvider,
+  type SceneControllerRegistry,
+  type SceneControllerRegistryProviderProps,
+  type SceneControllerRecord,
+} from './contexts/SceneControllerRegistryContext';
+export { useSceneControllerRegistry } from './hooks/useSceneControllerRegistry';
 export {
   containerPointerEvents,
   contentPointerEvents,
@@ -13,7 +24,6 @@ export { default as SceneView } from './components/SceneView';
 export { default as SceneStatus } from './components/SceneStatus';
 export { default as SceneSizeDisplay } from './components/SceneSizeDisplay';
 export { default as FitModeSelect } from './components/FitModeSelect';
-export type { FitModeSelectProps } from './components/FitModeSelect';
 export { ControllerContainer } from './components/widgets/ControllerContainer';
 export { useActiveScene, useActiveSceneStore } from './hooks/useActiveScene';
 export { useSceneScale } from './hooks/useSceneScale';
@@ -35,6 +45,7 @@ export {
   type SceneTreeVisitor,
   type SceneVisitContext,
 } from './utils/visitor';
+export { getChildObjectId } from './utils/objectId';
 export {
   isControllerWidget,
   isLayout,

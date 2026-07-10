@@ -99,6 +99,7 @@ describe('ControllerContainer integration', () => {
           width={180}
           height={40}
           model={model}
+          objectId="scene.0"
           Renderer={Renderer}
         />
       );

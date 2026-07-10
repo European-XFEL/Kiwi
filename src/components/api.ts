@@ -61,7 +61,8 @@ export {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-  type GroupImperativeHandle,
+  useDefaultLayout,
+  type ImperativePanelGroupHandle,
 } from './resizable';
 export {
   Pagination,

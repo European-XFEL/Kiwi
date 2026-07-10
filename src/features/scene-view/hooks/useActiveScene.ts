@@ -14,25 +14,22 @@ import { waitForTopology } from '@/lib/topology/api';
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { create } from 'zustand';
-import type { FitMode } from './useSceneScale';
 
+// Holds the active scene's identity/metadata. Fit mode is NOT stored here: it is
+// per-tab state owned by PanelWrangler's SceneTabContent so each tab keeps its
+// own zoom-to-fit choice.
 export interface ActiveSceneStore {
   loadedSceneRef?: LoadedSceneRef;
   setLoadedSceneRef: (loadedSceneRef?: LoadedSceneRef) => void;
   sceneLoadPending: boolean;
   setSceneLoadPending: (sceneLoadPending: boolean) => void;
-  fitMode: FitMode;
-  setFitMode: (mode: FitMode) => void;
 }
 
 export const useActiveSceneStore = create<ActiveSceneStore>((set) => ({
   loadedSceneRef: undefined,
-  setLoadedSceneRef: (loadedSceneRef) =>
-    set({ loadedSceneRef, fitMode: 'fit-page' }),
+  setLoadedSceneRef: (loadedSceneRef) => set({ loadedSceneRef }),
   sceneLoadPending: false,
   setSceneLoadPending: (sceneLoadPending) => set({ sceneLoadPending }),
-  fitMode: 'fit-page',
-  setFitMode: (fitMode) => set({ fitMode }),
 }));
 
 export interface ActiveSceneResult {
