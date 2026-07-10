@@ -19,11 +19,18 @@ import {
 // Renderer
 // ----------------------------------------------------------------------------
 
-export type Renderer = React.FC<{
-  model: any;
-  ctx?: any;
+export interface RendererProps<
+  TModel extends BaseSceneObjectData = BaseSceneObjectData,
+  TContext = unknown,
+> {
+  model: TModel;
+  ctx?: TContext;
   layer?: SceneLayer;
-}>;
+  objectId?: string;
+}
+
+export type Renderer<TProps extends RendererProps = RendererProps> =
+  React.FC<TProps>;
 
 const entries = new Map<string, Renderer>();
 
@@ -49,8 +56,11 @@ function resolveKey(model: BaseSceneObjectData): string | undefined {
 // Public API
 // ----------------------------------------------------------------------------
 
-export function registerRenderer(klass: string, component: Renderer): void {
-  entries.set(klass, component);
+export function registerRenderer<TProps extends RendererProps>(
+  klass: string,
+  component: Renderer<TProps>
+): void {
+  entries.set(klass, component as Renderer);
 }
 
 export function getRenderer(model: BaseSceneObjectData): Renderer | undefined {

@@ -3,9 +3,12 @@ import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
+  useDefaultLayout,
 } from '@/components/api';
 import type { PanelTab, WorkspaceBodyModel, PanelModel } from '../types';
 import PanelContainer from './PanelContainer';
+
+const PANEL_IDS = ['workspace-left', 'workspace-center', 'workspace-right'];
 
 interface WorkspaceBodyProps {
   body: WorkspaceBodyModel;
@@ -40,10 +43,22 @@ export default function WorkspaceBody({
 }: WorkspaceBodyProps) {
   const { panelArea } = body;
 
+  // Persist dragged panel widths across page reloads. On first run nothing is
+  // stored, so the per-panel defaultSize startup rule (sides collapsed, scene
+  // owns the space) still applies. A scene reload then only repaints the
+  // center panel instead of snapping all three back to their defaults.
+  const { defaultLayout, onLayoutChanged } = useDefaultLayout({
+    id: panelArea.id,
+    panelIds: PANEL_IDS,
+    storage: localStorage,
+  });
+
   return (
     <ResizablePanelGroup
       orientation={panelArea.orientation}
       className="h-full min-h-0 w-full"
+      defaultLayout={defaultLayout}
+      onLayoutChanged={onLayoutChanged}
     >
       <ResizablePanel
         id="workspace-left"

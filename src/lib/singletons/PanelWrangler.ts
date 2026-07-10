@@ -1,5 +1,7 @@
-import { SceneModel } from '@/karabo/common/scenemodel/api';
+import type { SceneModel } from '@/karabo/common/scenemodel/api';
+import type { FitMode } from '@/features/scene-view/api';
 import type { LoadedSceneRef } from '@/store/api';
+import { SceneControllerRegistry } from '@/features/scenepanel/SceneControllerRegistry';
 import type { Hash } from '@/karabo/data/hash';
 import { useGlobalStore, useRecentStore } from '@/store/api';
 import {
@@ -16,13 +18,19 @@ import type {
 } from '@/features/workspace/types';
 import { getProjectModel } from './api';
 
+// Per-tab scene state. fitMode lives here (not in a global store) so each scene
+// tab remembers its own zoom-to-fit choice independently of the others.
 export type SceneTabContent = {
   sceneRef?: LoadedSceneRef;
   sceneModel?: SceneModel;
+  sceneControllerRegistry?: SceneControllerRegistry;
+  fitMode?: FitMode;
   error?: string;
 };
 
 export const HOME_TAB_ID = 'home' as const;
+
+const DEFAULT_FIT_MODE: FitMode = 'fit-page';
 
 const HOME_TAB: PanelTab = { id: HOME_TAB_ID, title: 'Home', closable: false };
 
@@ -58,6 +66,16 @@ function toPanelTab(snapshot: SceneTabSnapshot): PanelTab {
   };
 }
 
+// Scene controller registry reuse is keyed by scene uuid, matching the tab id
+// (`scene:${uuid}`). A same-uuid content update should keep the existing
+// registry and tab-local state even if domain/project metadata changes.
+function isSameSceneRef(
+  current: LoadedSceneRef | undefined,
+  requested: LoadedSceneRef
+): boolean {
+  return current?.uuid === requested.uuid;
+}
+
 export class PanelWrangler {
   private state = {
     left: createEmptyArea('left'),
@@ -80,6 +98,12 @@ export class PanelWrangler {
 
   dispose() {
     unregister_for_broadcasts(this.eventMap);
+
+    for (const content of this.content.values()) {
+      content.sceneControllerRegistry?.dispose();
+    }
+    this.content.clear();
+    this.sceneTabs.clear();
   }
 
   getSnapshot = () => {
@@ -101,8 +125,45 @@ export class PanelWrangler {
     return this.sceneTabs.get(tabId);
   }
 
+  // Every stored tab content passes through here so a scene tab always carries
+  // its registry and fit mode, no matter which path (setContent, OpenScene
+  // event) produced it.
+  private resolveTabContent(
+    tabId: string,
+    data: SceneTabContent
+  ): SceneTabContent {
+    const existing = this.content.get(tabId);
+
+    // Reuse the registry when the update targets the same scene uuid so the
+    // currently mounted controller contexts remain reachable during same-tab
+    // metadata updates. Unmounted controllers are not preserved by the registry.
+    const reuseRegistry =
+      existing?.sceneControllerRegistry !== undefined &&
+      data.sceneRef !== undefined &&
+      isSameSceneRef(existing.sceneRef, data.sceneRef);
+
+    let sceneControllerRegistry: SceneControllerRegistry | undefined;
+    if (reuseRegistry) {
+      sceneControllerRegistry = existing.sceneControllerRegistry;
+    } else {
+      // The PanelWrangler owns each tab's registry lifecycle: dispose the old
+      // registry here before replacing it.
+      existing?.sceneControllerRegistry?.dispose();
+      sceneControllerRegistry = data.sceneRef
+        ? new SceneControllerRegistry(data.sceneRef)
+        : undefined;
+    }
+
+    // Keep the tab's current fit mode across same-tab updates (rename, re-fetch,
+    // error recovery). A brand-new tab starts at the default. An explicit
+    // fitMode on `data` always wins.
+    const fitMode = data.fitMode ?? existing?.fitMode ?? DEFAULT_FIT_MODE;
+
+    return { ...data, sceneControllerRegistry, fitMode };
+  }
+
   setContent(tabId: string, data: SceneTabContent): void {
-    this.content.set(tabId, data);
+    this.content.set(tabId, this.resolveTabContent(tabId, data));
 
     if (data.sceneRef) {
       this.updateSceneTitle(tabId, data.sceneRef.name);
@@ -112,8 +173,21 @@ export class PanelWrangler {
     this.emit();
   }
 
+  // Update a single tab's fit mode and notify subscribers so the panel rescales.
+  setFitMode(tabId: string, fitMode: FitMode): void {
+    const existing = this.content.get(tabId);
+    if (!existing || existing.fitMode === fitMode) {
+      return;
+    }
+
+    this.content.set(tabId, { ...existing, fitMode });
+    this.state = { ...this.state };
+    this.emit();
+  }
+
   resetCenter(): void {
     for (const tabId of this.state.center.tabs.map((tab) => tab.id)) {
+      this.content.get(tabId)?.sceneControllerRegistry?.dispose();
       this.content.delete(tabId);
       this.sceneTabs.delete(tabId);
     }
@@ -148,6 +222,7 @@ export class PanelWrangler {
     const areaModel = this.state[area];
     const nextTabs = areaModel.tabs.filter((tab) => tab.id !== tabId);
 
+    this.content.get(tabId)?.sceneControllerRegistry?.dispose();
     this.content.delete(tabId);
     this.sceneTabs.delete(tabId);
 
@@ -200,13 +275,17 @@ export class PanelWrangler {
     if (hasDifferentProjectTab) {
       for (const tab of center.tabs) {
         if (tab.id !== HOME_TAB_ID) {
+          this.content.get(tab.id)?.sceneControllerRegistry?.dispose();
           this.content.delete(tab.id);
           this.sceneTabs.delete(tab.id);
         }
       }
 
       this.sceneTabs.set(snapshot.id, snapshot);
-      this.content.set(snapshot.id, content);
+      this.content.set(
+        snapshot.id,
+        this.resolveTabContent(snapshot.id, content)
+      );
       this.commit({
         ...this.state,
         center: {
@@ -219,7 +298,7 @@ export class PanelWrangler {
     }
 
     this.sceneTabs.set(snapshot.id, snapshot);
-    this.content.set(snapshot.id, content);
+    this.content.set(snapshot.id, this.resolveTabContent(snapshot.id, content));
     const index = center.tabs.findIndex((tab) => tab.id === snapshot.id);
 
     let tabs: PanelTab[];

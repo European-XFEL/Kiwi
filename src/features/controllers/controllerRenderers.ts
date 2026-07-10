@@ -1,4 +1,4 @@
-import type { Renderer } from '@/features/scene-view/api';
+import type { Renderer, RendererProps } from '@/features/scene-view/api';
 import DisplayAlarmFloat from './components/display/DisplayAlarmFloat';
 import {
   DisplayCheckBox,
@@ -35,7 +35,10 @@ import TickSlider from './components/editable/TickSlider';
 let controllerRenderersBootstrapped = false;
 
 export function bootstrapControllerRenderers(
-  registerRenderer: (klass: string, component: Renderer) => void,
+  registerRenderer: <TProps extends RendererProps>(
+    klass: string,
+    component: Renderer<TProps>
+  ) => void,
   force = false
 ): void {
   if (controllerRenderersBootstrapped && !force) return;

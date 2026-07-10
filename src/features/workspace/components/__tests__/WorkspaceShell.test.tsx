@@ -4,6 +4,7 @@ import { createDefaultWorkspaceModel } from '../../utils';
 import type { WorkspaceRuntime } from '../../types';
 import WorkspaceShell from '../WorkspaceShell';
 import { useActiveSceneStore } from '@/features/scene-view/hooks/useActiveScene';
+import { SceneControllerRegistry } from '@/features/scenepanel/SceneControllerRegistry';
 
 const mockHeader = jest.fn();
 const mockFooter = jest.fn();
@@ -143,11 +144,11 @@ jest.mock('@/features/scenepanel/api', () => {
   const React = jest.requireActual<typeof import('react')>('react');
 
   return {
-    ScenePanel: ({ sceneRef }: { sceneRef: { uuid: string } }) =>
+    ScenePanel: ({ content }: { content: { sceneRef: { uuid: string } } }) =>
       React.createElement(
         'div',
         { 'data-testid': 'scene-panel' },
-        `scene:${sceneRef.uuid}`
+        `scene:${content.sceneRef.uuid}`
       ),
   };
 });
@@ -174,15 +175,20 @@ describe('WorkspaceShell', () => {
     useActiveSceneStore.setState({ sceneLoadPending: false });
     mockGetContent.mockImplementation((tabId: string) => {
       if (tabId === 'scene:scene-42') {
+        const sceneRef = {
+          uuid: 'scene-42',
+          domain: 'CONTROLS',
+          projectUuid: 'project-1',
+          projectName: 'David_test',
+          name: 'box_layout',
+          width: 800,
+          height: 600,
+        };
         return {
-          sceneRef: {
-            uuid: 'scene-42',
-            domain: 'CONTROLS',
-            projectUuid: 'project-1',
-            projectName: 'David_test',
-            name: 'box_layout',
-          },
+          sceneRef,
           sceneModel: { uuid: 'scene-42' },
+          sceneControllerRegistry: new SceneControllerRegistry(sceneRef),
+          fitMode: 'fit-page',
         };
       }
 

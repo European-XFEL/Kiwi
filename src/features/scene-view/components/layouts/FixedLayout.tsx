@@ -6,20 +6,32 @@ import React from 'react';
 
 import { FixedLayoutModel } from '@/karabo/common/api';
 import { renderContent, renderLayerContent } from '../../KaraboSceneWidget';
-import { resolveBounds, type SceneLayer } from '../../bounds';
-import { containerPointerEvents } from '../../utils/mode';
+import { isLayout, resolveBounds, type SceneLayer } from '../../bounds';
+import { containerPointerEvents, objectPointerEvents } from '../../utils/mode';
+import {
+  getChildObjectId,
+  getSceneObjectDomId,
+  sceneObjectIdAttr,
+} from '../../utils/objectId';
 import { registerRenderer } from '../../renderRegistry';
 
 type FixedLayoutProps = {
   model: FixedLayoutModel;
+  objectId: string;
   layer?: SceneLayer;
 };
 
-export const FixedLayout: React.FC<FixedLayoutProps> = ({ model, layer }) => {
+export const FixedLayout: React.FC<FixedLayoutProps> = ({
+  model,
+  objectId,
+  layer,
+}) => {
   const { x, y, children } = model;
-
+  const reactId = React.useId();
   return (
     <div
+      id={getSceneObjectDomId('FixedLayout', reactId, objectId)}
+      {...sceneObjectIdAttr(objectId)}
       style={{
         position: 'relative',
         width: '100%',
@@ -28,6 +40,7 @@ export const FixedLayout: React.FC<FixedLayoutProps> = ({ model, layer }) => {
       }}
     >
       {children.map((child, index) => {
+        const childObjectId = getChildObjectId(objectId, index);
         const {
           x: childX,
           y: childY,
@@ -38,17 +51,29 @@ export const FixedLayout: React.FC<FixedLayoutProps> = ({ model, layer }) => {
         return (
           <div
             key={index}
+            id={getSceneObjectDomId(
+              'FixedLayout-child',
+              reactId,
+              childObjectId
+            )}
+            {...sceneObjectIdAttr(childObjectId)}
             style={{
               position: 'absolute',
               left: childX - x,
               top: childY - y,
               width: childWidth,
               height: childHeight,
-              pointerEvents: containerPointerEvents(),
+              // A leaf child is a hit target; a nested layout child stays
+              // transparent so its own children win the hit.
+              pointerEvents: isLayout(child)
+                ? containerPointerEvents()
+                : objectPointerEvents(),
             }}
           >
             {/* Preserve the active layer through layout recursion. */}
-            {layer ? renderLayerContent(child, layer) : renderContent(child)}
+            {layer
+              ? renderLayerContent(child, layer, childObjectId)
+              : renderContent(child, childObjectId)}
           </div>
         );
       })}

@@ -1,10 +1,13 @@
-import { ScenePanel } from '@/features/scenepanel/api';
+import { ScenePanel, type ScenePanelContent } from '@/features/scenepanel/api';
 import {
   SceneOpenError,
   ScenePending,
 } from '@/features/scene-view/components/SceneStatusViews';
 import { getPanelWrangler } from '@/lib/singletons/api';
-import { HOME_TAB_ID } from '@/lib/singletons/PanelWrangler';
+import {
+  HOME_TAB_ID,
+  type SceneTabContent,
+} from '@/lib/singletons/PanelWrangler';
 import HomePanel from '@/app/HomePanel';
 import { useActiveSceneStore } from '@/features/scene-view/hooks/useActiveScene';
 import type { PanelTab, WorkspaceModel, WorkspaceRuntime } from '../types';
@@ -14,15 +17,31 @@ import WorkspaceHeader from './WorkspaceHeader';
 
 // TODO: renderLeftPanel — Topology panel (device/instance tree)
 
+// A tab's content is renderable as a scene only once all three loaded fields
+// are present; until then the panel shows a pending/error state instead.
+function isLoadedSceneContent(
+  content: SceneTabContent | undefined
+): content is ScenePanelContent {
+  return (
+    content?.sceneRef !== undefined &&
+    content.sceneModel !== undefined &&
+    content.sceneControllerRegistry !== undefined &&
+    content.fitMode !== undefined
+  );
+}
+
 function renderCenterPanel(tab: PanelTab, isSceneLoadPending = false) {
   if (tab.id === HOME_TAB_ID) {
     return isSceneLoadPending ? <ScenePending /> : <HomePanel />;
   }
   const content = getPanelWrangler().getContent(tab.id);
   if (content?.error) return <SceneOpenError message={content.error} />;
-  if (!content?.sceneRef || !content?.sceneModel) return <ScenePending />;
+  if (!isLoadedSceneContent(content)) return <ScenePending />;
   return (
-    <ScenePanel sceneRef={content.sceneRef} sceneModel={content.sceneModel} />
+    <ScenePanel
+      content={content}
+      onFitModeChange={(mode) => getPanelWrangler().setFitMode(tab.id, mode)}
+    />
   );
 }
 

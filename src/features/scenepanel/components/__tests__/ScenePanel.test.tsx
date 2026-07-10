@@ -2,33 +2,37 @@ import { render, screen } from '@testing-library/react';
 import { SceneModel } from '@/karabo/common/api';
 import React from 'react';
 import ScenePanel from '../ScenePanel';
+import { SceneControllerRegistry } from '../../SceneControllerRegistry';
 
 jest.mock('@/features/scene-view/api', () => {
   const ReactActual = jest.requireActual<typeof React>('react');
 
   return {
     __esModule: true,
-    FitModeSelect: () =>
+    SceneControllerRegistryProvider: ({
+      children,
+    }: {
+      children: React.ReactNode;
+    }) => ReactActual.createElement(ReactActual.Fragment, null, children),
+    FitModeSelect: ({ fitMode }: { fitMode: string }) =>
       ReactActual.createElement(
         'div',
         { 'data-testid': 'fit-mode-select' },
-        'fit-mode'
+        fitMode
       ),
-    SceneView: ({ sceneModel }: { sceneModel: { uuid: string } }) =>
+    SceneView: ({
+      sceneModel,
+      fitMode,
+    }: {
+      sceneModel: { uuid: string };
+      fitMode: string;
+    }) =>
       ReactActual.createElement(
         'div',
-        { 'data-testid': 'scene-view' },
+        { 'data-testid': 'scene-view', 'data-fit-mode': fitMode },
         sceneModel.uuid
       ),
     useSceneScale: () => 1,
-    useActiveSceneStore: (selector?: (state: unknown) => unknown) => {
-      const state = {
-        fitMode: 'fit-page',
-        loadedSceneRef: undefined,
-        setFitMode: jest.fn(),
-      };
-      return selector ? selector(state) : state;
-    },
     getOverflow: () => ({ overflowX: 'hidden', overflowY: 'hidden' }),
   };
 });
@@ -54,7 +58,15 @@ const sceneRef = {
 describe('ScenePanel', () => {
   it('renders left-side apply/decline actions and right-side scene controls', () => {
     render(
-      <ScenePanel sceneRef={sceneRef} sceneModel={makeScene('scene-1')} />
+      <ScenePanel
+        content={{
+          sceneRef,
+          sceneModel: makeScene('scene-1'),
+          sceneControllerRegistry: new SceneControllerRegistry(sceneRef),
+          fitMode: 'fit-page',
+        }}
+        onFitModeChange={jest.fn()}
+      />
     );
 
     expect(screen.getByLabelText('Apply all changes')).toBeInTheDocument();
@@ -62,5 +74,27 @@ describe('ScenePanel', () => {
     expect(screen.getByText('Scale:')).toBeInTheDocument();
     expect(screen.getByTestId('fit-mode-select')).toBeInTheDocument();
     expect(screen.getByTestId('scene-view')).toHaveTextContent('scene-1');
+  });
+
+  it("drives the toolbar and scene view from the tab's fit mode", () => {
+    render(
+      <ScenePanel
+        content={{
+          sceneRef,
+          sceneModel: makeScene('scene-1'),
+          sceneControllerRegistry: new SceneControllerRegistry(sceneRef),
+          fitMode: 'fit-width',
+        }}
+        onFitModeChange={jest.fn()}
+      />
+    );
+
+    expect(screen.getByTestId('fit-mode-select')).toHaveTextContent(
+      'fit-width'
+    );
+    expect(screen.getByTestId('scene-view')).toHaveAttribute(
+      'data-fit-mode',
+      'fit-width'
+    );
   });
 });

@@ -13,8 +13,11 @@ const mockWidgetMountSpy = jest.fn();
 const mockWidgetUnmountSpy = jest.fn();
 const mockShapeMountSpy = jest.fn();
 const mockShapeUnmountSpy = jest.fn();
-const mockRenderedEntries: Array<{ layer: 'shape' | 'widget'; kind: string }> =
-  [];
+const mockRenderedEntries: Array<{
+  layer: 'shape' | 'widget';
+  kind: string;
+  objectId: string;
+}> = [];
 
 // KaraboSceneWidget is mocked to components that track layer mount/unmount.
 // Written without JSX so the factory doesn't reference the hoisted jsx_runtime.
@@ -44,11 +47,17 @@ jest.mock('../../KaraboSceneWidget', () => {
     KaraboSceneWidget: function MockKaraboSceneWidget({
       layer,
       model,
+      objectId,
     }: {
       layer: 'shape' | 'widget';
       model: { constructor: { name: string } };
+      objectId: string;
     }) {
-      mockRenderedEntries.push({ layer, kind: model.constructor.name });
+      mockRenderedEntries.push({
+        layer,
+        kind: model.constructor.name,
+        objectId,
+      });
       return ReactActual.createElement(LifecycleTracker, { layer });
     },
   };
@@ -108,10 +117,18 @@ describe('SceneView — scene uuid keying', () => {
     );
 
     expect(mockRenderedEntries).toEqual([
-      { layer: 'shape', kind: 'RectangleModel' },
-      { layer: 'shape', kind: 'RectangleModel' },
-      { layer: 'widget', kind: 'DisplayLabelModel' },
-      { layer: 'widget', kind: 'DisplayLabelModel' },
+      { layer: 'shape', kind: 'RectangleModel', objectId: 'scene:scene-1.1' },
+      { layer: 'shape', kind: 'RectangleModel', objectId: 'scene:scene-1.3' },
+      {
+        layer: 'widget',
+        kind: 'DisplayLabelModel',
+        objectId: 'scene:scene-1.0',
+      },
+      {
+        layer: 'widget',
+        kind: 'DisplayLabelModel',
+        objectId: 'scene:scene-1.2',
+      },
     ]);
   });
 
@@ -129,10 +146,18 @@ describe('SceneView — scene uuid keying', () => {
     );
 
     expect(mockRenderedEntries).toEqual([
-      { layer: 'shape', kind: 'BoxLayoutModel' },
-      { layer: 'shape', kind: 'RectangleModel' },
-      { layer: 'widget', kind: 'DisplayLabelModel' },
-      { layer: 'widget', kind: 'BoxLayoutModel' },
+      { layer: 'shape', kind: 'BoxLayoutModel', objectId: 'scene:scene-1.1' },
+      { layer: 'shape', kind: 'RectangleModel', objectId: 'scene:scene-1.2' },
+      {
+        layer: 'widget',
+        kind: 'DisplayLabelModel',
+        objectId: 'scene:scene-1.0',
+      },
+      {
+        layer: 'widget',
+        kind: 'BoxLayoutModel',
+        objectId: 'scene:scene-1.1',
+      },
     ]);
   });
 
@@ -148,7 +173,6 @@ describe('SceneView — scene uuid keying', () => {
     expect(mockWidgetMountSpy).toHaveBeenCalledTimes(1);
     expect(mockWidgetUnmountSpy).toHaveBeenCalledTimes(0);
 
-    // Same scene uuid, fresh scene object — no remount expected
     act(() => {
       rerender(
         <SceneView
@@ -161,7 +185,6 @@ describe('SceneView — scene uuid keying', () => {
 
     expect(mockWidgetUnmountSpy).toHaveBeenCalledTimes(0);
 
-    // Different uuid — rendered scene key changes → full unmount + remount
     act(() => {
       rerender(
         <SceneView
@@ -188,7 +211,6 @@ describe('SceneView — scene uuid keying', () => {
     expect(mockShapeMountSpy).toHaveBeenCalledTimes(1);
     expect(mockShapeUnmountSpy).toHaveBeenCalledTimes(0);
 
-    // Same scene uuid, fresh scene object — no remount expected
     act(() => {
       rerender(
         <SceneView

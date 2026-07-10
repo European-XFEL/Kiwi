@@ -43,7 +43,6 @@ describe('useActiveScene', () => {
     jest.clearAllMocks();
     useActiveSceneStore.setState({
       loadedSceneRef: undefined,
-      fitMode: 'fit-page',
     });
     mockLocationSearch =
       '?host=test-host&port=44444&domain=CONTROLS&projectUuid=project-1&sceneUuid=scene-a';

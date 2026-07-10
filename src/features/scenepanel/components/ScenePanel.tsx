@@ -1,8 +1,9 @@
 import { SceneModel } from '@/karabo/common/api';
 import {
+  type FitMode,
   getOverflow,
+  SceneControllerRegistryProvider,
   SceneView,
-  useActiveSceneStore,
   useSceneScale,
 } from '@/features/scene-view/api';
 import { LoadedSceneRef } from '@/store/api';
@@ -11,14 +12,25 @@ import ScenePanelShell from './ScenePanelShell';
 import ScenePanelViewport from './ScenePanelViewport';
 import SceneToolBar from './SceneToolBar';
 import { useFullscreen } from '../hooks/useFullscreen';
+import type { SceneControllerRegistry } from '../SceneControllerRegistry';
 
-export interface ScenePanelProps {
+export interface ScenePanelContent {
   sceneRef: LoadedSceneRef;
   sceneModel: SceneModel;
+  sceneControllerRegistry: SceneControllerRegistry;
+  fitMode: FitMode;
 }
 
-const ScenePanel: React.FC<ScenePanelProps> = ({ sceneRef, sceneModel }) => {
-  const fitMode = useActiveSceneStore((state) => state.fitMode);
+export interface ScenePanelProps {
+  content: ScenePanelContent;
+  onFitModeChange: (mode: FitMode) => void;
+}
+
+const ScenePanel: React.FC<ScenePanelProps> = ({
+  content,
+  onFitModeChange,
+}) => {
+  const { sceneRef, sceneModel, sceneControllerRegistry, fitMode } = content;
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const shellRef = React.useRef<HTMLDivElement | null>(null);
   const { isFullscreen, supported, toggle } = useFullscreen(shellRef);
@@ -40,6 +52,8 @@ const ScenePanel: React.FC<ScenePanelProps> = ({ sceneRef, sceneModel }) => {
           width={sceneRef.width}
           height={sceneRef.height}
           scale={scale}
+          fitMode={fitMode}
+          onFitModeChange={onFitModeChange}
           isFullscreen={isFullscreen}
           onToggleFullscreen={supported ? toggle : undefined}
         />
@@ -49,7 +63,13 @@ const ScenePanel: React.FC<ScenePanelProps> = ({ sceneRef, sceneModel }) => {
           containerRef={containerRef}
           style={{ overflowX, overflowY }}
         >
-          <SceneView sceneModel={sceneModel} scale={scale} fitMode={fitMode} />
+          <SceneControllerRegistryProvider registry={sceneControllerRegistry}>
+            <SceneView
+              sceneModel={sceneModel}
+              scale={scale}
+              fitMode={fitMode}
+            />
+          </SceneControllerRegistryProvider>
         </ScenePanelViewport>
       }
     />

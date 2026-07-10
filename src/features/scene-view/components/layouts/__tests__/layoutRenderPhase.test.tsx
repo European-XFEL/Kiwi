@@ -62,7 +62,7 @@ describe('layout render layer propagation', () => {
   ])(
     'does not mount nested controller widgets in the shape pass for %s',
     (_, makeLayout) => {
-      render(<>{renderLayerContent(makeLayout(), 'shape')}</>);
+      render(<>{renderLayerContent(makeLayout(), 'shape', 'scene')}</>);
 
       expect(mockControllerContainer).not.toHaveBeenCalled();
     }
@@ -75,9 +75,35 @@ describe('layout render layer propagation', () => {
   ])(
     'mounts nested controller widgets once in the widget pass for %s',
     (_, makeLayout) => {
-      render(<>{renderLayerContent(makeLayout(), 'widget')}</>);
+      render(<>{renderLayerContent(makeLayout(), 'widget', 'scene')}</>);
 
       expect(mockControllerContainer).toHaveBeenCalledTimes(1);
+      expect(mockControllerContainer).toHaveBeenCalledWith(
+        expect.objectContaining({ objectId: 'scene.0' })
+      );
+    }
+  );
+
+  it.each([
+    ['BoxLayout', makeBoxLayout],
+    ['FixedLayout', makeFixedLayout],
+    ['GridLayout', makeGridLayout],
+  ])(
+    'adds scene object identity attributes for %s',
+    (layoutName, makeLayout) => {
+      const { container } = render(
+        <>{renderLayerContent(makeLayout(), 'widget', 'scene')}</>
+      );
+
+      const root = container.querySelector<HTMLElement>(
+        '[data-scene-object-id="scene"]'
+      );
+      const child = container.querySelector<HTMLElement>(
+        '[data-scene-object-id="scene.0"]'
+      );
+
+      expect(root?.id).toMatch(new RegExp('^' + layoutName + '-'));
+      expect(child?.id).toMatch(new RegExp('^' + layoutName + '-child-'));
     }
   );
 });

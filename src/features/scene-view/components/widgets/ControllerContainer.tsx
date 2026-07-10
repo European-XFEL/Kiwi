@@ -14,6 +14,8 @@ import {
   useProxies,
   type ControllerContainerContext,
 } from '@/features/controllers/api';
+import { useRegisterSceneControllerWidget } from '../../hooks/useRegisterSceneControllerWidget';
+import type { Renderer } from '../../renderRegistry';
 import { ControllerOverlay } from './ControllerOverlay';
 
 export type { ControllerContainerContext };
@@ -23,14 +25,15 @@ const EDITABLE_PARENT_COMPONENT = 'EditableApplyLaterComponent';
 export interface ControllerContainerProps {
   width: number;
   height: number;
+  objectId: string;
   model: BaseWidgetObjectData;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Renderer: React.ComponentType<any>;
+  Renderer: Renderer;
 }
 
 export const ControllerContainer: React.FC<ControllerContainerProps> = ({
   width,
   height,
+  objectId,
   model,
   Renderer,
 }) => {
@@ -59,9 +62,11 @@ export const ControllerContainer: React.FC<ControllerContainerProps> = ({
   );
   const controllerContent = (
     <div className="w-full h-full">
-      <Renderer model={model} ctx={ctx} />
+      <Renderer model={model} ctx={ctx} objectId={objectId} />
     </div>
   );
+
+  useRegisterSceneControllerWidget(objectId, model, ctx);
 
   const clearTooltipAutoClose = React.useCallback(() => {
     if (tooltipAutoCloseRef.current == null) return;

@@ -79,6 +79,7 @@ describe('ControllerContainer', () => {
         width={140}
         height={32}
         model={model}
+        objectId="scene.0"
         Renderer={Renderer}
       />
     );

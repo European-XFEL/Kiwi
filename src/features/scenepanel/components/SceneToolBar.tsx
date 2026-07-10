@@ -1,13 +1,15 @@
 import { Button, Separator } from '@/components/api';
 import declineIcon from '@/assets/icons/general/no.png';
 import applyIcon from '@/assets/icons/general/yes.png';
-import { FitModeSelect } from '@/features/scene-view/api';
+import { type FitMode, FitModeSelect } from '@/features/scene-view/api';
 import { Maximize, Minimize } from 'lucide-react';
 
 export interface SceneToolBarProps {
   width: number;
   height: number;
   scale: number;
+  fitMode: FitMode;
+  onFitModeChange: (mode: FitMode) => void;
   isFullscreen?: boolean;
   // When omitted (e.g. fullscreen unsupported), the toggle is not rendered.
   onToggleFullscreen?: () => void;
@@ -21,6 +23,8 @@ export function SceneToolBar({
   width,
   height,
   scale,
+  fitMode,
+  onFitModeChange,
   isFullscreen = false,
   onToggleFullscreen,
 }: SceneToolBarProps) {
@@ -70,7 +74,11 @@ export function SceneToolBar({
         <span className="text-[#3f3f3f]">Scale:</span>
         <span className="font-semibold tabular-nums">{scalePercent}</span>
         <Separator orientation="vertical" className="h-5 bg-[#9a9a9a]" />
-        <FitModeSelect isFullscreen={isFullscreen} />
+        <FitModeSelect
+          fitMode={fitMode}
+          onFitModeChange={onFitModeChange}
+          isFullscreen={isFullscreen}
+        />
         {onToggleFullscreen ? (
           <>
             <Separator orientation="vertical" className="h-5 bg-[#9a9a9a]" />
