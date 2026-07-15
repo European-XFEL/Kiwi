@@ -5,6 +5,7 @@ import type { ControllerContainerContext } from '@/features/scene-view/api';
 import { DisplayStateColorModel } from '@/karabo/common/api';
 import { getStateColor } from '@/lib/Indicators';
 import { getControllerFontStyle } from '../../utils/fonts';
+import { toStringValue } from '../../utils/getBindingValue';
 
 // DisplayStateColor
 // ----------------------------------------------------------------------------
@@ -13,7 +14,7 @@ const DisplayStateColor: React.FC<{
   model: DisplayStateColorModel;
   ctx?: ControllerContainerContext;
 }> = ({ model, ctx }) => {
-  const rawState = (ctx?.proxy?.root.state as string | undefined) ?? '';
+  const rawState = ctx ? toStringValue(ctx.proxy) : '';
   const bgColor = getStateColor(rawState);
 
   return (
