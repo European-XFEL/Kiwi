@@ -53,7 +53,11 @@ export default function AccessLevelForm({
               <SelectValue placeholder="Select access level" />
             </SelectTrigger>
             <SelectContent>
-              {[0, 1, 2, 3, 4].map((level) => (
+              {[
+                AccessLevel.OBSERVER,
+                AccessLevel.OPERATOR,
+                AccessLevel.EXPERT,
+              ].map((level) => (
                 <SelectItem key={level} value={String(level)}>
                   {AccessLevel[level]}
                 </SelectItem>
