@@ -1,5 +1,15 @@
-import { useState } from 'react';
 import { toast } from 'sonner';
+
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/api';
 
 type ToastVariant = 'info' | 'error' | 'warning';
 
@@ -12,34 +22,48 @@ type MessageBoxProps = {
 };
 
 type BoxDetailsProps = {
+  title: string;
   msg: string;
   details?: string;
 };
 
-function BoxDetails({ msg, details }: BoxDetailsProps) {
-  const [open, setOpen] = useState(false);
-
+function BoxDetails({ title, msg, details }: BoxDetailsProps) {
   return (
     <div className="space-y-3">
-      <div>{msg}</div>
-
-      {details && (
-        <div className="space-y-2">
-          <button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            className="text-xs font-medium underline underline-offset-2"
-          >
-            {open ? 'Hide details' : 'Show details'}
-          </button>
-
-          {open && (
-            <div className="rounded-md border bg-muted/50 p-3 text-xs whitespace-pre-wrap font-mono">
-              {details}
-            </div>
-          )}
-        </div>
-      )}
+      <Dialog>
+        <div>{msg}</div>
+        {details && (
+          <form>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                className="text-xs font-medium underline underline-offset-2"
+              >
+                Show Details
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-sm">
+              <DialogHeader>
+                <DialogTitle>{title}</DialogTitle>
+                <DialogDescription>{msg}</DialogDescription>
+              </DialogHeader>
+              <div className="-mx-4 no-scrollbar max-h-[50vh] overflow-y-auto px-4 text-xs whitespace-pre-wrap font-mono">
+                {details}
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    navigator.clipboard.writeText(details);
+                  }}
+                >
+                  Copy to Clipboard
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </form>
+        )}
+      </Dialog>
     </div>
   );
 }
@@ -54,7 +78,7 @@ export function showMessageBox({
   const options = {
     closeButton: true,
     duration,
-    description: <BoxDetails msg={msg} details={details} />,
+    description: <BoxDetails title={title} msg={msg} details={details} />,
   };
 
   switch (variant) {
