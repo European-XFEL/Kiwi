@@ -1,7 +1,7 @@
 import { Hash, decodeBinary } from '@/karabo/data/api';
 import { useAppSettingsStore } from '@/store/api';
 import { WebsocketBuilder } from 'websocket-ts';
-import { GuiServerInfo } from './auth.types';
+import { GuiServerInfo, TopicServerMap } from './auth.types';
 
 export function extractGuiServerInfo(hash: Hash):
   | {
@@ -114,4 +114,39 @@ export async function probeServer(
       })
       .build();
   });
+}
+
+/**
+ * Decodes a string containing "topic" to GUI Server "hostname:port" mappings
+ * in the format detailed below. Such strings are used to defined values for
+ * environment variables containing the mappings.
+ *
+ * Expected format:
+ * `TOPIC:HOSTNAME:PORT;TOPIC:HOSTNAME:PORT`
+ *
+ * Example from `.env.production`:
+ * `SA1:sa1-br-sys-con-gui3:8090;SA2:sa2-br-sys-con-gui3:8090;SA3:localhost:44448`
+ *
+ * Returns `undefined` for missing or empty input. Valid `topic:host:port`
+ * entries are decoded into an object keyed by topic. Entries that do not split
+ * into exactly three parts are ignored. Ports are parsed as integers.
+ */
+export function decodeTopicServerMap(
+  encodedMappings?: string
+): TopicServerMap | undefined {
+  if (!encodedMappings) {
+    return undefined;
+  }
+  let topicServerMap: TopicServerMap = {};
+  const entries = encodedMappings.split(';');
+  entries.forEach((encodedMapEntry: string, _index: number) => {
+    const parts = encodedMapEntry.split(':');
+    if (parts.length === 3) {
+      topicServerMap[parts[0]] = {
+        hostname: parts[1],
+        hostport: Number.parseInt(parts[2]),
+      };
+    }
+  });
+  return topicServerMap;
 }

@@ -41,3 +41,10 @@ export interface GuiServerInfo {
   topic: string;
   version: string;
 }
+
+export interface TopicServerMap {
+  [topic: string]: {
+    hostname: string;
+    hostport: number;
+  };
+}
