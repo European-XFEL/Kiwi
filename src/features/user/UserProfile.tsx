@@ -10,7 +10,7 @@ import {
   DropdownMenuLabel,
 } from '@/components/api';
 
-import { getNetwork } from '@/lib/singletons/api';
+import { getNetwork, getPanelWrangler } from '@/lib/singletons/api';
 import { useGlobalStore } from '@/store/api';
 
 const getInitials = (text?: string): string => {
@@ -43,6 +43,7 @@ export default function UserInfo() {
 
   const handleLogout = () => {
     getNetwork().finishSession();
+    getPanelWrangler().resetCenter();
     setLoggedOut();
     navigate('/', { replace: true });
   };
