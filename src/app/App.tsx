@@ -10,6 +10,7 @@ import { KaraboEvent, useKaraboEvent } from '@/lib/events';
 import { Hash } from '@/karabo/data/hash';
 import { toast } from 'sonner';
 import { sceneParamsFromURL } from '@/features/navigation/utils';
+import useSessionCleanup from './hooks/useSessionCleanup';
 
 const App: React.FC = () => {
   const executedOnceRef = React.useRef('');
@@ -22,6 +23,8 @@ const App: React.FC = () => {
     setSessionExpired,
     setLoggedOut,
   } = useGlobalStore();
+
+  useSessionCleanup();
 
   useKaraboEvent(KaraboEvent.SessionDropped, (hash: Hash) => {
     setError(hash.getValue('message'));

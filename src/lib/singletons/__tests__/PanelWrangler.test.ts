@@ -354,6 +354,125 @@ describe('PanelWrangler', () => {
     });
   });
 
+  describe('resetWorkspace', () => {
+    it('restores the home tab and drops every scene tab', () => {
+      const sceneA = makeScene('s1');
+      const sceneB = makeScene('s2');
+      setProject('CONTROLS', 'ProjectA', [sceneA, sceneB]);
+      openScene(sceneA);
+      openScene(sceneB);
+
+      wrangler.resetWorkspace();
+
+      const center = wrangler.getSnapshot().center;
+      expect(center.tabs).toEqual([
+        { id: HOME_TAB_ID, title: 'Home', closable: false },
+      ]);
+      expect(center.activeTabId).toBe(HOME_TAB_ID);
+    });
+
+    it('disposes the registry of every open scene tab', () => {
+      const sceneA = makeScene('s1');
+      const sceneB = makeScene('s2');
+      setProject('CONTROLS', 'ProjectA', [sceneA, sceneB]);
+      openScene(sceneA);
+      openScene(sceneB);
+
+      const disposeA = jest.spyOn(
+        wrangler.getContent('scene:s1')!
+          .sceneControllerRegistry as SceneControllerRegistry,
+        'dispose'
+      );
+      const disposeB = jest.spyOn(
+        wrangler.getContent('scene:s2')!
+          .sceneControllerRegistry as SceneControllerRegistry,
+        'dispose'
+      );
+
+      wrangler.resetWorkspace();
+
+      expect(disposeA).toHaveBeenCalledTimes(1);
+      expect(disposeB).toHaveBeenCalledTimes(1);
+    });
+
+    // The difference that matters versus resetCenter: content is keyed
+    // independently of the center tab list, so a registry belonging to any other
+    // slot must not survive the session either.
+    it('disposes content that is not reachable from the center tabs', () => {
+      const sceneRef = {
+        uuid: 'scene-orphan',
+        domain: 'CONTROLS',
+        projectUuid: 'project-ProjectA',
+        projectName: 'ProjectA',
+        name: 'Orphan',
+        width: 800,
+        height: 600,
+      };
+      wrangler.setContent('scene:scene-orphan', { sceneRef });
+      const registry = wrangler.getContent('scene:scene-orphan')
+        ?.sceneControllerRegistry as SceneControllerRegistry;
+      const disposeSpy = jest.spyOn(registry, 'dispose');
+
+      wrangler.resetWorkspace();
+
+      expect(disposeSpy).toHaveBeenCalledTimes(1);
+      expect(wrangler.getContent('scene:scene-orphan')).toBeUndefined();
+    });
+
+    it('forgets per-tab content and scene metadata', () => {
+      const scene = makeScene('scene-a');
+      setProject('CONTROLS', 'ProjectA', [scene]);
+      openScene(scene);
+      expect(wrangler.getContent('scene:scene-a')).toBeDefined();
+      expect(wrangler.getSceneTab('scene:scene-a')).toBeDefined();
+
+      wrangler.resetWorkspace();
+
+      expect(wrangler.getContent('scene:scene-a')).toBeUndefined();
+      expect(wrangler.getSceneTab('scene:scene-a')).toBeUndefined();
+    });
+
+    it('recreates all three panel slots as empty', () => {
+      const scene = makeScene('scene-a');
+      setProject('CONTROLS', 'ProjectA', [scene]);
+      openScene(scene);
+
+      wrangler.resetWorkspace();
+
+      const state = wrangler.getSnapshot();
+      expect(state.left).toEqual({
+        id: 'left',
+        tabs: [],
+        activeTabId: undefined,
+      });
+      expect(state.right).toEqual({
+        id: 'right',
+        tabs: [],
+        activeTabId: undefined,
+      });
+    });
+
+    it('strips the scene params from the browser URL', () => {
+      const scene = makeScene('scene-a');
+      setProject('CONTROLS', 'ProjectA', [scene]);
+      openScene(scene);
+      expect(window.location.search).not.toBe('');
+
+      wrangler.resetWorkspace();
+
+      expect(window.location.search).toBe('');
+    });
+
+    it('is a no-op on an untouched workspace', () => {
+      wrangler.resetWorkspace();
+
+      expect(wrangler.getSnapshot().center.tabs).toEqual([
+        { id: HOME_TAB_ID, title: 'Home', closable: false },
+      ]);
+      expect(wrangler.getSnapshot().center.activeTabId).toBe(HOME_TAB_ID);
+    });
+  });
+
   it('writes scene params on open and clears them when returning home', () => {
     const scene = makeScene('scene-a');
     setProject('CONTROLS', 'ProjectA', [scene]);
