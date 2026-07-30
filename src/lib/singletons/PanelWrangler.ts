@@ -198,6 +198,25 @@ export class PanelWrangler {
     });
   }
 
+  // Full teardown for a session boundary. resetCenter() deliberately keeps the
+  // side panels, which is right for "go home" within a session but wrong when
+  // the session itself ends: nothing from the old session may stay reachable by
+  // the next one. Iterates `content` rather than the center tabs so a registry
+  // is disposed no matter which slot its tab lived in.
+  resetWorkspace(): void {
+    for (const content of this.content.values()) {
+      content.sceneControllerRegistry?.dispose();
+    }
+    this.content.clear();
+    this.sceneTabs.clear();
+
+    this.commit({
+      left: createEmptyArea('left'),
+      center: createCenterArea(),
+      right: createEmptyArea('right'),
+    });
+  }
+
   selectTab(area: PanelSlot, tabId: string): void {
     const areaModel = this.state[area];
     if (!areaModel.tabs.some((tab) => tab.id === tabId)) {
