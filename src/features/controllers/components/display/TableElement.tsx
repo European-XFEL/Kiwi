@@ -72,12 +72,12 @@ const TableElement: React.FC<{
     <div className="border border-gray-300 bg-white overflow-hidden flex flex-col w-full h-full">
       <div className="flex-1 min-h-0 overflow-y-scroll overflow-x-auto">
         <Table className="w-full border-collapse text-xs">
-          <TableHeader className="sticky top-0 z-10 bg-gray-100">
+          <TableHeader>
             <TableRow className="border-b border-gray-300">
               {columns.map(({ key, binding }) => (
                 <TableHead
                   key={key}
-                  className="border border-gray-300 px-2 py-1 text-left align-middle font-semibold text-gray-800 whitespace-nowrap"
+                  className="sticky top-0 z-10 border border-gray-300 bg-gray-100 px-2 py-1 text-left align-middle font-semibold text-gray-800 whitespace-nowrap"
                 >
                   {binding.displayedName || key}
                 </TableHead>

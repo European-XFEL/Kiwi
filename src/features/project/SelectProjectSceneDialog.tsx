@@ -232,7 +232,7 @@ export default function SelectProjectSceneDialog({
 
           <div className="grid gap-4 lg:grid-cols-2">
             {/* Projects */}
-            <div className="space-y-2">
+            <div className="min-w-0 space-y-2">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold">
                   Projects on Domain "{selectedDomain}"
@@ -255,7 +255,7 @@ export default function SelectProjectSceneDialog({
             </div>
 
             {/* Scenes */}
-            <div className="space-y-2">
+            <div className="min-w-0 space-y-2">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold">
                   Scenes on Project "{selectedProject?.simple_name ?? ''}"

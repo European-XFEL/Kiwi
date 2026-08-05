@@ -19,54 +19,61 @@ export default function ProjectsTable({
   onQueryChange,
 }: ProjectsTableProps) {
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex min-w-0 flex-col gap-2">
       {onQueryChange !== undefined && (
         <KiwiSearchInput
           value={query ?? ''}
           onChange={onQueryChange}
           placeholder="Filter projects..."
+          className="w-full min-w-0"
         />
       )}
       <ScrollArea className="h-48 rounded-md border">
-        <Table>
-          <TableHeader className="sticky top-0 bg-background">
-            <TableRow>
-              <TableHead>Project Name</TableHead>
-              <TableHead>Last Modified</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {projects.length === 0 ? (
+        <div className="w-full overflow-x-auto">
+          <Table className="min-w-max">
+            <TableHeader>
               <TableRow>
-                <TableCell
-                  colSpan={2}
-                  className="text-center text-muted-foreground"
-                >
-                  {query ? 'No matching projects' : 'No projects found'}
-                </TableCell>
+                <TableHead className="sticky top-0 bg-background">
+                  Project Name
+                </TableHead>
+                <TableHead className="sticky top-0 bg-background">
+                  Last Modified
+                </TableHead>
               </TableRow>
-            ) : (
-              projects.map((project, index) => (
-                <TableRow
-                  key={`${index}::${project.uuid}`}
-                  onClick={() => onProjectClick(project)}
-                  className={`cursor-pointer ${
-                    selectedProject?.uuid === project.uuid
-                      ? 'bg-accent'
-                      : 'hover:bg-accent/50'
-                  }`}
-                >
-                  <TableCell className="font-medium truncate max-w-xs">
-                    {project.simple_name}
-                  </TableCell>
-                  <TableCell className="truncate">
-                    {asLocalDateTimeString(project.date)}
+            </TableHeader>
+            <TableBody>
+              {projects.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={2}
+                    className="text-center text-muted-foreground"
+                  >
+                    {query ? 'No matching projects' : 'No projects found'}
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : (
+                projects.map((project, index) => (
+                  <TableRow
+                    key={`${index}::${project.uuid}`}
+                    onClick={() => onProjectClick(project)}
+                    className={`cursor-pointer ${
+                      selectedProject?.uuid === project.uuid
+                        ? 'bg-accent'
+                        : 'hover:bg-accent/50'
+                    }`}
+                  >
+                    <TableCell className="font-medium truncate max-w-xs">
+                      {project.simple_name}
+                    </TableCell>
+                    <TableCell className="truncate">
+                      {asLocalDateTimeString(project.date)}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </ScrollArea>
     </div>
   );

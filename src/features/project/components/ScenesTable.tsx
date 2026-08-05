@@ -20,55 +20,62 @@ export default function ScenesTable({
   onQueryChange,
 }: ScenesTableProps) {
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex min-w-0 flex-col gap-2">
       {onQueryChange !== undefined && (
         <KiwiSearchInput
           value={query ?? ''}
           onChange={onQueryChange}
           placeholder="Filter scenes..."
+          className="w-full min-w-0"
         />
       )}
       <ScrollArea className="h-48 rounded-md border">
-        <Table>
-          <TableHeader className="sticky top-0 bg-background">
-            <TableRow>
-              <TableHead>Scene Name</TableHead>
-              <TableHead>Last Modified</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {scenes.length === 0 ? (
+        <div className="w-full overflow-x-auto">
+          <Table className="min-w-max">
+            <TableHeader>
               <TableRow>
-                <TableCell
-                  colSpan={2}
-                  className="text-center text-muted-foreground"
-                >
-                  {query ? 'No matching scenes' : 'No scenes available'}
-                </TableCell>
+                <TableHead className="sticky top-0 bg-background">
+                  Scene Name
+                </TableHead>
+                <TableHead className="sticky top-0 bg-background">
+                  Last Modified
+                </TableHead>
               </TableRow>
-            ) : (
-              scenes.map((scene, index) => (
-                <TableRow
-                  key={`${index}::${scene.uuid}`}
-                  onClick={() => onSceneClick(scene)}
-                  onDoubleClick={() => onSceneDoubleClick(scene)}
-                  className={`cursor-pointer ${
-                    selectedScene?.uuid === scene.uuid
-                      ? 'bg-accent'
-                      : 'hover:bg-accent/50'
-                  }`}
-                >
-                  <TableCell className="font-medium truncate max-w-xs">
-                    {scene.simple_name}
-                  </TableCell>
-                  <TableCell className="truncate">
-                    {asLocalDateTimeString(scene.date)}
+            </TableHeader>
+            <TableBody>
+              {scenes.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={2}
+                    className="text-center text-muted-foreground"
+                  >
+                    {query ? 'No matching scenes' : 'No scenes available'}
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : (
+                scenes.map((scene, index) => (
+                  <TableRow
+                    key={`${index}::${scene.uuid}`}
+                    onClick={() => onSceneClick(scene)}
+                    onDoubleClick={() => onSceneDoubleClick(scene)}
+                    className={`cursor-pointer ${
+                      selectedScene?.uuid === scene.uuid
+                        ? 'bg-accent'
+                        : 'hover:bg-accent/50'
+                    }`}
+                  >
+                    <TableCell className="font-medium truncate max-w-xs">
+                      {scene.simple_name}
+                    </TableCell>
+                    <TableCell className="truncate">
+                      {asLocalDateTimeString(scene.date)}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </ScrollArea>
     </div>
   );
