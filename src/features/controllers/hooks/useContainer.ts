@@ -15,15 +15,20 @@ export interface ContainerState {
   contentsStyle: React.CSSProperties;
 }
 
+const CONTAINER_STYLE: React.CSSProperties = { pointerEvents: 'none' };
+const CONTENTS_STYLE: React.CSSProperties = {
+  display: 'contents',
+  pointerEvents: 'auto',
+};
+
+const CONTAINER_STATE: ContainerState = {
+  containerStyle: CONTAINER_STYLE,
+  contentsStyle: CONTENTS_STYLE,
+};
+
 // useContainer
 // ---
 
 export function useContainer(): ContainerState {
-  return {
-    containerStyle: { pointerEvents: 'none' },
-    contentsStyle: {
-      display: 'contents',
-      pointerEvents: 'auto',
-    },
-  };
+  return CONTAINER_STATE;
 }

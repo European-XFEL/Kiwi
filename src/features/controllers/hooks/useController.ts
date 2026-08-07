@@ -1,3 +1,4 @@
+import React from 'react';
 import { AccessLevel } from '@/karabo/data/enums';
 import { useGlobalStore } from '@/store/api';
 import type { PropertyProxies } from '../utils/controller_proxies';
@@ -29,9 +30,12 @@ export function useController(
     (s) => s.sessionInfo?.accessLevel ?? AccessLevel.OBSERVER
   );
 
-  return {
-    proxy: getProxy(propertyProxies),
-    proxies: propertyProxies,
-    userAccessLevel,
-  };
+  return React.useMemo(
+    () => ({
+      proxy: getProxy(propertyProxies),
+      proxies: propertyProxies,
+      userAccessLevel,
+    }),
+    [propertyProxies, userAccessLevel]
+  );
 }

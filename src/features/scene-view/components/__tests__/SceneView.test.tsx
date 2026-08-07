@@ -161,6 +161,24 @@ describe('SceneView — scene uuid keying', () => {
     ]);
   });
 
+  it('skips the scene walk when the parent rerenders with unchanged props', () => {
+    const sceneModel = makeScene('scene-1', [
+      makeShapeChild(),
+      makeWidgetChild(),
+    ]);
+    const { rerender } = render(
+      <SceneView sceneModel={sceneModel} scale={1} fitMode="fit-page" />
+    );
+
+    expect(mockRenderedEntries).toHaveLength(2);
+
+    rerender(
+      <SceneView sceneModel={sceneModel} scale={1} fitMode="fit-page" />
+    );
+
+    expect(mockRenderedEntries).toHaveLength(2);
+  });
+
   it('unmounts and remounts the widget subtree when the scene uuid changes', () => {
     const { rerender } = render(
       <SceneView
