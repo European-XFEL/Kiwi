@@ -38,7 +38,9 @@ function* _walk_project_object(obj) {
   if (obj instanceof ProjectModel) {
     for (const scene of obj.scenes ?? []) {
       yield scene;
-      // subprojects
+    }
+    for (const project of obj.subprojects) {
+      yield project;
     }
   }
 }

@@ -1,8 +1,9 @@
 import {
+  findProjectModelInProject,
+  findSceneModelInProject,
   isProjectInitialized,
   ProjectModel,
 } from '@/karabo/common/project/api';
-import { SceneModel } from '@/karabo/common/scenemodel/api';
 import { Hash, HashList } from '@/karabo/data/api';
 import type { SceneURLParams } from '@/features/navigation/utils';
 import { KaraboEvent } from '@/lib/events';
@@ -72,7 +73,8 @@ export function startSceneFromRoute(
       const projectModel = getProjectModel();
       let project =
         projectModel.domain === params.domain &&
-        projectModel.root?.uuid === params.projectUuid
+        projectModel.root &&
+        findProjectModelInProject(projectModel.root, params.projectUuid)
           ? projectModel.root
           : undefined;
 
@@ -126,10 +128,13 @@ export function startSceneFromRoute(
 
       projectModel.setRoot(params.domain, project);
 
-      const scene = project.scenes?.find(
-        (item): item is SceneModel =>
-          item instanceof SceneModel && item.uuid === params.sceneUuid
+      const sceneProject = findProjectModelInProject(
+        project,
+        params.projectUuid
       );
+      const scene = sceneProject
+        ? findSceneModelInProject(sceneProject, params.sceneUuid)
+        : undefined;
       if (!scene) {
         throw new Error(
           `Scene "${params.sceneUuid}" was not found in project "${project.simple_name}".`

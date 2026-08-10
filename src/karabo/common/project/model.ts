@@ -6,6 +6,8 @@ export class ProjectModel extends BaseProjectObjectModel {
   is_trashed: boolean = false;
   initialized: boolean = false;
 
+  subprojects: ProjectModel[] = [];
+
   constructor({
     uuid,
     date,

@@ -3,6 +3,7 @@ import {
   sceneParamsFromURL,
   type SceneURLParams,
 } from '@/features/navigation/utils';
+import { findProjectModelInProject } from '@/karabo/common/project/api';
 import { getDbConn, getProjectModel } from '@/lib/singletons/api';
 import {
   type TopicRecentSceneInfo,
@@ -93,7 +94,11 @@ export function useActiveScene(): ActiveSceneResult {
         const sceneModel = fetchScene(sceneParams);
         if (isCancelled()) return;
 
-        const projectName = getProjectModel().root?.simple_name ?? '';
+        const rootProject = getProjectModel().root;
+        const projectName = rootProject
+          ? (findProjectModelInProject(rootProject, sceneParams.projectUuid)
+              ?.simple_name ?? rootProject.simple_name)
+          : '';
 
         const nextLoadedSceneRef: LoadedSceneRef = {
           width: sceneModel.width,

@@ -22,3 +22,37 @@ export function isProjectInitialized(project: ProjectModel): boolean {
     )
   );
 }
+
+export function* walkProjectModels(
+  project: ProjectModel
+): Generator<ProjectModel> {
+  yield project;
+
+  for (const subproject of project.subprojects ?? []) {
+    yield* walkProjectModels(subproject);
+  }
+}
+
+export function findProjectModelInProject(
+  project: ProjectModel,
+  uuid: string
+): ProjectModel | undefined {
+  return Array.from(walkProjectModels(project)).find(
+    (projectModel) => projectModel.uuid === uuid
+  );
+}
+
+export function findSceneModelInProject(
+  project: ProjectModel,
+  uuid: string
+): SceneModel | undefined {
+  for (const projectModel of walkProjectModels(project)) {
+    const scene = projectModel.scenes?.find(
+      (scene): scene is SceneModel =>
+        scene instanceof SceneModel && scene.uuid === uuid
+    );
+    if (scene) {
+      return scene;
+    }
+  }
+}

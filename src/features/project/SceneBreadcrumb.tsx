@@ -22,7 +22,7 @@ import { useDeferredSearch } from './hooks/useDeferredSearch';
 import { useKaraboEvent, KaraboEvent } from '@/lib/events';
 import type { SceneBreadcrumbProps } from './types/project.types';
 import { filterByQuery } from './utils/filterByQuery';
-import { ProjectModel } from '@/karabo/common/project/model';
+import { ProjectModel } from '@/karabo/common/project/api';
 import { SceneModel } from '@/karabo/common/scenemodel/api';
 import { openSceneInWorkspace } from './utils/openSceneInWorkspace';
 
@@ -74,7 +74,8 @@ export default function SceneBreadcrumb({
   const routeProject = projects.find(
     (project) => project.simple_name === projectName
   );
-  const activeProject = pendingSelection?.project ?? routeProject;
+  const activeProject =
+    pendingSelection?.project ?? routeProject ?? getProjectModel().root;
 
   const filteredProjects = filterByQuery(
     projects,
@@ -217,7 +218,8 @@ export default function SceneBreadcrumb({
     openSceneInWorkspace({ model: scene });
   };
 
-  const displayProjectName = activeProject?.simple_name ?? projectName;
+  const displayProjectName =
+    pendingSelection?.project.simple_name ?? projectName;
   const shownSceneName = pendingSelection
     ? (pendingSelection.sceneName ?? 'Select a scene...')
     : sceneName;
