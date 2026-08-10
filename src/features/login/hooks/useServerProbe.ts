@@ -11,11 +11,10 @@ import { probeServer } from '@/features/login/utils';
 import { getConfig } from '@/lib/singletons/api';
 import { sceneParamsFromURL } from '@/features/navigation/utils';
 
-const DEBOUNCE_MS = 2000;
-
 interface UseServerProbeProps {
   initialHost?: string;
   initialPort?: string;
+  debounceMs: number;
 }
 
 interface UseServerProbeReturn {
@@ -37,7 +36,8 @@ interface UseServerProbeReturn {
 export function useServerProbe({
   initialHost = '',
   initialPort = '',
-}: UseServerProbeProps = {}): UseServerProbeReturn {
+  debounceMs,
+}: UseServerProbeProps): UseServerProbeReturn {
   const [host, setHost] = useState<string>(initialHost);
   const [port, setPort] = useState<string>(initialPort);
   const [probedServerInfo, setProbedServerInfo] =
@@ -140,10 +140,10 @@ export function useServerProbe({
 
     const id = window.setTimeout(() => {
       doProbeServer(host.trim(), pNum);
-    }, DEBOUNCE_MS);
+    }, debounceMs);
 
     return () => window.clearTimeout(id);
-  }, [host, port, doProbeServer]);
+  }, [host, port, doProbeServer, debounceMs]);
 
   return {
     host,

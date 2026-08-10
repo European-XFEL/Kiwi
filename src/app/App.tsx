@@ -15,7 +15,7 @@ import useSessionCleanup from './hooks/useSessionCleanup';
 const App: React.FC = () => {
   const executedOnceRef = React.useRef('');
   const location = useLocation();
-  const { setWsProxyUrl } = useAppSettingsStore();
+  const { setWsProxyUrl, setTopicGuiServerMapping } = useAppSettingsStore();
   const {
     setError,
     setLoggedIn,
@@ -71,6 +71,7 @@ const App: React.FC = () => {
         'Kiwi.App: using direct connection to GUI Server websocket port'
       );
     }
+    setTopicGuiServerMapping(appSettings.topicGuiServerMapping);
 
     if (!executedOnceRef.current) {
       executedOnceRef.current = 'true';

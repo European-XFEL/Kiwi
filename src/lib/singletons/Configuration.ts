@@ -126,6 +126,11 @@ export class ConfigurationStore {
       group: NETWORK,
       dtype: 'int',
     }),
+    lastTopic: new Item({
+      defaultValue: '',
+      group: NETWORK,
+      dtype: 'string',
+    }),
 
     sessionUserId: new Item({
       defaultValue: '',
@@ -419,6 +424,14 @@ export class ConfigurationStore {
 
   public set lastPort(port: number) {
     this.setItem(this.storage_items.port, port);
+  }
+
+  public get lastTopic(): string {
+    return this.getItem(this.storage_items.lastTopic);
+  }
+
+  public set lastTopic(topic: string) {
+    this.setItem(this.storage_items.lastTopic, topic);
   }
 
   public get currentDomain(): string {

@@ -7,6 +7,7 @@ export interface AppSettingsState {
 
 export interface AppSettingsStateStoreProp extends AppSettingsState {
   setWsProxyUrl: (websocketProxyUrl: string) => void;
+  setTopicGuiServerMapping: (topicServerMapping) => void;
 }
 
 export const useAppSettingsStore = create<AppSettingsStateStoreProp>((set) => ({

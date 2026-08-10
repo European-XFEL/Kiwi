@@ -135,4 +135,16 @@ describe('ConfigurationStore', () => {
 
     expect(config.getRecentScenes('TOPIC_A')).toEqual([]);
   });
+
+  it('stores the last GUI server topic selection', () => {
+    const config = new ConfigurationStore();
+
+    config.lastTopic = 'SA2';
+
+    expect(config.lastTopic).toBe('SA2');
+
+    expect(localStorage.getItem('kiwi/network:lastTopic')).toBe(
+      JSON.stringify('SA2')
+    );
+  });
 });

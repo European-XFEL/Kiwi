@@ -9,6 +9,7 @@ import { useServerProbe } from './hooks/useServerProbe';
 import { useAuth } from './hooks/useAuth';
 import { ActivityStatus } from './auth.types';
 import ReadOnlyAccessForm from './components/ReadOnlyAccessForm';
+import { useAppSettingsStore } from '@/store/api';
 
 /**
  * LoginPage - Main login interface
@@ -19,6 +20,14 @@ import ReadOnlyAccessForm from './components/ReadOnlyAccessForm';
  * - Access level selection (for non-auth mode)
  */
 export function LoginPage() {
+  const topicServerMapping = useAppSettingsStore(
+    (state) => state.topicServerMapping
+  );
+
+  // When there's a Topic-Server Map defined the debouncing timeout for launching
+  // a GUI Server probe should be as the user won't be typing host and port.
+  const debounceServerProbing = topicServerMapping.length > 0 ? 500 : 2_000;
+
   // Server probe state and logic
   const {
     host,
@@ -31,7 +40,7 @@ export function LoginPage() {
     doProbeServer,
     setActivityStatus,
     setErrorMessage,
-  } = useServerProbe();
+  } = useServerProbe({ debounceMs: debounceServerProbing });
 
   // Auth state and logic
   const { userName, passwd, setUserName, setPasswd, setAccessLevel, doLogin } =
@@ -119,6 +128,7 @@ export function LoginPage() {
           port={port}
           onHostChange={setHost}
           onPortChange={setPort}
+          topicServerSettings={topicServerMapping}
           topic={probedServerInfo?.topic}
           disabled={activityStatus !== ActivityStatus.NO_ACTIVITY}
           onCommit={(h, p) => {
