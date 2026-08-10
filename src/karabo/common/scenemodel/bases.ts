@@ -2,6 +2,7 @@
  * Base model classes for the Karabo scene system.
  */
 
+import { v4 as uuidv4 } from 'uuid';
 import { FONT_DEFAULT, FONT_SIZE_DEFAULT } from './constants';
 
 import { BaseProjectObjectModel } from '../project/bases';
@@ -192,7 +193,7 @@ export abstract class XMLElementModel extends BaseSceneObjectData {
   }
 
   protected generateId(): string {
-    return `unknown_${crypto.randomUUID()}`;
+    return `unknown_${uuidv4()}`;
   }
 
   resetId(): void {
