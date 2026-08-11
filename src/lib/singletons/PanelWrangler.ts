@@ -16,6 +16,10 @@ import type {
   PanelTab,
   SceneTabSnapshot,
 } from '@/features/workspace/types';
+import {
+  findProjectModelInProject,
+  walkProjectModels,
+} from '@/karabo/common/project/api';
 import { getProjectModel } from './api';
 
 // Per-tab scene state. fitMode lives here (not in a global store) so each scene
@@ -285,9 +289,11 @@ export class PanelWrangler {
         return false;
       }
 
+      const root = getProjectModel().root;
       return (
         existing.domain !== snapshot.domain ||
-        existing.projectUuid !== snapshot.projectUuid
+        !root ||
+        !findProjectModelInProject(root, existing.projectUuid)
       );
     });
 
@@ -371,13 +377,21 @@ export class PanelWrangler {
       return undefined;
     }
 
+    const sceneProject = Array.from(walkProjectModels(project)).find(
+      (projectModel) =>
+        projectModel.scenes?.some((scene) => scene.uuid === model.uuid)
+    );
+    if (!sceneProject) {
+      return undefined;
+    }
+
     const sceneName = model.simple_name || model.uuid.slice(0, 8);
     const sceneRef: LoadedSceneRef = {
       width: model.width,
       height: model.height,
       domain,
-      projectUuid: project.uuid,
-      projectName: project.simple_name,
+      projectUuid: sceneProject.uuid,
+      projectName: sceneProject.simple_name,
       uuid: model.uuid,
       name: sceneName,
     };
@@ -386,8 +400,8 @@ export class PanelWrangler {
       id: toSceneTabId(model.uuid),
       title: sceneName,
       domain,
-      projectUuid: project.uuid,
-      projectName: project.simple_name,
+      projectUuid: sceneProject.uuid,
+      projectName: sceneProject.simple_name,
       uuid: model.uuid,
     };
 

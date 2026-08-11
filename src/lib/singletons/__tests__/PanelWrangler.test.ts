@@ -121,6 +121,27 @@ describe('PanelWrangler', () => {
     });
   });
 
+  it('keeps scenes from a subproject open with their owning project metadata', () => {
+    const rootScene = makeScene('scene-root', 'Root Scene');
+    const subprojectScene = makeScene('scene-child', 'Child Scene');
+    const project = setProject('CONTROLS', 'ProjectA', [rootScene]);
+    const subproject = new ProjectModel({
+      uuid: 'project-child',
+      simple_name: 'Child Project',
+    });
+    subproject.scenes = [subprojectScene];
+    project.subprojects = [subproject];
+
+    openScene(rootScene);
+    openScene(subprojectScene);
+
+    expect(wrangler.getSnapshot().center.tabs).toHaveLength(2);
+    expect(wrangler.getSceneTab('scene:scene-child')).toMatchObject({
+      projectUuid: 'project-child',
+      projectName: 'Child Project',
+    });
+  });
+
   it('reuses the existing SceneControllerRegistry when setContent targets the same scene', () => {
     const tabId = 'scene:scene-a';
     const sceneRef = {

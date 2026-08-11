@@ -1,4 +1,5 @@
-import { SceneModel } from '@/karabo/common/scenemodel/api';
+import { findSceneModelInProject } from '@/karabo/common/project/api';
+import { type SceneModel } from '@/karabo/common/scenemodel/api';
 import { getProjectModel } from '@/lib/singletons/api';
 import { openSceneInWorkspace } from './openSceneInWorkspace';
 
@@ -10,11 +11,12 @@ export function sceneUuidFromLinkTarget(target: string): string {
 export function findSceneModelInCurrentProject(
   uuid: string
 ): SceneModel | undefined {
-  const scenes = getProjectModel().root?.scenes ?? [];
-  return scenes.find(
-    (scene): scene is SceneModel =>
-      scene instanceof SceneModel && scene.uuid === uuid
-  );
+  const root = getProjectModel().root;
+  if (!root) {
+    return;
+  }
+
+  return findSceneModelInProject(root, uuid);
 }
 
 export function openSceneLinkInWorkspace(target: string): void {

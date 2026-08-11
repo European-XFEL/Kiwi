@@ -143,6 +143,31 @@ describe('startSceneFromRoute', () => {
     expect(openSceneInWorkspace).toHaveBeenCalledWith({ model: targetScene });
   });
 
+  it('opens a nested subproject scene using its project URL', async () => {
+    const scene = makeScene('scene-child', 'Child Scene');
+    const subproject = makeProject('project-child', 'Child Project');
+    subproject.scenes = [scene];
+
+    const project = makeProject('project-root', 'Root Project');
+    project.scenes = [];
+    project.subprojects = [subproject];
+    project.initialized = true;
+    mockProjectModelState.domain = 'CONTROLS';
+    mockProjectModelState.root = project;
+
+    const handle = startSceneFromRoute({
+      host: 'host-a',
+      port: 44444,
+      domain: 'CONTROLS',
+      projectUuid: 'project-child',
+      sceneUuid: 'scene-child',
+    });
+    await handle.promise;
+
+    expect(mockSetRoot).toHaveBeenCalledWith('CONTROLS', project);
+    expect(openSceneInWorkspace).toHaveBeenCalledWith({ model: scene });
+  });
+
   it('creates an abortable scene route load handle', async () => {
     const handle = startSceneFromRoute({
       host: 'host-a',

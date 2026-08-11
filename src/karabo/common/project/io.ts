@@ -9,7 +9,7 @@ import {
 } from './const';
 
 export const _PROJECT_ITEM_TYPES: Record<string, any> = {
-  // subprojects: ProjectModel,
+  subprojects: ProjectModel,
   scenes: SceneModel,
 };
 
