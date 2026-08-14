@@ -40,7 +40,7 @@ function* _walk_project_object(obj) {
       yield scene;
     }
     for (const project of obj.subprojects) {
-      yield project;
+      yield* _walk_project_object(project);
     }
   }
 }
