@@ -8,10 +8,13 @@ import { getQFontTextStyle } from '@/features/controllers/api';
 // Label
 // ----------------------------------------------------------------------------
 
+// Qt alignment bit flags, not an ordinal left/center/right enum:
+// Qt::AlignLeft = 0x1, Qt::AlignRight = 0x2, Qt::AlignHCenter = 0x4.
+// The gap at 3 is what distinguishes the two; do not renumber these.
 const ALIGNH_MAP: Record<1 | 2 | 4, React.CSSProperties['justifyContent']> = {
   1: 'flex-start',
-  2: 'center',
-  4: 'flex-end',
+  2: 'flex-end',
+  4: 'center',
 };
 
 const Label: React.FC<{ model: LabelModel }> = ({ model }) => {
