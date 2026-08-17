@@ -8,14 +8,18 @@ export type ProjectCacheItem = {
 // The ProjectDBCache to store project data in a simple key-value store.
 
 export class ProjectDBCache {
-  static readonly KEY_PREFIX = 'kiwi:project-db-cache:';
-
-  constructor(private readonly storage: Storage = sessionStorage) {}
+  private readonly cache = new Map<string, Map<string, string>>();
 
   public flush(): void {}
 
   public store(domain: string, uuid: string, data: string): void {
-    this.storage.setItem(this.key(domain, uuid), data);
+    let domainCache = this.cache.get(domain);
+    if (!domainCache) {
+      domainCache = new Map<string, string>();
+      this.cache.set(domain, domainCache);
+    }
+
+    domainCache.set(uuid, data);
   }
 
   public retrieve(
@@ -23,54 +27,10 @@ export class ProjectDBCache {
     uuid: string,
     _existing?: unknown
   ): string | null {
-    return this.storage.getItem(this.key(domain, uuid));
+    return this.cache.get(domain)?.get(uuid) ?? null;
   }
 
   public get_available_domains(): string[] {
-    const domains = new Set<string>();
-
-    for (const key of this.cacheKeys()) {
-      const parts = this.parseKey(key);
-      if (parts) {
-        domains.add(parts.domain);
-      }
-    }
-
-    return Array.from(domains);
-  }
-
-  private key(domain: string, uuid: string): string {
-    return `${ProjectDBCache.KEY_PREFIX}${encodeURIComponent(
-      domain
-    )}:${encodeURIComponent(uuid)}`;
-  }
-
-  private parseKey(key: string): { domain: string; uuid: string } | null {
-    if (!key.startsWith(ProjectDBCache.KEY_PREFIX)) {
-      return null;
-    }
-
-    const parts = key.slice(ProjectDBCache.KEY_PREFIX.length).split(':');
-    if (parts.length !== 2) {
-      return null;
-    }
-
-    return {
-      domain: decodeURIComponent(parts[0]),
-      uuid: decodeURIComponent(parts[1]),
-    };
-  }
-
-  private cacheKeys(): string[] {
-    const keys: string[] = [];
-
-    for (let i = 0; i < this.storage.length; i++) {
-      const key = this.storage.key(i);
-      if (key?.startsWith(ProjectDBCache.KEY_PREFIX)) {
-        keys.push(key);
-      }
-    }
-
-    return keys;
+    return Array.from(this.cache.keys());
   }
 }

@@ -1,10 +1,6 @@
 import { ProjectDBCache } from '../cache';
 
 describe('ProjectDBCache', () => {
-  beforeEach(() => {
-    sessionStorage.clear();
-  });
-
   it('stores and retrieves XML by domain and uuid', () => {
     const cache = new ProjectDBCache();
     const xml = '<xml item_type="scene" simple_name="Main" />';
@@ -14,6 +10,17 @@ describe('ProjectDBCache', () => {
     expect(cache.retrieve('FXE', 'scene-1')).toBe(xml);
     expect(cache.retrieve('FXE', 'missing')).toBeNull();
     expect(cache.get_available_domains()).toEqual(['FXE']);
+  });
+
+  it('keeps cached data in its own memory', () => {
+    const cache = new ProjectDBCache();
+    const otherCache = new ProjectDBCache();
+
+    cache.store('FXE', 'scene-1', '<xml />');
+
+    expect(otherCache.retrieve('FXE', 'scene-1')).toBeNull();
+    expect(sessionStorage).toHaveLength(0);
+    expect(localStorage).toHaveLength(0);
   });
 
   it('lists cached project metadata for one item type', () => {
