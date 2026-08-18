@@ -3,7 +3,7 @@ import { applyConfiguration, DeviceProxy } from '@/lib/binding/api';
 
 export class SystemTopology {
   public _system_hash: Hash | null = null;
-  private devices = new Map<string, DeviceProxy>();
+  protected devices = new Map<string, DeviceProxy>();
 
   public constructor() {}
 
