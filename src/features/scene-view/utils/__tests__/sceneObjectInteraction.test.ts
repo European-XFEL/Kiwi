@@ -1,26 +1,11 @@
-import type {
-  SceneControllerRecord,
-  SceneControllerRegistry,
-} from '../../contexts/SceneControllerRegistryContext';
+import type { SceneControllerRecord } from '../../contexts/SceneControllerRegistryContext';
+import { createSceneControllerRegistryMock } from '@/testing';
 import {
   getSceneObjectIdFromPoint,
   getScenePointFromPointer,
   getSceneRectForObject,
   resolveSceneObjectInteraction,
 } from '../sceneObjectInteraction';
-
-function makeRegistry(
-  controller: SceneControllerRecord | undefined
-): SceneControllerRegistry {
-  return {
-    registerController: jest.fn(),
-    unregisterController: jest.fn(),
-    getController: jest.fn(() => controller),
-    getDirtyProxies: jest.fn(() => []),
-    hasDirtyProxies: jest.fn(() => false),
-    dispose: jest.fn(),
-  };
-}
 
 function setRect(
   element: Element,
@@ -114,7 +99,7 @@ describe('scene object interaction utilities', () => {
       model: {} as SceneControllerRecord['model'],
       ctx: {} as SceneControllerRecord['ctx'],
     };
-    const registry = makeRegistry(controller);
+    const registry = createSceneControllerRegistryMock(controller);
 
     const interaction = resolveSceneObjectInteraction({
       clientX: 30,

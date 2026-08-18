@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import { DeviceProxy, PropertyProxy } from '@/lib/binding/api';
-import { SingletonContext } from '@/testing';
+import { PropertyProxy } from '@/lib/binding/api';
+import { createMockSystemTopology, SingletonContext } from '@/testing';
 
 const mockUseContainer = jest.fn();
 const mockOverlaySpy = jest.fn();
@@ -34,30 +34,7 @@ jest.mock('@/features/scene-view/components/widgets/ControllerOverlay', () => {
 
 import { ControllerContainer } from '../widgets/ControllerContainer';
 
-type MockDevice = DeviceProxy & {
-  stopMonitoring: jest.Mock;
-};
-
-const makeTopology = () => {
-  const devices = new Map<string, MockDevice>();
-
-  const getDevice = jest.fn((deviceId: string) => {
-    let device = devices.get(deviceId);
-    if (!device) {
-      const stopMonitoring = jest.fn();
-      device = new DeviceProxy(deviceId) as MockDevice;
-      device.stopMonitoring = stopMonitoring;
-      jest.spyOn(device, 'addMonitor').mockReturnValue(stopMonitoring);
-      devices.set(deviceId, device);
-    }
-    return device;
-  });
-
-  return {
-    devices,
-    topology: { getDevice },
-  };
-};
+const makeTopology = createMockSystemTopology;
 
 describe('ControllerContainer integration', () => {
   beforeEach(() => {
@@ -73,7 +50,7 @@ describe('ControllerContainer integration', () => {
   });
 
   it('owns proxies, derives controller context, passes ctx to the widget, and drives the overlay from the same proxies list', async () => {
-    const { devices, topology } = makeTopology();
+    const topology = makeTopology();
     const disposeSpy = jest.spyOn(PropertyProxy.prototype, 'dispose');
     let lastCtx: any;
 
@@ -112,8 +89,12 @@ describe('ControllerContainer integration', () => {
 
       expect(topology.getDevice).toHaveBeenCalledWith('DEVICE_A');
       expect(topology.getDevice).toHaveBeenCalledWith('DEVICE_B');
-      expect(devices.get('DEVICE_A')?.addMonitor).toHaveBeenCalledTimes(1);
-      expect(devices.get('DEVICE_B')?.addMonitor).toHaveBeenCalledTimes(1);
+      expect(topology.getDevice('DEVICE_A')?.addMonitor).toHaveBeenCalledTimes(
+        1
+      );
+      expect(topology.getDevice('DEVICE_B')?.addMonitor).toHaveBeenCalledTimes(
+        1
+      );
 
       expect(lastCtx.proxy).toBe(lastCtx.proxies[0]);
       expect(lastCtx.proxy.root.deviceId).toBe('DEVICE_A');
@@ -126,8 +107,12 @@ describe('ControllerContainer integration', () => {
 
       unmount();
 
-      expect(devices.get('DEVICE_A')?.stopMonitoring).toHaveBeenCalledTimes(1);
-      expect(devices.get('DEVICE_B')?.stopMonitoring).toHaveBeenCalledTimes(1);
+      expect(
+        topology.getDevice('DEVICE_A')?.stopMonitoring
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        topology.getDevice('DEVICE_B')?.stopMonitoring
+      ).toHaveBeenCalledTimes(1);
       expect(disposeSpy).toHaveBeenCalledTimes(2);
     });
   });

@@ -4,21 +4,9 @@ import type {
   SceneControllerRecord,
   SceneControllerRegistry,
 } from '../../contexts/SceneControllerRegistryContext';
+import { createSceneControllerRegistryMock } from '@/testing';
 import type { SceneObjectInteraction } from '../../utils/sceneObjectInteraction';
 import { useSceneObjectInteraction } from '../useSceneObjectInteraction';
-
-function makeRegistry(
-  controller: SceneControllerRecord | undefined
-): SceneControllerRegistry {
-  return {
-    registerController: jest.fn(),
-    unregisterController: jest.fn(),
-    getController: jest.fn(() => controller),
-    getDirtyProxies: jest.fn(() => []),
-    hasDirtyProxies: jest.fn(() => false),
-    dispose: jest.fn(),
-  };
-}
 
 function Surface({
   enabled,
@@ -63,7 +51,7 @@ describe('useSceneObjectInteraction', () => {
       model: {} as SceneControllerRecord['model'],
       ctx: {} as SceneControllerRecord['ctx'],
     };
-    const registry = makeRegistry(controller);
+    const registry = createSceneControllerRegistryMock(controller);
     const onPointerDown = jest.fn();
 
     const { getByTestId } = renderSurface(registry, { onPointerDown });
@@ -81,7 +69,7 @@ describe('useSceneObjectInteraction', () => {
   it('does not invoke the callback when disabled', () => {
     const onPointerDown = jest.fn();
 
-    const { getByTestId } = renderSurface(makeRegistry(undefined), {
+    const { getByTestId } = renderSurface(createSceneControllerRegistryMock(), {
       enabled: false,
       onPointerDown,
     });

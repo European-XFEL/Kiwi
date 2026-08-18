@@ -1,36 +1,13 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 
-import { DeviceProxy, PropertyProxy } from '@/lib/binding/api';
+import { PropertyProxy } from '@/lib/binding/api';
 import { ProxyStatus } from '@/lib/binding/ProxyStatus';
-import { SingletonContext } from '@/testing';
+import { createMockSystemTopology, SingletonContext } from '@/testing';
 
 import { useProxies } from '../useProxies';
 import { useController } from '../useController';
 
-type MockDevice = DeviceProxy & {
-  stopMonitoring: jest.Mock;
-};
-
-const makeTopology = () => {
-  const devices = new Map<string, MockDevice>();
-
-  const getDevice = jest.fn((deviceId: string) => {
-    let device = devices.get(deviceId);
-    if (!device) {
-      const stopMonitoring = jest.fn();
-      device = new DeviceProxy(deviceId) as MockDevice;
-      device.stopMonitoring = stopMonitoring;
-      jest.spyOn(device, 'addMonitor').mockReturnValue(stopMonitoring);
-      devices.set(deviceId, device);
-    }
-    return device;
-  });
-
-  return {
-    devices,
-    topology: { getDevice },
-  };
-};
+const makeTopology = createMockSystemTopology;
 
 describe('useController', () => {
   afterEach(() => {
@@ -38,7 +15,7 @@ describe('useController', () => {
   });
 
   it('keeps keys[0] as the controller root even when secondary devices update', async () => {
-    const { devices, topology } = makeTopology();
+    const topology = makeTopology();
 
     await SingletonContext.run({ topology }, async () => {
       const keys = ['DEVICE_A.speed', 'DEVICE_B.temperature'];
@@ -52,7 +29,9 @@ describe('useController', () => {
       });
 
       act(() => {
-        (devices.get('DEVICE_B') as any).updateStatus(ProxyStatus.MONITORING);
+        (topology.getDevice('DEVICE_B') as any).updateStatus(
+          ProxyStatus.MONITORING
+        );
       });
 
       expect(result.current.proxy).toBe(result.current.proxies[0]);
@@ -68,7 +47,7 @@ describe('useController', () => {
   });
 
   it('starts monitoring for each property proxy and updates secondary proxy device status', async () => {
-    const { devices, topology } = makeTopology();
+    const topology = makeTopology();
     const disposeSpy = jest.spyOn(PropertyProxy.prototype, 'dispose');
 
     await SingletonContext.run({ topology }, async () => {
@@ -86,8 +65,8 @@ describe('useController', () => {
         expect(result.current.proxies[2]).toBeInstanceOf(PropertyProxy);
       });
 
-      const deviceA = devices.get('DEVICE_A');
-      const deviceB = devices.get('DEVICE_B');
+      const deviceA = topology.getDevice('DEVICE_A');
+      const deviceB = topology.getDevice('DEVICE_B');
 
       expect(deviceA?.addMonitor).toHaveBeenCalledTimes(2);
       expect(deviceB?.addMonitor).toHaveBeenCalledTimes(1);
@@ -114,10 +93,10 @@ describe('useController', () => {
   });
 
   it('captures synchronous addMonitor status changes in the initial proxy snapshot', async () => {
-    const { devices, topology } = makeTopology();
+    const topology = makeTopology();
 
     await SingletonContext.run({ topology }, async () => {
-      const deviceA = topology.getDevice('DEVICE_A') as MockDevice;
+      const deviceA = topology.getDevice('DEVICE_A');
       const stopMonitoring = jest.fn();
 
       (deviceA.addMonitor as jest.Mock).mockImplementation(() => {
@@ -141,7 +120,9 @@ describe('useController', () => {
 
       unmount();
 
-      expect(devices.get('DEVICE_A')?.addMonitor).toHaveBeenCalledTimes(1);
+      expect(topology.getDevice('DEVICE_A')?.addMonitor).toHaveBeenCalledTimes(
+        1
+      );
       expect(stopMonitoring).toHaveBeenCalledTimes(1);
     });
   });

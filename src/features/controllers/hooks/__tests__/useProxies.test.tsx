@@ -7,26 +7,11 @@ import {
   PropertyProxy,
   StringBinding,
 } from '@/lib/binding/api';
-import { SingletonContext } from '@/testing';
+import { createMockSystemTopology, SingletonContext } from '@/testing';
 
 import { useProxies } from '../useProxies';
 
-const makeTopology = () => {
-  const devices = new Map<string, DeviceProxy>();
-
-  const getDevice = jest.fn((deviceId: string) => {
-    let device = devices.get(deviceId);
-    if (!device) {
-      device = new DeviceProxy(deviceId);
-      const stop = jest.fn();
-      jest.spyOn(device, 'addMonitor').mockReturnValue(stop);
-      devices.set(deviceId, device);
-    }
-    return device;
-  });
-
-  return { devices, topology: { getDevice } };
-};
+const makeTopology = createMockSystemTopology;
 
 const makePipelineTopology = () => {
   const devices = new Map<string, DeviceProxy>();
@@ -76,7 +61,7 @@ describe('useProxies', () => {
   });
 
   it('produces one real PropertyProxy per scene key', async () => {
-    const { topology } = makeTopology();
+    const topology = makeTopology();
 
     await SingletonContext.run({ topology }, async () => {
       const { result, unmount } = renderHook(() => useProxies(['DEV.speed']));
@@ -91,7 +76,7 @@ describe('useProxies', () => {
   });
 
   it('preserves scene key order, including nested property paths', async () => {
-    const { topology } = makeTopology();
+    const topology = makeTopology();
 
     await SingletonContext.run({ topology }, async () => {
       const { result, unmount } = renderHook(() =>
@@ -111,7 +96,7 @@ describe('useProxies', () => {
   });
 
   it('disposes proxies on unmount', async () => {
-    const { topology } = makeTopology();
+    const topology = makeTopology();
     const disposeSpy = jest.spyOn(PropertyProxy.prototype, 'dispose');
 
     await SingletonContext.run({ topology }, async () => {
@@ -127,7 +112,7 @@ describe('useProxies', () => {
   });
 
   it('recreates proxies and disposes old ones when keys change', async () => {
-    const { topology } = makeTopology();
+    const topology = makeTopology();
     const disposeSpy = jest.spyOn(PropertyProxy.prototype, 'dispose');
 
     await SingletonContext.run({ topology }, async () => {
@@ -156,7 +141,7 @@ describe('useProxies', () => {
   });
 
   it('does not replace the proxies array when a device update fires with unchanged state and status', async () => {
-    const { devices, topology } = makeTopology();
+    const topology = makeTopology();
 
     await SingletonContext.run({ topology }, async () => {
       const { result, unmount } = renderHook(() => useProxies(['DEV_A.speed']));
@@ -169,7 +154,7 @@ describe('useProxies', () => {
       const proxyBefore = result.current[0];
 
       act(() => {
-        devices.get('DEV_A')!.state_update.fire(undefined);
+        topology.getDevice('DEV_A').state_update.fire(undefined);
       });
 
       expect(result.current).toBe(proxiesBefore);
