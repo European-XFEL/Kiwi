@@ -89,6 +89,7 @@ release_deploy:
   <<: [*node_image, *before_script_commands]
   variables:
     KIWI_BUILD_ARTIFACT_DIR: kiwi/tags/$CI_COMMIT_REF_NAME
+    KIWI_PUBLISH_ARTIFACT_DIR: releases/$CI_COMMIT_REF_NAME
   script:
     - yarn install --immutable
     # build bundles the application with the settings from .env.production
@@ -97,5 +98,12 @@ release_deploy:
     - tar -czf ../kiwi_$CI_COMMIT_REF_NAME.tar.gz .
     - sshpass -p "$XKIWI_PWD" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $KIWI_BUILD_UPLOAD_HOST "mkdir -p $KIWI_BUILD_UPLOAD_DIR/$KIWI_BUILD_ARTIFACT_DIR"
     - sshpass -p "$XKIWI_PWD" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ../kiwi_$CI_COMMIT_REF_NAME.tar.gz $KIWI_BUILD_UPLOAD_HOST:$KIWI_BUILD_UPLOAD_DIR/$KIWI_BUILD_ARTIFACT_DIR
+    # publish kiwi release on production web server
+    - sshpass -p "$XKIWI_PWD" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $KIWI_RELEASE_PUBLISH_HOST "mkdir -p $KIWI_RELEASE_PUBLISH_DIR/$KIWI_PUBLISH_ARTIFACT_DIR"
+    - sshpass -p "$XKIWI_PWD" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ../kiwi_$CI_COMMIT_REF_NAME.tar.gz $KIWI_RELEASE_PUBLISH_HOST:$KIWI_RELEASE_PUBLISH_DIR/$KIWI_PUBLISH_ARTIFACT_DIR
+    - sshpass -p "$XKIWI_PWD" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $KIWI_RELEASE_PUBLISH_HOST "tar -xzf $KIWI_RELEASE_PUBLISH_DIR/$KIWI_PUBLISH_ARTIFACT_DIR/kiwi_$CI_COMMIT_REF_NAME.tar.gz -C $KIWI_RELEASE_PUBLISH_DIR/$KIWI_PUBLISH_ARTIFACT_DIR"
+    - sshpass -p "$XKIWI_PWD" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $KIWI_RELEASE_PUBLISH_HOST "rm $KIWI_RELEASE_PUBLISH_DIR/$KIWI_PUBLISH_ARTIFACT_DIR/kiwi_$CI_COMMIT_REF_NAME.tar.gz"
+    - sshpass -p "$XKIWI_PWD" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $KIWI_RELEASE_PUBLISH_HOST "ln -sfn $KIWI_RELEASE_PUBLISH_DIR/$KIWI_PUBLISH_ARTIFACT_DIR $KIWI_RELEASE_PUBLISH_DIR/current"
+
   rules:
     - if: $CI_COMMIT_TAG =~ /^(\d+\.)(\d+\.)(\d+)$/
