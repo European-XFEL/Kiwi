@@ -194,6 +194,7 @@ export function getQFontTextStyle(fontSource: string): CSSProperties {
     fontSize,
     fontWeight: font.css_fontWeight,
     fontStyle: font.css_fontStyle,
+    letterSpacing: 'normal',
     textDecoration: font.css_textDecoration,
   };
 }
@@ -208,6 +209,7 @@ export function getControllerFontStyle(
     fontSize: qtPointSizeToCssPt(font_size),
     fontWeight: fontWeight,
     fontStyle: 'normal',
+    letterSpacing: 'normal',
     textDecoration: 'none',
   };
 }
