@@ -87,7 +87,9 @@ const ControllerTooltip = React.memo<ControllerTooltipProps>(
         open={isTooltipOpen}
         onOpenChange={handleTooltipOpenChange}
       >
-        <TooltipTrigger asChild>{children}</TooltipTrigger>
+        <TooltipTrigger asChild>
+          <div className="w-full h-full pointer-events-auto">{children}</div>
+        </TooltipTrigger>
         <TooltipContent
           hideArrow
           side="bottom"
