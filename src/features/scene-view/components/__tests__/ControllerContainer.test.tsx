@@ -137,4 +137,33 @@ describe('ControllerContainer', () => {
 
     expect(Renderer).toHaveBeenCalledTimes(1);
   });
+
+  it('attaches the property tooltip trigger to a DOM element', () => {
+    const { ctx, proxies } = makeControllerContext();
+    const Renderer = jest.fn(() => <div data-testid="renderer" />);
+    const model = {
+      keys: ['DEVICE_A.speed'],
+      parent_component: 'EditableApplyLaterComponent',
+    } as any;
+
+    mockUseProxies.mockReturnValue(proxies);
+    mockUseController.mockReturnValue(ctx);
+
+    render(
+      <ControllerContainer
+        width={140}
+        height={32}
+        model={model}
+        objectId="scene.0"
+        Renderer={Renderer}
+      />
+    );
+
+    const tooltipTrigger = screen
+      .getByTestId('renderer')
+      .closest('[data-slot="tooltip-trigger"]');
+
+    expect(tooltipTrigger).toBeInTheDocument();
+    expect(tooltipTrigger).toHaveClass('pointer-events-auto');
+  });
 });
