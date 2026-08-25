@@ -115,6 +115,7 @@ export function LoginPage() {
           setUserName(v);
           clearError();
         }}
+        onSubmit={() => doLogin(host, port)}
         disabled={activityStatus !== ActivityStatus.NO_ACTIVITY}
       />
     );
