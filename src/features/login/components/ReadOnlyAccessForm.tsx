@@ -5,11 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/api';
 
 export type ReadOnlyAccessFormProps = {
   onUserNameChange: (username: string) => void;
+  onSubmit: () => void;
   disabled?: boolean;
 };
 
 export default function ReadOnlyAccessForm({
   onUserNameChange,
+  onSubmit,
   disabled = false,
 }: ReadOnlyAccessFormProps) {
   const userRef = useRef<HTMLInputElement>(null);
@@ -28,6 +30,15 @@ export default function ReadOnlyAccessForm({
             id="username-al"
             ref={userRef}
             onChange={(e) => onUserNameChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (
+                e.key === 'Enter' &&
+                userRef.current?.value.trim() &&
+                !disabled
+              ) {
+                onSubmit();
+              }
+            }}
             disabled={disabled}
           />
         </div>
