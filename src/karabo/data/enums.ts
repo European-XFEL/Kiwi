@@ -122,3 +122,9 @@ export enum Encoding {
   YUV422_UYVY = 11,
   JPEG = 12,
 }
+
+export enum Capabilities {
+  PROVIDES_SCENES = 1,
+  PROVIDES_MACROS = 2,
+  PROVICES_INTERFACES = 4,
+}

@@ -75,8 +75,11 @@ export function NavBar() {
             {activeLoadedSceneRef ? (
               <div className="max-w-full min-w-0 overflow-hidden">
                 <SceneBreadcrumb
-                  domain={activeLoadedSceneRef.domain}
-                  projectName={activeLoadedSceneRef.projectName}
+                  domain={activeLoadedSceneRef.domain ?? ''}
+                  projectName={
+                    activeLoadedSceneRef.projectName ??
+                    activeLoadedSceneRef.deviceId!
+                  }
                   sceneName={activeLoadedSceneRef.name}
                 />
               </div>
@@ -134,8 +137,11 @@ export function NavBar() {
                   <Separator orientation="vertical" className="h-6 shrink-0" />
                   <div className="min-w-0 flex-1 overflow-hidden">
                     <SceneBreadcrumb
-                      domain={activeLoadedSceneRef.domain}
-                      projectName={activeLoadedSceneRef.projectName}
+                      domain={activeLoadedSceneRef.domain ?? ''}
+                      projectName={
+                        activeLoadedSceneRef.projectName ??
+                        activeLoadedSceneRef.deviceId!
+                      }
                       sceneName={activeLoadedSceneRef.name}
                     />
                   </div>

@@ -21,7 +21,10 @@ export { filterByQuery } from './utils/filterByQuery';
 // Route / scene-loading helpers
 export { startSceneFromRoute } from './utils/openSceneFromRoute';
 export type { SceneRouteLoadHandle } from './utils/openSceneFromRoute';
-export { openSceneLinkInWorkspace } from './utils/openSceneLinkInWorkspace';
+export {
+  openSceneLinkInWorkspace,
+  openDeviceSceneLinkInWorkspace,
+} from './utils/openSceneLinkInWorkspace';
 
 // Types
 export type {

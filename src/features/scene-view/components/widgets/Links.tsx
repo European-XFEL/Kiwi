@@ -10,7 +10,12 @@ import {
 import type { ControllerContainerContext } from './ControllerContainer';
 import { registerRenderer } from '../../renderRegistry';
 import { getQFontTextStyle } from '@/features/controllers/api';
-import { openSceneLinkInWorkspace } from '@/features/project/api';
+import {
+  openSceneLinkInWorkspace,
+  openDeviceSceneLinkInWorkspace,
+} from '@/features/project/api';
+
+import { splitKaraboKeys } from '@/lib/binding/utils/splitKaraboKeys';
 
 // useSceneNavigate
 // ----------------------------------------------------------------------------
@@ -26,6 +31,24 @@ function useSceneNavigate(
 
     openSceneLinkInWorkspace(target);
   }, [target, title]);
+}
+
+// useDeviceSceneNavigate
+// ----------------------------------------------------------------------------
+// Resolves links to device provided scenes from the device ID and the scene
+// name before opening a scene.
+
+function useDeviceSceneNavigate(
+  deviceId: string,
+  sceneName: string,
+  _targetWindow: 'mainwin' | 'dialog',
+  title?: string
+) {
+  return React.useCallback(async () => {
+    if (!deviceId || !sceneName) return;
+
+    await openDeviceSceneLinkInWorkspace(deviceId, sceneName);
+  }, [deviceId, sceneName, title]);
 }
 
 // LinkButton — shared layout for all link types
@@ -95,13 +118,18 @@ const DeviceSceneLink: React.FC<{
   ctx?: ControllerContainerContext;
 }> = ({ model, ctx }) => {
   const scenes = ctx?.proxy?.value;
-  const firstScene: string =
+  const firstSceneName: string =
     Array.isArray(scenes) && scenes.length > 0
       ? String(scenes[0])
       : typeof scenes === 'string' && scenes
         ? scenes
         : '';
-  const go = useSceneNavigate(firstScene, model.target_window);
+  const { deviceId } = splitKaraboKeys(model.keys[0]);
+  const go = useDeviceSceneNavigate(
+    deviceId,
+    firstSceneName,
+    model.target_window
+  );
   return (
     <LinkButton
       text={model.text}
@@ -109,8 +137,8 @@ const DeviceSceneLink: React.FC<{
       foreground={model.foreground}
       background={model.background}
       frame_width={model.frame_width}
-      title={firstScene}
-      onClick={firstScene ? go : undefined}
+      title={firstSceneName}
+      onClick={firstSceneName ? go : undefined}
       Icon={Cpu}
       iconColor="#0ea5e9"
     />

@@ -135,6 +135,13 @@ export interface SceneTabSnapshot {
   uuid: string;
 }
 
+export interface DeviceSceneTabSnapshot {
+  id: PanelTabId;
+  title: string;
+  deviceId: string;
+  sceneName: string;
+}
+
 export interface WorkspaceSessionSnapshot {
   version: 1;
   center: {

@@ -1,7 +1,15 @@
 import { findSceneModelInProject } from '@/karabo/common/project/api';
-import { type SceneModel } from '@/karabo/common/scenemodel/api';
+import {
+  DeviceSceneModel,
+  type SceneModel,
+} from '@/karabo/common/scenemodel/api';
+import { showMessageBox } from '@/lib/messagebox';
+import { retrieveDeviceScene } from '@/lib/request';
 import { getProjectModel } from '@/lib/singletons/api';
-import { openSceneInWorkspace } from './openSceneInWorkspace';
+import {
+  openDeviceSceneInWorkspace,
+  openSceneInWorkspace,
+} from './openSceneInWorkspace';
 
 export function sceneUuidFromLinkTarget(target: string): string {
   const colonIdx = target.indexOf(':');
@@ -31,4 +39,22 @@ export function openSceneLinkInWorkspace(target: string): void {
   }
 
   openSceneInWorkspace({ model });
+}
+
+export async function openDeviceSceneLinkInWorkspace(
+  deviceId: string,
+  sceneName: string
+): Promise<void> {
+  console.log(`Opening scene "${sceneName}" of device "${deviceId}" ...`);
+  const result = await retrieveDeviceScene(deviceId, sceneName);
+  if (typeof result === 'string') {
+    showMessageBox({
+      variant: 'error',
+      title: 'Could not open device scene',
+      msg: result,
+    });
+    return;
+  }
+  const model = result as DeviceSceneModel;
+  openDeviceSceneInWorkspace({ model });
 }

@@ -81,8 +81,8 @@ export default function WorkspaceHeader({
             {runtime.activeScene ? (
               <div className="max-w-full min-w-0 overflow-hidden">
                 <SceneBreadcrumb
-                  domain={runtime.activeScene.domain}
-                  projectName={runtime.activeScene.projectName}
+                  domain={runtime.activeScene.domain ?? ''}
+                  projectName={runtime.activeScene.projectName ?? ''}
                   sceneName={runtime.activeScene.name}
                 />
               </div>
@@ -142,8 +142,8 @@ export default function WorkspaceHeader({
                   <Separator orientation="vertical" className="h-6 shrink-0" />
                   <div className="min-w-0 flex-1 overflow-hidden">
                     <SceneBreadcrumb
-                      domain={runtime.activeScene.domain}
-                      projectName={runtime.activeScene.projectName}
+                      domain={runtime.activeScene.domain ?? ''}
+                      projectName={runtime.activeScene.projectName ?? ''}
                       sceneName={runtime.activeScene.name}
                     />
                   </div>

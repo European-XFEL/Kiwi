@@ -5,6 +5,7 @@
 import type {
   BaseLayoutModel,
   BaseLinkModel,
+  BaseSceneLinkModel,
   BaseSceneObjectData,
   BaseShapeObjectData,
   BaseWidgetObjectData,
@@ -123,6 +124,15 @@ export function readBaseLinkData(element: Element, model: BaseLinkModel): void {
   model.foreground = toStr(krbAttr(element, 'foreground'));
   model.background = toStr(krbAttr(element, 'background'), model.background);
   model.frame_width = toNum(krbAttr(element, 'frameWidth'), model.frame_width);
+}
+
+export function readBaseSceneLinkData(
+  element: Element,
+  model: BaseSceneLinkModel
+): void {
+  readBaseLinkData(element, model);
+  const tw = toStr(krbAttr(element, 'target'));
+  if (tw == 'mainwin' || tw === 'dialog') model.target = tw;
 }
 
 export function attributesToRecord(element: Element): Record<string, string> {

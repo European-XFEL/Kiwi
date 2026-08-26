@@ -180,6 +180,10 @@ export abstract class BaseLinkModel extends BaseWidgetObjectData {
   frame_width = 1;
 }
 
+export abstract class BaseSceneLinkModel extends BaseLinkModel {
+  target_window: 'mainwin' | 'dialog' = 'dialog';
+}
+
 // XMLElementModel
 //
 

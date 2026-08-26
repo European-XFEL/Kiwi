@@ -36,7 +36,7 @@ const LandingPage: React.FC = () => {
   const handleRemoveScene = (recentScene: RecentSceneInfo) => {
     if (topic) {
       removeRecentScene(topic, {
-        domain: recentScene.domain,
+        domain: recentScene.domain ?? '',
         uuid: recentScene.uuid,
       });
     }

@@ -103,19 +103,19 @@ export class Manager {
     return token;
   }
 
-  public handle_requestGeneric(
-    success: boolean,
-    request: Hash,
-    reply: Hash,
-    reason: string = ''
-  ): void {
+  public handle_requestGeneric(response: Hash): void {
     /**
      * Handle the requestGeneric reply from the GUI server.
      *
      * Generic requests are supposed to have a `token` in the input arguments.
      * Unfolding the `token` should provide a request handler.
      */
-    const token = request.get('token');
+    const success = response.getValue('success');
+    const reply = response.get('reply');
+    const reason = response.get('reason');
+    const request = response.get('request');
+
+    const token = request.getValue('token');
     const handler = this._requestHandlers.get(token);
     if (!handler) {
       return;

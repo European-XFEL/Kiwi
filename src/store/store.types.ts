@@ -18,9 +18,10 @@ export interface SceneSize {
 export interface LoadedSceneRef {
   height: number;
   width: number;
-  domain: string;
-  projectUuid: string;
-  projectName: string;
+  domain?: string; // defined for project scenes
+  projectUuid?: string; // defined for project scenes
+  projectName?: string; // defined for project scenes
+  deviceId?: string; // defined for device-provided scenes
   uuid: string;
   name: string;
 }

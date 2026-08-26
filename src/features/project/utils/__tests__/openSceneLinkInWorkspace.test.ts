@@ -1,15 +1,41 @@
 import { ProjectModel } from '@/karabo/common/project/api';
+import { DeviceSceneModel, readScene } from '@/karabo/common/api';
 import { SceneModel } from '@/karabo/common/scenemodel/api';
+import { showMessageBox } from '@/lib/messagebox';
+import { retrieveDeviceScene } from '@/lib/request';
 import { getProjectModel } from '@/lib/singletons/api';
 import {
+  openDeviceSceneLinkInWorkspace,
   openSceneLinkInWorkspace,
   sceneUuidFromLinkTarget,
 } from '../openSceneLinkInWorkspace';
-import { openSceneInWorkspace } from '../openSceneInWorkspace';
+import {
+  openDeviceSceneInWorkspace,
+  openSceneInWorkspace,
+} from '../openSceneInWorkspace';
 
 jest.mock('../openSceneInWorkspace', () => ({
+  openDeviceSceneInWorkspace: jest.fn(),
   openSceneInWorkspace: jest.fn(),
 }));
+
+jest.mock('@/lib/request', () => ({
+  retrieveDeviceScene: jest.fn(),
+}));
+
+jest.mock('@/lib/messagebox', () => ({
+  showMessageBox: jest.fn(),
+}));
+
+function makeDeviceSceneModel() {
+  const sceneModel = readScene(
+    `<svg width="100" height="100" version="1.1"></svg>`
+  );
+  const model = new DeviceSceneModel(sceneModel);
+  model.simple_name = 'Device Scene';
+  model.deviceId = 'device-1';
+  return model;
+}
 
 describe('openSceneLinkInWorkspace', () => {
   beforeEach(() => {
@@ -102,5 +128,38 @@ describe('openSceneLinkInWorkspace', () => {
     openSceneLinkInWorkspace('scene-b');
 
     expect(openSceneInWorkspace).not.toHaveBeenCalled();
+  });
+});
+
+describe('openDeviceSceneLinkInWorkspace', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('opens the retrieved device scene model', async () => {
+    const model = makeDeviceSceneModel();
+    jest.mocked(retrieveDeviceScene).mockResolvedValue(model);
+
+    await openDeviceSceneLinkInWorkspace('device-1', 'scene-a');
+
+    expect(retrieveDeviceScene).toHaveBeenCalledWith('device-1', 'scene-a');
+    expect(openDeviceSceneInWorkspace).toHaveBeenCalledWith({ model });
+    expect(showMessageBox).not.toHaveBeenCalled();
+  });
+
+  it('shows an error message when retrieving the device scene fails', async () => {
+    jest
+      .mocked(retrieveDeviceScene)
+      .mockResolvedValue('Device "device-1" not online.');
+
+    await openDeviceSceneLinkInWorkspace('device-1', 'scene-a');
+
+    expect(retrieveDeviceScene).toHaveBeenCalledWith('device-1', 'scene-a');
+    expect(showMessageBox).toHaveBeenCalledWith({
+      variant: 'error',
+      title: 'Could not open device scene',
+      msg: 'Device "device-1" not online.',
+    });
+    expect(openDeviceSceneInWorkspace).not.toHaveBeenCalled();
   });
 });

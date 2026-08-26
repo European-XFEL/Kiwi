@@ -48,6 +48,10 @@ function readProjects(hash: Hash): ProjectModel[] {
     .sort((a, b) => a.simple_name.localeCompare(b.simple_name));
 }
 
+// TODO: Derive a breadcrumb tailored for device-provided scenes. For now,
+// the user of the breadcrumb (the NavBar), provides empty domains and
+// the deviceId as a replacement for the project name for device-provided
+// scenes breadcrumbs
 export default function SceneBreadcrumb({
   domain,
   projectName,

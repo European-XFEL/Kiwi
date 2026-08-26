@@ -23,6 +23,14 @@ export class SceneModel extends BaseSceneObjectData {
   children: BaseSceneObjectData[] = [];
 }
 
+export class DeviceSceneModel extends SceneModel {
+  constructor(init?: Partial<DeviceSceneModel>) {
+    super();
+    Object.assign(this, init);
+  }
+  deviceId = '';
+}
+
 /** Locate the svg root in the parsed XML document. */
 function extractSvgRoot(document: Document): Element | undefined {
   const root = document.documentElement;
