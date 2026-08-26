@@ -1,4 +1,4 @@
-import { Hash, Schema, Timestamp } from '@/karabo/data/api';
+import { Hash, HashAttributes, Schema, Timestamp } from '@/karabo/data/api';
 import { applyConfiguration, DeviceProxy } from '@/lib/binding/api';
 
 export class SystemTopology {
@@ -25,6 +25,14 @@ export class SystemTopology {
       return true;
     }
     return false;
+  };
+
+  public getDeviceInstanceInfo = (
+    deviceId: string
+  ): HashAttributes | undefined => {
+    const devicesHash = this._system_hash?.getValue('device') as Hash;
+    const deviceNode = devicesHash.getElement(deviceId);
+    return deviceNode?.attrs;
   };
 
   public updateTopology(hash: Hash) {

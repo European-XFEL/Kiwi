@@ -20,6 +20,7 @@ export {
   Assignment,
   AccessMode,
   ArchivePolicy,
+  Capabilities,
   NodeType,
   MetricPrefix,
   Unit,

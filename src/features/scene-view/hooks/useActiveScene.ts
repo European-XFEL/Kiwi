@@ -41,9 +41,10 @@ export interface ActiveSceneResult {
 }
 
 function fetchScene(params: SceneURLParams): SceneModel {
+  // TODO: add support for device provided scenes
   return getDbConn().getScene(
-    params.domain,
-    params.projectUuid,
+    params.domain!,
+    params.projectUuid!,
     params.sceneUuid
   );
 }
@@ -95,9 +96,12 @@ export function useActiveScene(): ActiveSceneResult {
         if (isCancelled()) return;
 
         const rootProject = getProjectModel().root;
+        // TODO: add support for device provided scenes
         const projectName = rootProject
-          ? (findProjectModelInProject(rootProject, sceneParams.projectUuid)
-              ?.simple_name ?? rootProject.simple_name)
+          ? (findProjectModelInProject(
+              rootProject,
+              sceneParams.projectUuid ?? ''
+            )?.simple_name ?? rootProject.simple_name)
           : '';
 
         const nextLoadedSceneRef: LoadedSceneRef = {
@@ -115,8 +119,8 @@ export function useActiveScene(): ActiveSceneResult {
         if (topic && projectName) {
           const recentScene: TopicRecentSceneInfo = {
             topic,
-            domain: sceneParams.domain,
-            projectUuid: sceneParams.projectUuid,
+            domain: sceneParams.domain!,
+            projectUuid: sceneParams.projectUuid!,
             uuid: sceneModel.uuid,
             name: sceneModel.simple_name,
             projectName,

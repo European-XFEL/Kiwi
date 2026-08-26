@@ -11,6 +11,7 @@ import {
   unregister_for_broadcasts,
 } from '@/lib/events';
 import type {
+  DeviceSceneTabSnapshot,
   PanelSlot,
   PanelState,
   PanelTab,
@@ -21,6 +22,7 @@ import {
   walkProjectModels,
 } from '@/karabo/common/project/api';
 import { getProjectModel } from './api';
+import { DeviceSceneModel } from '@/karabo/common/scenemodel/SceneModel';
 
 // Per-tab scene state. fitMode lives here (not in a global store) so each scene
 // tab remembers its own zoom-to-fit choice independently of the others.
@@ -70,6 +72,14 @@ function toPanelTab(snapshot: SceneTabSnapshot): PanelTab {
   };
 }
 
+function toDeviceScenePanelTab(snapshot: DeviceSceneTabSnapshot): PanelTab {
+  return {
+    id: snapshot.id,
+    title: `${snapshot.deviceId}|${snapshot.sceneName}`,
+    closable: true,
+  };
+}
+
 // Scene controller registry reuse is keyed by scene uuid, matching the tab id
 // (`scene:${uuid}`). A same-uuid content update should keep the existing
 // registry and tab-local state even if domain/project metadata changes.
@@ -89,12 +99,14 @@ export class PanelWrangler {
 
   private content = new Map<string, SceneTabContent>();
   private sceneTabs = new Map<string, SceneTabSnapshot>();
+  private deviceSceneTabs = new Map<string, DeviceSceneTabSnapshot>();
   private listeners = new Set<() => void>();
   private readonly eventMap: KaraboEventMap;
 
   public constructor() {
     this.eventMap = {
       [KaraboEvent.OpenScene]: this.onEventOpenScene,
+      [KaraboEvent.OpenDeviceScene]: this.onEventOpenDeviceScene,
     };
 
     register_for_broadcasts(this.eventMap);
@@ -125,7 +137,9 @@ export class PanelWrangler {
     return this.content.get(tabId);
   }
 
-  getSceneTab(tabId: string): SceneTabSnapshot | undefined {
+  getSceneTab(
+    tabId: string
+  ): SceneTabSnapshot | DeviceSceneTabSnapshot | undefined {
     return this.sceneTabs.get(tabId);
   }
 
@@ -347,6 +361,38 @@ export class PanelWrangler {
     });
   }
 
+  private openDeviceScene(
+    snapshot: DeviceSceneTabSnapshot,
+    content: SceneTabContent
+  ): void {
+    const center = this.state.center;
+    const nextTab = toDeviceScenePanelTab(snapshot);
+
+    this.deviceSceneTabs.set(snapshot.id, snapshot);
+    this.content.set(snapshot.id, this.resolveTabContent(snapshot.id, content));
+    const index = center.tabs.findIndex((tab) => tab.id === snapshot.id);
+
+    let tabs: PanelTab[];
+    if (index !== -1) {
+      tabs = center.tabs.map((tab, tabIndex) =>
+        tabIndex === index ? nextTab : tab
+      );
+    } else if (this.isHomeOnly()) {
+      tabs = [nextTab];
+    } else {
+      tabs = [...center.tabs, nextTab];
+    }
+
+    this.commit({
+      ...this.state,
+      center: {
+        ...center,
+        tabs,
+        activeTabId: snapshot.id,
+      },
+    });
+  }
+
   private commit(nextState: typeof this.state): void {
     this.state = nextState;
     this.syncBrowserURL();
@@ -412,6 +458,36 @@ export class PanelWrangler {
     };
   }
 
+  private createDeviceSceneOpenData(model: DeviceSceneModel):
+    | {
+        snapshot: DeviceSceneTabSnapshot;
+        content: SceneTabContent;
+        sceneRef: LoadedSceneRef;
+      }
+    | undefined {
+    const sceneName = model.simple_name || model.uuid.slice(0, 8);
+    const sceneRef: LoadedSceneRef = {
+      width: model.width,
+      height: model.height,
+      uuid: model.uuid,
+      deviceId: model.deviceId,
+      name: sceneName,
+    };
+
+    const snapshot: DeviceSceneTabSnapshot = {
+      id: toSceneTabId(model.uuid),
+      title: sceneName,
+      deviceId: model.deviceId,
+      sceneName: sceneName,
+    };
+
+    return {
+      snapshot,
+      sceneRef,
+      content: { sceneRef, sceneModel: model },
+    };
+  }
+
   private onEventOpenScene = (data: Hash): void => {
     const model = data.getValue<SceneModel>('model');
 
@@ -424,19 +500,31 @@ export class PanelWrangler {
     this.openScene(sceneData.snapshot, sceneData.content);
   };
 
+  private onEventOpenDeviceScene = (data: Hash): void => {
+    const model = data.getValue<DeviceSceneModel>('model');
+    const deviceSceneData = this.createDeviceSceneOpenData(model);
+    if (!deviceSceneData) {
+      return;
+    }
+    this.openDeviceScene(deviceSceneData.snapshot, deviceSceneData.content);
+  };
+
   private recordRecentScene(sceneRef: LoadedSceneRef): void {
     const topic = useGlobalStore.getState().sessionInfo?.guiServerTopic;
     if (!topic) {
       return;
     }
 
+    // NOTE: Only project scenes are currently stored in the list of recently
+    //       used scenes - the non-null assertion operators should not
+    //       trigger any assertion violation at runtime.
     useRecentStore.getState().setRecentScene({
       topic,
-      domain: sceneRef.domain,
-      projectUuid: sceneRef.projectUuid,
+      domain: sceneRef.domain!,
+      projectUuid: sceneRef.projectUuid!,
       uuid: sceneRef.uuid,
       name: sceneRef.name,
-      projectName: sceneRef.projectName,
+      projectName: sceneRef.projectName!,
     });
   }
 

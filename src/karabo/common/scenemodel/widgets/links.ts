@@ -2,21 +2,20 @@
  * Link widget models — scene navigation and web links.
  */
 
-import { BaseLinkModel } from '../bases';
+import { BaseLinkModel, BaseSceneLinkModel } from '../bases';
 import { registerReader } from '../Registry';
-import { krbAttr, readBaseLinkData, toStr } from '../util';
+import { readBaseLinkData, readBaseSceneLinkData } from '../util';
 
 // DeviceSceneLink
 // ----------------------------------------------------------------------------
 
-export class DeviceSceneLinkModel extends BaseLinkModel {
+export class DeviceSceneLinkModel extends BaseSceneLinkModel {
   klass = 'DeviceSceneLink';
-  target_window: 'mainwin' | 'dialog' = 'dialog';
 }
 
 registerReader('DeviceSceneLink', (element) => {
   const model = new DeviceSceneLinkModel();
-  readBaseLinkData(element, model);
+  readBaseSceneLinkData(element, model);
   return model;
 });
 
@@ -24,16 +23,13 @@ registerReader('DeviceSceneLink', (element) => {
 // ----------------------------------------------------------------------------
 
 /** Links to another scene by path — opens in a tab or dialog. */
-export class SceneLinkModel extends BaseLinkModel {
+export class SceneLinkModel extends BaseSceneLinkModel {
   klass = 'SceneLink';
-  target_window: 'mainwin' | 'dialog' = 'dialog';
 }
 
 registerReader('SceneLink', (element) => {
   const model = new SceneLinkModel();
-  readBaseLinkData(element, model);
-  const tw = toStr(krbAttr(element, 'target_window'));
-  if (tw === 'mainwin' || tw === 'dialog') model.target_window = tw;
+  readBaseSceneLinkData(element, model);
   return model;
 });
 

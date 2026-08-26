@@ -19,7 +19,12 @@ export { readerRegistry } from './Registry';
 export type { ReaderFn } from './Registry';
 export { registerReader } from './Registry';
 export { readElement } from './Registry';
-export { readSceneFromSvgElement, SceneModel, readScene } from './SceneModel';
+export {
+  readSceneFromSvgElement,
+  DeviceSceneModel,
+  SceneModel,
+  readScene,
+} from './SceneModel';
 export * from './modelio';
 
 export {

@@ -6,6 +6,14 @@ export interface SceneURLParams {
   sceneUuid: string;
 }
 
+export interface DeviceSceneURLParams {
+  host: string;
+  port: number;
+  deviceId: string;
+  sceneName: string;
+}
+
+// TODO: Add support for parameters for device-provided scenes
 export function sceneParamsFromURL(
   queryParams: string
 ): SceneURLParams | undefined {
