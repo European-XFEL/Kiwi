@@ -22,7 +22,6 @@ import {
   walkProjectModels,
 } from '@/karabo/common/project/api';
 import { getProjectModel } from './api';
-import { DeviceSceneModel } from '@/karabo/common/scenemodel/SceneModel';
 
 // Per-tab scene state. fitMode lives here (not in a global store) so each scene
 // tab remembers its own zoom-to-fit choice independently of the others.
@@ -120,6 +119,7 @@ export class PanelWrangler {
     }
     this.content.clear();
     this.sceneTabs.clear();
+    this.deviceSceneTabs.clear();
   }
 
   getSnapshot = () => {
@@ -140,7 +140,7 @@ export class PanelWrangler {
   getSceneTab(
     tabId: string
   ): SceneTabSnapshot | DeviceSceneTabSnapshot | undefined {
-    return this.sceneTabs.get(tabId);
+    return this.sceneTabs.get(tabId) ?? this.deviceSceneTabs.get(tabId);
   }
 
   // Every stored tab content passes through here so a scene tab always carries
@@ -208,6 +208,7 @@ export class PanelWrangler {
       this.content.get(tabId)?.sceneControllerRegistry?.dispose();
       this.content.delete(tabId);
       this.sceneTabs.delete(tabId);
+      this.deviceSceneTabs.delete(tabId);
     }
 
     this.commit({
@@ -227,6 +228,7 @@ export class PanelWrangler {
     }
     this.content.clear();
     this.sceneTabs.clear();
+    this.deviceSceneTabs.clear();
 
     this.commit({
       left: createEmptyArea('left'),
@@ -262,6 +264,7 @@ export class PanelWrangler {
     this.content.get(tabId)?.sceneControllerRegistry?.dispose();
     this.content.delete(tabId);
     this.sceneTabs.delete(tabId);
+    this.deviceSceneTabs.delete(tabId);
 
     if (nextTabs.length === 0 && area === 'center') {
       this.commit({
@@ -458,27 +461,32 @@ export class PanelWrangler {
     };
   }
 
-  private createDeviceSceneOpenData(model: DeviceSceneModel):
+  private createDeviceSceneOpenData(
+    model: SceneModel,
+    deviceId: string
+  ):
     | {
         snapshot: DeviceSceneTabSnapshot;
         content: SceneTabContent;
         sceneRef: LoadedSceneRef;
       }
     | undefined {
-    const sceneName = model.simple_name || model.uuid.slice(0, 8);
+    // For device scenes the simple-name is in the form ${deviceId}|${sceneName}
+    // and thus unique
+    const sceneId = model.simple_name;
     const sceneRef: LoadedSceneRef = {
       width: model.width,
       height: model.height,
       uuid: model.uuid,
-      deviceId: model.deviceId,
-      name: sceneName,
+      deviceId,
+      name: sceneId,
     };
 
     const snapshot: DeviceSceneTabSnapshot = {
-      id: toSceneTabId(model.uuid),
-      title: sceneName,
-      deviceId: model.deviceId,
-      sceneName: sceneName,
+      id: sceneId,
+      title: sceneId,
+      deviceId,
+      sceneName: sceneId,
     };
 
     return {
@@ -501,8 +509,13 @@ export class PanelWrangler {
   };
 
   private onEventOpenDeviceScene = (data: Hash): void => {
-    const model = data.getValue<DeviceSceneModel>('model');
-    const deviceSceneData = this.createDeviceSceneOpenData(model);
+    const model = data.getValue<SceneModel>('model');
+    // For device scenes, the simple-name is in the form "${deviceId}|${sceneName}""
+    const deviceId = model.simple_name.substring(
+      0,
+      model.simple_name.indexOf('|')
+    );
+    const deviceSceneData = this.createDeviceSceneOpenData(model, deviceId);
     if (!deviceSceneData) {
       return;
     }
