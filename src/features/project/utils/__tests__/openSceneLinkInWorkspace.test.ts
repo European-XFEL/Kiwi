@@ -1,5 +1,5 @@
 import { ProjectModel } from '@/karabo/common/project/api';
-import { DeviceSceneModel, readScene } from '@/karabo/common/api';
+import { readScene } from '@/karabo/common/api';
 import { SceneModel } from '@/karabo/common/scenemodel/api';
 import { showMessageBox } from '@/lib/messagebox';
 import { retrieveDeviceScene } from '@/lib/request';
@@ -27,13 +27,9 @@ jest.mock('@/lib/messagebox', () => ({
   showMessageBox: jest.fn(),
 }));
 
-function makeDeviceSceneModel() {
-  const sceneModel = readScene(
-    `<svg width="100" height="100" version="1.1"></svg>`
-  );
-  const model = new DeviceSceneModel(sceneModel);
-  model.simple_name = 'Device Scene';
-  model.deviceId = 'device-1';
+function makeRetrievedDeviceScene() {
+  const model = readScene(`<svg width="100" height="100" version="1.1"></svg>`);
+  model.simple_name = 'device-1|Device Scene';
   return model;
 }
 
@@ -137,13 +133,13 @@ describe('openDeviceSceneLinkInWorkspace', () => {
   });
 
   it('opens the retrieved device scene model', async () => {
-    const model = makeDeviceSceneModel();
-    jest.mocked(retrieveDeviceScene).mockResolvedValue(model);
+    const result = makeRetrievedDeviceScene();
+    jest.mocked(retrieveDeviceScene).mockResolvedValue(result);
 
     await openDeviceSceneLinkInWorkspace('device-1', 'scene-a');
 
     expect(retrieveDeviceScene).toHaveBeenCalledWith('device-1', 'scene-a');
-    expect(openDeviceSceneInWorkspace).toHaveBeenCalledWith({ model });
+    expect(openDeviceSceneInWorkspace).toHaveBeenCalledWith(result);
     expect(showMessageBox).not.toHaveBeenCalled();
   });
 

@@ -1,8 +1,5 @@
 import { findSceneModelInProject } from '@/karabo/common/project/api';
-import {
-  DeviceSceneModel,
-  type SceneModel,
-} from '@/karabo/common/scenemodel/api';
+import { type SceneModel } from '@/karabo/common/scenemodel/api';
 import { showMessageBox } from '@/lib/messagebox';
 import { retrieveDeviceScene } from '@/lib/request';
 import { getProjectModel } from '@/lib/singletons/api';
@@ -55,6 +52,5 @@ export async function openDeviceSceneLinkInWorkspace(
     });
     return;
   }
-  const model = result as DeviceSceneModel;
-  openDeviceSceneInWorkspace({ model });
+  openDeviceSceneInWorkspace(result);
 }

@@ -61,6 +61,13 @@ function openScene(model: SceneModel) {
   broadcast_event(KaraboEvent.OpenScene, createOpenSceneHash(model));
 }
 
+function openDeviceScene(model: SceneModel, deviceId: string) {
+  const hash = new Hash();
+  hash.set('model', { type_: HashType.None_, value_: model });
+  hash.set('deviceId', deviceId);
+  broadcast_event(KaraboEvent.OpenDeviceScene, hash);
+}
+
 describe('PanelWrangler', () => {
   let wrangler: PanelWrangler;
 
@@ -118,6 +125,39 @@ describe('PanelWrangler', () => {
       uuid: 'scene-a',
       name: 'Scene A',
       projectName: 'ProjectA',
+    });
+  });
+
+  it('opens device scene tabs from OpenDeviceScene events', () => {
+    const scene = makeScene('device-scene-a', 'DEVICE_A|Device Scene A');
+    const tabId = 'DEVICE_A|Device Scene A';
+
+    openDeviceScene(scene, 'DEVICE_A');
+
+    expect(wrangler.getSnapshot().center.tabs).toEqual([
+      {
+        id: tabId,
+        title: 'DEVICE_A|DEVICE_A|Device Scene A',
+        closable: true,
+      },
+    ]);
+    expect(wrangler.getSnapshot().center.activeTabId).toBe(tabId);
+    expect(wrangler.getSceneTab(tabId)).toMatchObject({
+      id: tabId,
+      title: 'DEVICE_A|Device Scene A',
+      deviceId: 'DEVICE_A',
+      sceneName: 'DEVICE_A|Device Scene A',
+    });
+    expect(wrangler.getContent(tabId)).toMatchObject({
+      sceneRef: {
+        width: 800,
+        height: 600,
+        uuid: 'device-scene-a',
+        deviceId: 'DEVICE_A',
+        name: 'DEVICE_A|Device Scene A',
+      },
+      sceneModel: scene,
+      fitMode: 'fit-page',
     });
   });
 

@@ -1,8 +1,7 @@
 import { Capabilities } from '@/karabo/data/api';
 import { Hash } from '@/karabo/data/api';
 import { getManager, getTopology, RequestHandler } from './singletons/api';
-import { readScene, DeviceSceneModel } from '@/karabo/common/api';
-import { v4 as uuidv4 } from 'uuid';
+import { readScene, SceneModel } from '@/karabo/common/api';
 
 export function callDeviceSlot(
   handler: RequestHandler,
@@ -42,7 +41,7 @@ export function callDeviceSlot(
 export async function retrieveDeviceScene(
   deviceId: string,
   sceneName: string
-): Promise<DeviceSceneModel | string> {
+): Promise<SceneModel | string> {
   const attrs = getTopology().getDeviceInstanceInfo(deviceId);
   if (attrs === undefined) {
     const errMsg = `Device "${deviceId}" not online. Cannot retrieve its "${sceneName}" scene.`;
@@ -58,19 +57,12 @@ export async function retrieveDeviceScene(
     console.error(errMsg);
     return errMsg;
   }
-  return await _requestScene(deviceId, sceneName);
-}
-
-/* Wraps a callDeviceSlot to request a device scene in a Promise that will
+  /* Wraps a callDeviceSlot to request a device scene in a Promise that will
    be fullfilled by the handler passed to callDeviceSlot, adapting
    callDeviceSlot to async function callers */
-function _requestScene(
-  deviceId: string,
-  sceneName: string
-): Promise<DeviceSceneModel | string> {
   return new Promise((resolve) => {
     const requestId = callDeviceSlot(
-      _createRequestSceneHandler(resolve),
+      _createRequestSceneHandler(deviceId, sceneName, resolve),
       deviceId,
       'requestScene',
       { name: sceneName }
@@ -83,11 +75,13 @@ function _requestScene(
 
 /* callDeviceSlot resolver for a requestScene slot call */
 function _createRequestSceneHandler(
-  resolve: (scene: DeviceSceneModel | string) => void
+  deviceId: string,
+  sceneName: string,
+  resolve: (scene: SceneModel | string) => void
 ): RequestHandler {
-  return (success: boolean, reply: Hash, request?: Hash): void => {
+  return (success: boolean, reply: Hash): void => {
     if (!success) {
-      const errMsg = `Request for scene "${request?.getValue('args.name')}" of device "${request?.getValue('instanceId')}" failed: "${reply.value_}"`;
+      const errMsg = `Request for scene "${sceneName}" of device "${deviceId}" failed: "${reply.value_}"`;
       console.error(errMsg);
       resolve(errMsg);
       return;
@@ -95,17 +89,15 @@ function _createRequestSceneHandler(
 
     const payload = reply.getValue('payload.data') as string | undefined;
     if (!payload) {
-      const errMsg = `Reply to request for scene "${request?.getValue('args.name')} of device "${request?.getValue('instanceId')}" had no scene data (empty 'payload.data')`;
+      const errMsg = `Reply to request for scene "${sceneName} of device "${deviceId}" had no scene data (empty 'payload.data')`;
       console.error(errMsg);
 
       resolve(errMsg);
       return;
     }
     const sceneModel = readScene(payload);
-    const model = new DeviceSceneModel(sceneModel);
-    model.uuid = uuidv4();
-    model.simple_name = reply.getValue('payload.name');
-    model.deviceId = reply.getValue('origin');
-    resolve(model);
+    sceneModel.reset_uuid();
+    sceneModel.simple_name = `${deviceId}|${sceneName}`;
+    resolve(sceneModel);
   };
 }
