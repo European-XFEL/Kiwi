@@ -8,7 +8,7 @@ import { strokePad, shapeSvgProps, strokeFillAttrs } from './shapeUtils';
 // Line
 // ----------------------------------------------------------------------------
 
-const Line: React.FC<{ model: LineModel }> = ({ model }) => {
+const Line: React.FC<{ model: LineModel }> = React.memo(({ model }) => {
   const {
     x1,
     y1,
@@ -34,7 +34,7 @@ const Line: React.FC<{ model: LineModel }> = ({ model }) => {
       <line x1={x1} y1={y1} x2={x2} y2={y2} {...strokeFillAttrs(model)} />
     </svg>
   );
-};
+});
 
 registerRenderer('Line', Line);
 

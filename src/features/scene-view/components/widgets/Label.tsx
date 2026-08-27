@@ -17,7 +17,7 @@ const ALIGNH_MAP: Record<1 | 2 | 4, React.CSSProperties['justifyContent']> = {
   4: 'center',
 };
 
-const Label: React.FC<{ model: LabelModel }> = ({ model }) => {
+const Label: React.FC<{ model: LabelModel }> = React.memo(({ model }) => {
   return (
     <div
       role="text"
@@ -42,7 +42,7 @@ const Label: React.FC<{ model: LabelModel }> = ({ model }) => {
       {model.text}
     </div>
   );
-};
+});
 
 registerRenderer('Label', Label);
 

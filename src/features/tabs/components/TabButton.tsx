@@ -1,8 +1,9 @@
+import { memo } from 'react';
 import { cn } from '@/components/api';
 import { X } from 'lucide-react';
 import type { TabButtonViewProps } from '../types';
 
-export default function TabButton({
+const TabButton = memo(function TabButton({
   groupId,
   tab,
   isActive,
@@ -85,4 +86,8 @@ export default function TabButton({
       ) : null}
     </div>
   );
-}
+});
+
+TabButton.displayName = 'TabButton';
+
+export default TabButton;

@@ -15,7 +15,7 @@ import { Hash, HashValues } from '@/karabo/data/api';
 import { cn } from '@/components/api';
 import { getDbConn, getProjectModel } from '@/lib/singletons/api';
 import { Loader2 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import ProjectsTable from './components/ProjectTable';
 import ScenesTable from './components/ScenesTable';
 import { useDeferredSearch } from './hooks/useDeferredSearch';
@@ -75,22 +75,31 @@ export default function SceneBreadcrumb({
   const loadingProjectRef = useRef<ProjectModel | null>(null);
   const scenesProjectRef = useRef<ProjectModel | null>(null);
 
-  const routeProject = projects.find(
-    (project) => project.simple_name === projectName
+  const routeProject = useMemo(
+    () => projects.find((project) => project.simple_name === projectName),
+    [projectName, projects]
   );
   const activeProject =
     pendingSelection?.project ?? routeProject ?? getProjectModel().root;
 
-  const filteredProjects = filterByQuery(
-    projects,
-    projectSearch.deferredQuery,
-    (project) => project.simple_name
+  const filteredProjects = useMemo(
+    () =>
+      filterByQuery(
+        projects,
+        projectSearch.deferredQuery,
+        (project) => project.simple_name
+      ),
+    [projectSearch.deferredQuery, projects]
   );
 
-  const filteredScenes = filterByQuery(
-    scenes,
-    sceneSearch.deferredQuery,
-    (scene) => scene.simple_name
+  const filteredScenes = useMemo(
+    () =>
+      filterByQuery(
+        scenes,
+        sceneSearch.deferredQuery,
+        (scene) => scene.simple_name
+      ),
+    [sceneSearch.deferredQuery, scenes]
   );
 
   useEffect(() => {

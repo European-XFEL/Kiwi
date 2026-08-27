@@ -1,4 +1,4 @@
-import type { KeyboardEvent } from 'react';
+import { memo, type KeyboardEvent } from 'react';
 import type { TabGroupViewProps, TabId, TabModel } from '../types';
 import TabButton from './TabButton';
 
@@ -37,7 +37,7 @@ function getNextTabId(
   ]?.id;
 }
 
-export default function TabGroup({
+const TabGroup = memo(function TabGroup({
   groupId,
   tabs,
   activeTabId,
@@ -109,4 +109,8 @@ export default function TabGroup({
       ))}
     </div>
   );
-}
+});
+
+TabGroup.displayName = 'TabGroup';
+
+export default TabGroup;
