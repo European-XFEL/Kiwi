@@ -116,20 +116,10 @@ function LinkButton({
 const DeviceSceneLink: React.FC<{
   model: DeviceSceneLinkModel;
   ctx?: ControllerContainerContext;
-}> = ({ model, ctx }) => {
-  const scenes = ctx?.proxy?.value;
-  const firstSceneName: string =
-    Array.isArray(scenes) && scenes.length > 0
-      ? String(scenes[0])
-      : typeof scenes === 'string' && scenes
-        ? scenes
-        : '';
+}> = ({ model }) => {
   const { deviceId } = splitKaraboKeys(model.keys[0]);
-  const go = useDeviceSceneNavigate(
-    deviceId,
-    firstSceneName,
-    model.target_window
-  );
+  const sceneName = model.target;
+  const go = useDeviceSceneNavigate(deviceId, sceneName, model.target_window);
   return (
     <LinkButton
       text={model.text}
@@ -137,8 +127,8 @@ const DeviceSceneLink: React.FC<{
       foreground={model.foreground}
       background={model.background}
       frame_width={model.frame_width}
-      title={firstSceneName}
-      onClick={firstSceneName ? go : undefined}
+      title={sceneName}
+      onClick={sceneName ? go : undefined}
       Icon={Cpu}
       iconColor="#0ea5e9"
     />
