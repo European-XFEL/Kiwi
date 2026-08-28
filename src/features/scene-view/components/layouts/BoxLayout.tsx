@@ -33,57 +33,59 @@ const FLEX_DIRECTION_BY_DIRECTION: Record<
   [Direction.BottomToTop]: 'column-reverse',
 };
 
-export const BoxLayout: React.FC<BoxLayoutProps> = ({
-  model,
-  objectId,
-  layer,
-}) => {
-  const { direction, children } = model;
-  const reactId = React.useId();
-  return (
-    <div
-      id={getSceneObjectDomId('BoxLayout', reactId, objectId)}
-      {...sceneObjectIdAttr(objectId)}
-      style={{
-        position: 'relative',
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        flexDirection: FLEX_DIRECTION_BY_DIRECTION[direction],
-        pointerEvents: containerPointerEvents(),
-      }}
-    >
-      {children.map((child, index) => {
-        const { width, height } = resolveBounds(child);
-        const childObjectId = getChildObjectId(objectId, index);
+export const BoxLayout: React.FC<BoxLayoutProps> = React.memo(
+  ({ model, objectId, layer }) => {
+    const { direction, children } = model;
+    const reactId = React.useId();
+    return (
+      <div
+        id={getSceneObjectDomId('BoxLayout', reactId, objectId)}
+        {...sceneObjectIdAttr(objectId)}
+        style={{
+          position: 'relative',
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: FLEX_DIRECTION_BY_DIRECTION[direction],
+          pointerEvents: containerPointerEvents(),
+        }}
+      >
+        {children.map((child, index) => {
+          const { width, height } = resolveBounds(child);
+          const childObjectId = getChildObjectId(objectId, index);
 
-        return (
-          <div
-            key={index}
-            id={getSceneObjectDomId('BoxLayout-child', reactId, childObjectId)}
-            {...sceneObjectIdAttr(childObjectId)}
-            style={{
-              position: 'relative',
-              width,
-              height,
-              flex: '0 0 auto',
-              // A leaf child is a hit target; a nested layout child stays
-              // transparent so its own children win the hit.
-              pointerEvents: isLayout(child)
-                ? containerPointerEvents()
-                : objectPointerEvents(),
-            }}
-          >
-            {/* Preserve the active layer through layout recursion. */}
-            {layer
-              ? renderLayerContent(child, layer, childObjectId)
-              : renderContent(child, childObjectId)}
-          </div>
-        );
-      })}
-    </div>
-  );
-};
+          return (
+            <div
+              key={index}
+              id={getSceneObjectDomId(
+                'BoxLayout-child',
+                reactId,
+                childObjectId
+              )}
+              {...sceneObjectIdAttr(childObjectId)}
+              style={{
+                position: 'relative',
+                width,
+                height,
+                flex: '0 0 auto',
+                // A leaf child is a hit target; a nested layout child stays
+                // transparent so its own children win the hit.
+                pointerEvents: isLayout(child)
+                  ? containerPointerEvents()
+                  : objectPointerEvents(),
+              }}
+            >
+              {/* Preserve the active layer through layout recursion. */}
+              {layer
+                ? renderLayerContent(child, layer, childObjectId)
+                : renderContent(child, childObjectId)}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+);
 
 registerRenderer('BoxLayout', BoxLayout);
 

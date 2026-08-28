@@ -1,7 +1,8 @@
+import { memo } from 'react';
 import { cn } from '@/components/api';
 import type { TabPanelViewProps } from '../types';
 
-export default function TabPanel({
+const TabPanel = memo(function TabPanel({
   id,
   labelledBy,
   isActive,
@@ -23,4 +24,8 @@ export default function TabPanel({
       {children}
     </section>
   );
-}
+});
+
+TabPanel.displayName = 'TabPanel';
+
+export default TabPanel;

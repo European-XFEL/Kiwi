@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { cn } from '@/components/api';
 import type { TabGroupId, TabId, TabModel, TabViewProps } from '../types';
 import TabGroup from './TabGroup';
@@ -37,7 +37,10 @@ export default function TabView({
   onTabClose,
   onTabContextMenu,
 }: TabViewProps) {
-  const tabs = useMemo(() => getOrderedTabs(group), [group]);
+  const tabs = useMemo(
+    () => getOrderedTabs(group),
+    [group.tabOrder, group.tabs]
+  );
 
   const initialActiveTabId =
     defaultActiveTabId ?? group.activeTabId ?? getFirstEnabledTab(tabs)?.id;
@@ -53,19 +56,22 @@ export default function TabView({
     isControlled ? controlledActiveTabId : localActiveTabId
   );
 
-  const handleTabSelect = (groupId: TabGroupId, tabId: TabId) => {
-    const selectedTab = tabs.find((tab) => tab.id === tabId);
+  const handleTabSelect = useCallback(
+    (groupId: TabGroupId, tabId: TabId) => {
+      const selectedTab = tabs.find((tab) => tab.id === tabId);
 
-    if (!selectedTab || selectedTab.disabled) {
-      return;
-    }
+      if (!selectedTab || selectedTab.disabled) {
+        return;
+      }
 
-    if (!isControlled) {
-      setLocalActiveTabId(tabId);
-    }
+      if (!isControlled) {
+        setLocalActiveTabId(tabId);
+      }
 
-    onTabSelect?.(groupId, tabId);
-  };
+      onTabSelect?.(groupId, tabId);
+    },
+    [isControlled, onTabSelect, tabs]
+  );
 
   return (
     <div

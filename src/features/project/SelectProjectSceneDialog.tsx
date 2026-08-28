@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -56,16 +56,24 @@ export default function SelectProjectSceneDialog({
   const projectSearch = useDeferredSearch();
   const sceneSearch = useDeferredSearch();
 
-  const filteredProjects = filterByQuery(
-    projects,
-    projectSearch.deferredQuery,
-    (project) => project.simple_name
+  const filteredProjects = useMemo(
+    () =>
+      filterByQuery(
+        projects,
+        projectSearch.deferredQuery,
+        (project) => project.simple_name
+      ),
+    [projectSearch.deferredQuery, projects]
   );
 
-  const filteredScenes = filterByQuery(
-    scenes,
-    sceneSearch.deferredQuery,
-    (scene) => scene.simple_name
+  const filteredScenes = useMemo(
+    () =>
+      filterByQuery(
+        scenes,
+        sceneSearch.deferredQuery,
+        (scene) => scene.simple_name
+      ),
+    [sceneSearch.deferredQuery, scenes]
   );
 
   const updateProjects = (domain: string) => {

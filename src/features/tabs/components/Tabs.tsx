@@ -42,15 +42,18 @@ export default function Tabs({
   onTabClose,
   onTabContextMenu,
 }: TabsProps) {
+  const tabOrder = useMemo(() => items.map((item) => item.id), [items]);
+  const tabs = useMemo(() => createTabModels(items), [items]);
+
   const group = useMemo<TabGroupModel>(() => {
     return {
       id,
       kind,
-      tabOrder: items.map((item) => item.id),
-      tabs: createTabModels(items),
+      tabOrder,
+      tabs,
       activeTabId,
     };
-  }, [id, kind, items, activeTabId]);
+  }, [id, kind, tabOrder, tabs, activeTabId]);
 
   const panelsById = useMemo(() => createPanelsById(items), [items]);
 

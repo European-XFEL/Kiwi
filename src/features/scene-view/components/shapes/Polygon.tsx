@@ -8,7 +8,7 @@ import { strokePad, shapeSvgProps, strokeFillAttrs } from './shapeUtils';
 // Polygon
 // ----------------------------------------------------------------------------
 
-const Polygon: React.FC<{ model: PolygonModel }> = ({ model }) => {
+const Polygon: React.FC<{ model: PolygonModel }> = React.memo(({ model }) => {
   const { computedX, computedY, computedWidth, computedHeight } = model;
   const pad = strokePad(model.stroke_width);
 
@@ -25,7 +25,7 @@ const Polygon: React.FC<{ model: PolygonModel }> = ({ model }) => {
       <polygon points={model.points} {...strokeFillAttrs(model)} />
     </svg>
   );
-};
+});
 
 registerRenderer('Polygon', Polygon);
 

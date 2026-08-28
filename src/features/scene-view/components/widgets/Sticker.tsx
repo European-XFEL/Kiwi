@@ -8,7 +8,7 @@ import { getQFontTextStyle } from '@/features/controllers/api';
 // Sticker
 // ----------------------------------------------------------------------------
 
-const Sticker: React.FC<{ model: StickerModel }> = ({ model }) => {
+const Sticker: React.FC<{ model: StickerModel }> = React.memo(({ model }) => {
   return (
     <div
       style={{
@@ -28,7 +28,7 @@ const Sticker: React.FC<{ model: StickerModel }> = ({ model }) => {
       {model.text}
     </div>
   );
-};
+});
 
 registerRenderer('Sticker', Sticker);
 

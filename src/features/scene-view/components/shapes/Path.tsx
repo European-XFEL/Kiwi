@@ -13,7 +13,7 @@ import { registerRenderer } from '../../renderRegistry';
 // Path
 // ----------------------------------------------------------------------------
 
-const Path: React.FC<{ model: PathModel }> = ({ model }) => (
+const Path: React.FC<{ model: PathModel }> = React.memo(({ model }) => (
   <svg
     style={{
       position: 'absolute',
@@ -41,7 +41,7 @@ const Path: React.FC<{ model: PathModel }> = ({ model }) => (
       }
     />
   </svg>
-);
+));
 
 registerRenderer('Path', Path);
 
