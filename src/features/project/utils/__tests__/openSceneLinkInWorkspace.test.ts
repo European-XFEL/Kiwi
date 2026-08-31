@@ -1,8 +1,7 @@
 import { ProjectModel } from '@/karabo/common/project/api';
-import { readScene } from '@/karabo/common/api';
 import { SceneModel } from '@/karabo/common/scenemodel/api';
+import { Capabilities, Hash } from '@/karabo/data/api';
 import { showMessageBox } from '@/lib/messagebox';
-import { retrieveDeviceScene } from '@/lib/request';
 import { getProjectModel } from '@/lib/singletons/api';
 import {
   openDeviceSceneLinkInWorkspace,
@@ -10,28 +9,40 @@ import {
   sceneUuidFromLinkTarget,
 } from '../openSceneLinkInWorkspace';
 import {
-  openDeviceSceneInWorkspace,
+  openUnattachedSceneInWorkspace,
   openSceneInWorkspace,
 } from '../openSceneInWorkspace';
 
 jest.mock('../openSceneInWorkspace', () => ({
-  openDeviceSceneInWorkspace: jest.fn(),
+  openUnattachedSceneInWorkspace: jest.fn(),
   openSceneInWorkspace: jest.fn(),
-}));
-
-jest.mock('@/lib/request', () => ({
-  retrieveDeviceScene: jest.fn(),
 }));
 
 jest.mock('@/lib/messagebox', () => ({
   showMessageBox: jest.fn(),
 }));
 
-function makeRetrievedDeviceScene() {
-  const model = readScene(`<svg width="100" height="100" version="1.1"></svg>`);
-  model.simple_name = 'device-1|Device Scene';
-  return model;
-}
+const mockCallDeviceSlot = jest.fn();
+const mockGetDeviceInstanceInfo = jest.fn();
+
+jest.mock('@/lib/request', () => ({
+  callDeviceSlot: (
+    ...args: Parameters<typeof mockCallDeviceSlot>
+  ): ReturnType<typeof mockCallDeviceSlot> => mockCallDeviceSlot(...args),
+}));
+
+jest.mock('@/lib/singletons/api', () => {
+  const actual = jest.requireActual<typeof import('@/lib/singletons/api')>(
+    '@/lib/singletons/api'
+  );
+
+  return {
+    ...actual,
+    getTopology: () => ({
+      getDeviceInstanceInfo: mockGetDeviceInstanceInfo,
+    }),
+  };
+});
 
 describe('openSceneLinkInWorkspace', () => {
   beforeEach(() => {
@@ -133,29 +144,71 @@ describe('openDeviceSceneLinkInWorkspace', () => {
   });
 
   it('opens the retrieved device scene model', async () => {
-    const result = makeRetrievedDeviceScene();
-    jest.mocked(retrieveDeviceScene).mockResolvedValue(result);
+    mockGetDeviceInstanceInfo.mockReturnValue(
+      new Hash('capabilities', Capabilities.PROVIDES_SCENES)
+    );
+    mockCallDeviceSlot.mockImplementation((handler) => {
+      handler(
+        true,
+        new Hash({
+          payload: new Hash({
+            data: '<svg width="100" height="100" version="1.1"></svg>',
+            name: 'Device Scene',
+          }),
+          origin: 'device-1',
+        })
+      );
+      return 'request-token';
+    });
 
     await openDeviceSceneLinkInWorkspace('device-1', 'scene-a');
 
-    expect(retrieveDeviceScene).toHaveBeenCalledWith('device-1', 'scene-a');
-    expect(openDeviceSceneInWorkspace).toHaveBeenCalledWith(result);
+    expect(mockCallDeviceSlot).toHaveBeenCalledWith(
+      expect.any(Function),
+      'device-1',
+      'requestScene',
+      { name: 'scene-a' }
+    );
+    expect(openUnattachedSceneInWorkspace).toHaveBeenCalledWith(
+      expect.objectContaining({
+        simple_name: 'device-1|scene-a',
+        width: 100,
+        height: 100,
+      })
+    );
     expect(showMessageBox).not.toHaveBeenCalled();
   });
 
-  it('shows an error message when retrieving the device scene fails', async () => {
-    jest
-      .mocked(retrieveDeviceScene)
-      .mockResolvedValue('Device "device-1" not online.');
+  it('shows an error message when the device is offline', async () => {
+    mockGetDeviceInstanceInfo.mockReturnValue(undefined);
 
     await openDeviceSceneLinkInWorkspace('device-1', 'scene-a');
 
-    expect(retrieveDeviceScene).toHaveBeenCalledWith('device-1', 'scene-a');
+    expect(mockCallDeviceSlot).not.toHaveBeenCalled();
     expect(showMessageBox).toHaveBeenCalledWith({
       variant: 'error',
       title: 'Could not open device scene',
-      msg: 'Device "device-1" not online.',
+      msg: 'Device "device-1" not online. Cannot retrieve its "scene-a" scene.',
     });
-    expect(openDeviceSceneInWorkspace).not.toHaveBeenCalled();
+    expect(openUnattachedSceneInWorkspace).not.toHaveBeenCalled();
+  });
+
+  it('shows an error message when the scene request fails', async () => {
+    mockGetDeviceInstanceInfo.mockReturnValue(
+      new Hash('capabilities', Capabilities.PROVIDES_SCENES)
+    );
+    mockCallDeviceSlot.mockImplementation((handler) => {
+      handler(false, new Hash({ error: 'boom' }));
+      return 'request-token';
+    });
+
+    await openDeviceSceneLinkInWorkspace('device-1', 'scene-a');
+
+    expect(showMessageBox).toHaveBeenCalledWith({
+      variant: 'error',
+      title: 'Could not retrieve scene',
+      msg: 'Request for scene "scene-a" of device "device-1" failed: "[object Map]"',
+    });
+    expect(openUnattachedSceneInWorkspace).not.toHaveBeenCalled();
   });
 });

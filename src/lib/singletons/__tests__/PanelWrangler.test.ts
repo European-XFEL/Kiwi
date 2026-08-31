@@ -65,7 +65,7 @@ function openDeviceScene(model: SceneModel, deviceId: string) {
   const hash = new Hash();
   hash.set('model', { type_: HashType.None_, value_: model });
   hash.set('deviceId', deviceId);
-  broadcast_event(KaraboEvent.OpenDeviceScene, hash);
+  broadcast_event(KaraboEvent.OpenUnattachedScene, hash);
 }
 
 describe('PanelWrangler', () => {

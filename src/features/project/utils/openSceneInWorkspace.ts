@@ -19,8 +19,8 @@ export function openSceneInWorkspace({
   broadcast_event(KaraboEvent.OpenScene, hash);
 }
 
-export function openDeviceSceneInWorkspace(model: SceneModel): void {
+export function openUnattachedSceneInWorkspace(model: SceneModel): void {
   const hash = new Hash();
   hash.set('model', sceneModelHashValue(model));
-  broadcast_event(KaraboEvent.OpenDeviceScene, hash);
+  broadcast_event(KaraboEvent.OpenUnattachedScene, hash);
 }

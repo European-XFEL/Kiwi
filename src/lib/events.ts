@@ -16,7 +16,7 @@ enum KaraboEvent {
   SessionExpirationNotified = 'SessionExpirationNotified',
   Notification = 'Notification',
   OpenScene = 'OpenScene',
-  OpenDeviceScene = 'OpenDeviceScene',
+  OpenUnattachedScene = 'OpenUnattachedScene',
   OpenSceneLink = 'OpenSceneLink',
   OpenSceneBrowser = 'OpenSceneBrowser',
   DatabaseBusy = 'DatabaseBusy',

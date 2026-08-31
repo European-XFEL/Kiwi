@@ -135,10 +135,10 @@ export interface SceneTabSnapshot {
   uuid: string;
 }
 
-export interface DeviceSceneTabSnapshot {
+export interface UnnatachedSceneTabSnapshot {
   id: PanelTabId;
   title: string;
-  deviceId: string;
+  deviceId?: string;
   sceneName: string;
 }
 
