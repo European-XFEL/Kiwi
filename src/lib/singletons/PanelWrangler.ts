@@ -11,7 +11,7 @@ import {
   unregister_for_broadcasts,
 } from '@/lib/events';
 import type {
-  DeviceSceneTabSnapshot,
+  UnnatachedSceneTabSnapshot,
   PanelSlot,
   PanelState,
   PanelTab,
@@ -71,10 +71,14 @@ function toPanelTab(snapshot: SceneTabSnapshot): PanelTab {
   };
 }
 
-function toDeviceScenePanelTab(snapshot: DeviceSceneTabSnapshot): PanelTab {
+function toUnattachedScenePanelTab(
+  snapshot: UnnatachedSceneTabSnapshot
+): PanelTab {
   return {
     id: snapshot.id,
-    title: `${snapshot.deviceId}|${snapshot.sceneName}`,
+    title: snapshot.deviceId
+      ? `${snapshot.deviceId}|${snapshot.sceneName}`
+      : snapshot.sceneName,
     closable: true,
   };
 }
@@ -98,14 +102,14 @@ export class PanelWrangler {
 
   private content = new Map<string, SceneTabContent>();
   private sceneTabs = new Map<string, SceneTabSnapshot>();
-  private deviceSceneTabs = new Map<string, DeviceSceneTabSnapshot>();
+  private deviceSceneTabs = new Map<string, UnnatachedSceneTabSnapshot>();
   private listeners = new Set<() => void>();
   private readonly eventMap: KaraboEventMap;
 
   public constructor() {
     this.eventMap = {
       [KaraboEvent.OpenScene]: this.onEventOpenScene,
-      [KaraboEvent.OpenDeviceScene]: this.onEventOpenDeviceScene,
+      [KaraboEvent.OpenUnattachedScene]: this.onEventOpenUnattachedScene,
     };
 
     register_for_broadcasts(this.eventMap);
@@ -139,7 +143,7 @@ export class PanelWrangler {
 
   getSceneTab(
     tabId: string
-  ): SceneTabSnapshot | DeviceSceneTabSnapshot | undefined {
+  ): SceneTabSnapshot | UnnatachedSceneTabSnapshot | undefined {
     return this.sceneTabs.get(tabId) ?? this.deviceSceneTabs.get(tabId);
   }
 
@@ -365,11 +369,11 @@ export class PanelWrangler {
   }
 
   private openDeviceScene(
-    snapshot: DeviceSceneTabSnapshot,
+    snapshot: UnnatachedSceneTabSnapshot,
     content: SceneTabContent
   ): void {
     const center = this.state.center;
-    const nextTab = toDeviceScenePanelTab(snapshot);
+    const nextTab = toUnattachedScenePanelTab(snapshot);
 
     this.deviceSceneTabs.set(snapshot.id, snapshot);
     this.content.set(snapshot.id, this.resolveTabContent(snapshot.id, content));
@@ -461,12 +465,12 @@ export class PanelWrangler {
     };
   }
 
-  private createDeviceSceneOpenData(
+  private createUnattachedSceneOpenData(
     model: SceneModel,
-    deviceId: string
+    deviceId: string | undefined
   ):
     | {
-        snapshot: DeviceSceneTabSnapshot;
+        snapshot: UnnatachedSceneTabSnapshot;
         content: SceneTabContent;
         sceneRef: LoadedSceneRef;
       }
@@ -482,7 +486,7 @@ export class PanelWrangler {
       name: sceneId,
     };
 
-    const snapshot: DeviceSceneTabSnapshot = {
+    const snapshot: UnnatachedSceneTabSnapshot = {
       id: sceneId,
       title: sceneId,
       deviceId,
@@ -508,18 +512,26 @@ export class PanelWrangler {
     this.openScene(sceneData.snapshot, sceneData.content);
   };
 
-  private onEventOpenDeviceScene = (data: Hash): void => {
+  private onEventOpenUnattachedScene = (data: Hash): void => {
     const model = data.getValue<SceneModel>('model');
-    // For device scenes, the simple-name is in the form "${deviceId}|${sceneName}""
-    const deviceId = model.simple_name.substring(
-      0,
-      model.simple_name.indexOf('|')
+    // Unattached scenes whose names have a pipe '|' are assumed to be
+    // device provided scenes and the deviceId comes before the pipe.
+    let deviceId: string | undefined = undefined;
+    const pipePos = model.simple_name.indexOf('|');
+    if (pipePos > 0) {
+      deviceId = model.simple_name.substring(0, model.simple_name.indexOf('|'));
+    }
+    const unattachedSceneData = this.createUnattachedSceneOpenData(
+      model,
+      deviceId
     );
-    const deviceSceneData = this.createDeviceSceneOpenData(model, deviceId);
-    if (!deviceSceneData) {
+    if (!unattachedSceneData) {
       return;
     }
-    this.openDeviceScene(deviceSceneData.snapshot, deviceSceneData.content);
+    this.openDeviceScene(
+      unattachedSceneData.snapshot,
+      unattachedSceneData.content
+    );
   };
 
   private recordRecentScene(sceneRef: LoadedSceneRef): void {

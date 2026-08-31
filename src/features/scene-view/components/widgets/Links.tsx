@@ -29,7 +29,7 @@ function useSceneNavigate(
   return React.useCallback(() => {
     if (!target) return;
 
-    openSceneLinkInWorkspace(target);
+    openSceneLinkInWorkspace(target, title);
   }, [target, title]);
 }
 
