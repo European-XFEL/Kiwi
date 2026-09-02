@@ -20,6 +20,7 @@ import {
   register_for_broadcasts,
   unregister_for_broadcasts,
 } from '@/lib/events';
+import { callDeviceSlot, createRequestSceneHandler } from '@/lib/request';
 
 enum DbConnectionState {
   IDLE,
@@ -214,6 +215,13 @@ export class DbConnection {
   // #endregion
 
   // #region GetScene
+
+  /**
+   * Returns a scene from the currently loaded project model.
+   *
+   * Throws when the requested project is not the active project model or when
+   * the scene cannot be found in that project.
+   */
   public getScene(
     domain: string,
     projectUuid: string,
@@ -244,6 +252,30 @@ export class DbConnection {
     }
 
     return scene;
+  }
+
+  /**
+   * Retrieves a scene with a given UUID by calling the slotGetScene slot of the
+   * ProjectDBManager in the current Karabo topic
+   *
+   * @param uuid of the scene to be retrieved by the ProjectDBManager
+   * @returns the SceneModel of the requested scene in case of success of undefined in case of failure
+   */
+  public async getDatabaseScene(uuid: string): Promise<SceneModel | undefined> {
+    return new Promise((resolve) => {
+      const deviceId = 'KaraboProjectDB'; // Orphan scenes are requested to the ProjectManager
+      const requestId = callDeviceSlot(
+        createRequestSceneHandler(deviceId, uuid, resolve),
+        deviceId,
+        'slotGetScene',
+        // NOTE: domain is a legacy from ExistDB and not used internally by
+        // the ProjectDBManager - any value will do
+        { domain: 'xyz', uuid: uuid }
+      );
+      console.debug(
+        `Token for request of database scene "${uuid}": ${requestId}`
+      );
+    });
   }
 
   // #endregion

@@ -2,6 +2,7 @@ import { ProjectModel } from '@/karabo/common/project/api';
 import { SceneModel } from '@/karabo/common/scenemodel/api';
 import { Capabilities, Hash } from '@/karabo/data/api';
 import { showMessageBox } from '@/lib/messagebox';
+import { ProjectItemModel } from '@/lib/singletons/ProjectItemModel';
 import { getProjectModel } from '@/lib/singletons/api';
 import {
   openDeviceSceneLinkInWorkspace,
@@ -24,25 +25,30 @@ jest.mock('@/lib/messagebox', () => ({
 
 const mockCallDeviceSlot = jest.fn();
 const mockGetDeviceInstanceInfo = jest.fn();
+const mockGetDatabaseScene = jest.fn();
+const mockProjectModel = new ProjectItemModel();
 
-jest.mock('@/lib/request', () => ({
-  callDeviceSlot: (
-    ...args: Parameters<typeof mockCallDeviceSlot>
-  ): ReturnType<typeof mockCallDeviceSlot> => mockCallDeviceSlot(...args),
-}));
-
-jest.mock('@/lib/singletons/api', () => {
-  const actual = jest.requireActual<typeof import('@/lib/singletons/api')>(
-    '@/lib/singletons/api'
-  );
+jest.mock('@/lib/request', () => {
+  const actual =
+    jest.requireActual<typeof import('@/lib/request')>('@/lib/request');
 
   return {
     ...actual,
-    getTopology: () => ({
-      getDeviceInstanceInfo: mockGetDeviceInstanceInfo,
-    }),
+    callDeviceSlot: (
+      ...args: Parameters<typeof mockCallDeviceSlot>
+    ): ReturnType<typeof mockCallDeviceSlot> => mockCallDeviceSlot(...args),
   };
 });
+
+jest.mock('@/lib/singletons/api', () => ({
+  getProjectModel: () => mockProjectModel,
+  getTopology: () => ({
+    getDeviceInstanceInfo: mockGetDeviceInstanceInfo,
+  }),
+  getDbConn: () => ({
+    getDatabaseScene: mockGetDatabaseScene,
+  }),
+}));
 
 describe('openSceneLinkInWorkspace', () => {
   beforeEach(() => {
@@ -55,7 +61,7 @@ describe('openSceneLinkInWorkspace', () => {
     expect(sceneUuidFromLinkTarget('scene-2')).toBe('scene-2');
   });
 
-  it('opens the matching SceneModel from the current project root', () => {
+  it('opens the matching SceneModel from the current project root', async () => {
     const sceneA = new SceneModel({ uuid: 'scene-a', simple_name: 'Scene A' });
     const sceneB = new SceneModel({ uuid: 'scene-b', simple_name: 'Scene B' });
     const project = new ProjectModel({
@@ -65,12 +71,13 @@ describe('openSceneLinkInWorkspace', () => {
     project.scenes = [sceneA, sceneB];
     getProjectModel().setRoot('CONTROLS', project);
 
-    openSceneLinkInWorkspace('ProjectA:scene-b');
+    await openSceneLinkInWorkspace('ProjectA:scene-b');
 
     expect(openSceneInWorkspace).toHaveBeenCalledWith({ model: sceneB });
+    expect(mockGetDatabaseScene).not.toHaveBeenCalled();
   });
 
-  it('opens the matching SceneModel from a current project subproject', () => {
+  it('opens the matching SceneModel from a current project subproject', async () => {
     const scene = new SceneModel({
       uuid: 'subproject-scene',
       simple_name: 'Subproject Scene',
@@ -89,12 +96,13 @@ describe('openSceneLinkInWorkspace', () => {
     project.subprojects = [subproject];
     getProjectModel().setRoot('CONTROLS', project);
 
-    openSceneLinkInWorkspace('Subproject:subproject-scene');
+    await openSceneLinkInWorkspace('Subproject:subproject-scene');
 
     expect(openSceneInWorkspace).toHaveBeenCalledWith({ model: scene });
+    expect(mockGetDatabaseScene).not.toHaveBeenCalled();
   });
 
-  it('opens the matching SceneModel from a nested subproject', () => {
+  it('opens the matching SceneModel from a nested subproject', async () => {
     const scene = new SceneModel({
       uuid: 'nested-scene',
       simple_name: 'Nested Scene',
@@ -119,22 +127,46 @@ describe('openSceneLinkInWorkspace', () => {
     project.subprojects = [subproject];
     getProjectModel().setRoot('CONTROLS', project);
 
-    openSceneLinkInWorkspace('NestedSubproject:nested-scene');
+    await openSceneLinkInWorkspace('NestedSubproject:nested-scene');
 
     expect(openSceneInWorkspace).toHaveBeenCalledWith({ model: scene });
+    expect(mockGetDatabaseScene).not.toHaveBeenCalled();
   });
 
-  it('does not open anything when the uuid is not in the current project', () => {
+  it('requests the scene from the database when it is not in the current project', async () => {
     const project = new ProjectModel({
       uuid: 'project-1',
       simple_name: 'ProjectA',
     });
     project.scenes = [];
     getProjectModel().setRoot('CONTROLS', project);
+    mockGetDatabaseScene.mockResolvedValue(undefined);
 
-    openSceneLinkInWorkspace('scene-b');
+    await openSceneLinkInWorkspace('scene-b');
 
     expect(openSceneInWorkspace).not.toHaveBeenCalled();
+    expect(openUnattachedSceneInWorkspace).not.toHaveBeenCalled();
+    expect(mockGetDatabaseScene).toHaveBeenCalledWith('scene-b');
+  });
+
+  it('opens an unattached scene retrieved from the database', async () => {
+    const project = new ProjectModel({
+      uuid: 'project-1',
+      simple_name: 'ProjectA',
+    });
+    const orphanScene = new SceneModel({
+      uuid: 'scene-b',
+      simple_name: 'Old Name',
+    });
+    project.scenes = [];
+    getProjectModel().setRoot('CONTROLS', project);
+    mockGetDatabaseScene.mockResolvedValue(orphanScene);
+
+    await openSceneLinkInWorkspace('scene-b');
+
+    expect(mockGetDatabaseScene).toHaveBeenCalledWith('scene-b');
+    expect(openSceneInWorkspace).not.toHaveBeenCalled();
+    expect(openUnattachedSceneInWorkspace).toHaveBeenCalledWith(orphanScene);
   });
 });
 

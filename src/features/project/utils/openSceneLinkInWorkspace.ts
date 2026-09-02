@@ -1,13 +1,9 @@
-import { readScene, type SceneModel } from '@/karabo/common/api';
+import { type SceneModel } from '@/karabo/common/api';
 import { findSceneModelInProject } from '@/karabo/common/project/api';
-import { Capabilities, Hash } from '@/karabo/data/api';
+import { Capabilities } from '@/karabo/data/api';
 import { showMessageBox } from '@/lib/messagebox';
-import { callDeviceSlot } from '@/lib/request';
-import {
-  getProjectModel,
-  getTopology,
-  type RequestHandler,
-} from '@/lib/singletons/api';
+import { callDeviceSlot, createRequestSceneHandler } from '@/lib/request';
+import { getDbConn, getProjectModel, getTopology } from '@/lib/singletons/api';
 import {
   openUnattachedSceneInWorkspace,
   openSceneInWorkspace,
@@ -45,7 +41,7 @@ export async function openSceneLinkInWorkspace(
     // The scene might be an orphan - not connected to the project anymore,
     // but still in the database. Try to retrieve it directly from the
     // ProjectDbManager.
-    const result = await _retrieveOrphanScene(uuid);
+    const result = await getDbConn().getDatabaseScene(uuid);
     if (result) {
       model = result;
       // For orphan scenes the deviceId is the ProjectManager - they are exposed
@@ -99,7 +95,7 @@ async function _retrieveDeviceScene(
 
   return new Promise((resolve) => {
     const requestId = callDeviceSlot(
-      _createRequestSceneHandler(deviceId, sceneName, resolve),
+      createRequestSceneHandler(deviceId, sceneName, resolve),
       deviceId,
       'requestScene',
       { name: sceneName }
@@ -108,51 +104,4 @@ async function _retrieveDeviceScene(
       `Token for request of scene "${sceneName}" of device "${deviceId}": ${requestId}`
     );
   });
-}
-
-async function _retrieveOrphanScene(
-  uuid: string
-): Promise<SceneModel | undefined> {
-  return new Promise((resolve) => {
-    const deviceId = 'KaraboProjectDB'; // Orphan scenes are requested to the ProjectManager
-    const requestId = callDeviceSlot(
-      _createRequestSceneHandler(deviceId, uuid, resolve),
-      deviceId,
-      'slotGetScene',
-      // NOTE: domain is a legacy from ExistDB and not used internally by
-      // the ProjectDBManager - any value will do
-      { domain: 'xyz', uuid: uuid }
-    );
-    console.debug(`Token for request of orphan scene "${uuid}": ${requestId}`);
-  });
-}
-
-function _createRequestSceneHandler(
-  deviceId: string,
-  sceneName: string,
-  resolve: (scene: SceneModel | undefined) => void
-): RequestHandler {
-  return (success: boolean, reply: Hash): void => {
-    let errorMessage: string | undefined = undefined;
-    if (!success) {
-      errorMessage = `Request for scene "${sceneName}" of device "${deviceId}" failed: "${reply.value_}"`;
-    } else {
-      const payload = reply.getValue('payload.data') as string | undefined;
-      if (payload) {
-        const sceneModel = readScene(payload);
-        resolve(sceneModel);
-      } else {
-        errorMessage = `Reply to request for scene "${sceneName} of device "${deviceId}" had no scene data (empty 'payload.data')`;
-      }
-    }
-    if (errorMessage) {
-      showMessageBox({
-        variant: 'error',
-        title: 'Could not retrieve scene',
-        msg: errorMessage,
-      });
-      console.log(errorMessage);
-      resolve(undefined);
-    }
-  };
 }
