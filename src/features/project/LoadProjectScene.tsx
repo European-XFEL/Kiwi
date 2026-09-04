@@ -5,8 +5,11 @@ import SelectProjectSceneDialog from './SelectProjectSceneDialog';
 import type { LoadProjectSceneProps } from './types/project.types';
 import { SceneModel } from '@/karabo/common/scenemodel/api';
 import { ProjectModel } from '@/karabo/common/project/api';
+import { showMessageBox } from '@/lib/messagebox';
 import { openSceneInWorkspace } from './utils/openSceneInWorkspace';
 import { getProjectModel } from '@/lib/singletons/api';
+import { findSceneModelInCurrentProject } from './utils/openSceneLinkInWorkspace';
+import { loadProjectSceneModel } from './utils/loadProjectSceneModel';
 
 export default function LoadProjectScene({
   className,
@@ -30,11 +33,47 @@ export default function LoadProjectScene({
   ) => {
     setOpenDialog(false);
 
-    // We have an active project
-    getProjectModel().setRoot(domain, project);
-    openSceneInWorkspace({
-      model: selectedScene,
-    });
+    if (
+      getProjectModel().root &&
+      getProjectModel().root!.uuid === project.uuid
+    ) {
+      // The selected scene belongs to the current root project - can be
+      // opened directly as it is already in the ProjectModel
+      let rootProject = getProjectModel().root!;
+
+      // As the selectedScene returned by the dialog is a partially filled object -
+      // only has uuid, simple_name and date - the full scene model has to be
+      // retrieved from the current root project
+      let model = findSceneModelInCurrentProject(selectedScene.uuid);
+      if (model) {
+        openSceneInWorkspace({
+          model: model,
+        });
+      } else {
+        console.error(
+          `Scene ${selectedScene.simple_name} (${selectedScene.uuid}) not found in root project, ${domain}:${rootProject.simple_name}!`
+        );
+      }
+    } else {
+      void loadProjectSceneModel({
+        domain,
+        projectUuid: project.uuid,
+        sceneUuid: selectedScene.uuid,
+      })
+        .then((scene) => {
+          openSceneInWorkspace({ model: scene });
+        })
+        .catch((error) => {
+          showMessageBox({
+            variant: 'error',
+            title: 'Could not open scene',
+            msg:
+              error instanceof Error
+                ? error.message
+                : 'The scene could not be loaded.',
+          });
+        });
+    }
   };
 
   return (

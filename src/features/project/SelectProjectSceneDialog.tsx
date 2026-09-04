@@ -10,7 +10,7 @@ import {
 import { Hash, HashValues } from '@/karabo/data/api';
 import { Button } from '@/components/api';
 import { Separator } from '@/components/api';
-import { getConfig, getDbConn } from '@/lib/singletons/api';
+import { getConfig, getDbConn, getNetwork } from '@/lib/singletons/api';
 import { ProjectModel } from '@/karabo/common/project/api';
 import { useGlobalStore } from '@/store/api';
 import DomainSelector from './components/DomainSelector';
@@ -84,9 +84,9 @@ export default function SelectProjectSceneDialog({
     getDbConn().listProjects(domain);
   };
 
-  const updateScenes = (domain: string, projectModel: ProjectModel) => {
+  const updateScenes = (projectModel: ProjectModel) => {
     setActivityStatus(ActivityStatus.GETTING_SCENES);
-    getDbConn().loadProject(domain, projectModel);
+    getNetwork().onListScenes(projectModel.uuid);
   };
 
   useKaraboEvent(KaraboEvent.DatabaseBusy, (hash: Hash) => {
@@ -103,7 +103,7 @@ export default function SelectProjectSceneDialog({
 
   const handleProjectClick = (project: ProjectModel) => {
     setSelectedProject(project);
-    updateScenes(selectedDomain, project);
+    updateScenes(project);
     setSelectedScene(undefined);
   };
 
@@ -204,14 +204,41 @@ export default function SelectProjectSceneDialog({
       if (nonTrashedSorted.length > 0) {
         const selProject = nonTrashedSorted[0];
         setSelectedProject(selProject);
-        updateScenes(selectedDomain, selProject);
+        updateScenes(selProject);
       }
     }
     setActivityStatus(ActivityStatus.NO_ACTIVITY);
   });
 
-  // TODO: Enable a new event for the scenes of a project retrieved
-  // useKaraboEvent(KaraboEvent.ListScenes, (hash: Hash) => {});
+  useKaraboEvent(KaraboEvent.ListScenes, (hash: Hash) => {
+    if (!open) {
+      // Don't handle ListScenes events when closed
+      return;
+    }
+    const reason = hash.getValue('reason');
+    if (reason.length > 0) {
+      setErrorMessage(reason);
+    } else {
+      // Project Scenes were retrieved successfully
+      const itemsHashes = hash.getValue('reply.items') as HashValues[];
+      const scenes: SceneModel[] = itemsHashes.map((hv: HashValues) => {
+        const sceneItem = new Hash(hv);
+        return new SceneModel({
+          uuid: sceneItem.getValue('uuid'),
+          date: sceneItem.getValue('date'),
+          simple_name: sceneItem.getValue('simple_name'),
+        });
+      });
+      const scenesSorted = scenes.sort((a, b) =>
+        a.simple_name.localeCompare(b.simple_name)
+      );
+      setScenes(scenesSorted);
+      if (scenesSorted.length > 0) {
+        setSelectedScene(scenesSorted[0]);
+      }
+    }
+    setActivityStatus(ActivityStatus.NO_ACTIVITY);
+  });
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>

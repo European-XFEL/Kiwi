@@ -619,6 +619,28 @@ export class Network {
     this.sendHash(hash);
   }
 
+  /**
+   * Requests the retrieval of the "uuid", "simple_name" and "date" values of
+   * all the scenes in a given project.
+   *
+   * The reply with the scenes is handled by Manager.handle_listScenes.
+   *
+   * @param projectUuid uuid of the project whose scenes must be retrieved
+   */
+  public onListScenes(projectUuid: string) {
+    const hash = new Hash({
+      type: 'requestGeneric',
+      empty: false,
+      timeout: 10,
+      instanceId: 'KaraboProjectDB',
+      slot: 'slotGenericRequest',
+      replyType: 'listScenes',
+    });
+    hash.set('args.type', 'listScenes');
+    hash.set('args.uuid', projectUuid);
+    this.sendHash(hash);
+  }
+
   public onSubscribeToOutput(
     deviceId: string,
     path: string,
