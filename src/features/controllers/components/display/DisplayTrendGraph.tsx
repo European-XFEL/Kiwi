@@ -3,6 +3,8 @@
 import React from 'react';
 import Plot from 'react-plotly.js';
 import type { Data, Layout } from 'plotly.js';
+import { RotateCcw } from 'lucide-react';
+import { Button } from '@/components/api';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 import { ProxyStatus } from '@/lib/binding/api';
 import { DisplayTrendGraphModel } from '@/karabo/common/api';
@@ -62,6 +64,7 @@ const DisplayTrendGraph: React.FC<{
 }> = React.memo(({ model, ctx }) => {
   if (!ctx) return null;
 
+  const [viewRevision, setViewRevision] = React.useState(0);
   const proxies = ctx.proxies;
   const rootDeviceId = ctx.proxy?.root.deviceId;
   const rootIsOffline =
@@ -173,7 +176,7 @@ const DisplayTrendGraph: React.FC<{
 
       showlegend: false,
     };
-  }, [model]);
+  }, [model, viewRevision]);
 
   if (isOffline || noData) {
     return (
@@ -184,20 +187,40 @@ const DisplayTrendGraph: React.FC<{
   }
 
   return (
-    <div className="relative w-full h-full rounded-sm border border-slate-200">
-      <Plot
-        className="kiwi-trend-chart"
-        data={data}
-        layout={layout}
-        config={{
-          responsive: true,
-          scrollZoom: true,
-          displayModeBar: false, // Temporarily hide the toolbar - it's outside the graph area (issue #264)
-          displaylogo: false,
-        }}
-        useResizeHandler
-        style={{ width: '100%', height: '100%' }}
-      />
+    <div className="flex w-full h-full rounded-sm border-2 border-slate-200">
+      <div className="min-w-0 flex-1">
+        <Plot
+          className="kiwi-trend-chart"
+          data={data}
+          layout={layout}
+          config={{
+            responsive: true,
+            scrollZoom: true,
+            displayModeBar: false, // Temporarily hide the toolbar - it's outside the graph area (issue #264)
+            displaylogo: false,
+          }}
+          revision={viewRevision}
+          useResizeHandler
+          style={{ width: '100%', height: '100%' }}
+        />
+      </div>
+      <div
+        role="toolbar"
+        aria-label="Trend graph controls"
+        className="flex w-8 shrink-0 flex-col items-center bg-transparent py-1"
+      >
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="Reset view"
+          title="Reset view"
+          className="h-7 w-7 rounded-sm"
+          onClick={() => setViewRevision((revision) => revision + 1)}
+        >
+          <RotateCcw aria-hidden="true" />
+        </Button>
+      </div>
     </div>
   );
 });
