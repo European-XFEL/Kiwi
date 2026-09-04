@@ -634,7 +634,7 @@ export class Network {
       timeout: 10,
       instanceId: 'KaraboProjectDB',
       slot: 'slotGenericRequest',
-      replyType: 'listScenes',
+      replyType: 'projectListScenes',
     });
     hash.set('args.type', 'listScenes');
     hash.set('args.uuid', projectUuid);
