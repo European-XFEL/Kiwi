@@ -228,6 +228,10 @@ export class Manager {
     broadcast_event(KaraboEvent.ProjectUpdated, hash.getValue('info.uuids'));
   }
 
+  public handle_listScenes(hash: Hash): void {
+    broadcast_event(KaraboEvent.ListScenes, hash);
+  }
+
   public handle_deviceConfigurations(hash: Hash): void {
     const configurations = hash.getValue('configurations') as Hash;
     for (const [deviceId, properties] of configurations.items()) {
