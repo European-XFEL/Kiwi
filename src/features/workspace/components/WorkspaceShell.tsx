@@ -10,6 +10,7 @@ import {
 } from '@/lib/singletons/PanelWrangler';
 import HomePanel from '@/app/HomePanel';
 import { useActiveSceneStore } from '@/features/scene-view/hooks/useActiveScene';
+import { useEffect, useState } from 'react';
 import type { PanelTab, WorkspaceModel, WorkspaceRuntime } from '../types';
 import WorkspaceBody from './WorkspaceBody';
 import WorkspaceFooter from './WorkspaceFooter';
@@ -30,10 +31,16 @@ function isLoadedSceneContent(
   );
 }
 
-function renderCenterPanel(tab: PanelTab, isSceneLoadPending = false) {
+function renderCenterPanel(
+  tab: PanelTab,
+  isSceneLoadPending: boolean,
+  isPageVisible: boolean
+) {
   if (tab.id === HOME_TAB_ID) {
     return isSceneLoadPending ? <ScenePending /> : <HomePanel />;
   }
+  if (!isPageVisible) return null;
+
   const content = getPanelWrangler().getContent(tab.id);
   if (content?.error) return <SceneOpenError message={content.error} />;
   if (!isLoadedSceneContent(content)) return <ScenePending />;
@@ -43,6 +50,20 @@ function renderCenterPanel(tab: PanelTab, isSceneLoadPending = false) {
       onFitModeChange={(mode) => getPanelWrangler().setFitMode(tab.id, mode)}
     />
   );
+}
+
+function usePageVisibility(): boolean {
+  const [isVisible, setIsVisible] = useState(() => !document.hidden);
+
+  useEffect(() => {
+    const updateVisibility = () => setIsVisible(!document.hidden);
+
+    document.addEventListener('visibilitychange', updateVisibility);
+    return () =>
+      document.removeEventListener('visibilitychange', updateVisibility);
+  }, []);
+
+  return isVisible;
 }
 
 // TODO: renderRightPanel — Configurator panel (properties for selected device)
@@ -57,6 +78,7 @@ export default function WorkspaceShell({
   const isSceneLoadPending = useActiveSceneStore(
     (state) => state.sceneLoadPending
   );
+  const isPageVisible = usePageVisibility();
 
   return (
     <section className="flex h-dvh min-h-0 flex-col overflow-hidden bg-background">
@@ -69,7 +91,7 @@ export default function WorkspaceShell({
           body={workspace.body}
           renderLeftPanel={() => null}
           renderCenterPanel={(tab) =>
-            renderCenterPanel(tab, isSceneLoadPending)
+            renderCenterPanel(tab, isSceneLoadPending, isPageVisible)
           }
           renderRightPanel={() => null}
           // The scene viewport owns its own overflow/layout, so skip the
