@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { createDefaultWorkspaceModel } from '../../utils';
 import type { WorkspaceRuntime } from '../../types';
@@ -196,6 +196,10 @@ describe('WorkspaceShell', () => {
     });
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('composes the workspace shell and resolves center tabs from the panel wrangler', () => {
     const workspace = createDefaultWorkspaceModel();
     const runtime = { connected: true, topic: 'oludedav' };
@@ -236,6 +240,28 @@ describe('WorkspaceShell', () => {
 
     expect(screen.queryByTestId('home-panel')).not.toBeInTheDocument();
     expect(screen.getByTestId('center-home')).toHaveTextContent('pending');
+  });
+
+  it('unmounts scene panels while the browser tab is hidden', () => {
+    const hidden = jest.spyOn(document, 'hidden', 'get').mockReturnValue(false);
+
+    renderWorkspaceShell();
+
+    expect(screen.getByTestId('scene-panel')).toBeInTheDocument();
+
+    act(() => {
+      hidden.mockReturnValue(true);
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+
+    expect(screen.queryByTestId('scene-panel')).not.toBeInTheDocument();
+
+    act(() => {
+      hidden.mockReturnValue(false);
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+
+    expect(screen.getByTestId('scene-panel')).toBeInTheDocument();
   });
 
   it('omits the header when the workspace model marks it as hidden', () => {
