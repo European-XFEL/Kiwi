@@ -2,6 +2,8 @@
 
 import React from 'react';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
+import { getStateColor } from '@/lib/Indicators';
+import { DEFAULT_VALUE_FIELD_BG } from '@/lib/colors';
 import { DisplayLabelModel } from '@/karabo/common/api';
 import { getControllerFontStyle } from '../../utils/fonts';
 import { toStringValue } from '../../utils/getBindingValue';
@@ -22,9 +24,16 @@ const DisplayLabel: React.FC<{
     );
 
   const labelValue = toStringValue(ctx.proxy, true);
+  const backgroundColor =
+    ctx.proxy?.binding?.displayType === 'State'
+      ? getStateColor(toStringValue(ctx.proxy))
+      : DEFAULT_VALUE_FIELD_BG;
 
   return (
-    <div className="overflow-hidden flex items-center justify-center border border-solid p-px w-full h-full">
+    <div
+      className="overflow-hidden flex items-center justify-center border border-solid border-black p-px w-full h-full"
+      style={{ backgroundColor }}
+    >
       <span
         className="block whitespace-nowrap overflow-hidden text-ellipsis max-w-full"
         style={{

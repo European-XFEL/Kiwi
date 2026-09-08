@@ -9,7 +9,12 @@ import {
   SceneModel,
   UnknownWidgetDataModel,
 } from '@/karabo/common/api';
-import { DeviceProxy, PropertyProxy } from '@/lib/binding/api';
+import {
+  BindingRoot,
+  StringBinding,
+  DeviceProxy,
+  PropertyProxy,
+} from '@/lib/binding/api';
 import { SingletonContext } from '@/testing';
 
 jest.mock('@/features/controllers/api', () => ({
@@ -266,5 +271,31 @@ describe('SceneView integration', () => {
       );
       expect(container.querySelectorAll('rect')).toHaveLength(1);
     });
+  });
+});
+
+test('a standalone state label receives its background through the scene binding', async () => {
+  const { topology } = makeTopology();
+  const device = topology.getDevice('DEV');
+  device.binding = new BindingRoot();
+  const binding = new StringBinding({ value: 'ERROR' });
+  binding.displayType = 'State';
+  device.binding.value!.set('state', binding);
+  const scene = new SceneModel();
+  scene.uuid = 'state-background';
+  scene.width = 100;
+  scene.height = 30;
+  const label = new DisplayLabelModel();
+  Object.assign(label, { width: 80, height: 20, keys: ['DEV.state'] });
+  scene.children = [label];
+
+  await SingletonContext.run({ topology }, async () => {
+    const { unmount } = render(
+      <SceneView sceneModel={scene} scale={1} fitMode="fit-page" />
+    );
+    expect(screen.getByText('ERROR').parentElement?.style.backgroundColor).toBe(
+      'rgb(255, 0, 0)'
+    );
+    unmount();
   });
 });
