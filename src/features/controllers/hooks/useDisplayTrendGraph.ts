@@ -1,32 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { throttle } from 'lodash';
 import { PropertyProxy } from '@/lib/binding/PropertyProxy';
 import type { PropertyProxies } from './useController';
-
-interface TrendDataPoint {
-  timestamp: number; // epoch ms
-  value: number;
-}
+import { TrendModel } from '../trendmodel';
 
 export interface TrendSeries {
   deviceId: string | undefined;
   propertyPath: string | undefined;
-  timestamps: number[];
-  values: number[];
+  timestamps: Float64Array;
+  values: Float64Array;
   dataPoints: number;
 }
-
-export interface TrendConfig {
-  maxDataPoints?: number;
-  timeWindowMs?: number;
-  throttleDelayMs?: number;
-}
-
-const DEFAULT_CONFIG: Required<TrendConfig> = {
-  maxDataPoints: 1000,
-  timeWindowMs: 5 * 60 * 1000,
-  throttleDelayMs: 100,
-};
 
 const toFiniteNumber = (raw: unknown): number | null => {
   if (typeof raw === 'number') return Number.isFinite(raw) ? raw : null;
@@ -53,32 +36,14 @@ const safeNowMs = (propertyProxy?: PropertyProxy | null): number => {
   return Date.now();
 };
 
-const prune = (data: TrendDataPoint[], max: number, windowMs: number) => {
-  let out = data;
-
-  if (Number.isFinite(windowMs)) {
-    const cutoff = Date.now() - windowMs;
-    out = out.filter((d) => d.timestamp >= cutoff);
-  }
-
-  if (out.length > max) out = out.slice(-max);
-  return out;
-};
-
 /**
  * useDisplayTrendGraph
  */
 export const useDisplayTrendGraph = (
   proxies: PropertyProxies = [],
   isOffline: boolean,
-  deviceId: string | undefined,
-  config: TrendConfig = {}
+  deviceId: string | undefined
 ) => {
-  const { maxDataPoints, timeWindowMs, throttleDelayMs } = {
-    ...DEFAULT_CONFIG,
-    ...config,
-  };
-
   const seriesCount = proxies.length;
   const bindingKey = proxies
     .map(
@@ -86,11 +51,23 @@ export const useDisplayTrendGraph = (
         `${propertyProxy?.root.deviceId ?? ''}.${propertyProxy?.path ?? ''}`
     )
     .join(',');
-  const [trendData, setTrendData] = useState<TrendDataPoint[][]>([]);
+  // Models stay in refs so incoming samples update bounded storage without
+  // copying plot arrays. A revision publishes one immutable snapshot batch.
+  const [revision, setRevision] = useState(0);
   const lastTsRef = useRef<number[]>([]);
-  const pendingRef = useRef<Map<number, TrendDataPoint>>(new Map());
+  const modelsRef = useRef<TrendModel[]>([]);
   const proxiesRef = useRef(proxies);
   proxiesRef.current = proxies;
+  const seriesMetadata = useMemo(
+    () =>
+      proxies.map((propertyProxy) => ({
+        deviceId: propertyProxy?.root.deviceId,
+        propertyPath: propertyProxy?.path,
+      })),
+    // Live updates replace `proxies`; series metadata changes only with bindings.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [bindingKey]
+  );
   const sampleKey = proxies
     .map((propertyProxy) => {
       const value = toFiniteNumber(propertyProxy?.value);
@@ -104,59 +81,35 @@ export const useDisplayTrendGraph = (
     })
     .join(',');
 
-  const flushPending = useMemo(
-    () =>
-      throttle(
-        () => {
-          const pending = pendingRef.current;
-          if (pending.size === 0) return;
-
-          pendingRef.current = new Map();
-          setTrendData((prev) => {
-            const next = Array.from(
-              { length: seriesCount },
-              (_, index) => prev[index] ?? []
-            );
-
-            pending.forEach((point, index) => {
-              next[index] = prune(
-                [...(next[index] ?? []), point],
-                maxDataPoints,
-                timeWindowMs
-              );
-            });
-
-            return next;
-          });
-        },
-        throttleDelayMs,
-        { leading: true, trailing: true }
-      ),
-    [maxDataPoints, seriesCount, throttleDelayMs, timeWindowMs]
-  );
-
   // reset on binding identity change
   useEffect(() => {
-    flushPending.cancel();
-    pendingRef.current.clear();
-    setTrendData(Array.from({ length: seriesCount }, () => []));
+    modelsRef.current = Array.from(
+      { length: seriesCount },
+      () => new TrendModel()
+    );
     lastTsRef.current = Array.from({ length: seriesCount }, () => -Infinity);
-  }, [deviceId, flushPending, seriesCount, bindingKey]);
+    setRevision((current) => current + 1);
+  }, [deviceId, seriesCount, bindingKey]);
 
   // clear on offline
   useEffect(() => {
     if (!isOffline) return;
 
-    flushPending.cancel();
-    pendingRef.current.clear();
-    setTrendData(Array.from({ length: seriesCount }, () => []));
+    modelsRef.current = Array.from(
+      { length: seriesCount },
+      () => new TrendModel()
+    );
     lastTsRef.current = Array.from({ length: seriesCount }, () => -Infinity);
-  }, [flushPending, isOffline, seriesCount]);
+    setRevision((current) => current + 1);
+  }, [isOffline, seriesCount]);
 
   // append points on updates
   useEffect(() => {
     if (isOffline) return;
 
+    // One network change can update several proxies. Collect every changed
+    // series first, then publish once so the batch causes one plot update.
+    let addedPoint = false;
     proxiesRef.current.forEach((propertyProxy, index) => {
       const value = toFiniteNumber(propertyProxy?.value);
       if (value == null) return;
@@ -165,40 +118,29 @@ export const useDisplayTrendGraph = (
       if (timestamp <= (lastTsRef.current[index] ?? -Infinity)) return;
 
       lastTsRef.current[index] = timestamp;
-      pendingRef.current.set(index, { timestamp, value });
+      modelsRef.current[index].addPoint(timestamp, value);
+      addedPoint = true;
     });
 
-    flushPending();
-  }, [flushPending, isOffline, sampleKey]);
-
-  // periodic pruning
-  useEffect(() => {
-    const id = setInterval(() => {
-      setTrendData((prev) =>
-        prev.map((series) => prune(series, maxDataPoints, timeWindowMs))
-      );
-    }, 5000);
-
-    return () => clearInterval(id);
-  }, [maxDataPoints, timeWindowMs]);
-
-  // cleanup
-  useEffect(() => () => flushPending.cancel(), [flushPending]);
+    if (addedPoint) setRevision((current) => current + 1);
+  }, [isOffline, sampleKey]);
 
   const series = useMemo<TrendSeries[]>(
     () =>
-      proxies.map((propertyProxy, index) => {
-        const data = trendData[index] ?? [];
+      seriesMetadata.map((metadata, index) => {
+        // Proxies appear before their reset effect on initial connection.
+        const data = modelsRef.current[index]?.snapshot() ?? {
+          timestamps: new Float64Array(),
+          values: new Float64Array(),
+        };
 
         return {
-          deviceId: propertyProxy?.root.deviceId,
-          propertyPath: propertyProxy?.path,
-          timestamps: data.map((d) => d.timestamp),
-          values: data.map((d) => d.value),
-          dataPoints: data.length,
+          ...metadata,
+          ...data,
+          dataPoints: data.values.length,
         };
       }),
-    [proxies, trendData]
+    [seriesMetadata, revision]
   );
 
   return {
