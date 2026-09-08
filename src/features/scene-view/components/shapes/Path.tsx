@@ -9,6 +9,7 @@
 import React from 'react';
 import { PathModel } from '@/karabo/common/api';
 import { registerRenderer } from '../../renderRegistry';
+import { dashArray } from './shapeUtils';
 
 // Path
 // ----------------------------------------------------------------------------
@@ -34,11 +35,7 @@ const Path: React.FC<{ model: PathModel }> = React.memo(({ model }) => (
       strokeLinejoin={model.stroke_linejoin}
       strokeMiterlimit={model.stroke_miterlimit}
       strokeDashoffset={model.stroke_dashoffset}
-      strokeDasharray={
-        model.stroke_dasharray.length
-          ? model.stroke_dasharray.join(' ')
-          : undefined
-      }
+      strokeDasharray={dashArray(model)}
     />
   </svg>
 ));

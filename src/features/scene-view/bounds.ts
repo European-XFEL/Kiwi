@@ -45,11 +45,13 @@ export type SceneLayer = 'shape' | 'widget';
 // ---
 
 export function resolveBounds(model: BaseSceneObjectData): Bounds {
-  // Line, Polygon, ArrowPolygon derive their bounding box from point data.
+  // Line, Polygon, ArrowPolygon derive their bounding box from point data, and
+  // Rectangle normalises negative extents the way Qt does.
   if (
     model instanceof LineModel ||
     model instanceof PolygonModel ||
-    model instanceof ArrowPolygonModel
+    model instanceof ArrowPolygonModel ||
+    model instanceof RectangleModel
   ) {
     return {
       x: model.computedX,
@@ -59,11 +61,10 @@ export function resolveBounds(model: BaseSceneObjectData): Bounds {
     };
   }
 
-  // Layouts, widgets, and Rectangle store position as plain x/y/width/height.
+  // Layouts and widgets store position as plain x/y/width/height.
   if (
     model instanceof BaseLayoutModel ||
-    model instanceof BaseWidgetObjectData ||
-    model instanceof RectangleModel
+    model instanceof BaseWidgetObjectData
   ) {
     return { x: model.x, y: model.y, width: model.width, height: model.height };
   }
