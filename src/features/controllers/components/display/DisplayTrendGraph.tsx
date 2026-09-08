@@ -24,6 +24,13 @@ const TRACE_COLORS = [
   '#00a3a3',
 ];
 
+const PLOT_CONFIG = {
+  responsive: true,
+  scrollZoom: true,
+  displayModeBar: false, // Temporarily hidden because it renders outside the graph area (issue #264).
+  displaylogo: false,
+};
+
 type SeriesInfo = {
   label: string;
   hoverTemplate: string;
@@ -72,8 +79,7 @@ const DisplayTrendGraph: React.FC<{
   const { series, isOffline } = useDisplayTrendGraph(
     proxies,
     rootIsOffline,
-    rootDeviceId,
-    { maxDataPoints: 1000, throttleDelayMs: 500 }
+    rootDeviceId
   );
 
   const noData = series.every((item) => item.values.length === 0);
@@ -193,12 +199,7 @@ const DisplayTrendGraph: React.FC<{
           className="kiwi-trend-chart"
           data={data}
           layout={layout}
-          config={{
-            responsive: true,
-            scrollZoom: true,
-            displayModeBar: false, // Temporarily hide the toolbar - it's outside the graph area (issue #264)
-            displaylogo: false,
-          }}
+          config={PLOT_CONFIG}
           revision={viewRevision}
           useResizeHandler
           style={{ width: '100%', height: '100%' }}
