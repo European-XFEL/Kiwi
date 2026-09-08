@@ -77,6 +77,27 @@ export class RectangleModel extends BaseShapeObjectData {
   y = 0;
   width = 0;
   height = 0;
+
+  // A rectangle dragged right-to-left or bottom-to-top is stored with negative
+  // extents. Qt normalises those when it draws (QRect::normalized), but SVG
+  // treats a negative width or height as an error and skips the element, so the
+  // shape would silently vanish. Normalise to the same box Qt paints, while
+  // leaving x/y/width/height untouched for round-tripping.
+  get computedX() {
+    return this.width < 0 ? this.x + this.width : this.x;
+  }
+
+  get computedY() {
+    return this.height < 0 ? this.y + this.height : this.y;
+  }
+
+  get computedWidth() {
+    return Math.abs(this.width);
+  }
+
+  get computedHeight() {
+    return Math.abs(this.height);
+  }
 }
 
 registerReader(
