@@ -151,7 +151,7 @@ const SceneLink: React.FC<{ model: SceneLinkModel }> = ({ model }) => {
     <LinkButton
       text={model.text}
       font={model.font}
-      foreground={model.foreground}
+      foreground={model.foreground || '#000000'}
       background={model.background}
       frame_width={model.frame_width}
       title={`Scene: ${name}`}

@@ -18,7 +18,7 @@ const DisplayStateColor: React.FC<{
   const bgColor = getStateColor(rawState);
 
   return (
-    <div className="flex items-center justify-center border border-solid overflow-hidden w-full h-full">
+    <div className="flex items-center justify-center border border-solid border-black overflow-hidden w-full h-full">
       <div
         className="w-full h-full flex items-center justify-center"
         style={{

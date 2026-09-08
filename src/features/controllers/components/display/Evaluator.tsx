@@ -3,6 +3,7 @@
 import React from 'react';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 import { EvaluatorModel } from '@/karabo/common/api';
+import { DEFAULT_VALUE_FIELD_BG } from '@/lib/colors';
 import { getControllerFontStyle } from '../../utils/fonts';
 import { toStringValue } from '../../utils/getBindingValue';
 
@@ -17,8 +18,9 @@ const Evaluator: React.FC<{
 
   return (
     <div
-      className="overflow-clip flex items-center justify-center border border-solid p-px w-full h-full"
+      className="overflow-clip flex items-center justify-center border border-solid border-black p-px w-full h-full"
       style={{
+        backgroundColor: DEFAULT_VALUE_FIELD_BG,
         ...getControllerFontStyle(model.font_size, model.font_weight),
       }}
     >
