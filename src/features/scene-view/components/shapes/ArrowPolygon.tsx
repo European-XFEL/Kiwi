@@ -3,7 +3,7 @@
 import React from 'react';
 import { ArrowPolygonModel } from '@/karabo/common/api';
 import { registerRenderer } from '../../renderRegistry';
-import { strokePad, shapeSvgProps, strokeFillAttrs } from './shapeUtils';
+import { strokePad, shapeSvgProps, useShapeAttrs } from './shapeUtils';
 
 // ArrowPolygon
 // ----------------------------------------------------------------------------
@@ -30,7 +30,7 @@ const ArrowPolygon: React.FC<{ model: ArrowPolygonModel }> = React.memo(
     // with the two base corners at (hx1, hy1) and (hx2, hy2).
     const arrowheadPoints = `${x2},${y2} ${hx1},${hy1} ${hx2},${hy2}`;
 
-    const attrs = strokeFillAttrs(model);
+    const attrs = useShapeAttrs(model);
 
     return (
       <svg

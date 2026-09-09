@@ -11,6 +11,7 @@ import {
 import { getChildObjectId } from '../utils/objectId';
 import { collectSceneLayers } from '../utils/visitor';
 import { useSceneObjectInteractionLogger } from '../hooks/useSceneObjectInteractionLogger';
+import { DefsScopeContext } from './shapes/shapeUtils';
 
 // Bootstrap — triggers all registerRenderer() calls
 import '../renderers';
@@ -50,6 +51,9 @@ const SceneView: React.FC<SceneViewProps> = React.memo(
     const sceneInnerId = useId();
     const scrollableId = useId();
     const sceneViewId = useId();
+    // Scopes this scene's <defs> ids so two mounted scenes cannot resolve each
+    // other's markers or gradients through a document-wide url(#id) lookup.
+    const defsScope = useId().replace(/[^a-zA-Z0-9]/g, '');
 
     const sceneEntries = React.useMemo(() => {
       const entriesByLayer = collectSceneLayers(sceneModel.children);
@@ -93,7 +97,9 @@ const SceneView: React.FC<SceneViewProps> = React.memo(
             transformOrigin: 'top left',
           }}
         >
-          {sceneEntries}
+          <DefsScopeContext.Provider value={defsScope}>
+            {sceneEntries}
+          </DefsScopeContext.Provider>
         </div>
       </div>
     );

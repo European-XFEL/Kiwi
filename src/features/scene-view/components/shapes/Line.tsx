@@ -3,7 +3,7 @@
 import React from 'react';
 import { LineModel } from '@/karabo/common/api';
 import { registerRenderer } from '../../renderRegistry';
-import { strokePad, shapeSvgProps, strokeFillAttrs } from './shapeUtils';
+import { strokePad, shapeSvgProps, useShapeAttrs } from './shapeUtils';
 
 // Line
 // ----------------------------------------------------------------------------
@@ -20,6 +20,7 @@ const Line: React.FC<{ model: LineModel }> = React.memo(({ model }) => {
     computedHeight,
   } = model;
   const pad = strokePad(model.stroke_width);
+  const attrs = useShapeAttrs(model);
 
   return (
     <svg
@@ -31,7 +32,7 @@ const Line: React.FC<{ model: LineModel }> = React.memo(({ model }) => {
         pad
       )}
     >
-      <line x1={x1} y1={y1} x2={x2} y2={y2} {...strokeFillAttrs(model)} />
+      <line x1={x1} y1={y1} x2={x2} y2={y2} {...attrs} />
     </svg>
   );
 });

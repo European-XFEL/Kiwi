@@ -92,6 +92,11 @@ export function readBaseShapeData(
   // Fill
   model.fill = toStr(xmlAttr(element, 'fill'), 'none');
   model.fill_opacity = toNum(xmlAttr(element, 'fill-opacity'), 1.0);
+
+  // Markers
+  model.marker_start = toStr(xmlAttr(element, 'marker-start'));
+  model.marker_mid = toStr(xmlAttr(element, 'marker-mid'));
+  model.marker_end = toStr(xmlAttr(element, 'marker-end'));
 }
 
 export function readBaseWidgetData(
