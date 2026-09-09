@@ -1,13 +1,16 @@
 /**
  * Shared helpers for shape components.
  *
- * All shapes face the same two problems:
+ * All shapes face the same three problems:
  *   1. The stroke extends beyond the bounding box — we pad each side by
  *      half the stroke width so it is never clipped.
  *   2. SVG viewBox lets us keep absolute scene coordinates in the markup
  *      while the shell positions the element.
+ *   3. Definitions they reference (markers, gradients) live in one shared
+ *      document, so the ids have to be scoped per scene.
  */
 
+import React from 'react';
 import type { BaseShapeObjectData } from '@/karabo/common/api';
 
 // strokePad
@@ -89,13 +92,42 @@ export function dashArray(model: BaseShapeObjectData): string | undefined {
     : undefined;
 }
 
-// strokeFillAttrs
+// Defs scope
 // ----------------------------------------------------------------------------
-// All SVG stroke + fill attributes from a shape model in one place.
+// A scene's <defs> ids land in the shared HTML document, where url(#id) resolves
+// document-wide. Karabo writes generic ids ("marker288071", "Arrow2Send"), so two
+// scenes open at once would otherwise resolve each other's definitions. Each
+// mounted scene supplies a scope that prefixes every id it defines and every
+// reference to it.
 
-export function strokeFillAttrs(model: BaseShapeObjectData) {
+export const DefsScopeContext = React.createContext('');
+
+export const useDefsScope = (): string => React.useContext(DefsScopeContext);
+
+export function scopedId(id: string, scope: string): string {
+  return scope ? `${scope}-${id}` : id;
+}
+
+const FUNC_IRI = /^url\((['"]?)#(.+)\1\)$/;
+
+/** Rewrites "url(#marker1)" to point at this scene's copy of the definition. */
+export function scopedFuncIri(value: string, scope: string): string {
+  const match = FUNC_IRI.exec(value.trim());
+  return match ? `url(#${scopedId(match[2], scope)})` : value;
+}
+
+// useShapeAttrs
+// ----------------------------------------------------------------------------
+// All SVG stroke, fill and marker attributes from a shape model in one place.
+// Markers, gradients and any other funcIRI are resolved against the defs scope.
+
+export function useShapeAttrs(model: BaseShapeObjectData) {
+  const scope = useDefsScope();
+  const marker = (value: string) =>
+    value ? scopedFuncIri(value, scope) : undefined;
+
   return {
-    stroke: model.stroke,
+    stroke: scopedFuncIri(model.stroke, scope),
     strokeOpacity: model.stroke_opacity,
     strokeWidth: model.stroke_width,
     strokeLinecap: model.stroke_linecap as 'butt' | 'square' | 'round',
@@ -103,7 +135,10 @@ export function strokeFillAttrs(model: BaseShapeObjectData) {
     strokeMiterlimit: model.stroke_miterlimit,
     strokeDashoffset: model.stroke_dashoffset,
     strokeDasharray: dashArray(model),
-    fill: model.fill,
+    fill: scopedFuncIri(model.fill, scope),
     fillOpacity: model.fill_opacity,
+    markerStart: marker(model.marker_start),
+    markerMid: marker(model.marker_mid),
+    markerEnd: marker(model.marker_end),
   };
 }

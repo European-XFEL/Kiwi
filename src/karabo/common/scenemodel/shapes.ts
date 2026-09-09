@@ -1,15 +1,23 @@
 /**
- * Shape models — Line, Rectangle, Polygon, ArrowPolygon, Path.
+ * Shape models — Line, Rectangle, Polygon, ArrowPolygon, Path, Defs.
  *
- * Purely visual, no data bindings. All extend BaseShapeObjectData.
+ * Purely visual, no data bindings. Every shape extends BaseShapeObjectData;
+ * Defs is the exception — it paints nothing and only carries definitions.
  */
 
-import { BaseShapeObjectData } from './bases';
+import { BaseSceneObjectData, BaseShapeObjectData } from './bases';
 
 import { registerReader } from './Registry';
-import { SVG_LINE, SVG_POLYGON, SVG_RECT } from './constants';
+import {
+  SVG_DEFS,
+  SVG_LINE,
+  SVG_PATH,
+  SVG_POLYGON,
+  SVG_RECT,
+} from './constants';
 import {
   xmlAttr,
+  attributesToRecord,
   childElements,
   readBaseShapeData,
   toNum,
@@ -238,6 +246,19 @@ export class PathModel extends BaseShapeObjectData {
 }
 
 registerReader(
+  'Path',
+  (element) => {
+    const path = new PathModel();
+
+    path.svg_data = toStr(xmlAttr(element, 'd'));
+    readBaseShapeData(element, path);
+
+    return path;
+  },
+  SVG_PATH
+);
+
+registerReader(
   'Polygon',
   (element) => {
     const polygon = new PolygonModel();
@@ -248,4 +269,45 @@ registerReader(
     return polygon;
   },
   SVG_POLYGON
+);
+
+// Defs
+// ----------------------------------------------------------------------------
+
+/** One SVG node inside <defs>, captured verbatim so it can be re-emitted. */
+export interface SvgNode {
+  tag: string;
+  attributes: Record<string, string>;
+  children: SvgNode[];
+}
+
+/**
+ * SVG <defs> block.
+ *
+ * Karabo writes arrowheads as <marker> definitions here and points at them
+ * from a shape's marker-start/mid/end. The definitions paint nothing on their
+ * own — they only need to be in the document so url(#id) resolves.
+ */
+export class DefsModel extends BaseSceneObjectData {
+  nodes: SvgNode[] = [];
+}
+
+function readSvgNode(element: Element): SvgNode {
+  return {
+    tag: element.localName,
+    attributes: attributesToRecord(element),
+    children: childElements(element).map(readSvgNode),
+  };
+}
+
+registerReader(
+  'Defs',
+  (element) => {
+    const defs = new DefsModel();
+
+    defs.nodes = childElements(element).map(readSvgNode);
+
+    return defs;
+  },
+  SVG_DEFS
 );

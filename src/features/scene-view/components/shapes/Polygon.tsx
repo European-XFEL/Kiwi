@@ -3,7 +3,7 @@
 import React from 'react';
 import { PolygonModel } from '@/karabo/common/api';
 import { registerRenderer } from '../../renderRegistry';
-import { strokePad, shapeSvgProps, strokeFillAttrs } from './shapeUtils';
+import { strokePad, shapeSvgProps, useShapeAttrs } from './shapeUtils';
 
 // Polygon
 // ----------------------------------------------------------------------------
@@ -11,6 +11,7 @@ import { strokePad, shapeSvgProps, strokeFillAttrs } from './shapeUtils';
 const Polygon: React.FC<{ model: PolygonModel }> = React.memo(({ model }) => {
   const { computedX, computedY, computedWidth, computedHeight } = model;
   const pad = strokePad(model.stroke_width);
+  const attrs = useShapeAttrs(model);
 
   return (
     <svg
@@ -22,7 +23,7 @@ const Polygon: React.FC<{ model: PolygonModel }> = React.memo(({ model }) => {
         pad
       )}
     >
-      <polygon points={model.points} {...strokeFillAttrs(model)} />
+      <polygon points={model.points} {...attrs} />
     </svg>
   );
 });
