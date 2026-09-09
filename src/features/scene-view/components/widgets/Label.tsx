@@ -34,7 +34,10 @@ const Label: React.FC<{ model: LabelModel }> = React.memo(({ model }) => {
         alignItems: 'center',
         justifyContent: ALIGNH_MAP[model.alignh],
         overflow: 'hidden',
-        whiteSpace: 'nowrap',
+        // 'pre', not 'nowrap': runs of spaces are meaningful here. Scene
+        // authors pad Text widgets with them to align table-like columns,
+        // and 'nowrap' collapses each run to a single space.
+        whiteSpace: 'pre',
         textOverflow: 'ellipsis',
         ...getQFontTextStyle(model.font),
       }}
