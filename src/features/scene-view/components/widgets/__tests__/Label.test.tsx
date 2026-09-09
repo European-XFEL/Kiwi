@@ -9,9 +9,9 @@ jest.mock('@/features/controllers/api', () => ({
 
 import Label from '../Label';
 
-function renderLabel(alignh: 1 | 2 | 4) {
+function renderLabel(alignh: 1 | 2 | 4, text = 'Beamline') {
   const model = new LabelModel();
-  model.text = 'Beamline';
+  model.text = text;
   model.foreground = '#000000';
   model.alignh = alignh;
 
@@ -37,5 +37,23 @@ describe('Label horizontal alignment', () => {
 
   it('defaults to left alignment', () => {
     expect(new LabelModel().alignh).toBe(1);
+  });
+});
+
+describe('Label whitespace', () => {
+  // Scene authors pad Text widgets with runs of spaces to align table-like
+  // columns. 'nowrap' collapses each run to a single space and loses that
+  // alignment, so the widget renders with 'pre'. jsdom does no layout, so the
+  // computed style is the only observable proxy for the collapsing itself.
+  const padded = 'f/1.4    1     0';
+
+  it('renders with a whitespace mode that preserves space runs', () => {
+    expect(renderLabel(1, padded)).toHaveStyle({ whiteSpace: 'pre' });
+  });
+
+  it('passes the model text through unnormalized', () => {
+    expect(renderLabel(1, padded)).toHaveTextContent(padded, {
+      normalizeWhitespace: false,
+    });
   });
 });
