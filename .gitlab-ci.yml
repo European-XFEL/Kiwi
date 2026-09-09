@@ -8,6 +8,7 @@ stages:
   - lint
   - test
   - deploy
+  - mirror
 
 variables:
   NODE_ENV: test
@@ -107,3 +108,82 @@ release_deploy:
 
   rules:
     - if: $CI_COMMIT_TAG =~ /^(\d+\.)(\d+\.)(\d+)$/
+
+#
+# Publish to the GitHub mirror - 1st. of 2 steps
+#
+# 1st. step is triggered by release tags automatically and publishes the
+# main branch and the release tags of Kiwi to an internal mirror. As part
+# of this step, the git commit history is edited using git-filter-repo to
+# remove personal data from contributors who do not want their personal data
+# exposed in the public GitHub mirror.
+#
+# The 2nd. step is manual, triggered from the internal mirror on demand
+# and is responsible for updating the public GitHub mirror with the
+# contents of the internal mirror.
+#
+internal_mirror_publish:
+  stage: mirror
+  timeout: 3h
+  image: europeanxfel/karabo-ci:miniconda-3-006
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^(\d+\.){2}\d+((a|b|rc)\d+)?$/'
+      when: on_success
+
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
+
+    - when: never
+  script:
+    # Retrieves the mail and name mappings for authors that have chosen to keep their data hidden in the
+    # commit history of the public repository.
+    - git clone https://gitlab-ci-token:$CI_JOB_TOKEN@git.xfel.eu/Karabo/contriboptouts.git
+    # Retrieves the main branch and the tags of the Karabo Framework repository.
+    - git clone https://gitlab-ci-token:$CI_JOB_TOKEN@git.xfel.eu/Karabo/kiwi.git --branch main --single-branch KiwiHead
+    - cd KiwiHead
+    # loop over all branches that are either main, or a hotfix branch and fetch them too, allowing tags to be pushed
+    - |
+      for remote_branch in $(git ls-remote --heads origin | awk '{print $2}' | grep -E '^refs/heads/[0-9]+\.[0-9]+\.[xX]-hotfix$'); do
+        branch_name=${remote_branch#refs/heads/}
+        git fetch origin "$remote_branch:$branch_name"
+      done
+    # To be on the safe side and prevent any push to the origin, remove it from the list of remotes (this is what git-filter-repo does).
+    - git remote rm origin
+    # Pushes main and tags to the internal mirror.
+    # The KIWI_MIRROR_TOKEN must be an environment variable defined in the Kiwi Gitlab project whose
+    # value is a project access token generated for the KiwiMirror Gitlab project.
+    - git remote add internal_mirror https://oauth2:$KIWI_MIRROR_TOKEN@git.xfel.eu/Karabo/KiwiMirror.git
+    - git fetch internal_mirror main
+    - git push -u internal_mirror main --force-with-lease
+    - |
+      git branch --format='%(refname:short)' | grep -E '^[0-9]+\.[0-9]+\.[xX]-hotfix$' | while read branch; do
+        git push internal_mirror "$branch" --force
+      done
+    - git push internal_mirror --tags --force
+    # Removes the local copy of the Kiwi repository - all the filtering will happen on the internal mirror.
+    - cd ..
+    - rm -rf KiwiHead
+    # The removal of files above 100 Mb (GitHub imposed limit) and the obfuscation of opts out must be performed over the just
+    # updated internal mirror to avoid any conflicts during the push.
+    - git clone https://oauth2:$KIWI_MIRROR_TOKEN@git.xfel.eu/Karabo/KiwiMirror.git
+    - cd KiwiMirror
+    # For examples of path based filtering: https://www.mankier.com/1/git-filter-repo#Examples-Path_based_filtering
+    # Removes files that can contain information specific to the production and staging environments in EurXFEL.
+    # "env.development" is published because it contains no sensitive data and documents the supported configuration
+    # variables.
+    - git-filter-repo --invert-paths --path 'env.production' --path 'env.staging'
+    - git-filter-repo --strip-blobs-bigger-than 100M
+    # we filter mails now (Kiwi uses the same set of exclusions as the Karabo Framework and Devices - at least for now)
+    - git-filter-repo --mailmap ../contriboptouts/karabo-mailmap
+    # As git-filter-repo for safety reasons removes the "origin" remote, we set again the new remote,
+    # "internal_mirror" (a remote with the same name had been defined a few steps back, but for another local).
+    # Details about how git-filter-repo works (the removal of the origin remote is the third step) can be
+    # found at https://htmlpreview.github.io/?https://github.com/newren/git-filter-repo/blob/docs/html/git-filter-repo.html#INTERNALS.
+    - git remote add internal_mirror https://oauth2:$KIWI_MIRROR_TOKEN@git.xfel.eu/Karabo/KiwiMirror.git
+    - git fetch internal_mirror main
+    - git push -u internal_mirror main --force-with-lease
+    - |
+      git for-each-ref --format='%(refname:short)' refs/heads | grep -E '^[3-9]+\.[0-9]+\.[xX]-hotfix$' | while read branch; do
+        git push internal_mirror "$branch" --force;
+      done
+    - git push internal_mirror --tags --force
