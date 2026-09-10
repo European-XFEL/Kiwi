@@ -69,11 +69,12 @@ const TableElement: React.FC<{
   }
 
   return (
-    <div className="border border-gray-300 bg-white overflow-hidden flex flex-col w-full h-full">
+    <div className="border border-gray-400 bg-white overflow-hidden flex flex-col w-full h-full">
       <div className="flex-1 min-h-0 overflow-y-scroll overflow-x-auto">
         <Table className="w-full border-collapse text-xs">
           <TableHeader>
             <TableRow className="border-b border-gray-300">
+              <TableHead className="sticky left-0 top-0 z-20 w-7 min-w-7 border border-gray-300 bg-gray-100 px-1 py-1 text-right align-middle font-normal text-gray-600" />
               {columns.map(({ key, binding }) => (
                 <TableHead
                   key={key}
@@ -84,13 +85,22 @@ const TableElement: React.FC<{
               ))}
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody className="[&_tr:last-child]:border-b">
             {cells.map((row, rowIdx) => (
-              <TableRow key={rowIdx} className="hover:bg-gray-50">
+              <TableRow
+                key={rowIdx}
+                className="border-b border-gray-300 hover:bg-gray-50"
+              >
+                <TableCell
+                  role="rowheader"
+                  className="sticky left-0 z-10 w-7 min-w-7 border border-gray-300 bg-gray-100 px-1 py-0.5 text-right align-middle text-gray-600"
+                >
+                  {rowIdx}
+                </TableCell>
                 {columns.map(({ key, binding }, colIdx) => (
                   <TableCell
                     key={key}
-                    className={`border border-gray-200 px-2 py-0.5 whitespace-nowrap align-middle ${
+                    className={`border border-gray-300 px-2 py-0.5 whitespace-nowrap align-middle ${
                       isNumericType(binding.hashType)
                         ? 'text-right'
                         : 'text-left'
