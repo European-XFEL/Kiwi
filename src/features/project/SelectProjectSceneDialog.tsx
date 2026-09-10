@@ -162,10 +162,10 @@ export default function SelectProjectSceneDialog({
     if (selectedDomain.length === 0 || !domains.includes(selectedDomain)) {
       const storedDomain = getConfig().currentDomain;
       const currentTopic = sessionInfo?.guiServerTopic as string;
-      const startupDomain = domains.includes(storedDomain)
-        ? storedDomain
-        : domains.includes(currentTopic)
-          ? currentTopic
+      const startupDomain = domains.includes(currentTopic)
+        ? currentTopic
+        : domains.includes(storedDomain)
+          ? storedDomain
           : domains[0];
       setSelectedDomain(startupDomain);
       getConfig().currentDomain = startupDomain;
