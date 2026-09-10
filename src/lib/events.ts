@@ -11,6 +11,9 @@ enum KaraboEvent {
   ListItems = 'ListItems', // triggered by reception of GUI Server message of type
   LoadProjectItems = 'LoadProjectItems', // triggered by reception of GUI Server message of type
   ListScenes = 'ListScenes', // trigerred by reception of reply to slotGetScenes of the ProjectDbManager (via GUI's "requestGeneric")
+  // Every set/clear broadcasts, even when unchanged.
+  // Empty Hash; read root and domain from ProjectItemModel.
+  RootProjectChanged = 'RootProjectChanged',
   ProjectUpdated = 'ProjectUpdated', // uuids of updated projects as string[] under 'uuids' key
   SessionDropped = 'SessionDropped',
   SessionExpired = 'SessionExpired',

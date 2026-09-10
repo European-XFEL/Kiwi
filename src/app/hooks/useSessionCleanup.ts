@@ -4,14 +4,14 @@ import { useEffect, useRef } from 'react';
 // ControllerContainer. It uses import.meta.glob, which Jest cannot parse, so
 // importing the barrel makes this hook untestable. WorkspaceShell does the same.
 import { useActiveSceneStore } from '@/features/scene-view/hooks/useActiveScene';
-import { getPanelWrangler } from '@/lib/singletons/api';
+import { getPanelWrangler, getProjectModel } from '@/lib/singletons/api';
 import { useGlobalStore } from '@/store/api';
 
-// Everything that must not outlive a GUI server session. The PanelWrangler and
-// the active-scene store are module-level singletons, so without this they keep
-// the previous session's scenes reachable by the next login.
+// These singletons must not keep the previous session's project or scenes
+// reachable by the next login.
 function clearSessionState(): void {
   getPanelWrangler().resetWorkspace();
+  getProjectModel().clearRoot();
   useActiveSceneStore.getState().setLoadedSceneRef(undefined);
   useActiveSceneStore.getState().setSceneLoadPending(false);
 }

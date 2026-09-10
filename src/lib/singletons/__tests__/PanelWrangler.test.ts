@@ -74,7 +74,7 @@ describe('PanelWrangler', () => {
   beforeEach(() => {
     window.history.replaceState(null, '', '/main');
     jest.clearAllMocks();
-    getProjectModel().root = undefined;
+    getProjectModel().clearRoot();
     wrangler = new PanelWrangler();
   });
 

@@ -1,11 +1,17 @@
 import { act, renderHook } from '@testing-library/react';
+import { ProjectModel } from '@/karabo/common/project/api';
+import { Mediator } from '@/lib/singletons/Mediator';
+import { ProjectItemModel } from '@/lib/singletons/ProjectItemModel';
 
 const mockResetWorkspace = jest.fn();
+const mockProjectModel = new ProjectItemModel();
+const mockMediator = new Mediator();
 
 jest.mock('@/lib/singletons/api', () => ({
   getPanelWrangler: () => ({ resetWorkspace: mockResetWorkspace }),
   getDbConn: jest.fn(),
-  getProjectModel: jest.fn(),
+  getProjectModel: () => mockProjectModel,
+  getMediator: () => mockMediator,
   getTopology: jest.fn(),
 }));
 
@@ -33,6 +39,7 @@ function login(session: typeof SESSION = SESSION) {
 describe('useSessionCleanup', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockProjectModel.clearRoot();
     act(() => {
       useGlobalStore.getState().reset();
     });
@@ -50,15 +57,20 @@ describe('useSessionCleanup', () => {
 
   it('does not clear while the session stays active', () => {
     login();
+    const project = new ProjectModel({ uuid: 'root' });
+    mockProjectModel.setRoot('CONTROLS', project);
     const { rerender } = renderHook(() => useSessionCleanup());
 
     rerender();
 
     expect(mockResetWorkspace).not.toHaveBeenCalled();
+    expect(mockProjectModel.root).toBe(project);
+    expect(mockProjectModel.domain).toBe('CONTROLS');
   });
 
-  it('clears the workspace when the user logs out', () => {
+  it('clears the workspace and project when the user logs out', () => {
     login();
+    mockProjectModel.setRoot('CONTROLS', new ProjectModel({ uuid: 'root' }));
     renderHook(() => useSessionCleanup());
 
     act(() => {
@@ -66,12 +78,15 @@ describe('useSessionCleanup', () => {
     });
 
     expect(mockResetWorkspace).toHaveBeenCalledTimes(1);
+    expect(mockProjectModel.root).toBeUndefined();
+    expect(mockProjectModel.domain).toBeUndefined();
   });
 
   // The reason this is keyed on sessionInfo rather than on the logout handler:
   // expiry and connection failure end a session without going near that button.
-  it('clears the workspace when the session expires', () => {
+  it('clears the workspace and project when the session expires', () => {
     login();
+    mockProjectModel.setRoot('CONTROLS', new ProjectModel({ uuid: 'root' }));
     renderHook(() => useSessionCleanup());
 
     act(() => {
@@ -79,10 +94,13 @@ describe('useSessionCleanup', () => {
     });
 
     expect(mockResetWorkspace).toHaveBeenCalledTimes(1);
+    expect(mockProjectModel.root).toBeUndefined();
+    expect(mockProjectModel.domain).toBeUndefined();
   });
 
-  it('clears the workspace when the connection drops', () => {
+  it('clears the workspace and project when the connection drops', () => {
     login();
+    mockProjectModel.setRoot('CONTROLS', new ProjectModel({ uuid: 'root' }));
     renderHook(() => useSessionCleanup());
 
     act(() => {
@@ -90,6 +108,8 @@ describe('useSessionCleanup', () => {
     });
 
     expect(mockResetWorkspace).toHaveBeenCalledTimes(1);
+    expect(mockProjectModel.root).toBeUndefined();
+    expect(mockProjectModel.domain).toBeUndefined();
   });
 
   it('clears the active scene state when the user logs out', () => {
