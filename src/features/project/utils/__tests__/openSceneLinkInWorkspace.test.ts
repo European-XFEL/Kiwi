@@ -27,6 +27,7 @@ const mockCallDeviceSlot = jest.fn();
 const mockGetDeviceInstanceInfo = jest.fn();
 const mockGetDatabaseScene = jest.fn();
 const mockProjectModel = new ProjectItemModel();
+const mockMediator = { postEvent: jest.fn() };
 
 jest.mock('@/lib/request', () => {
   const actual =
@@ -42,6 +43,7 @@ jest.mock('@/lib/request', () => {
 
 jest.mock('@/lib/singletons/api', () => ({
   getProjectModel: () => mockProjectModel,
+  getMediator: () => mockMediator,
   getTopology: () => ({
     getDeviceInstanceInfo: mockGetDeviceInstanceInfo,
   }),
@@ -53,7 +55,7 @@ jest.mock('@/lib/singletons/api', () => ({
 describe('openSceneLinkInWorkspace', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    getProjectModel().root = undefined;
+    getProjectModel().clearRoot();
   });
 
   it('extracts a uuid from scene link targets', () => {
