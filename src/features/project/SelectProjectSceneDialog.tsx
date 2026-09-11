@@ -56,6 +56,11 @@ export default function SelectProjectSceneDialog({
   const projectSearch = useDeferredSearch();
   const sceneSearch = useDeferredSearch();
 
+  // A request is in flight. Selecting anything while one is pending would send
+  // a second request whose reply cannot be told apart from the first, so the
+  // reply could be applied to whichever row happens to be selected by then.
+  const isBusy = activityStatus !== ActivityStatus.NO_ACTIVITY;
+
   const filteredProjects = useMemo(
     () =>
       filterByQuery(
@@ -77,7 +82,10 @@ export default function SelectProjectSceneDialog({
   );
 
   const updateProjects = (domain: string) => {
+    setErrorMessage('');
     setActivityStatus(ActivityStatus.GETTING_PROJECTS);
+    setProjects([]);
+    setSelectedProject(undefined);
     setScenes([]);
     setSelectedScene(undefined);
     sceneSearch.clear();
@@ -85,26 +93,17 @@ export default function SelectProjectSceneDialog({
   };
 
   const updateScenes = (projectModel: ProjectModel) => {
+    setErrorMessage('');
     setActivityStatus(ActivityStatus.GETTING_SCENES);
+    setScenes([]);
+    setSelectedScene(undefined);
+    sceneSearch.clear();
     getNetwork().onListScenes(projectModel.uuid);
   };
-
-  useKaraboEvent(KaraboEvent.DatabaseBusy, (hash: Hash) => {
-    const is_processing = hash.getValue('is_processing');
-    if (!is_processing && activityStatus === ActivityStatus.GETTING_SCENES) {
-      setActivityStatus(ActivityStatus.NO_ACTIVITY);
-      const scenes = selectedProject!.scenes ?? [];
-      setScenes(scenes);
-      if (scenes.length > 0) {
-        setSelectedScene(scenes[0]);
-      }
-    }
-  });
 
   const handleProjectClick = (project: ProjectModel) => {
     setSelectedProject(project);
     updateScenes(project);
-    setSelectedScene(undefined);
   };
 
   const handleSceneClick = (scene: SceneModel) => {
@@ -136,12 +135,24 @@ export default function SelectProjectSceneDialog({
   };
 
   React.useEffect(() => {
+    if (!open) {
+      // The event handlers below drop replies that arrive while the dialog is
+      // closed, so a request still in flight on close leaves its status behind
+      // with nothing left to clear it. Reset here, or the next open starts with
+      // every row disabled and no way to recover.
+      if (isBusy) {
+        domainsInitializedRef.current = false;
+      }
+      setActivityStatus(ActivityStatus.NO_ACTIVITY);
+      setErrorMessage('');
+      return;
+    }
     if (open && !domainsInitializedRef.current) {
       domainsInitializedRef.current = true;
       setActivityStatus(ActivityStatus.GETTING_DOMAINS);
       getDbConn().listDomains();
     }
-  }, [open]);
+  }, [isBusy, open]);
 
   useKaraboEvent(KaraboEvent.ListDomains, (hash: Hash) => {
     if (!open) {
@@ -155,6 +166,8 @@ export default function SelectProjectSceneDialog({
       setErrorMessage(
         `Error reading domains: ${e}. Close and reopen the dialog.`
       );
+      domainsInitializedRef.current = false;
+      setActivityStatus(ActivityStatus.NO_ACTIVITY);
       return;
     }
     domains.sort((a, b) => a.localeCompare(b));
@@ -173,7 +186,6 @@ export default function SelectProjectSceneDialog({
     } else {
       updateProjects(selectedDomain);
     }
-    setActivityStatus(ActivityStatus.NO_ACTIVITY);
   });
 
   useKaraboEvent(KaraboEvent.ListProjects, (hash: Hash) => {
@@ -184,30 +196,42 @@ export default function SelectProjectSceneDialog({
     const reason = hash.getValue('reason');
     if (reason.length > 0) {
       setErrorMessage(reason);
-    } else {
-      // Projects were retrieved successfully
-      const itemsHashes = hash.getValue('reply.items') as HashValues[];
-      const projects: ProjectModel[] = itemsHashes.map((hv: HashValues) => {
-        const item = new Hash(hv);
-        return new ProjectModel({
-          uuid: item.getValue('uuid'),
-          date: item.getValue('date'),
-          simple_name: item.getValue('simple_name'),
-          is_trashed: item.getValue('is_trashed'),
-        });
-      });
-      const nonTrashed = projects.filter((pInf) => !pInf.is_trashed);
-      const nonTrashedSorted = nonTrashed.sort((a, b) =>
-        a.simple_name.localeCompare(b.simple_name)
-      );
-      setProjects(nonTrashedSorted);
-      if (nonTrashedSorted.length > 0) {
-        const selProject = nonTrashedSorted[0];
-        setSelectedProject(selProject);
-        updateScenes(selProject);
-      }
+      setProjects([]);
+      setSelectedProject(undefined);
+      setScenes([]);
+      setSelectedScene(undefined);
+      setActivityStatus(ActivityStatus.NO_ACTIVITY);
+      return;
     }
-    setActivityStatus(ActivityStatus.NO_ACTIVITY);
+
+    // Projects were retrieved successfully
+    const itemsHashes = hash.getValue('reply.items') as HashValues[];
+    const projects: ProjectModel[] = itemsHashes.map((hv: HashValues) => {
+      const item = new Hash(hv);
+      return new ProjectModel({
+        uuid: item.getValue('uuid'),
+        date: item.getValue('date'),
+        simple_name: item.getValue('simple_name'),
+        is_trashed: item.getValue('is_trashed'),
+      });
+    });
+    const nonTrashed = projects.filter((pInf) => !pInf.is_trashed);
+    const nonTrashedSorted = nonTrashed.sort((a, b) =>
+      a.simple_name.localeCompare(b.simple_name)
+    );
+    setProjects(nonTrashedSorted);
+    if (nonTrashedSorted.length === 0) {
+      setSelectedProject(undefined);
+      setActivityStatus(ActivityStatus.NO_ACTIVITY);
+      return;
+    }
+
+    const selProject = nonTrashedSorted[0];
+    setSelectedProject(selProject);
+    // Stays busy: updateScenes starts fetching this project's scenes, and
+    // selecting another project before that reply lands would send a second
+    // request indistinguishable from it.
+    updateScenes(selProject);
   });
 
   useKaraboEvent(KaraboEvent.ListScenes, (hash: Hash) => {
@@ -218,6 +242,8 @@ export default function SelectProjectSceneDialog({
     const reason = hash.getValue('reason');
     if (reason.length > 0) {
       setErrorMessage(reason);
+      setScenes([]);
+      setSelectedScene(undefined);
     } else {
       // Project Scenes were retrieved successfully
       const itemsHashes = hash.getValue('reply.items') as HashValues[];
@@ -233,9 +259,7 @@ export default function SelectProjectSceneDialog({
         a.simple_name.localeCompare(b.simple_name)
       );
       setScenes(scenesSorted);
-      if (scenesSorted.length > 0) {
-        setSelectedScene(scenesSorted[0]);
-      }
+      setSelectedScene(scenesSorted[0]);
     }
     setActivityStatus(ActivityStatus.NO_ACTIVITY);
   });
@@ -261,7 +285,7 @@ export default function SelectProjectSceneDialog({
                 getConfig().currentDomain = domain;
                 updateProjects(domain);
               }}
-              disabled={activityStatus !== ActivityStatus.NO_ACTIVITY}
+              disabled={isBusy}
             />
           </div>
 
@@ -286,6 +310,7 @@ export default function SelectProjectSceneDialog({
                 onProjectClick={handleProjectClick}
                 query={projectSearch.query}
                 onQueryChange={projectSearch.setQuery}
+                selectionDisabled={isBusy}
               />
             </div>
 
@@ -310,6 +335,7 @@ export default function SelectProjectSceneDialog({
                 onSceneDoubleClick={handleSceneDoubleClick}
                 query={sceneSearch.query}
                 onQueryChange={sceneSearch.setQuery}
+                selectionDisabled={isBusy}
               />
             </div>
           </div>
@@ -319,7 +345,7 @@ export default function SelectProjectSceneDialog({
 
         <DialogFooter className="flex-row items-center justify-between">
           <LoadingStatus
-            isLoading={activityStatus !== ActivityStatus.NO_ACTIVITY}
+            isLoading={isBusy}
             loadingText={getStatusText()}
             error={errorMsg}
           />

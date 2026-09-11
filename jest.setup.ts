@@ -4,6 +4,17 @@ import { TextEncoder, TextDecoder } from 'util';
 
 Object.assign(global, { TextDecoder, TextEncoder });
 
+// jsdom does not implement ResizeObserver. Radix ScrollArea reads it during
+// table interaction tests, so use a no-op observer to keep those tests focused
+// on component behavior instead of browser API availability.
+class ResizeObserverStub {
+  observe(): void {}
+  unobserve(): void {}
+  disconnect(): void {}
+}
+
+Object.assign(global, { ResizeObserver: ResizeObserverStub });
+
 // -----------------------------------------------------------------------------
 // Global Mocks
 // -----------------------------------------------------------------------------

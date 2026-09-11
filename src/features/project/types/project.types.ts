@@ -45,6 +45,9 @@ export type ProjectsTableProps = {
   onProjectClick: (project: ProjectModel) => void;
   query?: string;
   onQueryChange?: (q: string) => void;
+  // Blocks selection while a request is in flight. Filtering stays available:
+  // it is local to the loaded list and touches no request.
+  selectionDisabled?: boolean;
 };
 
 export type ScenesTableProps = {
@@ -54,6 +57,7 @@ export type ScenesTableProps = {
   onSceneDoubleClick: (scene: SceneModel) => void;
   query?: string;
   onQueryChange?: (q: string) => void;
+  selectionDisabled?: boolean;
 };
 
 export type RecentSceneItemProps = {
