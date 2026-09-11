@@ -18,6 +18,7 @@ export default function ScenesTable({
   onSceneDoubleClick,
   query,
   onQueryChange,
+  selectionDisabled = false,
 }: ScenesTableProps) {
   return (
     <div className="flex min-w-0 flex-col gap-2">
@@ -56,13 +57,28 @@ export default function ScenesTable({
                 scenes.map((scene, index) => (
                   <TableRow
                     key={`${index}::${scene.uuid}`}
-                    onClick={() => onSceneClick(scene)}
-                    onDoubleClick={() => onSceneDoubleClick(scene)}
-                    className={`cursor-pointer ${
-                      selectedScene?.uuid === scene.uuid
-                        ? 'bg-accent'
-                        : 'hover:bg-accent/50'
-                    }`}
+                    onClick={
+                      selectionDisabled ? undefined : () => onSceneClick(scene)
+                    }
+                    onDoubleClick={
+                      selectionDisabled
+                        ? undefined
+                        : () => onSceneDoubleClick(scene)
+                    }
+                    aria-disabled={selectionDisabled || undefined}
+                    className={
+                      selectionDisabled
+                        ? `cursor-not-allowed opacity-60 ${
+                            selectedScene?.uuid === scene.uuid
+                              ? 'bg-accent'
+                              : ''
+                          }`
+                        : `cursor-pointer ${
+                            selectedScene?.uuid === scene.uuid
+                              ? 'bg-accent'
+                              : 'hover:bg-accent/50'
+                          }`
+                    }
                   >
                     <TableCell className="font-medium truncate max-w-xs">
                       {scene.simple_name}

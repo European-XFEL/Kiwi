@@ -17,6 +17,7 @@ export default function ProjectsTable({
   onProjectClick,
   query,
   onQueryChange,
+  selectionDisabled = false,
 }: ProjectsTableProps) {
   return (
     <div className="flex min-w-0 flex-col gap-2">
@@ -55,12 +56,25 @@ export default function ProjectsTable({
                 projects.map((project, index) => (
                   <TableRow
                     key={`${index}::${project.uuid}`}
-                    onClick={() => onProjectClick(project)}
-                    className={`cursor-pointer ${
-                      selectedProject?.uuid === project.uuid
-                        ? 'bg-accent'
-                        : 'hover:bg-accent/50'
-                    }`}
+                    onClick={
+                      selectionDisabled
+                        ? undefined
+                        : () => onProjectClick(project)
+                    }
+                    aria-disabled={selectionDisabled || undefined}
+                    className={
+                      selectionDisabled
+                        ? `cursor-not-allowed opacity-60 ${
+                            selectedProject?.uuid === project.uuid
+                              ? 'bg-accent'
+                              : ''
+                          }`
+                        : `cursor-pointer ${
+                            selectedProject?.uuid === project.uuid
+                              ? 'bg-accent'
+                              : 'hover:bg-accent/50'
+                          }`
+                    }
                   >
                     <TableCell className="font-medium truncate max-w-xs">
                       {project.simple_name}
