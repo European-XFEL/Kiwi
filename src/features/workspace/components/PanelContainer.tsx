@@ -1,7 +1,5 @@
 import type { ReactNode } from 'react';
-import { cn } from '@/components/api';
-import { Tabs } from '@/features/tabs/api';
-import type { TabItem } from '@/features/tabs/api';
+import { cn, Tabs, type TabItem } from '@/components/api';
 import usePanelArea from '../hooks/usePanelArea';
 import type { PanelSlot, PanelTab } from '../types';
 

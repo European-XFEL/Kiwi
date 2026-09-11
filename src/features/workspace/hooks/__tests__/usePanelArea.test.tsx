@@ -47,7 +47,7 @@ describe('usePanelArea', () => {
   it('dispatches tab selection to the wrangler for its slot', () => {
     const { result } = renderHook(() => usePanelArea('center'));
 
-    result.current.onTabSelect('group', 'center-1');
+    result.current.onTabSelect('center-1');
 
     expect(mockSelectTab).toHaveBeenCalledWith('center', 'center-1');
   });
@@ -55,7 +55,7 @@ describe('usePanelArea', () => {
   it('dispatches tab close to the wrangler for its slot', () => {
     const { result } = renderHook(() => usePanelArea('center'));
 
-    result.current.onTabClose('group', 'center-1');
+    result.current.onTabClose('center-1');
 
     expect(mockCloseTab).toHaveBeenCalledWith('center', 'center-1');
   });

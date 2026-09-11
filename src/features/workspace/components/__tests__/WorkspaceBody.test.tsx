@@ -63,7 +63,7 @@ jest.mock('@/components/api', () => {
   };
 });
 
-jest.mock('@/features/tabs/api', () => {
+jest.mock('@/components/tabs', () => {
   const React = jest.requireActual<typeof import('react')>('react');
 
   return {
