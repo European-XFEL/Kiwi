@@ -3,6 +3,7 @@ export { getAccessLevelDisplay } from './utils/getAccessLevelDisplay';
 
 export { default as CommandButton } from './CommandButton';
 export { default as KiwiSearchInput } from './KiwiSearchInput';
+export { Tabs, type TabId, type TabItem, type TabsProps } from './tabs';
 
 export { Alert, AlertDescription, AlertTitle } from './alert';
 export { Badge, badgeVariants } from './badge';

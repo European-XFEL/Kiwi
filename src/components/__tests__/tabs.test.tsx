@@ -1,35 +1,45 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import TabView from '../TabView';
-import type { TabGroupModel } from '../../types';
+import { Tabs, type TabItem } from '../tabs';
 
-function makeGroup(overrides: Partial<TabGroupModel> = {}): TabGroupModel {
-  return {
-    id: 'workspace-tabs',
-    kind: 'default',
-    tabOrder: ['tab-a', 'tab-b', 'tab-c'],
-    tabs: {
-      'tab-a': { id: 'tab-a', title: 'Tab A', closable: false },
-      'tab-b': { id: 'tab-b', title: 'Tab B', closable: true },
-      'tab-c': { id: 'tab-c', title: 'Tab C', closable: true, disabled: true },
+function makeItems(overrides: Partial<TabItem>[] = []): TabItem[] {
+  const items: TabItem[] = [
+    {
+      id: 'tab-a',
+      title: 'Tab A',
+      closable: false,
+      panel: <div>panel:tab-a</div>,
     },
-    activeTabId: 'tab-a',
-    ...overrides,
-  };
+    {
+      id: 'tab-b',
+      title: 'Tab B',
+      closable: true,
+      panel: <div>panel:tab-b</div>,
+    },
+    {
+      id: 'tab-c',
+      title: 'Tab C',
+      closable: true,
+      disabled: true,
+      panel: <div>panel:tab-c</div>,
+    },
+  ];
+
+  return items.map((item, index) => ({ ...item, ...overrides[index] }));
 }
 
-describe('TabView', () => {
+describe('Tabs', () => {
   it('uses defaultActiveTabId in uncontrolled mode and updates the active panel on click', async () => {
     const user = userEvent.setup();
     const onTabSelect = jest.fn();
 
     render(
-      <TabView
-        group={makeGroup()}
+      <Tabs
+        id="workspace-tabs"
+        items={makeItems()}
         defaultActiveTabId="tab-b"
         ariaLabel="Workspace tabs"
         onTabSelect={onTabSelect}
-        renderPanel={(tab) => <div>panel:{tab.id}</div>}
       />
     );
 
@@ -42,7 +52,7 @@ describe('TabView', () => {
 
     await user.click(screen.getByRole('tab', { name: 'Tab A' }));
 
-    expect(onTabSelect).toHaveBeenCalledWith('workspace-tabs', 'tab-a');
+    expect(onTabSelect).toHaveBeenCalledWith('tab-a');
     expect(screen.getByRole('tab', { name: 'Tab A' })).toHaveAttribute(
       'aria-selected',
       'true'
@@ -53,11 +63,11 @@ describe('TabView', () => {
 
   it('falls back to the first enabled tab when the requested active tab is disabled', () => {
     render(
-      <TabView
-        group={makeGroup({ activeTabId: 'tab-c' })}
+      <Tabs
+        id="workspace-tabs"
+        items={makeItems()}
         activeTabId="tab-c"
         ariaLabel="Workspace tabs"
-        renderPanel={(tab) => <div>panel:{tab.id}</div>}
       />
     );
 
@@ -74,18 +84,18 @@ describe('TabView', () => {
     const onTabSelect = jest.fn();
 
     render(
-      <TabView
-        group={makeGroup({ activeTabId: 'tab-a' })}
+      <Tabs
+        id="workspace-tabs"
+        items={makeItems()}
         activeTabId="tab-a"
         ariaLabel="Workspace tabs"
         onTabSelect={onTabSelect}
-        renderPanel={(tab) => <div>panel:{tab.id}</div>}
       />
     );
 
     await user.click(screen.getByRole('tab', { name: 'Tab B' }));
 
-    expect(onTabSelect).toHaveBeenCalledWith('workspace-tabs', 'tab-b');
+    expect(onTabSelect).toHaveBeenCalledWith('tab-b');
     expect(screen.getByRole('tab', { name: 'Tab A' })).toHaveAttribute(
       'aria-selected',
       'true'
@@ -94,36 +104,26 @@ describe('TabView', () => {
     expect(screen.queryByText('panel:tab-b')).not.toBeInTheDocument();
   });
 
-  it('renders close buttons and dirty indicators from the tab model', () => {
+  it('renders close buttons and dirty indicators and emits the closed tab id', async () => {
+    const user = userEvent.setup();
+    const onTabClose = jest.fn();
+
     render(
-      <TabView
-        group={makeGroup({
-          tabs: {
-            'tab-a': {
-              id: 'tab-a',
-              title: 'Tab A',
-              closable: true,
-              dirty: true,
-            },
-            'tab-b': { id: 'tab-b', title: 'Tab B', closable: false },
-            'tab-c': {
-              id: 'tab-c',
-              title: 'Tab C',
-              closable: false,
-              disabled: true,
-            },
-          },
-        })}
+      <Tabs
+        id="workspace-tabs"
+        items={makeItems([
+          { closable: true, dirty: true },
+          { closable: false },
+        ])}
         activeTabId="tab-a"
         ariaLabel="Workspace tabs"
-        onTabClose={jest.fn()}
-        renderPanel={(tab) => <div>panel:{tab.id}</div>}
+        onTabClose={onTabClose}
       />
     );
 
-    expect(
-      screen.getByRole('button', { name: 'Close Tab A' })
-    ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Close Tab A' }));
+
+    expect(onTabClose).toHaveBeenCalledWith('tab-a');
     expect(screen.getByLabelText('Unsaved changes')).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'Close Tab B' })
@@ -132,23 +132,12 @@ describe('TabView', () => {
 
   it('keeps inactive close buttons out of the keyboard tab order', () => {
     render(
-      <TabView
-        group={makeGroup({
-          tabs: {
-            'tab-a': { id: 'tab-a', title: 'Tab A', closable: true },
-            'tab-b': { id: 'tab-b', title: 'Tab B', closable: true },
-            'tab-c': {
-              id: 'tab-c',
-              title: 'Tab C',
-              closable: false,
-              disabled: true,
-            },
-          },
-        })}
+      <Tabs
+        id="workspace-tabs"
+        items={makeItems([{ closable: true }])}
         activeTabId="tab-a"
         ariaLabel="Workspace tabs"
         onTabClose={jest.fn()}
-        renderPanel={(tab) => <div>panel:{tab.id}</div>}
       />
     );
 
@@ -162,17 +151,21 @@ describe('TabView', () => {
     );
   });
 
-  it('applies a custom panel class when provided', () => {
+  it('applies custom container and panel classes', () => {
     render(
-      <TabView
-        group={makeGroup()}
+      <Tabs
+        id="workspace-tabs"
+        items={makeItems()}
         activeTabId="tab-a"
         ariaLabel="Workspace tabs"
+        className="custom-tabs"
         panelClassName="overflow-hidden"
-        renderPanel={(tab) => <div>panel:{tab.id}</div>}
       />
     );
 
+    expect(
+      screen.getByRole('tablist', { name: 'Workspace tabs' }).parentElement
+    ).toHaveClass('custom-tabs');
     expect(screen.getByRole('tabpanel', { name: 'Tab A' })).toHaveClass(
       'overflow-hidden'
     );

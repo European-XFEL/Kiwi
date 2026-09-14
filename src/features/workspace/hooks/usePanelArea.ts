@@ -1,12 +1,12 @@
 import { useCallback, useSyncExternalStore } from 'react';
-import type { TabGroupId, TabId } from '@/features/tabs/api';
+import type { TabId } from '@/components/api';
 import { getPanelWrangler } from '@/lib/singletons/api';
 import type { PanelSlot, PanelState } from '../types';
 
 export interface PanelAreaController {
   area: PanelState;
-  onTabSelect: (groupId: TabGroupId, tabId: TabId) => void;
-  onTabClose: (groupId: TabGroupId, tabId: TabId) => void;
+  onTabSelect: (tabId: TabId) => void;
+  onTabClose: (tabId: TabId) => void;
 }
 
 /**
@@ -23,14 +23,14 @@ export default function usePanelArea(slot: PanelSlot): PanelAreaController {
   );
 
   const onTabSelect = useCallback(
-    (_groupId: TabGroupId, tabId: TabId) => {
+    (tabId: TabId) => {
       getPanelWrangler().selectTab(slot, tabId);
     },
     [slot]
   );
 
   const onTabClose = useCallback(
-    (_groupId: TabGroupId, tabId: TabId) => {
+    (tabId: TabId) => {
       getPanelWrangler().closeTab(slot, tabId);
     },
     [slot]
