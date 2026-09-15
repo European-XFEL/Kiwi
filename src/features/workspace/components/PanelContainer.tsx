@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 import { cn, Tabs, type TabItem } from '@/components/api';
+import icons from '@/assets/icons';
+import { HOME_TAB_ID } from '@/lib/singletons/PanelWrangler';
 import usePanelArea from '../hooks/usePanelArea';
 import type { PanelSlot, PanelTab } from '../types';
 
@@ -40,6 +42,14 @@ export default function PanelContainer({
   const items: TabItem[] = areaModel.tabs.map((tab) => ({
     id: tab.id,
     title: tab.title,
+    icon:
+      area === 'center' ? (
+        <img
+          alt=""
+          className="h-4 w-4"
+          src={tab.id === HOME_TAB_ID ? icons.homeEdit : icons.image}
+        />
+      ) : undefined,
     closable: tab.closable,
     panel: renderPanel(tab),
   }));

@@ -8,6 +8,7 @@ export interface TabItem {
   id: TabId;
   title: string;
   panel: ReactNode;
+  icon?: ReactNode;
   closable?: boolean;
   disabled?: boolean;
   dirty?: boolean;
@@ -75,6 +76,11 @@ const TabButton = memo(function TabButton({
             : 'text-muted-foreground hover:text-foreground'
         )}
       >
+        {tab.icon ? (
+          <span aria-hidden="true" className="shrink-0">
+            {tab.icon}
+          </span>
+        ) : null}
         <span className="max-w-44 truncate">{tab.title}</span>
 
         {tab.dirty ? (
