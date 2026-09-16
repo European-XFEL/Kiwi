@@ -26,6 +26,11 @@ jest.mock('@/features/controllers/api', () => ({
   bootstrapStatefulIcons: jest.fn(),
 }));
 
+jest.mock('@/assets/icons', () => ({
+  __esModule: true,
+  default: { image: 'image-icon', homeEdit: 'home-edit-icon' },
+}));
+
 // Mock the simple Vigenère cipher crypto utility for tests
 jest.mock('@/lib/crypto', () => ({
   encryptData: jest.fn((text: string) => `encrypted_${text}`),
