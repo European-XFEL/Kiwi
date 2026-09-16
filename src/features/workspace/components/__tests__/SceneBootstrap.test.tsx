@@ -1,12 +1,13 @@
 import React from 'react';
 import { act, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter, useLocation } from 'react-router-dom';
+import { Link, MemoryRouter, useLocation } from 'react-router-dom';
+import userEvent from '@testing-library/user-event';
 import SceneBootstrap from '../SceneBootstrap';
-import { startSceneFromRoute } from '@/features/project/api';
+import { loadRootProjectFromBookmark } from '@/features/project/api';
 import { useActiveSceneStore } from '@/features/scene-view/hooks/useActiveScene';
 
 jest.mock('@/features/project/api', () => ({
-  startSceneFromRoute: jest.fn(() => ({
+  loadRootProjectFromBookmark: jest.fn(() => ({
     controller: new AbortController(),
     promise: new Promise(() => {}),
     abort: jest.fn(),
@@ -19,7 +20,8 @@ jest.mock('@/lib/singletons/api', () => ({
   getTopology: () => mockTopology,
 }));
 
-const startSceneFromRouteMock = startSceneFromRoute as jest.Mock;
+const loadRootProjectFromBookmarkMock =
+  loadRootProjectFromBookmark as jest.Mock;
 
 function LocationProbe() {
   const location = useLocation();
@@ -52,10 +54,10 @@ describe('SceneBootstrap', () => {
     );
 
     await waitFor(() =>
-      expect(startSceneFromRouteMock).toHaveBeenCalledTimes(1)
+      expect(loadRootProjectFromBookmarkMock).toHaveBeenCalledTimes(1)
     );
 
-    const params = startSceneFromRouteMock.mock.calls[0][0];
+    const params = loadRootProjectFromBookmarkMock.mock.calls[0][0];
     expect(params.sceneUuid).toBe('scene-a');
   });
 
@@ -92,7 +94,7 @@ describe('SceneBootstrap', () => {
     await waitFor(() => {
       expect(useActiveSceneStore.getState().sceneLoadPending).toBe(true);
     });
-    expect(startSceneFromRouteMock).not.toHaveBeenCalled();
+    expect(loadRootProjectFromBookmarkMock).not.toHaveBeenCalled();
 
     await act(async () => {
       mockTopology.initialized = true;
@@ -100,14 +102,85 @@ describe('SceneBootstrap', () => {
     });
 
     await waitFor(() => {
-      expect(startSceneFromRouteMock).toHaveBeenCalledTimes(1);
+      expect(loadRootProjectFromBookmarkMock).toHaveBeenCalledTimes(1);
     });
 
     jest.useRealTimers();
   });
 
+  it('ignores obsolete root parameters when identifying the same bookmark', async () => {
+    const user = userEvent.setup();
+    const sceneRoute =
+      '/main?host=host-a&port=44444&domain=CONTROLS&projectUuid=shared&sceneUuid=scene-a';
+    loadRootProjectFromBookmarkMock.mockReturnValueOnce({
+      controller: new AbortController(),
+      promise: Promise.resolve(),
+      abort: jest.fn(),
+    });
+
+    render(
+      <MemoryRouter initialEntries={[`${sceneRoute}&rootProjectUuid=root-a`]}>
+        <SceneBootstrap />
+        <Link to={`${sceneRoute}&rootProjectUuid=root-b`}>Other root</Link>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(loadRootProjectFromBookmarkMock).toHaveBeenCalledTimes(1);
+      expect(useActiveSceneStore.getState().sceneLoadPending).toBe(false);
+    });
+    await user.click(screen.getByRole('link', { name: 'Other root' }));
+
+    expect(loadRootProjectFromBookmarkMock).toHaveBeenCalledTimes(1);
+    expect(loadRootProjectFromBookmarkMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        projectUuid: 'shared',
+        sceneUuid: 'scene-a',
+      })
+    );
+  });
+
+  it('reloads the same bookmark after returning home', async () => {
+    const user = userEvent.setup();
+    const sceneRoute =
+      '/main?host=host-a&port=44444&domain=CONTROLS&projectUuid=motors&sceneUuid=motor-scene';
+    loadRootProjectFromBookmarkMock.mockReturnValueOnce({
+      controller: new AbortController(),
+      promise: Promise.resolve(),
+      abort: jest.fn(),
+    });
+
+    render(
+      <MemoryRouter initialEntries={[sceneRoute]}>
+        <SceneBootstrap />
+        <Link to="/main">Home</Link>
+        <Link to={sceneRoute}>Bookmarked scene</Link>
+        <LocationProbe />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(loadRootProjectFromBookmarkMock).toHaveBeenCalledTimes(1);
+      expect(useActiveSceneStore.getState().sceneLoadPending).toBe(false);
+    });
+    await user.click(screen.getByRole('link', { name: 'Home' }));
+    expect(screen.getByTestId('location-probe').textContent).toBe('/main');
+
+    await user.click(screen.getByRole('link', { name: 'Bookmarked scene' }));
+
+    await waitFor(() =>
+      expect(loadRootProjectFromBookmarkMock).toHaveBeenCalledTimes(2)
+    );
+    expect(loadRootProjectFromBookmarkMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        projectUuid: 'motors',
+        sceneUuid: 'motor-scene',
+      })
+    );
+  });
+
   it('clears broken scene params from the url when route loading fails', async () => {
-    startSceneFromRouteMock.mockReturnValueOnce({
+    loadRootProjectFromBookmarkMock.mockReturnValueOnce({
       controller: new AbortController(),
       promise: Promise.reject(new Error('scene missing')),
       abort: jest.fn(),

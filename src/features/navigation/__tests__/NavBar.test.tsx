@@ -3,10 +3,10 @@ import { render, screen } from '@testing-library/react';
 
 const mockNavigate = jest.fn();
 const mockGetScene = jest.fn();
-const mockSceneBreadcrumb = jest.fn<
-  ReturnType<typeof React.createElement>,
-  [unknown]
->(() => React.createElement('div', { 'data-testid': 'scene-breadcrumb' }));
+const mockBrowserState = {};
+const mockProjectBrowser = jest.fn<React.ReactElement, [unknown]>(() =>
+  React.createElement('div', { 'data-testid': 'project-browser' })
+);
 
 jest.mock('react-router-dom', () => ({
   useLocation: () => ({
@@ -102,7 +102,9 @@ jest.mock('@/features/project/api', () => {
       ReactActual.createElement('div', {
         'data-testid': 'load-project-scene',
       }),
-    SceneBreadcrumb: (props: any) => mockSceneBreadcrumb(props),
+    useRootProject: () => mockBrowserState,
+    ProjectBrowser: ({ browser }: { browser: unknown }) =>
+      mockProjectBrowser(browser),
   };
 });
 
@@ -158,17 +160,13 @@ describe('NavBar', () => {
     mockSceneStoreState.setLoadedSceneRef.mockReset();
   });
 
-  it('renders the loaded scene breadcrumb without fetching scene info again', () => {
+  it('shows the project browser in both layouts without fetching scene info again', () => {
     render(<NavBar />);
 
     expect(mockGetScene).not.toHaveBeenCalled();
-    expect(mockSceneBreadcrumb).toHaveBeenCalledWith(
-      expect.objectContaining({
-        domain: 'CONTROLS',
-        projectName: 'David_test',
-        sceneName: 'beckhoff',
-      })
-    );
-    expect(screen.getAllByTestId('scene-breadcrumb')).toHaveLength(2);
+    expect(mockProjectBrowser).toHaveBeenCalledTimes(2);
+    expect(mockProjectBrowser).toHaveBeenNthCalledWith(1, mockBrowserState);
+    expect(mockProjectBrowser).toHaveBeenNthCalledWith(2, mockBrowserState);
+    expect(screen.getAllByTestId('project-browser')).toHaveLength(2);
   });
 });

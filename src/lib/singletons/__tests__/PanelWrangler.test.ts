@@ -180,6 +180,23 @@ describe('PanelWrangler', () => {
       projectUuid: 'project-child',
       projectName: 'Child Project',
     });
+    expect(wrangler.getContent('scene:scene-child')?.sceneRef).toMatchObject({
+      projectUuid: subproject.uuid,
+    });
+    expect(mockSetRecentScene).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        projectUuid: subproject.uuid,
+      })
+    );
+    const bookmark = new URLSearchParams(window.location.search);
+    expect(bookmark.get('projectUuid')).toBe(subproject.uuid);
+    expect(bookmark.get('rootProjectUuid')).toBeNull();
+
+    wrangler.selectTab('center', 'scene:scene-root');
+    wrangler.selectTab('center', 'scene:scene-child');
+    expect(new URLSearchParams(window.location.search).get('projectUuid')).toBe(
+      subproject.uuid
+    );
   });
 
   it('reuses the existing SceneControllerRegistry when setContent targets the same scene', () => {

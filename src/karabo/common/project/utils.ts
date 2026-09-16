@@ -13,24 +13,22 @@ export function get_item_type(obj: BaseProjectObjectModel): string {
   throw new Error(`Unknown object type: ${obj.constructor.name}`);
 }
 
-export function isProjectInitialized(project: ProjectModel): boolean {
-  return (
-    project.initialized &&
-    Array.isArray(project.scenes) &&
-    project.scenes.every(
-      (scene) => scene instanceof SceneModel && scene.initialized
-    )
-  );
-}
-
 export function* walkProjectModels(
   project: ProjectModel
 ): Generator<ProjectModel> {
-  yield project;
+  const visited = new Set<ProjectModel>();
 
-  for (const subproject of project.subprojects ?? []) {
-    yield* walkProjectModels(subproject);
+  function* visit(model: ProjectModel): Generator<ProjectModel> {
+    if (visited.has(model)) return;
+    visited.add(model);
+    yield model;
+
+    for (const subproject of model.subprojects ?? []) {
+      yield* visit(subproject);
+    }
   }
+
+  yield* visit(project);
 }
 
 export function findProjectModelInProject(

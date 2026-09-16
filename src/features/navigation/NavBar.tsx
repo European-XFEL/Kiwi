@@ -3,7 +3,11 @@ import { KiwiHeader } from '@/app/api';
 import NavigationMenu from './components/NavMenu';
 import { NavItem } from './components/NavItem';
 import NavToggle from './components/NavToggle';
-import { LoadProjectScene, SceneBreadcrumb } from '@/features/project/api';
+import {
+  LoadProjectScene,
+  ProjectBrowser,
+  useRootProject,
+} from '@/features/project/api';
 import Logo from './components/Logo';
 import { UserProfile, AccessLevelSelector } from '@/features/user';
 import { Button, Separator } from '@/components/api';
@@ -13,6 +17,7 @@ import { useActiveSceneStore } from '@/features/scene-view/api';
 import { sceneParamsFromURL } from './utils';
 
 export function NavBar() {
+  const projectBrowser = useRootProject();
   const location = useLocation();
   const navigate = useNavigate();
   const sceneParams = sceneParamsFromURL(location.search);
@@ -74,14 +79,7 @@ export function NavBar() {
           <div className="flex-1 min-w-0 overflow-hidden flex justify-center items-center">
             {activeLoadedSceneRef ? (
               <div className="max-w-full min-w-0 overflow-hidden">
-                <SceneBreadcrumb
-                  domain={activeLoadedSceneRef.domain ?? ''}
-                  projectName={
-                    activeLoadedSceneRef.projectName ??
-                    activeLoadedSceneRef.deviceId!
-                  }
-                  sceneName={activeLoadedSceneRef.name}
-                />
+                <ProjectBrowser browser={projectBrowser} />
               </div>
             ) : (
               <Logo
@@ -136,14 +134,7 @@ export function NavBar() {
                   </Button>
                   <Separator orientation="vertical" className="h-6 shrink-0" />
                   <div className="min-w-0 flex-1 overflow-hidden">
-                    <SceneBreadcrumb
-                      domain={activeLoadedSceneRef.domain ?? ''}
-                      projectName={
-                        activeLoadedSceneRef.projectName ??
-                        activeLoadedSceneRef.deviceId!
-                      }
-                      sceneName={activeLoadedSceneRef.name}
-                    />
+                    <ProjectBrowser browser={projectBrowser} />
                   </div>
                 </>
               )}

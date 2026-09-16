@@ -1,22 +1,9 @@
-import {
-  findProjectModelInProject,
-  findSceneModelInProject,
-  isProjectInitialized,
-  ProjectModel,
-} from '@/karabo/common/project/api';
-import { SceneModel } from '@/karabo/common/scenemodel/api';
+import { ProjectModel } from '@/karabo/common/project/api';
 import { Hash, HashList } from '@/karabo/data/api';
 import { KaraboEvent } from '@/lib/events';
-import { getDbConn, getMediator, getProjectModel } from '@/lib/singletons/api';
+import { getDbConn, getMediator } from '@/lib/singletons/api';
 
 const cancelledMessage = 'Scene loading was cancelled.';
-
-type LoadProjectSceneModelParams = {
-  domain: string;
-  projectUuid: string;
-  sceneUuid: string;
-  signal?: AbortSignal;
-};
 
 function waitForEvent(
   event: KaraboEvent,
@@ -51,20 +38,6 @@ function waitForEvent(
 
     signal?.addEventListener('abort', onAbort, { once: true });
   });
-}
-
-function findLoadedProject(
-  domain: string,
-  projectUuid: string
-): ProjectModel | undefined {
-  const projectModel = getProjectModel();
-  if (projectModel.domain !== domain || !projectModel.root) {
-    return undefined;
-  }
-
-  return findProjectModelInProject(projectModel.root, projectUuid)
-    ? projectModel.root
-    : undefined;
 }
 
 async function listProjectByUuid(
@@ -102,15 +75,11 @@ async function listProjectByUuid(
   return project;
 }
 
-async function ensureProjectLoaded(
+async function loadProjectData(
   domain: string,
   project: ProjectModel,
   signal?: AbortSignal
 ): Promise<void> {
-  if (isProjectInitialized(project)) {
-    return;
-  }
-
   const projectLoaded = waitForEvent(
     KaraboEvent.DatabaseBusy,
     signal,
@@ -127,29 +96,14 @@ async function ensureProjectLoaded(
   }
 }
 
-export async function loadProjectSceneModel({
-  domain,
-  projectUuid,
-  sceneUuid,
-  signal,
-}: LoadProjectSceneModelParams): Promise<SceneModel> {
-  const projectModel = getProjectModel();
-  const project =
-    findLoadedProject(domain, projectUuid) ??
-    (await listProjectByUuid(domain, projectUuid, signal));
-
-  await ensureProjectLoaded(domain, project, signal);
-  projectModel.setRoot(domain, project);
-
-  const sceneProject = findProjectModelInProject(project, projectUuid);
-  const scene = sceneProject
-    ? findSceneModelInProject(sceneProject, sceneUuid)
-    : undefined;
-  if (!scene) {
-    throw new Error(
-      `Scene "${sceneUuid}" was not found in project "${project.simple_name}".`
-    );
-  }
-
-  return scene;
+// Always build a new model for the explicitly requested project. Its parents
+// in an already loaded tree do not determine the next navigation root.
+export async function loadProject(
+  domain: string,
+  projectUuid: string,
+  signal?: AbortSignal
+): Promise<ProjectModel> {
+  const project = await listProjectByUuid(domain, projectUuid, signal);
+  await loadProjectData(domain, project, signal);
+  return project;
 }
