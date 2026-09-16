@@ -1,6 +1,6 @@
 import { Hash } from '@/karabo/data/api';
 import { DeviceProxy } from '@/lib/binding/api';
-import { SystemTopology } from '@/lib/singletons/Topology';
+import { SystemTopology } from '@/lib/topology/Topology.ts';
 
 export class MockDevice extends DeviceProxy {
   public stopMonitoring = jest.fn();

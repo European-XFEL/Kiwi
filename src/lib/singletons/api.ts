@@ -1,7 +1,7 @@
 // In a real project, ensure these paths are correct relative to this file.
 import { Network } from './Network';
 import { DbConnection } from './DbConn';
-import { SystemTopology } from './Topology';
+import { SystemTopology } from '../topology/Topology.ts';
 import { Manager, RequestHandler } from './Manager';
 import { Mediator } from './Mediator';
 import { ConfigurationStore } from './Configuration';

@@ -1,5 +1,5 @@
-import { Hash, HashAttributes, Schema, Timestamp } from '@/karabo/data/api';
-import { applyConfiguration, DeviceProxy } from '@/lib/binding/api';
+import { Hash, HashAttributes, Schema, Timestamp } from '@/karabo/data/api.ts';
+import { applyConfiguration, DeviceProxy } from '@/lib/binding/api.ts';
 
 export class SystemTopology {
   public _system_hash: Hash | null = null;
