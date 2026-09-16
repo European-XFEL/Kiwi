@@ -309,6 +309,7 @@ export class Network {
 
     this._ws = new WebsocketBuilder(websocketURL)
       .onOpen((ws) => {
+        ws.binaryType = 'arraybuffer';
         if (useWebSocketProxy) {
           // When the connection to the GUI server is intermediated by a web socket proxy,
           // the target GUI Server host and port must be sent for the proxy to initialize
@@ -361,11 +362,13 @@ export class Network {
       ws.close();
       this._ws = undefined;
     } else {
-      const msgBlob = ev.data as Blob;
-      msgBlob.arrayBuffer().then((binHash: ArrayBuffer) => {
-        this._hashDeque.pushBack({ bin: binHash, time: performance.now() });
-        this._ensureTimerRunning();
-      });
+      const binHash = ev.data as ArrayBuffer;
+
+      // Binary messages are delivered synchronously as ArrayBuffers.
+      if (ws !== this._ws) return;
+
+      this._hashDeque.pushBack({ bin: binHash, time: performance.now() });
+      this._ensureTimerRunning();
     }
   };
 
