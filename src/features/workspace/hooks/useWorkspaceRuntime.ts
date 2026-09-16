@@ -4,6 +4,7 @@ import { getAccessLevelDisplay } from '@/components/api';
 import { useActiveSceneStore } from '@/features/scene-view/api';
 import { useGlobalActivityStore, useGlobalStore } from '@/store/api';
 import { getPanelWrangler } from '@/lib/singletons/api';
+import { clearRootProject } from '@/features/project/api';
 import type { WorkspaceRuntime } from '../types';
 
 function getConnectedForLabel(sessionStartEpoc?: number): string | undefined {
@@ -79,6 +80,7 @@ export default function useWorkspaceRuntime(): WorkspaceRuntime {
 
   const onGoHome = useCallback(() => {
     getPanelWrangler().resetCenter();
+    clearRootProject();
     navigate('/main');
   }, [navigate]);
 

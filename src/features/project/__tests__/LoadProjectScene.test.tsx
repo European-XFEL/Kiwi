@@ -1,120 +1,80 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import React from 'react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import type { ButtonHTMLAttributes, SVGProps } from 'react';
 import { ProjectModel } from '@/karabo/common/project/api';
 import { SceneModel } from '@/karabo/common/scenemodel/api';
+import type { SelectProjectSceneDialogProps } from '../types/project.types';
 import LoadProjectScene from '../LoadProjectScene';
-import { openSceneInWorkspace } from '../utils/openSceneInWorkspace';
-import { loadProjectSceneModel } from '../utils/loadProjectSceneModel';
+import { loadRootProjectFromDialogSelection } from '../utils/rootProjectActions';
 
-const mockSetRoot = jest.fn();
-
-const mockProjectModelState: {
-  root?: ProjectModel;
-  setRoot: (domain: string, project: ProjectModel) => void;
-} = {
-  root: undefined,
-  setRoot: mockSetRoot,
-};
-
-let dialogProps:
-  | {
-      open: boolean;
-      onSceneSelected: (
-        domain: string,
-        project: ProjectModel,
-        scene: SceneModel
-      ) => void;
-      onCancel: () => void;
-    }
-  | undefined;
+let dialogProps: SelectProjectSceneDialogProps | undefined;
 
 jest.mock('@/components/api', () => {
-  const ReactActual = jest.requireActual<typeof React>('react');
-
+  const React = jest.requireActual<typeof import('react')>('react');
   return {
-    Button: ({ children, ...props }: any) =>
-      ReactActual.createElement('button', props, children),
+    Button: ({ children, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) =>
+      React.createElement('button', props, children),
   };
 });
 
 jest.mock('lucide-react', () => {
-  const ReactActual = jest.requireActual<typeof React>('react');
-
+  const React = jest.requireActual<typeof import('react')>('react');
   return {
-    FolderOpen: (props: any) => ReactActual.createElement('svg', props),
+    FolderOpen: (props: SVGProps<SVGSVGElement>) =>
+      React.createElement('svg', props),
   };
 });
 
-jest.mock('../SelectProjectSceneDialog', () => {
-  const ReactActual = jest.requireActual<typeof React>('react');
-
-  return {
-    __esModule: true,
-    default: (props: any) => {
-      dialogProps = props;
-      return ReactActual.createElement('div', {
-        'data-testid': 'select-project-scene-dialog',
-      });
-    },
-  };
-});
-
-jest.mock('../utils/openSceneInWorkspace', () => ({
-  openSceneInWorkspace: jest.fn(),
+jest.mock('../SelectProjectSceneDialog', () => ({
+  __esModule: true,
+  default: (props: SelectProjectSceneDialogProps) => {
+    dialogProps = props;
+    return null;
+  },
 }));
 
-jest.mock('../utils/loadProjectSceneModel', () => ({
-  loadProjectSceneModel: jest.fn(),
-}));
-
-jest.mock('@/lib/singletons/api', () => ({
-  getProjectModel: () => mockProjectModelState,
+jest.mock('../utils/rootProjectActions', () => ({
+  loadRootProjectFromDialogSelection: jest.fn(() => ({
+    controller: new AbortController(),
+    promise: Promise.resolve(),
+    abort: jest.fn(),
+  })),
 }));
 
 describe('LoadProjectScene', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     dialogProps = undefined;
-    mockProjectModelState.root = makeProject('current-project', 'Current');
   });
 
-  it('loads a scene from another project before opening it', async () => {
-    const selectedProject = makeProject('other-project', 'Other');
-    const partialScene = makeScene('scene-1', 'Scene 1');
-    const loadedScene = makeScene('scene-1', 'Scene 1');
-    (loadProjectSceneModel as jest.Mock).mockResolvedValue(loadedScene);
-
+  it('closes the dialog and delegates its selection to the root-loading action', async () => {
+    const project = new ProjectModel({ uuid: 'motors', simple_name: 'Motors' });
+    const scene = new SceneModel({
+      uuid: 'motor-scene',
+      simple_name: 'Motor Scene',
+    });
     render(<LoadProjectScene />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Load Project Scene' }));
-
-    dialogProps?.onSceneSelected('CONTROLS', selectedProject, partialScene);
-
-    await waitFor(() => {
-      expect(loadProjectSceneModel).toHaveBeenCalledWith({
-        domain: 'CONTROLS',
-        projectUuid: 'other-project',
-        sceneUuid: 'scene-1',
-      });
-      expect(openSceneInWorkspace).toHaveBeenCalledWith({ model: loadedScene });
+    expect(dialogProps?.open).toBe(true);
+    await act(async () => {
+      dialogProps?.onSceneSelected('CONTROLS', project, scene);
     });
+
+    expect(dialogProps?.open).toBe(false);
+    expect(loadRootProjectFromDialogSelection).toHaveBeenCalledWith(
+      'CONTROLS',
+      project,
+      scene
+    );
+  });
+
+  it('closes a cancelled dialog without loading a root', () => {
+    render(<LoadProjectScene />);
+    fireEvent.click(screen.getByRole('button', { name: 'Load Project Scene' }));
+
+    act(() => dialogProps?.onCancel());
+
+    expect(dialogProps?.open).toBe(false);
+    expect(loadRootProjectFromDialogSelection).not.toHaveBeenCalled();
   });
 });
-
-function makeProject(uuid: string, name: string): ProjectModel {
-  return new ProjectModel({
-    uuid,
-    simple_name: name,
-    date: '2026-07-01T00:00:00',
-  });
-}
-
-function makeScene(uuid: string, name: string): SceneModel {
-  return new SceneModel({
-    uuid,
-    simple_name: name,
-    width: 800,
-    height: 600,
-    initialized: true,
-  });
-}

@@ -30,7 +30,13 @@ export function sceneParamsFromURL(
   const port = Number.parseInt(portStr, 10);
   if (Number.isNaN(port)) return undefined;
 
-  return { host, port, domain, projectUuid, sceneUuid };
+  return {
+    host,
+    port,
+    domain,
+    projectUuid,
+    sceneUuid,
+  };
 }
 
 export function scenePathFromParams(params: SceneURLParams): string {

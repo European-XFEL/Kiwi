@@ -6,6 +6,18 @@ import { ProjectModel } from '@/karabo/common/project/api';
 import { SceneModel } from '@/karabo/common/scenemodel/api';
 import { RecentSceneInfo } from '@/store/api';
 
+export interface ProjectSceneSelection {
+  domain: string;
+  projectUuid: string;
+  sceneUuid: string;
+}
+
+export interface RootProjectLoadHandle {
+  controller: AbortController;
+  promise: Promise<void>;
+  abort: () => void;
+}
+
 // Main component props
 export type LoadProjectSceneProps = {
   className?: string;

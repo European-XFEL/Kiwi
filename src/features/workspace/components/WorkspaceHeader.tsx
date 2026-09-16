@@ -6,7 +6,11 @@ import NavigationMenu from '@/features/navigation/components/NavMenu';
 import { NavItem } from '@/features/navigation/components/NavItem';
 import NavToggle from '@/features/navigation/components/NavToggle';
 import Logo from '@/features/navigation/components/Logo';
-import { LoadProjectScene, SceneBreadcrumb } from '@/features/project/api';
+import {
+  LoadProjectScene,
+  ProjectBrowser,
+  useRootProject,
+} from '@/features/project/api';
 import { AccessLevelSelector, UserProfile } from '@/features/user';
 import type { WorkspaceHeaderModel, WorkspaceRuntime } from '../types';
 
@@ -17,6 +21,8 @@ export default function WorkspaceHeader({
   header: WorkspaceHeaderModel;
   runtime: WorkspaceRuntime;
 }) {
+  const projectBrowser = useRootProject();
+
   if (!header.visible || header.kind !== 'app-navbar') {
     return null;
   }
@@ -80,11 +86,7 @@ export default function WorkspaceHeader({
           <div className="flex-1 min-w-0 overflow-hidden flex justify-center items-center">
             {runtime.activeScene ? (
               <div className="max-w-full min-w-0 overflow-hidden">
-                <SceneBreadcrumb
-                  domain={runtime.activeScene.domain ?? ''}
-                  projectName={runtime.activeScene.projectName ?? ''}
-                  sceneName={runtime.activeScene.name}
-                />
+                <ProjectBrowser browser={projectBrowser} />
               </div>
             ) : (
               <Logo
@@ -141,11 +143,7 @@ export default function WorkspaceHeader({
                   </Button>
                   <Separator orientation="vertical" className="h-6 shrink-0" />
                   <div className="min-w-0 flex-1 overflow-hidden">
-                    <SceneBreadcrumb
-                      domain={runtime.activeScene.domain ?? ''}
-                      projectName={runtime.activeScene.projectName ?? ''}
-                      sceneName={runtime.activeScene.name}
-                    />
+                    <ProjectBrowser browser={projectBrowser} />
                   </div>
                 </>
               ) : (

@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { sceneParamsFromURL } from '@/features/navigation/utils';
-import { startSceneFromRoute } from '@/features/project/api';
-import type { SceneRouteLoadHandle } from '@/features/project/api';
+import { loadRootProjectFromBookmark } from '@/features/project/api';
+import type { RootProjectLoadHandle } from '@/features/project/api';
 import { waitForTopology } from '@/lib/topology/api';
 import { useActiveSceneStore } from '@/features/scene-view/hooks/useActiveScene';
 
@@ -17,6 +17,7 @@ export default function SceneBootstrap() {
   useEffect(() => {
     const params = sceneParamsFromURL(location.search);
     if (!params) {
+      openedRef.current = null;
       setSceneLoadPending(false);
       return;
     }
@@ -35,7 +36,7 @@ export default function SceneBootstrap() {
     // `waitForTopology` only polls readiness, so a boolean is enough to stop
     // that wait when this effect is cleaned up before topology is available.
     let cancelled = false;
-    let handle: SceneRouteLoadHandle | undefined;
+    let handle: RootProjectLoadHandle | undefined;
 
     // The callbacks below run in promise order: wait for topology, then start
     // the scene load, then mark this route as opened or handle the failure.
@@ -48,7 +49,7 @@ export default function SceneBootstrap() {
         // The actual project/scene loading owns its own AbortController via
         // the returned handle. This is the part that can still be aborted after
         // topology is ready.
-        handle = startSceneFromRoute(params);
+        handle = loadRootProjectFromBookmark(params);
         return handle.promise;
       })
       .then(() => {

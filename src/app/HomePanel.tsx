@@ -1,7 +1,10 @@
 import React from 'react';
 import { RecentSceneInfo, useRecentStore, useGlobalStore } from '@/store/api';
-import { RecentScenesList, startSceneFromRoute } from '@/features/project/api';
-import type { SceneRouteLoadHandle } from '@/features/project/api';
+import {
+  RecentScenesList,
+  loadRootProjectFromBookmark,
+} from '@/features/project/api';
+import type { RootProjectLoadHandle } from '@/features/project/api';
 import BookmarkInfo from './components/BookmarkInfo';
 import { Separator } from '@/components/api';
 import { useActiveSceneStore } from '@/features/scene-view/hooks/useActiveScene';
@@ -12,7 +15,7 @@ const HomePanel: React.FC = () => {
   const setSceneLoadPending = useActiveSceneStore(
     (state) => state.setSceneLoadPending
   );
-  const sceneLoadHandleRef = React.useRef<SceneRouteLoadHandle | null>(null);
+  const sceneLoadHandleRef = React.useRef<RootProjectLoadHandle | null>(null);
 
   React.useEffect(() => {
     document.title = 'Kiwi';
@@ -27,9 +30,7 @@ const HomePanel: React.FC = () => {
     if (!sessionInfo) return;
 
     sceneLoadHandleRef.current?.abort();
-    const handle = startSceneFromRoute({
-      host: sessionInfo.guiServerHost,
-      port: sessionInfo.guiServerPort,
+    const handle = loadRootProjectFromBookmark({
       domain: recentScene.domain,
       projectUuid: recentScene.projectUuid,
       sceneUuid: recentScene.uuid,
