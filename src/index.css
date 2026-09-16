@@ -9,7 +9,7 @@ body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Neue Helvetica', 'Helvetica', 'arial', sans-serif;
+  font-family: 'Source Sans Pro', Arial, Helvetica, sans-serif;
 }
 
 /* Map Tailwind design tokens to CSS variables */
