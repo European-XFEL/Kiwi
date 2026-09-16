@@ -5,12 +5,11 @@ import type {
   SceneControllerRegistry as SceneControllerRegistryContract,
 } from '@/features/scene-view/contexts/SceneControllerRegistryContext';
 import type { LoadedSceneRef } from '@/store/api';
-import type {
-  ObjectCache,
-  ObjectCacheOptions,
-} from '@/lib/object-cache/ObjectCache';
 
-export type SceneControllerRegistryOptions = ObjectCacheOptions;
+export interface SceneControllerRegistryOptions {
+  id?: string;
+  type?: string;
+}
 export type { SceneControllerRecord };
 
 function isLoadedSceneRef(
@@ -25,9 +24,7 @@ function isDirtyProxy(proxy: SceneProxy): boolean {
   return proxy.edit_value !== undefined;
 }
 
-export class SceneControllerRegistry
-  implements SceneControllerRegistryContract, ObjectCache<SceneControllerRecord>
-{
+export class SceneControllerRegistry implements SceneControllerRegistryContract {
   private readonly records = new Map<string, SceneControllerRecord>();
 
   readonly options: SceneControllerRegistryOptions;

@@ -4,11 +4,7 @@ import {
 } from '@/karabo/common/api';
 import type { ControllerContainerContext } from '@/features/controllers/api';
 import { AccessLevel } from '@/karabo/data/enums';
-import type { ObjectCache } from '@/lib/object-cache/ObjectCache';
-import {
-  SceneControllerRegistry,
-  type SceneControllerRecord,
-} from '../SceneControllerRegistry';
+import { SceneControllerRegistry } from '../SceneControllerRegistry';
 
 const makeControllerModel = () => {
   const model = new DisplayLabelModel();
@@ -136,14 +132,6 @@ describe('SceneControllerRegistry', () => {
     const registry = new SceneControllerRegistry({ id: 'abc', type: 'scene' });
 
     expect(registry.options.id).toBe('abc');
-    expect(registry.options.type).toBe('scene');
-  });
-
-  it('satisfies the generic object cache contract', () => {
-    const registry: ObjectCache<SceneControllerRecord> =
-      new SceneControllerRegistry();
-
-    expect(registry.values()).toEqual([]);
     expect(registry.options.type).toBe('scene');
   });
 });
