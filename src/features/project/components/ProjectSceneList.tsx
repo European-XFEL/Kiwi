@@ -55,13 +55,13 @@ export default function ProjectSceneList({
           disabled={!isLoaded || sceneCount === 0}
           aria-label="Open scene"
           title={isLoaded ? `${sceneCount} scenes` : 'Scenes not loaded'}
-          className="h-8 shrink-0 gap-1.5 border-2 border-secondary/50 bg-secondary/10 px-2.5 text-foreground hover:border-secondary/70 hover:bg-secondary/20"
+          className="h-8 gap-1.5 border-2 border-secondary/50 bg-secondary/10 text-base text-foreground hover:border-secondary/70 hover:bg-secondary/20 shrink-0 px-2.5"
         >
           <SceneIcon />
           <span className="hidden sm:inline">Scenes</span>
           <span
             aria-hidden="true"
-            className="rounded bg-background/80 px-1.5 text-xs tabular-nums"
+            className="rounded bg-background/80 px-1.5 text-sm tabular-nums"
           >
             {sceneCount}
           </span>

@@ -29,7 +29,11 @@ const getInitials = (text?: string): string => {
     .join('');
 };
 
-export default function UserInfo() {
+export default function UserInfo({
+  nameClassName,
+}: {
+  nameClassName?: string;
+}) {
   const { sessionInfo, setLoggedOut } = useGlobalStore();
   const navigate = useNavigate();
 
@@ -52,21 +56,21 @@ export default function UserInfo() {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="flex items-center gap-3 h-auto px-3 py-2 hover:bg-accent cursor-pointer"
+          className="flex items-center gap-2 h-8 px-2 hover:bg-accent cursor-pointer"
           aria-label="User menu"
         >
           {/* Avatar */}
           <div
-            className="w-8 h-8 bg-linear-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center shadow-sm"
+            className="w-7 h-7 bg-linear-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center shadow-sm"
             aria-hidden="true"
           >
-            <span className="text-white text-sm font-semibold">{initials}</span>
+            <span className="text-white text-xs font-semibold">{initials}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-foreground">
-              {displayName}
-            </span>
-          </div>
+          <span
+            className={`text-base font-medium text-foreground ${nameClassName ?? ''}`}
+          >
+            {displayName}
+          </span>
         </Button>
       </DropdownMenuTrigger>
 

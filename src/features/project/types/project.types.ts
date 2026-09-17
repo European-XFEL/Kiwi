@@ -21,6 +21,8 @@ export interface RootProjectLoadHandle {
 // Main component props
 export type LoadProjectSceneProps = {
   className?: string;
+  iconClassName?: string;
+  labelClassName?: string;
   size?: 'default' | 'sm' | 'lg' | 'icon';
   variant?:
     'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';

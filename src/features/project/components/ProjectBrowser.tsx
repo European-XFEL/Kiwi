@@ -44,7 +44,7 @@ export default function ProjectBrowser({
       <span
         title={browser.rootProject.projectName}
         className={cn(
-          'max-w-48 shrink truncate pl-1 text-sm font-medium text-muted-foreground',
+          'max-w-48 shrink truncate pl-1 text-base font-medium text-muted-foreground',
           browser.rootProject.isTrashed &&
             'text-fuchsia-600 dark:text-fuchsia-400'
         )}

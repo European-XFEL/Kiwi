@@ -8,4 +8,5 @@ export type ConnectionTimerProps = {
 
 export type AccessLevelSelectorProps = {
   compact?: boolean;
+  badgeClassName?: string;
 };

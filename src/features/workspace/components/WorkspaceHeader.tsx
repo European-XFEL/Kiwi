@@ -26,31 +26,35 @@ export default function WorkspaceHeader({
   }
 
   const isCompact = header.density === 'compact';
-  const desktopGapClass = isCompact ? 'lg:gap-2' : 'lg:gap-4';
+  const desktopGapClass = isCompact ? 'lg:gap-3' : 'lg:gap-5';
+  const separatorClass = 'hidden lg:block h-6 mx-1';
   const handleHome = () => {
     runtime.onGoHome?.();
   };
 
   return (
     <KiwiHeader id="workspace-header" className="shrink-0">
-      <NavigationMenu className="justify-between px-2 py-2 w-full">
-        <div
-          className={`hidden lg:flex lg:items-center lg:w-full ${desktopGapClass}`}
-        >
-          <NavItem>
+      <NavigationMenu className="px-3 py-1.5 sm:px-4 w-full">
+        <div className={`flex items-center w-full gap-3 ${desktopGapClass}`}>
+          <NavItem className="hidden lg:block">
             <img src={icons.logo} alt="Karabo" className="h-8 w-auto" />
           </NavItem>
 
-          <Separator orientation="vertical" className="h-8 mx-2" />
+          <Separator orientation="vertical" className={separatorClass} />
 
           <NavItem>
-            <LoadProjectScene />
+            <LoadProjectScene
+              variant="ghost"
+              className="h-8 gap-1.5 border-2 border-secondary/50 bg-secondary/10 text-base text-foreground hover:border-secondary/70 hover:bg-secondary/20 px-2 lg:px-2.5"
+              iconClassName="size-5 text-secondary lg:size-4"
+              labelClassName="sr-only lg:not-sr-only"
+            />
           </NavItem>
 
-          <Separator orientation="vertical" className="h-8 mx-2" />
+          <Separator orientation="vertical" className={separatorClass} />
 
           <NavItem className="flex-1 min-w-0 overflow-hidden">
-            <div className="flex items-center gap-2 overflow-hidden w-full">
+            <div className="flex items-center gap-3 overflow-hidden w-full">
               {runtime.activeScene ? (
                 <>
                   <Button
@@ -58,39 +62,43 @@ export default function WorkspaceHeader({
                     size="icon"
                     onClick={handleHome}
                     aria-label="Go home"
-                    className="shrink-0"
+                    className="size-8 shrink-0"
                   >
                     <img src={icons.homeEdit} alt="" className="h-6 w-6" />
                   </Button>
                   <Separator orientation="vertical" className="h-6 shrink-0" />
                   <div className="min-w-0 flex-1 overflow-hidden">
-                    <ProjectBrowser browser={projectBrowser} />
+                    <ProjectBrowser
+                      browser={projectBrowser}
+                      className="w-fit"
+                    />
                   </div>
                 </>
               ) : (
-                <span className="text-sm text-muted-foreground italic">
+                <span className="hidden sm:inline text-base text-muted-foreground italic truncate">
                   No scene loaded
                 </span>
               )}
             </div>
           </NavItem>
 
-          <Separator orientation="vertical" className="h-8 mx-2" />
-
-          <NavItem>
+          <NavItem className="px-1">
             <ActiveIndicator />
           </NavItem>
 
-          <Separator orientation="vertical" className="h-8 mx-2" />
+          <Separator orientation="vertical" className={separatorClass} />
 
           <NavItem>
-            <AccessLevelSelector compact={false} />
+            <AccessLevelSelector
+              compact={false}
+              badgeClassName="hidden lg:inline-flex"
+            />
           </NavItem>
 
-          <Separator orientation="vertical" className="h-8 mx-2" />
+          <Separator orientation="vertical" className={separatorClass} />
 
           <NavItem>
-            <UserProfile />
+            <UserProfile nameClassName="hidden lg:inline" />
           </NavItem>
         </div>
       </NavigationMenu>
