@@ -61,7 +61,10 @@ const HomePanel: React.FC = () => {
   };
 
   return (
-    <div className="flex justify-center min-h-full p-4">
+    <div
+      data-testid="home-panel"
+      className="flex justify-center min-h-full p-4"
+    >
       <div className="w-full max-w-2xl space-y-6">
         {/* Header */}
         <div className="space-y-2">

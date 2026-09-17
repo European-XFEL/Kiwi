@@ -15,6 +15,7 @@ export default function Footer({
 }: FooterProps) {
   return (
     <footer
+      data-testid="app-footer"
       id={id}
       role="contentinfo"
       className={[

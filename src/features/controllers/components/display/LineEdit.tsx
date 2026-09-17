@@ -17,6 +17,7 @@ export const DisplayLineEdit: React.FC<{
   return (
     <div className="w-full h-full flex items-center">
       <input
+        data-testid="display-line-edit"
         type="text"
         value={String(value)}
         readOnly
@@ -51,6 +52,7 @@ export const EditableLineEdit: React.FC<{
   return (
     <div className="w-full h-full flex items-center">
       <input
+        data-testid="display-line-edit"
         type="text"
         value={localValue}
         onFocus={() => setIsEditing(true)}

@@ -63,6 +63,7 @@ export const EditableList: React.FC<{
   return (
     <div className="flex items-center gap-1 w-full h-full">
       <input
+        data-testid="editable-list-input"
         type="text"
         value={localValue}
         onFocus={() => setIsEditing(true)}
@@ -101,6 +102,7 @@ export const EditableList: React.FC<{
           </DialogHeader>
           <div className="p-4">
             <textarea
+              data-testid="editable-list-textarea"
               className="w-full h-40 border rounded px-2 py-1 text-xs font-mono resize-y"
               value={localValue}
               onChange={(e) => setLocalValue(e.target.value)}
@@ -155,6 +157,7 @@ export const EditableRegexList: React.FC<{
   return (
     <div className="flex flex-col w-full h-full">
       <input
+        data-testid="editable-list-input"
         type="text"
         value={localValue}
         onFocus={() => setIsEditing(true)}
@@ -215,6 +218,7 @@ export const EditableListElement: React.FC<{
 
   return (
     <input
+      data-testid="editable-list-input"
       type="text"
       value={localValue}
       onFocus={() => setIsEditing(true)}

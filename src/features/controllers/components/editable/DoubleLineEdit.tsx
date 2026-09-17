@@ -42,6 +42,7 @@ const DoubleLineEdit: React.FC<{
   return (
     <div className="flex items-center gap-1 w-full h-full">
       <input
+        data-testid="editable-double-line-edit"
         type="text"
         inputMode="decimal"
         value={localValue}

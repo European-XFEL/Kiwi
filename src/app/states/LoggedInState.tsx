@@ -36,7 +36,10 @@ const LoggedInState = () => {
         <NavBar />
       </div>
 
-      <main className="flex-1 overflow-y-auto overscroll-contain pt-14 md:pt-16 lg:pt-20 pb-12 sm:pb-14 px-2 sm:px-4">
+      <main
+        data-testid="logged-in-state"
+        className="flex-1 overflow-y-auto overscroll-contain pt-14 md:pt-16 lg:pt-20 pb-12 sm:pb-14 px-2 sm:px-4"
+      >
         <Body className="w-full h-full" useOutlet />
       </main>
 

@@ -38,6 +38,7 @@ export default function ProjectList({
     <DropdownMenu onOpenChange={(open) => !open && onQueryChange('')}>
       <DropdownMenuTrigger asChild>
         <Button
+          data-testid="project-selector"
           ref={focusReturn.triggerRef}
           type="button"
           variant="ghost"

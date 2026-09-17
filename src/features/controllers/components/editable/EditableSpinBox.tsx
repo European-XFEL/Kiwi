@@ -31,6 +31,7 @@ const EditableSpinBox: React.FC<{
   return (
     <div className="w-full h-full flex items-center">
       <input
+        data-testid="editable-spin-box"
         type="number"
         step={1}
         value={localValue}

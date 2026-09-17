@@ -122,7 +122,7 @@ export function LoginPage() {
   }
 
   return (
-    <Card className="shadow-lg">
+    <Card data-testid="login-page" className="shadow-lg">
       <CardContent className="pt-6 space-y-6">
         <ServerProbeForm
           host={host}

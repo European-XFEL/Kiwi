@@ -17,6 +17,7 @@ export default function LoadProjectScene({
   return (
     <>
       <Button
+        data-testid="load-project-scene"
         size={size}
         variant={variant}
         onClick={handleOpenDialog}

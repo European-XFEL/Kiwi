@@ -25,7 +25,7 @@ export default function AccessLevelForm({
   const userRef = useRef<HTMLInputElement>(null);
 
   return (
-    <Card>
+    <Card data-testid="access-level-form">
       <CardHeader>
         <CardTitle className="text-sm font-semibold">
           ACCESS LEVEL LOGIN
@@ -35,6 +35,7 @@ export default function AccessLevelForm({
         <div className="space-y-2">
           <Label htmlFor="username-al">Username</Label>
           <Input
+            data-testid="login-username"
             id="username-al"
             ref={userRef}
             onChange={(e) => onUserNameChange(e.target.value)}

@@ -9,10 +9,14 @@ export default function RecentSceneItem({
   disabled = false,
 }: RecentSceneItemProps) {
   return (
-    <div className="group flex items-center gap-3 rounded-md p-2 transition-colors hover:bg-accent/50">
+    <div
+      data-testid={`recent-scene-${scene.uuid}`}
+      className="group flex items-center gap-3 rounded-md p-2 transition-colors hover:bg-accent/50"
+    >
       <Button
         variant="ghost"
         size="icon"
+        data-testid="recent-scene-open"
         onClick={() => onOpen(scene)}
         disabled={disabled}
         title="Open scene"
@@ -24,6 +28,7 @@ export default function RecentSceneItem({
       <Button
         variant="ghost"
         size="icon"
+        data-testid="recent-scene-remove"
         onClick={() => onRemove(scene)}
         title="Remove from recent scenes"
         disabled={disabled}

@@ -9,6 +9,7 @@ type InitializingStateProps = {
 
 const InitializingState: React.FC<InitializingStateProps> = ({ visible }) => (
   <section
+    data-testid="initializing-state"
     className={cn(
       'fixed inset-0 z-50',
       'flex items-center justify-center',

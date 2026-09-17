@@ -28,6 +28,7 @@ export default function PanelContainer({
   if (areaModel.tabs.length === 0) {
     return (
       <section
+        data-testid="workspace-panel"
         id={`workspace-panel-${area}`}
         className={cn(
           'flex h-full min-h-0 flex-col items-center justify-center overflow-hidden border bg-background',
@@ -56,6 +57,7 @@ export default function PanelContainer({
 
   return (
     <section
+      data-testid="workspace-panel"
       id={`workspace-panel-${area}`}
       className={cn(
         'flex h-full min-h-0 flex-col overflow-hidden border bg-background',

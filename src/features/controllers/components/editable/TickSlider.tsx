@@ -32,6 +32,7 @@ const TickSlider: React.FC<{
   return (
     <div className="w-full h-full flex flex-col items-center justify-center gap-1">
       <input
+        data-testid="editable-tick-slider"
         type="range"
         min={min}
         max={max}

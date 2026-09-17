@@ -37,6 +37,7 @@ const FloatSpinBox: React.FC<{
   return (
     <div className="w-full h-full flex items-center">
       <input
+        data-testid="editable-float-spin-box"
         type="number"
         step={step}
         value={localValue}

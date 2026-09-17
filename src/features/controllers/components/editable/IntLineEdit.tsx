@@ -40,6 +40,7 @@ const IntLineEdit: React.FC<{
   return (
     <div className="flex items-center gap-1 w-full h-full">
       <input
+        data-testid="editable-int-line-edit"
         type="text"
         inputMode="numeric"
         value={localValue}
