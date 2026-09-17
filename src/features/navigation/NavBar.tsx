@@ -8,13 +8,13 @@ import {
   ProjectBrowser,
   useRootProject,
 } from '@/features/project/api';
-import Logo from './components/Logo';
 import { UserProfile, AccessLevelSelector } from '@/features/user';
 import { Button, Separator } from '@/components/api';
 import { GuiServerDisplay, ActiveIndicator } from '@/features/status';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useActiveSceneStore } from '@/features/scene-view/api';
 import { sceneParamsFromURL } from './utils';
+import icons from '@/assets/icons';
 
 export function NavBar() {
   const projectBrowser = useRootProject();
@@ -82,14 +82,7 @@ export function NavBar() {
                 <ProjectBrowser browser={projectBrowser} />
               </div>
             ) : (
-              <Logo
-                imageUrl="logo192.png"
-                logoText="KIWI"
-                alt="Karabo"
-                className="flex items-center gap-1.5"
-                imageClassName="h-8 w-auto"
-                textClassName="text-lg font-bold"
-              />
+              <img src={icons.logo} alt="Karabo" className="h-8 w-auto" />
             )}
           </div>
 
@@ -101,14 +94,7 @@ export function NavBar() {
 
         <div className="hidden xl:flex xl:items-center xl:gap-4 xl:w-full">
           <NavItem>
-            <Logo
-              imageUrl="logo192.png"
-              logoText="KIWI"
-              alt="Karabo"
-              className="flex items-center gap-2"
-              imageClassName="h-14 w-auto"
-              textClassName="text-2xl font-bold"
-            />
+            <img src={icons.logo} alt="Karabo" className="h-8 w-auto" />
           </NavItem>
 
           <Separator orientation="vertical" className="h-8 mx-2" />

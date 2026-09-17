@@ -9,11 +9,9 @@
 export { NavBar } from './NavBar';
 
 // Components
-export { default as Logo } from './components/Logo';
 
 // Types
 export type {
-  LogoProps,
   NavItemProps,
   NavLinkProps,
   NavToggleProps,
