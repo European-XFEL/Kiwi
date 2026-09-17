@@ -6,6 +6,8 @@ import { useLoadProjectScene } from './hooks/useLoadProjectScene';
 
 export default function LoadProjectScene({
   className,
+  iconClassName,
+  labelClassName,
   size = 'sm',
   variant = 'default',
 }: LoadProjectSceneProps) {
@@ -20,8 +22,8 @@ export default function LoadProjectScene({
         onClick={handleOpenDialog}
         className={className}
       >
-        <FolderOpen className="h-4 w-4 mr-2" />
-        Load Project Scene
+        <FolderOpen className={iconClassName ?? 'size-4'} />
+        <span className={labelClassName}>Load Project Scene</span>
       </Button>
 
       <SelectProjectSceneDialog

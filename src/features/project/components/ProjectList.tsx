@@ -44,7 +44,7 @@ export default function ProjectList({
           size="sm"
           title={label}
           className={cn(
-            'h-8 min-w-0 max-w-48 shrink gap-1 px-2 font-semibold tracking-normal [word-spacing:normal]',
+            'h-8 min-w-0 max-w-48 shrink gap-1 px-2 text-base font-semibold tracking-normal [word-spacing:normal]',
             selectedProject.isTrashed &&
               'text-fuchsia-600 dark:text-fuchsia-400'
           )}

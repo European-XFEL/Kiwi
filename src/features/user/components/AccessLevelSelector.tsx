@@ -18,6 +18,7 @@ import type { AccessLevelSelectorProps } from '../types/user.types';
 
 export default function AccessLevelSelector({
   compact = true,
+  badgeClassName,
 }: AccessLevelSelectorProps) {
   const { sessionInfo, setLoggedIn } = useGlobalStore();
   const { accessLevel, canChangeLevel, canChangeTo, setLevel } =
@@ -79,7 +80,7 @@ export default function AccessLevelSelector({
         {!compact && currentLevelInfo && (
           <Badge
             variant="secondary"
-            className={`ml-2 ${currentLevelInfo.className} font-medium px-2 py-0.5 text-xs`}
+            className={`ml-2 ${currentLevelInfo.className} font-medium px-2 py-0.5 text-xs ${badgeClassName ?? ''}`}
           >
             {currentLevelInfo.label}
           </Badge>
@@ -102,7 +103,7 @@ export default function AccessLevelSelector({
           {!compact && currentLevelInfo && (
             <Badge
               variant="secondary"
-              className={`ml-2 ${currentLevelInfo.className} font-medium px-2 py-0.5 text-xs`}
+              className={`ml-2 ${currentLevelInfo.className} font-medium px-2 py-0.5 text-xs ${badgeClassName ?? ''}`}
             >
               {currentLevelInfo.label}
             </Badge>
