@@ -9,11 +9,14 @@ import { useNavigate } from 'react-router-dom';
 
 export function ScenePending() {
   return (
-    <div className="flex h-full w-full items-center justify-center bg-muted/20">
-      <div className="flex items-center gap-3 rounded-md border border-border bg-background px-4 py-3 text-sm text-muted-foreground">
-        <Spinner className="text-primary" variant="circle" size={200} />
-        <span>Opening scene...</span>
-      </div>
+    <div
+      role="status"
+      className="flex h-full w-full flex-col items-center justify-center gap-6 bg-muted/20"
+    >
+      <Spinner className="text-primary" variant="circle-filled" size={128} />
+      <span className="text-xl font-medium text-muted-foreground">
+        Opening scene...
+      </span>
     </div>
   );
 }
