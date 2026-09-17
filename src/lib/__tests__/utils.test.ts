@@ -29,6 +29,37 @@ describe('Signal', () => {
     expect(mockHandler).toHaveBeenCalledTimes(1);
   });
 
+  it('unregisters only the disposed subscription when an owner has several', () => {
+    const register = jest.spyOn(FinalizationRegistry.prototype, 'register');
+    const unregister = jest.spyOn(FinalizationRegistry.prototype, 'unregister');
+    try {
+      const signal = new Signal();
+      const owner = {};
+      const first = jest.fn();
+      const second = jest.fn();
+      const stopFirst = signal.subscribe(owner, first);
+      const stopSecond = signal.subscribe(owner, second);
+      const firstToken = register.mock.calls[0][2];
+      const secondToken = register.mock.calls[1][2];
+
+      expect(firstToken).toBeDefined();
+      expect(firstToken).not.toBe(secondToken);
+      stopFirst();
+      expect(unregister).toHaveBeenCalledWith(firstToken);
+      signal.fire();
+      expect(first).not.toHaveBeenCalled();
+      expect(second).toHaveBeenCalledTimes(1);
+
+      stopSecond();
+      expect(unregister).toHaveBeenCalledWith(secondToken);
+      signal.fire();
+      expect(second).toHaveBeenCalledTimes(1);
+    } finally {
+      register.mockRestore();
+      unregister.mockRestore();
+    }
+  });
+
   it('should correctly bind "this" to the owner during execution', () => {
     const signal = new Signal<[number]>();
 
@@ -55,36 +86,74 @@ describe('Signal', () => {
     expect(component.total).toBe(115);
   });
 
-  // XXX: Define outside test scope
-  // When this function finishes, its stack frame is instantly destroyed.
-  function attachDoomedListener(
-    signal: Signal<[string]>,
-    callback: () => void
-  ) {
-    const temporaryOwner = { id: 'doomed' };
-    signal.subscribe(temporaryOwner, callback);
-  }
+  it('unregisters only the removed subscription for a shared owner', () => {
+    const register = jest.spyOn(FinalizationRegistry.prototype, 'register');
+    const unregister = jest.spyOn(FinalizationRegistry.prototype, 'unregister');
+    try {
+      const signal = new Signal();
+      const owner = {};
+      const first = jest.fn();
+      const second = jest.fn();
+      const removeFirst = signal.subscribe(owner, first);
+      const removeSecond = signal.subscribe(owner, second);
+      const firstToken = register.mock.calls[0][2];
+      const secondToken = register.mock.calls[1][2];
+      expect(firstToken).toBeDefined();
+      expect(secondToken).not.toBe(firstToken);
 
-  it('should safely ignore handlers if the owner is garbage collected', async () => {
-    const signal = new Signal<[string]>();
-    let handlerCalled = false;
-
-    // Call the separate function. Once this line finishes, V8 drops the reference.
-    attachDoomedListener(signal, () => {
-      handlerCalled = true;
-    });
-
-    if (!global.gc) {
-      console.warn('Skipping GC test. Run Jest with: node --expose-gc');
-      return;
+      removeFirst();
+      removeFirst();
+      signal.fire();
+      expect(first).not.toHaveBeenCalled();
+      expect(second).toHaveBeenCalledTimes(1);
+      expect(unregister).toHaveBeenCalledTimes(1);
+      expect(unregister).toHaveBeenCalledWith(firstToken);
+      removeSecond();
+      expect(unregister).toHaveBeenLastCalledWith(secondToken);
+    } finally {
+      register.mockRestore();
+      unregister.mockRestore();
     }
-    await sleep(0);
-    global.gc();
-    global.gc();
-    await sleep(0);
-
-    signal.fire('test');
-    expect(handlerCalled).toBe(false);
-    expect((signal as any).subscribers.size).toBe(0);
   });
+
+  // Run with node --expose-gc to test actual collection, not mocked weak references.
+  const gcTest = global.gc ? it : it.skip;
+  gcTest(
+    'collects an owner captured by its handler even when unsubscribe is retained',
+    async () => {
+      const signal = new Signal();
+      let calls = 0;
+      function attach() {
+        const owner = { update: () => calls++ };
+        const unsubscribe = signal.subscribe(owner, () => owner.update());
+        return { reference: new WeakRef(owner), unsubscribe };
+      }
+      const { reference, unsubscribe } = attach();
+      signal.fire();
+      expect(calls).toBe(1);
+      for (let i = 0; i < 5; i++) {
+        await sleep(0);
+        global.gc!();
+      }
+      expect(reference.deref()).toBeUndefined();
+      signal.fire();
+      expect(calls).toBe(1);
+      unsubscribe();
+    }
+  );
+
+  gcTest(
+    'keeps inline handlers available while their owner is alive',
+    async () => {
+      const signal = new Signal<[number]>();
+      const owner = { total: 0 };
+      signal.subscribe(owner, (amount) => {
+        owner.total += amount;
+      });
+      await sleep(0);
+      global.gc!();
+      signal.fire(3);
+      expect(owner.total).toBe(3);
+    }
+  );
 });
