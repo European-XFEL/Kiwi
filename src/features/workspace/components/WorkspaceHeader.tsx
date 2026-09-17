@@ -32,11 +32,13 @@ export default function WorkspaceHeader({
     runtime.onGoHome?.();
   };
 
+  // The row has a fixed height so the header does not jump when the project
+  // browser, which is taller than the buttons, appears with a scene.
   return (
     <KiwiHeader id="workspace-header" className="shrink-0">
-      <NavigationMenu className="px-3 py-1.5 sm:px-4 w-full">
+      <NavigationMenu className="px-3 sm:px-4 w-full">
         <div
-          className={`flex items-center w-full gap-2 sm:gap-3 ${desktopGapClass}`}
+          className={`flex h-14 items-center w-full gap-2 sm:gap-3 ${desktopGapClass}`}
         >
           <NavItem className="hidden lg:block">
             <img src={icons.logo} alt="Karabo" className="h-8 w-auto" />
@@ -64,9 +66,10 @@ export default function WorkspaceHeader({
                     size="icon"
                     onClick={handleHome}
                     aria-label="Go home"
+                    title="Go home"
                     className="size-8 shrink-0"
                   >
-                    <img src={icons.homeEdit} alt="" className="h-6 w-6" />
+                    <img src={icons.homeEdit} alt="" className="size-5" />
                   </Button>
                   <Separator
                     orientation="vertical"
