@@ -319,3 +319,51 @@ describe('SelectProjectSceneDialog loading state', () => {
     expect(screen.getByText('Scene New Scene')).toBeInTheDocument();
   });
 });
+
+describe('SelectProjectSceneDialog navigation', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockConfig.currentDomain = 'CONTROLS';
+  });
+
+  function loadProjectWithScene() {
+    emit(KaraboEvent.ListDomains, domainsReply());
+    emit(
+      KaraboEvent.ListProjects,
+      projectsReply([
+        makeProject('project-a', 'First'),
+        makeProject('project-b', 'Second'),
+      ])
+    );
+    emit(
+      KaraboEvent.ListScenes,
+      scenesReply([makeScene('scene-a', 'Overview')])
+    );
+  }
+
+  it('moves focus into the scenes pane when a project is chosen', async () => {
+    const user = userEvent.setup();
+
+    renderDialog();
+    loadProjectWithScene();
+    await user.click(screen.getByText('Project Second'));
+
+    expect(screen.getByRole('button', { name: 'Projects' })).toHaveFocus();
+  });
+
+  // jsdom applies no CSS, so this checks the classes that hide the action
+  // below lg rather than what is rendered.
+  it('only offers Open Scene once the scene list is in view', async () => {
+    const user = userEvent.setup();
+
+    renderDialog();
+    loadProjectWithScene();
+
+    const openScene = screen.getByRole('button', { name: 'Open Scene' });
+    expect(openScene).toHaveClass('hidden', 'lg:inline-flex');
+
+    await user.click(screen.getByText('Project Second'));
+
+    expect(openScene).not.toHaveClass('hidden');
+  });
+});

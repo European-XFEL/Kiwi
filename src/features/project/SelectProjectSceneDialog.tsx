@@ -1,4 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
+import { ChevronLeft } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,11 @@ import { getDomains } from './utils/getDomains';
 import { useDeferredSearch } from './hooks/useDeferredSearch';
 import { filterByQuery } from './utils/filterByQuery';
 import { SceneModel } from '@/karabo/common/scenemodel/api';
+
+// Below lg the projects and scenes panes are a navigation stack: only one is
+// shown and choosing a project slides to its scenes. From lg up both are
+// side by side and this is ignored.
+type DialogView = 'projects' | 'scenes';
 
 enum ActivityStatus {
   NO_ACTIVITY,
@@ -51,7 +57,13 @@ export default function SelectProjectSceneDialog({
   const [selectedScene, setSelectedScene] = useState<SceneModel | undefined>(
     undefined
   );
+  const [view, setView] = useState<DialogView>('projects');
   const domainsInitializedRef = useRef(false);
+  const projectsPaneRef = useRef<HTMLElement>(null);
+  const backButtonRef = useRef<HTMLButtonElement>(null);
+  // Set when the user navigates, so focus follows them into the pane they
+  // opened. A domain change also resets the view but leaves focus alone.
+  const moveFocusOnViewChangeRef = useRef(false);
 
   const projectSearch = useDeferredSearch();
   const sceneSearch = useDeferredSearch();
@@ -82,6 +94,7 @@ export default function SelectProjectSceneDialog({
   );
 
   const updateProjects = (domain: string) => {
+    setView('projects');
     setErrorMessage('');
     setActivityStatus(ActivityStatus.GETTING_PROJECTS);
     setProjects([]);
@@ -101,10 +114,37 @@ export default function SelectProjectSceneDialog({
     getNetwork().onListScenes(projectModel.uuid);
   };
 
+  const navigateTo = (next: DialogView) => {
+    moveFocusOnViewChangeRef.current = true;
+    setView(next);
+  };
+
   const handleProjectClick = (project: ProjectModel) => {
     setSelectedProject(project);
     updateScenes(project);
+    navigateTo('scenes');
   };
+
+  // From lg up the back button is display: none, so focusing it does nothing
+  // and a desktop click keeps focus where it was.
+  React.useEffect(() => {
+    if (!moveFocusOnViewChangeRef.current) {
+      return;
+    }
+    moveFocusOnViewChangeRef.current = false;
+    if (view === 'scenes') {
+      backButtonRef.current?.focus();
+    } else {
+      // The selected row is disabled while its scenes are still loading, so
+      // fall back to the project filter rather than dropping focus.
+      const pane = projectsPaneRef.current;
+      (
+        pane?.querySelector<HTMLElement>(
+          'tr[data-selected] button:not(:disabled)'
+        ) ?? pane?.querySelector<HTMLElement>('input')
+      )?.focus();
+    }
+  }, [view]);
 
   const handleSceneClick = (scene: SceneModel) => {
     setSelectedScene(scene);
@@ -266,7 +306,7 @@ export default function SelectProjectSceneDialog({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>
-      <DialogContent className="w-[95vw] sm:w-[90vw] md:w-[85vw] lg:max-w-7xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="w-[95vw] sm:w-[92vw] sm:max-w-3xl lg:w-[85vw] lg:max-w-7xl max-h-[90dvh] gap-3 overflow-hidden p-4 sm:gap-4 sm:p-6 flex flex-col">
         <DialogHeader>
           <DialogTitle>Load Project Scene</DialogTitle>
           <DialogDescription>
@@ -274,89 +314,127 @@ export default function SelectProjectSceneDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-auto space-y-4 pr-2">
-          {/* Domain selector */}
-          <div>
-            <DomainSelector
-              domains={domains}
-              selectedDomain={selectedDomain}
-              onDomainChange={(domain) => {
-                setSelectedDomain(domain);
-                getConfig().currentDomain = domain;
-                updateProjects(domain);
-              }}
-              disabled={isBusy}
-            />
-          </div>
+        <div className="flex-1 overflow-auto pr-2">
+          <div className="overflow-hidden lg:overflow-visible">
+            <div
+              className={`flex w-[200%] transition-transform duration-300 ease-out motion-reduce:transition-none lg:grid lg:w-full lg:translate-x-0 lg:grid-cols-2 lg:gap-4 ${
+                view === 'scenes' ? '-translate-x-1/2' : ''
+              }`}
+            >
+              {/* Projects pane: flattened into the grid from lg up so the
+                  domain selector can span both columns */}
+              <section
+                ref={projectsPaneRef}
+                aria-label="Projects"
+                className={`w-1/2 min-w-0 space-y-4 px-1 transition-[visibility] duration-300 lg:contents lg:space-y-0 ${
+                  view === 'scenes' ? 'invisible lg:visible' : ''
+                }`}
+              >
+                <div className="lg:col-span-2">
+                  <DomainSelector
+                    domains={domains}
+                    selectedDomain={selectedDomain}
+                    onDomainChange={(domain) => {
+                      setSelectedDomain(domain);
+                      getConfig().currentDomain = domain;
+                      updateProjects(domain);
+                    }}
+                    disabled={isBusy}
+                  />
+                </div>
 
-          <div className="grid gap-4 lg:grid-cols-2">
-            {/* Projects */}
-            <div className="min-w-0 space-y-2">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold">
-                  Projects on Domain "{selectedDomain}"
-                </h3>
-                <span className="text-xs text-muted-foreground">
-                  (
-                  {filteredProjects.length === projects.length
-                    ? projects.length
-                    : `${filteredProjects.length} of ${projects.length}`}
-                  )
-                </span>
-              </div>
-              <ProjectsTable
-                projects={filteredProjects}
-                selectedProject={selectedProject}
-                onProjectClick={handleProjectClick}
-                query={projectSearch.query}
-                onQueryChange={projectSearch.setQuery}
-                selectionDisabled={isBusy}
-              />
-            </div>
+                <div className="min-w-0 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="min-w-0 truncate text-sm font-semibold">
+                      Projects on Domain "{selectedDomain}"
+                    </h3>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      (
+                      {filteredProjects.length === projects.length
+                        ? projects.length
+                        : `${filteredProjects.length} of ${projects.length}`}
+                      )
+                    </span>
+                  </div>
+                  <ProjectsTable
+                    projects={filteredProjects}
+                    selectedProject={selectedProject}
+                    onProjectClick={handleProjectClick}
+                    query={projectSearch.query}
+                    onQueryChange={projectSearch.setQuery}
+                    selectionDisabled={isBusy}
+                  />
+                </div>
+              </section>
 
-            {/* Scenes */}
-            <div className="min-w-0 space-y-2">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold">
-                  Scenes on Project "{selectedProject?.simple_name ?? ''}"
-                </h3>
-                <span className="text-xs text-muted-foreground">
-                  (
-                  {filteredScenes.length === scenes.length
-                    ? scenes.length
-                    : `${filteredScenes.length} of ${scenes.length}`}
-                  )
-                </span>
-              </div>
-              <ScenesTable
-                scenes={filteredScenes}
-                selectedScene={selectedScene}
-                onSceneClick={handleSceneClick}
-                onSceneDoubleClick={handleSceneDoubleClick}
-                query={sceneSearch.query}
-                onQueryChange={sceneSearch.setQuery}
-                selectionDisabled={isBusy}
-              />
+              {/* Scenes pane */}
+              <section
+                aria-label="Scenes"
+                className={`w-1/2 min-w-0 space-y-2 px-1 transition-[visibility] duration-300 lg:w-auto ${
+                  view === 'projects' ? 'invisible lg:visible' : ''
+                }`}
+              >
+                <Button
+                  ref={backButtonRef}
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigateTo('projects')}
+                  className="-ml-2 gap-1 text-muted-foreground lg:hidden"
+                >
+                  <ChevronLeft className="size-4" />
+                  Projects
+                </Button>
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="min-w-0 truncate text-sm font-semibold">
+                    Scenes on Project "{selectedProject?.simple_name ?? ''}"
+                  </h3>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    (
+                    {filteredScenes.length === scenes.length
+                      ? scenes.length
+                      : `${filteredScenes.length} of ${scenes.length}`}
+                    )
+                  </span>
+                </div>
+                <ScenesTable
+                  scenes={filteredScenes}
+                  selectedScene={selectedScene}
+                  onSceneClick={handleSceneClick}
+                  onSceneDoubleClick={handleSceneDoubleClick}
+                  query={sceneSearch.query}
+                  onQueryChange={sceneSearch.setQuery}
+                  selectionDisabled={isBusy}
+                />
+              </section>
             </div>
           </div>
         </div>
 
         <Separator />
 
-        <DialogFooter className="flex-row items-center justify-between">
+        <DialogFooter className="flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
           <LoadingStatus
             isLoading={isBusy}
             loadingText={getStatusText()}
             error={errorMsg}
           />
-          <div className="ml-auto flex gap-2">
-            <Button variant="outline" onClick={onCancel}>
+          <div className="flex gap-2 sm:ml-auto">
+            <Button
+              variant="outline"
+              onClick={onCancel}
+              className="flex-1 sm:flex-none"
+            >
               Cancel
             </Button>
+            {/* Below lg the scene selection is off screen on the projects
+                pane: tapping a project is the way forward, and opening from
+                here would load a scene the user has not seen */}
             <Button
               onClick={handleSelectScene}
               disabled={!selectedScene}
-              className="min-w-[140px]"
+              className={`flex-1 sm:min-w-[140px] sm:flex-none ${
+                view === 'projects' ? 'hidden lg:inline-flex' : ''
+              }`}
             >
               Open Scene
             </Button>

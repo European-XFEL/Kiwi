@@ -1,3 +1,4 @@
+import { ChevronRight } from 'lucide-react';
 import { ScrollArea } from '@/components/api';
 import {
   Table,
@@ -29,16 +30,22 @@ export default function ProjectsTable({
           className="w-full min-w-0"
         />
       )}
-      <ScrollArea className="h-48 rounded-md border">
+      {/* Radix wraps the viewport content in a display: table div that grows
+          with the widest row, which pushes the last column out of view and
+          stops names from truncating */}
+      <ScrollArea className="h-[40dvh] rounded-md border sm:h-[50dvh] lg:h-48 [&_[data-radix-scroll-area-viewport]>div]:block!">
         <div className="w-full overflow-x-auto">
-          <Table className="min-w-max">
+          <Table className="table-fixed lg:min-w-max lg:table-auto">
             <TableHeader>
               <TableRow>
                 <TableHead className="sticky top-0 bg-background">
                   Project Name
                 </TableHead>
-                <TableHead className="sticky top-0 bg-background">
+                <TableHead className="sticky top-0 hidden w-44 bg-background sm:table-cell lg:w-auto">
                   Last Modified
+                </TableHead>
+                <TableHead className="sticky top-0 w-10 bg-background lg:hidden">
+                  <span className="sr-only">Open</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -46,7 +53,7 @@ export default function ProjectsTable({
               {projects.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={2}
+                    colSpan={3}
                     className="text-center text-muted-foreground"
                   >
                     {query ? 'No matching projects' : 'No projects found'}
@@ -62,6 +69,9 @@ export default function ProjectsTable({
                         : () => onProjectClick(project)
                     }
                     aria-disabled={selectionDisabled || undefined}
+                    data-selected={
+                      selectedProject?.uuid === project.uuid || undefined
+                    }
                     className={
                       selectionDisabled
                         ? `cursor-not-allowed opacity-60 ${
@@ -76,11 +86,27 @@ export default function ProjectsTable({
                           }`
                     }
                   >
-                    <TableCell className="font-medium truncate max-w-xs">
-                      {project.simple_name}
+                    <TableCell className="py-3 font-medium sm:max-w-xs lg:py-2">
+                      {/* Keyboard access to the row: activating the button
+                          clicks it, and that click reaches the row handler */}
+                      <button
+                        type="button"
+                        disabled={selectionDisabled}
+                        className="block w-full min-w-0 cursor-[inherit] rounded-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <span className="block truncate">
+                          {project.simple_name}
+                        </span>
+                        <span className="block truncate text-xs font-normal text-muted-foreground sm:hidden">
+                          {asLocalDateTimeString(project.date)}
+                        </span>
+                      </button>
                     </TableCell>
-                    <TableCell className="truncate">
+                    <TableCell className="hidden truncate sm:table-cell">
                       {asLocalDateTimeString(project.date)}
+                    </TableCell>
+                    <TableCell className="w-10 text-muted-foreground lg:hidden">
+                      <ChevronRight aria-hidden="true" className="size-5" />
                     </TableCell>
                   </TableRow>
                 ))

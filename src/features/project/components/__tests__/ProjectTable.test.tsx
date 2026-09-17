@@ -60,6 +60,36 @@ describe('ProjectsTable', () => {
     );
   });
 
+  it('lets keyboard users choose a project', async () => {
+    const user = userEvent.setup();
+    const onProjectClick = jest.fn();
+
+    render(
+      <ProjectsTable projects={projects} onProjectClick={onProjectClick} />
+    );
+    await user.tab();
+    await user.tab();
+    await user.keyboard('{Enter}');
+
+    expect(onProjectClick).toHaveBeenCalledTimes(1);
+    expect(onProjectClick.mock.calls[0][0].uuid).toBe('project-b');
+  });
+
+  it('keeps disabled projects out of the tab order', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ProjectsTable
+        projects={projects}
+        onProjectClick={jest.fn()}
+        selectionDisabled
+      />
+    );
+    await user.tab();
+
+    expect(document.body).toHaveFocus();
+  });
+
   // Filtering is local to the already loaded list and sends no request, so it
   // stays usable while the dialog waits.
   it('keeps filtering available while selection is disabled', async () => {

@@ -30,15 +30,18 @@ export default function ScenesTable({
           className="w-full min-w-0"
         />
       )}
-      <ScrollArea className="h-48 rounded-md border">
+      {/* Radix wraps the viewport content in a display: table div that grows
+          with the widest row, which pushes the last column out of view and
+          stops names from truncating */}
+      <ScrollArea className="h-[40dvh] rounded-md border sm:h-[50dvh] lg:h-48 [&_[data-radix-scroll-area-viewport]>div]:block!">
         <div className="w-full overflow-x-auto">
-          <Table className="min-w-max">
+          <Table className="table-fixed lg:min-w-max lg:table-auto">
             <TableHeader>
               <TableRow>
                 <TableHead className="sticky top-0 bg-background">
                   Scene Name
                 </TableHead>
-                <TableHead className="sticky top-0 bg-background">
+                <TableHead className="sticky top-0 hidden w-44 bg-background sm:table-cell lg:w-auto">
                   Last Modified
                 </TableHead>
               </TableRow>
@@ -80,10 +83,23 @@ export default function ScenesTable({
                           }`
                     }
                   >
-                    <TableCell className="font-medium truncate max-w-xs">
-                      {scene.simple_name}
+                    <TableCell className="py-3 font-medium sm:max-w-xs lg:py-2">
+                      {/* Keyboard access to the row: activating the button
+                          clicks it, and that click reaches the row handler */}
+                      <button
+                        type="button"
+                        disabled={selectionDisabled}
+                        className="block w-full min-w-0 cursor-[inherit] rounded-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <span className="block truncate">
+                          {scene.simple_name}
+                        </span>
+                        <span className="block truncate text-xs font-normal text-muted-foreground sm:hidden">
+                          {asLocalDateTimeString(scene.date)}
+                        </span>
+                      </button>
                     </TableCell>
-                    <TableCell className="truncate">
+                    <TableCell className="hidden truncate sm:table-cell">
                       {asLocalDateTimeString(scene.date)}
                     </TableCell>
                   </TableRow>
