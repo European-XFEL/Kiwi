@@ -23,7 +23,7 @@ export default function AuthenticationForm({
   const passwdRef = useRef<HTMLInputElement>(null);
 
   return (
-    <Card>
+    <Card data-testid="authentication-form">
       <CardHeader>
         <CardTitle className="text-sm font-semibold">
           USER AUTHENTICATION
@@ -33,6 +33,7 @@ export default function AuthenticationForm({
         <div className="space-y-2">
           <Label htmlFor="username">Username</Label>
           <Input
+            data-testid="login-username"
             id="username"
             ref={userRef}
             onChange={(e) => onUserNameChange(e.target.value)}
@@ -45,6 +46,7 @@ export default function AuthenticationForm({
           <Label htmlFor="password">Password</Label>
           <div className="relative">
             <Input
+              data-testid="login-password"
               id="password"
               ref={passwdRef}
               type={showPassword ? 'text' : 'password'}

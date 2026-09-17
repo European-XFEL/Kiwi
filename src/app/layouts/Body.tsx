@@ -13,7 +13,14 @@ export default function Body({
   ...rest
 }: BodyProps) {
   return (
-    <main id={id} role="main" tabIndex={-1} className={className} {...rest}>
+    <main
+      data-testid="app-body"
+      id={id}
+      role="main"
+      tabIndex={-1}
+      className={className}
+      {...rest}
+    >
       {useOutlet ? <Outlet /> : children}
     </main>
   );

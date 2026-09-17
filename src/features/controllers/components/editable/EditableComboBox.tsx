@@ -26,6 +26,7 @@ function ComboBox({
     <div className="w-full h-full flex items-center">
       {options.length > 0 ? (
         <select
+          data-testid="editable-combo-box"
           value={current}
           disabled={!enabled}
           onChange={() => {
@@ -46,6 +47,7 @@ function ComboBox({
         </select>
       ) : (
         <input
+          data-testid="editable-combo-box-input"
           type="text"
           value={current}
           readOnly

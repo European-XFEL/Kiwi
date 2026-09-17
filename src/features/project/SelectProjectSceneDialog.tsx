@@ -306,7 +306,10 @@ export default function SelectProjectSceneDialog({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>
-      <DialogContent className="w-[95vw] sm:w-[92vw] sm:max-w-3xl lg:w-[85vw] lg:max-w-7xl max-h-[90dvh] gap-3 overflow-hidden p-4 sm:gap-4 sm:p-6 flex flex-col">
+      <DialogContent
+        data-testid="select-project-scene-dialog"
+        className="w-[95vw] sm:w-[92vw] sm:max-w-3xl lg:w-[85vw] lg:max-w-7xl max-h-[90dvh] gap-3 overflow-hidden p-4 sm:gap-4 sm:p-6 flex flex-col"
+      >
         <DialogHeader>
           <DialogTitle>Load Project Scene</DialogTitle>
           <DialogDescription>

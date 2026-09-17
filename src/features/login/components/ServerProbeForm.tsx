@@ -113,7 +113,7 @@ export default function ServerProbeForm({
     selectedTopic && topicServerMap ? topicServerMap[selectedTopic] : undefined;
 
   return (
-    <Card>
+    <Card data-testid="server-probe-form">
       <CardHeader>
         <CardTitle className="flex items-center justify-between gap-4 text-sm font-semibold">
           <span>GUI SERVER</span>
@@ -166,6 +166,7 @@ export default function ServerProbeForm({
             <div className="space-y-2">
               <Label htmlFor="hostname">Hostname</Label>
               <Input
+                data-testid="login-host"
                 id="hostname"
                 value={host}
                 onChange={(e) => onHostChange(e.target.value)}
@@ -180,6 +181,7 @@ export default function ServerProbeForm({
               <div className="space-y-2">
                 <Label htmlFor="port">Port</Label>
                 <Input
+                  data-testid="login-port"
                   id="port"
                   value={port}
                   onChange={(e) => onPortChange(e.target.value)}

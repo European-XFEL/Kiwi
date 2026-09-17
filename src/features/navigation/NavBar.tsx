@@ -36,7 +36,7 @@ export function NavBar() {
   };
 
   return (
-    <KiwiHeader className="border-b">
+    <KiwiHeader data-testid="navigation-bar" className="border-b">
       <NavigationMenu className="justify-between px-2 py-2 w-full">
         <div className="flex items-center justify-between w-full xl:hidden gap-2">
           <NavToggle

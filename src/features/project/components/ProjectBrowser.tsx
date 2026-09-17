@@ -36,6 +36,7 @@ export default function ProjectBrowser({
   return (
     <div
       id={id}
+      data-testid="project-browser"
       className={cn(
         'flex min-w-0 max-w-full items-center gap-1 rounded-lg border border-border/60 bg-muted/30 p-1',
         className

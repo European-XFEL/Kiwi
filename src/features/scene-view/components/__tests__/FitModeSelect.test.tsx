@@ -96,6 +96,6 @@ describe('FitModeSelect', () => {
     fireEvent.change(select, { target: { value: 'fit-height' } });
 
     expect(onFitModeChange).toHaveBeenCalledWith('fit-height');
-    expect(screen.queryByTestId('fit-mode-select')).not.toBeInTheDocument();
+    expect(select).toHaveAttribute('data-testid', 'fit-mode-select');
   });
 });

@@ -14,6 +14,7 @@ export default function Header({
 }: HeaderProps) {
   return (
     <header
+      data-testid="app-header"
       id={id}
       role="banner"
       className={[

@@ -20,7 +20,12 @@ export function SceneViewport({
   children,
 }: SceneViewportProps) {
   return (
-    <div ref={containerRef} className={className} style={style}>
+    <div
+      data-testid="scene-viewport"
+      ref={containerRef}
+      className={className}
+      style={style}
+    >
       {children}
     </div>
   );

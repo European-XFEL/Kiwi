@@ -37,6 +37,7 @@ export default function Sidebar({
 
   return (
     <aside
+      data-testid="app-sidebar"
       role="complementary"
       aria-label={ariaLabel}
       style={{ width: computedWidth, height: computedHeight }}

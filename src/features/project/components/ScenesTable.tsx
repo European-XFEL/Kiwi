@@ -21,7 +21,7 @@ export default function ScenesTable({
   selectionDisabled = false,
 }: ScenesTableProps) {
   return (
-    <div className="flex min-w-0 flex-col gap-2">
+    <div data-testid="scenes-table" className="flex min-w-0 flex-col gap-2">
       {onQueryChange !== undefined && (
         <KiwiSearchInput
           value={query ?? ''}
@@ -60,6 +60,7 @@ export default function ScenesTable({
                 scenes.map((scene, index) => (
                   <TableRow
                     key={`${index}::${scene.uuid}`}
+                    data-testid={`scene-row-${scene.uuid}`}
                     onClick={
                       selectionDisabled ? undefined : () => onSceneClick(scene)
                     }

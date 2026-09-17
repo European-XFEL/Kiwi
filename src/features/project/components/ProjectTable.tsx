@@ -21,7 +21,7 @@ export default function ProjectsTable({
   selectionDisabled = false,
 }: ProjectsTableProps) {
   return (
-    <div className="flex min-w-0 flex-col gap-2">
+    <div data-testid="projects-table" className="flex min-w-0 flex-col gap-2">
       {onQueryChange !== undefined && (
         <KiwiSearchInput
           value={query ?? ''}
@@ -63,6 +63,7 @@ export default function ProjectsTable({
                 projects.map((project, index) => (
                   <TableRow
                     key={`${index}::${project.uuid}`}
+                    data-testid={`project-row-${project.uuid}`}
                     onClick={
                       selectionDisabled
                         ? undefined

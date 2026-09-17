@@ -15,6 +15,7 @@ export function ScenePanelViewport({
 }: ScenePanelViewportProps) {
   return (
     <div
+      data-testid="scene-panel-viewport"
       ref={containerRef}
       className={['min-h-0 min-w-0 flex-1 bg-muted', className ?? '']
         .join(' ')

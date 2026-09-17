@@ -48,6 +48,7 @@ export default function ProjectSceneList({
     >
       <DropdownMenuTrigger asChild>
         <Button
+          data-testid="scene-selector"
           ref={focusReturn.triggerRef}
           type="button"
           variant="secondary"

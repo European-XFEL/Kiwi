@@ -17,7 +17,7 @@ export default function ReadOnlyAccessForm({
   const userRef = useRef<HTMLInputElement>(null);
 
   return (
-    <Card>
+    <Card data-testid="read-only-access-form">
       <CardHeader>
         <CardTitle className="text-sm font-semibold">
           READ-ONLY SERVER LOGIN
@@ -27,6 +27,7 @@ export default function ReadOnlyAccessForm({
         <div className="space-y-2">
           <Label htmlFor="username-al">Username</Label>
           <Input
+            data-testid="login-username"
             id="username-al"
             ref={userRef}
             onChange={(e) => onUserNameChange(e.target.value)}

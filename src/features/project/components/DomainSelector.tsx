@@ -15,7 +15,7 @@ export default function DomainSelector({
   disabled = false,
 }: DomainSelectorProps) {
   return (
-    <div className="space-y-2">
+    <div data-testid="domain-selector" className="space-y-2">
       <Label htmlFor="domain-select">Domain</Label>
       <Select
         value={selectedDomain}

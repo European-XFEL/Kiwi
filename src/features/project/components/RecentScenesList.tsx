@@ -9,7 +9,7 @@ export default function RecentScenesList({
   disabled = false,
 }: RecentScenesListProps) {
   return (
-    <div className="space-y-4">
+    <div data-testid="recent-scenes-list" className="space-y-4">
       <div>
         <h2 className="text-lg font-semibold mb-2">Recent Scenes</h2>
       </div>

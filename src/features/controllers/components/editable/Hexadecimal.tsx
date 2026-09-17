@@ -39,6 +39,7 @@ const Hexadecimal: React.FC<{
   return (
     <div className="w-full h-full flex items-center">
       <input
+        data-testid="editable-hexadecimal"
         type="text"
         value={localValue}
         onFocus={() => setIsEditing(true)}

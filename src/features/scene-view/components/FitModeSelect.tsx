@@ -35,6 +35,7 @@ export default function FitModeSelect({
     return (
       <div className="relative inline-flex">
         <select
+          data-testid="fit-mode-select"
           aria-label="Fit mode"
           value={fitMode}
           onChange={(event) => onFitModeChange(event.target.value as FitMode)}
@@ -60,6 +61,7 @@ export default function FitModeSelect({
       onValueChange={(value) => onFitModeChange(value as FitMode)}
     >
       <SelectTrigger
+        data-testid="fit-mode-select"
         aria-label="Fit mode"
         size="sm"
         className="h-7 w-[130px] rounded-[2px] border-[#8f8f8f] bg-[#eeeeee] px-2 py-0 text-xs text-[#111111] shadow-none focus-visible:border-[#777777] focus-visible:ring-1 focus-visible:ring-[#777777] data-[size=sm]:h-7 [&_svg]:size-4"

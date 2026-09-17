@@ -12,7 +12,12 @@ const NavigationMenu = React.forwardRef<HTMLElement, NavbarProps>(
     const gap = gapClassName ?? defaultGap;
 
     return (
-      <nav ref={ref} className={className} {...rest}>
+      <nav
+        data-testid="navigation-menu"
+        ref={ref}
+        className={className}
+        {...rest}
+      >
         <ul
           role="menubar"
           aria-orientation={direction}

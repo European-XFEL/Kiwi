@@ -81,7 +81,10 @@ export default function WorkspaceShell({
   const isPageVisible = usePageVisibility();
 
   return (
-    <section className="flex h-dvh min-h-0 flex-col overflow-hidden bg-background">
+    <section
+      data-testid="workspace-shell"
+      className="flex h-dvh min-h-0 flex-col overflow-hidden bg-background"
+    >
       {workspace.header.visible ? (
         <WorkspaceHeader header={workspace.header} runtime={runtime} />
       ) : null}

@@ -34,7 +34,10 @@ export function SceneToolBar({
   const formattedHeight = height.toLocaleString('de-DE');
 
   return (
-    <div className="flex h-10 items-center justify-between gap-3 border-b border-[#8d8d8d] bg-[#d7d7d7] px-2">
+    <div
+      data-testid="scene-toolbar"
+      className="flex h-10 items-center justify-between gap-3 border-b border-[#8d8d8d] bg-[#d7d7d7] px-2"
+    >
       <div className="flex items-center gap-1">
         <Button
           variant="ghost"
