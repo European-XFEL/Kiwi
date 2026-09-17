@@ -11,7 +11,7 @@ export function ScenePending() {
   return (
     <div className="flex h-full w-full items-center justify-center bg-muted/20">
       <div className="flex items-center gap-3 rounded-md border border-border bg-background px-4 py-3 text-sm text-muted-foreground">
-        <Spinner className="text-primary" variant="default" size={20} />
+        <Spinner className="text-primary" variant="circle" size={200} />
         <span>Opening scene...</span>
       </div>
     </div>
