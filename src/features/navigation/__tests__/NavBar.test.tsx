@@ -85,15 +85,6 @@ jest.mock('../components/NavToggle', () => {
   };
 });
 
-jest.mock('../components/Logo', () => {
-  const ReactActual = jest.requireActual<typeof React>('react');
-
-  return {
-    __esModule: true,
-    default: () => ReactActual.createElement('div', { 'data-testid': 'logo' }),
-  };
-});
-
 jest.mock('@/features/project/api', () => {
   const ReactActual = jest.requireActual<typeof React>('react');
 
