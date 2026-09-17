@@ -35,7 +35,9 @@ export default function WorkspaceHeader({
   return (
     <KiwiHeader id="workspace-header" className="shrink-0">
       <NavigationMenu className="px-3 py-1.5 sm:px-4 w-full">
-        <div className={`flex items-center w-full gap-3 ${desktopGapClass}`}>
+        <div
+          className={`flex items-center w-full gap-2 sm:gap-3 ${desktopGapClass}`}
+        >
           <NavItem className="hidden lg:block">
             <img src={icons.logo} alt="Karabo" className="h-8 w-auto" />
           </NavItem>
@@ -54,7 +56,7 @@ export default function WorkspaceHeader({
           <Separator orientation="vertical" className={separatorClass} />
 
           <NavItem className="flex-1 min-w-0 overflow-hidden">
-            <div className="flex items-center gap-3 overflow-hidden w-full">
+            <div className="flex items-center gap-2 overflow-hidden w-full sm:gap-3">
               {runtime.activeScene ? (
                 <>
                   <Button
@@ -66,7 +68,10 @@ export default function WorkspaceHeader({
                   >
                     <img src={icons.homeEdit} alt="" className="h-6 w-6" />
                   </Button>
-                  <Separator orientation="vertical" className="h-6 shrink-0" />
+                  <Separator
+                    orientation="vertical"
+                    className="hidden h-6 shrink-0 sm:block"
+                  />
                   <div className="min-w-0 flex-1 overflow-hidden">
                     <ProjectBrowser
                       browser={projectBrowser}

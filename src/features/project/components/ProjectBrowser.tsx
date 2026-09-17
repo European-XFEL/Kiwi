@@ -44,7 +44,7 @@ export default function ProjectBrowser({
       <span
         title={browser.rootProject.projectName}
         className={cn(
-          'max-w-48 shrink truncate pl-1 text-base font-medium text-muted-foreground',
+          'hidden max-w-48 shrink truncate pl-1 text-base font-medium sm:inline text-muted-foreground',
           browser.rootProject.isTrashed &&
             'text-fuchsia-600 dark:text-fuchsia-400'
         )}
@@ -53,7 +53,7 @@ export default function ProjectBrowser({
       </span>
       <ChevronRight
         aria-hidden="true"
-        className="size-3.5 shrink-0 text-muted-foreground/60"
+        className="hidden size-3.5 shrink-0 text-muted-foreground/60 sm:block"
       />
       <ProjectList
         projects={browser.projects}
