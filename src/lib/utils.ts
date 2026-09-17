@@ -5,41 +5,65 @@ export const sleep = (ms: number) =>
 
 type Unsubscribe = () => void;
 
-type Subscriber<TArgs extends any[]> = {
-  handler: (...args: TArgs) => void;
-  owner: WeakRef<object>;
-};
-
-export class Signal<TArgs extends any[] = []> {
+/** Synchronous notifications with weakly held owners. */
+export class Signal<TArgs extends unknown[] = []> {
   private nextId: number;
-  private subscribers: Map<number, Subscriber<TArgs>>;
+  // Iterable index with weak owner references.
+  private subscribers: Map<number, WeakRef<object>>;
+  // Owner-keyed callbacks do not keep owners alive.
+  private handlers = new WeakMap<
+    object,
+    Map<number, (...args: TArgs) => void>
+  >();
   private registry: FinalizationRegistry<number>;
 
   constructor() {
     this.nextId = 1;
-    this.subscribers = new Map<number, Subscriber<TArgs>>();
+    this.subscribers = new Map<number, WeakRef<object>>();
 
-    // Note: It is safe to use an arrow function here because the
-    // registry belongs to the Signal instance itself.
+    // Finalization removes stale subscriber ids.
     this.registry = new FinalizationRegistry<number>((id) => {
       this.subscribers.delete(id);
     });
   }
 
+  /** Subscribe an owner and return idempotent cleanup. */
   subscribe(owner: object, handler: (...args: TArgs) => void): Unsubscribe {
     const id = this.nextId++;
-    this.subscribers.set(id, { owner: new WeakRef(owner), handler });
-    this.registry.register(owner, id);
-    return () => this.subscribers.delete(id);
+    let handlers = this.handlers.get(owner);
+    if (!handlers) {
+      handlers = new Map();
+      this.handlers.set(owner, handlers);
+    }
+    handlers.set(id, handler);
+    const reference = new WeakRef(owner);
+    this.subscribers.set(id, reference);
+    // Each subscription needs its own unregister token.
+    this.registry.register(owner, id, reference);
+    // Cleanup must not retain the owner or handler.
+    return this.unsubscribe.bind(this, id);
   }
 
+  private unsubscribe(id: number): void {
+    const reference = this.subscribers.get(id);
+    if (!reference) return;
+    this.registry.unregister(reference);
+    this.subscribers.delete(id);
+    const owner = reference.deref();
+    if (!owner) return;
+    const handlers = this.handlers.get(owner)!;
+    handlers.delete(id);
+    if (!handlers.size) this.handlers.delete(owner);
+  }
+
+  /** Notify listeners synchronously in subscription order. */
   fire(...args: TArgs): void {
     for (const [id, sub] of this.subscribers) {
-      const owner = sub.owner.deref();
+      const owner = sub.deref();
       if (owner) {
-        sub.handler.apply(owner, args);
+        this.handlers.get(owner)!.get(id)!.apply(owner, args);
       } else {
-        this.subscribers.delete(id);
+        this.unsubscribe(id);
       }
     }
   }
