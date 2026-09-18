@@ -28,13 +28,6 @@ export type LoadProjectSceneProps = {
     'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
 };
 
-export type SceneBreadcrumbProps = {
-  domain: string;
-  projectName: string;
-  sceneName: string;
-  className?: string;
-};
-
 export type SelectProjectSceneDialogProps = {
   open: boolean;
   onSceneSelected: (

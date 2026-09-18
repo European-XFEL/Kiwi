@@ -7,7 +7,7 @@ import { Mediator } from '@/lib/singletons/Mediator';
 import { ProjectItemModel } from '@/lib/singletons/ProjectItemModel';
 import {
   clearRootProject,
-  loadRootProjectFromBookmark,
+  loadRootProjectScene,
   loadRootProjectFromDialogSelection,
 } from '../rootProjectActions';
 
@@ -101,7 +101,7 @@ beforeEach(() => {
   mockProjectModel = new ProjectItemModel();
 });
 
-describe('loadRootProjectFromBookmark', () => {
+describe('loadRootProjectScene', () => {
   it('loads the bookmarked project and announces its root before opening the scene', async () => {
     const project = makeProject('motors', 'Motors');
     const scene = makeScene('motor-scene', 'Motor Scene');
@@ -113,7 +113,7 @@ describe('loadRootProjectFromBookmark', () => {
     );
     const events = observeActivation();
 
-    await loadRootProjectFromBookmark(bookmark).promise;
+    await loadRootProjectScene(bookmark).promise;
 
     const root = mockProjectModel.root;
     expect(root?.uuid).toBe('motors');
@@ -142,7 +142,7 @@ describe('loadRootProjectFromBookmark', () => {
     );
     const events = observeActivation();
 
-    await loadRootProjectFromBookmark(bookmark).promise;
+    await loadRootProjectScene(bookmark).promise;
 
     expect(mockListProjects).toHaveBeenCalledWith('CONTROLS');
     expect(mockProjectModel.root?.uuid).toBe(child.uuid);
@@ -171,7 +171,7 @@ describe('loadRootProjectFromBookmark', () => {
       }
     );
 
-    await loadRootProjectFromBookmark(bookmark).promise;
+    await loadRootProjectScene(bookmark).promise;
 
     expect(mockProjectModel.root?.uuid).toBe(active.uuid);
     expect(mockProjectModel.root).not.toBe(active);
@@ -189,7 +189,7 @@ describe('loadRootProjectFromBookmark', () => {
       }
     );
 
-    await loadRootProjectFromBookmark(savedEntry).promise;
+    await loadRootProjectScene(savedEntry).promise;
 
     expect(mockProjectModel.root?.uuid).toBe('motors');
     expect(showMessageBox).not.toHaveBeenCalled();
@@ -201,7 +201,7 @@ describe('loadRootProjectFromBookmark', () => {
     mockListProjects.mockImplementation(() => emitProjects([active]));
     const events = observeActivation();
 
-    await expect(loadRootProjectFromBookmark(bookmark).promise).rejects.toThrow(
+    await expect(loadRootProjectScene(bookmark).promise).rejects.toThrow(
       'Project "motors" was not found in CONTROLS.'
     );
 
@@ -217,7 +217,7 @@ describe('loadRootProjectFromBookmark', () => {
     );
     const events = observeActivation();
 
-    await expect(loadRootProjectFromBookmark(bookmark).promise).rejects.toThrow(
+    await expect(loadRootProjectScene(bookmark).promise).rejects.toThrow(
       'Database unavailable'
     );
 
@@ -242,7 +242,7 @@ describe('loadRootProjectFromBookmark', () => {
     });
     const events = observeActivation();
 
-    await expect(loadRootProjectFromBookmark(bookmark).promise).rejects.toThrow(
+    await expect(loadRootProjectScene(bookmark).promise).rejects.toThrow(
       'Could not load project "motors".'
     );
 
@@ -263,7 +263,7 @@ describe('loadRootProjectFromBookmark', () => {
     );
     const events = observeActivation();
 
-    await expect(loadRootProjectFromBookmark(bookmark).promise).rejects.toThrow(
+    await expect(loadRootProjectScene(bookmark).promise).rejects.toThrow(
       'Scene "motor-scene" was not found in project "motors".'
     );
 
@@ -275,7 +275,7 @@ describe('loadRootProjectFromBookmark', () => {
     const active = makeProject('existing');
     mockProjectModel.setRoot('CONTROLS', active);
     const events = observeActivation();
-    const handle = loadRootProjectFromBookmark(bookmark);
+    const handle = loadRootProjectScene(bookmark);
 
     handle.abort();
     await expect(handle.promise).rejects.toThrow(
@@ -303,7 +303,7 @@ describe('loadRootProjectFromBookmark', () => {
     );
     const events = observeActivation();
 
-    const handle = loadRootProjectFromBookmark(bookmark);
+    const handle = loadRootProjectScene(bookmark);
     await expect(handle.promise).rejects.toThrow(
       'Scene loading was cancelled.'
     );
@@ -315,7 +315,7 @@ describe('loadRootProjectFromBookmark', () => {
 
   it('rejects an empty project selection before requesting data', async () => {
     await expect(
-      loadRootProjectFromBookmark({ ...bookmark, projectUuid: '' }).promise
+      loadRootProjectScene({ ...bookmark, projectUuid: '' }).promise
     ).rejects.toThrow('A project UUID is required to open a scene.');
 
     expect(mockListProjects).not.toHaveBeenCalled();

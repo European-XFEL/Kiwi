@@ -1,11 +1,7 @@
 import React from 'react';
 import { RecentSceneInfo, useRecentStore, useGlobalStore } from '@/store/api';
-import {
-  RecentScenesList,
-  loadRootProjectFromBookmark,
-} from '@/features/project/api';
+import { RecentScenesList, loadRootProjectScene } from '@/features/project/api';
 import type { RootProjectLoadHandle } from '@/features/project/api';
-import BookmarkInfo from './components/BookmarkInfo';
 import { Separator } from '@/components/api';
 import { useActiveSceneStore } from '@/features/scene-view/hooks/useActiveScene';
 
@@ -30,7 +26,7 @@ const HomePanel: React.FC = () => {
     if (!sessionInfo) return;
 
     sceneLoadHandleRef.current?.abort();
-    const handle = loadRootProjectFromBookmark({
+    const handle = loadRootProjectScene({
       domain: recentScene.domain,
       projectUuid: recentScene.projectUuid,
       sceneUuid: recentScene.uuid,
@@ -83,9 +79,6 @@ const HomePanel: React.FC = () => {
           onSceneRemove={handleRemoveScene}
           disabled={!sessionInfo}
         />
-
-        {/* Bookmark Info */}
-        <BookmarkInfo />
       </div>
     </div>
   );

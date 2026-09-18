@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { loadRootProjectFromBookmark } from '@/features/project/api';
+import { loadRootProjectScene } from '@/features/project/api';
 import { getConfig, singletons } from '@/lib/singletons/api';
 import { useGlobalStore, useRecentStore } from '@/store/api';
 import HomePanel from '../HomePanel';
@@ -9,7 +9,7 @@ jest.mock('@/features/project/api', () => ({
   RecentScenesList: jest.requireActual(
     '@/features/project/components/RecentScenesList'
   ).default,
-  loadRootProjectFromBookmark: jest.fn(() => ({
+  loadRootProjectScene: jest.fn(() => ({
     controller: new AbortController(),
     promise: Promise.resolve(),
     abort: jest.fn(),
@@ -61,7 +61,7 @@ describe('opening persisted recent scenes', () => {
       await user.click(screen.getByRole('button', { name: 'Open scene' }));
 
       await waitFor(() =>
-        expect(loadRootProjectFromBookmark).toHaveBeenCalledWith({
+        expect(loadRootProjectScene).toHaveBeenCalledWith({
           domain: 'CONTROLS',
           projectUuid: 'motor-project',
           sceneUuid: 'motor-scene',

@@ -8,7 +8,6 @@
 // Main components
 export { default as LoadProjectScene } from './LoadProjectScene';
 export { default as ProjectBrowser } from './components/ProjectBrowser';
-export { default as SceneBreadcrumb } from './SceneBreadcrumb';
 export { default as SelectProjectSceneDialog } from './SelectProjectSceneDialog';
 
 // Subcomponents (for internal use or specific cases)
@@ -24,7 +23,7 @@ export { filterByQuery } from './utils/filterByQuery';
 
 // Route / scene-loading helpers
 export {
-  loadRootProjectFromBookmark,
+  loadRootProjectScene,
   clearRootProject,
 } from './utils/rootProjectActions';
 export {
@@ -36,7 +35,6 @@ export {
 export type {
   RootProjectLoadHandle,
   LoadProjectSceneProps,
-  SceneBreadcrumbProps,
   SelectProjectSceneDialogProps,
   DomainSelectorProps,
   ProjectsTableProps,
