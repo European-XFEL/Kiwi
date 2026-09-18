@@ -6,6 +6,7 @@ import { useGlobalStore, useRecentStore } from '@/store/api';
 import {
   KaraboEvent,
   KaraboEventMap,
+  broadcast_event,
   register_for_broadcasts,
   unregister_for_broadcasts,
 } from '@/lib/events';
@@ -21,6 +22,11 @@ import {
   walkProjectModels,
 } from '@/karabo/common/project/api';
 import { getProjectModel } from './api';
+import {
+  readActiveTab,
+  writeActiveTab,
+  type SavedActiveTab,
+} from './activeTabStorage';
 
 // Per-tab scene state. fitMode lives here (not in a global store) so each scene
 // tab remembers its own zoom-to-fit choice independently of the others.
@@ -109,6 +115,7 @@ export class PanelWrangler {
     this.eventMap = {
       [KaraboEvent.OpenScene]: this.onEventOpenScene,
       [KaraboEvent.OpenUnattachedScene]: this.onEventOpenUnattachedScene,
+      [KaraboEvent.GoHome]: this.onEventGoHome,
     };
 
     register_for_broadcasts(this.eventMap);
@@ -214,6 +221,7 @@ export class PanelWrangler {
       this.deviceSceneTabs.delete(tabId);
     }
 
+    this.clearSavedActiveTab();
     this.commit({
       ...this.state,
       center: createCenterArea(),
@@ -233,11 +241,31 @@ export class PanelWrangler {
     this.sceneTabs.clear();
     this.deviceSceneTabs.clear();
 
+    this.clearSavedActiveTab();
     this.commit({
       left: createEmptyArea('left'),
       center: createCenterArea(),
       right: createEmptyArea('right'),
     });
+  }
+
+  getSavedActiveTab(): SavedActiveTab | undefined {
+    const saved = readActiveTab();
+    const session = useGlobalStore.getState().sessionInfo;
+    if (!saved || !session) {
+      return undefined;
+    }
+
+    // A reload reconnects to the server last used in any browser tab, which
+    // is not necessarily the server this tab's scene belongs to.
+    const sameServer =
+      saved.host === session.guiServerHost &&
+      saved.port === session.guiServerPort;
+    return sameServer ? saved : undefined;
+  }
+
+  clearSavedActiveTab(): void {
+    writeActiveTab(undefined);
   }
 
   selectTab(area: PanelSlot, tabId: string): void {
@@ -250,7 +278,7 @@ export class PanelWrangler {
       return;
     }
 
-    this.commit({
+    this.commitTabChange({
       ...this.state,
       [area]: { ...areaModel, activeTabId: tabId },
     });
@@ -270,10 +298,7 @@ export class PanelWrangler {
     this.deviceSceneTabs.delete(tabId);
 
     if (nextTabs.length === 0 && area === 'center') {
-      this.commit({
-        ...this.state,
-        center: createCenterArea(),
-      });
+      broadcast_event(KaraboEvent.GoHome, {});
       return;
     }
 
@@ -282,7 +307,7 @@ export class PanelWrangler {
         ? nextTabs[nextTabs.length - 1]?.id
         : areaModel.activeTabId;
 
-    this.commit({
+    this.commitTabChange({
       ...this.state,
       [area]: {
         ...areaModel,
@@ -331,7 +356,7 @@ export class PanelWrangler {
         snapshot.id,
         this.resolveTabContent(snapshot.id, content)
       );
-      this.commit({
+      this.commitTabChange({
         ...this.state,
         center: {
           ...center,
@@ -357,7 +382,7 @@ export class PanelWrangler {
       tabs = [...center.tabs, nextTab];
     }
 
-    this.commit({
+    this.commitTabChange({
       ...this.state,
       center: {
         ...center,
@@ -389,7 +414,7 @@ export class PanelWrangler {
       tabs = [...center.tabs, nextTab];
     }
 
-    this.commit({
+    this.commitTabChange({
       ...this.state,
       center: {
         ...center,
@@ -401,8 +426,34 @@ export class PanelWrangler {
 
   private commit(nextState: typeof this.state): void {
     this.state = nextState;
-    this.syncBrowserURL();
     this.emit();
+  }
+
+  // Opening, selecting, and closing tabs. Resets clear the saved tab instead,
+  // so the event only ever means a tab change within the session.
+  private commitTabChange(nextState: typeof this.state): void {
+    const previousTabId = this.state.center.activeTabId;
+    this.commit(nextState);
+    if (this.state.center.activeTabId !== previousTabId) {
+      this.onActiveSceneTabChanged();
+    }
+  }
+
+  private onActiveSceneTabChanged(): void {
+    const scene = this.getActiveCenterSceneTab();
+    const session = useGlobalStore.getState().sessionInfo;
+    writeActiveTab(
+      scene && session
+        ? {
+            host: session.guiServerHost,
+            port: session.guiServerPort,
+            domain: scene.domain,
+            projectUuid: scene.projectUuid,
+            sceneUuid: scene.uuid,
+          }
+        : undefined
+    );
+    broadcast_event(KaraboEvent.ActiveSceneTabChanged, {});
   }
 
   private getActiveCenterSceneTab(): SceneTabSnapshot | undefined {
@@ -499,6 +550,11 @@ export class PanelWrangler {
     };
   }
 
+  private onEventGoHome = (): void => {
+    this.resetCenter();
+    getProjectModel().clearRoot(); // Emits RootProjectChanged.
+  };
+
   private onEventOpenScene = (data: { model: SceneModel }): void => {
     const model = data.model;
 
@@ -574,38 +630,6 @@ export class PanelWrangler {
         tabs,
       },
     };
-  }
-
-  private syncBrowserURL(): void {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    const activeScene = this.getActiveCenterSceneTab();
-    const pathname = window.location.pathname || '/main';
-
-    if (!activeScene) {
-      window.history.replaceState(null, '', pathname);
-      return;
-    }
-
-    const sessionInfo = useGlobalStore.getState().sessionInfo;
-    if (
-      !sessionInfo?.guiServerHost ||
-      sessionInfo.guiServerPort === undefined
-    ) {
-      return;
-    }
-
-    const params = new URLSearchParams({
-      host: sessionInfo.guiServerHost,
-      port: String(sessionInfo.guiServerPort),
-      domain: activeScene.domain,
-      projectUuid: activeScene.projectUuid,
-      sceneUuid: activeScene.uuid,
-    });
-
-    window.history.replaceState(null, '', `${pathname}?${params.toString()}`);
   }
 
   private isHomeOnly(): boolean {

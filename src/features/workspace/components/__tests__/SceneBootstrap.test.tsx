@@ -1,6 +1,6 @@
 import React from 'react';
 import { act, render, screen, waitFor } from '@testing-library/react';
-import { Link, MemoryRouter, useLocation } from 'react-router-dom';
+import { Link, MemoryRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import SceneBootstrap from '../SceneBootstrap';
 import { loadRootProjectFromBookmark } from '@/features/project/api';
@@ -15,39 +15,39 @@ jest.mock('@/features/project/api', () => ({
 }));
 
 const mockTopology = { initialized: true };
+const mockPanelWrangler = {
+  getSavedActiveTab: jest.fn(),
+  clearSavedActiveTab: jest.fn(),
+};
 
 jest.mock('@/lib/singletons/api', () => ({
   getTopology: () => mockTopology,
+  getPanelWrangler: () => mockPanelWrangler,
 }));
 
 const loadRootProjectFromBookmarkMock =
   loadRootProjectFromBookmark as jest.Mock;
 
-function LocationProbe() {
-  const location = useLocation();
-  return (
-    <div data-testid="location-probe">
-      {location.pathname}
-      {location.search}
-    </div>
-  );
-}
+const savedTab = {
+  host: 'host-a',
+  port: 44444,
+  domain: 'CONTROLS',
+  projectUuid: 'project-a',
+  sceneUuid: 'scene-a',
+};
 
 describe('SceneBootstrap', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockTopology.initialized = true;
+    mockPanelWrangler.getSavedActiveTab.mockReturnValue(savedTab);
     useActiveSceneStore.setState({ sceneLoadPending: false });
   });
 
-  it('loads the bookmarked scene once after StrictMode reruns the bootstrap effect', async () => {
+  it('restores the saved tab once after StrictMode reruns the bootstrap effect', async () => {
     render(
       <React.StrictMode>
-        <MemoryRouter
-          initialEntries={[
-            '/main?host=host-a&port=44444&domain=CONTROLS&projectUuid=project-a&sceneUuid=scene-a',
-          ]}
-        >
+        <MemoryRouter initialEntries={['/main']}>
           <SceneBootstrap />
         </MemoryRouter>
       </React.StrictMode>
@@ -56,18 +56,12 @@ describe('SceneBootstrap', () => {
     await waitFor(() =>
       expect(loadRootProjectFromBookmarkMock).toHaveBeenCalledTimes(1)
     );
-
-    const params = loadRootProjectFromBookmarkMock.mock.calls[0][0];
-    expect(params.sceneUuid).toBe('scene-a');
+    expect(loadRootProjectFromBookmarkMock).toHaveBeenCalledWith(savedTab);
   });
 
-  it('marks the scene route as pending while loading', async () => {
+  it('marks the workspace as pending while the saved tab loads', async () => {
     render(
-      <MemoryRouter
-        initialEntries={[
-          '/main?host=host-a&port=44444&domain=CONTROLS&projectUuid=project-a&sceneUuid=scene-a',
-        ]}
-      >
+      <MemoryRouter initialEntries={['/main']}>
         <SceneBootstrap />
       </MemoryRouter>
     );
@@ -77,16 +71,12 @@ describe('SceneBootstrap', () => {
     });
   });
 
-  it('waits for topology before loading a bookmarked scene route', async () => {
+  it('waits for topology before restoring the saved tab', async () => {
     jest.useFakeTimers();
     mockTopology.initialized = false;
 
     render(
-      <MemoryRouter
-        initialEntries={[
-          '/main?host=host-a&port=44444&domain=CONTROLS&projectUuid=project-a&sceneUuid=scene-a',
-        ]}
-      >
+      <MemoryRouter initialEntries={['/main']}>
         <SceneBootstrap />
       </MemoryRouter>
     );
@@ -108,83 +98,8 @@ describe('SceneBootstrap', () => {
     jest.useRealTimers();
   });
 
-  it('ignores obsolete root parameters when identifying the same bookmark', async () => {
-    const user = userEvent.setup();
-    const sceneRoute =
-      '/main?host=host-a&port=44444&domain=CONTROLS&projectUuid=shared&sceneUuid=scene-a';
-    loadRootProjectFromBookmarkMock.mockReturnValueOnce({
-      controller: new AbortController(),
-      promise: Promise.resolve(),
-      abort: jest.fn(),
-    });
-
-    render(
-      <MemoryRouter initialEntries={[`${sceneRoute}&rootProjectUuid=root-a`]}>
-        <SceneBootstrap />
-        <Link to={`${sceneRoute}&rootProjectUuid=root-b`}>Other root</Link>
-      </MemoryRouter>
-    );
-
-    await waitFor(() => {
-      expect(loadRootProjectFromBookmarkMock).toHaveBeenCalledTimes(1);
-      expect(useActiveSceneStore.getState().sceneLoadPending).toBe(false);
-    });
-    await user.click(screen.getByRole('link', { name: 'Other root' }));
-
-    expect(loadRootProjectFromBookmarkMock).toHaveBeenCalledTimes(1);
-    expect(loadRootProjectFromBookmarkMock).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        projectUuid: 'shared',
-        sceneUuid: 'scene-a',
-      })
-    );
-  });
-
-  it('reloads the same bookmark after returning home', async () => {
-    const user = userEvent.setup();
-    const sceneRoute =
-      '/main?host=host-a&port=44444&domain=CONTROLS&projectUuid=motors&sceneUuid=motor-scene';
-    loadRootProjectFromBookmarkMock.mockReturnValueOnce({
-      controller: new AbortController(),
-      promise: Promise.resolve(),
-      abort: jest.fn(),
-    });
-
-    render(
-      <MemoryRouter initialEntries={[sceneRoute]}>
-        <SceneBootstrap />
-        <Link to="/main">Home</Link>
-        <Link to={sceneRoute}>Bookmarked scene</Link>
-        <LocationProbe />
-      </MemoryRouter>
-    );
-
-    await waitFor(() => {
-      expect(loadRootProjectFromBookmarkMock).toHaveBeenCalledTimes(1);
-      expect(useActiveSceneStore.getState().sceneLoadPending).toBe(false);
-    });
-    await user.click(screen.getByRole('link', { name: 'Home' }));
-    expect(screen.getByTestId('location-probe').textContent).toBe('/main');
-
-    await user.click(screen.getByRole('link', { name: 'Bookmarked scene' }));
-
-    await waitFor(() =>
-      expect(loadRootProjectFromBookmarkMock).toHaveBeenCalledTimes(2)
-    );
-    expect(loadRootProjectFromBookmarkMock).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        projectUuid: 'motors',
-        sceneUuid: 'motor-scene',
-      })
-    );
-  });
-
-  it('clears broken scene params from the url when route loading fails', async () => {
-    loadRootProjectFromBookmarkMock.mockReturnValueOnce({
-      controller: new AbortController(),
-      promise: Promise.reject(new Error('scene missing')),
-      abort: jest.fn(),
-    });
+  it('stays at Home without a saved tab, even when the URL names a scene', () => {
+    mockPanelWrangler.getSavedActiveTab.mockReturnValue(undefined);
 
     render(
       <MemoryRouter
@@ -193,18 +108,57 @@ describe('SceneBootstrap', () => {
         ]}
       >
         <SceneBootstrap />
-        <LocationProbe />
+      </MemoryRouter>
+    );
+
+    expect(loadRootProjectFromBookmarkMock).not.toHaveBeenCalled();
+    expect(useActiveSceneStore.getState().sceneLoadPending).toBe(false);
+  });
+
+  it('does not restore the saved tab again after returning Home', async () => {
+    const user = userEvent.setup();
+    loadRootProjectFromBookmarkMock.mockReturnValueOnce({
+      controller: new AbortController(),
+      promise: Promise.resolve(),
+      abort: jest.fn(),
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/main']}>
+        <SceneBootstrap />
+        <Link to="/main">Home</Link>
       </MemoryRouter>
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('location-probe')).toHaveTextContent('/main');
-      expect(screen.getByTestId('location-probe')).not.toHaveTextContent(
-        'sceneUuid=scene-a'
-      );
-      expect(screen.getByTestId('location-probe')).not.toHaveTextContent(
-        'projectUuid=project-a'
-      );
+      expect(loadRootProjectFromBookmarkMock).toHaveBeenCalledTimes(1);
+      expect(useActiveSceneStore.getState().sceneLoadPending).toBe(false);
     });
+    await user.click(screen.getByRole('link', { name: 'Home' }));
+
+    expect(loadRootProjectFromBookmarkMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('forgets a saved tab that fails to load so the next reload starts at Home', async () => {
+    const consoleError = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    loadRootProjectFromBookmarkMock.mockReturnValueOnce({
+      controller: new AbortController(),
+      promise: Promise.reject(new Error('scene missing')),
+      abort: jest.fn(),
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/main']}>
+        <SceneBootstrap />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(mockPanelWrangler.clearSavedActiveTab).toHaveBeenCalledTimes(1);
+      expect(useActiveSceneStore.getState().sceneLoadPending).toBe(false);
+    });
+    consoleError.mockRestore();
   });
 });

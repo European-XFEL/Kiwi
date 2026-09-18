@@ -78,12 +78,12 @@ export default function ProjectsTable({
                       selectionDisabled
                         ? `cursor-not-allowed opacity-60 ${
                             selectedProject?.uuid === project.uuid
-                              ? 'bg-accent'
+                              ? 'bg-secondary/15'
                               : ''
                           }`
                         : `cursor-pointer ${
                             selectedProject?.uuid === project.uuid
-                              ? 'bg-accent'
+                              ? 'bg-secondary/15 hover:bg-secondary/20'
                               : 'hover:bg-accent/50'
                           }`
                     }

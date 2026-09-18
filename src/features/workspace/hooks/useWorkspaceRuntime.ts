@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getAccessLevelDisplay } from '@/components/api';
 import { useActiveSceneStore } from '@/features/scene-view/api';
 import { useGlobalActivityStore, useGlobalStore } from '@/store/api';
-import { getPanelWrangler } from '@/lib/singletons/api';
-import { clearRootProject } from '@/features/project/api';
+import { broadcast_event, KaraboEvent } from '@/lib/events';
 import type { WorkspaceRuntime } from '../types';
 
 function getConnectedForLabel(sessionStartEpoc?: number): string | undefined {
@@ -79,8 +78,7 @@ export default function useWorkspaceRuntime(): WorkspaceRuntime {
   const activeScene = loadedSceneRef;
 
   const onGoHome = useCallback(() => {
-    getPanelWrangler().resetCenter();
-    clearRootProject();
+    broadcast_event(KaraboEvent.GoHome, {});
     navigate('/main');
   }, [navigate]);
 
