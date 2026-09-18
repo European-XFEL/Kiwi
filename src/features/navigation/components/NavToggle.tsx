@@ -36,7 +36,11 @@ export default function NavToggle({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetTrigger asChild>
         {trigger ?? (
-          <Button variant="outline" {...triggerButtonProps}>
+          <Button
+            data-testid="nav-toggle-trigger"
+            variant="outline"
+            {...triggerButtonProps}
+          >
             Open
           </Button>
         )}
@@ -56,7 +60,10 @@ export default function NavToggle({
           .filter(Boolean)
           .join(' ')}
       >
-        <SheetClose className="absolute right-4 top-4 z-50 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+        <SheetClose
+          data-testid="nav-toggle-close"
+          className="absolute right-4 top-4 z-50 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+        >
           <X className="h-4 w-4" />
           <span className="sr-only">Close</span>
         </SheetClose>
@@ -102,7 +109,9 @@ export default function NavToggle({
               {primaryAction}
             </div>
             <SheetClose asChild>
-              <Button variant="outline">Close</Button>
+              <Button data-testid="nav-toggle-footer-close" variant="outline">
+                Close
+              </Button>
             </SheetClose>
           </SheetFooter>
         )}

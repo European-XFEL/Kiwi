@@ -58,6 +58,7 @@ export default function SceneStatus({
                     size="icon"
                     className="h-7 w-7"
                     onClick={handleUnloadScene}
+                    data-testid="scene-unload-compact"
                     aria-label="Unload scene"
                   >
                     <XCircle className="h-4 w-4" />
@@ -99,6 +100,7 @@ export default function SceneStatus({
               size="icon"
               onClick={handleUnloadScene}
               disabled={!hasScene}
+              data-testid="scene-unload"
               aria-label={hasScene ? 'Unload scene' : 'No scene to unload'}
               className={cn(
                 'hover:text-destructive hover:bg-destructive/10',

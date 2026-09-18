@@ -26,6 +26,7 @@ export default function ProjectsTable({
         <KiwiSearchInput
           value={query ?? ''}
           onChange={onQueryChange}
+          data-testid="projects-search"
           placeholder="Filter projects..."
           className="w-full min-w-0"
         />
@@ -93,6 +94,7 @@ export default function ProjectsTable({
                       <button
                         type="button"
                         disabled={selectionDisabled}
+                        data-testid="project-select"
                         className="block w-full min-w-0 cursor-[inherit] rounded-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
                         <span className="block truncate">

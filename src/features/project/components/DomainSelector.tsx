@@ -22,12 +22,20 @@ export default function DomainSelector({
         onValueChange={onDomainChange}
         disabled={disabled}
       >
-        <SelectTrigger id="domain-select" className="w-full min-w-48">
+        <SelectTrigger
+          id="domain-select"
+          data-testid="domain-select"
+          className="w-full min-w-48"
+        >
           <SelectValue placeholder="Select domain" />
         </SelectTrigger>
         <SelectContent className="max-h-[300px]">
           {domains.map((domain) => (
-            <SelectItem key={domain} value={domain}>
+            <SelectItem
+              key={domain}
+              value={domain}
+              data-testid={`domain-option-${domain}`}
+            >
               {domain}
             </SelectItem>
           ))}

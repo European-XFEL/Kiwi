@@ -37,6 +37,7 @@ function BoxDetails({ title, msg, details }: BoxDetailsProps) {
             <DialogTrigger asChild>
               <Button
                 variant="outline"
+                data-testid="message-show-details"
                 className="text-xs font-medium underline underline-offset-2"
               >
                 Show Details
@@ -53,6 +54,7 @@ function BoxDetails({ title, msg, details }: BoxDetailsProps) {
               <DialogFooter>
                 <Button
                   variant="outline"
+                  data-testid="message-copy-details"
                   onClick={() => {
                     navigator.clipboard.writeText(details);
                   }}

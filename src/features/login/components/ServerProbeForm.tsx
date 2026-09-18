@@ -131,12 +131,20 @@ export default function ServerProbeForm({
                 onValueChange={setSelectedTopic}
                 disabled={disabled}
               >
-                <SelectTrigger id="gui-server-topic" className="w-full">
+                <SelectTrigger
+                  id="gui-server-topic"
+                  data-testid="login-topic"
+                  className="w-full"
+                >
                   <SelectValue placeholder="Select topic" />
                 </SelectTrigger>
                 <SelectContent>
                   {availableTopics.map((availableTopic) => (
-                    <SelectItem key={availableTopic} value={availableTopic}>
+                    <SelectItem
+                      key={availableTopic}
+                      value={availableTopic}
+                      data-testid={`login-topic-option-${availableTopic}`}
+                    >
                       {availableTopic}
                     </SelectItem>
                   ))}

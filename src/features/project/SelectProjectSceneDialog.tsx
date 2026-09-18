@@ -381,6 +381,7 @@ export default function SelectProjectSceneDialog({
                   ref={backButtonRef}
                   variant="ghost"
                   size="sm"
+                  data-testid="project-scene-back"
                   onClick={() => navigateTo('projects')}
                   className="-ml-2 gap-1 text-muted-foreground lg:hidden"
                 >
@@ -424,6 +425,7 @@ export default function SelectProjectSceneDialog({
           <div className="flex gap-2 sm:ml-auto">
             <Button
               variant="outline"
+              data-testid="project-scene-cancel"
               onClick={onCancel}
               className="flex-1 sm:flex-none"
             >
@@ -433,6 +435,7 @@ export default function SelectProjectSceneDialog({
                 pane: tapping a project is the way forward, and opening from
                 here would load a scene the user has not seen */}
             <Button
+              data-testid="project-scene-open"
               onClick={handleSelectScene}
               disabled={!selectedScene}
               className={`flex-1 sm:min-w-[140px] sm:flex-none ${

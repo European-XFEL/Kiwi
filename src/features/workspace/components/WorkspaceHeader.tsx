@@ -65,6 +65,7 @@ export default function WorkspaceHeader({
                     variant="ghost"
                     size="icon"
                     onClick={handleHome}
+                    data-testid="workspace-home-button"
                     aria-label="Go home"
                     title="Go home"
                     className="size-8 shrink-0"

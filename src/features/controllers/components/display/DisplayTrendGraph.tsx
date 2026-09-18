@@ -214,6 +214,7 @@ const DisplayTrendGraph: React.FC<{
           type="button"
           variant="ghost"
           size="icon"
+          data-testid="trend-reset-view"
           aria-label="Reset view"
           title="Reset view"
           className="h-7 w-7 rounded-sm"

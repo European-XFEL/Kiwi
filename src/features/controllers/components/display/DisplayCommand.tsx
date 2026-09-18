@@ -72,6 +72,7 @@ const DisplayCommand: React.FC<{
       width={model.width}
       height={model.height}
       disabled={!isEnabled}
+      data-testid="controller-command"
       ariaLabel={`Command: ${buttonCaption}`}
       style={getControllerFontStyle(model.font_size, model.font_weight)}
       onClick={onSubmitCommand}

@@ -59,7 +59,11 @@ export default function AccessLevelForm({
                 AccessLevel.OPERATOR,
                 AccessLevel.EXPERT,
               ].map((level) => (
-                <SelectItem key={level} value={String(level)}>
+                <SelectItem
+                  key={level}
+                  value={String(level)}
+                  data-testid={`login-access-level-option-${AccessLevel[level].toLowerCase()}`}
+                >
                   {AccessLevel[level]}
                 </SelectItem>
               ))}

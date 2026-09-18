@@ -77,6 +77,8 @@ function LinkButton({
 }) {
   return (
     <button
+      data-testid="scene-link"
+      aria-label={text}
       type="button"
       title={title}
       onClick={onClick}
