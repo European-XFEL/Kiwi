@@ -15,7 +15,11 @@ export default function LoginStatus({
 }: LoginStatusProps) {
   if (error) {
     return (
-      <Alert variant="destructive" className="border-0">
+      <Alert
+        data-testid="login-error"
+        variant="destructive"
+        className="border-0"
+      >
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>{error}</AlertDescription>
       </Alert>
@@ -24,7 +28,10 @@ export default function LoginStatus({
 
   if (isLoading && loadingText) {
     return (
-      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+      <div
+        data-testid="login-loading"
+        className="flex items-center gap-3 text-sm text-muted-foreground"
+      >
         <Spinner variant="default" size={24} className="text-primary" />
         <span>{loadingText}</span>
       </div>

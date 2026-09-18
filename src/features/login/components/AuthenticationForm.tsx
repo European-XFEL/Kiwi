@@ -61,6 +61,7 @@ export default function AuthenticationForm({
               className="pr-10"
             />
             <Button
+              data-testid="login-password-toggle"
               type="button"
               variant="ghost"
               size="icon"

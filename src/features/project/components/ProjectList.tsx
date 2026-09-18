@@ -70,6 +70,7 @@ export default function ProjectList({
         </div>
         <div ref={keyboard.searchRef} onKeyDown={keyboard.onSearchKeyDown}>
           <KiwiSearchInput
+            data-testid="project-search"
             value={query}
             onChange={onQueryChange}
             placeholder="Filter projects..."
@@ -85,6 +86,7 @@ export default function ProjectList({
             projects.map((project) => (
               <DropdownMenuItem
                 key={project.projectUuid}
+                data-testid="project-option"
                 disabled={!project.isLoaded}
                 aria-current={
                   project.projectUuid === selectedProject.projectUuid

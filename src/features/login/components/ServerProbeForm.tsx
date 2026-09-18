@@ -147,14 +147,20 @@ export default function ServerProbeForm({
             <div className="grid grid-cols-4 gap-4 items-start">
               <div className="col-span-3 space-y-2">
                 <Label>Hostname</Label>
-                <div className="min-h-9 rounded-md border border-input bg-muted/30 px-3 py-2 text-sm">
+                <div
+                  data-testid="login-host-display"
+                  className="min-h-9 rounded-md border border-input bg-muted/30 px-3 py-2 text-sm"
+                >
                   {selectedServer?.hostname ?? ''}
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label>Port</Label>
-                <div className="min-h-9 rounded-md border border-input bg-muted/30 px-3 py-2 text-sm">
+                <div
+                  data-testid="login-port-display"
+                  className="min-h-9 rounded-md border border-input bg-muted/30 px-3 py-2 text-sm"
+                >
                   {selectedServer ? String(selectedServer.hostport) : ''}
                 </div>
               </div>
