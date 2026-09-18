@@ -1,7 +1,5 @@
 import { ProjectModel } from '@/karabo/common/project/api';
 import { SceneModel } from '@/karabo/common/scenemodel/api';
-import { Hash } from '@/karabo/data/hash';
-import { HashType } from '@/karabo/data/typenums';
 import { KaraboEvent, broadcast_event } from '@/lib/events';
 import { getProjectModel } from '../api';
 import { SceneControllerRegistry } from '@/features/scenepanel/SceneControllerRegistry';
@@ -51,21 +49,12 @@ function setProject(
   return project;
 }
 
-function createOpenSceneHash(model: SceneModel): Hash {
-  const hash = new Hash();
-  hash.set('model', { type_: HashType.None_, value_: model });
-  return hash;
-}
-
 function openScene(model: SceneModel) {
-  broadcast_event(KaraboEvent.OpenScene, createOpenSceneHash(model));
+  broadcast_event(KaraboEvent.OpenScene, { model });
 }
 
-function openDeviceScene(model: SceneModel, deviceId: string) {
-  const hash = new Hash();
-  hash.set('model', { type_: HashType.None_, value_: model });
-  hash.set('deviceId', deviceId);
-  broadcast_event(KaraboEvent.OpenUnattachedScene, hash);
+function openDeviceScene(model: SceneModel) {
+  broadcast_event(KaraboEvent.OpenUnattachedScene, { model });
 }
 
 describe('PanelWrangler', () => {
@@ -132,7 +121,7 @@ describe('PanelWrangler', () => {
     const scene = makeScene('device-scene-a', 'DEVICE_A|Device Scene A');
     const tabId = 'DEVICE_A|Device Scene A';
 
-    openDeviceScene(scene, 'DEVICE_A');
+    openDeviceScene(scene);
 
     expect(wrangler.getSnapshot().center.tabs).toEqual([
       {

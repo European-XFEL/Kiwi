@@ -1,5 +1,4 @@
 import { SceneModel } from '@/karabo/common/scenemodel/api';
-import { Hash } from '@/karabo/data/hash';
 import { broadcast_event, KaraboEvent } from '@/lib/events';
 import { openSceneInWorkspace } from '../openSceneInWorkspace';
 
@@ -19,15 +18,11 @@ describe('openSceneInWorkspace', () => {
 
     openSceneInWorkspace({ model });
 
-    expect(broadcast_event).toHaveBeenCalledWith(
-      KaraboEvent.OpenScene,
-      expect.any(Hash)
-    );
+    expect(broadcast_event).toHaveBeenCalledWith(KaraboEvent.OpenScene, {
+      model,
+    });
 
-    const [, hash] = (broadcast_event as jest.Mock).mock.calls[0];
-    expect(hash.getValue('model')).toBe(model);
-    expect(hash.has('uuid')).toBe(false);
-    expect(hash.has('domain')).toBe(false);
-    expect(hash.has('project')).toBe(false);
+    const [, payload] = (broadcast_event as jest.Mock).mock.calls[0];
+    expect(payload).toEqual({ model });
   });
 });
