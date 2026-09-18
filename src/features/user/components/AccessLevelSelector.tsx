@@ -73,6 +73,7 @@ export default function AccessLevelSelector({
         variant="ghost"
         size={compact ? 'icon' : 'sm'}
         disabled
+        data-testid="access-level-locked"
         aria-label="Access level locked (Observer)"
         className="cursor-not-allowed opacity-60"
       >
@@ -96,6 +97,7 @@ export default function AccessLevelSelector({
         <Button
           variant="ghost"
           size={compact ? 'icon' : 'sm'}
+          data-testid="access-level-trigger"
           aria-label="Change access level"
           className="hover:bg-accent"
         >
@@ -126,6 +128,7 @@ export default function AccessLevelSelector({
             return (
               <DropdownMenuItem
                 key={level}
+                data-testid="access-level-option"
                 onClick={() => handleAccessLevelChange(level)}
                 disabled={isDisabled}
                 className={`cursor-pointer ${

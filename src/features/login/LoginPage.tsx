@@ -150,6 +150,7 @@ export function LoginPage() {
           />
         </div>
         <Button
+          data-testid="login-submit"
           onClick={() => doLogin(host, port)}
           disabled={isLoginDisabled}
           className="min-w-[100px]"

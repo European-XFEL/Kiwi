@@ -24,6 +24,7 @@ export default function ScenesTable({
     <div data-testid="scenes-table" className="flex min-w-0 flex-col gap-2">
       {onQueryChange !== undefined && (
         <KiwiSearchInput
+          data-testid="scenes-search"
           value={query ?? ''}
           onChange={onQueryChange}
           placeholder="Filter scenes..."
@@ -88,6 +89,7 @@ export default function ScenesTable({
                       {/* Keyboard access to the row: activating the button
                           clicks it, and that click reaches the row handler */}
                       <button
+                        data-testid="scene-select"
                         type="button"
                         disabled={selectionDisabled}
                         className="block w-full min-w-0 cursor-[inherit] rounded-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"

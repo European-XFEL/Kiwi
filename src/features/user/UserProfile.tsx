@@ -55,6 +55,7 @@ export default function UserInfo({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
+          data-testid="user-menu-trigger"
           variant="ghost"
           className="flex items-center gap-2 h-8 px-2 hover:bg-accent cursor-pointer"
           aria-label="User menu"
@@ -89,6 +90,7 @@ export default function UserInfo({
         <DropdownMenuSeparator />
 
         <DropdownMenuItem
+          data-testid="logout-button"
           onClick={handleLogout}
           className="cursor-pointer text-destructive focus:text-destructive"
         >

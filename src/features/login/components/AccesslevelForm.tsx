@@ -50,7 +50,7 @@ export default function AccessLevelForm({
             disabled={disabled}
             defaultValue="0"
           >
-            <SelectTrigger id="access-level">
+            <SelectTrigger id="access-level" data-testid="login-access-level">
               <SelectValue placeholder="Select access level" />
             </SelectTrigger>
             <SelectContent>

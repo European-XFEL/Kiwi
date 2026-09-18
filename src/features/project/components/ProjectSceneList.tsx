@@ -81,6 +81,7 @@ export default function ProjectSceneList({
         </div>
         <div ref={keyboard.searchRef} onKeyDown={keyboard.onSearchKeyDown}>
           <KiwiSearchInput
+            data-testid="scene-search"
             value={query}
             onChange={onQueryChange}
             placeholder="Filter scenes..."
@@ -96,6 +97,7 @@ export default function ProjectSceneList({
             scenes.map((scene) => (
               <DropdownMenuItem
                 key={scene.sceneUuid}
+                data-testid="scene-option"
                 onSelect={() => onOpenScene(scene.sceneUuid)}
                 title={scene.sceneName}
                 className="min-h-8 cursor-pointer py-2 focus:bg-secondary/12"

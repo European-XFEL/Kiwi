@@ -41,7 +41,12 @@ export function NavBar() {
         <div className="flex items-center justify-between w-full xl:hidden gap-2">
           <NavToggle
             trigger={
-              <Button variant="ghost" size="icon" aria-label="Open menu">
+              <Button
+                data-testid="mobile-menu-trigger"
+                variant="ghost"
+                size="icon"
+                aria-label="Open menu"
+              >
                 <Menu className="h-5 w-5" />
               </Button>
             }

@@ -45,6 +45,7 @@ export function SceneToolBar({
           aria-disabled="true"
           type="button"
           tabIndex={-1}
+          data-testid="scene-apply-all"
           aria-label="Apply all changes"
           className={toolbarButtonClassName}
         >
@@ -56,6 +57,7 @@ export function SceneToolBar({
           aria-disabled="true"
           type="button"
           tabIndex={-1}
+          data-testid="scene-decline-all"
           aria-label="Decline all changes"
           className={toolbarButtonClassName}
         >
@@ -90,6 +92,7 @@ export function SceneToolBar({
               size="icon"
               type="button"
               onClick={onToggleFullscreen}
+              data-testid="scene-fullscreen-toggle"
               aria-pressed={isFullscreen}
               aria-label={
                 isFullscreen ? 'Exit full screen' : 'View full screen'

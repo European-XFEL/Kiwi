@@ -46,7 +46,9 @@ export default function ReadOnlyAccessForm({
 
         <div className="space-y-2">
           <Label htmlFor="access-level">Access Level</Label>
-          <div id="access-level">OBSERVER</div>
+          <div id="access-level" data-testid="login-access-level">
+            OBSERVER
+          </div>
         </div>
       </CardContent>
     </Card>

@@ -16,7 +16,7 @@ export default function RecentSceneItem({
       <Button
         variant="ghost"
         size="icon"
-        data-testid="recent-scene-open"
+        data-testid={`recent-scene-open-${scene.uuid}`}
         onClick={() => onOpen(scene)}
         disabled={disabled}
         title="Open scene"
@@ -28,7 +28,7 @@ export default function RecentSceneItem({
       <Button
         variant="ghost"
         size="icon"
-        data-testid="recent-scene-remove"
+        data-testid={`recent-scene-remove-${scene.uuid}`}
         onClick={() => onRemove(scene)}
         title="Remove from recent scenes"
         disabled={disabled}
