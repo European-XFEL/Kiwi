@@ -500,6 +500,7 @@ export class PanelWrangler {
     };
 
     const snapshot: SceneTabSnapshot = {
+      isUnattachedScene: false,
       id: toSceneTabId(model.uuid),
       title: sceneName,
       domain,
@@ -537,6 +538,7 @@ export class PanelWrangler {
     };
 
     const snapshot: UnnatachedSceneTabSnapshot = {
+      isUnattachedScene: true,
       id: sceneId,
       title: sceneId,
       deviceId,

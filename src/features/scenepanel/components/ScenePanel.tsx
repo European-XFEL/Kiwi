@@ -19,6 +19,7 @@ export interface ScenePanelContent {
   sceneModel: SceneModel;
   sceneControllerRegistry: SceneControllerRegistry;
   fitMode: FitMode;
+  isUnattachedScene?: boolean;
 }
 
 export interface ScenePanelProps {
@@ -53,6 +54,7 @@ const ScenePanel: React.FC<ScenePanelProps> = ({
           height={sceneRef.height}
           scale={scale}
           fitMode={fitMode}
+          isUnattachedScene={content.isUnattachedScene}
           onFitModeChange={onFitModeChange}
           isFullscreen={isFullscreen}
           onToggleFullscreen={supported ? toggle : undefined}
