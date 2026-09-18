@@ -1,10 +1,12 @@
 import { Hash } from '@/karabo/data/api';
-type BroadCastHandler = (data: Hash) => void;
+import { KaraboEvent } from '../events';
+
+type BroadCastHandler = (data: any) => void;
 
 export class Mediator {
-  private listeners = new Map<any, Set<BroadCastHandler>>();
+  private listeners = new Map<KaraboEvent, Set<BroadCastHandler>>();
 
-  postEvent(sender: any, data: Hash = new Hash()) {
+  postEvent(sender: KaraboEvent, data: any = new Hash()) {
     const set = this.listeners.get(sender);
     if (!set || set.size === 0) {
       return;
@@ -15,7 +17,7 @@ export class Mediator {
     }
   }
 
-  on(sender: any, handler: BroadCastHandler): () => void {
+  on(sender: KaraboEvent, handler: BroadCastHandler): () => void {
     let set = this.listeners.get(sender);
     if (!set) {
       set = new Set<BroadCastHandler>();
@@ -38,9 +40,9 @@ export class Mediator {
     };
   }
 
-  registerListener(eventMap: Partial<Record<any, BroadCastHandler>>) {
+  registerListener(eventMap: Partial<Record<KaraboEvent, BroadCastHandler>>) {
     for (const [k, handler] of Object.entries(eventMap) as Array<
-      [any, BroadCastHandler | undefined]
+      [KaraboEvent, BroadCastHandler | undefined]
     >) {
       if (!handler) {
         console.log('No handler registered ...');
@@ -57,9 +59,9 @@ export class Mediator {
     }
   }
 
-  unregisterListener(eventMap: Partial<Record<any, BroadCastHandler>>) {
+  unregisterListener(eventMap: Partial<Record<KaraboEvent, BroadCastHandler>>) {
     for (const [k, handler] of Object.entries(eventMap) as Array<
-      [any, BroadCastHandler | undefined]
+      [KaraboEvent, BroadCastHandler | undefined]
     >) {
       if (!handler) {
         continue;

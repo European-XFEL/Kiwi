@@ -2,7 +2,6 @@ import type { SceneModel } from '@/karabo/common/scenemodel/api';
 import type { FitMode } from '@/features/scene-view/api';
 import type { LoadedSceneRef } from '@/store/api';
 import { SceneControllerRegistry } from '@/features/scenepanel/SceneControllerRegistry';
-import type { Hash } from '@/karabo/data/hash';
 import { useGlobalStore, useRecentStore } from '@/store/api';
 import {
   KaraboEvent,
@@ -500,8 +499,8 @@ export class PanelWrangler {
     };
   }
 
-  private onEventOpenScene = (data: Hash): void => {
-    const model = data.getValue<SceneModel>('model');
+  private onEventOpenScene = (data: { model: SceneModel }): void => {
+    const model = data.model;
 
     const sceneData = this.createSceneOpenData(model);
     if (!sceneData) {
@@ -512,8 +511,8 @@ export class PanelWrangler {
     this.openScene(sceneData.snapshot, sceneData.content);
   };
 
-  private onEventOpenUnattachedScene = (data: Hash): void => {
-    const model = data.getValue<SceneModel>('model');
+  private onEventOpenUnattachedScene = (data: { model: SceneModel }): void => {
+    const model = data.model;
     // Unattached scenes whose names have a pipe '|' are assumed to be
     // device provided scenes and the deviceId comes before the pipe.
     let deviceId: string | undefined = undefined;

@@ -77,11 +77,11 @@ function observeActivation() {
       root: mockProjectModel.root,
     });
   });
-  mockMediator.on(KaraboEvent.OpenScene, (hash) => {
+  mockMediator.on(KaraboEvent.OpenScene, (data: { model: SceneModel }) => {
     events.push({
       event: KaraboEvent.OpenScene,
       root: mockProjectModel.root,
-      scene: hash.getValue<SceneModel>('model'),
+      scene: data.model,
     });
   });
   return events;
