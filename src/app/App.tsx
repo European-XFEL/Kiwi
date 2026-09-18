@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
 import { bootstrapStatefulIcons } from '@/features/controllers/api';
 import { initAppSettings } from './AppSettings';
 import { useAppSettingsStore, useGlobalStore } from '@/store/api';
@@ -9,12 +8,10 @@ import { Toaster } from '@/components/api';
 import { KaraboEvent, useKaraboEvent } from '@/lib/events';
 import { Hash } from '@/karabo/data/hash';
 import { toast } from 'sonner';
-import { sceneParamsFromURL } from '@/features/navigation/utils';
 import useSessionCleanup from './hooks/useSessionCleanup';
 
 const App: React.FC = () => {
   const executedOnceRef = React.useRef('');
-  const location = useLocation();
   const { setWsProxyUrl, setTopicGuiServerMapping } = useAppSettingsStore();
   const {
     setError,
@@ -81,19 +78,7 @@ const App: React.FC = () => {
       // Initialize the Manager singleton;
       getManager();
 
-      // If the application is being initialized from scene URL (e.g. a bookmark), try
-      // to resume any existing GUI Session for the host:port specified in the scene URL.
-      // Otherwise try to resume an existing GUI Session with the last connected host:port.
-      const sceneParams = sceneParamsFromURL(location.search);
-      let host: string | null;
-      let port: number | null;
-      if (sceneParams) {
-        host = sceneParams.host;
-        port = sceneParams.port;
-      } else {
-        host = getConfig().lastHost;
-        port = getConfig().lastPort;
-      }
+      const { lastHost: host, lastPort: port } = getConfig();
       getNetwork()
         .resumeGuiSession(host, port)
         .then((sessionData) => {

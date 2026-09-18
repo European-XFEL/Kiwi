@@ -11,24 +11,18 @@ import {
 import { UserProfile, AccessLevelSelector } from '@/features/user';
 import { Button, Separator } from '@/components/api';
 import { GuiServerDisplay, ActiveIndicator } from '@/features/status';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useActiveSceneStore } from '@/features/scene-view/api';
-import { sceneParamsFromURL } from './utils';
 import icons from '@/assets/icons';
 
 export function NavBar() {
   const projectBrowser = useRootProject();
-  const location = useLocation();
   const navigate = useNavigate();
-  const sceneParams = sceneParamsFromURL(location.search);
   const loadedSceneRef = useActiveSceneStore((state) => state.loadedSceneRef);
   const setLoadedSceneRef = useActiveSceneStore(
     (state) => state.setLoadedSceneRef
   );
-  const activeLoadedSceneRef =
-    sceneParams && loadedSceneRef?.uuid === sceneParams.sceneUuid
-      ? loadedSceneRef
-      : null;
+  const activeLoadedSceneRef = loadedSceneRef ?? null;
 
   const handleHome = () => {
     setLoadedSceneRef(undefined);

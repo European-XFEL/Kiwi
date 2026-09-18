@@ -24,7 +24,7 @@ export function loadRootProjectFromDialogSelection(
   });
 }
 
-export function loadRootProjectFromBookmark({
+export function loadRootProjectScene({
   domain,
   projectUuid,
   sceneUuid,

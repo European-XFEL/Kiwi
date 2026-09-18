@@ -1,11 +1,10 @@
 import { useState, useCallback, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { getConfig, getNetwork } from '@/lib/singletons/api';
 import type { SessionStartData } from '@/lib/singletons/Network';
 import AuthServerClient from '@/lib/http/AuthServerClient';
 import { useGlobalStore } from '@/store/api';
 import { ActivityStatus, GuiServerInfo } from '../auth.types';
-import { sceneParamsFromURL } from '@/features/navigation/utils';
 
 interface UseAuthProps {
   probedServerInfo: GuiServerInfo | null;
@@ -33,7 +32,6 @@ export function useAuth({
 }: UseAuthProps): UseAuthReturn {
   const setLoggedIn = useGlobalStore((s) => s.setLoggedIn);
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [userName, setUserName] = useState('');
   const [passwd, setPasswd] = useState('');
@@ -67,15 +65,9 @@ export function useAuth({
         sessionStartEpoc: Date.now(),
       });
 
-      const sceneParams = sceneParamsFromURL(location.search);
-      if (!sceneParams) {
-        navigate('home');
-      }
-      // else (there's are scene params in the location bar):  it means
-      // the user activated some previously saved scene bookmark. Just let
-      // the router handle the route and the scene will be loaded.
+      navigate('/main');
     },
-    [setLoggedIn, navigate, location.search, setActivityStatus]
+    [setLoggedIn, navigate, setActivityStatus]
   );
 
   // Update auth server URL ref

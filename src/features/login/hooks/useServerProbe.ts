@@ -5,11 +5,9 @@ import {
   useRef,
   useState,
 } from 'react';
-import { useLocation } from 'react-router-dom';
 import { ActivityStatus, GuiServerInfo } from '../auth.types';
 import { probeServer } from '@/features/login/utils';
 import { getConfig } from '@/lib/singletons/api';
-import { sceneParamsFromURL } from '@/features/navigation/utils';
 
 interface UseServerProbeProps {
   initialHost?: string;
@@ -46,8 +44,6 @@ export function useServerProbe({
     ActivityStatus.NO_ACTIVITY
   );
   const [errorMsg, setErrorMessage] = useState('');
-
-  const location = useLocation();
 
   // #region Focused control capture and restoration
 
@@ -108,21 +104,10 @@ export function useServerProbe({
   // Initial probe (runs once)
   useEffect(() => {
     if (!didInitialProbeRef.current) {
-      // If the current URL is of a scene, use the host and port in the URL for
-      // the initial server probing; otherwise use the last successfully connected
-      // GUI Server, if any.
-      const sceneParams = sceneParamsFromURL(location.search);
-      let savedHost: string | null;
-      let savedPort: string | null;
-      if (sceneParams) {
-        savedHost = sceneParams.host;
-        savedPort = `${sceneParams.port}`;
-      } else {
-        const lastHost = getConfig().lastHost;
-        savedHost = lastHost ?? initialHost;
-        const lastPort = getConfig().lastPort;
-        savedPort = lastPort === 0 ? initialPort : `${lastPort}`;
-      }
+      const lastHost = getConfig().lastHost;
+      const savedHost = lastHost ?? initialHost;
+      const lastPort = getConfig().lastPort;
+      const savedPort = lastPort === 0 ? initialPort : `${lastPort}`;
 
       setHost(savedHost);
       setPort(savedPort);

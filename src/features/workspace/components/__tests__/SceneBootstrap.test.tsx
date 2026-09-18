@@ -3,11 +3,11 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import { Link, MemoryRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import SceneBootstrap from '../SceneBootstrap';
-import { loadRootProjectFromBookmark } from '@/features/project/api';
+import { loadRootProjectScene } from '@/features/project/api';
 import { useActiveSceneStore } from '@/features/scene-view/hooks/useActiveScene';
 
 jest.mock('@/features/project/api', () => ({
-  loadRootProjectFromBookmark: jest.fn(() => ({
+  loadRootProjectScene: jest.fn(() => ({
     controller: new AbortController(),
     promise: new Promise(() => {}),
     abort: jest.fn(),
@@ -25,8 +25,7 @@ jest.mock('@/lib/singletons/api', () => ({
   getPanelWrangler: () => mockPanelWrangler,
 }));
 
-const loadRootProjectFromBookmarkMock =
-  loadRootProjectFromBookmark as jest.Mock;
+const loadRootProjectSceneMock = loadRootProjectScene as jest.Mock;
 
 const savedTab = {
   host: 'host-a',
@@ -54,9 +53,9 @@ describe('SceneBootstrap', () => {
     );
 
     await waitFor(() =>
-      expect(loadRootProjectFromBookmarkMock).toHaveBeenCalledTimes(1)
+      expect(loadRootProjectSceneMock).toHaveBeenCalledTimes(1)
     );
-    expect(loadRootProjectFromBookmarkMock).toHaveBeenCalledWith(savedTab);
+    expect(loadRootProjectSceneMock).toHaveBeenCalledWith(savedTab);
   });
 
   it('marks the workspace as pending while the saved tab loads', async () => {
@@ -84,7 +83,7 @@ describe('SceneBootstrap', () => {
     await waitFor(() => {
       expect(useActiveSceneStore.getState().sceneLoadPending).toBe(true);
     });
-    expect(loadRootProjectFromBookmarkMock).not.toHaveBeenCalled();
+    expect(loadRootProjectSceneMock).not.toHaveBeenCalled();
 
     await act(async () => {
       mockTopology.initialized = true;
@@ -92,7 +91,7 @@ describe('SceneBootstrap', () => {
     });
 
     await waitFor(() => {
-      expect(loadRootProjectFromBookmarkMock).toHaveBeenCalledTimes(1);
+      expect(loadRootProjectSceneMock).toHaveBeenCalledTimes(1);
     });
 
     jest.useRealTimers();
@@ -111,13 +110,13 @@ describe('SceneBootstrap', () => {
       </MemoryRouter>
     );
 
-    expect(loadRootProjectFromBookmarkMock).not.toHaveBeenCalled();
+    expect(loadRootProjectSceneMock).not.toHaveBeenCalled();
     expect(useActiveSceneStore.getState().sceneLoadPending).toBe(false);
   });
 
   it('does not restore the saved tab again after returning Home', async () => {
     const user = userEvent.setup();
-    loadRootProjectFromBookmarkMock.mockReturnValueOnce({
+    loadRootProjectSceneMock.mockReturnValueOnce({
       controller: new AbortController(),
       promise: Promise.resolve(),
       abort: jest.fn(),
@@ -131,19 +130,19 @@ describe('SceneBootstrap', () => {
     );
 
     await waitFor(() => {
-      expect(loadRootProjectFromBookmarkMock).toHaveBeenCalledTimes(1);
+      expect(loadRootProjectSceneMock).toHaveBeenCalledTimes(1);
       expect(useActiveSceneStore.getState().sceneLoadPending).toBe(false);
     });
     await user.click(screen.getByRole('link', { name: 'Home' }));
 
-    expect(loadRootProjectFromBookmarkMock).toHaveBeenCalledTimes(1);
+    expect(loadRootProjectSceneMock).toHaveBeenCalledTimes(1);
   });
 
   it('forgets a saved tab that fails to load so the next reload starts at Home', async () => {
     const consoleError = jest
       .spyOn(console, 'error')
       .mockImplementation(() => undefined);
-    loadRootProjectFromBookmarkMock.mockReturnValueOnce({
+    loadRootProjectSceneMock.mockReturnValueOnce({
       controller: new AbortController(),
       promise: Promise.reject(new Error('scene missing')),
       abort: jest.fn(),

@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { loadRootProjectFromBookmark } from '@/features/project/api';
+import { loadRootProjectScene } from '@/features/project/api';
 import type { RootProjectLoadHandle } from '@/features/project/api';
 import { getPanelWrangler } from '@/lib/singletons/api';
 import { waitForTopology } from '@/lib/topology/api';
@@ -34,7 +33,7 @@ export default function SceneBootstrap() {
         // The actual project/scene loading owns its own AbortController via
         // the returned handle. This is the part that can still be aborted after
         // topology is ready.
-        handle = loadRootProjectFromBookmark(savedTab);
+        handle = loadRootProjectScene(savedTab);
         return handle.promise;
       })
       .catch((error: unknown) => {
@@ -65,9 +64,4 @@ export default function SceneBootstrap() {
   }, [setSceneLoadPending]);
 
   return null;
-}
-
-export function SceneRouteRedirect() {
-  const location = useLocation();
-  return <Navigate to={`/main${location.search}`} replace />;
 }

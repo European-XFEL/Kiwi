@@ -9,10 +9,6 @@ const mockProjectBrowser = jest.fn<React.ReactElement, [unknown]>(() =>
 );
 
 jest.mock('react-router-dom', () => ({
-  useLocation: () => ({
-    search:
-      '?host=test-host&port=44444&domain=CONTROLS&projectUuid=project-1&sceneUuid=scene-123',
-  }),
   useNavigate: () => mockNavigate,
 }));
 
