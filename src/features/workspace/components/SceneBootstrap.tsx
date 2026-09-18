@@ -1,35 +1,20 @@
-import { useEffect, useRef } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { sceneParamsFromURL } from '@/features/navigation/utils';
+import { useEffect } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { loadRootProjectFromBookmark } from '@/features/project/api';
 import type { RootProjectLoadHandle } from '@/features/project/api';
+import { getPanelWrangler } from '@/lib/singletons/api';
 import { waitForTopology } from '@/lib/topology/api';
 import { useActiveSceneStore } from '@/features/scene-view/hooks/useActiveScene';
 
 export default function SceneBootstrap() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const openedRef = useRef<string | null>(null);
   const setSceneLoadPending = useActiveSceneStore(
     (state) => state.setSceneLoadPending
   );
 
   useEffect(() => {
-    const params = sceneParamsFromURL(location.search);
-    if (!params) {
-      openedRef.current = null;
-      setSceneLoadPending(false);
-      return;
-    }
-
-    const key = [
-      params.host,
-      params.port,
-      params.domain,
-      params.projectUuid,
-      params.sceneUuid,
-    ].join('|');
-    if (openedRef.current === key) return;
+    const panelWrangler = getPanelWrangler();
+    const savedTab = panelWrangler.getSavedActiveTab();
+    if (!savedTab) return;
 
     setSceneLoadPending(true);
 
@@ -39,7 +24,7 @@ export default function SceneBootstrap() {
     let handle: RootProjectLoadHandle | undefined;
 
     // The callbacks below run in promise order: wait for topology, then start
-    // the scene load, then mark this route as opened or handle the failure.
+    // the scene load, then handle the failure.
     waitForTopology(() => cancelled)
       .then((topologyReady) => {
         if (!topologyReady || cancelled) {
@@ -49,13 +34,8 @@ export default function SceneBootstrap() {
         // The actual project/scene loading owns its own AbortController via
         // the returned handle. This is the part that can still be aborted after
         // topology is ready.
-        handle = loadRootProjectFromBookmark(params);
+        handle = loadRootProjectFromBookmark(savedTab);
         return handle.promise;
-      })
-      .then(() => {
-        if (!cancelled && !handle?.controller.signal.aborted) {
-          openedRef.current = key;
-        }
       })
       .catch((error: unknown) => {
         if (cancelled || handle?.controller.signal.aborted) {
@@ -67,7 +47,8 @@ export default function SceneBootstrap() {
             ? error.message
             : 'The scene could not be loaded.';
         console.error(message);
-        navigate('/main', { replace: true });
+        // A scene that cannot be opened must not fail again on the next reload.
+        panelWrangler.clearSavedActiveTab();
       })
       .finally(() => {
         if (!cancelled && !handle?.controller.signal.aborted) {
@@ -81,7 +62,7 @@ export default function SceneBootstrap() {
       handle?.abort();
       setSceneLoadPending(false);
     };
-  }, [location.search, navigate, setSceneLoadPending]);
+  }, [setSceneLoadPending]);
 
   return null;
 }

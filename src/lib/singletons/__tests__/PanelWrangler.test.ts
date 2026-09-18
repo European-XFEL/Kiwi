@@ -1,7 +1,7 @@
 import { ProjectModel } from '@/karabo/common/project/api';
 import { SceneModel } from '@/karabo/common/scenemodel/api';
 import { KaraboEvent, broadcast_event } from '@/lib/events';
-import { getProjectModel } from '../api';
+import { getMediator, getProjectModel } from '../api';
 import { SceneControllerRegistry } from '@/features/scenepanel/SceneControllerRegistry';
 import { HOME_TAB_ID, PanelWrangler } from '../PanelWrangler';
 
@@ -61,7 +61,7 @@ describe('PanelWrangler', () => {
   let wrangler: PanelWrangler;
 
   beforeEach(() => {
-    window.history.replaceState(null, '', '/main');
+    sessionStorage.clear();
     jest.clearAllMocks();
     getProjectModel().clearRoot();
     wrangler = new PanelWrangler();
@@ -177,15 +177,18 @@ describe('PanelWrangler', () => {
         projectUuid: subproject.uuid,
       })
     );
-    const bookmark = new URLSearchParams(window.location.search);
-    expect(bookmark.get('projectUuid')).toBe(subproject.uuid);
-    expect(bookmark.get('rootProjectUuid')).toBeNull();
+    expect(wrangler.getSavedActiveTab()).toMatchObject({
+      projectUuid: subproject.uuid,
+      sceneUuid: 'scene-child',
+    });
 
     wrangler.selectTab('center', 'scene:scene-root');
+    expect(wrangler.getSavedActiveTab()).toMatchObject({
+      projectUuid: project.uuid,
+      sceneUuid: 'scene-root',
+    });
     wrangler.selectTab('center', 'scene:scene-child');
-    expect(new URLSearchParams(window.location.search).get('projectUuid')).toBe(
-      subproject.uuid
-    );
+    expect(wrangler.getSavedActiveTab()?.projectUuid).toBe(subproject.uuid);
   });
 
   it('reuses the existing SceneControllerRegistry when setContent targets the same scene', () => {
@@ -519,17 +522,6 @@ describe('PanelWrangler', () => {
       });
     });
 
-    it('strips the scene params from the browser URL', () => {
-      const scene = makeScene('scene-a');
-      setProject('CONTROLS', 'ProjectA', [scene]);
-      openScene(scene);
-      expect(window.location.search).not.toBe('');
-
-      wrangler.resetWorkspace();
-
-      expect(window.location.search).toBe('');
-    });
-
     it('is a no-op on an untouched workspace', () => {
       wrangler.resetWorkspace();
 
@@ -540,22 +532,153 @@ describe('PanelWrangler', () => {
     });
   });
 
-  it('writes scene params on open and clears them when returning home', () => {
-    const scene = makeScene('scene-a');
-    setProject('CONTROLS', 'ProjectA', [scene]);
+  describe('saved active tab', () => {
+    const storageKey = 'kiwi/workspace:activeTab';
+    const savedScene = {
+      host: 'host-a',
+      port: 44444,
+      domain: 'CONTROLS',
+      projectUuid: 'project-ProjectA',
+      sceneUuid: 'scene-a',
+    };
 
-    openScene(scene);
+    afterEach(() => jest.restoreAllMocks());
 
-    const opened = new URLSearchParams(window.location.search);
-    expect(opened.get('host')).toBe('host-a');
-    expect(opened.get('port')).toBe('44444');
-    expect(opened.get('sceneUuid')).toBe('scene-a');
-    expect(opened.get('domain')).toBe('CONTROLS');
-    expect(opened.get('projectUuid')).toBe('project-ProjectA');
-    expect(opened.get('projectName')).toBeNull();
+    it('saves the active project scene with its server and forgets it at Home', () => {
+      const scene = makeScene('scene-a');
+      setProject('CONTROLS', 'ProjectA', [scene]);
 
-    wrangler.closeTab('center', 'scene:scene-a');
-    expect(window.location.search).toBe('');
+      openScene(scene);
+      expect(wrangler.getSavedActiveTab()).toEqual(savedScene);
+
+      wrangler.closeTab('center', 'scene:scene-a');
+      expect(wrangler.getSavedActiveTab()).toBeUndefined();
+    });
+
+    it('forgets the saved scene when a device scene becomes active', () => {
+      const scene = makeScene('scene-a');
+      setProject('CONTROLS', 'ProjectA', [scene]);
+      openScene(scene);
+
+      openDeviceScene(makeScene('device-scene', 'DEVICE_A|overview'));
+
+      expect(wrangler.getSavedActiveTab()).toBeUndefined();
+    });
+
+    it('announces ActiveSceneTabChanged only when the active scene tab changes', () => {
+      const sceneA = makeScene('s1');
+      const sceneB = makeScene('s2');
+      setProject('CONTROLS', 'ProjectA', [sceneA, sceneB]);
+      const onActiveSceneTabChanged = jest.fn();
+      const unsubscribe = getMediator().on(
+        KaraboEvent.ActiveSceneTabChanged,
+        onActiveSceneTabChanged
+      );
+
+      openScene(sceneA); // Home -> s1
+      openScene(sceneB); // s1 -> s2
+      wrangler.setFitMode('scene:s2', 'fit-width');
+      wrangler.selectTab('center', 'scene:s1'); // s2 -> s1
+      wrangler.closeTab('center', 'scene:s2'); // s1 stays active
+
+      expect(onActiveSceneTabChanged).toHaveBeenCalledTimes(3);
+      unsubscribe();
+    });
+
+    it.each([
+      ['the Home button', () => broadcast_event(KaraboEvent.GoHome, {})],
+      [
+        'closing the last tab',
+        () => wrangler.closeTab('center', 'scene:scene-a'),
+      ],
+    ])(
+      'goes Home on %s: resets the tabs, the saved tab, and the project',
+      (_trigger, goHome) => {
+        const scene = makeScene('scene-a');
+        setProject('CONTROLS', 'ProjectA', [scene]);
+        openScene(scene);
+        const onActiveSceneTabChanged = jest.fn();
+        const unsubscribe = getMediator().on(
+          KaraboEvent.ActiveSceneTabChanged,
+          onActiveSceneTabChanged
+        );
+
+        goHome();
+
+        expect(wrangler.getSnapshot().center.tabs).toEqual([
+          { id: HOME_TAB_ID, title: 'Home', closable: false },
+        ]);
+        expect(getProjectModel().root).toBeUndefined();
+        expect(wrangler.getSavedActiveTab()).toBeUndefined();
+        expect(onActiveSceneTabChanged).not.toHaveBeenCalled();
+        unsubscribe();
+      }
+    );
+
+    it('forgets the saved tab when the session ends without announcing a tab change', () => {
+      const scene = makeScene('scene-a');
+      setProject('CONTROLS', 'ProjectA', [scene]);
+      openScene(scene);
+      const onActiveSceneTabChanged = jest.fn();
+      const unsubscribe = getMediator().on(
+        KaraboEvent.ActiveSceneTabChanged,
+        onActiveSceneTabChanged
+      );
+
+      wrangler.resetWorkspace();
+
+      expect(wrangler.getSavedActiveTab()).toBeUndefined();
+      expect(onActiveSceneTabChanged).not.toHaveBeenCalled();
+      unsubscribe();
+    });
+
+    it('keeps switching tabs when session storage rejects the write', () => {
+      jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new DOMException('Quota exceeded', 'QuotaExceededError');
+      });
+      jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+      const sceneA = makeScene('s1');
+      const sceneB = makeScene('s2');
+      setProject('CONTROLS', 'ProjectA', [sceneA, sceneB]);
+
+      openScene(sceneA);
+      openScene(sceneB);
+      wrangler.selectTab('center', 'scene:s1');
+
+      expect(wrangler.getSnapshot().center.activeTabId).toBe('scene:s1');
+      expect(wrangler.getSavedActiveTab()).toBeUndefined();
+    });
+
+    it.each([
+      [
+        'saved on a different host',
+        JSON.stringify({ ...savedScene, host: 'host-b' }),
+      ],
+      [
+        'saved on a different port',
+        JSON.stringify({ ...savedScene, port: 44445 }),
+      ],
+      [
+        'missing its project',
+        JSON.stringify({ ...savedScene, projectUuid: '' }),
+      ],
+      ['not valid JSON', '{"host":'],
+    ])('does not restore a scene %s', (_reason, stored) => {
+      jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+      sessionStorage.setItem(storageKey, stored);
+
+      expect(wrangler.getSavedActiveTab()).toBeUndefined();
+    });
+
+    it('does not restore when session storage cannot be read', () => {
+      sessionStorage.setItem(storageKey, JSON.stringify(savedScene));
+      jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+        throw new DOMException('Access denied', 'SecurityError');
+      });
+      jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+      expect(wrangler.getSavedActiveTab()).toBeUndefined();
+    });
   });
 
   it('notifies subscribers on change and stops after unsubscribe', () => {

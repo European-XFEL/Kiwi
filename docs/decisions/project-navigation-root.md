@@ -23,7 +23,9 @@ scenes inside the current project browser continues to use its loaded tree.
 
 ## Clearing
 
-Home closes scene tabs, calls `clearRootProject`, and navigates to `/main`.
-Clearing uses the same `RootProjectChanged` notification. `useRootProject`
-reads the now-absent root and clears navigation, selection, and searches.
-Recent Scenes remains available; reopening an entry loads its project again.
+The Home button and closing the last tab both broadcast `GoHome`.
+`PanelWrangler` closes the scene tabs and clears the root; the Home button also
+navigates to `/main`. Clearing uses the same `RootProjectChanged` notification.
+`useRootProject` reads the now-absent root and clears navigation, selection,
+and searches. Recent Scenes remains available; reopening an entry loads its
+project again.

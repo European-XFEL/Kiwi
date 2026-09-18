@@ -75,12 +75,12 @@ export default function ScenesTable({
                       selectionDisabled
                         ? `cursor-not-allowed opacity-60 ${
                             selectedScene?.uuid === scene.uuid
-                              ? 'bg-accent'
+                              ? 'bg-secondary/15'
                               : ''
                           }`
                         : `cursor-pointer ${
                             selectedScene?.uuid === scene.uuid
-                              ? 'bg-accent'
+                              ? 'bg-secondary/15 hover:bg-secondary/20'
                               : 'hover:bg-accent/50'
                           }`
                     }
