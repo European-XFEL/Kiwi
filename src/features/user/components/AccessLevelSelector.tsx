@@ -128,7 +128,7 @@ export default function AccessLevelSelector({
             return (
               <DropdownMenuItem
                 key={level}
-                data-testid="access-level-option"
+                data-testid={`access-level-option-${AccessLevel[level].toLowerCase()}`}
                 onClick={() => handleAccessLevelChange(level)}
                 disabled={isDisabled}
                 className={`cursor-pointer ${

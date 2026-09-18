@@ -97,7 +97,7 @@ export default function ProjectSceneList({
             scenes.map((scene) => (
               <DropdownMenuItem
                 key={scene.sceneUuid}
-                data-testid="scene-option"
+                data-testid={`scene-option-${scene.sceneUuid}`}
                 onSelect={() => onOpenScene(scene.sceneUuid)}
                 title={scene.sceneName}
                 className="min-h-8 cursor-pointer py-2 focus:bg-secondary/12"

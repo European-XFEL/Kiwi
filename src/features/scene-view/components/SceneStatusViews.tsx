@@ -11,6 +11,7 @@ export function ScenePending() {
   return (
     <div
       role="status"
+      data-testid="scene-pending"
       className="flex h-full w-full flex-col items-center justify-center gap-6 bg-muted/20 px-6 sm:gap-8"
     >
       <div
@@ -60,7 +61,11 @@ export function SceneOpenError({ message }: { message: string }) {
   return (
     <div className="flex h-full w-full items-center justify-center bg-muted/20 p-4">
       <div className="flex w-full max-w-2xl flex-col gap-3">
-        <Alert variant="destructive" className="border-destructive/50">
+        <Alert
+          data-testid="scene-open-error"
+          variant="destructive"
+          className="border-destructive/50"
+        >
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Couldn't open scene</AlertTitle>
           <AlertDescription className="whitespace-pre-line">
@@ -70,6 +75,7 @@ export function SceneOpenError({ message }: { message: string }) {
         <Button
           className="self-start"
           variant="outline"
+          data-testid="scene-error-back"
           onClick={() => navigate('/home')}
         >
           <ArrowLeft aria-hidden="true" className="h-4 w-4" />
@@ -89,7 +95,11 @@ export function SceneSystemError({ message }: { message: string }) {
   return (
     <div className="flex h-full w-full items-center justify-center bg-muted/20 p-4">
       <div className="w-full max-w-2xl">
-        <Alert variant="destructive" className="border-destructive/50">
+        <Alert
+          data-testid="scene-system-error"
+          variant="destructive"
+          className="border-destructive/50"
+        >
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Unrecoverable Error</AlertTitle>
           <AlertDescription className="whitespace-pre-line">

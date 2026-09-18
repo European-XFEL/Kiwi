@@ -35,6 +35,7 @@ export const DisplayCheckBox: React.FC<{
       <Checkbox
         checked={checked}
         aria-readonly="true"
+        data-testid="display-checkbox"
         className={DISPLAY_CHECKBOX_CLASSNAME}
       />
     </div>
@@ -64,6 +65,7 @@ export const EditableCheckBox: React.FC<{
           //   new Hash(propertyPath, !checked)
           // );
         }}
+        data-testid="editable-checkbox"
         className={EDITABLE_CHECKBOX_CLASSNAME}
       />
     </div>

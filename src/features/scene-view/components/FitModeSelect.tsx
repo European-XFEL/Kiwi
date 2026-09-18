@@ -42,7 +42,11 @@ export default function FitModeSelect({
           className="h-7 w-[130px] cursor-pointer appearance-none rounded-[2px] border border-[#8f8f8f] bg-[#eeeeee] py-0 pr-7 pl-2 text-xs text-[#111111] shadow-none outline-none focus-visible:border-[#777777] focus-visible:ring-1 focus-visible:ring-[#777777]"
         >
           {FIT_MODE_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
+            <option
+              key={option.value}
+              value={option.value}
+              data-testid={`fit-mode-option-${option.value}`}
+            >
               {option.label}
             </option>
           ))}
@@ -72,6 +76,7 @@ export default function FitModeSelect({
         {FIT_MODE_OPTIONS.map((option) => (
           <SelectItem
             key={option.value}
+            data-testid={`fit-mode-option-${option.value}`}
             value={option.value}
             className="text-xs"
           >

@@ -39,7 +39,7 @@ interface ControllerRendererHostProps {
 
 const ControllerRendererHost = React.memo<ControllerRendererHostProps>(
   ({ model, objectId, Renderer, ctx }) => (
-    <div className="w-full h-full">
+    <div data-testid={`controller-${objectId}`} className="w-full h-full">
       <Renderer model={model} ctx={ctx} objectId={objectId} />
     </div>
   )

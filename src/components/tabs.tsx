@@ -63,6 +63,7 @@ const TabButton = memo(function TabButton({
         data-active={isActive}
         disabled={tab.disabled}
         id={tabButtonId}
+        data-testid={`tab-${tab.id}`}
         onClick={() => onSelect(tab.id)}
         role="tab"
         tabIndex={isActive ? 0 : -1}
@@ -85,6 +86,7 @@ const TabButton = memo(function TabButton({
 
         {tab.dirty ? (
           <span
+            data-testid={`tab-dirty-${tab.id}`}
             aria-label="Unsaved changes"
             title="Unsaved changes"
             className={cn(
@@ -97,6 +99,7 @@ const TabButton = memo(function TabButton({
 
       {tab.closable && onClose ? (
         <button
+          data-testid={`tab-close-${tab.id}`}
           aria-label={`Close ${tab.title}`}
           onClick={() => onClose(tab.id)}
           tabIndex={isActive ? 0 : -1}

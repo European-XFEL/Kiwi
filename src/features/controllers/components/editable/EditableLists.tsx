@@ -91,6 +91,7 @@ export const EditableList: React.FC<{
           <Button
             variant="ghost"
             disabled={!enabled}
+            data-testid="editable-list-dialog-trigger"
             className="h-6 w-6 p-0 shrink-0"
           >
             <SquarePen className="h-3 w-3" />

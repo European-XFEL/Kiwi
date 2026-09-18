@@ -86,7 +86,7 @@ export default function ProjectList({
             projects.map((project) => (
               <DropdownMenuItem
                 key={project.projectUuid}
-                data-testid="project-option"
+                data-testid={`project-option-${project.projectUuid}`}
                 disabled={!project.isLoaded}
                 aria-current={
                   project.projectUuid === selectedProject.projectUuid
