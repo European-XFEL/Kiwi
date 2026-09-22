@@ -19,7 +19,6 @@ import './components/shapes/Line';
 import './components/shapes/Polygon';
 import './components/shapes/ArrowPolygon';
 import './components/shapes/Path';
-import './components/shapes/Defs';
 
 // Widgets
 import './components/widgets/Label';

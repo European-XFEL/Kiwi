@@ -9,28 +9,36 @@
 import React from 'react';
 import { PathModel } from '@/karabo/common/api';
 import { registerRenderer } from '../../renderRegistry';
-import { useShapeAttrs } from './shapeUtils';
+import { dashArray } from './shapeUtils';
 
 // Path
 // ----------------------------------------------------------------------------
 
-const Path: React.FC<{ model: PathModel }> = React.memo(({ model }) => {
-  const attrs = useShapeAttrs(model);
-
-  return (
-    <svg
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        overflow: 'visible',
-        pointerEvents: 'none',
-      }}
-    >
-      <path d={model.svg_data} {...attrs} />
-    </svg>
-  );
-});
+const Path: React.FC<{ model: PathModel }> = React.memo(({ model }) => (
+  <svg
+    style={{
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      overflow: 'visible',
+      pointerEvents: 'none',
+    }}
+  >
+    <path
+      d={model.svg_data}
+      fill={model.fill}
+      fillOpacity={model.fill_opacity}
+      stroke={model.stroke}
+      strokeOpacity={model.stroke_opacity}
+      strokeWidth={model.stroke_width}
+      strokeLinecap={model.stroke_linecap}
+      strokeLinejoin={model.stroke_linejoin}
+      strokeMiterlimit={model.stroke_miterlimit}
+      strokeDashoffset={model.stroke_dashoffset}
+      strokeDasharray={dashArray(model)}
+    />
+  </svg>
+));
 
 registerRenderer('Path', Path);
 
