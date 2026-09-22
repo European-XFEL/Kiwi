@@ -29,6 +29,7 @@ enum KaraboEvent {
   OpenSceneLink = 'OpenSceneLink',
   OpenSceneBrowser = 'OpenSceneBrowser',
   DatabaseBusy = 'DatabaseBusy',
+  NetworkConnectStatus = 'NetworkConnectStatus',
 }
 
 function broadcast_event(sender: KaraboEvent, data: any) {

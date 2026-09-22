@@ -14,7 +14,7 @@ const MAX_ITEM_PROCESSING = 5;
 const REQUEST_REPLY_TIMEOUT = 5;
 const KIWI_GUI_CLIENT_VERSION = '3.1.0';
 
-type BinHashItem = { bin: ArrayBuffer; time: number };
+type BinHashItem = { bin: ArrayBuffer | null; time: number };
 
 export interface SessionStartData {
   accessLevel: AccessLevel;
@@ -48,11 +48,10 @@ interface SessionStartResolvers {
 export class Network {
   // "Signal" for received data
   public onReceivedData?: (binHash: ArrayBuffer) => void;
+  public onConnectionChanged?: (connected: boolean) => void;
 
   // Session State
   private _session?: GuiServerSession;
-  private _closeRequested = false; // when true (e.g. user logout), web socket connection closes are expected and are not errors
-  private _sessionExpired = false; //
   private _ws?: Websocket;
   private _hashDeque = new Deque<BinHashItem>();
   private _sessionStartResolvers?: SessionStartResolvers;
@@ -256,7 +255,7 @@ export class Network {
 
   public expireSession(): void {
     this._session = undefined;
-    this._sessionExpired = true;
+    this._rejectSessionStart('Session expired.');
     this._stopWebsocketSession();
     getConfig().deleteSession();
     useGlobalActivityStore.getState().reset();
@@ -264,7 +263,7 @@ export class Network {
 
   public finishSession(): void {
     this._session = undefined;
-    this._closeRequested = true;
+    this._rejectSessionStart('Session ended.');
     this._stopWebsocketSession();
     getConfig().deleteSession();
     useGlobalActivityStore.getState().reset();
@@ -294,9 +293,7 @@ export class Network {
   }
 
   private _startWebsocketSession(host: string, port: number) {
-    this._stopTimer();
-    this._hashDeque = new Deque();
-    if (this._ws) this._ws.close();
+    this._stopWebsocketSession();
 
     // Initialize the two possible connection modes: direct connection to a GUI
     // server web socket port (empty wsProxyURL) or proxy-intermediated connection
@@ -310,6 +307,8 @@ export class Network {
     this._ws = new WebsocketBuilder(websocketURL)
       .onOpen((ws) => {
         ws.binaryType = 'arraybuffer';
+        if (ws !== this._ws) return;
+        this.onConnectionChanged?.(true);
         if (useWebSocketProxy) {
           // When the connection to the GUI server is intermediated by a web socket proxy,
           // the target GUI Server host and port must be sent for the proxy to initialize
@@ -318,49 +317,33 @@ export class Network {
         }
       })
       .onClose((ws, ev) => {
-        if (!this._closeRequested && !this._sessionExpired) {
-          // Outside normal session finishes (e.g. user logouts) and session
-          // expirations, a web socket close is considered an error.
-          this._handleWsError(ws, ev, (msg) => this._handleSessionError(msg));
-        } else if (this._closeRequested) {
-          // the web socket was closed as part of a normal session finish or
-          // as part of a session expiration. Must reset the corresponding flags.
-          // Note: The resets cannot be performed by neither of the setting
-          // methods (expireSession and finishSession) because this handler is
-          // only processed by the event loop after the settings methods have
-          // returned.
-          this._closeRequested = false;
-        } else {
-          // the web socket was closed as part of a session expiration. Must
-          // reset the corresponding flag.
-          // Note: The resets cannot be performed by the method expireSession
-          // because this handler is only processed by the event loop after
-          // expireSession has returned.
-          broadcast_event(KaraboEvent.SessionExpired, new Hash({}));
-          this._sessionExpired = false;
-        }
+        if (ws !== this._ws) return;
+        this._handleWsError(ws, ev, (msg) => this._handleSessionError(msg));
       })
       .onMessage(this._onWsMessage)
       .onError((ws, ev) => {
+        if (ws !== this._ws) return;
         this._handleWsError(ws, ev, (msg) => this._handleSessionError(msg));
       })
       .build();
   }
 
   private _stopWebsocketSession() {
-    this._stopTimer();
-    this._ws?.close();
+    const ws = this._ws;
     this._ws = undefined;
+    this._stopTimer();
+    this._hashDeque.clear();
+    ws?.close();
+    if (ws) this.onConnectionChanged?.(false);
   }
 
   private _onWsMessage = (ws: Websocket, ev: MessageEvent<any>) => {
+    if (ws !== this._ws) return;
     if (typeof ev.data === 'string') {
       const errMsg = (
         ev.data.startsWith('0|') ? ev.data.substring(2) : ev.data
       ).trim();
       this._handleSessionError(errMsg);
-      ws.close();
-      this._ws = undefined;
     } else {
       const binHash = ev.data as ArrayBuffer;
 
@@ -378,7 +361,6 @@ export class Network {
     callback: (msg: string) => void
   ) {
     let message = this._websocketEventMessage(ws, ev);
-    ws.close();
     if (callback && message) callback(message);
   }
 
@@ -391,8 +373,9 @@ export class Network {
       return;
     }
 
-    broadcast_event(KaraboEvent.SessionDropped, new Hash('message', message));
+    this._session = undefined;
     this._stopWebsocketSession();
+    broadcast_event(KaraboEvent.SessionDropped, new Hash('message', message));
   }
 
   // #endregion
@@ -413,6 +396,7 @@ export class Network {
   }
 
   private _processQueueBatch() {
+    const ws = this._ws;
     let taskCounter = MAX_ITEM_PROCESSING;
     let latency = 0.0;
 
@@ -421,9 +405,12 @@ export class Network {
       if (!item) break;
 
       const { bin: binHash, time: queued_time } = item;
+      // Deque retains popped entries until compaction; release their payload now.
+      item.bin = null;
       latency = performance.now() - queued_time;
       if (binHash && this.onReceivedData) {
         this.onReceivedData(binHash);
+        if (this._ws !== ws) return;
       }
 
       taskCounter--;
