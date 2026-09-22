@@ -114,6 +114,7 @@ export class ConfigurationStore {
   private readonly prefix = 'kiwi';
   private readonly memory = new Map<string, any>();
   private readonly MRU_SCENES_SIZE = 6;
+  private storage: Storage | undefined;
 
   private readonly storage_items = {
     host: new Item({
@@ -161,9 +162,16 @@ export class ConfigurationStore {
   };
 
   constructor() {
+    try {
+      this.storage = globalThis.localStorage;
+    } catch {
+      this.storage = undefined;
+      console.log('localeStorage could not be created.');
+    }
+
     Object.entries(this.storage_items).forEach(([key, configItem]) => {
       configItem.key = key;
-      if (!configItem.encrypted) {
+      if (!configItem.encrypted || !this.storage) {
         this.memory.set(configItem.key, this.loadInitialValue(configItem));
       }
     });
@@ -174,11 +182,11 @@ export class ConfigurationStore {
   }
 
   private loadInitialValue(configItem: Item): any {
-    if (!configItem.store) {
+    if (!configItem.store || !this.storage) {
       return configItem.defaultValue;
     }
 
-    const rawValue = localStorage.getItem(this.storageKey(configItem));
+    const rawValue = this.readStorage(this.storageKey(configItem));
     if (rawValue === null) {
       return configItem.defaultValue;
     }
@@ -197,7 +205,7 @@ export class ConfigurationStore {
   }
 
   private getItem(configItem: Item): any {
-    if (configItem.encrypted) {
+    if (configItem.encrypted && this.storage) {
       return this.loadInitialValue(configItem);
     }
 
@@ -207,29 +215,52 @@ export class ConfigurationStore {
   private setItem(configItem: Item, value: any): void {
     const coercedValue = coerceByDtype(value, configItem);
 
-    if (!configItem.encrypted) {
+    if (!configItem.encrypted || !this.storage) {
       this.memory.set(configItem.key, coercedValue);
     }
 
-    if (!configItem.store) {
+    if (!configItem.store || !this.storage) {
       return;
     }
 
     const rawValue = serialize(coercedValue);
     const finalValue = configItem.encrypted ? encryptData(rawValue) : rawValue;
-    localStorage.setItem(this.storageKey(configItem), finalValue);
+    try {
+      this.storage.setItem(this.storageKey(configItem), finalValue);
+    } catch {
+      this.storage = undefined;
+      this.memory.set(configItem.key, coercedValue);
+    }
   }
 
   private deleteItem(configItem: Item): void {
-    if (!configItem.encrypted) {
+    if (!configItem.encrypted || !this.storage) {
       this.memory.set(configItem.key, configItem.defaultValue);
     }
 
-    if (!configItem.store) {
+    if (!configItem.store || !this.storage) {
       return;
     }
 
-    localStorage.removeItem(this.storageKey(configItem));
+    try {
+      this.storage.removeItem(this.storageKey(configItem));
+    } catch {
+      this.storage = undefined;
+      this.memory.set(configItem.key, configItem.defaultValue);
+    }
+  }
+
+  private readStorage(key: string): string | null {
+    if (!this.storage) {
+      return null;
+    }
+
+    try {
+      return this.storage.getItem(key);
+    } catch {
+      this.storage = undefined;
+      return null;
+    }
   }
 
   // #region SessionData

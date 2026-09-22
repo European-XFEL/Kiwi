@@ -19,6 +19,31 @@ describe('ConfigurationStore', () => {
     expect(config.getValue('host')).toBe('stored-host');
   });
 
+  it('keeps configuration in memory when localStorage is unavailable', () => {
+    const originalGetItem = localStorage.getItem;
+    Object.defineProperty(localStorage, 'getItem', {
+      configurable: true,
+      value: () => {
+        throw new DOMException('The operation is insecure.');
+      },
+    });
+
+    try {
+      const config = new ConfigurationStore();
+
+      expect(() => config.setValue('host', 'memory-host')).not.toThrow();
+      expect(config.getValue('host')).toBe('memory-host');
+
+      config.setValue('sessionRefreshToken', 'memory-token');
+      expect(config.getValue('sessionRefreshToken')).toBe('memory-token');
+    } finally {
+      Object.defineProperty(localStorage, 'getItem', {
+        configurable: true,
+        value: originalGetItem,
+      });
+    }
+  });
+
   it('reads encrypted items from localStorage as shared values', () => {
     const rawToken = JSON.stringify('secret-token');
     localStorage.setItem(
