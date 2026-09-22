@@ -13,16 +13,8 @@ import { toStringFloatValue, toStringValue } from '../../utils/getBindingValue';
 
 const DisplayLabel: React.FC<{
   model: DisplayLabelModel;
-  ctx?: ControllerContainerContext;
+  ctx: ControllerContainerContext;
 }> = ({ model, ctx }) => {
-  if (!ctx)
-    return (
-      <div
-        className="w-full h-full border border-dashed opacity-40"
-        title="No device binding"
-      />
-    );
-
   const binding = ctx.proxy?.binding;
   const labelValue =
     binding instanceof FloatBinding || binding instanceof DoubleBinding

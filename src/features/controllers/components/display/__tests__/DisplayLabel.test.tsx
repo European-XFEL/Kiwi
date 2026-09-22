@@ -71,8 +71,3 @@ test('ordinary bindings use the default grey background', () => {
   expect(screen.getByText('ERROR mm')).toBeInTheDocument();
   expect(field.style.backgroundColor).toBe('rgb(238, 238, 238)');
 });
-
-test('the no-context placeholder remains transparent', () => {
-  render(<DisplayLabel model={new DisplayLabelModel()} />);
-  expect(screen.getByTitle('No device binding').style.backgroundColor).toBe('');
-});
