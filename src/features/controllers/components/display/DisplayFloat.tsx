@@ -5,7 +5,7 @@ import type { ControllerContainerContext } from '@/features/scene-view/api';
 import { DisplayFloatModel } from '@/karabo/common/api';
 import { DEFAULT_VALUE_FIELD_BG } from '@/lib/colors';
 import { getControllerFontStyle } from '../../utils/fonts';
-import { toStringNumberValue } from '../../utils/getBindingValue';
+import { toStringFloatValue } from '../../utils/getBindingValue';
 
 // DisplayFloat
 // ----------------------------------------------------------------------------
@@ -14,7 +14,7 @@ const DisplayFloat: React.FC<{
   model: DisplayFloatModel;
   ctx?: ControllerContainerContext;
 }> = ({ model, ctx }) => {
-  const labelValue = toStringNumberValue(
+  const labelValue = toStringFloatValue(
     ctx?.proxy,
     model.fmt,
     model.decimals,

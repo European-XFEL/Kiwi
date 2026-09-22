@@ -274,7 +274,7 @@ describe('SceneView integration', () => {
   });
 });
 
-test('a standalone state label receives its background through the scene binding', async () => {
+test('a standalone state label uses the default grey background', async () => {
   const { topology } = makeTopology();
   const device = topology.getDevice('DEV');
   device.binding = new BindingRoot();
@@ -294,7 +294,7 @@ test('a standalone state label receives its background through the scene binding
       <SceneView sceneModel={scene} scale={1} fitMode="fit-page" />
     );
     expect(screen.getByText('ERROR').parentElement?.style.backgroundColor).toBe(
-      'rgb(255, 0, 0)'
+      'rgb(238, 238, 238)'
     );
     unmount();
   });

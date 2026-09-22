@@ -7,7 +7,7 @@ import { DEFAULT_VALUE_FIELD_BG } from '@/lib/colors';
 import { getControllerFontStyle } from '../../utils/fonts';
 import {
   getBindingValue,
-  toStringNumberValue,
+  toStringFloatValue,
 } from '../../utils/getBindingValue';
 
 // DisplayAlarmFloat
@@ -35,13 +35,16 @@ const DisplayAlarmFloat: React.FC<{
   ctx?: ControllerContainerContext;
 }> = ({ model, ctx }) => {
   const value = getBindingValue(ctx?.proxy);
-  const labelValue = toStringNumberValue(
+  const labelValue = toStringFloatValue(
     ctx?.proxy,
     model.fmt,
     model.decimals,
     true
   );
-  const color = Number.isFinite(value) ? alarmColor(value, model) : undefined;
+  const numericValue = Number(value);
+  const color = Number.isFinite(numericValue)
+    ? alarmColor(numericValue, model)
+    : undefined;
 
   return (
     <div
