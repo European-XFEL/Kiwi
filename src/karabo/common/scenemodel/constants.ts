@@ -59,5 +59,3 @@ export const SVG_RECT = 'svg:rect';
 export const SVG_G = 'svg:g';
 export const SVG_LINE = 'svg:line';
 export const SVG_POLYGON = 'svg:polygon';
-export const SVG_PATH = 'svg:path';
-export const SVG_DEFS = 'svg:defs';

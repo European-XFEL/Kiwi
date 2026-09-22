@@ -24,10 +24,17 @@ import { resolveBounds, type SceneLayer } from './bounds';
 import { isControllerWidget, isLayout } from './utils/sceneNodePredicates';
 import { isVisibleInLayer } from './utils/visitor';
 import { getSceneObjectDomId, sceneObjectIdAttr } from './utils/objectId';
-import { warnOnce } from './utils/warnOnce';
 
 export { resolveBounds } from './bounds';
 export { isLayout } from './utils/sceneNodePredicates';
+
+const warnedKlasses = new Set<string>();
+
+function warnOnce(key: string, msg: string) {
+  if (warnedKlasses.has(key)) return;
+  warnedKlasses.add(key);
+  console.warn(msg);
+}
 
 const isUnknownWidget = (
   model: BaseSceneObjectData
@@ -40,13 +47,7 @@ const isUnknownXml = (
 // Handles missing renderer registrations without leaking unknown-model checks
 // into the shared node predicates or traversal helpers.
 const renderMissingContent = (model: BaseSceneObjectData): React.ReactNode => {
-  if (isUnknownXml(model)) {
-    warnOnce(
-      model.tag,
-      `[Scene] Dropped "${model.tag}" — no reader registered for this tag`
-    );
-    return null;
-  }
+  if (isUnknownXml(model)) return null;
 
   if (isUnknownWidget(model)) {
     warnOnce(

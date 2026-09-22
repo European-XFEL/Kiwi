@@ -10,7 +10,6 @@ import {
 } from '@/karabo/common/api';
 import {
   ArrowPolygonModel,
-  DefsModel,
   LineModel,
   PathModel,
   PolygonModel,
@@ -51,7 +50,6 @@ function resolveKey(model: BaseSceneObjectData): string | undefined {
   if (model instanceof PolygonModel) return 'Polygon';
   if (model instanceof ArrowPolygonModel) return 'ArrowPolygon';
   if (model instanceof PathModel) return 'Path';
-  if (model instanceof DefsModel) return 'Defs';
   return undefined;
 }
 

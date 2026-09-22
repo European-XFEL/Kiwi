@@ -89,11 +89,6 @@ export abstract class BaseShapeObjectData extends BaseSceneObjectData {
 
   fill = 'none';
   fill_opacity = 1.0;
-
-  /** funcIRI references into <defs>, e.g. "url(#marker288071)". */
-  marker_start = '';
-  marker_mid = '';
-  marker_end = '';
 }
 
 // BaseWidgetObjectData

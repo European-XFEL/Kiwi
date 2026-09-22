@@ -5,10 +5,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import {
-  ArrowPolygonModel,
-  DefsModel,
-  LineModel,
-  PathModel,
   SceneModel,
   readScene,
   BoxLayoutModel,
@@ -229,129 +225,10 @@ describe('readScene', () => {
     expect(deviceLinks[0].klass).toBe('DeviceSceneLink');
   });
 
-  it('reads ArrowPolygonModel groups when defs markers are interleaved in the scene XML', () => {
-    const xml = `
-      <svg:svg xmlns:krb="http://karabo.eu/scene" xmlns:svg="http://www.w3.org/2000/svg" krb:version="2" krb:uuid="arrow-with-defs" height="666" width="859">
-        <svg:defs>
-          <svg:marker id="marker288071" markerHeight="10.0" markerUnits="strokeWidth" markerWidth="10.0" orient="auto" refX="0.0" refY="3.0">
-            <svg:path stroke="none" fill="#000000" fill-opacity="1.0" d="M0,0 L0,6 L9,3 z" />
-          </svg:marker>
-        </svg:defs>
-        <svg:g krb:class="ArrowPolygonModel">
-          <svg:line
-            stroke="#000000"
-            stroke-opacity="1.0"
-            stroke-linecap="butt"
-            stroke-dashoffset="0.0"
-            stroke-width="1.0"
-            stroke-dasharray=""
-            stroke-style="1"
-            stroke-linejoin="miter"
-            stroke-miterlimit="4.0"
-            fill="none"
-            x1="374"
-            y1="130"
-            x2="428"
-            y2="130"
-          />
-          <svg:polygon
-            points="428,130 418,133 418,127 "
-            stroke="#000000"
-            stroke-opacity="1.0"
-            stroke-linecap="butt"
-            stroke-dashoffset="0.0"
-            stroke-width="1.0"
-            stroke-dasharray=""
-            stroke-style="1"
-            stroke-linejoin="miter"
-            stroke-miterlimit="4.0"
-            fill="#000000"
-            fill-opacity="1.0"
-          />
-        </svg:g>
-      </svg:svg>
-    `;
-
-    const scene = readScene(xml);
-    const arrows = scene.children.filter(
-      (child) => child instanceof ArrowPolygonModel
-    ) as ArrowPolygonModel[];
-
-    expect(arrows).toHaveLength(1);
-    expect(arrows[0].x1).toBe(374);
-    expect(arrows[0].y1).toBe(130);
-    expect(arrows[0].x2).toBe(428);
-    expect(arrows[0].y2).toBe(130);
-    expect(arrows[0].hx1).toBe(418);
-    expect(arrows[0].hy1).toBe(133);
-    expect(arrows[0].hx2).toBe(418);
-    expect(arrows[0].hy2).toBe(127);
-  });
-
-  // Shapes that used to be dropped on the floor: svg:path had no reader at all,
-  // and svg:defs fell through to the wildcard reader, taking the marker
-  // definitions that Karabo draws arrowheads with along with it.
-  describe('shape readers', () => {
-    const wrap = (body: string) =>
-      `<svg:svg xmlns:krb="http://karabo.eu/scene" xmlns:svg="http://www.w3.org/2000/svg" krb:version="2" krb:uuid="shapes" height="100" width="100">${body}</svg:svg>`;
-
-    it('reads svg:path into a PathModel', () => {
-      const scene = readScene(
-        wrap('<svg:path d="M0,0 L9,3 z" stroke="#000000" fill="none" />')
-      );
-      const paths = scene.children.filter(
-        (child) => child instanceof PathModel
-      ) as PathModel[];
-
-      expect(paths).toHaveLength(1);
-      expect(paths[0].svg_data).toBe('M0,0 L9,3 z');
-      expect(paths[0].stroke).toBe('#000000');
-    });
-
-    it('reads svg:defs into a DefsModel, keeping the definition subtree', () => {
-      const scene = readScene(
-        wrap(
-          `<svg:defs>
-             <svg:marker id="marker288071" orient="auto" refX="0.0" refY="3.0">
-               <svg:path fill="#000000" d="M0,0 L0,6 L9,3 z" />
-             </svg:marker>
-           </svg:defs>`
-        )
-      );
-      const defs = scene.children.filter(
-        (child) => child instanceof DefsModel
-      ) as DefsModel[];
-
-      expect(defs).toHaveLength(1);
-      expect(defs[0].nodes).toHaveLength(1);
-      expect(defs[0].nodes[0].tag).toBe('marker');
-      expect(defs[0].nodes[0].attributes.id).toBe('marker288071');
-      expect(defs[0].nodes[0].children[0].tag).toBe('path');
-      expect(defs[0].nodes[0].children[0].attributes.d).toBe(
-        'M0,0 L0,6 L9,3 z'
-      );
-    });
-
-    it('captures marker references on shapes', () => {
-      const scene = readScene(
-        wrap(
-          '<svg:line x1="0" y1="0" x2="10" y2="0" marker-end="url(#marker288071)" />'
-        )
-      );
-      const lines = scene.children.filter(
-        (child) => child instanceof LineModel
-      ) as LineModel[];
-
-      expect(lines).toHaveLength(1);
-      expect(lines[0].marker_end).toBe('url(#marker288071)');
-      expect(lines[0].marker_start).toBe('');
-    });
-  });
-
   it('returns an empty SceneModel for invalid XML', () => {
     // Temporarily mock console.warn to avoid warnings in the test output -
     // readScene outputs a console warning before returning
-    const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+    let consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
     const scene = readScene('<not-svg>invalid</not-svg>');
     expect(scene).toBeInstanceOf(SceneModel);
     expect(scene.children).toHaveLength(0);
