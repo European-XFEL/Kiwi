@@ -42,11 +42,15 @@ function renderCenterPanel(
   if (!isPageVisible) return null;
 
   const content = getPanelWrangler().getContent(tab.id);
+  const snapshot = getPanelWrangler().getSceneTab(tab.id);
   if (content?.error) return <SceneOpenError message={content.error} />;
   if (!isLoadedSceneContent(content)) return <ScenePending />;
   return (
     <ScenePanel
-      content={content}
+      content={{
+        ...content,
+        isUnattachedScene: snapshot?.isUnattachedScene === true,
+      }}
       onFitModeChange={(mode) => getPanelWrangler().setFitMode(tab.id, mode)}
     />
   );

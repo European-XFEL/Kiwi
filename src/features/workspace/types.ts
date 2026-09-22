@@ -127,6 +127,7 @@ export interface PanelAreaState {
 // ---
 
 export interface SceneTabSnapshot {
+  isUnattachedScene: false;
   id: PanelTabId;
   title: string;
   domain: string;
@@ -136,6 +137,7 @@ export interface SceneTabSnapshot {
 }
 
 export interface UnnatachedSceneTabSnapshot {
+  isUnattachedScene: true;
   id: PanelTabId;
   title: string;
   deviceId?: string;

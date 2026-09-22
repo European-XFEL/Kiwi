@@ -127,6 +127,7 @@ jest.mock('../WorkspaceBody', () => {
 jest.mock('@/lib/singletons/api', () => ({
   getPanelWrangler: () => ({
     getContent: mockGetContent,
+    getSceneTab: jest.fn(() => undefined),
   }),
 }));
 

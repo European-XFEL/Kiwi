@@ -76,6 +76,26 @@ describe('ScenePanel', () => {
     expect(screen.getByTestId('scene-view')).toHaveTextContent('scene-1');
   });
 
+  it('shows the device class icon for an unattached scene', () => {
+    render(
+      <ScenePanel
+        content={{
+          sceneRef: { ...sceneRef, deviceId: 'device-1' },
+          sceneModel: makeScene('scene-1'),
+          sceneControllerRegistry: new SceneControllerRegistry(sceneRef),
+          fitMode: 'fit-page',
+          isUnattachedScene: true,
+        }}
+        onFitModeChange={jest.fn()}
+      />
+    );
+
+    expect(screen.getByTestId('scene-device-class-icon')).toHaveAttribute(
+      'alt',
+      'Unattached scene'
+    );
+  });
+
   it("drives the toolbar and scene view from the tab's fit mode", () => {
     render(
       <ScenePanel

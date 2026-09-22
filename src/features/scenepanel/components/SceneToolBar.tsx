@@ -1,6 +1,7 @@
 import { Button, Separator } from '@/components/api';
 import declineIcon from '@/assets/icons/general/no.png';
 import applyIcon from '@/assets/icons/general/yes.png';
+import icons from '@/assets/icons';
 import { type FitMode, FitModeSelect } from '@/features/scene-view/api';
 import { Maximize, Minimize } from 'lucide-react';
 
@@ -9,6 +10,7 @@ export interface SceneToolBarProps {
   height: number;
   scale: number;
   fitMode: FitMode;
+  isUnattachedScene?: boolean;
   onFitModeChange: (mode: FitMode) => void;
   isFullscreen?: boolean;
   // When omitted (e.g. fullscreen unsupported), the toggle is not rendered.
@@ -24,6 +26,7 @@ export function SceneToolBar({
   height,
   scale,
   fitMode,
+  isUnattachedScene = false,
   onFitModeChange,
   isFullscreen = false,
   onToggleFullscreen,
@@ -39,6 +42,15 @@ export function SceneToolBar({
       className="flex h-10 items-center justify-between gap-3 border-b border-[#8d8d8d] bg-[#d7d7d7] px-2"
     >
       <div className="flex items-center gap-1">
+        {isUnattachedScene ? (
+          <img
+            src={icons.deviceClass}
+            alt="Unattached scene"
+            title="Unattached scene"
+            data-testid="scene-device-class-icon"
+            className="h-4 w-4"
+          />
+        ) : null}
         <Button
           variant="ghost"
           size="icon"
