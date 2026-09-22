@@ -24,6 +24,18 @@ export class Manager {
     this._topology = getTopology();
     // Bind 'this' context so dynamic calls inside processMessage work correctly
     this._network.onReceivedData = this.processMessage.bind(this);
+    this._network.onConnectionChanged = this.handleConnectionChanged.bind(this);
+  }
+
+  private handleConnectionChanged(connected: boolean): void {
+    broadcast_event(
+      KaraboEvent.NetworkConnectStatus,
+      new Hash('status', connected)
+    );
+    if (!connected) {
+      this._requestHandlers.clear();
+      this._topology.clear();
+    }
   }
 
   /**
@@ -185,7 +197,9 @@ export class Manager {
     // waits at least 1 second and terminates the connection. We finish
     // the connection from Kiwi's side before that to avoid Kiwi
     // interpreting the terminated connection as a connection loss.
+    // XXX: Can we change this?
     this._network.expireSession(session.host, session.port);
+    broadcast_event(KaraboEvent.SessionExpired, new Hash({}));
   }
 
   public handle_onEndSessionNotice(hash: Hash): void {

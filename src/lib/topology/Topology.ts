@@ -93,6 +93,11 @@ export class SystemTopology {
     return proxy;
   }
 
+  public clear(): void {
+    this.devices.clear();
+    this._system_hash = null;
+  }
+
   public setOnlineFlag(deviceId: string, isOnline: boolean): void {
     let proxy = this.devices.get(deviceId);
     if (proxy) {
