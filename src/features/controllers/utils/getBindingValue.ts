@@ -1,34 +1,24 @@
 import { stringFromHashType } from '@/karabo/data/api';
+import { FloatBinding, type PropertyProxy } from '@/lib/binding/api';
+import { formatFloatValue, normalizeFloat32 } from './floatFormatting';
 
-export const getBindingValue = (proxy: any, fallback: any = undefined): any => {
+export const getBindingValue = (
+  proxy: PropertyProxy | undefined,
+  fallback: unknown = undefined
+): unknown => {
   const value = proxy?.value;
   return value === undefined ? fallback : value;
 };
 
-export const formatUnitLabelSuffix = (proxy: any): string => {
+export const formatUnitLabelSuffix = (
+  proxy: PropertyProxy | undefined
+): string => {
   const unitLabel = proxy?.binding?.unit_label;
   return unitLabel ? ` ${unitLabel}` : '';
 };
 
-export const formatFloatValue = (
-  value: unknown,
-  fmt: string,
-  decimals: number | string
-): string => {
-  const num = Number(value);
-  if (!Number.isFinite(num)) return String(value);
-
-  const parsedDecimals =
-    typeof decimals === 'string' ? parseInt(decimals, 10) : decimals;
-  const p = Math.max(0, Number.isFinite(parsedDecimals) ? parsedDecimals : 8);
-
-  if (fmt === 'f') return num.toFixed(p);
-  if (fmt === 'e') return num.toExponential(p);
-  return parseFloat(num.toPrecision(p)).toString();
-};
-
 export const toStringValue = (
-  proxy: any,
+  proxy: PropertyProxy | undefined,
   withUnit: boolean = false
 ): string => {
   const value = getBindingValue(proxy);
@@ -38,15 +28,19 @@ export const toStringValue = (
   return `${stringFromHashType(value, proxy?.binding?.hashType)}${unitSuffix}`;
 };
 
-export const toStringNumberValue = (
-  proxy: any,
-  fmt: string,
-  decimals: number | string,
+export const toStringFloatValue = (
+  proxy: PropertyProxy | undefined,
+  fmt: string = 'g',
+  decimals: string = '8',
   withUnit: boolean = false
 ): string => {
   const value = getBindingValue(proxy);
   if (value === undefined) return '';
 
+  const binding = proxy?.binding;
   const unitSuffix = withUnit ? formatUnitLabelSuffix(proxy) : '';
-  return `${formatFloatValue(value, fmt, decimals)}${unitSuffix}`;
+  const num = Number(value);
+  const displayValue =
+    binding instanceof FloatBinding ? normalizeFloat32(num) : num;
+  return `${formatFloatValue(displayValue, fmt, decimals)}${unitSuffix}`;
 };

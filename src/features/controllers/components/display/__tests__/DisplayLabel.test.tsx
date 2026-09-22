@@ -6,6 +6,8 @@ import {
   DeviceProxy,
   PropertyProxy,
   StringBinding,
+  DoubleBinding,
+  FloatBinding,
 } from '@/lib/binding/api';
 import DisplayLabel from '../DisplayLabel';
 
@@ -30,36 +32,44 @@ function renderLabel(displayType: string, value?: string, unit = '') {
   };
 }
 
-test('state bindings paint their state colour without a scene provider', () => {
-  const { field } = renderLabel('State', 'ERROR');
-  expect(field.style.backgroundColor).toBe('rgb(255, 0, 0)');
+function renderNumericLabel(
+  binding: FloatBinding | DoubleBinding,
+  unit = 'mm'
+) {
+  binding.unit_label = unit;
+  const root = new DeviceProxy('DEV');
+  root.binding = new BindingRoot();
+  root.binding.value!.set('value', binding);
+  const proxy = new PropertyProxy(root, 'value');
+  const result = render(
+    <DisplayLabel
+      model={new DisplayLabelModel()}
+      ctx={{ proxy, proxies: [proxy], userAccessLevel: AccessLevel.OBSERVER }}
+    />
+  );
+  return result;
+}
+
+test('string bindings render their value and unit', () => {
+  renderLabel('', 'READY', 'mm');
+  expect(screen.getByText('READY mm')).toBeInTheDocument();
 });
 
-test.each([undefined, '', 'UNRECOGNIZED_STATE'])(
-  'missing or invalid state %s is transparent',
-  (value) => {
-    expect(renderLabel('State', value).field.style.backgroundColor).toBe(
-      'rgba(0, 0, 0, 0)'
-    );
+test.each([
+  ['float', new FloatBinding({ value: 1.2345678 }), '1.2345678 mm'],
+  ['double', new DoubleBinding({ value: 1.23456789 }), '1.2345679 mm'],
+])(
+  'numeric %s bindings render their formatted value',
+  (_kind, binding, text) => {
+    renderNumericLabel(binding);
+    expect(screen.getByText(text)).toBeInTheDocument();
   }
 );
 
-test('the valid UNKNOWN state keeps the existing amber colour', () => {
-  expect(renderLabel('State', 'UNKNOWN').field.style.backgroundColor).toBe(
-    'rgb(255, 170, 0)'
-  );
-});
-
-test('ordinary values use grey even when their text names a state', () => {
-  expect(renderLabel('', 'ERROR').field.style.backgroundColor).toBe(
-    'rgb(238, 238, 238)'
-  );
-});
-
-test('units remain in the label but do not affect state colour lookup', () => {
-  const { field } = renderLabel('State', 'ERROR', 'mm');
+test('ordinary bindings use the default grey background', () => {
+  const { field } = renderLabel('', 'ERROR', 'mm');
   expect(screen.getByText('ERROR mm')).toBeInTheDocument();
-  expect(field.style.backgroundColor).toBe('rgb(255, 0, 0)');
+  expect(field.style.backgroundColor).toBe('rgb(238, 238, 238)');
 });
 
 test('the no-context placeholder remains transparent', () => {

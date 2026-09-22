@@ -2,11 +2,11 @@
 
 import React from 'react';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
-import { getStateColor } from '@/lib/Indicators';
 import { DEFAULT_VALUE_FIELD_BG } from '@/lib/colors';
 import { DisplayLabelModel } from '@/karabo/common/api';
+import { DoubleBinding, FloatBinding } from '@/lib/binding/api';
 import { getControllerFontStyle } from '../../utils/fonts';
-import { toStringValue } from '../../utils/getBindingValue';
+import { toStringFloatValue, toStringValue } from '../../utils/getBindingValue';
 
 // DisplayLabel
 // ----------------------------------------------------------------------------
@@ -23,11 +23,12 @@ const DisplayLabel: React.FC<{
       />
     );
 
-  const labelValue = toStringValue(ctx.proxy, true);
-  const backgroundColor =
-    ctx.proxy?.binding?.displayType === 'State'
-      ? getStateColor(toStringValue(ctx.proxy))
-      : DEFAULT_VALUE_FIELD_BG;
+  const binding = ctx.proxy?.binding;
+  const labelValue =
+    binding instanceof FloatBinding || binding instanceof DoubleBinding
+      ? toStringFloatValue(ctx.proxy, 'g', '8', true)
+      : toStringValue(ctx.proxy, true);
+  const backgroundColor = DEFAULT_VALUE_FIELD_BG;
 
   return (
     <div
