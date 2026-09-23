@@ -3,7 +3,14 @@ import { HashType } from './typenums';
 import { KaraboValue, wrapValue } from './types';
 import { decodeXML } from './xml_reader';
 import { encodeXML } from './xml_writer';
-import { unwrap, hashToDict, dictToHash, toBase64, fromBase64 } from './utils';
+import {
+  unwrap,
+  hashToDict,
+  dictToHash,
+  toBase64,
+  fromBase64,
+  isTypedArray,
+} from './utils';
 
 const stringFromSimple = (data: unknown) => String(unwrap(data));
 const stringFromBool = (data: unknown) => (unwrap(data) ? '1' : '0');
@@ -24,10 +31,8 @@ const stringFromVector = (data: unknown) => {
   const value = unwrap(data);
   if (Array.isArray(value)) return value.map((x) => String(x)).join(',');
 
-  if (ArrayBuffer.isView(value) && !(value instanceof DataView)) {
-    return Array.from(value as unknown as Iterable<unknown>)
-      .map((x) => String(x))
-      .join(',');
+  if (isTypedArray(value)) {
+    return value.join(',');
   }
 
   return String(value);
@@ -36,10 +41,9 @@ const stringFromVector = (data: unknown) => {
 const stringFromVectorChar = (data: unknown) => {
   const value = unwrap(data);
   if (value instanceof Uint8Array) return toBase64(value);
-  if (ArrayBuffer.isView(value) && !(value instanceof DataView)) {
-    const view = value as ArrayBufferView;
+  if (isTypedArray(value)) {
     return toBase64(
-      new Uint8Array(view.buffer, view.byteOffset, view.byteLength)
+      new Uint8Array(value.buffer, value.byteOffset, value.byteLength)
     );
   }
   return String(value);

@@ -9,7 +9,20 @@ import {
 
 export type SimpleValueTypes = number | string | bigint | boolean;
 
-export type ValueTypes = SimpleValueTypes | SimpleValueTypes[] | Uint8Array;
+export type NumericVectorTypes =
+  | Int8Array
+  | Uint8Array
+  | Int16Array
+  | Uint16Array
+  | Int32Array
+  | Uint32Array
+  | BigInt64Array
+  | BigUint64Array
+  | Float32Array
+  | Float64Array;
+
+export type ValueTypes =
+  SimpleValueTypes | SimpleValueTypes[] | NumericVectorTypes;
 
 export interface KaraboValue {
   type_: HashType;
@@ -26,10 +39,12 @@ export class UInt8Value extends Integer implements KaraboValue {
   }
 }
 
-export class VectorUInt8Value implements KaraboValue {
+export class VectorUInt8Value extends Uint8Array implements KaraboValue {
   readonly type_ = HashType.VectorUInt8;
 
-  constructor(public value_: number[]) {}
+  get value_(): VectorUInt8Value {
+    return this;
+  }
 }
 
 export class Int8Value extends Integer implements KaraboValue {
@@ -42,10 +57,12 @@ export class Int8Value extends Integer implements KaraboValue {
   }
 }
 
-export class VectorInt8Value implements KaraboValue {
+export class VectorInt8Value extends Int8Array implements KaraboValue {
   readonly type_ = HashType.VectorInt8;
 
-  constructor(public value_: number[]) {}
+  get value_(): VectorInt8Value {
+    return this;
+  }
 }
 
 export class UInt16Value extends Integer implements KaraboValue {
@@ -58,10 +75,12 @@ export class UInt16Value extends Integer implements KaraboValue {
   }
 }
 
-export class VectorUInt16Value implements KaraboValue {
+export class VectorUInt16Value extends Uint16Array implements KaraboValue {
   readonly type_ = HashType.VectorUInt16;
 
-  constructor(public value_: number[]) {}
+  get value_(): VectorUInt16Value {
+    return this;
+  }
 }
 
 export class Int16Value extends Integer implements KaraboValue {
@@ -74,10 +93,12 @@ export class Int16Value extends Integer implements KaraboValue {
   }
 }
 
-export class VectorInt16Value implements KaraboValue {
+export class VectorInt16Value extends Int16Array implements KaraboValue {
   readonly type_ = HashType.VectorInt16;
 
-  constructor(public value_: number[]) {}
+  get value_(): VectorInt16Value {
+    return this;
+  }
 }
 
 export class UInt32Value extends Integer implements KaraboValue {
@@ -90,10 +111,12 @@ export class UInt32Value extends Integer implements KaraboValue {
   }
 }
 
-export class VectorUInt32Value implements KaraboValue {
+export class VectorUInt32Value extends Uint32Array implements KaraboValue {
   readonly type_ = HashType.VectorUInt32;
 
-  constructor(public value_: number[]) {}
+  get value_(): VectorUInt32Value {
+    return this;
+  }
 }
 
 export class Int32Value extends Integer implements KaraboValue {
@@ -106,10 +129,12 @@ export class Int32Value extends Integer implements KaraboValue {
   }
 }
 
-export class VectorInt32Value implements KaraboValue {
+export class VectorInt32Value extends Int32Array implements KaraboValue {
   readonly type_ = HashType.VectorInt32;
 
-  constructor(public value_: number[]) {}
+  get value_(): VectorInt32Value {
+    return this;
+  }
 }
 
 export class UInt64Value extends BigInteger implements KaraboValue {
@@ -122,9 +147,12 @@ export class UInt64Value extends BigInteger implements KaraboValue {
   }
 }
 
-export class VectorUInt64Value implements KaraboValue {
+export class VectorUInt64Value extends BigUint64Array implements KaraboValue {
   readonly type_ = HashType.VectorUInt64;
-  constructor(public value_: bigint[]) {}
+
+  get value_(): VectorUInt64Value {
+    return this;
+  }
 }
 
 export class Int64Value extends BigInteger implements KaraboValue {
@@ -139,10 +167,12 @@ export class Int64Value extends BigInteger implements KaraboValue {
   }
 }
 
-export class VectorInt64Value implements KaraboValue {
+export class VectorInt64Value extends BigInt64Array implements KaraboValue {
   readonly type_ = HashType.VectorInt64;
 
-  constructor(public value_: bigint[]) {}
+  get value_(): VectorInt64Value {
+    return this;
+  }
 }
 
 export class FloatValue extends FloatingPoint implements KaraboValue {
@@ -158,10 +188,12 @@ export class FloatValue extends FloatingPoint implements KaraboValue {
   }
 }
 
-export class VectorFloatValue implements KaraboValue {
+export class VectorFloatValue extends Float32Array implements KaraboValue {
   readonly type_ = HashType.VectorFloat;
 
-  constructor(public value_: number[]) {}
+  get value_(): VectorFloatValue {
+    return this;
+  }
 }
 
 export class DoubleValue extends FloatingPoint implements KaraboValue {
@@ -176,10 +208,12 @@ export class DoubleValue extends FloatingPoint implements KaraboValue {
   }
 }
 
-export class VectorDoubleValue implements KaraboValue {
+export class VectorDoubleValue extends Float64Array implements KaraboValue {
   readonly type_ = HashType.VectorDouble;
 
-  constructor(public value_: number[]) {}
+  get value_(): VectorDoubleValue {
+    return this;
+  }
 }
 
 export class BoolValue extends BooleanLike implements KaraboValue {

@@ -110,16 +110,25 @@ function readVectorString(parser: BinaryDecoder): Types.VectorStringValue {
   return res;
 }
 
-function buildVectorReader(elementReader: any, klass: any) {
-  return (parser: BinaryDecoder) => {
-    let size = readUInt32(parser).value_;
-    const slice_: any[] = [];
-    while (size > 0) {
-      const element = elementReader(parser);
-      slice_.push(element.value_);
-      size -= 1;
+// DataView keeps wire decoding explicitly little-endian and supports unaligned
+// input. Allocate the Karabo typed-array subclass directly to avoid a second
+// array allocation and copy.
+function buildVectorReader<
+  T extends number | bigint,
+  V extends Types.KaraboValue & { [index: number]: T },
+>(
+  byteWidth: number,
+  readElement: (view: DataView, offset: number) => T,
+  VectorValue: new (length: number) => V
+) {
+  return (parser: BinaryDecoder): V => {
+    const size = readUInt32(parser).value_;
+    const values = new VectorValue(size);
+    for (let i = 0; i < size; i++) {
+      values[i] = readElement(parser.dataview, parser.pos);
+      parser.pos += byteWidth;
     }
-    return new klass(slice_);
+    return values;
   };
 }
 
@@ -149,25 +158,65 @@ const parsers = [
   readChar, // Char = 2
   readVectorChar, // VectorChar = 3
   readInt8, // Int8 = 4
-  buildVectorReader(readInt8, Types.VectorInt8Value), //  VectorInt8 = 5
+  buildVectorReader(
+    1,
+    (view, offset) => view.getInt8(offset),
+    Types.VectorInt8Value
+  ), //  VectorInt8 = 5
   readUInt8, // UInt8 = 6
-  buildVectorReader(readUInt8, Types.VectorUInt8Value), // VectorUInt8 = 7
+  buildVectorReader(
+    1,
+    (view, offset) => view.getUint8(offset),
+    Types.VectorUInt8Value
+  ), // VectorUInt8 = 7
   readInt16, // Int16 = 8
-  buildVectorReader(readInt16, Types.VectorInt16Value), // VectorInt16 = 9
+  buildVectorReader(
+    2,
+    (view, offset) => view.getInt16(offset, true),
+    Types.VectorInt16Value
+  ), // VectorInt16 = 9
   readUInt16, // UInt16 = 10
-  buildVectorReader(readUInt16, Types.VectorUInt16Value), // VectorUInt16 = 11
+  buildVectorReader(
+    2,
+    (view, offset) => view.getUint16(offset, true),
+    Types.VectorUInt16Value
+  ), // VectorUInt16 = 11
   readInt32, // Int32 = 12
-  buildVectorReader(readInt32, Types.VectorInt32Value), // VectorInt32 = 13
+  buildVectorReader(
+    4,
+    (view, offset) => view.getInt32(offset, true),
+    Types.VectorInt32Value
+  ), // VectorInt32 = 13
   readUInt32, // UInt32 = 14
-  buildVectorReader(readUInt32, Types.VectorUInt32Value), // VectorUInt32 = 15
+  buildVectorReader(
+    4,
+    (view, offset) => view.getUint32(offset, true),
+    Types.VectorUInt32Value
+  ), // VectorUInt32 = 15
   readInt64, // Int64 = 16
-  buildVectorReader(readInt64, Types.VectorInt64Value), // VectorInt64 = 17
+  buildVectorReader(
+    8,
+    (view, offset) => view.getBigInt64(offset, true),
+    Types.VectorInt64Value
+  ), // VectorInt64 = 17
   readUInt64, // UInt64 = 18
-  buildVectorReader(readUInt64, Types.VectorUInt64Value), // VectorUInt64 = 19
+  buildVectorReader(
+    8,
+    (view, offset) => view.getBigUint64(offset, true),
+    Types.VectorUInt64Value
+  ), // VectorUInt64 = 19
   readFloat32, // Float = 20
-  buildVectorReader(readFloat32, Types.VectorFloatValue), // VectorFloat = 21
+  buildVectorReader(
+    4,
+    (view, offset) => view.getFloat32(offset, true),
+    Types.VectorFloatValue
+  ), // VectorFloat = 21
   readFloat64, // Double = 22
-  buildVectorReader(readFloat64, Types.VectorDoubleValue), // VectorDouble = 23
+  buildVectorReader(
+    8,
+    (view, offset) => view.getFloat64(offset, true),
+    Types.VectorDoubleValue
+  ), // VectorDouble = 23
   (p: BinaryDecoder) => parserUndefined(p, 24), // ComplexFloat = 24
   (p: BinaryDecoder) => parserUndefined(p, 25), // VectorComplexFloat = 25
   (p: BinaryDecoder) => parserUndefined(p, 26), // ComplexDouble = 26

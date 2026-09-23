@@ -489,7 +489,7 @@ describe('Karabo Hash Class Tests', () => {
         const values = new Map(out.map(([k, v]) => [k, v.value_]));
 
         expect(values.get('a.b.c')).toBe('Karabo');
-        expect(values.get('a.b.d')).toEqual([1.2, 1.4]);
+        expect(values.get('a.b.d')).toEqual(new VectorDoubleValue([1.2, 1.4]));
         expect(values.get('z')).toBe(7.3);
 
         const karaboValues = new Map(out.map(([k, v]) => [k, v]));

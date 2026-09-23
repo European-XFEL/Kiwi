@@ -96,11 +96,13 @@ function encodeString(parser: BinaryEncoder, data: string): ArrayBuffer {
 
 function encodeVector<T>(
   parser: BinaryEncoder,
-  data: T[],
+  data: Iterable<T>,
   encoderFn: (parser: BinaryEncoder, item: T) => ArrayBuffer
 ): ArrayBuffer {
   // 1. Encode all elements to buffers
-  const elementBuffers = data.map((element) => encoderFn(parser, element));
+  const elementBuffers = Array.from(data, (element) =>
+    encoderFn(parser, element)
+  );
 
   // 2. Calculate total size: 4 bytes (uint32 size) + sum of all element buffers
   let totalSize = 4;
@@ -113,7 +115,7 @@ function encodeVector<T>(
   const dv = new DataView(ret.buffer);
 
   // Set vector length
-  dv.setUint32(0, data.length, true);
+  dv.setUint32(0, elementBuffers.length, true);
 
   // Write elements
   let offset = 4;

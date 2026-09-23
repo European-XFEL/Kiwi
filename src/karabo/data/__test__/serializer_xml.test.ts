@@ -388,9 +388,15 @@ describe('TestSerializers', () => {
     // Vectors
     expect(decoded.getValue('v_string')).toEqual(['one', 'two', 'three']);
     expect(decoded.getValue('v_bool')).toEqual([true, false, true]);
-    expect(decoded.getValue('v_int32')).toEqual([1, 2, 3, 4]);
-    expect(decoded.getValue('v_float32')).toEqual([1.1, 2.2, 3.3]);
-    expect(decoded.getValue('v_float64')).toEqual([1.1, 2.2, 3.3]);
+    expect(decoded.getValue('v_int32')).toEqual(
+      new VectorInt32Value([1, 2, 3, 4])
+    );
+    expect(decoded.getValue('v_float32')).toEqual(
+      new VectorFloatValue([1.1, 2.2, 3.3])
+    );
+    expect(decoded.getValue('v_float64')).toEqual(
+      new VectorDoubleValue([1.1, 2.2, 3.3])
+    );
 
     // Byte Array (Base64 roundtrip check)
     const originalBytes = original.getValue('byte_array');

@@ -2,6 +2,7 @@ import fs from 'fs';
 import { Hash, HashList, Schema } from '@/karabo/data/hash';
 import { decodeBinary, decodeBinarySchema } from '@/karabo/data/bin_reader';
 import { encodeBinary } from '@/karabo/data/bin_writer';
+import * as Types from '@/karabo/data/types';
 
 import path from 'path';
 
@@ -57,26 +58,30 @@ describe('binary', () => {
       true,
       false,
     ]);
-    expect(hsh.getValue('vectors.uint8Property')).toEqual([
-      41, 42, 43, 44, 45, 46,
-    ]);
-    expect(hsh.getValue('vectors.int16Property')).toEqual([
-      20041, 20042, 20043, 20044, 20045, 20046,
-    ]);
-    expect(hsh.getValue('vectors.uint16Property')).toEqual([
-      10041, 10042, 10043, 10044, 10045, 10046,
-    ]);
-    expect(hsh.getValue('vectors.uint32Property')).toEqual([
-      90000041, 90000042, 90000043, 90000044, 90000045, 90000046,
-    ]);
-    expect(hsh.getValue('vectors.int64Property')).toEqual([
-      20000000041n,
-      20000000042n,
-      20000000043n,
-      20000000044n,
-      20000000045n,
-      20000000046n,
-    ]);
+    expect(hsh.getValue('vectors.uint8Property')).toEqual(
+      new Types.VectorUInt8Value([41, 42, 43, 44, 45, 46])
+    );
+    expect(hsh.getValue('vectors.int16Property')).toEqual(
+      new Types.VectorInt16Value([20041, 20042, 20043, 20044, 20045, 20046])
+    );
+    expect(hsh.getValue('vectors.uint16Property')).toEqual(
+      new Types.VectorUInt16Value([10041, 10042, 10043, 10044, 10045, 10046])
+    );
+    expect(hsh.getValue('vectors.uint32Property')).toEqual(
+      new Types.VectorUInt32Value([
+        90000041, 90000042, 90000043, 90000044, 90000045, 90000046,
+      ])
+    );
+    expect(hsh.getValue('vectors.int64Property')).toEqual(
+      new Types.VectorInt64Value([
+        20000000041n,
+        20000000042n,
+        20000000043n,
+        20000000044n,
+        20000000045n,
+        20000000046n,
+      ])
+    );
     expect(hsh.getValue('vectors.stringProperty')).toEqual([
       '1111111',
       '2222222',
@@ -176,6 +181,40 @@ describe('binary', () => {
       expect(read.getValue('e4')).toBe(new_.getValue('e4'));
       // Use 5 digits precision for floating point comparison ~ 0.00001
       expect(read.getValue('e5')).toBeCloseTo(new_.getValue('e5') as number, 5);
+    }
+  });
+
+  it('decodes numeric vectors into their public wrappers', () => {
+    const original = new Hash(
+      'int8',
+      new Types.VectorInt8Value([-128, 127]),
+      'uint8',
+      new Types.VectorUInt8Value([0, 255]),
+      'int16',
+      new Types.VectorInt16Value([-32768, 32767]),
+      'uint16',
+      new Types.VectorUInt16Value([0, 65535]),
+      'int32',
+      new Types.VectorInt32Value([-2147483648, 2147483647]),
+      'uint32',
+      new Types.VectorUInt32Value([0, 4294967295]),
+      'int64',
+      new Types.VectorInt64Value([-9223372036854775808n, 9223372036854775807n]),
+      'uint64',
+      new Types.VectorUInt64Value([0n, 18446744073709551615n]),
+      'float',
+      new Types.VectorFloatValue([-1.5, 2.25]),
+      'double',
+      new Types.VectorDoubleValue([-Math.PI, Number.MAX_VALUE])
+    );
+
+    const decoded = decodeBinary(new Uint8Array(encodeBinary(original)));
+
+    for (const [key, value] of original) {
+      const actual = decoded.get(key);
+      expect(actual).toBeInstanceOf(value.data.constructor);
+      expect(actual.value_).toBe(actual);
+      expect(actual.value_).toEqual(value.data.value_);
     }
   });
 
