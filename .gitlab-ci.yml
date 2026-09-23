@@ -156,7 +156,7 @@ internal_mirror_publish:
     - git fetch internal_mirror main
     - git push -u internal_mirror main --force-with-lease
     - |
-      git branch --format='%(refname:short)' | grep -E '^[0-9]+\.[0-9]+\.[xX]-hotfix$' | while read branch; do
+      git branch --format='%(refname:short)' | { grep -E '^[0-9]+\.[0-9]+\.[xX]-hotfix$' || true; } | while read branch; do
         git push internal_mirror "$branch" --force
       done
     - git push internal_mirror --tags --force
@@ -183,7 +183,7 @@ internal_mirror_publish:
     - git fetch internal_mirror main
     - git push -u internal_mirror main --force-with-lease
     - |
-      git for-each-ref --format='%(refname:short)' refs/heads | grep -E '^[3-9]+\.[0-9]+\.[xX]-hotfix$' | while read branch; do
+      git for-each-ref --format='%(refname:short)' refs/heads | { grep -E '^[3-9]+\.[0-9]+\.[xX]-hotfix$' || true; } | while read branch; do
         git push internal_mirror "$branch" --force;
       done
     - git push internal_mirror --tags --force
