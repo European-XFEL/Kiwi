@@ -171,7 +171,7 @@ internal_mirror_publish:
     # Removes files that can contain information specific to the production and staging environments in EurXFEL.
     # "env.development" is published because it contains no sensitive data and documents the supported configuration
     # variables.
-    - git-filter-repo --invert-paths --path 'env.production' --path 'env.staging'
+    - git-filter-repo --invert-paths --path '.env.production' --path '.env.staging'
     - git-filter-repo --strip-blobs-bigger-than 100M
     # we filter mails now (Kiwi uses the same set of exclusions as the Karabo Framework and Devices - at least for now)
     - git-filter-repo --mailmap ../contriboptouts/karabo-mailmap
