@@ -10,7 +10,7 @@ The application has been bootstrapped using [vite](https://vitejs.dev/).
 
 A local installation of [node](https://nodejs.org/) is required.
 
-Note for sudoless installations: since versions of `yarn` greater than `1.2.X` require `corepack enabled` to be set, the `nodejs` installation should be done via `nvm`. To install `nvm` the instructions at `https://github.com/nvm-sh/nvm/blob/master/README.md#installing-and-updating` should be followed.
+Note for sudoless installations: since versions of `yarn` greater than `1.2.X` require `corepack enabled` to be set, the `nodejs` installation should be done via `nvm`. To install `nvm` the instructions at https://github.com/nvm-sh/nvm/blob/master/README.md#installing-and-updating should be followed.
 
 The `vite`-compatible `node` versions are documented
 at https://vitejs.dev/guide/#scaffolding-your-first-vite-project.
@@ -27,7 +27,7 @@ yarn dev
 
 ## Testing
 
-Jest is used for unit and integration testing with React Testing Library for component testing.
+`Jest` is used for unit and integration testing with `React Testing Library` for component testing.
 
 ### Running Tests
 
