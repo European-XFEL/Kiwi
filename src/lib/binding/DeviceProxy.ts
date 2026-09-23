@@ -72,7 +72,7 @@ export class DeviceProxy {
     return this.binding.getBinding(path);
   }
 
-  public hasSchema(): Boolean {
+  public hasSchema(): boolean {
     return this.binding?.value!.length > 0;
   }
 
@@ -168,6 +168,11 @@ export class DeviceProxy {
       this.status === ProxyStatus.MONITORING
     ) {
       this.updateStatus(ProxyStatus.ONLINE);
+      // We will request later a new schema, lets remove the bindings
+      if (this.hasSchema()) {
+        this.binding.value!.clear_namespace();
+        this._schema_update_fired();
+      }
     }
   }
 
