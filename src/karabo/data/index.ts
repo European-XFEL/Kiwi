@@ -27,6 +27,6 @@ export {
 } from './enums';
 export { decodeBinary, decodeBinarySchema } from './bin_reader';
 export { encodeBinary, encodeBinarySchema } from './bin_writer';
-export { unwrap } from './utils';
+export { isTypedArray, unwrap } from './utils';
 export { State } from './State';
 export { type SimpleValueTypes } from './types';

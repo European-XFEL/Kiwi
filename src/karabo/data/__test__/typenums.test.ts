@@ -1,5 +1,6 @@
 import { Hash } from '@/karabo/data/hash';
 import { HashType, getHashTypeFromValue } from '@/karabo/data/typenums';
+import { VectorUInt8Value } from '@/karabo/data/types';
 
 describe('getHashTypeFromValue', () => {
   test('infers primitive types', () => {
@@ -14,6 +15,26 @@ describe('getHashTypeFromValue', () => {
     expect(getHashTypeFromValue(new Uint8Array([1, 2, 3]))).toBe(
       HashType.VectorChar
     );
+  });
+
+  test('uses the wrapper type for VectorUInt8Value', () => {
+    expect(getHashTypeFromValue(new VectorUInt8Value([1, 2, 3]))).toBe(
+      HashType.VectorUInt8
+    );
+  });
+
+  test.each([
+    [new Int8Array(), HashType.VectorInt8],
+    [new Int16Array(), HashType.VectorInt16],
+    [new Uint16Array(), HashType.VectorUInt16],
+    [new Int32Array(), HashType.VectorInt32],
+    [new Uint32Array(), HashType.VectorUInt32],
+    [new BigInt64Array(), HashType.VectorInt64],
+    [new BigUint64Array(), HashType.VectorUInt64],
+    [new Float32Array(), HashType.VectorFloat],
+    [new Float64Array(), HashType.VectorDouble],
+  ])('infers %s', (value, expected) => {
+    expect(getHashTypeFromValue(value)).toBe(expected);
   });
 
   test('infers array types from first element', () => {

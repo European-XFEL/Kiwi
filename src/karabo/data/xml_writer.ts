@@ -1,6 +1,6 @@
 import { Hash, HashList, Schema } from './hash';
 import { HashType, HashTypeToXmlType } from './typenums';
-import { escapeXml, quoteAttr, toBase64, unwrap } from './utils';
+import { escapeXml, isTypedArray, quoteAttr, toBase64, unwrap } from './utils';
 
 function* yield_xml_simple(data: any): Generator<string> {
   yield escapeXml(String(unwrap(data)));
@@ -12,8 +12,10 @@ function* yield_xml_bool(data: any): Generator<string> {
 }
 
 function* yield_xml_vector_simple(data: any): Generator<string> {
-  const val = unwrap(data); // Expecting array
-  if (Array.isArray(val)) {
+  const val = unwrap(data);
+  // Numeric Karabo vectors extend typed arrays, which Array.isArray does not
+  // recognize.
+  if (Array.isArray(val) || isTypedArray(val)) {
     yield escapeXml(val.join(','));
   }
 }

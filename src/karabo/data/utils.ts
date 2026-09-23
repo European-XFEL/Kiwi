@@ -60,6 +60,23 @@ const isPlainObject = (value: unknown): value is Record<string, unknown> => {
   return proto === Object.prototype || proto === null;
 };
 
+type TypedArray =
+  | Int8Array
+  | Uint8Array
+  | Uint8ClampedArray
+  | Int16Array
+  | Uint16Array
+  | Int32Array
+  | Uint32Array
+  | BigInt64Array
+  | BigUint64Array
+  | Float32Array
+  | Float64Array;
+
+export function isTypedArray(value: unknown): value is TypedArray {
+  return ArrayBuffer.isView(value) && !(value instanceof DataView);
+}
+
 /**
  * Helper to extract the raw primitive value from a KaraboValue.
  * If data is not a wrapper (e.g. raw string), returns data as is.

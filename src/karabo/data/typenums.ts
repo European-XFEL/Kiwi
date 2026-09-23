@@ -33,9 +33,6 @@ export enum HashType {
 }
 
 export function getHashTypeFromValue(value: any): HashType {
-  if (value instanceof Uint8Array) {
-    return HashType.VectorChar;
-  }
   switch (typeof value) {
     case 'string': {
       return HashType.String;
@@ -50,33 +47,38 @@ export function getHashTypeFromValue(value: any): HashType {
       return _getNumberType(value);
     }
     case 'object': {
+      if (value === null) break;
+
       if (Object.prototype.hasOwnProperty.call(value, 'type_')) {
         return value.type_;
       }
 
       if (Array.isArray(value)) {
-        if (value.length === 0) {
-          return HashType.VectorString;
-        }
+        if (value.length === 0) return HashType.VectorString;
+
         const first = value[0];
         switch (typeof first) {
-          case 'string': {
+          case 'string':
             return HashType.VectorString;
-          }
-          case 'number': {
+          case 'number':
             return _getNumberVector(first);
-          }
-          case 'boolean': {
+          case 'boolean':
             return HashType.VectorBool;
-          }
-          case 'bigint': {
+          case 'bigint':
             return HashType.VectorInt64;
-          }
-          default: {
-            break;
-          }
         }
       }
+
+      if (value instanceof Uint8Array) return HashType.VectorChar;
+      if (value instanceof Int8Array) return HashType.VectorInt8;
+      if (value instanceof Int16Array) return HashType.VectorInt16;
+      if (value instanceof Uint16Array) return HashType.VectorUInt16;
+      if (value instanceof Int32Array) return HashType.VectorInt32;
+      if (value instanceof Uint32Array) return HashType.VectorUInt32;
+      if (value instanceof BigInt64Array) return HashType.VectorInt64;
+      if (value instanceof BigUint64Array) return HashType.VectorUInt64;
+      if (value instanceof Float32Array) return HashType.VectorFloat;
+      if (value instanceof Float64Array) return HashType.VectorDouble;
       break;
     }
   }

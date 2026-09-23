@@ -3,6 +3,7 @@ import path from 'path';
 
 import { Schema, Hash } from '@/karabo/data/hash';
 import { decodeBinarySchema } from '@/karabo/data/bin_reader';
+import { VectorInt32Value } from '@/karabo/data/types';
 import { buildBinding } from '@/lib/binding/BindingFactory';
 import { applyConfiguration } from '@/lib/binding/DeviceProxy';
 
@@ -55,8 +56,7 @@ describe('check configuration', () => {
     expect(leaf?.value.value_).toBe(2);
     expect(string?.value.value_).toBe('karabo');
 
-    // For arrays, use deep equality:
-    expect(nodeVectorInt32?.value.value_).toEqual([1, 2]);
+    expect(nodeVectorInt32?.value.value_).toEqual(new VectorInt32Value([1, 2]));
     expect(nodeVectorBool?.value.value_).toEqual([true, false]);
   });
 });
