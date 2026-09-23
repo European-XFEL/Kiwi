@@ -18,7 +18,7 @@ const Evaluator: React.FC<{
   const binding = ctx.proxy?.binding;
   let labelValue;
   if (binding instanceof FloatBinding) {
-    labelValue = toStringFloatValue(ctx.proxy, 'f', '3', true);
+    labelValue = toStringFloatValue(ctx.proxy, 'g', '3', true);
   } else if (binding instanceof DoubleBinding) {
     labelValue = toStringFloatValue(ctx.proxy, 'g', '5', true);
   } else {
