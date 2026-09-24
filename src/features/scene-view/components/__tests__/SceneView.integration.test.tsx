@@ -15,6 +15,7 @@ import {
   DeviceProxy,
   PropertyProxy,
 } from '@/lib/binding/api';
+import { ALL_OK_COLOR } from '@/lib/colors';
 import { SingletonContext } from '@/testing';
 
 jest.mock('@/features/controllers/api', () => ({
@@ -294,7 +295,7 @@ test('a standalone state label uses the default grey background', async () => {
       <SceneView sceneModel={scene} scale={1} fitMode="fit-page" />
     );
     expect(screen.getByText('ERROR').parentElement?.style.backgroundColor).toBe(
-      'rgb(238, 238, 238)'
+      ALL_OK_COLOR
     );
     unmount();
   });

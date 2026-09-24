@@ -7,6 +7,7 @@ import {
   PropertyProxy,
   DoubleBinding,
 } from '@/lib/binding/api';
+import { ALL_OK_COLOR } from '@/lib/colors';
 import DisplayAlarmFloat from '../DisplayAlarmFloat';
 
 function renderAlarm(value: number | undefined, model: DisplayAlarmFloatModel) {
@@ -32,7 +33,7 @@ test.each([
   ['at alarmHigh', 10, 'rgb(255, 68, 68)'],
   ['low warning band', 1, 'rgb(255, 170, 0)'],
   ['high warning band', 9, 'rgb(255, 170, 0)'],
-  ['in range', 5, 'rgb(238, 238, 238)'],
+  ['in range', 5, ALL_OK_COLOR],
 ] as const)('%s retains the correct background', (_name, value, color) => {
   const model = new DisplayAlarmFloatModel();
   Object.assign(model, { alarmLow: 0, warnLow: 2, warnHigh: 8, alarmHigh: 10 });
@@ -44,14 +45,12 @@ test.each([undefined, NaN])(
   (value) => {
     const model = new DisplayAlarmFloatModel();
     Object.assign(model, { alarmLow: 0, alarmHigh: 10 });
-    expect(renderAlarm(value, model).style.backgroundColor).toBe(
-      'rgb(238, 238, 238)'
-    );
+    expect(renderAlarm(value, model).style.backgroundColor).toBe(ALL_OK_COLOR);
   }
 );
 
 test('a value without thresholds uses grey', () => {
   expect(
     renderAlarm(42, new DisplayAlarmFloatModel()).style.backgroundColor
-  ).toBe('rgb(238, 238, 238)');
+  ).toBe(ALL_OK_COLOR);
 });

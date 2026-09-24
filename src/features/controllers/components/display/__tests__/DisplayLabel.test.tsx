@@ -9,6 +9,7 @@ import {
   DoubleBinding,
   FloatBinding,
 } from '@/lib/binding/api';
+import { ALL_OK_COLOR } from '@/lib/colors';
 import DisplayLabel from '../DisplayLabel';
 
 function renderLabel(displayType: string, value?: string, unit = '') {
@@ -69,5 +70,5 @@ test.each([
 test('ordinary bindings use the default grey background', () => {
   const { field } = renderLabel('', 'ERROR', 'mm');
   expect(screen.getByText('ERROR mm')).toBeInTheDocument();
-  expect(field.style.backgroundColor).toBe('rgb(238, 238, 238)');
+  expect(field.style.backgroundColor).toBe(ALL_OK_COLOR);
 });
