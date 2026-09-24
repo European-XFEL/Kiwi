@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Card, CardContent, CardFooter } from '@/components/api';
 import { Button } from '@/components/api';
 import ServerProbeForm from './components/ServerProbeForm';
@@ -51,29 +50,28 @@ export function LoginPage() {
     });
 
   // Status text for loading states
-  const statusText = useMemo(() => {
-    switch (activityStatus) {
-      case ActivityStatus.AUTH_USER:
-        return 'Authenticating user...';
-      case ActivityStatus.CONNECTING_SERVER:
-        return 'Connecting to GUI Server...';
-      case ActivityStatus.PROBING_SERVER:
-        return 'Probing GUI Server...';
-      default:
-        return '';
-    }
-  }, [activityStatus]);
+  let statusText = '';
+  switch (activityStatus) {
+    case ActivityStatus.AUTH_USER:
+      statusText = 'Authenticating user...';
+      break;
+    case ActivityStatus.CONNECTING_SERVER:
+      statusText = 'Connecting to GUI Server...';
+      break;
+    case ActivityStatus.PROBING_SERVER:
+      statusText = 'Probing GUI Server...';
+      break;
+  }
 
   // Login button disabled state
-  const isLoginDisabled = useMemo(() => {
-    if (activityStatus !== ActivityStatus.NO_ACTIVITY) return true;
-    const portNum = parseInt(port, 10);
-    if (!host || Number.isNaN(portNum)) return true;
-
-    return probedServerInfo?.authRequired
+  const portNum = parseInt(port, 10);
+  const isLoginDisabled =
+    activityStatus !== ActivityStatus.NO_ACTIVITY ||
+    !host ||
+    Number.isNaN(portNum) ||
+    (probedServerInfo?.authRequired
       ? !userName || !passwd
-      : !userName || !probedServerInfo;
-  }, [activityStatus, host, port, probedServerInfo, userName, passwd]);
+      : !userName || !probedServerInfo);
 
   // Clear error when user makes changes
   const clearError = () => {
