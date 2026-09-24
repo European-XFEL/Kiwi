@@ -21,6 +21,8 @@ import { ControllerOverlay } from './ControllerOverlay';
 export type { ControllerContainerContext };
 
 const EDITABLE_PARENT_COMPONENT = 'EditableApplyLaterComponent';
+const TOOLTIP_WAKEUP = 700;
+const TOOLTIP_FALL_ASLEEP = 2000;
 
 const EDITABLE_CONTENTS_PADDING: React.CSSProperties = {
   paddingTop: 1,
@@ -97,7 +99,7 @@ const ControllerTooltip = React.memo<ControllerTooltipProps>(
           tooltipAutoCloseRef.current = window.setTimeout(() => {
             setIsTooltipOpen(false);
             tooltipAutoCloseRef.current = null;
-          }, 5000);
+          }, TOOLTIP_FALL_ASLEEP);
         }
       },
       [clearTooltipAutoClose]
@@ -107,7 +109,7 @@ const ControllerTooltip = React.memo<ControllerTooltipProps>(
 
     return (
       <Tooltip
-        delayDuration={1500}
+        delayDuration={TOOLTIP_WAKEUP}
         open={isTooltipOpen}
         onOpenChange={handleTooltipOpenChange}
       >
