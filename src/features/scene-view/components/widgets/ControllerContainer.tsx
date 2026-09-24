@@ -22,6 +22,20 @@ export type { ControllerContainerContext };
 
 const EDITABLE_PARENT_COMPONENT = 'EditableApplyLaterComponent';
 
+const EDITABLE_CONTENTS_PADDING: React.CSSProperties = {
+  paddingTop: 1,
+  paddingRight: 2,
+  paddingBottom: 1,
+  paddingLeft: 2,
+};
+
+const DISPLAY_CONTENTS_PADDING: React.CSSProperties = {
+  paddingTop: 0,
+  paddingRight: 1,
+  paddingBottom: 1,
+  paddingLeft: 0,
+};
+
 export interface ControllerContainerProps {
   width: number;
   height: number;
@@ -30,22 +44,32 @@ export interface ControllerContainerProps {
   Renderer: Renderer;
 }
 
-interface ControllerRendererHostProps {
+interface ControllerLayoutProps {
   model: BaseWidgetObjectData;
   objectId: string;
   Renderer: Renderer;
   ctx: ControllerContainerContext;
+  isEditableWidget: boolean;
 }
 
-const ControllerRendererHost = React.memo<ControllerRendererHostProps>(
-  ({ model, objectId, Renderer, ctx }) => (
-    <div data-testid={`controller-${objectId}`} className="w-full h-full">
+const ContainerLayout = React.memo<ControllerLayoutProps>(
+  ({ model, objectId, Renderer, ctx, isEditableWidget }) => (
+    <div
+      data-testid={`controller-${objectId}`}
+      className="w-full h-full"
+      style={{
+        boxSizing: 'border-box',
+        ...(isEditableWidget
+          ? EDITABLE_CONTENTS_PADDING
+          : DISPLAY_CONTENTS_PADDING),
+      }}
+    >
       <Renderer model={model} ctx={ctx} objectId={objectId} />
     </div>
   )
 );
 
-ControllerRendererHost.displayName = 'ControllerRendererHost';
+ContainerLayout.displayName = 'ContainerLayout';
 
 interface ControllerTooltipProps {
   children: React.ReactNode;
@@ -132,16 +156,17 @@ export const ControllerContainer: React.FC<ControllerContainerProps> =
     ) : (
       tooltipBody
     );
-    const controllerContent = React.useMemo(
+    const containerContent = React.useMemo(
       () => (
-        <ControllerRendererHost
+        <ContainerLayout
           model={model}
           objectId={objectId}
           Renderer={Renderer}
           ctx={ctx}
+          isEditableWidget={isEditableWidget}
         />
       ),
-      [Renderer, ctx, model, objectId]
+      [Renderer, ctx, isEditableWidget, model, objectId]
     );
 
     useRegisterSceneControllerWidget(objectId, model, ctx);
@@ -159,10 +184,10 @@ export const ControllerContainer: React.FC<ControllerContainerProps> =
           <ControllerOverlay proxies={ctx.proxies}>
             {tooltipContent ? (
               <ControllerTooltip tooltipContent={tooltipContent}>
-                {controllerContent}
+                {containerContent}
               </ControllerTooltip>
             ) : (
-              controllerContent
+              containerContent
             )}
           </ControllerOverlay>
         </div>

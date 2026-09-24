@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import { BaseWidgetObjectData } from '@/karabo/common/api';
 import { AccessLevel, AccessMode } from '@/karabo/data/enums';
 import { ProxyStatus } from '@/lib/binding/api';
 
@@ -137,6 +138,48 @@ describe('ControllerContainer', () => {
 
     expect(Renderer).toHaveBeenCalledTimes(1);
   });
+
+  it.each([
+    {
+      parentComponent: 'EditableApplyLaterComponent',
+      padding: '1px 2px 1px 2px',
+    },
+    {
+      parentComponent: 'DisplayComponent',
+      padding: '0px 1px 1px 0px',
+    },
+  ])(
+    'applies Python-compatible contents margins for $parentComponent',
+    ({ parentComponent, padding }) => {
+      const { ctx, proxies } = makeControllerContext();
+      const Renderer = jest.fn(() => <div data-testid="renderer" />);
+      const model = {
+        keys: ['DEVICE_A.speed'],
+        parent_component: parentComponent,
+      } as BaseWidgetObjectData;
+
+      mockUseProxies.mockReturnValue(proxies);
+      mockUseController.mockReturnValue(ctx);
+
+      render(
+        <ControllerContainer
+          width={140}
+          height={32}
+          model={model}
+          objectId="scene.0"
+          Renderer={Renderer}
+        />
+      );
+
+      const controllerLayout = screen.getByTestId('controller-scene.0');
+
+      expect(controllerLayout).toHaveClass('w-full', 'h-full');
+      expect(controllerLayout).toHaveStyle({
+        boxSizing: 'border-box',
+        padding,
+      });
+    }
+  );
 
   it('attaches the property tooltip trigger to a DOM element', () => {
     const { ctx, proxies } = makeControllerContext();
