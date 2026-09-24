@@ -2,7 +2,7 @@
 
 import React from 'react';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
-import { DEFAULT_VALUE_FIELD_BG } from '@/lib/colors';
+import { ALL_OK_COLOR } from '@/lib/colors';
 import { DisplayLabelModel } from '@/karabo/common/api';
 import { DoubleBinding, FloatBinding } from '@/lib/binding/api';
 import { getControllerFontStyle } from '../../utils/fonts';
@@ -20,7 +20,7 @@ const DisplayLabel: React.FC<{
     binding instanceof FloatBinding || binding instanceof DoubleBinding
       ? toStringFloatValue(ctx.proxy, 'g', '8', true)
       : toStringValue(ctx.proxy, true);
-  const backgroundColor = DEFAULT_VALUE_FIELD_BG;
+  const backgroundColor = ALL_OK_COLOR;
 
   return (
     <div

@@ -7,6 +7,7 @@ import {
   PropertyProxy,
   StringBinding,
 } from '@/lib/binding/api';
+import { ALL_OK_COLOR } from '@/lib/colors';
 import DisplayList from '../DisplayList';
 
 test('renders the value on a grey background', () => {
@@ -20,7 +21,5 @@ test('renders the value on a grey background', () => {
     userAccessLevel: AccessLevel.OBSERVER,
   };
   render(<DisplayList model={new DisplayListModel()} ctx={ctx} />);
-  expect(screen.getByText('reading').style.backgroundColor).toBe(
-    'rgb(238, 238, 238)'
-  );
+  expect(screen.getByText('reading').style.backgroundColor).toBe(ALL_OK_COLOR);
 });

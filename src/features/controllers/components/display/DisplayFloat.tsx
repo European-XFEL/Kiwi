@@ -3,7 +3,7 @@
 import React from 'react';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 import { DisplayFloatModel } from '@/karabo/common/api';
-import { DEFAULT_VALUE_FIELD_BG } from '@/lib/colors';
+import { ALL_OK_COLOR } from '@/lib/colors';
 import { getControllerFontStyle } from '../../utils/fonts';
 import { toStringFloatValue } from '../../utils/getBindingValue';
 
@@ -25,7 +25,7 @@ const DisplayFloat: React.FC<{
     <div
       className="overflow-clip flex items-center justify-center border border-solid border-black p-px w-full h-full"
       style={{
-        backgroundColor: DEFAULT_VALUE_FIELD_BG,
+        backgroundColor: ALL_OK_COLOR,
         ...getControllerFontStyle(model.font_size, model.font_weight),
       }}
     >
