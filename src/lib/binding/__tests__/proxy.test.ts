@@ -63,7 +63,7 @@ describe('The basic proxy test', () => {
     missingProxy.dispose();
   });
 
-  it('PropertyProxy - schema update seeds pipeline parent path without subscribing when proxy is not monitored', () => {
+  it('PropertyProxy - schema update seeds pipeline parent path to connect', () => {
     const rootBinding = new BindingRoot();
     const rootProxy = new DeviceProxy('TEST_KIWI');
     rootProxy.binding = rootBinding;
@@ -81,7 +81,7 @@ describe('The basic proxy test', () => {
     rootProxy.schema_update.fire();
 
     expect(proxy.pipeline_parent_path).toBe('channel');
-    expect(connectPipeline).not.toHaveBeenCalled();
+    expect(connectPipeline).toHaveBeenCalledTimes(1);
 
     proxy.dispose();
   });

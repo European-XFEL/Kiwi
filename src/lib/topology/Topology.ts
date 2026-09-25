@@ -134,13 +134,16 @@ export class SystemTopology {
     // get output channel binding
     const binding = proxy.getBinding(prop_path);
     if (!binding) {
+      console.log('No binding in network data from', name);
       return;
     }
     const timestamp = Timestamp.fromHashAttributes(
       meta.getAttributes('timestamp')
     );
     applyConfiguration(data, binding!.value.get('schema'), timestamp);
-    proxy.requestNetwork(prop_path);
+    if (proxy.pipeline_subscriptions.has(prop_path)) {
+      proxy.requestNetwork(prop_path);
+    }
   }
 
   private _ensureTopologyKeys(): void {

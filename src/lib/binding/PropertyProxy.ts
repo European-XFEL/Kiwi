@@ -28,7 +28,7 @@ export class PropertyProxy {
   ) {
     this.setBinding(this.root_proxy.getBinding(this.path));
 
-    this.pipeline_parent_path = this._set_pipeline_path();
+    this.pipeline_parent_path = this._get_pipeline_path();
     this.removeBindingUpdate = this.root_proxy.schema_update.subscribe(
       this,
       this.onSchemaUpdate
@@ -103,19 +103,17 @@ export class PropertyProxy {
     this.setBinding(this.root_proxy.getBinding(this.path));
     this.binding_update_signal.fire(this);
 
-    const pipeline_parent_path = this._set_pipeline_path();
-    if (
-      this.isMonitored &&
-      pipeline_parent_path !== this.pipeline_parent_path
-    ) {
-      if (this.pipeline_parent_path !== '') {
-        this.root_proxy.disconnectPipeline(this.pipeline_parent_path);
+    const old_path = this.pipeline_parent_path;
+    const new_path = this._get_pipeline_path();
+    if (new_path !== old_path) {
+      if (old_path !== '') {
+        this.root_proxy.disconnectPipeline(old_path);
       }
-      if (pipeline_parent_path !== '') {
-        this.root_proxy.connectPipeline(pipeline_parent_path);
+      if (new_path !== '') {
+        this.root_proxy.connectPipeline(new_path);
       }
     }
-    this.pipeline_parent_path = pipeline_parent_path;
+    this.pipeline_parent_path = new_path;
   }
 
   public value_update(callback: (proxy: PropertyProxy) => void): Unsubscribe {
@@ -126,7 +124,7 @@ export class PropertyProxy {
     return this.binding_update_signal.subscribe(this, callback);
   }
 
-  private _set_pipeline_path(): string {
+  private _get_pipeline_path(): string {
     if (!this.binding) {
       return '';
     }
