@@ -9,7 +9,7 @@ import {
   getProjectModel,
   singletons,
 } from '@/lib/singletons/api';
-import { useGlobalStore, useRecentStore } from '@/store/api';
+import { useGlobalStore } from '@/store/api';
 import useWorkspaceRuntime from '../useWorkspaceRuntime';
 
 jest.mock('@/features/scene-view/api', () => ({
@@ -24,7 +24,6 @@ describe('useWorkspaceRuntime', () => {
     localStorage.clear();
     singletons.delete('config');
     getProjectModel().clearRoot();
-    useRecentStore.setState({ recentScenes: new Map() });
     useGlobalStore.getState().setLoggedIn({
       loggedUser: 'test-user',
       accessLevel: 4,
@@ -43,13 +42,12 @@ describe('useWorkspaceRuntime', () => {
     singletons.delete('panel_wrangler');
     getProjectModel().clearRoot();
     useGlobalStore.getState().reset();
-    useRecentStore.setState({ recentScenes: new Map() });
     singletons.delete('config');
     localStorage.clear();
     jest.restoreAllMocks();
   });
 
-  it('clears the project, browser filters, and scene tabs while keeping recent scenes', () => {
+  it('opens scenes without recording history and clears the workspace when going Home', () => {
     const overview = new SceneModel({
       uuid: 'overview',
       simple_name: 'Overview',
@@ -108,16 +106,7 @@ describe('useWorkspaceRuntime', () => {
       wrangler.getContent('scene:motor-scene')!.sceneControllerRegistry!,
       'dispose'
     );
-    const recentScenes = useRecentStore
-      .getState()
-      .getRecentScenesForTopic('TOPIC_A');
-    expect(recentScenes).toHaveLength(2);
-    expect(recentScenes).toContainEqual(
-      expect.objectContaining({
-        uuid: 'motor-scene',
-        projectUuid: 'motors',
-      })
-    );
+    expect(localStorage.getItem('kiwi/project:recentScenesByTopic')).toBeNull();
 
     act(() => result.current.runtime.onGoHome!());
 
@@ -140,8 +129,5 @@ describe('useWorkspaceRuntime', () => {
     expect(result.current.location.pathname).toBe('/main');
     expect(result.current.location.search).toBe('');
     expect(window.location.search).toBe('');
-    expect(
-      useRecentStore.getState().getRecentScenesForTopic('TOPIC_A')
-    ).toEqual(recentScenes);
   });
 });

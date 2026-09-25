@@ -1,15 +1,3 @@
-export interface TopicRecentSceneInfo extends RecentSceneInfo {
-  topic: string;
-}
-
-export interface RecentSceneInfo {
-  domain: string;
-  projectUuid: string;
-  uuid: string;
-  name: string;
-  projectName: string;
-}
-
 export interface SceneSize {
   height: number;
   width: number;

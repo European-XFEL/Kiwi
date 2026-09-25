@@ -311,7 +311,7 @@ export default function SelectProjectSceneDialog({
         className="w-[95vw] sm:w-[92vw] sm:max-w-3xl lg:w-[85vw] lg:max-w-7xl max-h-[90dvh] gap-3 overflow-hidden p-4 sm:gap-4 sm:p-6 flex flex-col"
       >
         <DialogHeader>
-          <DialogTitle>Load Project Scene</DialogTitle>
+          <DialogTitle>Load Project</DialogTitle>
           <DialogDescription>
             Select a domain, project, and scene to load
           </DialogDescription>

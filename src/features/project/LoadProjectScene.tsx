@@ -24,7 +24,7 @@ export default function LoadProjectScene({
         className={className}
       >
         <FolderOpen className={iconClassName ?? 'size-4'} />
-        <span className={labelClassName}>Load Project Scene</span>
+        <span className={labelClassName}>Load Project</span>
       </Button>
 
       <SelectProjectSceneDialog

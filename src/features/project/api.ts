@@ -10,10 +10,6 @@ export { default as LoadProjectScene } from './LoadProjectScene';
 export { default as ProjectBrowser } from './components/ProjectBrowser';
 export { default as SelectProjectSceneDialog } from './SelectProjectSceneDialog';
 
-// Subcomponents (for internal use or specific cases)
-export { default as RecentScenesList } from './components/RecentScenesList';
-export { default as RecentSceneItem } from './components/RecentSceneItem';
-
 // Browser controller
 export { useRootProject } from './hooks/useRootProject';
 
@@ -39,6 +35,4 @@ export type {
   DomainSelectorProps,
   ProjectsTableProps,
   ScenesTableProps,
-  RecentSceneItemProps,
-  RecentScenesListProps,
 } from './types/project.types';

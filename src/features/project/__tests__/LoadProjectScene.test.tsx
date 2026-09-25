@@ -54,7 +54,7 @@ describe('LoadProjectScene', () => {
     });
     render(<LoadProjectScene />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Load Project Scene' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Load Project' }));
     expect(dialogProps?.open).toBe(true);
     await act(async () => {
       dialogProps?.onSceneSelected('CONTROLS', project, scene);
@@ -70,7 +70,7 @@ describe('LoadProjectScene', () => {
 
   it('closes a cancelled dialog without loading a root', () => {
     render(<LoadProjectScene />);
-    fireEvent.click(screen.getByRole('button', { name: 'Load Project Scene' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Load Project' }));
 
     act(() => dialogProps?.onCancel());
 

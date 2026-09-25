@@ -5,8 +5,6 @@ import { getMediator, getProjectModel } from '../api';
 import { SceneControllerRegistry } from '@/features/scenepanel/SceneControllerRegistry';
 import { HOME_TAB_ID, PanelWrangler } from '../PanelWrangler';
 
-const mockSetRecentScene = jest.fn();
-
 jest.mock('@/store/api', () => ({
   useGlobalStore: {
     getState: () => ({
@@ -15,11 +13,6 @@ jest.mock('@/store/api', () => ({
         guiServerPort: 44444,
         guiServerTopic: 'TOPIC_A',
       },
-    }),
-  },
-  useRecentStore: {
-    getState: () => ({
-      setRecentScene: mockSetRecentScene,
     }),
   },
 }));
@@ -107,14 +100,6 @@ describe('PanelWrangler', () => {
     expect(content?.sceneControllerRegistry).toBeInstanceOf(
       SceneControllerRegistry
     );
-    expect(mockSetRecentScene).toHaveBeenCalledWith({
-      topic: 'TOPIC_A',
-      domain: 'CONTROLS',
-      projectUuid: 'project-ProjectA',
-      uuid: 'scene-a',
-      name: 'Scene A',
-      projectName: 'ProjectA',
-    });
   });
 
   it('opens device scene tabs from OpenDeviceScene events', () => {
@@ -172,11 +157,6 @@ describe('PanelWrangler', () => {
     expect(wrangler.getContent('scene:scene-child')?.sceneRef).toMatchObject({
       projectUuid: subproject.uuid,
     });
-    expect(mockSetRecentScene).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        projectUuid: subproject.uuid,
-      })
-    );
     expect(wrangler.getSavedActiveTab()).toMatchObject({
       projectUuid: subproject.uuid,
       sceneUuid: 'scene-child',
