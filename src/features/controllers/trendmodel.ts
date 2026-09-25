@@ -1,7 +1,7 @@
-export interface TrendData {
-  timestamps: Float64Array;
-  values: Float64Array;
-}
+export type TrendData = {
+  timestamps: number[];
+  values: number[];
+};
 
 const GENERATION_COUNT = 4;
 const GENERATION_SIZE = 200;
@@ -14,11 +14,13 @@ type Point = readonly [timestamp: number, value: number];
 class Generation {
   private readonly timestamps = new Float64Array(GENERATION_SIZE);
   private readonly values = new Float64Array(GENERATION_SIZE);
+  private start = 0;
   private fill = 0;
 
   addPoint(timestamp: number, value: number): Point | undefined {
-    this.timestamps[this.fill] = timestamp;
-    this.values[this.fill] = value;
+    const position = (this.start + this.fill) % GENERATION_SIZE;
+    this.timestamps[position] = timestamp;
+    this.values[position] = value;
     this.fill++;
 
     if (this.fill < GENERATION_SIZE) return undefined;
@@ -28,24 +30,23 @@ class Generation {
     let timestampSum = 0;
     let valueSum = 0;
     for (let i = 0; i < GENERATION_BASE; i++) {
-      timestampSum += this.timestamps[i];
-      valueSum += this.values[i];
+      const position = (this.start + i) % GENERATION_SIZE;
+      timestampSum += this.timestamps[position];
+      valueSum += this.values[position];
     }
 
-    this.timestamps.copyWithin(0, GENERATION_BASE, this.fill);
-    this.values.copyWithin(0, GENERATION_BASE, this.fill);
+    this.start = (this.start + GENERATION_BASE) % GENERATION_SIZE;
     this.fill -= GENERATION_BASE;
 
     return [timestampSum / GENERATION_BASE, valueSum / GENERATION_BASE];
   }
 
-  copyInto(
-    timestamps: Float64Array,
-    values: Float64Array,
-    offset: number
-  ): number {
-    timestamps.set(this.timestamps.subarray(0, this.fill), offset);
-    values.set(this.values.subarray(0, this.fill), offset);
+  copyInto(timestamps: number[], values: number[], offset: number): number {
+    for (let i = 0; i < this.fill; i++) {
+      const position = (this.start + i) % GENERATION_SIZE;
+      timestamps[offset + i] = this.timestamps[position];
+      values[offset + i] = this.values[position];
+    }
     return offset + this.fill;
   }
 }
@@ -60,9 +61,7 @@ export class TrendModel {
     { length: GENERATION_COUNT },
     () => new Generation()
   );
-  private readonly timestamps = new Float64Array(DISPLAY_SIZE);
-  private readonly values = new Float64Array(DISPLAY_SIZE);
-  private fill = 0;
+  private readonly data: TrendData = { timestamps: [], values: [] };
 
   addPoint(timestamp: number, value: number): void {
     let nextTimestamp = timestamp;
@@ -77,28 +76,29 @@ export class TrendModel {
       nextValue = point[1];
     }
 
-    this.timestamps[this.fill] = timestamp;
-    this.values[this.fill] = value;
-    this.fill++;
+    this.data.timestamps.push(timestamp);
+    this.data.values.push(value);
 
     // The spare region lets raw points accumulate between bounded rebuilds.
-    if (this.fill === DISPLAY_SIZE) this.fillFromGenerations();
+    if (this.data.values.length === DISPLAY_SIZE) this.fillFromGenerations();
   }
 
-  snapshot(): TrendData {
-    // slice keeps snapshots isolated while preserving compact typed storage.
-    return {
-      timestamps: this.timestamps.slice(0, this.fill),
-      values: this.values.slice(0, this.fill),
-    };
+  view(): TrendData {
+    // Consumers share live arrays and must signal updates with a data revision.
+    return this.data;
   }
 
   private fillFromGenerations(): void {
     let position = 0;
     // Coarse-to-fine order keeps timestamps chronological for plotting.
     for (const generation of this.generations) {
-      position = generation.copyInto(this.timestamps, this.values, position);
+      position = generation.copyInto(
+        this.data.timestamps,
+        this.data.values,
+        position
+      );
     }
-    this.fill = position;
+    this.data.timestamps.length = position;
+    this.data.values.length = position;
   }
 }
