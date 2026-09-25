@@ -2,10 +2,6 @@ import React from 'react';
 import { Button } from '@/components/api';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 import type { DisplayTrendGraphModel } from '@/karabo/common/api';
-import pointerIcon from '@/assets/icons/general/pointer.svg?url';
-import zoomIcon from '@/assets/icons/general/zoom.svg?url';
-import moveIcon from '@/assets/icons/general/move.svg?url';
-import resetIcon from '@/assets/icons/general/reset.svg?url';
 import {
   useDisplayTrendGraph,
   type TrendSeries,
@@ -13,12 +9,8 @@ import {
 import { useTrendGraphView } from '../../hooks/useTrendGraphView';
 import { useTrendChart } from '../../hooks/useTrendChart';
 import { formatTrendTime } from '../../hooks/trendChartConfig';
+import { GraphToolbar } from './GraphToolbar';
 
-const MOUSE_TOOLS = [
-  { tool: 'pointer', label: 'Pointer', icon: pointerIcon },
-  { tool: 'zoom', label: 'Zoom', icon: zoomIcon },
-  { tool: 'pan', label: 'Move', icon: moveIcon },
-] as const;
 const TIME_PRESETS = [
   { mode: 'week', label: 'One Week' },
   { mode: 'day', label: 'One Day' },
@@ -28,52 +20,6 @@ const TIME_PRESETS = [
 ] as const;
 
 type TrendView = ReturnType<typeof useTrendGraphView>;
-
-const TrendToolbar = React.memo(function TrendToolbar({
-  tool: selectedTool,
-  selectTool,
-  reset,
-}: Pick<TrendView, 'tool' | 'selectTool' | 'reset'>) {
-  const controls = [
-    ...MOUSE_TOOLS.map(({ tool, label, icon }) => ({
-      label,
-      icon,
-      checked: selectedTool === tool,
-      onClick: () => selectTool(tool),
-    })),
-    {
-      label: 'Reset view',
-      icon: resetIcon,
-      checked: undefined,
-      onClick: reset,
-    },
-  ];
-
-  return (
-    <div
-      role="toolbar"
-      aria-label="Trend graph controls"
-      className="flex w-8 shrink-0 flex-col items-center bg-transparent"
-    >
-      {controls.map(({ label, icon, checked, onClick }) => (
-        <Button
-          key={label}
-          type="button"
-          variant="ghost"
-          size="icon"
-          data-testid={label === 'Reset view' ? 'trend-reset-view' : undefined}
-          aria-label={label}
-          title={label}
-          aria-pressed={checked}
-          className="h-7 w-7 rounded-sm border border-transparent aria-pressed:border-slate-500 aria-pressed:bg-slate-200"
-          onClick={onClick}
-        >
-          <img src={icon} alt="" className="h-4 w-4" />
-        </Button>
-      ))}
-    </div>
-  );
-});
 
 const TrendTimeControls = React.memo(function TrendTimeControls({
   visibleRange,
@@ -190,7 +136,7 @@ const TrendPlot = React.memo(function TrendPlot({
           dataRevision={dataRevision}
           view={view}
         />
-        <TrendToolbar
+        <GraphToolbar
           tool={view.tool}
           selectTool={view.selectTool}
           reset={view.reset}

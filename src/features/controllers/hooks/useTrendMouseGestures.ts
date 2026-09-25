@@ -165,6 +165,7 @@ export function useTrendMouseGestures({
   chartRef,
   tool,
   inverted,
+  logarithmicX = false,
   logarithmicY,
   activeRef,
   getRanges,
@@ -178,6 +179,7 @@ export function useTrendMouseGestures({
   chartRef: React.RefObject<EChartsType | null>;
   tool: 'pointer' | 'zoom' | 'pan';
   inverted: { x: boolean; y: boolean };
+  logarithmicX?: boolean;
   logarithmicY: boolean;
   activeRef: React.RefObject<boolean>;
   getRanges: () => AxisRanges | undefined;
@@ -222,7 +224,7 @@ export function useTrendMouseGestures({
       start: Point,
       current: Point
     ): AxisRanges => ({
-      x: shiftedRange(ranges.x, start.x, current.x, ...pixels.x, false),
+      x: shiftedRange(ranges.x, start.x, current.x, ...pixels.x, logarithmicX),
       y: shiftedRange(ranges.y, start.y, current.y, ...pixels.y, logarithmicY),
     });
     // Both axes scale together so right-drag behaves like a conventional chart zoom.
@@ -236,7 +238,7 @@ export function useTrendMouseGestures({
       // scaling makes equal horizontal drags feel consistent at every zoom level.
       const scale = Math.exp((current.x - start.x) / RIGHT_DRAG_ZOOM_PIXELS);
       return {
-        x: scaledRange(ranges.x, start.x, ...pixels.x, false, scale),
+        x: scaledRange(ranges.x, start.x, ...pixels.x, logarithmicX, scale),
         y: scaledRange(ranges.y, start.y, ...pixels.y, logarithmicY, scale),
       };
     };
@@ -290,8 +292,8 @@ export function useTrendMouseGestures({
           return;
         }
         const xValues = [
-          axisValue(left, ...pixels.x, ranges.x, false),
-          axisValue(right, ...pixels.x, ranges.x, false),
+          axisValue(left, ...pixels.x, ranges.x, logarithmicX),
+          axisValue(right, ...pixels.x, ranges.x, logarithmicX),
         ].sort((a, b) => a - b) as Range;
         const yValues = [
           axisValue(top, ...pixels.y, ranges.y, logarithmicY),
@@ -388,6 +390,7 @@ export function useTrendMouseGestures({
     getRanges,
     inverted.x,
     inverted.y,
+    logarithmicX,
     logarithmicY,
     selectionRef,
     setRanges,
