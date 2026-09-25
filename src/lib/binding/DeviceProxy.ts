@@ -42,7 +42,7 @@ export class DeviceProxy {
   private monitorCount = 0;
   private currentRootRevision = 0;
 
-  private pipeline_subscriptions = new Map<string, number>();
+  public pipeline_subscriptions = new Map<string, number>();
 
   config_update = new Signal<[]>();
   schema_update = new Signal<[]>();
@@ -132,10 +132,9 @@ export class DeviceProxy {
     }
     // We fill a counter object with the path, as we might be
     // interested in multiple values from an output channel
-    this.pipeline_subscriptions.set(
-      path,
-      (this.pipeline_subscriptions.get(path) ?? 0) + 1
-    );
+    const count = (this.pipeline_subscriptions.get(path) ?? 0) + 1;
+    this.pipeline_subscriptions.set(path, count);
+    console.log('Setting pipeline data counter', this.deviceId, path, count);
   }
 
   disconnectPipeline(path: string): void {
@@ -146,6 +145,7 @@ export class DeviceProxy {
 
     const count = (this.pipeline_subscriptions.get(path) ?? 0) - 1;
     this.pipeline_subscriptions.set(path, count);
+    console.log('Setting pipeline data counter', this.deviceId, path, count);
 
     // Only if we fully removed all interested properties
     // do we unsubscribe from the output channel
