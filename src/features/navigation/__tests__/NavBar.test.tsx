@@ -14,12 +14,6 @@ jest.mock('react-router-dom', () => ({
 
 jest.mock('@/lib/singletons/api', () => ({
   getDbConn: () => ({ getScene: mockGetScene }),
-  getConfig: () => ({
-    getRecentScenesByTopic: () => new Map(),
-    getRecentScenes: () => [],
-    setRecentScene: jest.fn(),
-    removeRecentScene: jest.fn(),
-  }),
 }));
 
 const mockSceneStoreState: {

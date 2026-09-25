@@ -15,14 +15,6 @@ export const BACKBONE = 'backbone';
 export const DIRECTORIES = 'dir';
 export const USER = 'user';
 
-export interface StoredRecentSceneInfo {
-  domain: string;
-  projectUuid: string;
-  uuid: string;
-  name: string;
-  projectName: string;
-}
-
 type ItemDType = 'string' | 'number' | 'int' | 'float' | 'boolean' | 'json';
 
 class Item {
@@ -64,23 +56,6 @@ function deserialize(rawValue: string): any {
   return JSON.parse(rawValue);
 }
 
-function isStoredRecentSceneInfo(
-  value: unknown
-): value is StoredRecentSceneInfo {
-  if (!value || typeof value !== 'object') {
-    return false;
-  }
-
-  const scene = value as Record<string, unknown>;
-  return (
-    typeof scene.domain === 'string' &&
-    typeof scene.projectUuid === 'string' &&
-    typeof scene.uuid === 'string' &&
-    typeof scene.name === 'string' &&
-    typeof scene.projectName === 'string'
-  );
-}
-
 function coerceByDtype(value: any, configItem: Item): any {
   if (value === undefined || value === null) {
     return value;
@@ -113,7 +88,6 @@ function coerceByDtype(value: any, configItem: Item): any {
 export class ConfigurationStore {
   private readonly prefix = 'kiwi';
   private readonly memory = new Map<string, any>();
-  private readonly MRU_SCENES_SIZE = 6;
   private storage: Storage | undefined;
 
   private readonly storage_items = {
@@ -149,11 +123,6 @@ export class ConfigurationStore {
       dtype: 'string',
     }),
 
-    recentScenesByTopic: new Item({
-      defaultValue: {},
-      group: PROJECT,
-      dtype: 'json',
-    }),
     currentDomain: new Item({
       defaultValue: '',
       group: PROJECT,
@@ -300,119 +269,6 @@ export class ConfigurationStore {
     this.deleteItem(this.storage_items.sessionUserId);
     this.deleteItem(this.storage_items.sessionRefreshToken);
     this.deleteItem(this.storage_items.sessionAccessLevel);
-  }
-
-  // #endregion
-
-  // #region RecentScenes
-
-  private moveFront<T>(arr: readonly T[], index: number): T[] {
-    if (index === 0) {
-      return arr.slice();
-    }
-
-    return [arr[index], ...arr.slice(0, index), ...arr.slice(index + 1)];
-  }
-
-  private getRecentScenesByTopicObject(): Record<
-    string,
-    StoredRecentSceneInfo[]
-  > {
-    const recentScenes = this.getItem(this.storage_items.recentScenesByTopic);
-    if (!recentScenes || typeof recentScenes !== 'object') {
-      return {};
-    }
-
-    return Object.fromEntries(
-      Object.entries(recentScenes as Record<string, unknown>).flatMap(
-        ([topic, scenes]) => {
-          if (!Array.isArray(scenes)) {
-            return [];
-          }
-
-          const validScenes = scenes.filter(isStoredRecentSceneInfo);
-          return validScenes.length > 0 ? [[topic, validScenes]] : [];
-        }
-      )
-    );
-  }
-
-  public getRecentScenes(topic: string): StoredRecentSceneInfo[] {
-    const recentScenesByTopic = this.getRecentScenesByTopicObject();
-    const scenes = recentScenesByTopic[topic];
-    return Array.isArray(scenes) ? [...scenes] : [];
-  }
-
-  public getRecentScenesByTopic(): Map<string, StoredRecentSceneInfo[]> {
-    const recentScenesByTopic = this.getRecentScenesByTopicObject();
-    const recentScenesMap = new Map<string, StoredRecentSceneInfo[]>();
-
-    Object.entries(recentScenesByTopic).forEach(([topic, scenes]) => {
-      recentScenesMap.set(topic, [...scenes]);
-    });
-
-    return recentScenesMap;
-  }
-
-  public setRecentScene(topic: string, scene: StoredRecentSceneInfo): void {
-    const recentScenesByTopic = this.getRecentScenesByTopicObject();
-    let scenes = Array.isArray(recentScenesByTopic[topic])
-      ? [...recentScenesByTopic[topic]]
-      : [];
-
-    const index = scenes.findIndex(
-      (entry) => entry.domain === scene.domain && entry.uuid === scene.uuid
-    );
-
-    if (index >= 0) {
-      scenes[index] = {
-        ...scenes[index],
-        projectUuid: scene.projectUuid,
-        name: scene.name,
-        projectName: scene.projectName,
-      };
-      scenes = this.moveFront(scenes, index);
-    } else {
-      scenes.unshift(scene);
-      if (scenes.length > this.MRU_SCENES_SIZE) {
-        scenes = scenes.slice(0, this.MRU_SCENES_SIZE);
-      }
-    }
-
-    this.setItem(this.storage_items.recentScenesByTopic, {
-      ...recentScenesByTopic,
-      [topic]: scenes,
-    });
-  }
-
-  public removeRecentScene(
-    topic: string,
-    sceneId: { domain: string; uuid: string }
-  ): void {
-    const recentScenesByTopic = this.getRecentScenesByTopicObject();
-    const scenes = Array.isArray(recentScenesByTopic[topic])
-      ? recentScenesByTopic[topic]
-      : [];
-
-    const updatedScenes = scenes.filter(
-      (scene) =>
-        !(scene.domain === sceneId.domain && scene.uuid === sceneId.uuid)
-    );
-
-    if (updatedScenes.length === 0) {
-      const nextRecentScenesByTopic = { ...recentScenesByTopic };
-      delete nextRecentScenesByTopic[topic];
-      this.setItem(
-        this.storage_items.recentScenesByTopic,
-        nextRecentScenesByTopic
-      );
-      return;
-    }
-
-    this.setItem(this.storage_items.recentScenesByTopic, {
-      ...recentScenesByTopic,
-      [topic]: updatedScenes,
-    });
   }
 
   // #endregion

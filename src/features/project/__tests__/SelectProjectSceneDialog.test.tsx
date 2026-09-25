@@ -230,6 +230,9 @@ describe('SelectProjectSceneDialog loading state', () => {
 
   it('requests domains again after closing before the first domain reply', () => {
     const { rerender } = renderDialog(true);
+    expect(
+      screen.getByRole('heading', { name: 'Load Project' })
+    ).toBeInTheDocument();
     expect(mockListDomains).toHaveBeenCalledTimes(1);
 
     rerender(

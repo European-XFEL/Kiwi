@@ -4,7 +4,6 @@
 
 import { ProjectModel } from '@/karabo/common/project/api';
 import { SceneModel } from '@/karabo/common/scenemodel/api';
-import { RecentSceneInfo } from '@/store/api';
 
 export interface ProjectSceneSelection {
   domain: string;
@@ -65,18 +64,4 @@ export type ScenesTableProps = {
   query?: string;
   onQueryChange?: (q: string) => void;
   selectionDisabled?: boolean;
-};
-
-export type RecentSceneItemProps = {
-  scene: RecentSceneInfo;
-  onOpen: (scene: RecentSceneInfo) => void;
-  onRemove: (scene: RecentSceneInfo) => void;
-  disabled?: boolean;
-};
-
-export type RecentScenesListProps = {
-  scenes: RecentSceneInfo[];
-  onSceneOpen: (scene: RecentSceneInfo) => void;
-  onSceneRemove: (scene: RecentSceneInfo) => void;
-  disabled?: boolean;
 };

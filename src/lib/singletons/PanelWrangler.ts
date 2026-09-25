@@ -2,7 +2,7 @@ import type { SceneModel } from '@/karabo/common/scenemodel/api';
 import type { FitMode } from '@/features/scene-view/api';
 import type { LoadedSceneRef } from '@/store/api';
 import { SceneControllerRegistry } from '@/features/scenepanel/SceneControllerRegistry';
-import { useGlobalStore, useRecentStore } from '@/store/api';
+import { useGlobalStore } from '@/store/api';
 import {
   KaraboEvent,
   KaraboEventMap,
@@ -469,7 +469,6 @@ export class PanelWrangler {
     | {
         snapshot: SceneTabSnapshot;
         content: SceneTabContent;
-        sceneRef: LoadedSceneRef;
       }
     | undefined {
     const projectModel = getProjectModel();
@@ -511,7 +510,6 @@ export class PanelWrangler {
 
     return {
       snapshot,
-      sceneRef,
       content: { sceneRef, sceneModel: model },
     };
   }
@@ -565,7 +563,6 @@ export class PanelWrangler {
       return;
     }
 
-    this.recordRecentScene(sceneData.sceneRef);
     this.openScene(sceneData.snapshot, sceneData.content);
   };
 
@@ -590,25 +587,6 @@ export class PanelWrangler {
       unattachedSceneData.content
     );
   };
-
-  private recordRecentScene(sceneRef: LoadedSceneRef): void {
-    const topic = useGlobalStore.getState().sessionInfo?.guiServerTopic;
-    if (!topic) {
-      return;
-    }
-
-    // NOTE: Only project scenes are currently stored in the list of recently
-    //       used scenes - the non-null assertion operators should not
-    //       trigger any assertion violation at runtime.
-    useRecentStore.getState().setRecentScene({
-      topic,
-      domain: sceneRef.domain!,
-      projectUuid: sceneRef.projectUuid!,
-      uuid: sceneRef.uuid,
-      name: sceneRef.name,
-      projectName: sceneRef.projectName!,
-    });
-  }
 
   private updateSceneTitle(tabId: string, title: string): void {
     const snapshot = this.sceneTabs.get(tabId);
