@@ -7,7 +7,8 @@ export default {
 
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
-    '\\.(gif|ttf|eot|svg|png)$': '<rootDir>/test/__mocks__/fileMock.js',
+    '\\.(gif|ttf|eot|svg|png)(\\?url)?$':
+      '<rootDir>/test/__mocks__/fileMock.js',
     '\\.(css|less|sass|scss)$': 'identity-obj-proxy',
     '^@/(.*)$': '<rootDir>/src/$1',
     '^karabo-ts$': '<rootDir>/test/__mocks__/karabo-ts.ts',

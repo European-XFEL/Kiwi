@@ -1,11 +1,11 @@
-import type { Data } from 'plotly.js';
+import type { Data, PlotData } from 'plotly.js';
 
 export type ChartType = 'line' | 'points' | 'area' | 'bar' | 'heatmap';
 
-export interface XYSeries {
-  x: (number | string | Date)[];
-  y: number[];
-}
+export type XYSeries = {
+  x: (number | string | Date)[] | Float64Array;
+  y: number[] | Float64Array;
+};
 
 export interface HeatmapSeries {
   xLabels: string[]; // e.g., time bins as "12:01", "12:02", ...
@@ -19,7 +19,7 @@ export type TraceInput =
 
 export const buildLine = (
   input: Extract<TraceInput, { kind: 'xy' }>
-): Data => ({
+): Partial<PlotData> => ({
   x: input.series.x,
   y: input.series.y,
   type: 'scatter',
