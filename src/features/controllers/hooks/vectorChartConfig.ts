@@ -4,6 +4,21 @@ import { formatValueTick, type Range } from './trendChartConfig';
 
 const PLOT_INSETS = { left: 52, right: 2, top: 2, bottom: 34 } as const;
 
+export const DIMENSION_DOWNSAMPLE = [
+  { size: 200_000, points: 30_000 },
+  { size: 300_000, points: 40_000 },
+  { size: 400_000, points: 50_000 },
+  { size: 500_000, points: 60_000 },
+] as const;
+
+export function chooseVectorTargetPoints(length: number) {
+  let target = length;
+  for (const rule of DIMENSION_DOWNSAMPLE) {
+    if (length >= rule.size) target = rule.points;
+  }
+  return Math.min(target, length);
+}
+
 function axisTitle(label: string, units: string) {
   return [label, units ? `(${units})` : ''].filter(Boolean).join(' ');
 }
@@ -30,15 +45,39 @@ export function fixedVectorRange(
     ? undefined
     : [min, max];
 }
-export function vectorSeriesOption(values: number[], indices: number[]) {
+
+export function visibleVectorRange(
+  pointCount: number,
+  range?: Range,
+  logarithmic = false
+) {
+  if (!range || pointCount === 0) return [0, pointCount] as const;
+
+  const [min, max] = range;
+  const ratio = max / min;
+  const logarithmicPadding = logarithmic && min > 0 && ratio > 1;
+  const span = max - min;
+  const paddedMin = logarithmicPadding ? min / ratio : min - span;
+  const paddedMax = logarithmicPadding ? max * ratio : max + span;
+  if (paddedMax < 0 || paddedMin > pointCount - 1) return [0, 0] as const;
+
+  const firstPoint = Math.max(0, Math.floor(paddedMin));
+  const lastPoint = Math.min(pointCount, Math.ceil(paddedMax) + 1);
+  return [firstPoint, Math.max(firstPoint, lastPoint)] as const;
+}
+
+export function vectorSeriesOption(points: Float64Array) {
   return {
     id: 'vector',
     type: 'line' as const,
-    data: indices.map((index, valueIndex) => [index, values[valueIndex]]),
-    showSymbol: values.length < 300,
+    data: points,
+    dimensions: ['x', 'y'],
+    encode: { x: 'x', y: 'y' },
+    showSymbol: points.length / 2 < 300,
     symbol: 'circle',
     symbolSize: 4,
     lineStyle: { width: 1.5 },
+    sampling: 'none' as const,
     emphasis: { disabled: true },
     silent: true,
   };
@@ -46,8 +85,7 @@ export function vectorSeriesOption(values: number[], indices: number[]) {
 
 export function vectorChartOption(
   model: DisplayVectorGraphModel,
-  values: number[],
-  indices: number[],
+  points: Float64Array,
   xRange?: Range,
   yRange?: Range
 ): EChartsCoreOption {
@@ -116,6 +154,6 @@ export function vectorChartOption(
       },
       splitLine: { show: model.y_grid, lineStyle: { color: '#ddd' } },
     },
-    series: [vectorSeriesOption(values, indices)],
+    series: [vectorSeriesOption(points)],
   };
 }

@@ -1,6 +1,9 @@
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 import type { DisplayVectorGraphModel } from '@/karabo/common/api';
-import { useDisplayVectorGraph } from '../../hooks/useDisplayVectorGraph';
+import {
+  useDisplayVectorGraph,
+  type VectorData,
+} from '../../hooks/useDisplayVectorGraph';
 import { useVectorChart } from '../../hooks/useVectorChart';
 import { useVectorGraphView } from '../../hooks/useVectorGraphView';
 import { GraphToolbar } from './GraphToolbar';
@@ -8,17 +11,14 @@ import { GraphToolbar } from './GraphToolbar';
 function VectorChart({
   model,
   values,
-  indices,
 }: {
   model: DisplayVectorGraphModel;
-  values: number[];
-  indices: number[];
+  values: VectorData;
 }) {
   const view = useVectorGraphView();
   const { containerRef, selectionRef } = useVectorChart({
     model,
     values,
-    indices,
     view,
   });
 
@@ -60,7 +60,7 @@ const DisplayVectorGraph = ({
   model: DisplayVectorGraphModel;
   ctx?: ControllerContainerContext;
 }) => {
-  const { vectorData, indices, isOffline } = useDisplayVectorGraph(ctx?.proxy);
+  const { values, isOffline } = useDisplayVectorGraph(ctx?.proxy);
 
   if (isOffline) {
     return (
@@ -70,7 +70,7 @@ const DisplayVectorGraph = ({
     );
   }
 
-  return <VectorChart model={model} values={vectorData} indices={indices} />;
+  return <VectorChart model={model} values={values} />;
 };
 
 export default DisplayVectorGraph;

@@ -8,13 +8,17 @@ import { LineChart } from 'echarts/charts';
 import { GridComponent, TitleComponent } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 import type { DisplayVectorGraphModel } from '@/karabo/common/api';
+import { lttb } from '../utils/lttb';
 import {
   useTrendMouseGestures,
   type AxisRanges,
 } from './useTrendMouseGestures';
 import type { useVectorGraphView } from './useVectorGraphView';
+import type { VectorData } from './useDisplayVectorGraph';
 import {
   fixedVectorRange,
+  chooseVectorTargetPoints,
+  visibleVectorRange,
   vectorChartOption,
   vectorPlotBounds,
   vectorSeriesOption,
@@ -69,12 +73,10 @@ function renderedRanges(
 export function useVectorChart({
   model,
   values,
-  indices,
   view,
 }: {
   model: DisplayVectorGraphModel;
-  values: number[];
-  indices: number[];
+  values: VectorData;
   view: VectorView;
 }) {
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -134,9 +136,20 @@ export function useVectorChart({
         previous.resetRevision !== view.resetRevision ||
         !sameRange(previous.x, xRange) ||
         !sameRange(previous.y, yRange);
+      const [start, end] = visibleVectorRange(
+        values.length,
+        xRange,
+        model.x_log
+      );
+      const visiblePoints = lttb(
+        values,
+        chooseVectorTargetPoints(end - start),
+        start,
+        end
+      );
       const option = configChanged
-        ? vectorChartOption(model, values, indices, xRange, yRange)
-        : { series: [vectorSeriesOption(values, indices)] };
+        ? vectorChartOption(model, visiblePoints, xRange, yRange)
+        : { series: [vectorSeriesOption(visiblePoints)] };
       chart.setOption(option, { replaceMerge: ['series'] });
       appliedConfigRef.current = {
         model,
@@ -151,7 +164,7 @@ export function useVectorChart({
       );
       pendingUpdateRef.current = undefined;
     },
-    [indices, model, values, view.ranges, view.resetRevision]
+    [model, values, view.ranges, view.resetRevision]
   );
 
   React.useLayoutEffect(() => {

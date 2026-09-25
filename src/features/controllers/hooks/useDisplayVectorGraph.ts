@@ -1,122 +1,67 @@
-import { useMemo } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PropertyProxy, ProxyStatus } from '@/lib/binding/api';
-import { isHashVector } from '@/karabo/data/typenumIdentifier';
-import { downsampleArray } from '../utils/lttb';
+import type { HashType } from '@/karabo/data/typenums';
+import { isTypedArray } from '@/karabo/data/api';
+import { useIdleScheduler } from './useIdleScheduler';
 
 export type VectorProxy = PropertyProxy | undefined;
-
-export interface UseDisplayVectorGraphConfig {
-  defaultThreshold?: number;
-}
-
-export const DEFAULT_CONFIG: Required<UseDisplayVectorGraphConfig> = {
-  defaultThreshold: 20_000,
-};
+export type VectorData = ArrayLike<number>;
 
 export interface UseDisplayVectorGraphResult {
-  vectorData: number[];
-  indices: number[];
-  schemaValueType?: any;
+  values: VectorData;
+  schemaValueType?: HashType;
   isOffline: boolean;
   rawLength: number;
 }
 
-const DIMENSION_DOWNSAMPLE: Array<{ size: number; points: number }> = [
-  { size: 200_000, points: 30_000 },
-  { size: 300_000, points: 40_000 },
-  { size: 400_000, points: 50_000 },
-  { size: 500_000, points: 60_000 },
-];
-
-const chooseTargetPoints = (length: number, defaultThreshold: number) => {
-  let target = defaultThreshold;
-  for (const rule of DIMENSION_DOWNSAMPLE) {
-    if (length >= rule.size) target = rule.points;
-  }
-  return Math.min(target, length);
-};
-
-const getSchemaValueType = (proxy: VectorProxy): any | undefined =>
+const getSchemaValueType = (proxy: VectorProxy): HashType | undefined =>
   proxy?.binding?.hashType;
 
-const toNumberSafe = (v: unknown): number | null => {
-  if (typeof v === 'number') return Number.isFinite(v) ? v : null;
-  if (typeof v === 'bigint') {
-    const n = Number(v);
-    return Number.isFinite(n) ? n : null;
-  }
-  if (typeof v === 'string') {
-    const n = Number(v);
-    return Number.isFinite(n) ? n : null;
-  }
-  return null;
-};
+const normalizeVector = (raw: unknown): VectorData => {
+  if (!raw) return new Float64Array();
 
-const normalizeVector = (raw: unknown, schemaValueType?: any): number[] => {
-  if (!raw) return [];
-
-  const schemaKnowsVector = isHashVector(schemaValueType);
-  const isRuntimeVectorShape =
-    Array.isArray(raw) ||
-    (ArrayBuffer.isView(raw) && !(raw instanceof DataView));
-
-  if (!schemaKnowsVector && !isRuntimeVectorShape) return [];
-
-  if (ArrayBuffer.isView(raw) && !(raw instanceof DataView)) {
-    try {
-      return Array.from(raw as any)
-        .map(toNumberSafe)
-        .filter((v): v is number => v != null);
-    } catch {
-      return [];
-    }
+  if (isTypedArray(raw)) {
+    if (!(raw instanceof BigInt64Array) && !(raw instanceof BigUint64Array))
+      return raw;
+  } else if (!Array.isArray(raw)) {
+    return new Float64Array();
   }
 
-  if (Array.isArray(raw)) {
-    return raw.map(toNumberSafe).filter((v): v is number => v != null);
+  const normalized = new Float64Array(raw.length);
+  for (let index = 0; index < raw.length; index++) {
+    normalized[index] = Number(raw[index]);
   }
-
-  return [];
-};
-
-const downsampleVectorLTTB = (data: number[], defaultThreshold: number) => {
-  const len = data.length;
-  if (len === 0) return { values: [], indices: [] as number[] };
-
-  const targetPoints = chooseTargetPoints(len, defaultThreshold);
-  return downsampleArray(data, targetPoints);
+  return normalized;
 };
 
 export const useDisplayVectorGraph = (
-  proxy: VectorProxy,
-  cfg: UseDisplayVectorGraphConfig = {}
+  proxy: VectorProxy
 ): UseDisplayVectorGraphResult => {
-  const { defaultThreshold } = { ...DEFAULT_CONFIG, ...cfg };
-
   const isOffline =
     (proxy?.root.status ?? ProxyStatus.OFFLINE) === ProxyStatus.OFFLINE;
-
   const schemaValueType = getSchemaValueType(proxy);
-
   const rawValue = proxy?.value;
+  const latestValue = useRef(rawValue);
+  latestValue.current = rawValue;
+  const schedulePublish = useIdleScheduler(1000);
+  const [published, setPublished] = useState<
+    Pick<UseDisplayVectorGraphResult, 'values' | 'rawLength'>
+  >(() => ({
+    values: new Float64Array(),
+    rawLength: 0,
+  }));
 
-  const baseVector = useMemo(
-    () => normalizeVector(rawValue, schemaValueType),
-    [rawValue, schemaValueType]
-  );
-
-  const rawLength = baseVector.length;
-
-  const { values: vectorData, indices } = useMemo(
-    () => downsampleVectorLTTB(baseVector, defaultThreshold),
-    [baseVector, defaultThreshold]
-  );
+  useEffect(() => {
+    if (isOffline) return;
+    schedulePublish(() => {
+      const values = normalizeVector(latestValue.current);
+      setPublished({ values, rawLength: values.length });
+    });
+  }, [isOffline, rawValue, schedulePublish]);
 
   return {
-    vectorData,
-    indices,
+    ...published,
     schemaValueType,
     isOffline,
-    rawLength,
   };
 };

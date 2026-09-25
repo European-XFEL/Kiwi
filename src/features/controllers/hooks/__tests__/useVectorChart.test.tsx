@@ -45,8 +45,7 @@ function VectorChartHarness({ model }: { model: DisplayVectorGraphModel }) {
   const view = useVectorGraphView();
   const { containerRef } = useVectorChart({
     model,
-    values: [1, 2],
-    indices: [0, 1],
+    values: new Float64Array([1, 2]),
     view,
   });
   return <div ref={containerRef} />;
