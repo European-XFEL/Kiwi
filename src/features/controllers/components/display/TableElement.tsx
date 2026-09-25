@@ -70,7 +70,7 @@ const TableElement: React.FC<{
 
   return (
     <div className="border border-gray-400 bg-white overflow-hidden flex flex-col w-full h-full">
-      <div className="flex-1 min-h-0 overflow-y-scroll overflow-x-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto">
         <Table className="w-full border-collapse text-xs">
           <TableHeader>
             <TableRow className="border-b border-gray-300">
