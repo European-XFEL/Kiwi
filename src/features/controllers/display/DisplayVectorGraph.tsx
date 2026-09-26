@@ -23,8 +23,13 @@ function VectorChart({
         <div
           ref={containerRef}
           data-testid="vector-chart"
-          className="h-full w-full"
+          className="relative h-full w-full min-w-0"
         />
+        {model.title && (
+          <div className="pointer-events-none absolute inset-x-0 top-0.5 text-center text-[13px] text-black">
+            {model.title}
+          </div>
+        )}
         <div
           ref={selectionRef}
           data-testid="vector-zoom-selection"

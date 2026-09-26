@@ -5,16 +5,6 @@ import { DisplayVectorGraphModel } from '@/karabo/common/api';
 import { VectorFloatValue, VectorInt64Value } from '@/karabo/data/types';
 import { useVectorChart } from '../graph/useVectorChart';
 
-jest.mock('echarts/core', () => ({ init: jest.fn(), use: jest.fn() }));
-jest.mock('echarts/charts', () => ({ LineChart: class LineChart {} }));
-jest.mock('echarts/components', () => ({
-  GridComponent: class GridComponent {},
-  TitleComponent: class TitleComponent {},
-}));
-jest.mock('echarts/renderers', () => ({
-  CanvasRenderer: class CanvasRenderer {},
-}));
-
 const originalRequestIdleCallback = window.requestIdleCallback;
 const originalCancelIdleCallback = window.cancelIdleCallback;
 

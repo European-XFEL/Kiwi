@@ -14,6 +14,7 @@ export default {
     '^karabo-ts$': '<rootDir>/test/__mocks__/karabo-ts.ts',
     '\\?worker$': '<rootDir>/test/__mocks__/WorkerMock.ts',
     '^react-plotly.js$': '<rootDir>/test/__mocks__/plotlyMock.js',
+    '^chart.js/auto$': '<rootDir>/test/__mocks__/chartJsMock.ts',
     '^uuid$': '<rootDir>/test/__mocks__/uuidMock.ts',
   },
 

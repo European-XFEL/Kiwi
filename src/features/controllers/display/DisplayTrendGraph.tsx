@@ -4,7 +4,7 @@ import type { ControllerContainerContext } from '@/features/scene-view/api';
 import type { DisplayTrendGraphModel } from '@/karabo/common/api';
 import { useTrendModel, type TrendSeries } from '../graph/useTrendModel';
 import { useTrendChart } from '../graph/useTrendChart';
-import { formatTrendTime } from '../graph/configTrendChart';
+import { formatTrendTime, TRACE_COLORS } from '../graph/configTrendChart';
 import { GraphToolbar } from '../graph/GraphToolbar';
 
 const TIME_PRESETS = [
@@ -63,10 +63,16 @@ const TrendTimePresets = React.memo(function TrendTimePresets({
 
 function TrendChart({
   series,
+  title,
+  hiddenCurves,
+  toggleCurve,
   containerRef,
   selectionRef,
 }: {
   series: TrendSeries[];
+  title: string;
+  hiddenCurves: TrendView['hiddenCurves'];
+  toggleCurve: TrendView['toggleCurve'];
   containerRef: TrendView['containerRef'];
   selectionRef: TrendView['selectionRef'];
 }) {
@@ -75,8 +81,39 @@ function TrendChart({
       <div
         ref={containerRef}
         data-testid="trend-chart"
-        className="h-full w-full"
+        className="relative h-full w-full min-w-0"
       />
+      {title && (
+        <div className="pointer-events-none absolute inset-x-0 top-0.5 text-center text-[13px] text-black">
+          {title}
+        </div>
+      )}
+      {series.length > 1 && (
+        <div
+          className="absolute left-[60px] z-10 flex flex-col gap-1 rounded-sm border border-black bg-slate-200/20 p-1 text-xs text-black"
+          style={{ top: title ? 26 : 10 }}
+          aria-label="Graph legend"
+        >
+          {series.map((item, index) => (
+            <button
+              key={item.key}
+              type="button"
+              aria-pressed={!hiddenCurves.has(item.key)}
+              onClick={() => toggleCurve(item.key)}
+              className="flex items-center gap-1"
+              style={{ opacity: hiddenCurves.has(item.key) ? 0.4 : 1 }}
+            >
+              <span
+                className="inline-block h-3 w-3"
+                style={{
+                  backgroundColor: TRACE_COLORS[index % TRACE_COLORS.length],
+                }}
+              />
+              {item.key}
+            </button>
+          ))}
+        </div>
+      )}
       <div
         ref={selectionRef}
         data-testid="trend-zoom-selection"
@@ -117,6 +154,9 @@ const TrendPlot = React.memo(function TrendPlot({
       <div className="flex min-h-0 flex-1">
         <TrendChart
           series={series}
+          title={model.title}
+          hiddenCurves={view.hiddenCurves}
+          toggleCurve={view.toggleCurve}
           containerRef={view.containerRef}
           selectionRef={view.selectionRef}
         />

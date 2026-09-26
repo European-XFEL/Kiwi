@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  init,
-  use as registerEChartsModules,
-  type EChartsType,
-} from 'echarts/core';
-import { LineChart } from 'echarts/charts';
-import { GridComponent, TitleComponent } from 'echarts/components';
-import { CanvasRenderer } from 'echarts/renderers';
+import { Chart } from 'chart.js/auto';
 import type { DisplayVectorGraphModel } from '@/karabo/common/api';
 import { isTypedArray } from '@/karabo/data/api';
 import type { HashType } from '@/karabo/data/typenums';
@@ -23,25 +16,11 @@ import {
   chooseVectorTargetPoints,
   visibleVectorRange,
   vectorChartOption,
-  vectorPlotBounds,
-  vectorSeriesOption,
+  vectorPoints,
 } from './configVectorChart';
-
-registerEChartsModules([
-  LineChart,
-  GridComponent,
-  TitleComponent,
-  CanvasRenderer,
-]);
+import { GRAPH_LAYOUT } from './configTrendChart';
 
 export type VectorData = ArrayLike<number>;
-
-type AppliedConfig = {
-  model: DisplayVectorGraphModel;
-  x?: AxisRanges['x'];
-  y?: AxisRanges['y'];
-  resetRevision: number;
-};
 
 function normalizeVector(raw: unknown): VectorData {
   if (!raw) return new Float64Array();
@@ -60,34 +39,15 @@ function normalizeVector(raw: unknown): VectorData {
   return normalized;
 }
 
-function sameRange(first?: AxisRanges['x'], second?: AxisRanges['x']) {
-  return first?.[0] === second?.[0] && first?.[1] === second?.[1];
-}
-
-function renderedRanges(
-  chart: EChartsType,
-  title: string,
-  fallback?: AxisRanges
-) {
-  const bounds = vectorPlotBounds(chart.getWidth(), chart.getHeight(), title);
-  const first = chart.convertFromPixel({ gridIndex: 0 }, [
-    bounds.left,
-    bounds.bottom,
-  ]) as number[];
-  const second = chart.convertFromPixel({ gridIndex: 0 }, [
-    bounds.right,
-    bounds.top,
-  ]) as number[];
-  const valid = (values: number[]) =>
-    values.every(Number.isFinite) && values[0] !== values[1];
-  const xValues = [first?.[0], second?.[0]];
-  const yValues = [first?.[1], second?.[1]];
-  const x = valid(xValues)
-    ? (xValues.sort((a, b) => a - b) as AxisRanges['x'])
-    : fallback?.x;
-  const y = valid(yValues)
-    ? (yValues.sort((a, b) => a - b) as AxisRanges['y'])
-    : fallback?.y;
+function renderedRanges(chart: Chart<'line'>, fallback?: AxisRanges) {
+  const read = (key: 'x' | 'y') => {
+    const { min, max } = chart.scales[key];
+    return Number.isFinite(min) && Number.isFinite(max) && min !== max
+      ? ([min!, max!] as AxisRanges['x'])
+      : fallback?.[key];
+  };
+  const x = read('x');
+  const y = read('y');
   return x && y ? { x, y } : undefined;
 }
 
@@ -114,13 +74,12 @@ export function useVectorChart({
   const [resetRevision, setResetRevision] = React.useState(0);
   const containerRef = React.useRef<HTMLDivElement>(null);
   const selectionRef = React.useRef<HTMLDivElement>(null);
-  const chartRef = React.useRef<EChartsType | null>(null);
+  const chartRef = React.useRef<Chart<'line'> | null>(null);
   const activeRef = React.useRef(false);
   const pendingUpdateRef = React.useRef<
     ((ranges?: AxisRanges) => void) | undefined
   >(undefined);
   const rangesRef = React.useRef<AxisRanges | undefined>(undefined);
-  const appliedConfigRef = React.useRef<AppliedConfig | undefined>(undefined);
 
   React.useEffect(() => {
     if (isOffline) return;
@@ -133,31 +92,16 @@ export function useVectorChart({
   React.useLayoutEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-    const chart = init(container, undefined, {
-      renderer: 'canvas',
-      useDirtyRect: true,
-    });
-    appliedConfigRef.current = undefined;
-    const observer = new ResizeObserver(() => {
-      const width = container.clientWidth;
-      const height = container.clientHeight;
-      if (
-        width === 0 ||
-        height === 0 ||
-        (chart.getWidth() === width && chart.getHeight() === height)
-      )
-        return;
-      chart.resize({ width, height, silent: true });
-    });
+    const canvas = document.createElement('canvas');
+    container.appendChild(canvas);
+    const chart = new Chart(canvas, vectorChartOption(model));
     chartRef.current = chart;
-    observer.observe(container);
     return () => {
-      observer.disconnect();
-      chart.dispose();
+      chart.destroy();
+      canvas.remove();
       chartRef.current = null;
-      appliedConfigRef.current = undefined;
     };
-  }, []);
+  }, [model]);
 
   const applyLatest = React.useCallback(
     (gestureRanges?: AxisRanges) => {
@@ -171,12 +115,6 @@ export function useVectorChart({
         gestureRanges?.y ??
         ranges?.y ??
         fixedVectorRange(model.y_autorange, model.y_min, model.y_max);
-      const previous = appliedConfigRef.current;
-      const configChanged =
-        previous?.model !== model ||
-        previous.resetRevision !== resetRevision ||
-        !sameRange(previous.x, xRange) ||
-        !sameRange(previous.y, yRange);
       const [start, end] = visibleVectorRange(
         values.length,
         xRange,
@@ -188,24 +126,23 @@ export function useVectorChart({
         start,
         end
       );
-      const option = configChanged
-        ? vectorChartOption(model, visiblePoints, xRange, yRange)
-        : { series: [vectorSeriesOption(visiblePoints)] };
-      chart.setOption(option, { replaceMerge: ['series'] });
-      appliedConfigRef.current = {
-        model,
-        x: xRange,
-        y: yRange,
-        resetRevision,
-      };
+      chart.data.datasets[0].data = vectorPoints(visiblePoints);
+      chart.data.datasets[0].pointRadius =
+        visiblePoints.length / 2 < GRAPH_LAYOUT.vectorPointLimit
+          ? GRAPH_LAYOUT.vectorPointSize
+          : 0;
+      chart.options.scales!.x!.min = xRange?.[0];
+      chart.options.scales!.x!.max = xRange?.[1];
+      chart.options.scales!.y!.min = yRange?.[0];
+      chart.options.scales!.y!.max = yRange?.[1];
+      chart.update('none');
       rangesRef.current = renderedRanges(
         chart,
-        model.title,
         xRange && yRange ? { x: xRange, y: yRange } : rangesRef.current
       );
       pendingUpdateRef.current = undefined;
     },
-    [model, values, ranges, resetRevision]
+    [model, values, ranges]
   );
 
   React.useLayoutEffect(() => {
@@ -219,10 +156,13 @@ export function useVectorChart({
   const getRanges = React.useCallback(() => rangesRef.current, []);
   const setRanges = React.useCallback((ranges: AxisRanges) => {
     rangesRef.current = ranges;
-    chartRef.current?.setOption({
-      xAxis: { min: ranges.x[0], max: ranges.x[1] },
-      yAxis: { min: ranges.y[0], max: ranges.y[1] },
-    });
+    const chart = chartRef.current;
+    if (!chart) return;
+    chart.options.scales!.x!.min = ranges.x[0];
+    chart.options.scales!.x!.max = ranges.x[1];
+    chart.options.scales!.y!.min = ranges.y[0];
+    chart.options.scales!.y!.max = ranges.y[1];
+    chart.update('none');
   }, []);
 
   const finish = React.useCallback(() => {
