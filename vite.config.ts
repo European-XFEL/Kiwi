@@ -45,7 +45,7 @@ export default defineConfig({
     }),
   ],
   define: {
-    'import.meta.env.VITE_APP_VERSION': JSON.stringify(getGitVersion()),
+    __APP_VERSION__: JSON.stringify(getGitVersion()),
   },
   resolve: {
     alias: {
