@@ -36,11 +36,6 @@ export const isShape = (sceneElement: BaseSceneObjectData): boolean =>
 export const isLayout = (sceneElement: BaseSceneObjectData): boolean =>
   sceneElement instanceof BaseLayoutModel;
 
-// SceneLayer
-// ---
-
-export type SceneLayer = 'shape' | 'widget';
-
 // resolveBounds
 // ---
 

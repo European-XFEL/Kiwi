@@ -36,7 +36,7 @@ jest.mock(
   })
 );
 
-import { renderLayerContent } from '../../../KaraboSceneWidget';
+import { renderContent } from '../../../KaraboSceneWidget';
 import { registerRenderer } from '../../../renderRegistry';
 import '../BoxLayout';
 import '../FixedLayout';
@@ -118,7 +118,7 @@ const makeNestedLayout = (
   return outerLayout;
 };
 
-describe('layout monitoring layer propagation', () => {
+describe('layout controller monitoring', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockStartMonitoring.mockImplementation(() => mockStopMonitoring);
@@ -129,37 +129,12 @@ describe('layout monitoring layer propagation', () => {
     ['FixedLayout', makeFixedLayout],
     ['GridLayout', makeGridLayout],
   ])(
-    'does not start monitoring nested controller widgets in the shape pass for %s',
+    'starts and stops monitoring a controller once for %s',
     async (_, makeLayout) => {
       const { topology } = makeTopology();
 
       await SingletonContext.run({ topology }, async () => {
-        const { unmount } = render(
-          <>{renderLayerContent(makeLayout(), 'shape', 'scene')}</>
-        );
-
-        expect(mockStartMonitoring).not.toHaveBeenCalled();
-
-        unmount();
-
-        expect(mockStopMonitoring).not.toHaveBeenCalled();
-      });
-    }
-  );
-
-  it.each([
-    ['BoxLayout', makeBoxLayout],
-    ['FixedLayout', makeFixedLayout],
-    ['GridLayout', makeGridLayout],
-  ])(
-    'starts monitoring nested controller widgets once in the widget pass for %s',
-    async (_, makeLayout) => {
-      const { topology } = makeTopology();
-
-      await SingletonContext.run({ topology }, async () => {
-        const { unmount } = render(
-          <>{renderLayerContent(makeLayout(), 'widget', 'scene')}</>
-        );
+        const { unmount } = render(<>{renderContent(makeLayout(), 'scene')}</>);
 
         await waitFor(() => {
           expect(mockStartMonitoring).toHaveBeenCalledTimes(1);
@@ -179,48 +154,13 @@ describe('layout monitoring layer propagation', () => {
     ['FixedLayout', makeFixedLayout],
     ['GridLayout', makeGridLayout],
   ])(
-    'propagates the shape pass through nested layouts for %s',
+    'starts and stops nested controller monitoring once for %s',
     async (_, makeOuterLayout) => {
       const { topology } = makeTopology();
 
       await SingletonContext.run({ topology }, async () => {
         const { unmount } = render(
-          <>
-            {renderLayerContent(
-              makeNestedLayout(makeOuterLayout),
-              'shape',
-              'scene'
-            )}
-          </>
-        );
-
-        expect(mockStartMonitoring).not.toHaveBeenCalled();
-
-        unmount();
-
-        expect(mockStopMonitoring).not.toHaveBeenCalled();
-      });
-    }
-  );
-
-  it.each([
-    ['BoxLayout', makeBoxLayout],
-    ['FixedLayout', makeFixedLayout],
-    ['GridLayout', makeGridLayout],
-  ])(
-    'propagates the widget pass through nested layouts for %s',
-    async (_, makeOuterLayout) => {
-      const { topology } = makeTopology();
-
-      await SingletonContext.run({ topology }, async () => {
-        const { unmount } = render(
-          <>
-            {renderLayerContent(
-              makeNestedLayout(makeOuterLayout),
-              'widget',
-              'scene'
-            )}
-          </>
+          <>{renderContent(makeNestedLayout(makeOuterLayout), 'scene')}</>
         );
 
         await waitFor(() => {

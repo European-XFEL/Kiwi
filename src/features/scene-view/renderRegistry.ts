@@ -2,7 +2,6 @@
 
 import type React from 'react';
 import { BaseSceneObjectData, BaseWidgetObjectData } from '@/karabo/common/api';
-import type { SceneLayer } from './bounds';
 import {
   BoxLayoutModel,
   FixedLayoutModel,
@@ -25,7 +24,6 @@ export interface RendererProps<
 > {
   model: TModel;
   ctx?: TContext;
-  layer?: SceneLayer;
   objectId?: string;
 }
 

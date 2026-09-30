@@ -9,7 +9,6 @@ import {
   isScrollableMode,
 } from '../utils/sceneLayout';
 import { getChildObjectId } from '../utils/objectId';
-import { collectSceneLayers } from '../utils/visitor';
 import { useSceneObjectInteractionLogger } from '../hooks/useSceneObjectInteractionLogger';
 
 // Bootstrap — triggers all registerRenderer() calls
@@ -52,18 +51,11 @@ const SceneView: React.FC<SceneViewProps> = React.memo(
     const sceneViewId = useId();
 
     const sceneEntries = React.useMemo(() => {
-      const entriesByLayer = collectSceneLayers(sceneModel.children);
-      const orderedEntries = [
-        ...entriesByLayer.shape,
-        ...entriesByLayer.widget,
-      ];
-
-      return orderedEntries.map(({ model, context }) => (
+      return sceneModel.children.map((model, index) => (
         <KaraboSceneWidget
-          key={`${context.layer}_${context.layerIndex}`}
+          key={index}
           model={model}
-          objectId={getChildObjectId(rootObjectId, context.rootIndex)}
-          layer={context.layer}
+          objectId={getChildObjectId(rootObjectId, index)}
         />
       ));
     }, [sceneModel.children, rootObjectId]);
@@ -91,6 +83,7 @@ const SceneView: React.FC<SceneViewProps> = React.memo(
             height: sceneModel.height,
             transform: `scale(${scale})`,
             transformOrigin: 'top left',
+            isolation: 'isolate',
           }}
         >
           {sceneEntries}
