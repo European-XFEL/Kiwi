@@ -70,10 +70,7 @@ export function useAuth({
     [setLoggedIn, navigate, setActivityStatus]
   );
 
-  // Update auth server URL ref
-  if (!authServerURLRef.current) {
-    authServerURLRef.current = probedServerInfo?.authServer ?? '';
-  }
+  authServerURLRef.current = probedServerInfo?.authServer ?? '';
 
   // Main login function
   const doLogin = useCallback(
