@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { RootProjectBrowser } from '../types/project.types';
 import { KaraboEvent, useKaraboEvent } from '@/lib/events';
 import { getProjectModel } from '@/lib/singletons/api';
 import {
@@ -29,7 +30,7 @@ function buildFromActiveRoot(): ProjectBrowserModel | undefined {
  * loading: an unchanged root identity does not mean unchanged content, so the
  * announcement is the only reliable signal.
  */
-export function useRootProject() {
+export function useRootProject(): RootProjectBrowser {
   // Seeded during the first render rather than from a mount effect, so a
   // project activated before this mounted renders immediately instead of after
   // a frame of empty navigation.

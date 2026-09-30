@@ -1,12 +1,12 @@
 import { useId, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/components/api';
-import type { useRootProject } from '../hooks/useRootProject';
+import type { RootProjectBrowser } from '../types/project.types';
 import ProjectList from './ProjectList';
 import ProjectSceneList from './ProjectSceneList';
 
 type ProjectBrowserProps = {
-  browser: ReturnType<typeof useRootProject>;
+  browser: RootProjectBrowser;
   className?: string;
 };
 

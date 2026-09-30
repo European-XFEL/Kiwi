@@ -30,6 +30,7 @@ export {
 
 // Types
 export type {
+  RootProjectBrowser,
   RootProjectLoadHandle,
   LoadProjectSceneProps,
   SelectProjectSceneDialogProps,

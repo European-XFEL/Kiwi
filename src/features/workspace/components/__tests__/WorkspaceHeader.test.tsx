@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 import { AccessLevel } from '@/karabo/data/api';
-import type { useRootProject } from '@/features/project/api';
+import type { RootProjectBrowser } from '@/features/project/api';
 import WorkspaceHeader from '../WorkspaceHeader';
 import { createDefaultWorkspaceModel } from '../../utils';
 import type { WorkspaceRuntime } from '../../types';
@@ -11,7 +11,7 @@ jest.mock('@/features/navigation', () => ({
   NavBar: (props: unknown) => mockNavBar(props),
 }));
 
-const browser = { rootProject: undefined } as ReturnType<typeof useRootProject>;
+const browser = { rootProject: undefined } as RootProjectBrowser;
 
 function renderHeader(
   runtime: WorkspaceRuntime,

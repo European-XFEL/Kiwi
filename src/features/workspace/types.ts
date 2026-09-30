@@ -1,4 +1,4 @@
-import type { useRootProject } from '@/features/project/api';
+import type { RootProjectBrowser } from '@/features/project/api';
 import type { ActiveIndicatorProps } from '@/features/status';
 import type {
   AccessLevelSelectorProps,
@@ -94,19 +94,25 @@ export interface WorkspaceFooterModel {
 export interface WorkspaceRuntime {
   access?: Omit<AccessLevelSelectorProps, 'compact' | 'badgeClassName'>;
   activity?: ActiveIndicatorProps;
-  browser?: ReturnType<typeof useRootProject>;
-  connectedFor?: string;
+  browser?: RootProjectBrowser;
   connected: boolean;
   guiServer?: string;
   guiServerVersion?: string;
-  latestLatency?: number | null;
   onGoToHomeTab?: () => void;
   projectLoading?: boolean;
-  queuedMessageCount?: number;
   sceneTabOpen?: boolean;
   topic?: string;
   user?: Omit<UserProfileProps, 'nameClassName'>;
 }
+
+export type WorkspaceFooterRuntime = Pick<
+  WorkspaceRuntime,
+  'connected' | 'guiServer' | 'guiServerVersion' | 'topic'
+> & {
+  connectedFor?: string;
+  latestLatency: number | null;
+  queuedMessageCount: number;
+};
 
 // Panel tabs & live state
 // ---

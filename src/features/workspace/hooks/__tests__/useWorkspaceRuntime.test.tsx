@@ -83,6 +83,25 @@ describe('useWorkspaceRuntime', () => {
     expect(result.current.runtime.sceneTabOpen).toBe(false);
   });
 
+  it('reads a project load that started before mounting', () => {
+    const wrangler = getPanelWrangler();
+    broadcast_event(KaraboEvent.DatabaseBusy, new Hash('is_processing', true));
+    expect(wrangler.getSnapshot().projectLoading).toBe(true);
+
+    const { result } = renderHook(() => useWorkspaceRuntime(), {
+      wrapper: MemoryRouter,
+    });
+    expect(result.current.projectLoading).toBe(true);
+
+    act(() => {
+      broadcast_event(
+        KaraboEvent.DatabaseBusy,
+        new Hash('is_processing', false)
+      );
+    });
+    expect(result.current.projectLoading).toBe(false);
+  });
+
   it('reports whether a project is loading', () => {
     const { result } = renderHook(() => useWorkspaceRuntime(), {
       wrapper: MemoryRouter,

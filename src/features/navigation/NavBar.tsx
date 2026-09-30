@@ -3,7 +3,7 @@ import { Button, Separator } from '@/components/api';
 import { ActiveIndicator } from '@/features/status';
 import type { ActiveIndicatorProps } from '@/features/status';
 import { LoadProjectScene, ProjectBrowser } from '@/features/project/api';
-import type { useRootProject } from '@/features/project/api';
+import type { RootProjectBrowser } from '@/features/project/api';
 import { AccessLevelSelector, UserProfile } from '@/features/user';
 import type {
   AccessLevelSelectorProps,
@@ -23,7 +23,7 @@ export function NavBar({
   access,
   user,
 }: {
-  browser?: ReturnType<typeof useRootProject>;
+  browser?: RootProjectBrowser;
   sceneOpen: boolean;
   onGoHome?: () => void;
   compact: boolean;

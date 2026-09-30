@@ -10,7 +10,7 @@ import HomePanel from '@/app/HomePanel';
 import { useEffect, useState } from 'react';
 import type { PanelTab, WorkspaceModel, WorkspaceRuntime } from '../types';
 import WorkspaceBody from './WorkspaceBody';
-import WorkspaceFooter from './WorkspaceFooter';
+import WorkspaceFooterContainer from './WorkspaceFooterContainer';
 import WorkspaceHeader from './WorkspaceHeader';
 
 // TODO: renderLeftPanel — Topology panel (device/instance tree)
@@ -110,7 +110,9 @@ export default function WorkspaceShell({
         )}
       </div>
 
-      <WorkspaceFooter footer={workspace.footer} runtime={runtime} />
+      {workspace.footer.visible ? (
+        <WorkspaceFooterContainer footer={workspace.footer} runtime={runtime} />
+      ) : null}
     </section>
   );
 }

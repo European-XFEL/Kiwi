@@ -5,7 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/api';
-import type { WorkspaceFooterModel, WorkspaceRuntime } from '../types';
+import type { WorkspaceFooterModel, WorkspaceFooterRuntime } from '../types';
 
 function FooterText({
   label,
@@ -104,7 +104,7 @@ export default function WorkspaceFooter({
   runtime,
 }: {
   footer: WorkspaceFooterModel;
-  runtime: WorkspaceRuntime;
+  runtime: WorkspaceFooterRuntime;
 }) {
   if (!footer.visible || footer.kind !== 'app-footer') {
     return null;
