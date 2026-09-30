@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 // ControllerContainer. It uses import.meta.glob, which Jest cannot parse, so
 // importing the barrel makes this hook untestable. WorkspaceShell does the same.
 import { useActiveSceneStore } from '@/features/scene-view/hooks/useActiveScene';
-import { getPanelWrangler } from '@/lib/singletons/api';
+import { getDbConn, getPanelWrangler } from '@/lib/singletons/api';
 import { clearRootProject } from '@/features/project/api';
 import { useGlobalStore } from '@/store/api';
 
@@ -13,6 +13,7 @@ import { useGlobalStore } from '@/store/api';
 function clearSessionState(): void {
   getPanelWrangler().resetWorkspace();
   clearRootProject();
+  getDbConn().reset();
   useActiveSceneStore.getState().setLoadedSceneRef(undefined);
   useActiveSceneStore.getState().setSceneLoadPending(false);
 }
