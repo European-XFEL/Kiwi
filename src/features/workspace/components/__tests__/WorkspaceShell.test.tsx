@@ -22,7 +22,7 @@ jest.mock('../WorkspaceHeader', () => {
   };
 });
 
-jest.mock('../WorkspaceFooter', () => {
+jest.mock('../WorkspaceFooterContainer', () => {
   const React = jest.requireActual<typeof import('react')>('react');
 
   return {

@@ -4,6 +4,23 @@
 
 import { ProjectModel } from '@/karabo/common/project/api';
 import { SceneModel } from '@/karabo/common/scenemodel/api';
+import type {
+  ProjectBrowserEntry,
+  ProjectBrowserSceneEntry,
+} from '../utils/createProjectBrowser';
+
+export interface RootProjectBrowser {
+  rootProject: ProjectBrowserEntry | undefined;
+  selectedProject: ProjectBrowserEntry | undefined;
+  projects: ProjectBrowserEntry[];
+  query: string;
+  setQuery: (query: string) => void;
+  filteredScenes: ProjectBrowserSceneEntry[];
+  sceneQuery: string;
+  setSceneQuery: (query: string) => void;
+  selectProject: (projectUuid: string) => void;
+  openScene: (sceneUuid: string) => void;
+}
 
 export interface ProjectSceneSelection {
   domain: string;

@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { AccessLevel } from '@/karabo/data/api';
-import type { useRootProject } from '@/features/project/api';
+import type { RootProjectBrowser } from '@/features/project/api';
 
 const mockProjectBrowser = jest.fn<React.ReactElement, [unknown]>(() =>
   React.createElement('div', { 'data-testid': 'project-browser' })
@@ -40,10 +40,8 @@ jest.mock('@/features/status', () => ({
 
 import { NavBar } from '../NavBar';
 
-const browser = { rootProject: {} } as ReturnType<typeof useRootProject>;
-const noProject = { rootProject: undefined } as ReturnType<
-  typeof useRootProject
->;
+const browser = { rootProject: {} } as RootProjectBrowser;
+const noProject = { rootProject: undefined } as RootProjectBrowser;
 const activity = { lastActivity: 1, activityLevel: 'moderate' as const };
 const access = {
   accessLevel: AccessLevel.OPERATOR,
