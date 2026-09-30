@@ -2,6 +2,7 @@ import type { SceneModel } from '@/karabo/common/scenemodel/api';
 import type { FitMode } from '@/features/scene-view/api';
 import type { LoadedSceneRef } from '@/store/api';
 import { SceneControllerRegistry } from '@/features/scenepanel/SceneControllerRegistry';
+import type { Hash } from '@/karabo/data/api';
 import { useGlobalStore } from '@/store/api';
 import {
   KaraboEvent,
@@ -99,7 +100,10 @@ function isSameSceneRef(
 }
 
 export class PanelWrangler {
+  // Mirrors DatabaseBusy: the database connection alone decides when a project
+  // is loading, so resets leave this flag untouched.
   private state = {
+    projectLoading: false,
     left: createEmptyArea('left'),
     center: createCenterArea(),
     right: createEmptyArea('right'),
@@ -116,6 +120,7 @@ export class PanelWrangler {
       [KaraboEvent.OpenScene]: this.onEventOpenScene,
       [KaraboEvent.OpenUnattachedScene]: this.onEventOpenUnattachedScene,
       [KaraboEvent.GoHome]: this.onEventGoHome,
+      [KaraboEvent.DatabaseBusy]: this.onEventDatabaseBusy,
     };
 
     register_for_broadcasts(this.eventMap);
@@ -142,6 +147,8 @@ export class PanelWrangler {
       this.listeners.delete(listener);
     };
   };
+
+  isSceneTabOpen = (): boolean => !this.isHomeOnly();
 
   getContent(tabId: string): SceneTabContent | undefined {
     return this.content.get(tabId);
@@ -243,6 +250,7 @@ export class PanelWrangler {
 
     this.clearSavedActiveTab();
     this.commit({
+      ...this.state,
       left: createEmptyArea('left'),
       center: createCenterArea(),
       right: createEmptyArea('right'),
@@ -549,6 +557,12 @@ export class PanelWrangler {
       content: { sceneRef, sceneModel: model },
     };
   }
+
+  private onEventDatabaseBusy = (data: Hash): void => {
+    const projectLoading = data.getValue<boolean>('is_processing');
+    if (this.state.projectLoading === projectLoading) return;
+    this.commit({ ...this.state, projectLoading });
+  };
 
   private onEventGoHome = (): void => {
     this.resetCenter();

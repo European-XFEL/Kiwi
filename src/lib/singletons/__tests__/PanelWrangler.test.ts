@@ -1,5 +1,6 @@
 import { ProjectModel } from '@/karabo/common/project/api';
 import { SceneModel } from '@/karabo/common/scenemodel/api';
+import { Hash } from '@/karabo/data/api';
 import { KaraboEvent, broadcast_event } from '@/lib/events';
 import { getMediator, getProjectModel } from '../api';
 import { SceneControllerRegistry } from '@/features/scenepanel/SceneControllerRegistry';
@@ -46,6 +47,14 @@ function openScene(model: SceneModel) {
   broadcast_event(KaraboEvent.OpenScene, { model });
 }
 
+function setDatabaseBusy(isProcessing: boolean, loadingFailed?: boolean) {
+  const data = new Hash('is_processing', isProcessing);
+  if (loadingFailed !== undefined) {
+    data.set('loading_failed', loadingFailed);
+  }
+  broadcast_event(KaraboEvent.DatabaseBusy, data);
+}
+
 function openDeviceScene(model: SceneModel) {
   broadcast_event(KaraboEvent.OpenUnattachedScene, { model });
 }
@@ -62,6 +71,51 @@ describe('PanelWrangler', () => {
 
   afterEach(() => {
     wrangler.dispose();
+  });
+
+  it.each(['resetCenter', 'resetWorkspace'] as const)(
+    'clears the active scene on %s but leaves project loading to the database',
+    (reset) => {
+      const scene = makeScene('scene-a');
+      setProject('CONTROLS', 'ProjectA', [scene]);
+      openScene(scene);
+      const observed: { sceneTabOpen: boolean; loading: boolean }[] = [];
+      const unsubscribe = wrangler.subscribe(() => {
+        observed.push({
+          sceneTabOpen: wrangler.isSceneTabOpen(),
+          loading: wrangler.getSnapshot().projectLoading,
+        });
+      });
+      try {
+        setDatabaseBusy(true);
+        wrangler[reset]();
+        expect(observed).toEqual([
+          { sceneTabOpen: true, loading: true },
+          { sceneTabOpen: false, loading: true },
+        ]);
+      } finally {
+        unsubscribe();
+      }
+    }
+  );
+
+  it('marks the project as loading exactly while the database is busy', () => {
+    const scene = makeScene('scene-a');
+    setProject('CONTROLS', 'ProjectA', [scene]);
+
+    setDatabaseBusy(true);
+    openScene(scene);
+    expect(wrangler.getSnapshot().projectLoading).toBe(true);
+
+    setDatabaseBusy(false);
+    expect(wrangler.getSnapshot().projectLoading).toBe(false);
+  });
+
+  it('ends project loading when the database reports a failed load', () => {
+    setDatabaseBusy(true);
+    setDatabaseBusy(false, true);
+
+    expect(wrangler.getSnapshot().projectLoading).toBe(false);
   });
 
   it('starts with the home tab before any scene is opened', () => {

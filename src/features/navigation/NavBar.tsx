@@ -12,20 +12,22 @@ import { UserProfile, AccessLevelSelector } from '@/features/user';
 import { Button, Separator } from '@/components/api';
 import { GuiServerDisplay, ActiveIndicator } from '@/features/status';
 import { useNavigate } from 'react-router-dom';
-import { useActiveSceneStore } from '@/features/scene-view/api';
+import { useSyncExternalStore } from 'react';
+import { getPanelWrangler } from '@/lib/singletons/api';
+import { broadcast_event, KaraboEvent } from '@/lib/events';
 import icons from '@/assets/icons';
 
 export function NavBar() {
   const projectBrowser = useRootProject();
   const navigate = useNavigate();
-  const loadedSceneRef = useActiveSceneStore((state) => state.loadedSceneRef);
-  const setLoadedSceneRef = useActiveSceneStore(
-    (state) => state.setLoadedSceneRef
+  const wrangler = getPanelWrangler();
+  const sceneTabOpen = useSyncExternalStore(
+    wrangler.subscribe,
+    wrangler.isSceneTabOpen
   );
-  const activeLoadedSceneRef = loadedSceneRef ?? null;
 
   const handleHome = () => {
-    setLoadedSceneRef(undefined);
+    broadcast_event(KaraboEvent.GoHome, {});
     navigate('/home');
   };
 
@@ -59,7 +61,7 @@ export function NavBar() {
                 variant="outline"
                 className="w-full justify-start"
               />
-              {activeLoadedSceneRef && (
+              {sceneTabOpen && (
                 <>
                   <Separator />
                   <Button
@@ -76,7 +78,7 @@ export function NavBar() {
           </NavToggle>
 
           <div className="flex-1 min-w-0 overflow-hidden flex justify-center items-center">
-            {activeLoadedSceneRef ? (
+            {sceneTabOpen ? (
               <div className="max-w-full min-w-0 overflow-hidden">
                 <ProjectBrowser browser={projectBrowser} />
               </div>
@@ -106,7 +108,7 @@ export function NavBar() {
 
           <NavItem className="flex-1 min-w-0 overflow-hidden">
             <div className="flex items-center gap-2 overflow-hidden w-full">
-              {activeLoadedSceneRef && (
+              {sceneTabOpen && (
                 <>
                   <Button
                     variant="ghost"
@@ -124,7 +126,7 @@ export function NavBar() {
                 </>
               )}
 
-              {!activeLoadedSceneRef && (
+              {!sceneTabOpen && (
                 <span className="text-sm text-muted-foreground italic">
                   No scene loaded
                 </span>

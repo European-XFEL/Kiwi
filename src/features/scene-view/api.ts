@@ -20,10 +20,8 @@ export {
 } from './utils/mode';
 export type { SceneInteractionMode } from './utils/mode';
 export { default as SceneView } from './components/SceneView';
-export { default as SceneSizeDisplay } from './components/SceneSizeDisplay';
 export { default as FitModeSelect } from './components/FitModeSelect';
 export { ControllerContainer } from './components/widgets/ControllerContainer';
-export { useActiveSceneStore } from './hooks/useActiveScene';
 export { useSceneScale } from './hooks/useSceneScale';
 export { getOverflow } from './utils/sceneLayout';
 export {

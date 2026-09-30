@@ -3,19 +3,12 @@ import { loadRootProjectScene } from '@/features/project/api';
 import type { RootProjectLoadHandle } from '@/features/project/api';
 import { getPanelWrangler } from '@/lib/singletons/api';
 import { waitForTopology } from '@/lib/topology/api';
-import { useActiveSceneStore } from '@/features/scene-view/hooks/useActiveScene';
 
 export default function SceneBootstrap() {
-  const setSceneLoadPending = useActiveSceneStore(
-    (state) => state.setSceneLoadPending
-  );
-
   useEffect(() => {
     const panelWrangler = getPanelWrangler();
     const savedTab = panelWrangler.getSavedActiveTab();
     if (!savedTab) return;
-
-    setSceneLoadPending(true);
 
     // `waitForTopology` only polls readiness, so a boolean is enough to stop
     // that wait when this effect is cleaned up before topology is available.
@@ -48,20 +41,14 @@ export default function SceneBootstrap() {
         console.error(message);
         // A scene that cannot be opened must not fail again on the next reload.
         panelWrangler.clearSavedActiveTab();
-      })
-      .finally(() => {
-        if (!cancelled && !handle?.controller.signal.aborted) {
-          setSceneLoadPending(false);
-        }
       });
 
     return () => {
       // Stop a pending topology wait and abort the scene load if it has started.
       cancelled = true;
       handle?.abort();
-      setSceneLoadPending(false);
     };
-  }, [setSceneLoadPending]);
+  }, []);
 
   return null;
 }

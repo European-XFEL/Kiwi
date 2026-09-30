@@ -12,12 +12,6 @@ import {
 import { useGlobalStore } from '@/store/api';
 import useWorkspaceRuntime from '../useWorkspaceRuntime';
 
-jest.mock('@/features/scene-view/api', () => ({
-  useActiveSceneStore: jest.requireActual(
-    '@/features/scene-view/hooks/useActiveScene'
-  ).useActiveSceneStore,
-}));
-
 describe('useWorkspaceRuntime', () => {
   beforeEach(() => {
     window.history.replaceState(null, '', '/main');
@@ -45,6 +39,45 @@ describe('useWorkspaceRuntime', () => {
     singletons.delete('config');
     localStorage.clear();
     jest.restoreAllMocks();
+  });
+
+  it('reports whether a scene tab is open', () => {
+    const first = new SceneModel({
+      uuid: 'first',
+      simple_name: 'First',
+      initialized: true,
+    });
+    const second = new SceneModel({
+      uuid: 'second',
+      simple_name: 'Second',
+      initialized: true,
+    });
+    const project = new ProjectModel({
+      uuid: 'project',
+      simple_name: 'Project',
+    });
+    project.scenes = [first, second];
+    getProjectModel().setRoot('CONTROLS', project);
+    const wrangler = getPanelWrangler();
+    const { result } = renderHook(
+      () => ({
+        runtime: useWorkspaceRuntime(),
+        browser: useRootProject(),
+      }),
+      { wrapper: MemoryRouter }
+    );
+    expect(result.current.runtime.sceneTabOpen).toBe(false);
+
+    act(() => {
+      result.current.browser.openScene(first.uuid);
+      result.current.browser.openScene(second.uuid);
+    });
+    expect(result.current.runtime.sceneTabOpen).toBe(true);
+
+    act(() => wrangler.closeTab('center', 'scene:first'));
+    expect(result.current.runtime.sceneTabOpen).toBe(true);
+    act(() => wrangler.closeTab('center', 'scene:second'));
+    expect(result.current.runtime.sceneTabOpen).toBe(false);
   });
 
   it('opens scenes without recording history and clears the workspace when going Home', () => {
@@ -98,6 +131,7 @@ describe('useWorkspaceRuntime', () => {
       result.current.browser.setSceneQuery('motor');
     });
 
+    expect(result.current.runtime.sceneTabOpen).toBe(true);
     expect(result.current.browser.selectedProject?.projectUuid).toBe('motors');
     expect(result.current.browser.query).toBe('mot');
     expect(result.current.browser.sceneQuery).toBe('motor');
@@ -110,6 +144,7 @@ describe('useWorkspaceRuntime', () => {
 
     act(() => result.current.runtime.onGoHome!());
 
+    expect(result.current.runtime.sceneTabOpen).toBe(false);
     expect(getProjectModel().root).toBeUndefined();
     expect(getProjectModel().domain).toBeUndefined();
     expect(result.current.browser.rootProject).toBeUndefined();

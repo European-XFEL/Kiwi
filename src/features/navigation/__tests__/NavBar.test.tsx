@@ -1,7 +1,13 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { KaraboEvent } from '@/lib/events';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 const mockNavigate = jest.fn();
+const mockPostEvent = jest.fn();
+const mockWrangler = {
+  subscribe: jest.fn(() => jest.fn()),
+  isSceneTabOpen: jest.fn(),
+};
 const mockGetScene = jest.fn();
 const mockBrowserState = {};
 const mockProjectBrowser = jest.fn<React.ReactElement, [unknown]>(() =>
@@ -13,28 +19,9 @@ jest.mock('react-router-dom', () => ({
 }));
 
 jest.mock('@/lib/singletons/api', () => ({
+  getPanelWrangler: () => mockWrangler,
+  getMediator: () => ({ postEvent: mockPostEvent }),
   getDbConn: () => ({ getScene: mockGetScene }),
-}));
-
-const mockSceneStoreState: {
-  loadedSceneRef?: {
-    width: number;
-    height: number;
-    domain: string;
-    projectUuid: string;
-    projectName: string;
-    uuid: string;
-    name: string;
-  };
-  setLoadedSceneRef: jest.Mock;
-} = {
-  loadedSceneRef: undefined,
-  setLoadedSceneRef: jest.fn(),
-};
-
-jest.mock('@/features/scene-view/api', () => ({
-  useActiveSceneStore: (selector?: (state: unknown) => unknown) =>
-    selector ? selector(mockSceneStoreState) : mockSceneStoreState,
 }));
 
 jest.mock('@/app/api', () => {
@@ -129,16 +116,14 @@ import { NavBar } from '../NavBar';
 describe('NavBar', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockSceneStoreState.loadedSceneRef = {
-      width: 800,
-      height: 600,
-      domain: 'CONTROLS',
-      projectUuid: 'project-1',
-      projectName: 'David_test',
-      uuid: 'scene-123',
-      name: 'beckhoff',
-    };
-    mockSceneStoreState.setLoadedSceneRef.mockReset();
+    mockWrangler.isSceneTabOpen.mockReturnValue(true);
+  });
+
+  it('resets the workspace through GoHome before navigating home', () => {
+    render(<NavBar />);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Go home' })[0]);
+    expect(mockPostEvent).toHaveBeenCalledWith(KaraboEvent.GoHome, {});
+    expect(mockNavigate).toHaveBeenCalledWith('/home');
   });
 
   it('shows the project browser in both layouts without fetching scene info again', () => {

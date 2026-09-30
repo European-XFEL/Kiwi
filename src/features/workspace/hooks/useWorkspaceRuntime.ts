@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAccessLevelDisplay } from '@/components/api';
-import { useActiveSceneStore } from '@/features/scene-view/api';
+import { getPanelWrangler } from '@/lib/singletons/api';
 import { useGlobalActivityStore, useGlobalStore } from '@/store/api';
 import { broadcast_event, KaraboEvent } from '@/lib/events';
 import type { WorkspaceRuntime } from '../types';
@@ -50,7 +50,11 @@ export default function useWorkspaceRuntime(): WorkspaceRuntime {
   const navigate = useNavigate();
   const sessionInfo = useGlobalStore((state) => state.sessionInfo);
   const globalState = useGlobalStore((state) => state.globalState);
-  const loadedSceneRef = useActiveSceneStore((state) => state.loadedSceneRef);
+  const wrangler = getPanelWrangler();
+  const sceneTabOpen = useSyncExternalStore(
+    wrangler.subscribe,
+    wrangler.isSceneTabOpen
+  );
   const queuedMessageCount = useGlobalActivityStore(
     (state) => state.queuedMessageCount
   );
@@ -75,8 +79,6 @@ export default function useWorkspaceRuntime(): WorkspaceRuntime {
     return () => window.clearInterval(timer);
   }, [sessionInfo?.sessionStartEpoc]);
 
-  const activeScene = loadedSceneRef;
-
   const onGoHome = useCallback(() => {
     broadcast_event(KaraboEvent.GoHome, {});
     navigate('/main');
@@ -92,7 +94,7 @@ export default function useWorkspaceRuntime(): WorkspaceRuntime {
 
   return {
     accessLevelLabel: accessLevelInfo?.label,
-    activeScene,
+    sceneTabOpen,
     connected:
       globalState === 'LOGGED_IN' ||
       globalState === 'NOTIFIED_SESSION_EXPIRATION',

@@ -1,5 +1,3 @@
-import type { LoadedSceneRef } from '@/store/api';
-
 // Workspace
 // ---
 
@@ -88,7 +86,6 @@ export interface WorkspaceFooterModel {
 
 export interface WorkspaceRuntime {
   accessLevelLabel?: string | null;
-  activeScene?: LoadedSceneRef;
   connectedFor?: string;
   connected: boolean;
   guiServer?: string;
@@ -96,6 +93,7 @@ export interface WorkspaceRuntime {
   latestLatency?: number | null;
   onGoHome?: () => void;
   queuedMessageCount?: number;
+  sceneTabOpen?: boolean;
   topic?: string;
 }
 
