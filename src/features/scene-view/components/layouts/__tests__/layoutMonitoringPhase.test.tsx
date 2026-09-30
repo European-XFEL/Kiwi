@@ -17,13 +17,13 @@ jest.mock('@/features/controllers/api', () => ({
   >('@/features/controllers/utils/controller_semantics').getModelKeys,
   useContainer: jest.requireActual<
     typeof import('@/features/controllers/useContainer')
-  >('@/features/controllers/useContainer.ts').useContainer,
+  >('@/features/controllers/useContainer').useContainer,
   useController: jest.requireActual<
     typeof import('@/features/controllers/useController')
-  >('@/features/controllers/useController.ts').useController,
+  >('@/features/controllers/useController').useController,
   useProxies: jest.requireActual<
     typeof import('@/features/controllers/useProxies')
-  >('@/features/controllers/useProxies.ts').useProxies,
+  >('@/features/controllers/useProxies').useProxies,
 }));
 
 jest.mock(

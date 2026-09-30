@@ -1,103 +1,19 @@
-import { init } from 'echarts';
 import { DisplayTrendGraphModel } from '@/karabo/common/api';
 import {
   fixedXRange,
   fixedYRange,
   formatValueTick,
-  timeTickInterval,
   trendChartOption,
-  trendPlotBounds,
+  trendDatasets,
 } from '../graph/configTrendChart';
 
 const series = [
   { key: 'A.value', timestamps: [1000, 2000], values: [1, 2] },
-  { key: 'B.value', timestamps: [1000], values: [3] },
+  { key: 'B.value', timestamps: [1500], values: [3] },
 ];
 
-describe('trendChartOption', () => {
-  it.each(['', 'Temperatures'])(
-    'keeps rendered plot bounds fixed across value updates with title "%s"',
-    (title) => {
-      // SVG rendering uses ECharts' fallback text metrics without a canvas.
-      const context = jest
-        .spyOn(HTMLCanvasElement.prototype, 'getContext')
-        .mockReturnValue(null);
-      const chart = init(null, undefined, {
-        renderer: 'svg',
-        ssr: true,
-        width: 400,
-        height: 240,
-      });
-      const model = new DisplayTrendGraphModel();
-      model.title = title;
-      const bounds = trendPlotBounds(400, 240, title);
-      try {
-        for (const maximum of [2, 1e20, 0.001, 200]) {
-          chart.setOption(
-            trendChartOption(
-              model,
-              [
-                {
-                  key: 'A.value',
-                  timestamps: [1000, 2000],
-                  values: [0, maximum],
-                },
-              ],
-              [1000, 2000],
-              [0, maximum]
-            )
-          );
-          const topLeft = chart.convertToPixel({ gridIndex: 0 }, [
-            1000,
-            maximum,
-          ]);
-          const bottomRight = chart.convertToPixel({ gridIndex: 0 }, [2000, 0]);
-          expect(topLeft[0]).toBeCloseTo(bounds.left);
-          expect(topLeft[1]).toBeCloseTo(bounds.top);
-          expect(bottomRight[0]).toBeCloseTo(bounds.right);
-          expect(bottomRight[1]).toBeCloseTo(bounds.bottom);
-        }
-      } finally {
-        chart.dispose();
-        context.mockRestore();
-      }
-    }
-  );
-
-  it('configures line data, color rotation, markers, and the conditional legend', () => {
-    const model = new DisplayTrendGraphModel();
-    const option = trendChartOption(model, series);
-
-    expect(option).toMatchObject({
-      series: [
-        {
-          name: 'A.value',
-          type: 'line',
-          data: [
-            [1000, 1],
-            [2000, 2],
-          ],
-          color: '#009be5',
-          connectNulls: true,
-          showSymbol: true,
-          symbol: 'circle',
-        },
-        { color: '#ff0040' },
-      ],
-      legend: {
-        show: true,
-        selectedMode: true,
-        padding: 4,
-        borderColor: '#000',
-        borderWidth: 1,
-      },
-    });
-    expect(trendChartOption(model, series.slice(0, 1))).toMatchObject({
-      legend: { show: false },
-    });
-  });
-
-  it('configures titles, units, grids, colors, and local time labels', () => {
+describe('trend Chart.js configuration', () => {
+  it('keeps independent timestamps and configures the existing colors and axes', () => {
     const model = new DisplayTrendGraphModel();
     model.title = 'Temperatures';
     model.x_label = 'Time';
@@ -106,95 +22,118 @@ describe('trendChartOption', () => {
     model.x_grid = true;
     model.y_grid = true;
     const option = trendChartOption(model, series);
-
-    expect(option).toMatchObject({
-      title: { show: true, text: 'Temperatures' },
-      grid: {
-        show: true,
-        left: 52,
-        right: 2,
-        top: 18,
-        bottom: 34,
-        containLabel: false,
-        outerBoundsMode: 'none',
-        backgroundColor: '#fff',
-        borderColor: '#000',
-        borderWidth: 1,
+    expect(trendDatasets(series)).toMatchObject([
+      {
+        label: 'A.value',
+        data: [
+          { x: 1000, y: 1 },
+          { x: 2000, y: 2 },
+        ],
+        borderColor: '#009be5',
+        spanGaps: true,
       },
-      xAxis: {
-        name: 'Time (s)',
-        interval: undefined,
-        splitLine: { show: true },
-        axisLabel: {
-          width: 64,
-          overflow: 'truncate',
-          hideOverlap: false,
-          showMinLabel: false,
-          showMaxLabel: false,
+      { label: 'B.value', data: [{ x: 1500, y: 3 }], borderColor: '#ff0040' },
+    ]);
+    expect(option.options).toMatchObject({
+      animation: false,
+      plugins: { legend: { display: false } },
+      layout: { autoPadding: false, padding: { top: 18, right: 2 } },
+      scales: {
+        x: {
+          type: 'linear',
+          reverse: false,
+          title: { text: 'Time (s)' },
+          grid: { drawOnChartArea: true },
+          ticks: { align: 'inner' },
+        },
+        y: {
+          type: 'linear',
+          reverse: false,
+          title: { text: '(K)' },
+          grid: { drawOnChartArea: true },
         },
       },
-      yAxis: {
-        name: '(K)',
-        splitLine: { show: true },
-        axisLabel: { width: 36, overflow: 'truncate' },
-      },
-      backgroundColor: 'transparent',
-      animation: false,
     });
-    const date = new Date(2026, 0, 2, 13, 45);
-    const timeAxis = option.xAxis as {
-      axisLabel: { formatter: (value: number) => string };
-    };
-    expect(timeAxis.axisLabel.formatter(date.getTime())).toBe(
-      new Intl.DateTimeFormat(undefined, {
-        hour: '2-digit',
-        minute: '2-digit',
-      }).format(date)
-    );
-    const wideRange = trendChartOption(model, series, [
-      date.getTime(),
-      date.getTime() + 2 * 24 * 60 * 60_000,
-    ]);
-    const dateAxis = wideRange.xAxis as typeof timeAxis;
-    expect(dateAxis.axisLabel.formatter(date.getTime())).toBe(
-      new Intl.DateTimeFormat().format(date)
-    );
   });
 
-  it('applies fixed ranges, autorange, logarithmic Y, and inversions', () => {
+  it('applies fixed ranges, logarithmic Y and inversion', () => {
     const model = new DisplayTrendGraphModel();
-    model.x_autorange = false;
-    model.x_min = 1;
-    model.x_max = 4;
-    model.y_autorange = false;
-    model.y_min = 0.1;
-    model.y_max = 100;
-    model.x_invert = true;
-    model.y_invert = true;
-    model.y_log = true;
-
+    Object.assign(model, {
+      x_autorange: false,
+      x_min: 1,
+      x_max: 4,
+      y_autorange: false,
+      y_min: 0.1,
+      y_max: 100,
+      x_invert: true,
+      y_invert: true,
+      y_log: true,
+    });
     expect(fixedXRange(model)).toEqual([1000, 4000]);
     expect(fixedYRange(model)).toEqual([0.1, 100]);
-    const option = trendChartOption(
-      model,
-      series,
-      fixedXRange(model),
-      fixedYRange(model)
-    );
-    expect(option).toMatchObject({
-      xAxis: { min: 1000, max: 4000, inverse: true },
-      yAxis: {
-        min: 0.1,
-        max: 100,
-        inverse: true,
-        type: 'log',
-      },
+    expect(
+      trendChartOption(model, series, fixedXRange(model), fixedYRange(model))
+        .options?.scales
+    ).toMatchObject({
+      x: { min: 1000, max: 4000, reverse: true },
+      y: { min: 0.1, max: 100, type: 'logarithmic', reverse: true },
     });
+  });
 
-    model.x_autorange = true;
-    model.y_autorange = true;
-    expect(fixedXRange(model)).toBeUndefined();
-    expect(fixedYRange(model)).toBeUndefined();
+  it('recomputes time ticks for the visible range and chart width', () => {
+    const axis = trendChartOption(new DisplayTrendGraphModel(), series).options!
+      .scales!.x! as unknown as {
+      afterBuildTicks: (scale: unknown) => void;
+      ticks: { callback: (value: number) => string };
+    };
+    const scale = {
+      min: 0,
+      max: 60_000,
+      width: 600,
+      ticks: [] as { value: number }[],
+      chart: {
+        ctx: {
+          save: jest.fn(),
+          restore: jest.fn(),
+          measureText: jest.fn((label: string) => ({
+            width: label.length * 7,
+          })),
+        },
+      },
+    };
+    axis.afterBuildTicks(scale);
+    const wide = scale.ticks.map(({ value }) => value);
+    expect(axis.ticks.callback(wide[0])).not.toBe('');
+    scale.width = 200;
+    axis.afterBuildTicks(scale);
+    expect(scale.ticks.length).toBeLessThan(wide.length);
+    scale.min = 60_000;
+    scale.max = 120_000;
+    axis.afterBuildTicks(scale);
+    expect(scale.ticks[0].value).toBeGreaterThan(wide[0]);
+  });
+
+  it('keeps the plot rectangle stable when tick labels change', () => {
+    const scales = trendChartOption(new DisplayTrendGraphModel(), series)
+      .options!.scales as unknown as {
+      x: { afterFit: (axis: { height: number }) => void };
+      y: { afterFit: (axis: { width: number }) => void };
+    };
+    const x = { height: 60 };
+    const y = { width: 90 };
+    scales.x.afterFit(x);
+    scales.y.afterFit(y);
+    expect(x.height).toBe(34);
+    expect(y.width).toBe(52);
+    const titled = new DisplayTrendGraphModel();
+    titled.x_label = 'Time';
+    titled.y_label = 'Value';
+    const titledScales = trendChartOption(titled, series).options!
+      .scales as unknown as typeof scales;
+    titledScales.x.afterFit(x);
+    titledScales.y.afterFit(y);
+    expect(x.height).toBe(42);
+    expect(y.width).toBe(68);
   });
 
   it.each([
@@ -203,19 +142,7 @@ describe('trendChartOption', () => {
     [1.234, '1.23'],
     [0.001234, '1.23e-3'],
     [1e9, '1e+9'],
-  ])('formats the numeric tick %s as %s', (value, expected) => {
+  ])('formats numeric tick %s', (value, expected) => {
     expect(formatValueTick(value)).toBe(expected);
   });
-
-  it.each([
-    [[0, 10 * 60_000], 2 * 60_000],
-    [[0, 60 * 60_000], 15 * 60_000],
-    [[0, 24 * 60 * 60_000], 6 * 60 * 60_000],
-    [[0, 7 * 24 * 60 * 60_000], 2 * 24 * 60 * 60_000],
-  ] as const)(
-    'uses a stable interval for the time range %s',
-    (range, expected) => {
-      expect(timeTickInterval([...range])).toBe(expected);
-    }
-  );
 });

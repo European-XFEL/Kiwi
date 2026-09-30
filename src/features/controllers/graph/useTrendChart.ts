@@ -1,37 +1,18 @@
 import React from 'react';
-import {
-  init,
-  use as registerEChartsModules,
-  type EChartsType,
-} from 'echarts/core';
-import { LineChart } from 'echarts/charts';
-import {
-  GridComponent,
-  LegendComponent,
-  TitleComponent,
-} from 'echarts/components';
-import { CanvasRenderer } from 'echarts/renderers';
+import { Chart } from 'chart.js/auto';
 import type { DisplayTrendGraphModel } from '@/karabo/common/api';
 import type { TrendSeries } from './useTrendModel';
 import {
   fixedXRange,
   fixedYRange,
+  trendDatasets,
   trendChartOption,
-  trendPlotBounds,
   type Range,
 } from './configTrendChart';
 import {
   useTrendMouseGestures,
   type AxisRanges,
 } from './useTrendMouseGestures';
-
-registerEChartsModules([
-  LineChart,
-  GridComponent,
-  LegendComponent,
-  TitleComponent,
-  CanvasRenderer,
-]);
 
 type TimeRangeMode = 'uptime' | 'week' | 'day' | 'hour' | 'tenMinutes';
 type View = {
@@ -40,39 +21,18 @@ type View = {
   yRange?: Range;
 };
 
-/**
- * Reads the displayed axis limits by converting the plot corners to data values.
- * ECharts chooses and rounds autorange limits, so gestures must use these rendered
- * limits to translate mouse movement correctly. The rendered X range also feeds
- * the time controls. If a collapsed plot cannot provide usable
- * limits, retain the supplied fallback ranges until the plot can be read again.
- */
 function renderedRanges(
-  chart: EChartsType,
-  title: string,
+  chart: Chart<'line'>,
   fallback?: AxisRanges
 ): AxisRanges | undefined {
-  const bounds = trendPlotBounds(chart.getWidth(), chart.getHeight(), title);
-  const first = chart.convertFromPixel({ gridIndex: 0 }, [
-    bounds.left,
-    bounds.bottom,
-  ]) as number[];
-  const second = chart.convertFromPixel({ gridIndex: 0 }, [
-    bounds.right,
-    bounds.top,
-  ]) as number[];
-  const valid = (values: number[]) =>
-    values.every(Number.isFinite) && values[0] !== values[1];
-  // A grid collapsed to zero width or height converts both edges to one value.
-  // Keep usable ranges so resizing can restore gestures without another sample.
-  const xValues = [first?.[0], second?.[0]];
-  const yValues = [first?.[1], second?.[1]];
-  const x = valid(xValues)
-    ? (xValues.sort((a, b) => a - b) as Range)
-    : fallback?.x;
-  const y = valid(yValues)
-    ? (yValues.sort((a, b) => a - b) as Range)
-    : fallback?.y;
+  const range = (key: 'x' | 'y') => {
+    const { min, max } = chart.scales[key];
+    return Number.isFinite(min) && Number.isFinite(max) && min !== max
+      ? ([min!, max!] as Range)
+      : fallback?.[key];
+  };
+  const x = range('x');
+  const y = range('y');
   return x && y ? { x, y } : undefined;
 }
 
@@ -92,7 +52,12 @@ export function useTrendChart({
   const [visibleRange, setVisibleRange] = React.useState<Range>();
   const containerRef = React.useRef<HTMLDivElement>(null);
   const selectionRef = React.useRef<HTMLDivElement>(null);
-  const chartRef = React.useRef<EChartsType | null>(null);
+  const chartRef = React.useRef<Chart<'line'> | null>(null);
+  const latestSeriesRef = React.useRef(series);
+  latestSeriesRef.current = series;
+  const [hiddenCurves, setHiddenCurves] = React.useState<Set<string>>(
+    () => new Set()
+  );
   const gestureActiveRef = React.useRef(false);
   const pendingUpdateRef = React.useRef<
     ((ranges?: AxisRanges) => void) | undefined
@@ -148,31 +113,56 @@ export function useTrendChart({
     []
   );
 
+  const seriesKeys = series.map((item) => item.key).join('\0');
   React.useLayoutEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-    const chart = init(container, undefined, {
-      renderer: 'canvas',
-      useDirtyRect: true,
-    });
-    const observer = new ResizeObserver(() => {
-      const width = container.clientWidth;
-      const height = container.clientHeight;
-      if (
-        width === 0 ||
-        height === 0 ||
-        (chart.getWidth() === width && chart.getHeight() === height)
-      )
-        return;
-      chart.resize({ width, height, silent: true });
-    });
+    const canvas = document.createElement('canvas');
+    container.appendChild(canvas);
+    const chart = new Chart(
+      canvas,
+      trendChartOption(model, latestSeriesRef.current)
+    );
     chartRef.current = chart;
-    observer.observe(container);
     return () => {
-      observer.disconnect();
-      chart.dispose();
+      chart.destroy();
+      canvas.remove();
       chartRef.current = null;
     };
+  }, [model, seriesKeys]);
+
+  React.useLayoutEffect(() => {
+    const chart = chartRef.current;
+    if (!chart) return;
+    let visibilityChanged = false;
+    seriesKeys
+      .split('\0')
+      .filter(Boolean)
+      .forEach((key, index) => {
+        const visible = !hiddenCurves.has(key);
+        if (chart.isDatasetVisible(index) !== visible) {
+          chart.setDatasetVisibility(index, visible);
+          visibilityChanged = true;
+        }
+      });
+    if (visibilityChanged) chart.update('none');
+    rangesRef.current = renderedRanges(chart, rangesRef.current);
+  }, [seriesKeys, hiddenCurves]);
+  const toggleCurve = React.useCallback((key: string) => {
+    const chart = chartRef.current;
+    const index = chart?.data.datasets.findIndex(
+      (dataset) => dataset.label === key
+    );
+    if (!chart || index === undefined || index < 0) return;
+    const visible = !chart.isDatasetVisible(index);
+    chart.setDatasetVisibility(index, visible);
+    chart.update('none');
+    setHiddenCurves((current) => {
+      const next = new Set(current);
+      if (visible) next.delete(key);
+      else next.add(key);
+      return next;
+    });
   }, []);
 
   const yRange = view.yRange;
@@ -182,15 +172,19 @@ export function useTrendChart({
       if (!chart) return;
       const nextX = gestureRanges?.x ?? xRange ?? fixedXRange(model);
       const nextY = gestureRanges?.y ?? yRange ?? fixedYRange(model);
-      const option = trendChartOption(model, series, nextX, nextY);
-      chart.setOption(option, {
-        // Preserve the grid and axes so switching ranges does not blank or
-        // rebuild the plot. Series replacement still removes stale curves.
-        replaceMerge: ['series'],
+      const datasets = trendDatasets(series);
+      datasets.forEach((dataset, index) => {
+        chart.data.datasets[index].data = dataset.data;
       });
-      const fallback: AxisRanges | undefined =
-        nextX && nextY ? { x: nextX, y: nextY } : rangesRef.current;
-      const ranges = renderedRanges(chart, model.title, fallback);
+      chart.options.scales!.x!.min = nextX?.[0];
+      chart.options.scales!.x!.max = nextX?.[1];
+      chart.options.scales!.y!.min = nextY?.[0];
+      chart.options.scales!.y!.max = nextY?.[1];
+      chart.update('none');
+      const fallback: AxisRanges | undefined = nextX
+        ? { x: nextX, y: nextY ?? rangesRef.current?.y ?? [0, 1] }
+        : rangesRef.current;
+      const ranges = renderedRanges(chart, fallback);
       rangesRef.current = ranges;
       if (ranges) rememberRange(ranges.x);
       pendingUpdateRef.current = undefined;
@@ -210,10 +204,13 @@ export function useTrendChart({
   const getRanges = React.useCallback(() => rangesRef.current, []);
   const setRanges = React.useCallback((ranges: AxisRanges) => {
     rangesRef.current = ranges;
-    chartRef.current?.setOption({
-      xAxis: { min: ranges.x[0], max: ranges.x[1] },
-      yAxis: { min: ranges.y[0], max: ranges.y[1] },
-    });
+    const chart = chartRef.current;
+    if (!chart) return;
+    chart.options.scales!.x!.min = ranges.x[0];
+    chart.options.scales!.x!.max = ranges.x[1];
+    chart.options.scales!.y!.min = ranges.y[0];
+    chart.options.scales!.y!.max = ranges.y[1];
+    chart.update('none');
   }, []);
   const finish = React.useCallback(() => {
     pendingUpdateRef.current?.(rangesRef.current);
@@ -247,5 +244,7 @@ export function useTrendChart({
     yRange,
     pause,
     rememberRange,
+    hiddenCurves,
+    toggleCurve,
   };
 }

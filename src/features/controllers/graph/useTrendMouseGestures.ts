@@ -1,5 +1,5 @@
 import React from 'react';
-import type { EChartsType } from 'echarts/core';
+import type { Chart } from 'chart.js';
 import type { Range } from './configTrendChart';
 
 type Point = { x: number; y: number };
@@ -17,22 +17,12 @@ function clamp(value: number, min: number, max: number) {
 }
 
 /** Finds the rendered grid rectangle that accepts pan and zoom gestures. */
-function plotBounds(chart: EChartsType, ranges: AxisRanges): PlotBounds {
-  // ECharts owns the final grid geometry. Derive it from the rendered axes so
-  // gestures still match the plot after title, inversion, or layout changes.
-  const first = chart.convertToPixel({ gridIndex: 0 }, [
-    ranges.x[0],
-    ranges.y[0],
-  ]);
-  const second = chart.convertToPixel({ gridIndex: 0 }, [
-    ranges.x[1],
-    ranges.y[1],
-  ]);
+function plotBounds(chart: Chart<'line'>): PlotBounds {
   return {
-    left: Math.min(first[0], second[0]),
-    right: Math.max(first[0], second[0]),
-    top: Math.min(first[1], second[1]),
-    bottom: Math.max(first[1], second[1]),
+    left: chart.chartArea.left,
+    right: chart.chartArea.right,
+    top: chart.chartArea.top,
+    bottom: chart.chartArea.bottom,
   };
 }
 
@@ -176,7 +166,7 @@ export function useTrendMouseGestures({
 }: {
   containerRef: React.RefObject<HTMLDivElement | null>;
   selectionRef: React.RefObject<HTMLDivElement | null>;
-  chartRef: React.RefObject<EChartsType | null>;
+  chartRef: React.RefObject<Chart<'line'> | null>;
   tool: 'pointer' | 'zoom' | 'pan';
   inverted: { x: boolean; y: boolean };
   logarithmicX?: boolean;
@@ -318,7 +308,7 @@ export function useTrendMouseGestures({
       const ranges = getRanges();
       if (!ranges) return;
       const start = mousePosition(container, event);
-      const bounds = plotBounds(chart, ranges);
+      const bounds = plotBounds(chart);
       if (
         start.x < bounds.left ||
         start.x > bounds.right ||
