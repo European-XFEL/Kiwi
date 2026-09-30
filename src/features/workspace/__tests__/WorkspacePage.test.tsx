@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import type { PanelAreaState } from '@/features/workspace/types';
 import WorkspacePage from '../WorkspacePage';
 
@@ -7,13 +7,10 @@ const mockUseWorkspaceRuntime = jest.fn();
 const mockWorkspaceShell = jest.fn();
 const mockSubscribe = jest.fn();
 const mockGetSnapshot = jest.fn();
-const mockGetContent = jest.fn();
-const mockSetLoadedSceneRef = jest.fn();
 
 const mockPanelWrangler = {
   subscribe: mockSubscribe,
   getSnapshot: mockGetSnapshot,
-  getContent: mockGetContent,
 };
 
 jest.mock('react-router-dom', () => ({
@@ -54,19 +51,12 @@ jest.mock('@/lib/singletons/api', () => ({
   getPanelWrangler: () => mockGetPanelWrangler(),
 }));
 
-jest.mock('@/features/scene-view/api', () => ({
-  useActiveSceneStore: (
-    selector?: (state: {
-      setLoadedSceneRef: typeof mockSetLoadedSceneRef;
-    }) => unknown
-  ) => {
-    const state = { setLoadedSceneRef: mockSetLoadedSceneRef };
-    return selector ? selector(state) : state;
-  },
-}));
-
-function makePanelState(activeTabId: string | undefined): PanelAreaState {
+function makePanelState(
+  activeTabId: string | undefined,
+  projectLoading = false
+): PanelAreaState & { projectLoading: boolean } {
   return {
+    projectLoading,
     left: { id: 'left', tabs: [], activeTabId: undefined },
     center: {
       id: 'center',
@@ -98,18 +88,9 @@ describe('WorkspacePage', () => {
     });
     mockSubscribe.mockImplementation(() => jest.fn());
     mockGetSnapshot.mockReturnValue(makePanelState('scene:scene-1'));
-    mockGetContent.mockReturnValue({
-      sceneRef: {
-        uuid: 'scene-1',
-        domain: 'CONTROLS',
-        projectUuid: 'project-1',
-        projectName: 'David_test',
-        name: 'box_layout',
-      },
-    });
   });
 
-  it('initializes the panel wrangler and syncs the active scene into global state', async () => {
+  it('renders the workspace with loading state from the panel wrangler', () => {
     render(<WorkspacePage />);
 
     expect(screen.getByTestId('scene-bootstrap')).toBeInTheDocument();
@@ -118,36 +99,27 @@ describe('WorkspacePage', () => {
       expect.objectContaining({
         workspace: expect.objectContaining({ id: 'workspace-main' }),
         runtime: { connected: true, topic: 'oludedav' },
+        projectLoading: false,
       })
     );
-
-    await waitFor(() => {
-      expect(mockSetLoadedSceneRef).toHaveBeenCalledWith(
-        expect.objectContaining({ uuid: 'scene-1' })
-      );
-    });
   });
 
-  it('clears the active scene when the center tab is the home tab', async () => {
-    mockGetSnapshot.mockReturnValue(makePanelState('home'));
-    mockGetContent.mockReturnValue(undefined);
-
+  it('updates loading feedback when the panel wrangler announces a change', () => {
+    let notify = () => {};
+    mockSubscribe.mockImplementation((listener: () => void) => {
+      notify = listener;
+      return jest.fn();
+    });
     render(<WorkspacePage />);
 
-    await waitFor(() => {
-      expect(mockSetLoadedSceneRef).toHaveBeenCalledWith(undefined);
+    act(() => {
+      mockGetSnapshot.mockReturnValue(makePanelState('home', true));
+      notify();
     });
-  });
 
-  it('clears the active scene while a non-home center tab is still pending', async () => {
-    mockGetSnapshot.mockReturnValue(makePanelState('scene:pending-scene'));
-    mockGetContent.mockReturnValue(undefined);
-
-    render(<WorkspacePage />);
-
-    await waitFor(() => {
-      expect(mockSetLoadedSceneRef).toHaveBeenCalledWith(undefined);
-    });
+    expect(mockWorkspaceShell).toHaveBeenLastCalledWith(
+      expect.objectContaining({ projectLoading: true })
+    );
   });
 
   it('creates the panel wrangler only once across rerenders of the same page instance', () => {

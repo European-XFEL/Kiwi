@@ -3,7 +3,6 @@ import type { ReactNode } from 'react';
 import { createDefaultWorkspaceModel } from '../../utils';
 import type { WorkspaceRuntime } from '../../types';
 import WorkspaceShell from '../WorkspaceShell';
-import { useActiveSceneStore } from '@/features/scene-view/hooks/useActiveScene';
 import { SceneControllerRegistry } from '@/features/scenepanel/SceneControllerRegistry';
 
 const mockHeader = jest.fn();
@@ -165,15 +164,21 @@ jest.mock('@/features/scene-view/components/SceneStatusViews', () => {
 
 function renderWorkspaceShell(
   workspace = createDefaultWorkspaceModel(),
-  runtime: WorkspaceRuntime = { connected: true, topic: 'oludedav' }
+  runtime: WorkspaceRuntime = { connected: true, topic: 'oludedav' },
+  projectLoading = false
 ) {
-  return render(<WorkspaceShell workspace={workspace} runtime={runtime} />);
+  return render(
+    <WorkspaceShell
+      workspace={workspace}
+      runtime={runtime}
+      projectLoading={projectLoading}
+    />
+  );
 }
 
 describe('WorkspaceShell', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    useActiveSceneStore.setState({ sceneLoadPending: false });
     mockGetContent.mockImplementation((tabId: string) => {
       if (tabId === 'scene:scene-42') {
         const sceneRef = {
@@ -232,12 +237,10 @@ describe('WorkspaceShell', () => {
     );
   });
 
-  it('shows the pending scene state immediately for scene URLs', () => {
+  it('shows the loading page in place of Home while a project loads', () => {
     const workspace = createDefaultWorkspaceModel();
 
-    useActiveSceneStore.setState({ sceneLoadPending: true });
-
-    renderWorkspaceShell(workspace, { connected: true });
+    renderWorkspaceShell(workspace, { connected: true }, true);
 
     expect(screen.queryByTestId('home-panel')).not.toBeInTheDocument();
     expect(screen.getByTestId('center-home')).toHaveTextContent('pending');

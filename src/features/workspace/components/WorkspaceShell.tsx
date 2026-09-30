@@ -9,7 +9,6 @@ import {
   type SceneTabContent,
 } from '@/lib/singletons/PanelWrangler';
 import HomePanel from '@/app/HomePanel';
-import { useActiveSceneStore } from '@/features/scene-view/hooks/useActiveScene';
 import { useEffect, useState } from 'react';
 import type { PanelTab, WorkspaceModel, WorkspaceRuntime } from '../types';
 import WorkspaceBody from './WorkspaceBody';
@@ -33,11 +32,11 @@ function isLoadedSceneContent(
 
 function renderCenterPanel(
   tab: PanelTab,
-  isSceneLoadPending: boolean,
+  isProjectLoading: boolean,
   isPageVisible: boolean
 ) {
   if (tab.id === HOME_TAB_ID) {
-    return isSceneLoadPending ? <ScenePending /> : <HomePanel />;
+    return isProjectLoading ? <ScenePending /> : <HomePanel />;
   }
   if (!isPageVisible) return null;
 
@@ -75,13 +74,12 @@ function usePageVisibility(): boolean {
 export default function WorkspaceShell({
   workspace,
   runtime,
+  projectLoading,
 }: {
   workspace: WorkspaceModel;
   runtime: WorkspaceRuntime;
+  projectLoading: boolean;
 }) {
-  const isSceneLoadPending = useActiveSceneStore(
-    (state) => state.sceneLoadPending
-  );
   const isPageVisible = usePageVisibility();
 
   return (
@@ -98,7 +96,7 @@ export default function WorkspaceShell({
           body={workspace.body}
           renderLeftPanel={() => null}
           renderCenterPanel={(tab) =>
-            renderCenterPanel(tab, isSceneLoadPending, isPageVisible)
+            renderCenterPanel(tab, projectLoading, isPageVisible)
           }
           renderRightPanel={() => null}
           // The scene viewport owns its own overflow/layout, so skip the

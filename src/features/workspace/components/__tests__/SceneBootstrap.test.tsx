@@ -4,7 +4,6 @@ import { Link, MemoryRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import SceneBootstrap from '../SceneBootstrap';
 import { loadRootProjectScene } from '@/features/project/api';
-import { useActiveSceneStore } from '@/features/scene-view/hooks/useActiveScene';
 
 jest.mock('@/features/project/api', () => ({
   loadRootProjectScene: jest.fn(() => ({
@@ -40,7 +39,6 @@ describe('SceneBootstrap', () => {
     jest.clearAllMocks();
     mockTopology.initialized = true;
     mockPanelWrangler.getSavedActiveTab.mockReturnValue(savedTab);
-    useActiveSceneStore.setState({ sceneLoadPending: false });
   });
 
   it('restores the saved tab once after StrictMode reruns the bootstrap effect', async () => {
@@ -58,18 +56,6 @@ describe('SceneBootstrap', () => {
     expect(loadRootProjectSceneMock).toHaveBeenCalledWith(savedTab);
   });
 
-  it('marks the workspace as pending while the saved tab loads', async () => {
-    render(
-      <MemoryRouter initialEntries={['/main']}>
-        <SceneBootstrap />
-      </MemoryRouter>
-    );
-
-    await waitFor(() => {
-      expect(useActiveSceneStore.getState().sceneLoadPending).toBe(true);
-    });
-  });
-
   it('waits for topology before restoring the saved tab', async () => {
     jest.useFakeTimers();
     mockTopology.initialized = false;
@@ -80,9 +66,6 @@ describe('SceneBootstrap', () => {
       </MemoryRouter>
     );
 
-    await waitFor(() => {
-      expect(useActiveSceneStore.getState().sceneLoadPending).toBe(true);
-    });
     expect(loadRootProjectSceneMock).not.toHaveBeenCalled();
 
     await act(async () => {
@@ -111,7 +94,6 @@ describe('SceneBootstrap', () => {
     );
 
     expect(loadRootProjectSceneMock).not.toHaveBeenCalled();
-    expect(useActiveSceneStore.getState().sceneLoadPending).toBe(false);
   });
 
   it('does not restore the saved tab again after returning Home', async () => {
@@ -131,7 +113,6 @@ describe('SceneBootstrap', () => {
 
     await waitFor(() => {
       expect(loadRootProjectSceneMock).toHaveBeenCalledTimes(1);
-      expect(useActiveSceneStore.getState().sceneLoadPending).toBe(false);
     });
     await user.click(screen.getByRole('link', { name: 'Home' }));
 
@@ -156,7 +137,6 @@ describe('SceneBootstrap', () => {
 
     await waitFor(() => {
       expect(mockPanelWrangler.clearSavedActiveTab).toHaveBeenCalledTimes(1);
-      expect(useActiveSceneStore.getState().sceneLoadPending).toBe(false);
     });
     consoleError.mockRestore();
   });

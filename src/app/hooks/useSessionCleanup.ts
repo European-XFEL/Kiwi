@@ -1,9 +1,4 @@
 import { useEffect, useRef } from 'react';
-// NOTE: Imported from the module rather than the '@/features/scene-view/api'
-// barrel on purpose. That barrel reaches bootstrapStatefulIcons via
-// ControllerContainer. It uses import.meta.glob, which Jest cannot parse, so
-// importing the barrel makes this hook untestable. WorkspaceShell does the same.
-import { useActiveSceneStore } from '@/features/scene-view/hooks/useActiveScene';
 import { getDbConn, getPanelWrangler } from '@/lib/singletons/api';
 import { clearRootProject } from '@/features/project/api';
 import { useGlobalStore } from '@/store/api';
@@ -14,8 +9,6 @@ function clearSessionState(): void {
   getPanelWrangler().resetWorkspace();
   clearRootProject();
   getDbConn().reset();
-  useActiveSceneStore.getState().setLoadedSceneRef(undefined);
-  useActiveSceneStore.getState().setSceneLoadPending(false);
 }
 
 /**

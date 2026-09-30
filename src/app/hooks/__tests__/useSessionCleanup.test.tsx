@@ -16,7 +16,6 @@ jest.mock('@/lib/singletons/api', () => ({
   getTopology: jest.fn(),
 }));
 
-import { useActiveSceneStore } from '@/features/scene-view/hooks/useActiveScene';
 import { useGlobalStore } from '@/store/api';
 import useSessionCleanup from '../useSessionCleanup';
 
@@ -43,10 +42,6 @@ describe('useSessionCleanup', () => {
     mockProjectModel.clearRoot();
     act(() => {
       useGlobalStore.getState().reset();
-    });
-    useActiveSceneStore.setState({
-      loadedSceneRef: undefined,
-      sceneLoadPending: false,
     });
   });
 
@@ -116,32 +111,6 @@ describe('useSessionCleanup', () => {
     expect(mockResetDb).toHaveBeenCalledTimes(1);
     expect(mockProjectModel.root).toBeUndefined();
     expect(mockProjectModel.domain).toBeUndefined();
-  });
-
-  it('clears the active scene state when the user logs out', () => {
-    login();
-    act(() => {
-      useActiveSceneStore.setState({
-        loadedSceneRef: {
-          uuid: 'scene-a',
-          domain: 'CONTROLS',
-          projectUuid: 'project-a',
-          projectName: 'ProjectA',
-          name: 'Scene A',
-          width: 800,
-          height: 600,
-        },
-        sceneLoadPending: true,
-      });
-    });
-    renderHook(() => useSessionCleanup());
-
-    act(() => {
-      useGlobalStore.getState().setLoggedOut();
-    });
-
-    expect(useActiveSceneStore.getState().loadedSceneRef).toBeUndefined();
-    expect(useActiveSceneStore.getState().sceneLoadPending).toBe(false);
   });
 
   it('clears each separate session after logging out and back in', () => {
