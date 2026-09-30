@@ -21,5 +21,3 @@ export type { SidebarProps as KiwiSidebarProps } from './layouts/Sidebar';
 
 export { default as Footer } from './layouts/Footer';
 export type { FooterProps } from './layouts/Footer';
-
-export { default as KiwiFooter } from './layouts/KiwiFooter';

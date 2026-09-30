@@ -3,7 +3,6 @@
  */
 
 import * as React from 'react';
-import { Button } from '@/components/api';
 
 type Direction = 'horizontal' | 'vertical';
 
@@ -18,23 +17,6 @@ export type NavLinkProps = {
   activeClassName?: string;
   /** Match exactly (maps to RR's `end`) */
   exact?: boolean;
-};
-
-export type NavToggleProps = {
-  trigger?: React.ReactNode;
-  title?: React.ReactNode;
-  description?: React.ReactNode;
-  side?: 'top' | 'right' | 'bottom' | 'left';
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-  closeOnContentClick?: boolean;
-  contentClassName?: string;
-  headerClassName?: string;
-  footerClassName?: string;
-  showFooter?: boolean;
-  primaryAction?: React.ReactNode;
-  triggerButtonProps?: React.ComponentProps<typeof Button>;
-  children?: React.ReactNode;
 };
 
 export type NavbarProps = {

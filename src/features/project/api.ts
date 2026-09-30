@@ -9,6 +9,7 @@
 export { default as LoadProjectScene } from './LoadProjectScene';
 export { default as ProjectBrowser } from './components/ProjectBrowser';
 export { default as SelectProjectSceneDialog } from './SelectProjectSceneDialog';
+export { ProjectLoading } from './components/ProjectLoading';
 
 // Browser controller
 export { useRootProject } from './hooks/useRootProject';

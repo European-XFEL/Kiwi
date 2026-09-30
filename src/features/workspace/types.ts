@@ -1,3 +1,10 @@
+import type { useRootProject } from '@/features/project/api';
+import type { ActiveIndicatorProps } from '@/features/status';
+import type {
+  AccessLevelSelectorProps,
+  UserProfileProps,
+} from '@/features/user';
+
 // Workspace
 // ---
 
@@ -85,16 +92,20 @@ export interface WorkspaceFooterModel {
 // ---
 
 export interface WorkspaceRuntime {
-  accessLevelLabel?: string | null;
+  access?: Omit<AccessLevelSelectorProps, 'compact' | 'badgeClassName'>;
+  activity?: ActiveIndicatorProps;
+  browser?: ReturnType<typeof useRootProject>;
   connectedFor?: string;
   connected: boolean;
   guiServer?: string;
   guiServerVersion?: string;
   latestLatency?: number | null;
-  onGoHome?: () => void;
+  onGoToHomeTab?: () => void;
+  projectLoading?: boolean;
   queuedMessageCount?: number;
   sceneTabOpen?: boolean;
   topic?: string;
+  user?: Omit<UserProfileProps, 'nameClassName'>;
 }
 
 // Panel tabs & live state

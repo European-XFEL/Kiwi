@@ -1,64 +1,84 @@
-import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
+import { AccessLevel } from '@/karabo/data/api';
+import type { useRootProject } from '@/features/project/api';
 import WorkspaceHeader from '../WorkspaceHeader';
 import { createDefaultWorkspaceModel } from '../../utils';
 import type { WorkspaceRuntime } from '../../types';
 
-const mockRootProject = jest.fn<unknown, []>();
+const mockNavBar = jest.fn<null, [unknown]>(() => null);
 
-jest.mock('@/features/project/api', () => {
-  const ReactActual = jest.requireActual<typeof React>('react');
-
-  return {
-    LoadProjectScene: () => null,
-    ProjectBrowser: () =>
-      ReactActual.createElement('div', { 'data-testid': 'project-browser' }),
-    useRootProject: () => ({ rootProject: mockRootProject() }),
-  };
-});
-
-jest.mock('@/app/api', () => {
-  const ReactActual = jest.requireActual<typeof React>('react');
-
-  return {
-    KiwiHeader: ({ children }: { children: React.ReactNode }) =>
-      ReactActual.createElement('div', null, children),
-  };
-});
-
-jest.mock('@/features/user', () => ({
-  AccessLevelSelector: () => null,
-  UserProfile: () => null,
+jest.mock('@/features/navigation', () => ({
+  NavBar: (props: unknown) => mockNavBar(props),
 }));
 
-jest.mock('@/features/status', () => ({ ActiveIndicator: () => null }));
+const browser = { rootProject: undefined } as ReturnType<typeof useRootProject>;
 
-function renderHeader(runtime: Partial<WorkspaceRuntime>) {
-  const { header } = createDefaultWorkspaceModel();
-  return render(
-    <WorkspaceHeader
-      header={header}
-      runtime={{ connected: true, ...runtime }}
-    />
-  );
+function renderHeader(
+  runtime: WorkspaceRuntime,
+  header = createDefaultWorkspaceModel().header
+) {
+  render(<WorkspaceHeader header={header} runtime={runtime} />);
 }
 
 describe('WorkspaceHeader', () => {
   beforeEach(() => {
-    mockRootProject.mockReturnValue({ projectUuid: 'project-a' });
+    jest.clearAllMocks();
   });
 
-  it('shows no Home button while the Home tab is showing', () => {
-    renderHeader({ sceneTabOpen: false });
+  it('hands every piece of state from the runtime down to the NavBar', () => {
+    const onGoToHomeTab = jest.fn();
+    const activity = { lastActivity: 1, activityLevel: 'active' as const };
+    const access = {
+      accessLevel: AccessLevel.EXPERT,
+      canChangeLevel: true,
+      canChangeTo: jest.fn(),
+      onChange: jest.fn(),
+    };
+    const user = { loggedUser: 'Ada', topic: 'TOPIC_A', onLogout: jest.fn() };
 
-    expect(screen.getByText('No scene loaded')).toBeInTheDocument();
-    expect(screen.queryByTestId('workspace-home-button')).toBeNull();
+    renderHeader({
+      connected: true,
+      sceneTabOpen: true,
+      onGoToHomeTab,
+      browser,
+      activity,
+      access,
+      user,
+    });
+
+    expect(mockNavBar).toHaveBeenCalledWith({
+      browser,
+      sceneOpen: true,
+      onGoHome: onGoToHomeTab,
+      compact: true,
+      projectLoading: false,
+      activity,
+      access,
+      user,
+    });
   });
 
-  it('shows the Home button and the project browser for a project scene', () => {
-    renderHeader({ sceneTabOpen: true });
+  it('tells the NavBar that no scene is open', () => {
+    renderHeader({ connected: true, browser });
 
-    expect(screen.getByTestId('workspace-home-button')).toBeInTheDocument();
-    expect(screen.getByTestId('project-browser')).toBeInTheDocument();
+    expect(mockNavBar).toHaveBeenCalledWith(
+      expect.objectContaining({ sceneOpen: false })
+    );
+  });
+
+  it('tells the NavBar while a project loads', () => {
+    renderHeader({ connected: true, browser, projectLoading: true });
+
+    expect(mockNavBar).toHaveBeenCalledWith(
+      expect.objectContaining({ projectLoading: true })
+    );
+  });
+
+  it('renders nothing when the workspace model hides the header', () => {
+    const header = { ...createDefaultWorkspaceModel().header, visible: false };
+
+    renderHeader({ connected: true, browser }, header);
+
+    expect(mockNavBar).not.toHaveBeenCalled();
   });
 });

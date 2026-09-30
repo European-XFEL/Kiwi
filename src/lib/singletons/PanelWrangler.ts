@@ -119,7 +119,7 @@ export class PanelWrangler {
     this.eventMap = {
       [KaraboEvent.OpenScene]: this.onEventOpenScene,
       [KaraboEvent.OpenUnattachedScene]: this.onEventOpenUnattachedScene,
-      [KaraboEvent.GoHome]: this.onEventGoHome,
+      [KaraboEvent.GoToHomeTab]: this.onEventGoToHomeTab,
       [KaraboEvent.DatabaseBusy]: this.onEventDatabaseBusy,
     };
 
@@ -221,18 +221,7 @@ export class PanelWrangler {
   }
 
   resetCenter(): void {
-    for (const tabId of this.state.center.tabs.map((tab) => tab.id)) {
-      this.content.get(tabId)?.sceneControllerRegistry?.dispose();
-      this.content.delete(tabId);
-      this.sceneTabs.delete(tabId);
-      this.deviceSceneTabs.delete(tabId);
-    }
-
-    this.clearSavedActiveTab();
-    this.commit({
-      ...this.state,
-      center: createCenterArea(),
-    });
+    this.commit({ ...this.state, center: this.teardownCenter() });
   }
 
   // Full teardown for a session boundary. resetCenter() deliberately keeps the
@@ -241,6 +230,7 @@ export class PanelWrangler {
   // the next one. Iterates `content` rather than the center tabs so a registry
   // is disposed no matter which slot its tab lived in.
   resetWorkspace(): void {
+    const center = this.teardownCenter();
     for (const content of this.content.values()) {
       content.sceneControllerRegistry?.dispose();
     }
@@ -248,13 +238,26 @@ export class PanelWrangler {
     this.sceneTabs.clear();
     this.deviceSceneTabs.clear();
 
-    this.clearSavedActiveTab();
     this.commit({
       ...this.state,
       left: createEmptyArea('left'),
-      center: createCenterArea(),
+      center,
       right: createEmptyArea('right'),
     });
+  }
+
+  // The single teardown of scene state behind both resets. It does not commit,
+  // so each reset notifies subscribers once with its final state.
+  private teardownCenter(): PanelState {
+    for (const tabId of this.state.center.tabs.map((tab) => tab.id)) {
+      this.content.get(tabId)?.sceneControllerRegistry?.dispose();
+      this.content.delete(tabId);
+      this.sceneTabs.delete(tabId);
+      this.deviceSceneTabs.delete(tabId);
+    }
+
+    this.clearSavedActiveTab();
+    return createCenterArea();
   }
 
   getSavedActiveTab(): SavedActiveTab | undefined {
@@ -306,7 +309,7 @@ export class PanelWrangler {
     this.deviceSceneTabs.delete(tabId);
 
     if (nextTabs.length === 0 && area === 'center') {
-      broadcast_event(KaraboEvent.GoHome, {});
+      broadcast_event(KaraboEvent.GoToHomeTab, {});
       return;
     }
 
@@ -558,13 +561,22 @@ export class PanelWrangler {
     };
   }
 
+  // A fresh project load starts from Home: the previous project's tabs and
+  // root are torn down as GoToHomeTab does, so a failed load also ends at Home.
   private onEventDatabaseBusy = (data: Hash): void => {
     const projectLoading = data.getValue<boolean>('is_processing');
     if (this.state.projectLoading === projectLoading) return;
-    this.commit({ ...this.state, projectLoading });
+    if (!projectLoading) {
+      this.commit({ ...this.state, projectLoading });
+      return;
+    }
+
+    const center = this.teardownCenter();
+    getProjectModel().clearRoot(); // Emits RootProjectChanged.
+    this.commit({ ...this.state, projectLoading, center });
   };
 
-  private onEventGoHome = (): void => {
+  private onEventGoToHomeTab = (): void => {
     this.resetCenter();
     getProjectModel().clearRoot(); // Emits RootProjectChanged.
   };

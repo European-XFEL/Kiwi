@@ -1,138 +1,143 @@
 import React from 'react';
-import { KaraboEvent } from '@/lib/events';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { AccessLevel } from '@/karabo/data/api';
+import type { useRootProject } from '@/features/project/api';
 
-const mockNavigate = jest.fn();
-const mockPostEvent = jest.fn();
-const mockWrangler = {
-  subscribe: jest.fn(() => jest.fn()),
-  isSceneTabOpen: jest.fn(),
-};
-const mockGetScene = jest.fn();
-const mockBrowserState = {};
 const mockProjectBrowser = jest.fn<React.ReactElement, [unknown]>(() =>
   React.createElement('div', { 'data-testid': 'project-browser' })
 );
-
-jest.mock('react-router-dom', () => ({
-  useNavigate: () => mockNavigate,
-}));
-
-jest.mock('@/lib/singletons/api', () => ({
-  getPanelWrangler: () => mockWrangler,
-  getMediator: () => ({ postEvent: mockPostEvent }),
-  getDbConn: () => ({ getScene: mockGetScene }),
-}));
+const mockActiveIndicator = jest.fn<null, [unknown]>(() => null);
+const mockAccessLevelSelector = jest.fn<null, [unknown]>(() => null);
+const mockUserProfile = jest.fn<null, [unknown]>(() => null);
 
 jest.mock('@/app/api', () => {
   const ReactActual = jest.requireActual<typeof React>('react');
 
   return {
-    KiwiHeader: ({ children }: any) =>
-      ReactActual.createElement('div', null, children),
+    KiwiHeader: ({ children, ...props }: React.HTMLAttributes<HTMLElement>) =>
+      ReactActual.createElement(
+        'header',
+        { 'data-testid': 'app-header', ...props },
+        children
+      ),
   };
 });
 
-jest.mock('../components/NavMenu', () => {
-  const ReactActual = jest.requireActual<typeof React>('react');
+jest.mock('@/features/project/api', () => ({
+  LoadProjectScene: () => null,
+  ProjectBrowser: ({ browser }: { browser: unknown }) =>
+    mockProjectBrowser(browser),
+}));
 
-  return {
-    __esModule: true,
-    default: ({ children }: any) =>
-      ReactActual.createElement('div', null, children),
-  };
-});
+jest.mock('@/features/user', () => ({
+  AccessLevelSelector: (props: unknown) => mockAccessLevelSelector(props),
+  UserProfile: (props: unknown) => mockUserProfile(props),
+}));
 
-jest.mock('../components/NavItem', () => {
-  const ReactActual = jest.requireActual<typeof React>('react');
-
-  return {
-    NavItem: ({ children }: any) =>
-      ReactActual.createElement('div', null, children),
-  };
-});
-
-jest.mock('../components/NavToggle', () => {
-  const ReactActual = jest.requireActual<typeof React>('react');
-
-  return {
-    __esModule: true,
-    default: ({ children }: any) =>
-      ReactActual.createElement('div', null, children),
-  };
-});
-
-jest.mock('@/features/project/api', () => {
-  const ReactActual = jest.requireActual<typeof React>('react');
-
-  return {
-    LoadProjectScene: () =>
-      ReactActual.createElement('div', {
-        'data-testid': 'load-project-scene',
-      }),
-    useRootProject: () => mockBrowserState,
-    ProjectBrowser: ({ browser }: { browser: unknown }) =>
-      mockProjectBrowser(browser),
-  };
-});
-
-jest.mock('@/features/user', () => {
-  const ReactActual = jest.requireActual<typeof React>('react');
-
-  return {
-    UserProfile: () =>
-      ReactActual.createElement('div', { 'data-testid': 'user-profile' }),
-    AccessLevelSelector: () =>
-      ReactActual.createElement('div', {
-        'data-testid': 'access-level-selector',
-      }),
-  };
-});
-
-jest.mock('@/features/status', () => {
-  const ReactActual = jest.requireActual<typeof React>('react');
-
-  return {
-    GuiServerDisplay: () =>
-      ReactActual.createElement('div', { 'data-testid': 'gui-server-display' }),
-    ActiveIndicator: () =>
-      ReactActual.createElement('div', { 'data-testid': 'active-indicator' }),
-  };
-});
-
-jest.mock('@/components/api', () => {
-  const ReactActual = jest.requireActual<typeof React>('react');
-
-  return {
-    Button: ({ children, ...props }: any) =>
-      ReactActual.createElement('button', props, children),
-    Separator: () =>
-      ReactActual.createElement('div', { 'data-testid': 'separator' }),
-  };
-});
+jest.mock('@/features/status', () => ({
+  ActiveIndicator: (props: unknown) => mockActiveIndicator(props),
+}));
 
 import { NavBar } from '../NavBar';
+
+const browser = { rootProject: {} } as ReturnType<typeof useRootProject>;
+const noProject = { rootProject: undefined } as ReturnType<
+  typeof useRootProject
+>;
+const activity = { lastActivity: 1, activityLevel: 'moderate' as const };
+const access = {
+  accessLevel: AccessLevel.OPERATOR,
+  canChangeLevel: true,
+  canChangeTo: () => true,
+  onChange: jest.fn(),
+};
+const user = { loggedUser: 'Ada', topic: 'TOPIC_A', onLogout: jest.fn() };
+
+function renderNavBar(
+  props: Partial<React.ComponentProps<typeof NavBar>> = {}
+) {
+  render(
+    <NavBar
+      browser={browser}
+      sceneOpen
+      onGoHome={jest.fn()}
+      compact
+      projectLoading={false}
+      activity={activity}
+      access={access}
+      user={user}
+      {...props}
+    />
+  );
+}
 
 describe('NavBar', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockWrangler.isSceneTabOpen.mockReturnValue(true);
   });
 
-  it('resets the workspace through GoHome before navigating home', () => {
-    render(<NavBar />);
-    fireEvent.click(screen.getAllByRole('button', { name: 'Go home' })[0]);
-    expect(mockPostEvent).toHaveBeenCalledWith(KaraboEvent.GoHome, {});
-    expect(mockNavigate).toHaveBeenCalledWith('/home');
+  it('shows the Home button and the project browser it is given while a scene is open', () => {
+    renderNavBar();
+
+    expect(screen.getByTestId('workspace-home-button')).toBeInTheDocument();
+    expect(mockProjectBrowser).toHaveBeenCalledWith(browser);
+    expect(screen.queryByText('No project loaded')).toBeNull();
   });
 
-  it('shows the project browser in both layouts without fetching scene info again', () => {
-    render(<NavBar />);
+  it('shows the loaded project without a Home button while no scene tab is open', () => {
+    renderNavBar({ sceneOpen: false });
 
-    expect(mockGetScene).not.toHaveBeenCalled();
-    expect(mockProjectBrowser).toHaveBeenCalledTimes(2);
-    expect(mockProjectBrowser).toHaveBeenNthCalledWith(1, mockBrowserState);
-    expect(mockProjectBrowser).toHaveBeenNthCalledWith(2, mockBrowserState);
-    expect(screen.getAllByTestId('project-browser')).toHaveLength(2);
+    expect(mockProjectBrowser).toHaveBeenCalledWith(browser);
+    expect(screen.queryByTestId('workspace-home-button')).toBeNull();
+  });
+
+  it('says no project is loaded when there is none', () => {
+    renderNavBar({ sceneOpen: false, browser: noProject });
+
+    expect(screen.getByText('No project loaded')).toBeInTheDocument();
+    expect(mockProjectBrowser).not.toHaveBeenCalled();
+  });
+
+  it('shows only the Home button for a device scene without a project', () => {
+    renderNavBar({ browser: noProject });
+
+    expect(screen.getByTestId('workspace-home-button')).toBeInTheDocument();
+    expect(mockProjectBrowser).not.toHaveBeenCalled();
+  });
+
+  it('reports a Home click to its owner', () => {
+    const onGoHome = jest.fn();
+    renderNavBar({ onGoHome });
+
+    fireEvent.click(screen.getByTestId('workspace-home-button'));
+
+    expect(onGoHome).toHaveBeenCalledTimes(1);
+  });
+
+  it('marks the header inert while a project loads', () => {
+    renderNavBar({ projectLoading: true });
+
+    expect(screen.getByTestId('app-header')).toHaveAttribute('inert');
+    expect(screen.getByTestId('app-header')).toHaveAttribute(
+      'aria-busy',
+      'true'
+    );
+  });
+
+  it('hands each widget its own state', () => {
+    renderNavBar();
+
+    expect(mockActiveIndicator).toHaveBeenCalledWith(activity);
+    expect(mockAccessLevelSelector).toHaveBeenCalledWith(
+      expect.objectContaining(access)
+    );
+    expect(mockUserProfile).toHaveBeenCalledWith(expect.objectContaining(user));
+  });
+
+  it('leaves out the user widgets without a session', () => {
+    renderNavBar({ access: undefined, user: undefined });
+
+    expect(mockAccessLevelSelector).not.toHaveBeenCalled();
+    expect(mockUserProfile).not.toHaveBeenCalled();
   });
 });

@@ -77,6 +77,7 @@ describe('PanelWrangler', () => {
     'clears the active scene on %s but leaves project loading to the database',
     (reset) => {
       const scene = makeScene('scene-a');
+      setDatabaseBusy(true);
       setProject('CONTROLS', 'ProjectA', [scene]);
       openScene(scene);
       const observed: { sceneTabOpen: boolean; loading: boolean }[] = [];
@@ -87,35 +88,75 @@ describe('PanelWrangler', () => {
         });
       });
       try {
-        setDatabaseBusy(true);
         wrangler[reset]();
-        expect(observed).toEqual([
-          { sceneTabOpen: true, loading: true },
-          { sceneTabOpen: false, loading: true },
-        ]);
+        expect(observed).toEqual([{ sceneTabOpen: false, loading: true }]);
       } finally {
         unsubscribe();
       }
     }
   );
 
-  it('marks the project as loading exactly while the database is busy', () => {
+  it('starts a fresh project load at Home, clearing the previous project', () => {
     const scene = makeScene('scene-a');
     setProject('CONTROLS', 'ProjectA', [scene]);
-
-    setDatabaseBusy(true);
     openScene(scene);
-    expect(wrangler.getSnapshot().projectLoading).toBe(true);
+    const observed: { tabs: string[]; loading: boolean }[] = [];
+    const unsubscribe = wrangler.subscribe(() => {
+      const { center, projectLoading } = wrangler.getSnapshot();
+      observed.push({
+        tabs: center.tabs.map((tab) => tab.id),
+        loading: projectLoading,
+      });
+    });
+    try {
+      setDatabaseBusy(true);
 
-    setDatabaseBusy(false);
-    expect(wrangler.getSnapshot().projectLoading).toBe(false);
+      expect(observed).toEqual([{ tabs: [HOME_TAB_ID], loading: true }]);
+      expect(wrangler.getSnapshot().center.activeTabId).toBe(HOME_TAB_ID);
+      expect(wrangler.getContent('scene:scene-a')).toBeUndefined();
+      expect(getProjectModel().root).toBeUndefined();
+    } finally {
+      unsubscribe();
+    }
   });
 
-  it('ends project loading when the database reports a failed load', () => {
+  it('opens the new scene once the fresh project has loaded', () => {
+    setProject('CONTROLS', 'ProjectA', [makeScene('scene-a')]);
+    setDatabaseBusy(true);
+
+    setDatabaseBusy(false);
+    const scene = makeScene('scene-b');
+    setProject('CONTROLS', 'ProjectB', [scene]);
+    openScene(scene);
+
+    expect(wrangler.getSnapshot().projectLoading).toBe(false);
+    expect(wrangler.getSnapshot().center.activeTabId).toBe('scene:scene-b');
+  });
+
+  it('stays at Home when the fresh project fails to load', () => {
+    const scene = makeScene('scene-a');
+    setProject('CONTROLS', 'ProjectA', [scene]);
+    openScene(scene);
+
     setDatabaseBusy(true);
     setDatabaseBusy(false, true);
 
-    expect(wrangler.getSnapshot().projectLoading).toBe(false);
+    const { center, projectLoading } = wrangler.getSnapshot();
+    expect(projectLoading).toBe(false);
+    expect(center.tabs.map((tab) => tab.id)).toEqual([HOME_TAB_ID]);
+    expect(getProjectModel().root).toBeUndefined();
+  });
+
+  it('tears nothing down when the database becomes idle', () => {
+    const scene = makeScene('scene-a');
+    setDatabaseBusy(true);
+    setProject('CONTROLS', 'ProjectA', [scene]);
+    openScene(scene);
+
+    setDatabaseBusy(false);
+
+    expect(wrangler.getSnapshot().center.activeTabId).toBe('scene:scene-a');
+    expect(getProjectModel().root?.uuid).toBe('project-ProjectA');
   });
 
   it('starts with the home tab before any scene is opened', () => {
@@ -620,13 +661,13 @@ describe('PanelWrangler', () => {
     });
 
     it.each([
-      ['the Home button', () => broadcast_event(KaraboEvent.GoHome, {})],
+      ['the Home button', () => broadcast_event(KaraboEvent.GoToHomeTab, {})],
       [
         'closing the last tab',
         () => wrangler.closeTab('center', 'scene:scene-a'),
       ],
     ])(
-      'goes Home on %s: resets the tabs, the saved tab, and the project',
+      'goes to the Home tab on %s: resets the tabs, the saved tab, and the project',
       (_trigger, goHome) => {
         const scene = makeScene('scene-a');
         setProject('CONTROLS', 'ProjectA', [scene]);

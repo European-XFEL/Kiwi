@@ -13,6 +13,7 @@ export { default as TopicDisplay } from './components/TopicDisplay';
 
 // Types
 export type {
+  ActiveIndicatorProps,
   GuiServerDisplayProps,
   LoadingStatusProps,
   TopicDisplayProps,

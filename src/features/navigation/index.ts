@@ -11,8 +11,4 @@ export { NavBar } from './NavBar';
 // Components
 
 // Types
-export type {
-  NavItemProps,
-  NavLinkProps,
-  NavToggleProps,
-} from './types/navigation.types';
+export type { NavItemProps, NavLinkProps } from './types/navigation.types';
