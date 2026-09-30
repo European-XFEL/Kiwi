@@ -5,8 +5,8 @@
 import React from 'react';
 
 import { GridLayoutModel, GridLayoutChildData } from '@/karabo/common/api';
-import { renderContent, renderLayerContent } from '../../KaraboSceneWidget';
-import { isLayout, resolveBounds, type SceneLayer } from '../../bounds';
+import { renderContent } from '../../KaraboSceneWidget';
+import { isLayout, isShape, resolveBounds } from '../../bounds';
 import { containerPointerEvents, objectPointerEvents } from '../../utils/mode';
 import {
   getChildObjectId,
@@ -18,11 +18,10 @@ import { registerRenderer } from '../../renderRegistry';
 type GridLayoutProps = {
   model: GridLayoutModel;
   objectId: string;
-  layer?: SceneLayer;
 };
 
 export const GridLayout: React.FC<GridLayoutProps> = React.memo(
-  ({ model, objectId, layer }) => {
+  ({ model, objectId }) => {
     const { children } = model;
     const reactId = React.useId();
     // Compute grid dimensions from layout_data so CSS grid auto-sizing works.
@@ -90,12 +89,10 @@ export const GridLayout: React.FC<GridLayoutProps> = React.memo(
                 pointerEvents: isLayout(child)
                   ? containerPointerEvents()
                   : objectPointerEvents(),
+                zIndex: isShape(child) ? -1 : undefined,
               }}
             >
-              {/* Preserve the active layer through layout recursion. */}
-              {layer
-                ? renderLayerContent(child, layer, childObjectId)
-                : renderContent(child, childObjectId)}
+              {renderContent(child, childObjectId)}
             </div>
           );
         })}

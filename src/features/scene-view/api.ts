@@ -24,23 +24,7 @@ export { default as FitModeSelect } from './components/FitModeSelect';
 export { ControllerContainer } from './components/widgets/ControllerContainer';
 export { useSceneScale } from './hooks/useSceneScale';
 export { getOverflow } from './utils/sceneLayout';
-export {
-  KaraboSceneWidget,
-  renderContent,
-  renderLayerContent,
-} from './KaraboSceneWidget';
-export {
-  collectSceneLayers,
-  createRootVisitContext,
-  getChildVisitContext,
-  isVisibleInLayer,
-  visitSceneLayers,
-  visitSceneTree,
-  type SceneLayerContext,
-  type SceneLayerEntry,
-  type SceneTreeVisitor,
-  type SceneVisitContext,
-} from './utils/visitor';
+export { KaraboSceneWidget, renderContent } from './KaraboSceneWidget';
 export { getChildObjectId } from './utils/objectId';
 export {
   isControllerWidget,
@@ -53,4 +37,3 @@ export type {
   ControllerContainerProps,
 } from './components/widgets/ControllerContainer';
 export type { FitMode, Dimensions } from './hooks/useSceneScale';
-export type { SceneLayer } from './bounds';

@@ -2,8 +2,7 @@
  * ElementRenderer — resolves scene models to renderer components.
  *
  * Main exports:
- *  - renderContent: direct render path for one model, without scene-layer filtering.
- *  - renderLayerContent: layered render path for one model in the shape/widget scene passes.
+ *  - renderContent: render path for one model.
  *  - KaraboSceneWidget: positioned shell for one top-level rendered scene entry.
  */
 
@@ -20,9 +19,12 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/api';
 import { ControllerContainer } from './components/widgets/ControllerContainer';
 
 import { getRenderer, type Renderer } from './renderRegistry';
-import { resolveBounds, type SceneLayer } from './bounds';
-import { isControllerWidget, isLayout } from './utils/sceneNodePredicates';
-import { isVisibleInLayer } from './utils/visitor';
+import { resolveBounds } from './bounds';
+import {
+  isControllerWidget,
+  isLayout,
+  isShape,
+} from './utils/sceneNodePredicates';
 import { getSceneObjectDomId, sceneObjectIdAttr } from './utils/objectId';
 
 export { resolveBounds } from './bounds';
@@ -118,27 +120,7 @@ const renderDirectContent = (
     <Renderer model={model} objectId={objectId} />
   ));
 
-// Render a model in one real scene layer only.
-// SceneView uses this path when building the shape and widget layers, so
-// visibility is checked first and the active layer is forwarded into layouts.
-export const renderLayerContent = (
-  model: BaseSceneObjectData,
-  layer: SceneLayer,
-  objectId: string
-): React.ReactNode => {
-  if (!isVisibleInLayer(model, layer)) return null;
-
-  const content = isControllerWidget(model)
-    ? renderControllerContent(model, objectId)
-    : renderWithRenderer(model, (Renderer) => (
-        <Renderer model={model} layer={layer} objectId={objectId} />
-      ));
-
-  return content;
-};
-
-// Render one model directly, without shape/widget layer filtering.
-// This is the unsplit path used for single-object rendering outside SceneView.
+// Render one model through its registered renderer.
 export function renderContent(
   model: BaseSceneObjectData,
   objectId: string
@@ -159,8 +141,7 @@ export function renderContent(
 export const KaraboSceneWidget: React.FC<{
   model: BaseSceneObjectData;
   objectId: string;
-  layer?: SceneLayer;
-}> = React.memo(({ model, objectId, layer }) => {
+}> = React.memo(({ model, objectId }) => {
   const { x, y, width, height } = resolveBounds(model);
   const reactId = React.useId();
 
@@ -182,11 +163,10 @@ export const KaraboSceneWidget: React.FC<{
         width,
         height,
         pointerEvents,
+        zIndex: isShape(model) ? -1 : undefined,
       }}
     >
-      {layer
-        ? renderLayerContent(model, layer, objectId)
-        : renderContent(model, objectId)}
+      {renderContent(model, objectId)}
     </div>
   );
 });

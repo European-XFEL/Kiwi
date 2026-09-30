@@ -7,8 +7,8 @@
 import React from 'react';
 
 import { BoxLayoutModel, Direction } from '@/karabo/common/api';
-import { renderContent, renderLayerContent } from '../../KaraboSceneWidget';
-import { isLayout, resolveBounds, type SceneLayer } from '../../bounds';
+import { renderContent } from '../../KaraboSceneWidget';
+import { isLayout, isShape, resolveBounds } from '../../bounds';
 import { containerPointerEvents, objectPointerEvents } from '../../utils/mode';
 import {
   getChildObjectId,
@@ -20,7 +20,6 @@ import { registerRenderer } from '../../renderRegistry';
 type BoxLayoutProps = {
   model: BoxLayoutModel;
   objectId: string;
-  layer?: SceneLayer;
 };
 
 const FLEX_DIRECTION_BY_DIRECTION: Record<
@@ -34,7 +33,7 @@ const FLEX_DIRECTION_BY_DIRECTION: Record<
 };
 
 export const BoxLayout: React.FC<BoxLayoutProps> = React.memo(
-  ({ model, objectId, layer }) => {
+  ({ model, objectId }) => {
     const { direction, children } = model;
     const reactId = React.useId();
     return (
@@ -73,12 +72,10 @@ export const BoxLayout: React.FC<BoxLayoutProps> = React.memo(
                 pointerEvents: isLayout(child)
                   ? containerPointerEvents()
                   : objectPointerEvents(),
+                zIndex: isShape(child) ? -1 : undefined,
               }}
             >
-              {/* Preserve the active layer through layout recursion. */}
-              {layer
-                ? renderLayerContent(child, layer, childObjectId)
-                : renderContent(child, childObjectId)}
+              {renderContent(child, childObjectId)}
             </div>
           );
         })}

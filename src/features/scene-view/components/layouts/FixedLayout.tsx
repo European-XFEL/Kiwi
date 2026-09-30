@@ -5,8 +5,8 @@
 import React from 'react';
 
 import { FixedLayoutModel } from '@/karabo/common/api';
-import { renderContent, renderLayerContent } from '../../KaraboSceneWidget';
-import { isLayout, resolveBounds, type SceneLayer } from '../../bounds';
+import { renderContent } from '../../KaraboSceneWidget';
+import { isLayout, isShape, resolveBounds } from '../../bounds';
 import { containerPointerEvents, objectPointerEvents } from '../../utils/mode';
 import {
   getChildObjectId,
@@ -18,11 +18,10 @@ import { registerRenderer } from '../../renderRegistry';
 type FixedLayoutProps = {
   model: FixedLayoutModel;
   objectId: string;
-  layer?: SceneLayer;
 };
 
 export const FixedLayout: React.FC<FixedLayoutProps> = React.memo(
-  ({ model, objectId, layer }) => {
+  ({ model, objectId }) => {
     const { x, y, children } = model;
     const reactId = React.useId();
     return (
@@ -65,12 +64,10 @@ export const FixedLayout: React.FC<FixedLayoutProps> = React.memo(
                 pointerEvents: isLayout(child)
                   ? containerPointerEvents()
                   : objectPointerEvents(),
+                zIndex: isShape(child) ? -1 : undefined,
               }}
             >
-              {/* Preserve the active layer through layout recursion. */}
-              {layer
-                ? renderLayerContent(child, layer, childObjectId)
-                : renderContent(child, childObjectId)}
+              {renderContent(child, childObjectId)}
             </div>
           );
         })}

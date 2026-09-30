@@ -1,10 +1,10 @@
 import React from 'react';
 import { act, render } from '@testing-library/react';
 import {
-  BoxLayoutModel,
-  Direction,
+  type BaseSceneObjectData,
   DisplayLabelModel,
   RectangleModel,
+  SceneModel,
 } from '@/karabo/common/api';
 import SceneView from '../SceneView';
 
@@ -14,51 +14,49 @@ const mockWidgetUnmountSpy = jest.fn();
 const mockShapeMountSpy = jest.fn();
 const mockShapeUnmountSpy = jest.fn();
 const mockRenderedEntries: Array<{
-  layer: 'shape' | 'widget';
   kind: string;
   objectId: string;
 }> = [];
 
-// KaraboSceneWidget is mocked to components that track layer mount/unmount.
+// KaraboSceneWidget is mocked to components that track object mount/unmount.
 // Written without JSX so the factory doesn't reference the hoisted jsx_runtime.
 jest.mock('../../KaraboSceneWidget', () => {
   const ReactActual = jest.requireActual<typeof React>('react');
 
-  function LifecycleTracker({ layer }: { layer: 'shape' | 'widget' }) {
+  function LifecycleTracker({ shape }: { shape: boolean }) {
     ReactActual.useEffect(() => {
-      if (layer === 'widget') {
-        mockWidgetMountSpy();
-      } else {
+      if (shape) {
         mockShapeMountSpy();
+      } else {
+        mockWidgetMountSpy();
       }
 
       return () => {
-        if (layer === 'widget') {
-          mockWidgetUnmountSpy();
-        } else {
+        if (shape) {
           mockShapeUnmountSpy();
+        } else {
+          mockWidgetUnmountSpy();
         }
       };
-    }, [layer]);
-    return ReactActual.createElement('div', { 'data-layer': layer });
+    }, [shape]);
+    return ReactActual.createElement('div');
   }
 
   return {
     KaraboSceneWidget: function MockKaraboSceneWidget({
-      layer,
       model,
       objectId,
     }: {
-      layer: 'shape' | 'widget';
       model: { constructor: { name: string } };
       objectId: string;
     }) {
       mockRenderedEntries.push({
-        layer,
         kind: model.constructor.name,
         objectId,
       });
-      return ReactActual.createElement(LifecycleTracker, { layer });
+      return ReactActual.createElement(LifecycleTracker, {
+        shape: model.constructor.name === 'RectangleModel',
+      });
     },
   };
 });
@@ -80,29 +78,22 @@ function makeWidgetChild() {
   return widget;
 }
 
-function makeLayoutChild() {
-  const layout = new BoxLayoutModel();
-  layout.direction = Direction.LeftToRight;
-  layout.children = [makeShapeChild(), makeWidgetChild()];
-  return layout;
-}
-
-function makeScene(uuid: string, children: unknown[]) {
-  return {
+function makeScene(uuid: string, children: BaseSceneObjectData[]) {
+  return new SceneModel({
     uuid,
     width: 800,
     height: 600,
     children,
-  } as any;
+  });
 }
 
-describe('SceneView — scene uuid keying', () => {
+describe('SceneView rendering', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockRenderedEntries.length = 0;
   });
 
-  it('renders root layers as shape pass first, then widget pass, while preserving order within each layer', () => {
+  it('renders every root object once in model order with stable object ids', () => {
     render(
       <SceneView
         sceneModel={makeScene('scene-1', [
@@ -117,48 +108,31 @@ describe('SceneView — scene uuid keying', () => {
     );
 
     expect(mockRenderedEntries).toEqual([
-      { layer: 'shape', kind: 'RectangleModel', objectId: 'scene:scene-1.1' },
-      { layer: 'shape', kind: 'RectangleModel', objectId: 'scene:scene-1.3' },
       {
-        layer: 'widget',
         kind: 'DisplayLabelModel',
         objectId: 'scene:scene-1.0',
       },
+      { kind: 'RectangleModel', objectId: 'scene:scene-1.1' },
       {
-        layer: 'widget',
         kind: 'DisplayLabelModel',
         objectId: 'scene:scene-1.2',
       },
+      { kind: 'RectangleModel', objectId: 'scene:scene-1.3' },
     ]);
   });
 
-  it('renders layout roots in both passes without interleaving the root layer order', () => {
-    render(
+  it('isolates the scene content stacking context', () => {
+    const { container } = render(
       <SceneView
-        sceneModel={makeScene('scene-1', [
-          makeWidgetChild(),
-          makeLayoutChild(),
-          makeShapeChild(),
-        ])}
+        sceneModel={makeScene('scene-1', [])}
         scale={1}
         fitMode="fit-page"
       />
     );
 
-    expect(mockRenderedEntries).toEqual([
-      { layer: 'shape', kind: 'BoxLayoutModel', objectId: 'scene:scene-1.1' },
-      { layer: 'shape', kind: 'RectangleModel', objectId: 'scene:scene-1.2' },
-      {
-        layer: 'widget',
-        kind: 'DisplayLabelModel',
-        objectId: 'scene:scene-1.0',
-      },
-      {
-        layer: 'widget',
-        kind: 'BoxLayoutModel',
-        objectId: 'scene:scene-1.1',
-      },
-    ]);
+    expect(
+      container.querySelector('[id^="SceneView-Scene-Inner-"]')
+    ).toHaveStyle({ isolation: 'isolate' });
   });
 
   it('skips the scene walk when the parent rerenders with unchanged props', () => {
