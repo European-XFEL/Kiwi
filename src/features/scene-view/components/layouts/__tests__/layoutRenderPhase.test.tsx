@@ -6,7 +6,7 @@ import {
   FixedLayoutModel,
   GridLayoutModel,
 } from '@/karabo/common/api';
-import DisplayLabel from '@/features/controllers/components/display/DisplayLabel';
+import DisplayLabel from '@/features/controllers/display/DisplayLabel';
 import { renderLayerContent } from '../../../KaraboSceneWidget';
 import { registerRenderer } from '../../../renderRegistry';
 import '../BoxLayout';

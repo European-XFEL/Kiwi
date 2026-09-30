@@ -10,11 +10,11 @@ jest.mock('@/features/controllers/api', () => ({
   getModelKeys: jest.fn(() => ''),
   useContainer: () => mockUseContainer(),
   useController: jest.requireActual<
-    typeof import('@/features/controllers/hooks/useController')
-  >('@/features/controllers/hooks/useController').useController,
+    typeof import('@/features/controllers/useController')
+  >('@/features/controllers/useController.ts').useController,
   useProxies: jest.requireActual<
-    typeof import('@/features/controllers/hooks/useProxies')
-  >('@/features/controllers/hooks/useProxies').useProxies,
+    typeof import('@/features/controllers/useProxies')
+  >('@/features/controllers/useProxies.ts').useProxies,
 }));
 
 jest.mock('@/features/scene-view/components/widgets/ControllerOverlay', () => {
