@@ -12,8 +12,12 @@ export { default as UserProfile } from './UserProfile';
 export { default as AccessLevelSelector } from './components/AccessLevelSelector';
 export { default as ConnectionTimer } from './components/ConnectionTimer';
 
+// Hooks
+export { useAccessLevel } from './hooks/useAccessLevel';
+
 // Types
 export type {
   ConnectionTimerProps,
   AccessLevelSelectorProps,
+  UserProfileProps,
 } from './types/user.types';

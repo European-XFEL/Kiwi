@@ -20,12 +20,14 @@ enum KaraboEvent {
   Notification = 'Notification',
   OpenScene = 'OpenScene',
   OpenUnattachedScene = 'OpenUnattachedScene',
-  // Tab changes within a session only. GoHome and session end reset the
+  // Tab changes within a session only. GoToHomeTab and session end reset the
   // workspace instead.
   // No payload; read the active scene tab from PanelWrangler.
   ActiveSceneTabChanged = 'ActiveSceneTabChanged',
-  // Sent by the Home button and by closing the last tab. No payload.
-  GoHome = 'GoHome',
+  // Shows the Home tab, which exists only while no scene tab is open: closes
+  // every scene tab and clears the project root. Sent by the Home buttons,
+  // "Back to Start", and closing the last tab. No payload.
+  GoToHomeTab = 'GoToHomeTab',
   OpenSceneLink = 'OpenSceneLink',
   OpenSceneBrowser = 'OpenSceneBrowser',
   DatabaseBusy = 'DatabaseBusy',

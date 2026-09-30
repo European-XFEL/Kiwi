@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-interface GlobalActivityState {
+export interface GlobalActivityState {
   lastActivity: number | null;
   latestLatency: number | null; // Time, in seconds, that the latest processed message waited in the queue to be processed
   queuedMessageCount: number; // Number of messages received from the GUI server waiting to be processed

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAccessLevelDisplay } from '@/components/api';
-import { getPanelWrangler } from '@/lib/singletons/api';
+import { useRootProject } from '@/features/project/api';
+import { useAccessLevel } from '@/features/user';
+import { getNetwork, getPanelWrangler } from '@/lib/singletons/api';
 import { useGlobalActivityStore, useGlobalStore } from '@/store/api';
 import { broadcast_event, KaraboEvent } from '@/lib/events';
 import type { WorkspaceRuntime } from '../types';
@@ -50,19 +51,28 @@ export default function useWorkspaceRuntime(): WorkspaceRuntime {
   const navigate = useNavigate();
   const sessionInfo = useGlobalStore((state) => state.sessionInfo);
   const globalState = useGlobalStore((state) => state.globalState);
+  const setLoggedOut = useGlobalStore((state) => state.setLoggedOut);
   const wrangler = getPanelWrangler();
   const sceneTabOpen = useSyncExternalStore(
     wrangler.subscribe,
     wrangler.isSceneTabOpen
   );
+  const projectLoading = useSyncExternalStore(
+    wrangler.subscribe,
+    () => wrangler.getSnapshot().projectLoading
+  );
   const queuedMessageCount = useGlobalActivityStore(
     (state) => state.queuedMessageCount
   );
   const latestLatency = useGlobalActivityStore((state) => state.latestLatency);
+  const lastActivity = useGlobalActivityStore((state) => state.lastActivity);
+  const activityLevel = useGlobalActivityStore((state) => state.activityLevel);
+  const { accessLevel, canChangeLevel, canChangeTo, changeLevel } =
+    useAccessLevel();
+  const browser = useRootProject();
   const [connectedFor, setConnectedFor] = useState<string | undefined>(() =>
     getConnectedForLabel(sessionInfo?.sessionStartEpoc)
   );
-  const accessLevelInfo = getAccessLevelDisplay(sessionInfo?.accessLevel);
 
   useEffect(() => {
     const updateConnectedFor = () => {
@@ -79,10 +89,15 @@ export default function useWorkspaceRuntime(): WorkspaceRuntime {
     return () => window.clearInterval(timer);
   }, [sessionInfo?.sessionStartEpoc]);
 
-  const onGoHome = useCallback(() => {
-    broadcast_event(KaraboEvent.GoHome, {});
-    navigate('/main');
-  }, [navigate]);
+  const onGoToHomeTab = useCallback(() => {
+    broadcast_event(KaraboEvent.GoToHomeTab, {});
+  }, []);
+
+  const onLogout = useCallback(() => {
+    getNetwork().finishSession();
+    setLoggedOut();
+    navigate('/', { replace: true });
+  }, [navigate, setLoggedOut]);
 
   let guiServerDesc: string | undefined = undefined;
   if (sessionInfo?.guiServerHost && sessionInfo?.guiServerPort) {
@@ -93,8 +108,12 @@ export default function useWorkspaceRuntime(): WorkspaceRuntime {
   }
 
   return {
-    accessLevelLabel: accessLevelInfo?.label,
+    access: sessionInfo
+      ? { accessLevel, canChangeLevel, canChangeTo, onChange: changeLevel }
+      : undefined,
     sceneTabOpen,
+    activity: { lastActivity, activityLevel },
+    browser,
     connected:
       globalState === 'LOGGED_IN' ||
       globalState === 'NOTIFIED_SESSION_EXPIRATION',
@@ -102,8 +121,16 @@ export default function useWorkspaceRuntime(): WorkspaceRuntime {
     guiServer: guiServerDesc,
     guiServerVersion: sessionInfo?.guiServerVersion,
     latestLatency,
-    onGoHome,
+    onGoToHomeTab,
+    projectLoading,
     queuedMessageCount,
     topic: sessionInfo?.guiServerTopic,
+    user: sessionInfo
+      ? {
+          loggedUser: sessionInfo.loggedUser,
+          topic: sessionInfo.guiServerTopic,
+          onLogout,
+        }
+      : undefined,
   };
 }

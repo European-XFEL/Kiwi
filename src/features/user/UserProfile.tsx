@@ -1,5 +1,4 @@
 import { LogOut } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/api';
 import {
   DropdownMenu,
@@ -9,9 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from '@/components/api';
-
-import { getNetwork } from '@/lib/singletons/api';
-import { useGlobalStore } from '@/store/api';
+import type { UserProfileProps } from './types/user.types';
 
 const getInitials = (text?: string): string => {
   if (!text) return '?';
@@ -30,26 +27,13 @@ const getInitials = (text?: string): string => {
 };
 
 export default function UserInfo({
+  loggedUser,
+  topic,
+  onLogout,
   nameClassName,
-}: {
-  nameClassName?: string;
-}) {
-  const { sessionInfo, setLoggedOut } = useGlobalStore();
-  const navigate = useNavigate();
-
-  if (!sessionInfo) {
-    return null;
-  }
-
-  const { loggedUser, guiServerTopic } = sessionInfo;
-  const displayName = loggedUser || guiServerTopic || 'Guest';
+}: UserProfileProps) {
+  const displayName = loggedUser || topic || 'Guest';
   const initials = getInitials(displayName);
-
-  const handleLogout = () => {
-    getNetwork().finishSession();
-    setLoggedOut();
-    navigate('/', { replace: true });
-  };
 
   return (
     <DropdownMenu>
@@ -79,10 +63,8 @@ export default function UserInfo({
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{displayName}</p>
-            {guiServerTopic && guiServerTopic !== displayName && (
-              <p className="text-xs text-muted-foreground">
-                Topic: {guiServerTopic}
-              </p>
+            {topic && topic !== displayName && (
+              <p className="text-xs text-muted-foreground">Topic: {topic}</p>
             )}
           </div>
         </DropdownMenuLabel>
@@ -91,7 +73,7 @@ export default function UserInfo({
 
         <DropdownMenuItem
           data-testid="logout-button"
-          onClick={handleLogout}
+          onClick={onLogout}
           className="cursor-pointer text-destructive focus:text-destructive"
         >
           <LogOut className="mr-2 h-4 w-4" />

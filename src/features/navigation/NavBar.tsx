@@ -1,155 +1,123 @@
-import { Menu, Home } from 'lucide-react';
 import { KiwiHeader } from '@/app/api';
+import { Button, Separator } from '@/components/api';
+import { ActiveIndicator } from '@/features/status';
+import type { ActiveIndicatorProps } from '@/features/status';
+import { LoadProjectScene, ProjectBrowser } from '@/features/project/api';
+import type { useRootProject } from '@/features/project/api';
+import { AccessLevelSelector, UserProfile } from '@/features/user';
+import type {
+  AccessLevelSelectorProps,
+  UserProfileProps,
+} from '@/features/user';
 import NavigationMenu from './components/NavMenu';
 import { NavItem } from './components/NavItem';
-import NavToggle from './components/NavToggle';
-import {
-  LoadProjectScene,
-  ProjectBrowser,
-  useRootProject,
-} from '@/features/project/api';
-import { UserProfile, AccessLevelSelector } from '@/features/user';
-import { Button, Separator } from '@/components/api';
-import { GuiServerDisplay, ActiveIndicator } from '@/features/status';
-import { useNavigate } from 'react-router-dom';
-import { useSyncExternalStore } from 'react';
-import { getPanelWrangler } from '@/lib/singletons/api';
-import { broadcast_event, KaraboEvent } from '@/lib/events';
 import icons from '@/assets/icons';
 
-export function NavBar() {
-  const projectBrowser = useRootProject();
-  const navigate = useNavigate();
-  const wrangler = getPanelWrangler();
-  const sceneTabOpen = useSyncExternalStore(
-    wrangler.subscribe,
-    wrangler.isSceneTabOpen
-  );
+export function NavBar({
+  browser,
+  sceneOpen,
+  onGoHome,
+  compact,
+  projectLoading,
+  activity,
+  access,
+  user,
+}: {
+  browser?: ReturnType<typeof useRootProject>;
+  sceneOpen: boolean;
+  onGoHome?: () => void;
+  compact: boolean;
+  projectLoading: boolean;
+  activity?: ActiveIndicatorProps;
+  access?: Omit<AccessLevelSelectorProps, 'compact' | 'badgeClassName'>;
+  user?: Omit<UserProfileProps, 'nameClassName'>;
+}) {
+  const desktopGapClass = compact ? 'lg:gap-3' : 'lg:gap-5';
+  const separatorClass = 'hidden lg:block h-6 mx-1';
 
-  const handleHome = () => {
-    broadcast_event(KaraboEvent.GoHome, {});
-    navigate('/home');
-  };
-
+  // The row has a fixed height so the header does not jump when the project
+  // browser, which is taller than the buttons, appears with a project.
   return (
-    <KiwiHeader data-testid="navigation-bar" className="border-b">
-      <NavigationMenu className="justify-between px-2 py-2 w-full">
-        <div className="flex items-center justify-between w-full xl:hidden gap-2">
-          <NavToggle
-            trigger={
-              <Button
-                data-testid="mobile-menu-trigger"
-                variant="ghost"
-                size="icon"
-                aria-label="Open menu"
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
-            }
-            title={<GuiServerDisplay />}
-            side="left"
-            showFooter
-            footerClassName="flex-col items-stretch gap-3"
-            primaryAction={
-              <div className="w-full">
-                <UserProfile />
-              </div>
-            }
-          >
-            <nav className="flex flex-col gap-4">
-              <LoadProjectScene
-                variant="outline"
-                className="w-full justify-start"
-              />
-              {sceneTabOpen && (
-                <>
-                  <Separator />
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start gap-2"
-                    onClick={handleHome}
-                  >
-                    <Home className="h-4 w-4" />
-                    Go home
-                  </Button>
-                </>
-              )}
-            </nav>
-          </NavToggle>
-
-          <div className="flex-1 min-w-0 overflow-hidden flex justify-center items-center">
-            {sceneTabOpen ? (
-              <div className="max-w-full min-w-0 overflow-hidden">
-                <ProjectBrowser browser={projectBrowser} />
-              </div>
-            ) : (
-              <img src={icons.logo} alt="Karabo" className="h-8 w-auto" />
-            )}
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <ActiveIndicator />
-            <AccessLevelSelector compact={true} />
-          </div>
-        </div>
-
-        <div className="hidden xl:flex xl:items-center xl:gap-4 xl:w-full">
-          <NavItem>
+    <KiwiHeader
+      id="workspace-header"
+      className={`shrink-0 ${projectLoading ? 'opacity-70' : ''}`}
+      aria-busy={projectLoading}
+      inert={projectLoading || undefined}
+    >
+      <NavigationMenu className="px-3 sm:px-4 w-full">
+        <div
+          className={`flex h-14 items-center w-full gap-2 sm:gap-3 ${desktopGapClass}`}
+        >
+          <NavItem className="hidden lg:block">
             <img src={icons.logo} alt="Karabo" className="h-8 w-auto" />
           </NavItem>
 
-          <Separator orientation="vertical" className="h-8 mx-2" />
+          <Separator orientation="vertical" className={separatorClass} />
 
           <NavItem>
-            <LoadProjectScene />
+            <LoadProjectScene
+              variant="ghost"
+              className="h-8 gap-1.5 border-2 border-secondary/50 bg-secondary/10 text-base text-foreground hover:border-secondary/70 hover:bg-secondary/20 px-2 lg:px-2.5"
+              iconClassName="size-5 text-secondary lg:size-4"
+              labelClassName="sr-only lg:not-sr-only"
+            />
           </NavItem>
 
-          <Separator orientation="vertical" className="h-8 mx-2" />
+          <Separator orientation="vertical" className={separatorClass} />
 
           <NavItem className="flex-1 min-w-0 overflow-hidden">
-            <div className="flex items-center gap-2 overflow-hidden w-full">
-              {sceneTabOpen && (
+            <div className="flex items-center gap-2 overflow-hidden w-full sm:gap-3">
+              {sceneOpen && (
                 <>
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={handleHome}
+                    onClick={onGoHome}
+                    data-testid="workspace-home-button"
                     aria-label="Go home"
-                    className="shrink-0"
+                    title="Go home"
+                    className="size-8 shrink-0"
                   >
-                    <Home className="h-4 w-4" />
+                    <img src={icons.homeEdit} alt="" className="size-5" />
                   </Button>
-                  <Separator orientation="vertical" className="h-6 shrink-0" />
-                  <div className="min-w-0 flex-1 overflow-hidden">
-                    <ProjectBrowser browser={projectBrowser} />
-                  </div>
+                  <Separator
+                    orientation="vertical"
+                    className="hidden h-6 shrink-0 sm:block"
+                  />
                 </>
               )}
-
-              {!sceneTabOpen && (
-                <span className="text-sm text-muted-foreground italic">
-                  No scene loaded
+              {browser?.rootProject ? (
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  <ProjectBrowser browser={browser} className="w-fit" />
+                </div>
+              ) : (
+                <span className="hidden sm:inline text-base text-muted-foreground italic truncate">
+                  No project loaded
                 </span>
               )}
             </div>
           </NavItem>
 
-          <Separator orientation="vertical" className="h-8 mx-2" />
-
-          <NavItem>
-            <ActiveIndicator />
+          <NavItem className="px-1">
+            {activity && <ActiveIndicator {...activity} />}
           </NavItem>
 
-          <Separator orientation="vertical" className="h-8 mx-2" />
+          <Separator orientation="vertical" className={separatorClass} />
 
           <NavItem>
-            <AccessLevelSelector compact={false} />
+            {access && (
+              <AccessLevelSelector
+                {...access}
+                compact={false}
+                badgeClassName="hidden lg:inline-flex"
+              />
+            )}
           </NavItem>
 
-          <Separator orientation="vertical" className="h-8 mx-2" />
+          <Separator orientation="vertical" className={separatorClass} />
 
           <NavItem>
-            <UserProfile />
+            {user && <UserProfile {...user} nameClassName="hidden lg:inline" />}
           </NavItem>
         </div>
       </NavigationMenu>

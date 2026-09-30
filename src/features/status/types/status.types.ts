@@ -2,6 +2,13 @@
  * Status Feature - Type Definitions
  */
 
+import type { GlobalActivityState } from '@/store/api';
+
+export type ActiveIndicatorProps = Pick<
+  GlobalActivityState,
+  'lastActivity' | 'activityLevel'
+>;
+
 export type GuiServerDisplayProps = {
   className?: string;
 };

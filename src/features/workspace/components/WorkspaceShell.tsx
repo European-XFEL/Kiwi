@@ -1,8 +1,6 @@
 import { ScenePanel, type ScenePanelContent } from '@/features/scenepanel/api';
-import {
-  SceneOpenError,
-  ScenePending,
-} from '@/features/scene-view/components/SceneStatusViews';
+import { SceneOpenError } from '@/features/scene-view/components/SceneStatusViews';
+import { ProjectLoading } from '@/features/project/api';
 import { getPanelWrangler } from '@/lib/singletons/api';
 import {
   HOME_TAB_ID,
@@ -18,7 +16,7 @@ import WorkspaceHeader from './WorkspaceHeader';
 // TODO: renderLeftPanel — Topology panel (device/instance tree)
 
 // A tab's content is renderable as a scene only once all three loaded fields
-// are present; until then the panel shows a pending/error state instead.
+// are present; missing content is an error, not another scene load.
 function isLoadedSceneContent(
   content: SceneTabContent | undefined
 ): content is ScenePanelContent {
@@ -30,20 +28,19 @@ function isLoadedSceneContent(
   );
 }
 
-function renderCenterPanel(
-  tab: PanelTab,
-  isProjectLoading: boolean,
-  isPageVisible: boolean
-) {
+function renderCenterPanel(tab: PanelTab, isPageVisible: boolean) {
   if (tab.id === HOME_TAB_ID) {
-    return isProjectLoading ? <ScenePending /> : <HomePanel />;
+    return <HomePanel />;
   }
   if (!isPageVisible) return null;
 
   const content = getPanelWrangler().getContent(tab.id);
   const snapshot = getPanelWrangler().getSceneTab(tab.id);
   if (content?.error) return <SceneOpenError message={content.error} />;
-  if (!isLoadedSceneContent(content)) return <ScenePending />;
+  if (!isLoadedSceneContent(content))
+    return (
+      <SceneOpenError message="The scene is unavailable. Try opening it again." />
+    );
   return (
     <ScenePanel
       content={{
@@ -74,11 +71,9 @@ function usePageVisibility(): boolean {
 export default function WorkspaceShell({
   workspace,
   runtime,
-  projectLoading,
 }: {
   workspace: WorkspaceModel;
   runtime: WorkspaceRuntime;
-  projectLoading: boolean;
 }) {
   const isPageVisible = usePageVisibility();
 
@@ -92,25 +87,27 @@ export default function WorkspaceShell({
       ) : null}
 
       <div className="min-h-0 flex-1 overflow-hidden">
-        <WorkspaceBody
-          body={workspace.body}
-          renderLeftPanel={() => null}
-          renderCenterPanel={(tab) =>
-            renderCenterPanel(tab, projectLoading, isPageVisible)
-          }
-          renderRightPanel={() => null}
-          // The scene viewport owns its own overflow/layout, so skip the
-          // generic tab-panel overflow-auto/padding to avoid nested scroll.
-          centerPanelClassName="overflow-hidden"
-          centerEmptyState={
-            <div className="space-y-2 text-center">
-              <p className="text-sm font-medium">No scene open</p>
-              <p className="text-xs text-muted-foreground">
-                Open a scene to start working.
-              </p>
-            </div>
-          }
-        />
+        {runtime.projectLoading ? (
+          <ProjectLoading />
+        ) : (
+          <WorkspaceBody
+            body={workspace.body}
+            renderLeftPanel={() => null}
+            renderCenterPanel={(tab) => renderCenterPanel(tab, isPageVisible)}
+            renderRightPanel={() => null}
+            // The scene viewport owns its own overflow/layout, so skip the
+            // generic tab-panel overflow-auto/padding to avoid nested scroll.
+            centerPanelClassName="overflow-hidden"
+            centerEmptyState={
+              <div className="space-y-2 text-center">
+                <p className="text-sm font-medium">No scene open</p>
+                <p className="text-xs text-muted-foreground">
+                  Open a scene to start working.
+                </p>
+              </div>
+            }
+          />
+        )}
       </div>
 
       <WorkspaceFooter footer={workspace.footer} runtime={runtime} />

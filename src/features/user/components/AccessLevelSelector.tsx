@@ -9,62 +9,19 @@ import {
 } from '@/components/api';
 import { Button } from '@/components/api';
 import { Badge } from '@/components/api';
-import { useAccessLevel } from '@/features/user/hooks/useAccessLevel';
-import { useGlobalStore } from '@/store/api';
 import { AccessLevel } from '@/karabo/data/api';
 import { getAccessLevelDisplay } from '@/components/api';
-import { getConfig } from '@/lib/singletons/api';
 import type { AccessLevelSelectorProps } from '../types/user.types';
 
 export default function AccessLevelSelector({
+  accessLevel,
+  canChangeLevel,
+  canChangeTo,
+  onChange,
   compact = true,
   badgeClassName,
 }: AccessLevelSelectorProps) {
-  const { sessionInfo, setLoggedIn } = useGlobalStore();
-  const { accessLevel, canChangeLevel, canChangeTo, setLevel } =
-    useAccessLevel();
-
-  if (!sessionInfo) {
-    return null;
-  }
-
   const currentLevelInfo = getAccessLevelDisplay(accessLevel);
-
-  const handleAccessLevelChange = async (newLevel: AccessLevel) => {
-    if (!canChangeTo(newLevel)) {
-      console.warn(
-        `User cannot change access level from ${AccessLevel[accessLevel]} to ${AccessLevel[newLevel]}`
-      );
-      return;
-    }
-
-    // Update central manager + store
-    setLevel(newLevel);
-
-    // Optionally also sync sessionInfo in store (for consistency)
-    setLoggedIn({
-      ...sessionInfo,
-      accessLevel: newLevel,
-    });
-
-    // Persist the change to encrypted localStorage for non-auth sessions only
-    try {
-      const storedSession = await getConfig().loadSession();
-
-      if (storedSession && !storedSession.refreshToken) {
-        await getConfig().saveNonAuthSession(sessionInfo.loggedUser, newLevel);
-        console.debug(
-          `Access level changed to: ${AccessLevel[newLevel]} and persisted to session storage`
-        );
-      } else if (storedSession?.refreshToken) {
-        console.warn(
-          'Access level change not persisted: Auth sessions are controlled by backend'
-        );
-      }
-    } catch (error) {
-      console.error('Failed to persist access level change:', error);
-    }
-  };
 
   // Observer: Show locked padlock, no dropdown
   if (!canChangeLevel) {
@@ -129,7 +86,7 @@ export default function AccessLevelSelector({
               <DropdownMenuItem
                 key={level}
                 data-testid={`access-level-option-${AccessLevel[level].toLowerCase()}`}
-                onClick={() => handleAccessLevelChange(level)}
+                onClick={() => onChange(level)}
                 disabled={isDisabled}
                 className={`cursor-pointer ${
                   isCurrentLevel ? 'bg-accent' : ''

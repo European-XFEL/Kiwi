@@ -97,7 +97,7 @@ jest.mock('../WorkspaceBody', () => {
         ),
         React.createElement(
           'div',
-          { 'data-testid': 'center-pending' },
+          { 'data-testid': 'center-missing' },
           renderCenterPanel({
             id: 'scene:missing',
             title: 'missing',
@@ -157,23 +157,16 @@ jest.mock('@/features/scene-view/components/SceneStatusViews', () => {
   const React = jest.requireActual<typeof import('react')>('react');
 
   return {
-    ScenePending: () =>
-      React.createElement('div', { 'data-testid': 'scene-pending' }, 'pending'),
+    SceneOpenError: ({ message }: { message: string }) =>
+      React.createElement('div', null, message),
   };
 });
 
 function renderWorkspaceShell(
   workspace = createDefaultWorkspaceModel(),
-  runtime: WorkspaceRuntime = { connected: true, topic: 'oludedav' },
-  projectLoading = false
+  runtime: WorkspaceRuntime = { connected: true, topic: 'oludedav' }
 ) {
-  return render(
-    <WorkspaceShell
-      workspace={workspace}
-      runtime={runtime}
-      projectLoading={projectLoading}
-    />
-  );
+  return render(<WorkspaceShell workspace={workspace} runtime={runtime} />);
 }
 
 describe('WorkspaceShell', () => {
@@ -219,7 +212,9 @@ describe('WorkspaceShell', () => {
     expect(screen.getByTestId('scene-panel')).toHaveTextContent(
       'scene:scene-42'
     );
-    expect(screen.getByTestId('scene-pending')).toBeInTheDocument();
+    expect(screen.getByTestId('center-missing')).toHaveTextContent(
+      'The scene is unavailable'
+    );
     expect(screen.getByTestId('left-slot')).toHaveTextContent('left-empty');
     expect(screen.getByTestId('right-slot')).toHaveTextContent('right-empty');
     expect(screen.getByText('No scene open')).toBeInTheDocument();
@@ -237,13 +232,23 @@ describe('WorkspaceShell', () => {
     );
   });
 
-  it('shows the loading page in place of Home while a project loads', () => {
+  it('shows the loading page across the workspace body while a project loads', () => {
     const workspace = createDefaultWorkspaceModel();
 
-    renderWorkspaceShell(workspace, { connected: true }, true);
+    const runtime = { connected: true, projectLoading: true };
 
+    renderWorkspaceShell(workspace, runtime);
+
+    expect(screen.queryByTestId('workspace-body')).not.toBeInTheDocument();
     expect(screen.queryByTestId('home-panel')).not.toBeInTheDocument();
-    expect(screen.getByTestId('center-home')).toHaveTextContent('pending');
+    expect(mockBody).not.toHaveBeenCalled();
+    expect(mockHeader).toHaveBeenCalledWith(
+      expect.objectContaining({ runtime })
+    );
+    expect(screen.getByTestId('project-loading')).toHaveTextContent(
+      'Loading projectThis might take a while.'
+    );
+    expect(screen.getByTestId('workspace-footer')).toBeInTheDocument();
   });
 
   it('unmounts scene panels while the browser tab is hidden', () => {

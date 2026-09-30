@@ -1,10 +1,10 @@
 import * as React from 'react';
-import { useGlobalActivityStore } from '@/store/api';
+import type { ActiveIndicatorProps } from '../types/status.types';
 
-export const ActiveIndicator: React.FC = () => {
-  const lastActivity = useGlobalActivityStore((s) => s.lastActivity);
-  const activityLevel = useGlobalActivityStore((s) => s.activityLevel);
-
+export const ActiveIndicator: React.FC<ActiveIndicatorProps> = ({
+  lastActivity,
+  activityLevel,
+}) => {
   const [blink, setBlink] = React.useState(false);
 
   React.useEffect(() => {
