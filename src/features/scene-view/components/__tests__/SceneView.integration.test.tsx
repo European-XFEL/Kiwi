@@ -27,14 +27,14 @@ jest.mock('@/features/controllers/api', () => ({
   >('@/features/controllers/utils/controller_semantics').getModelKeys,
   getQFontTextStyle: jest.fn(() => ({})),
   useContainer: jest.requireActual<
-    typeof import('@/features/controllers/hooks/useContainer')
-  >('@/features/controllers/hooks/useContainer').useContainer,
+    typeof import('@/features/controllers/useContainer')
+  >('@/features/controllers/useContainer.ts').useContainer,
   useController: jest.requireActual<
-    typeof import('@/features/controllers/hooks/useController')
-  >('@/features/controllers/hooks/useController').useController,
+    typeof import('@/features/controllers/useController')
+  >('@/features/controllers/useController.ts').useController,
   useProxies: jest.requireActual<
-    typeof import('@/features/controllers/hooks/useProxies')
-  >('@/features/controllers/hooks/useProxies').useProxies,
+    typeof import('@/features/controllers/useProxies')
+  >('@/features/controllers/useProxies.ts').useProxies,
 }));
 
 jest.mock(
@@ -68,8 +68,8 @@ jest.mock('../../renderers', () => {
     typeof import('@/features/scene-view/renderRegistry')
   >('@/features/scene-view/renderRegistry');
   const DisplayLabel = jest.requireActual<
-    typeof import('@/features/controllers/components/display/DisplayLabel')
-  >('@/features/controllers/components/display/DisplayLabel').default;
+    typeof import('@/features/controllers/display/DisplayLabel')
+  >('@/features/controllers/display/DisplayLabel.tsx').default;
 
   registerRenderer('DisplayLabel', DisplayLabel);
   return {};

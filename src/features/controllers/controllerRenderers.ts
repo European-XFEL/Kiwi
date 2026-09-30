@@ -1,36 +1,36 @@
 import type { Renderer, RendererProps } from '@/features/scene-view/api';
-import DisplayAlarmFloat from './components/display/DisplayAlarmFloat';
+import DisplayAlarmFloat from '@/features/controllers/display/DisplayAlarmFloat';
 import {
   DisplayCheckBox,
   EditableCheckBox,
-} from './components/display/CheckBox';
-import DisplayCommand from './components/display/DisplayCommand';
-import DisplayFloat from './components/display/DisplayFloat';
-import DisplayLabel from './components/display/DisplayLabel';
-import DisplayList from './components/display/DisplayList';
-import DisplayStateColor from './components/display/DisplayStateColor';
-import DisplayTrendGraph from './components/display/DisplayTrendGraph';
-import DisplayVectorGraph from './components/display/DisplayVectorGraph';
-import Evaluator from './components/display/Evaluator';
+} from '@/features/controllers/display/CheckBox';
+import DisplayCommand from '@/features/controllers/display/DisplayCommand';
+import DisplayFloat from '@/features/controllers/display/DisplayFloat';
+import DisplayLabel from '@/features/controllers/display/DisplayLabel';
+import DisplayList from '@/features/controllers/display/DisplayList';
+import DisplayStateColor from '@/features/controllers/display/DisplayStateColor';
+import DisplayTrendGraph from '@/features/controllers/display/DisplayTrendGraph';
+import DisplayVectorGraph from '@/features/controllers/display/DisplayVectorGraph';
+import Evaluator from '@/features/controllers/display/Evaluator';
 import {
   DisplayLineEdit,
   EditableLineEdit,
-} from './components/display/LineEdit';
-import StatefulIconWidget from './components/display/StatefulIconWidget';
-import TableElement from './components/display/TableElement';
-import EditableComboBox from './components/editable/EditableComboBox';
+} from '@/features/controllers/display/LineEdit';
+import StatefulIconWidget from '@/features/controllers/display/StatefulIconWidget';
+import TableElement from '@/features/controllers/display/TableElement';
+import EditableComboBox from '@/features/controllers/editable/EditableComboBox';
 import {
   EditableList,
   EditableListElement,
   EditableRegexList,
-} from './components/editable/EditableLists';
-import EditableRegex from './components/editable/EditableRegex';
-import EditableSpinBox from './components/editable/EditableSpinBox';
-import DoubleLineEdit from './components/editable/DoubleLineEdit';
-import FloatSpinBox from './components/editable/FloatSpinBox';
-import Hexadecimal from './components/editable/Hexadecimal';
-import IntLineEdit from './components/editable/IntLineEdit';
-import TickSlider from './components/editable/TickSlider';
+} from '@/features/controllers/editable/EditableLists';
+import EditableRegex from '@/features/controllers/editable/EditableRegex';
+import EditableSpinBox from '@/features/controllers/editable/EditableSpinBox';
+import DoubleLineEdit from '@/features/controllers/editable/DoubleLineEdit';
+import FloatSpinBox from '@/features/controllers/editable/FloatSpinBox';
+import Hexadecimal from '@/features/controllers/editable/Hexadecimal';
+import IntLineEdit from '@/features/controllers/editable/IntLineEdit';
+import TickSlider from '@/features/controllers/editable/TickSlider';
 
 let controllerRenderersBootstrapped = false;
 

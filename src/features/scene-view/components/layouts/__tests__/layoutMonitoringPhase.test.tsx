@@ -7,7 +7,7 @@ import {
   GridLayoutModel,
 } from '@/karabo/common/api';
 import { DeviceProxy } from '@/lib/binding/api';
-import DisplayLabel from '@/features/controllers/components/display/DisplayLabel';
+import DisplayLabel from '@/features/controllers/display/DisplayLabel';
 import { SingletonContext } from '@/testing';
 
 jest.mock('@/features/controllers/api', () => ({
@@ -16,14 +16,14 @@ jest.mock('@/features/controllers/api', () => ({
     typeof import('@/features/controllers/utils/controller_semantics')
   >('@/features/controllers/utils/controller_semantics').getModelKeys,
   useContainer: jest.requireActual<
-    typeof import('@/features/controllers/hooks/useContainer')
-  >('@/features/controllers/hooks/useContainer').useContainer,
+    typeof import('@/features/controllers/useContainer')
+  >('@/features/controllers/useContainer.ts').useContainer,
   useController: jest.requireActual<
-    typeof import('@/features/controllers/hooks/useController')
-  >('@/features/controllers/hooks/useController').useController,
+    typeof import('@/features/controllers/useController')
+  >('@/features/controllers/useController.ts').useController,
   useProxies: jest.requireActual<
-    typeof import('@/features/controllers/hooks/useProxies')
-  >('@/features/controllers/hooks/useProxies').useProxies,
+    typeof import('@/features/controllers/useProxies')
+  >('@/features/controllers/useProxies.ts').useProxies,
 }));
 
 jest.mock(
