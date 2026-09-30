@@ -4,12 +4,13 @@ import { Mediator } from '@/lib/singletons/Mediator';
 import { ProjectItemModel } from '@/lib/singletons/ProjectItemModel';
 
 const mockResetWorkspace = jest.fn();
+const mockResetDb = jest.fn();
 const mockProjectModel = new ProjectItemModel();
 const mockMediator = new Mediator();
 
 jest.mock('@/lib/singletons/api', () => ({
   getPanelWrangler: () => ({ resetWorkspace: mockResetWorkspace }),
-  getDbConn: jest.fn(),
+  getDbConn: () => ({ reset: mockResetDb }),
   getProjectModel: () => mockProjectModel,
   getMediator: () => mockMediator,
   getTopology: jest.fn(),
@@ -53,6 +54,7 @@ describe('useSessionCleanup', () => {
     renderHook(() => useSessionCleanup());
 
     expect(mockResetWorkspace).not.toHaveBeenCalled();
+    expect(mockResetDb).not.toHaveBeenCalled();
   });
 
   it('does not clear while the session stays active', () => {
@@ -64,6 +66,7 @@ describe('useSessionCleanup', () => {
     rerender();
 
     expect(mockResetWorkspace).not.toHaveBeenCalled();
+    expect(mockResetDb).not.toHaveBeenCalled();
     expect(mockProjectModel.root).toBe(project);
     expect(mockProjectModel.domain).toBe('CONTROLS');
   });
@@ -78,6 +81,7 @@ describe('useSessionCleanup', () => {
     });
 
     expect(mockResetWorkspace).toHaveBeenCalledTimes(1);
+    expect(mockResetDb).toHaveBeenCalledTimes(1);
     expect(mockProjectModel.root).toBeUndefined();
     expect(mockProjectModel.domain).toBeUndefined();
   });
@@ -94,6 +98,7 @@ describe('useSessionCleanup', () => {
     });
 
     expect(mockResetWorkspace).toHaveBeenCalledTimes(1);
+    expect(mockResetDb).toHaveBeenCalledTimes(1);
     expect(mockProjectModel.root).toBeUndefined();
     expect(mockProjectModel.domain).toBeUndefined();
   });
@@ -108,6 +113,7 @@ describe('useSessionCleanup', () => {
     });
 
     expect(mockResetWorkspace).toHaveBeenCalledTimes(1);
+    expect(mockResetDb).toHaveBeenCalledTimes(1);
     expect(mockProjectModel.root).toBeUndefined();
     expect(mockProjectModel.domain).toBeUndefined();
   });

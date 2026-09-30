@@ -57,11 +57,7 @@ export class DbConnection {
   private _onEventLoadProjectItems = (data: Hash): void => {
     const success = data.getValue<boolean>('success');
     if (!success) {
-      this._waiting_for_read.clear();
-      this._read_items_buffer.length = 0;
-      const reason = data.getValue<string>('reason');
-      console.log(`Not successful reading project items. Error: ${reason}`);
-      this._broadcast_is_processing(false, true, true);
+      this._failReading(data.getValue<string>('reason'));
       return;
     }
     const items = data.getValue<HashList>('reply.items');
@@ -80,6 +76,22 @@ export class DbConnection {
     }
     this.flush();
   };
+
+  private _failReading(reason: string): void {
+    this._waiting_for_read.clear();
+    this._read_items_buffer.length = 0;
+    console.log(`Not successful reading project items. Error: ${reason}`);
+    this._broadcast_is_processing(false, true, true);
+  }
+
+  // Called when the session ends. Replies to its requests will never arrive,
+  // so a read in progress fails and the next session starts idle.
+  public reset(): void {
+    if (this.is_processing()) {
+      this._failReading('The session ended.');
+    }
+    this._state = DbConnectionState.IDLE;
+  }
 
   // #region List Projects
 
