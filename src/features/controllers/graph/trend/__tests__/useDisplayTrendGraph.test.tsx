@@ -2,8 +2,8 @@ import { StrictMode } from 'react';
 import { act, cleanup, renderHook } from '@testing-library/react';
 import type { PropertyProxy } from '@/lib/binding/PropertyProxy';
 import { ProxyStatus } from '@/lib/binding/api';
-import { TrendModel } from '../graph/trendmodel';
-import { useTrendModel } from '../graph/useTrendModel';
+import { TrendModel } from '../trendmodel';
+import { useTrendModel } from '../useTrendModel';
 
 const START = 1_800_000_000;
 const originalRequestIdleCallback = window.requestIdleCallback;

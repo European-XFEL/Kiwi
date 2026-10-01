@@ -1,13 +1,13 @@
 import type { ControllerContainerContext } from '@/features/scene-view/api';
-import type { DisplayVectorGraphModel } from '@/karabo/common/api';
+import type { VectorBarGraphModel } from '@/karabo/common/api';
 import { ChartLayout, ChartPlot } from '../graph/common/api';
 import { useVectorChart } from '../graph/plot/api';
 
-export default function DisplayVectorGraph({
+export default function DisplayBarGraph({
   model,
   ctx,
 }: {
-  model: DisplayVectorGraphModel;
+  model: VectorBarGraphModel;
   ctx?: ControllerContainerContext;
 }) {
   const { containerRef, selectionRef, tool, selectTool, reset } =

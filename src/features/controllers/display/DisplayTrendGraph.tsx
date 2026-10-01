@@ -2,10 +2,12 @@ import React from 'react';
 import { Button } from '@/components/api';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 import type { DisplayTrendGraphModel } from '@/karabo/common/api';
-import { useTrendModel, type TrendSeries } from '../graph/useTrendModel';
-import { useTrendChart } from '../graph/useTrendChart';
-import { formatTrendTime, TRACE_COLORS } from '../graph/configTrendChart';
-import { GraphToolbar } from '../graph/GraphToolbar';
+import {
+  formatTrendTime,
+  useTrendChart,
+  useTrendModel,
+} from '../graph/trend/api';
+import { ChartLayout, ChartPlot, TRACE_COLORS } from '../graph/common/api';
 
 const TIME_PRESETS = [
   { mode: 'week', label: 'One Week' },
@@ -61,73 +63,6 @@ const TrendTimePresets = React.memo(function TrendTimePresets({
   );
 });
 
-function TrendChart({
-  series,
-  title,
-  hiddenCurves,
-  toggleCurve,
-  containerRef,
-  selectionRef,
-}: {
-  series: TrendSeries[];
-  title: string;
-  hiddenCurves: TrendView['hiddenCurves'];
-  toggleCurve: TrendView['toggleCurve'];
-  containerRef: TrendView['containerRef'];
-  selectionRef: TrendView['selectionRef'];
-}) {
-  return (
-    <div className="relative h-full min-h-0 min-w-0 flex-1">
-      <div
-        ref={containerRef}
-        data-testid="trend-chart"
-        className="relative h-full w-full min-w-0"
-      />
-      {title && (
-        <div className="pointer-events-none absolute inset-x-0 top-0.5 text-center text-[13px] text-black">
-          {title}
-        </div>
-      )}
-      {series.length > 1 && (
-        <div
-          className="absolute left-[60px] z-10 flex flex-col gap-1 rounded-sm border border-black bg-slate-200/20 p-1 text-xs text-black"
-          style={{ top: title ? 26 : 10 }}
-          aria-label="Graph legend"
-        >
-          {series.map((item, index) => (
-            <button
-              key={item.key}
-              type="button"
-              aria-pressed={!hiddenCurves.has(item.key)}
-              onClick={() => toggleCurve(item.key)}
-              className="flex items-center gap-1"
-              style={{ opacity: hiddenCurves.has(item.key) ? 0.4 : 1 }}
-            >
-              <span
-                className="inline-block h-3 w-3"
-                style={{
-                  backgroundColor: TRACE_COLORS[index % TRACE_COLORS.length],
-                }}
-              />
-              {item.key}
-            </button>
-          ))}
-        </div>
-      )}
-      <div
-        ref={selectionRef}
-        data-testid="trend-zoom-selection"
-        className="pointer-events-none absolute hidden border border-slate-300 bg-slate-200/30"
-      />
-      {series.every((item) => item.values.length === 0) && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-xs text-slate-500">
-          Waiting for data…
-        </div>
-      )}
-    </div>
-  );
-}
-
 function TrendGraph({
   model,
   ctx,
@@ -147,30 +82,61 @@ const TrendPlot = React.memo(function TrendPlot({
 }: { model: DisplayTrendGraphModel } & ReturnType<typeof useTrendModel>) {
   const view = useTrendChart({ model, series, startTime, dataRevision });
   return (
-    <div
-      className="flex h-full w-full min-w-0 flex-col gap-0.5"
-      style={{ backgroundColor: model.background }}
+    <ChartLayout
+      background={model.background}
+      viewBox={{
+        tool: view.tool,
+        selectTool: view.selectTool,
+        reset: view.reset,
+      }}
+      footer={
+        <>
+          <TrendTimeControls visibleRange={view.visibleRange} />
+          <TrendTimePresets mode={view.mode} follow={view.follow} />
+        </>
+      }
     >
-      <div className="flex min-h-0 flex-1">
-        <TrendChart
-          series={series}
-          title={model.title}
-          hiddenCurves={view.hiddenCurves}
-          toggleCurve={view.toggleCurve}
-          containerRef={view.containerRef}
-          selectionRef={view.selectionRef}
-        />
-        <GraphToolbar
-          tool={view.tool}
-          selectTool={view.selectTool}
-          reset={view.reset}
-        />
-      </div>
-      <div className="flex shrink-0 flex-col gap-0.5">
-        <TrendTimeControls visibleRange={view.visibleRange} />
-        <TrendTimePresets mode={view.mode} follow={view.follow} />
-      </div>
-    </div>
+      <ChartPlot
+        containerRef={view.containerRef}
+        selectionRef={view.selectionRef}
+        testId="trend-chart"
+        title={model.title}
+        empty={
+          series.every((item) => item.values.length === 0)
+            ? 'Waiting for data…'
+            : undefined
+        }
+        legend={
+          series.length > 1 && (
+            <div
+              className="absolute left-[60px] z-10 flex flex-col gap-1 rounded-sm border border-black bg-slate-200/20 p-1 text-xs text-black"
+              style={{ top: model.title ? 26 : 10 }}
+              aria-label="Graph legend"
+            >
+              {series.map((item, index) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  aria-pressed={!view.hiddenCurves.has(item.key)}
+                  onClick={() => view.toggleCurve(item.key)}
+                  className="flex items-center gap-1"
+                  style={{ opacity: view.hiddenCurves.has(item.key) ? 0.4 : 1 }}
+                >
+                  <span
+                    className="inline-block h-3 w-3"
+                    style={{
+                      backgroundColor:
+                        TRACE_COLORS[index % TRACE_COLORS.length],
+                    }}
+                  />
+                  {item.key}
+                </button>
+              ))}
+            </div>
+          )
+        }
+      />
+    </ChartLayout>
   );
 });
 

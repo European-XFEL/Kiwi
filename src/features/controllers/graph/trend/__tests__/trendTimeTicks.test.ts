@@ -1,4 +1,4 @@
-import { trendTimeTicks } from '../graph/trendTimeTicks';
+import { trendTimeTicks } from '../trendTimeTicks';
 
 const utc = (date: string) => new Date(date).getTime();
 const ticks = (start: string, end: string, width = 600) =>

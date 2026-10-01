@@ -1,4 +1,4 @@
-import { TrendModel } from '../graph/trendmodel';
+import { TrendModel } from '../trendmodel';
 
 describe('TrendModel', () => {
   it('keeps incoming points unchanged until the display buffer fills', () => {

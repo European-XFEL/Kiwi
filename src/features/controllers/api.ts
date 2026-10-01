@@ -9,7 +9,7 @@ export { useController } from './useController';
 export type { ControllerContainerContext } from './useController';
 export { useProxies } from './useProxies';
 export { useContainer } from './useContainer';
-export { useTrendModel } from './graph/useTrendModel';
+export { useTrendModel } from './graph/trend/api';
 export { bootstrapControllerRenderers } from './controllerRenderers';
 
 export {
