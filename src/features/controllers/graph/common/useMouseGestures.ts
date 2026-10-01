@@ -96,10 +96,30 @@ function scaledRange(
   ];
 }
 
-/** Converts document mouse coordinates to coordinates relative to the chart container. */
+/** Converts viewport coordinates to unscaled chart pixels, including scene CSS scaling. */
 function mousePosition(container: HTMLElement, event: MouseEvent): Point {
+  // container is containerRef.current: the graph's HTML div holding the
+  // Chart.js canvas. Its bounding rectangle includes the parent scene's CSS
+  // scale; offsetWidth/offsetHeight are its unscaled layout dimensions, used
+  // by chart bounds and the zoom box.
   const rect = container.getBoundingClientRect();
-  return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+  // Convert displayed pixels back to chart pixels. For example, at 200% scene
+  // scale, a 100px mouse movement covers 50 chart pixels. Fall back to 1 when
+  // dimensions are unavailable (e.g. a hidden container).
+  const scaleX =
+    rect.width > 0 && container.offsetWidth > 0
+      ? container.offsetWidth / rect.width
+      : 1;
+  const scaleY =
+    rect.height > 0 && container.offsetHeight > 0
+      ? container.offsetHeight / rect.height
+      : 1;
+  return {
+    // clientX/clientY and rect.left/top share viewport coordinates. Subtract
+    // the graph's current position before applying the inverse scene scale.
+    x: (event.clientX - rect.left) * scaleX,
+    y: (event.clientY - rect.top) * scaleY,
+  };
 }
 
 /** Shares the clamped rectangle between the zoom preview and the committed selection. */
