@@ -1,9 +1,14 @@
 import React from 'react';
-import type { Chart } from 'chart.js';
-import type { Range } from './configTrendChart';
+import type { Range } from './constants';
+import type { PlotViewport } from './usePlotItem';
 
 type Point = { x: number; y: number };
-type PlotBounds = { left: number; right: number; top: number; bottom: number };
+export type PlotBounds = {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+};
 export type AxisRanges = { x: Range; y: Range };
 
 const PRIMARY_MOUSE_BUTTON = 0;
@@ -14,16 +19,6 @@ const RIGHT_DRAG_ZOOM_PIXELS = 100;
 /** Keeps selection edges inside the plot so a drag ending outside still has valid ranges. */
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
-}
-
-/** Finds the rendered grid rectangle that accepts pan and zoom gestures. */
-function plotBounds(chart: Chart<'line'>): PlotBounds {
-  return {
-    left: chart.chartArea.left,
-    right: chart.chartArea.right,
-    top: chart.chartArea.top,
-    bottom: chart.chartArea.bottom,
-  };
 }
 
 /** Maps a pixel on one axis to its value, including logarithmic interpolation. */
@@ -144,15 +139,16 @@ function setSelection(
 }
 
 /**
- * Connects the toolbar and mouse shortcuts to chart ranges.
+ * Attaches mouse and keyboard listeners and turns gestures into range changes.
+ * Reads and writes ranges through callbacks supplied by useViewBox.
  *
  * Zoom is a primary-button rectangle, Move is a primary-button pan, middle-button
  * dragging always pans, and right-button horizontal dragging continuously zooms.
  */
-export function useTrendMouseGestures({
+export function useMouseGestures({
   containerRef,
   selectionRef,
-  chartRef,
+  viewport,
   tool,
   inverted,
   logarithmicX = false,
@@ -166,7 +162,7 @@ export function useTrendMouseGestures({
 }: {
   containerRef: React.RefObject<HTMLDivElement | null>;
   selectionRef: React.RefObject<HTMLDivElement | null>;
-  chartRef: React.RefObject<Chart<'line'> | null>;
+  viewport: PlotViewport;
   tool: 'pointer' | 'zoom' | 'pan';
   inverted: { x: boolean; y: boolean };
   logarithmicX?: boolean;
@@ -180,8 +176,7 @@ export function useTrendMouseGestures({
 }) {
   React.useLayoutEffect(() => {
     const container = containerRef.current;
-    const chart = chartRef.current;
-    if (!container || !chart) return;
+    if (!container) return;
 
     let gesture:
       | {
@@ -298,6 +293,8 @@ export function useTrendMouseGestures({
     };
     // Capture a stable range and grid rectangle so one gesture is not affected by live updates.
     const onMouseDown = (event: MouseEvent) => {
+      const bounds = viewport.readBounds();
+      if (!bounds) return;
       if (
         event.button !== PRIMARY_MOUSE_BUTTON &&
         event.button !== MIDDLE_MOUSE_BUTTON &&
@@ -308,7 +305,6 @@ export function useTrendMouseGestures({
       const ranges = getRanges();
       if (!ranges) return;
       const start = mousePosition(container, event);
-      const bounds = plotBounds(chart);
       if (
         start.x < bounds.left ||
         start.x > bounds.right ||
@@ -373,7 +369,7 @@ export function useTrendMouseGestures({
     };
   }, [
     activeRef,
-    chartRef,
+    viewport,
     complete,
     containerRef,
     finish,

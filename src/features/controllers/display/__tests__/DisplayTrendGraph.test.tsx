@@ -2,8 +2,13 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { Chart } from 'chart.js/auto';
 import { AccessLevel } from '@/karabo/data/api';
 import { DisplayTrendGraphModel } from '@/karabo/common/api';
-import * as trendData from '../../graph/useTrendModel';
+import * as trendData from '../../graph/trend/api';
 import DisplayTrendGraph from '../DisplayTrendGraph';
+
+jest.mock('../../graph/trend/api', () => ({
+  ...jest.requireActual('../../graph/trend/api'),
+  useTrendModel: jest.fn(),
+}));
 
 const ctx = {
   proxies: [],
@@ -23,10 +28,10 @@ describe('DisplayTrendGraph with Chart.js', () => {
   beforeEach(() => {
     charts().length = 0;
   });
-  afterEach(() => jest.restoreAllMocks());
+  afterEach(() => jest.mocked(trendData.useTrendModel).mockReset());
 
   it('renders controls, data and background, then disposes the chart', () => {
-    jest.spyOn(trendData, 'useTrendModel').mockReturnValue(published());
+    jest.mocked(trendData.useTrendModel).mockReturnValue(published());
     const model = new DisplayTrendGraphModel();
     model.title = 'Temperatures';
     model.background = '#123456';
@@ -57,7 +62,7 @@ describe('DisplayTrendGraph with Chart.js', () => {
       timestamps: [1000, 2000],
       values: [3, 4],
     });
-    jest.spyOn(trendData, 'useTrendModel').mockReturnValue(data);
+    jest.mocked(trendData.useTrendModel).mockReturnValue(data);
     const model = new DisplayTrendGraphModel();
     const { rerender } = render(<DisplayTrendGraph model={model} ctx={ctx} />);
     const second = screen.getByRole('button', { name: 'B.value' });
@@ -91,7 +96,7 @@ describe('DisplayTrendGraph with Chart.js', () => {
   });
 
   it('zooms with a bounded rectangle and reset resumes uptime', () => {
-    jest.spyOn(trendData, 'useTrendModel').mockReturnValue(published());
+    jest.mocked(trendData.useTrendModel).mockReturnValue(published());
     render(
       <DisplayTrendGraph model={new DisplayTrendGraphModel()} ctx={ctx} />
     );
@@ -115,7 +120,7 @@ describe('DisplayTrendGraph with Chart.js', () => {
 
   it('defers live samples during a pan and applies them on release', () => {
     const data = published();
-    jest.spyOn(trendData, 'useTrendModel').mockReturnValue(data);
+    jest.mocked(trendData.useTrendModel).mockReturnValue(data);
     const model = new DisplayTrendGraphModel();
     const { rerender } = render(<DisplayTrendGraph model={model} ctx={ctx} />);
     fireEvent.click(screen.getByRole('button', { name: 'Move' }));
@@ -134,7 +139,7 @@ describe('DisplayTrendGraph with Chart.js', () => {
   });
 
   it('restores the view when a pan is cancelled', () => {
-    jest.spyOn(trendData, 'useTrendModel').mockReturnValue(published());
+    jest.mocked(trendData.useTrendModel).mockReturnValue(published());
     render(
       <DisplayTrendGraph model={new DisplayTrendGraphModel()} ctx={ctx} />
     );
@@ -149,7 +154,7 @@ describe('DisplayTrendGraph with Chart.js', () => {
   });
 
   it('pans inverted axes with a positive logarithmic Y range', () => {
-    jest.spyOn(trendData, 'useTrendModel').mockReturnValue(published());
+    jest.mocked(trendData.useTrendModel).mockReturnValue(published());
     const model = new DisplayTrendGraphModel();
     model.x_invert = true;
     model.y_invert = true;
@@ -168,7 +173,7 @@ describe('DisplayTrendGraph with Chart.js', () => {
   });
 
   it('supports middle click reset and right drag zoom', () => {
-    jest.spyOn(trendData, 'useTrendModel').mockReturnValue(published());
+    jest.mocked(trendData.useTrendModel).mockReturnValue(published());
     render(
       <DisplayTrendGraph model={new DisplayTrendGraphModel()} ctx={ctx} />
     );

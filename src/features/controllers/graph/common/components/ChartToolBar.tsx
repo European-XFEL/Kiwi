@@ -5,7 +5,7 @@ import zoomIcon from '@/assets/icons/general/zoom.svg?url';
 import moveIcon from '@/assets/icons/general/move.svg?url';
 import resetIcon from '@/assets/icons/general/reset.svg?url';
 
-export type GraphMouseTool = 'pointer' | 'zoom' | 'pan';
+export type ChartMouseTool = 'pointer' | 'zoom' | 'pan';
 
 const MOUSE_TOOLS = [
   { tool: 'pointer', label: 'Pointer', icon: pointerIcon },
@@ -13,13 +13,13 @@ const MOUSE_TOOLS = [
   { tool: 'pan', label: 'Move', icon: moveIcon },
 ] as const;
 
-export const GraphToolbar = React.memo(function GraphToolbar({
+export const ChartToolBar = React.memo(function ChartToolBar({
   tool: selectedTool,
   selectTool,
   reset,
 }: {
-  tool: GraphMouseTool;
-  selectTool: (tool: GraphMouseTool) => void;
+  tool: ChartMouseTool;
+  selectTool: (tool: ChartMouseTool) => void;
   reset: () => void;
 }) {
   return (

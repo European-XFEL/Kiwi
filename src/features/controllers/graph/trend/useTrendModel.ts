@@ -1,11 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { ProxyStatus } from '@/lib/binding/api';
-import type { PropertyProxies } from '../useController';
-import { useIdleScheduler } from '../useIdleScheduler';
+import type { PropertyProxies } from '../../useController';
+import { useIdleScheduler } from '../../useIdleScheduler';
 import { TrendModel, type TrendData } from './trendmodel';
 
 export type TrendSeries = TrendData & { key: string };
 
+/**
+ * Collects timestamped proxy samples into trend series and publishes changed
+ * series when the browser is idle. Chart rendering stays with useTrendChart.
+ */
 export function useTrendModel(proxies: PropertyProxies, keys: string[]) {
   const [startTime] = useState(Date.now);
   // Keys and proxy order stay fixed for the lifetime of this graph.

@@ -310,9 +310,15 @@ export class DisplayVectorGraphModel extends BasePlotModel {
   roi_tool = 0;
 }
 
-const readVectorGraph = (element: Element) => {
-  const graph = new DisplayVectorGraphModel();
+export class VectorBarGraphModel extends BasePlotModel {
+  klass = 'VectorBarGraph';
+  bar_width = 0.1;
+}
 
+const readVectorPlot = <T extends BasePlotModel>(
+  element: Element,
+  graph: T
+): T => {
   readBaseWidgetData(element, graph);
   graph.x_label = toStr(krbAttr(element, 'x_label'));
   graph.y_label = toStr(krbAttr(element, 'y_label'));
@@ -332,11 +338,18 @@ const readVectorGraph = (element: Element) => {
   graph.y_max = toNum(krbAttr(element, 'y_max'));
   graph.title = toStr(krbAttr(element, 'title'));
   graph.background = toStr(krbAttr(element, 'background'), 'transparent');
-  graph.offset = toNum(krbAttr(element, 'offset'));
-  graph.step = toNum(krbAttr(element, 'step'), 1.0);
-  graph.roi_tool = toNum(krbAttr(element, 'roi_tool'));
-
   return graph;
 };
 
-registerReader('VectorGraph', readVectorGraph);
+registerReader('VectorGraph', (element) => {
+  const graph = readVectorPlot(element, new DisplayVectorGraphModel());
+  graph.offset = toNum(krbAttr(element, 'offset'));
+  graph.step = toNum(krbAttr(element, 'step'), 1.0);
+  graph.roi_tool = toNum(krbAttr(element, 'roi_tool'));
+  return graph;
+});
+registerReader('VectorBarGraph', (element) => {
+  const graph = readVectorPlot(element, new VectorBarGraphModel());
+  graph.bar_width = toNum(krbAttr(element, 'bar_width'), 0.1);
+  return graph;
+});

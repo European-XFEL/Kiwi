@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { DisplayTrendGraphModel } from '@/karabo/common/api';
-import { useTrendChart } from '../graph/useTrendChart';
+import { useTrendChart } from '../useTrendChart';
 
 const START = new Date(2027, 2, 29, 0, 30).getTime();
 const samples = (seconds: number) => [

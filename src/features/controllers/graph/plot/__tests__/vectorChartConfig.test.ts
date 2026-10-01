@@ -1,10 +1,9 @@
 import { DisplayVectorGraphModel } from '@/karabo/common/api';
 import {
   vectorChartOption,
-  vectorPoints,
   chooseVectorTargetPoints,
-  visibleVectorRange,
-} from '../graph/configVectorChart';
+} from '../configVectorChart';
+import { vectorPoints, visibleVectorRange } from '../vectorRange';
 
 describe('vector Chart.js configuration', () => {
   it('uses model axis labels and units', () => {

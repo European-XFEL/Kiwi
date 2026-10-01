@@ -2,10 +2,10 @@ import { DisplayTrendGraphModel } from '@/karabo/common/api';
 import {
   fixedXRange,
   fixedYRange,
-  formatValueTick,
   trendChartOption,
   trendDatasets,
-} from '../graph/configTrendChart';
+} from '../configTrendChart';
+import { formatValueTick } from '../../common/api';
 
 const series = [
   { key: 'A.value', timestamps: [1000, 2000], values: [1, 2] },
@@ -92,6 +92,7 @@ describe('trend Chart.js configuration', () => {
       width: 600,
       ticks: [] as { value: number }[],
       chart: {
+        width: 670,
         ctx: {
           save: jest.fn(),
           restore: jest.fn(),
@@ -111,6 +112,34 @@ describe('trend Chart.js configuration', () => {
     scale.max = 120_000;
     axis.afterBuildTicks(scale);
     expect(scale.ticks[0].value).toBeGreaterThan(wide[0]);
+  });
+
+  it('sizes time tick spacing to the plot area after the Y-axis gutter', () => {
+    const axis = trendChartOption(new DisplayTrendGraphModel(), series).options!
+      .scales!.x! as unknown as { afterBuildTicks: (scale: unknown) => void };
+    const start = new Date('2026-09-30T23:39:12').getTime();
+    const scale = {
+      min: start,
+      max: start + 3 * 60_000,
+      width: 420,
+      ticks: [] as { value: number }[],
+      chart: {
+        width: 420,
+        ctx: {
+          save: jest.fn(),
+          restore: jest.fn(),
+          measureText: jest.fn((label: string) => ({
+            width: label.length * 7,
+          })),
+        },
+      },
+    };
+
+    axis.afterBuildTicks(scale);
+
+    expect(scale.ticks.map(({ value }) => value - start)).toEqual([
+      48_000, 108_000, 168_000,
+    ]);
   });
 
   it('keeps the plot rectangle stable when tick labels change', () => {

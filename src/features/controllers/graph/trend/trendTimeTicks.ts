@@ -1,4 +1,4 @@
-import type { Range } from './configTrendChart';
+import type { Range } from '../common/api';
 
 const SECOND = 1000;
 const MINUTE = 60 * SECOND;

@@ -1,23 +1,21 @@
 import { act, cleanup, renderHook } from '@testing-library/react';
 import type { PropertyProxy } from '@/lib/binding/PropertyProxy';
 import { ProxyStatus } from '@/lib/binding/api';
-import { DisplayVectorGraphModel } from '@/karabo/common/api';
 import { VectorFloatValue, VectorInt64Value } from '@/karabo/data/types';
-import { useVectorChart } from '../graph/useVectorChart';
+import { useVectorData } from '../useVectorData';
 
 const originalRequestIdleCallback = window.requestIdleCallback;
 const originalCancelIdleCallback = window.cancelIdleCallback;
 
 const makeProxy = (value: unknown): PropertyProxy =>
   ({ root: { status: ProxyStatus.MONITORING }, value }) as PropertyProxy;
-const model = new DisplayVectorGraphModel();
-const useData = (proxy: PropertyProxy) => useVectorChart({ model, proxy });
+const useData = (proxy: PropertyProxy) => useVectorData(proxy);
 
 function flushIdle() {
   act(() => jest.runOnlyPendingTimers());
 }
 
-describe('useVectorChart data', () => {
+describe('useVectorData', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     window.requestIdleCallback = jest.fn((callback: IdleRequestCallback) =>
@@ -49,7 +47,6 @@ describe('useVectorChart data', () => {
     expect(window.requestIdleCallback).toHaveBeenCalledTimes(1);
     flushIdle();
     expect(result.current.values).toEqual(new Float64Array([3, 4, 5]));
-    expect(result.current.rawLength).toBe(3);
   });
 
   it('keeps non-finite numeric samples for viewport sampling', () => {
@@ -60,7 +57,6 @@ describe('useVectorChart data', () => {
     expect(result.current.values).toEqual(
       new Float64Array([1, Number.NaN, 3, Number.POSITIVE_INFINITY, 5])
     );
-    expect(result.current.rawLength).toBe(5);
   });
 
   it('reuses the Karabo typed vector including non-finite samples', () => {
@@ -78,5 +74,20 @@ describe('useVectorChart data', () => {
     flushIdle();
     expect(result.current.values).toEqual(new Float64Array([1, -2]));
     expect(Array.from(values)).toEqual([1n, -2n]);
+  });
+
+  it('publishes an empty vector when the proxy is absent', () => {
+    const { result, rerender } = renderHook(
+      ({ proxy }) => useVectorData(proxy),
+      {
+        initialProps: { proxy: makeProxy([1, 2]) as PropertyProxy | undefined },
+      }
+    );
+    flushIdle();
+    expect(result.current.values).toEqual(new Float64Array([1, 2]));
+
+    rerender({ proxy: undefined });
+    flushIdle();
+    expect(result.current.values).toEqual(new Float64Array());
   });
 });

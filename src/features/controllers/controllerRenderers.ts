@@ -1,5 +1,6 @@
 import type { Renderer, RendererProps } from '@/features/scene-view/api';
 import DisplayAlarmFloat from '@/features/controllers/display/DisplayAlarmFloat';
+import DisplayBarGraph from './display/DisplayBarGraph';
 import {
   DisplayCheckBox,
   EditableCheckBox,
@@ -10,7 +11,7 @@ import DisplayLabel from '@/features/controllers/display/DisplayLabel';
 import DisplayList from '@/features/controllers/display/DisplayList';
 import DisplayStateColor from '@/features/controllers/display/DisplayStateColor';
 import DisplayTrendGraph from '@/features/controllers/display/DisplayTrendGraph';
-import DisplayVectorGraph from '@/features/controllers/display/DisplayVectorGraph';
+import DisplayVectorGraph from './display/DisplayVectorGraph';
 import Evaluator from '@/features/controllers/display/Evaluator';
 import {
   DisplayLineEdit,
@@ -60,6 +61,7 @@ export function bootstrapControllerRenderers(
   registerRenderer('DisplayTrendGraph', DisplayTrendGraph);
   registerRenderer('DisplayVectorGraph', DisplayVectorGraph);
   registerRenderer('VectorGraph', DisplayVectorGraph);
+  registerRenderer('VectorBarGraph', DisplayBarGraph);
   registerRenderer('IntLineEdit', IntLineEdit);
   registerRenderer('DoubleLineEdit', DoubleLineEdit);
   registerRenderer('EditableSpinBox', EditableSpinBox);
