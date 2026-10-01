@@ -4,8 +4,6 @@ import type { ChartConfiguration } from 'chart.js';
 import type { Range } from './constants';
 import type { AxisRanges, PlotBounds } from './useMouseGestures';
 
-type Datasets = ChartConfiguration<'line'>['data']['datasets'];
-
 export type PlotViewport = {
   readBounds: () => PlotBounds | undefined;
   readRanges: (fallback?: AxisRanges) => AxisRanges | undefined;
@@ -16,12 +14,12 @@ export type PlotViewport = {
  * Owns the Chart.js canvas and instance lifecycle for every graph type.
  * Exposes chart bounds, ranges, data updates, and dataset visibility to callers.
  */
-export function usePlotItem(
-  configuration: () => ChartConfiguration<'line'>,
+export function usePlotItem<T extends 'line' | 'scatter' = 'line'>(
+  configuration: () => ChartConfiguration<T>,
   identity: readonly unknown[]
 ) {
   const containerRef = React.useRef<HTMLDivElement>(null);
-  const chartRef = React.useRef<Chart<'line'> | null>(null);
+  const chartRef = React.useRef<Chart<T> | null>(null);
   React.useLayoutEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -68,10 +66,10 @@ export function usePlotItem(
       setRanges: (ranges) => {
         const chart = chartRef.current;
         if (!chart) return;
-        chart.options.scales!.x!.min = ranges.x[0];
-        chart.options.scales!.x!.max = ranges.x[1];
-        chart.options.scales!.y!.min = ranges.y[0];
-        chart.options.scales!.y!.max = ranges.y[1];
+        chart.options!.scales!.x!.min = ranges.x[0];
+        chart.options!.scales!.x!.max = ranges.x[1];
+        chart.options!.scales!.y!.min = ranges.y[0];
+        chart.options!.scales!.y!.max = ranges.y[1];
         chart.update('none');
       },
     }),
@@ -80,7 +78,7 @@ export function usePlotItem(
 
   const update = React.useCallback(
     (
-      datasets: Datasets,
+      datasets: ChartConfiguration<T>['data']['datasets'],
       xRange?: Range,
       yRange?: Range,
       pointRadius?: number
@@ -92,10 +90,10 @@ export function usePlotItem(
       });
       if (pointRadius !== undefined)
         chart.data.datasets[0].pointRadius = pointRadius;
-      chart.options.scales!.x!.min = xRange?.[0];
-      chart.options.scales!.x!.max = xRange?.[1];
-      chart.options.scales!.y!.min = yRange?.[0];
-      chart.options.scales!.y!.max = yRange?.[1];
+      chart.options!.scales!.x!.min = xRange?.[0];
+      chart.options!.scales!.x!.max = xRange?.[1];
+      chart.options!.scales!.y!.min = yRange?.[0];
+      chart.options!.scales!.y!.max = yRange?.[1];
       chart.update('none');
     },
     []

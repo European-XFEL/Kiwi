@@ -10,13 +10,12 @@ export function ChartPlot({
 }: {
   containerRef: React.RefObject<HTMLDivElement | null>;
   selectionRef: React.RefObject<HTMLDivElement | null>;
-  testId: 'trend-chart' | 'vector-chart';
+  testId: 'trend-chart' | 'vector-chart' | 'scatter-chart';
   title: string;
   legend?: React.ReactNode;
   empty?: string;
 }) {
-  const selectionId =
-    testId === 'trend-chart' ? 'trend-zoom-selection' : 'vector-zoom-selection';
+  const selectionId = testId.replace('-chart', '-zoom-selection');
   return (
     <div className="relative h-full min-h-0 min-w-0 flex-1">
       <div
