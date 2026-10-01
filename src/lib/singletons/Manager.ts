@@ -162,7 +162,11 @@ export class Manager {
 
     const accessLevel = hash.getValue('accessLevel') as number;
 
-    getConfig().saveAuthSession(session.userId!, session.refreshToken!);
+    getConfig().saveAuthSession(
+      session.userId!,
+      session.refreshToken!,
+      session.isReadOnly
+    );
 
     AccessControlManager.instance.initFromLogin({
       accessLevel: accessLevel,

@@ -1,11 +1,12 @@
 import { decryptData, encryptData } from '@/lib/crypto';
-import type { AccessLevel } from '@/karabo/data/api';
+import { AccessLevel } from '@/karabo/data/api';
 
 /** Subset of data needed to resume a GUI Session when the app starts. */
 export interface SessionData {
   userId: string;
   refreshToken?: string; // Only for auth sessions.
   accessLevel?: AccessLevel; // Only for non-auth sessions.
+  isReadOnly: boolean;
 }
 
 export const AUTHENTICATION = 'authentication';
@@ -122,6 +123,11 @@ export class ConfigurationStore {
       group: AUTHENTICATION,
       dtype: 'string',
     }),
+    sessionReadOnly: new Item({
+      defaultValue: undefined,
+      group: AUTHENTICATION,
+      dtype: 'boolean',
+    }),
 
     currentDomain: new Item({
       defaultValue: '',
@@ -234,9 +240,14 @@ export class ConfigurationStore {
 
   // #region SessionData
 
-  async saveAuthSession(userId: string, refreshToken: string): Promise<void> {
+  async saveAuthSession(
+    userId: string,
+    refreshToken: string,
+    isReadOnly: boolean
+  ): Promise<void> {
     this.setItem(this.storage_items.sessionUserId, userId);
     this.setItem(this.storage_items.sessionRefreshToken, refreshToken);
+    this.setItem(this.storage_items.sessionReadOnly, isReadOnly);
     this.deleteItem(this.storage_items.sessionAccessLevel);
   }
 
@@ -246,6 +257,10 @@ export class ConfigurationStore {
   ): Promise<void> {
     this.setItem(this.storage_items.sessionUserId, userId);
     this.setItem(this.storage_items.sessionAccessLevel, accessLevel);
+    this.setItem(
+      this.storage_items.sessionReadOnly,
+      accessLevel === AccessLevel.OBSERVER
+    );
     this.deleteItem(this.storage_items.sessionRefreshToken);
   }
 
@@ -257,11 +272,13 @@ export class ConfigurationStore {
 
     const refreshToken = this.getItem(this.storage_items.sessionRefreshToken);
     const accessLevel = this.getItem(this.storage_items.sessionAccessLevel);
+    const isReadOnly = this.getItem(this.storage_items.sessionReadOnly);
 
     return {
       userId,
       refreshToken: refreshToken ?? undefined,
       accessLevel: accessLevel ?? undefined,
+      isReadOnly: isReadOnly,
     };
   }
 
@@ -269,6 +286,7 @@ export class ConfigurationStore {
     this.deleteItem(this.storage_items.sessionUserId);
     this.deleteItem(this.storage_items.sessionRefreshToken);
     this.deleteItem(this.storage_items.sessionAccessLevel);
+    this.deleteItem(this.storage_items.sessionReadOnly);
   }
 
   // #endregion

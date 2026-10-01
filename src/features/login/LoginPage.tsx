@@ -42,12 +42,19 @@ export function LoginPage() {
   } = useServerProbe({ debounceMs: debounceServerProbing });
 
   // Auth state and logic
-  const { userName, passwd, setUserName, setPasswd, setAccessLevel, doLogin } =
-    useAuth({
-      probedServerInfo,
-      setActivityStatus,
-      setErrorMessage,
-    });
+  const {
+    userName,
+    passwd,
+    setUserName,
+    setPasswd,
+    setAccessLevel,
+    doLogin,
+    doConnectObserver,
+  } = useAuth({
+    probedServerInfo,
+    setActivityStatus,
+    setErrorMessage,
+  });
 
   // Status text for loading states
   let statusText = '';
@@ -91,6 +98,7 @@ export function LoginPage() {
           setPasswd(v);
           clearError();
         }}
+        onConnectObserver={() => doConnectObserver(host, port)}
         onSubmit={() => doLogin(host, port)}
         disabled={activityStatus !== ActivityStatus.NO_ACTIVITY}
       />
@@ -121,7 +129,7 @@ export function LoginPage() {
 
   return (
     <Card data-testid="login-page" className="shadow-lg">
-      <CardContent className="pt-6 space-y-6">
+      <CardContent className="pt-2 space-y-5">
         <ServerProbeForm
           host={host}
           port={port}

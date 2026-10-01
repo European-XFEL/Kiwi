@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/api';
 export type AuthenticationFormProps = {
   onUserNameChange: (username: string) => void;
   onPasswordChange: (password: string) => void;
+  onConnectObserver: () => void;
   onSubmit: () => void;
   disabled?: boolean;
 };
@@ -15,6 +16,7 @@ export type AuthenticationFormProps = {
 export default function AuthenticationForm({
   onUserNameChange,
   onPasswordChange,
+  onConnectObserver,
   onSubmit,
   disabled = false,
 }: AuthenticationFormProps) {
@@ -26,7 +28,18 @@ export default function AuthenticationForm({
     <Card data-testid="authentication-form">
       <CardHeader>
         <CardTitle className="text-sm font-semibold">
-          USER AUTHENTICATION
+          <div className="flex items-baseline justify-between">
+            USER AUTHENTICATION
+            <div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onConnectObserver()}
+              >
+                <span className="text-xs font-normal">Connect Read-Only</span>
+              </Button>
+            </div>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

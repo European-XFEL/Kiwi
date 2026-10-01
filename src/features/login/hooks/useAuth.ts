@@ -20,6 +20,7 @@ interface UseAuthReturn {
   setPasswd: (pwd: string) => void;
   setAccessLevel: (level: number) => void;
   doLogin: (host: string, port: string) => Promise<void>;
+  doConnectObserver: (host: string, port: string) => Promise<void>;
 }
 
 /**
@@ -144,6 +145,26 @@ export function useAuth({
     ]
   );
 
+  const doConnectObserver = async (host: string, port: string) => {
+    const portNum = parseInt(port, 10);
+    if (!host || Number.isNaN(portNum)) return;
+
+    setActivityStatus(ActivityStatus.CONNECTING_SERVER);
+    try {
+      const session = await getNetwork().startNonAuthSession(
+        host.trim(),
+        portNum,
+        'Observer', // userName
+        0, // AccessLevel.OBSERVER
+        true // readOnly
+      );
+      onAuthSessionStarted(session);
+    } catch (error: any) {
+      setActivityStatus(ActivityStatus.NO_ACTIVITY);
+      setErrorMessage(`Login error: ${error.message || 'Unknown error'}`);
+    }
+  };
+
   return {
     userName,
     passwd,
@@ -152,5 +173,6 @@ export function useAuth({
     setPasswd,
     setAccessLevel,
     doLogin,
+    doConnectObserver,
   };
 }
