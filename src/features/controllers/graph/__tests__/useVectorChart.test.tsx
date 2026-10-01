@@ -1,4 +1,4 @@
-import { buildModelConfig } from '../../common/api';
+import { buildModelConfig } from '../common/api';
 import React from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { Chart } from 'chart.js/auto';

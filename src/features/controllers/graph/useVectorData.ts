@@ -1,7 +1,7 @@
 import React from 'react';
 import { isTypedArray } from '@/karabo/data/api';
 import { PropertyProxy } from '@/lib/binding/api';
-import { useIdleScheduler } from '../../useIdleScheduler';
+import { useIdleScheduler } from '../useIdleScheduler';
 
 export type VectorData = ArrayLike<number>;
 function normalizeVector(raw: unknown): VectorData {

@@ -1,5 +1,5 @@
 import type { Plugin } from 'chart.js';
-import { TRACE_COLORS } from '../common/api';
+import { TRACE_COLORS } from './common/api';
 
 /** Draws bars in data coordinates so their X width follows zoom. */
 export function vectorBarPlugin(width: number): Plugin<'line'> {

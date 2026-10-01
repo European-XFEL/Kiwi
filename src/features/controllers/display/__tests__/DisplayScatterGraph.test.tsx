@@ -17,8 +17,8 @@ import {
   DeviceProxy,
   PropertyProxy,
 } from '@/lib/binding/api';
-import { useScatterData } from '../../graph/scatter/useScatterData';
-import { scatterChartOption } from '../../graph/scatter/configScatterChart';
+import { useScatterData } from '../../graph/useScatterData';
+import { scatterChartOption } from '../../graph/chartConfig';
 import DisplayScatterGraph from '../DisplayScatterGraph';
 
 function property(path: string) {

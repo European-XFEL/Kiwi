@@ -4,7 +4,7 @@ import { Button } from '@/components/api';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 import type { ScatterGraphModel } from '@/karabo/common/api';
 import { ChartLayout, ChartPlot } from '../graph/common/api';
-import { useScatterChart } from '../graph/scatter/useScatterChart';
+import { useScatterChart } from '../graph/useScatterChart';
 
 export default function DisplayScatterGraph({
   model,

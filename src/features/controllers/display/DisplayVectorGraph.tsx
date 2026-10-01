@@ -3,7 +3,7 @@ import { buildModelConfig } from '../graph/common/api';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 import type { DisplayVectorGraphModel } from '@/karabo/common/api';
 import { ChartLayout, ChartPlot } from '../graph/common/api';
-import { useVectorChart } from '../graph/plot/api';
+import { useVectorChart } from '../graph/useVectorChart';
 
 export default function DisplayVectorGraph({
   model,

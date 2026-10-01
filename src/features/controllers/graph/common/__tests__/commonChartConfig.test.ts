@@ -4,8 +4,39 @@ import {
   DisplayVectorGraphModel,
   VectorBarGraphModel,
 } from '@/karabo/common/api';
-import { barChartOption, vectorChartOption } from '../../plot/api';
+import { barChartOption, vectorChartOption } from '../../chartConfig';
 import { trendChartOption } from '../../trend/api';
+import { buildPlotAxes, commonChartOption, integerTickFormatter } from '../api';
+
+it('pairs adaptive time ticks with mapped numeric Y labels and numeric fallbacks', () => {
+  const model = buildModelConfig(new DisplayTrendGraphModel());
+  Object.assign(model, {
+    x_autorange: false,
+    x_min: 1,
+    x_max: 4,
+    y_autorange: false,
+    y_min: 0,
+    y_max: 1,
+  });
+  const axes = buildPlotAxes(model, { timeX: true });
+  axes.y.formatTick = integerTickFormatter(
+    new Map([
+      [0, 'Off'],
+      [1, 'On'],
+      [0.5, 'ignored'],
+    ])
+  );
+  const scales = commonChartOption(model, axes).options!.scales!;
+  expect(scales.x).toMatchObject({ type: 'linear', min: 1000, max: 4000 });
+  expect(scales.x!.afterBuildTicks).toEqual(expect.any(Function));
+  expect(scales.y).toMatchObject({ type: 'linear', min: 0, max: 1 });
+  const format = scales.y!.ticks!.callback as (value: number) => string;
+  expect(format(0)).toBe('Off');
+  expect(format(1)).toBe('On');
+  expect(format(2)).toBe('2');
+  expect(format(0.5)).toBe('0.5');
+  expect(format(0.001234)).toBe('1.23e-3');
+});
 
 it.each([
   [
