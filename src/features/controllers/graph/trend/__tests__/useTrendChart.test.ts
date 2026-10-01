@@ -6,6 +6,7 @@ import {
   trendDatasets,
 } from '../../chartConfig';
 import { formatValueTick } from '../../common/api';
+import { STATE_LABELS, ALARM_LABELS } from '../categories';
 
 const series = [
   { key: 'A.value', timestamps: [1000, 2000], values: [1, 2] },
@@ -13,6 +14,84 @@ const series = [
 ];
 
 describe('trend Chart.js configuration', () => {
+  it.each([[STATE_LABELS], [ALARM_LABELS]])(
+    'uses linear categorical axes with every integer tick and automatic label width',
+    (categories) => {
+      const model = buildModelConfig(new DisplayTrendGraphModel());
+      Object.assign(model, {
+        y_log: true,
+        y_invert: true,
+        y_autorange: false,
+        y_min: 0.5,
+        y_max: 3.5,
+      });
+      const onYAxisWidth = jest.fn();
+      const axes = buildPlotAxes(model, {
+        timeX: true,
+        categories,
+        onYAxisWidth,
+      });
+      const option = trendChartOption(
+        model,
+        series,
+        undefined,
+        undefined,
+        axes
+      );
+      expect(option.options?.scales?.y).toMatchObject({
+        type: 'linear',
+        reverse: true,
+        min: 0.5,
+        max: 3.5,
+        ticks: { autoSkip: false },
+      });
+      expect(option.data.datasets[0]).toMatchObject({
+        tension: 0,
+        stepped: false,
+      });
+      const y = option.options!.scales!.y! as unknown as {
+        afterBuildTicks: (axis: unknown) => void;
+        afterFit: (axis: unknown) => void;
+        ticks: { callback: (value: number) => string };
+      };
+      const scale = {
+        min: 0.5,
+        max: 3.5,
+        width: 90,
+        ticks: [] as { value: number }[],
+        chart: {
+          ctx: {
+            save: jest.fn(),
+            restore: jest.fn(),
+            measureText: (label: string) => ({ width: label.length * 7 }),
+          },
+        },
+      };
+      y.afterBuildTicks(scale);
+      expect(scale.ticks).toEqual([{ value: 1 }, { value: 2 }, { value: 3 }]);
+      expect(y.ticks.callback(1)).toBe(categories[1]);
+      for (const value of [1.5, -1, 100, NaN])
+        expect(y.ticks.callback(value)).toBe('');
+      y.afterFit(scale);
+      expect(scale.width).toBe(90);
+      scale.min = 0;
+      scale.max = categories.length - 1;
+      y.afterBuildTicks(scale);
+      expect(scale.ticks.map(({ value }) => y.ticks.callback(value))).toEqual(
+        categories
+      );
+      expect(onYAxisWidth).toHaveBeenLastCalledWith(90);
+      scale.min = 1.9;
+      scale.max = 2.1;
+      y.afterBuildTicks(scale);
+      // Chart.js has fitted a narrower axis to the remaining label.
+      scale.width = 40;
+      y.afterFit(scale);
+      expect(scale.ticks).toEqual([{ value: 2 }]);
+      expect(scale.width).toBe(40);
+      expect(onYAxisWidth).toHaveBeenLastCalledWith(40);
+    }
+  );
   it('keeps independent timestamps and configures the existing colors and axes', () => {
     const model = buildModelConfig(new DisplayTrendGraphModel());
     model.title = 'Temperatures';
@@ -114,37 +193,50 @@ describe('trend Chart.js configuration', () => {
     expect(scale.ticks[0].value).toBeGreaterThan(wide[0]);
   });
 
-  it('sizes time tick spacing to the plot area after the Y-axis gutter', () => {
-    const axis = trendChartOption(
-      buildModelConfig(new DisplayTrendGraphModel()),
-      series
-    ).options!.scales!.x! as unknown as {
-      afterBuildTicks: (scale: unknown) => void;
-    };
-    const start = new Date('2026-09-30T23:39:12').getTime();
-    const scale = {
-      min: start,
-      max: start + 3 * 60_000,
-      width: 420,
-      ticks: [] as { value: number }[],
-      chart: {
+  it.each([[undefined], [STATE_LABELS]] as const)(
+    'sizes time tick spacing to the plot area after the Y-axis width (%p)',
+    (categories) => {
+      const model = buildModelConfig(new DisplayTrendGraphModel());
+      const axis = trendChartOption(
+        model,
+        series,
+        undefined,
+        undefined,
+        buildPlotAxes(model, { timeX: true, categories })
+      ).options!.scales!.x! as unknown as {
+        afterBuildTicks: (scale: unknown) => void;
+      };
+      const start = new Date('2026-09-30T23:39:12').getTime();
+      const scale = {
+        min: start,
+        max: start + 3 * 60_000,
         width: 420,
-        ctx: {
-          save: jest.fn(),
-          restore: jest.fn(),
-          measureText: jest.fn((label: string) => ({
-            width: label.length * 7,
-          })),
+        ticks: [] as { value: number }[],
+        chart: {
+          width: 420,
+          scales: { y: { width: 52 } },
+          ctx: {
+            save: jest.fn(),
+            restore: jest.fn(),
+            measureText: jest.fn((label: string) => ({
+              width: label.length * 7,
+            })),
+          },
         },
-      },
-    };
+      };
 
-    axis.afterBuildTicks(scale);
+      axis.afterBuildTicks(scale);
 
-    expect(scale.ticks.map(({ value }) => value - start)).toEqual([
-      48_000, 108_000, 168_000,
-    ]);
-  });
+      expect(scale.ticks.map(({ value }) => value - start)).toEqual([
+        48_000, 108_000, 168_000,
+      ]);
+      if (categories) {
+        scale.chart.scales.y.width = 300;
+        axis.afterBuildTicks(scale);
+        expect(scale.ticks.length).toBeLessThan(3);
+      }
+    }
+  );
 
   it('keeps the plot rectangle stable when tick labels change', () => {
     const scales = trendChartOption(

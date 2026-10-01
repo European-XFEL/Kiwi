@@ -20,7 +20,7 @@ const makeProxy = (
     timestamp: { toTimestamp: () => seconds },
   }) as PropertyProxy;
 
-function update(proxy: PropertyProxy, value: number, seconds: number) {
+function update(proxy: PropertyProxy, value: unknown, seconds: number) {
   Object.assign(proxy, { value, timestamp: { toTimestamp: () => seconds } });
 }
 
@@ -49,6 +49,62 @@ describe('useTrendModel', () => {
     jest.useRealTimers();
     jest.restoreAllMocks();
   });
+
+  it.each(['state', 'alarm'] as const)(
+    'collects %s samples with timestamps, idle publication and offline resume',
+    (mode) => {
+      const labels =
+        mode === 'state'
+          ? ['NORMAL', 'UNKNOWN', 'INIT', 'ERROR']
+          : ['none', 'warn', 'alarm', 'interlock'];
+      const proxy = makeProxy('A.value', labels[0], START - 60);
+      const { result, rerender } = renderHook(() =>
+        useTrendModel([proxy], [proxy.key], mode)
+      );
+      expect(result.current.dataRevision).toBe(0);
+      flushIdle();
+      expect(result.current.series[0].values).toEqual([0, 0]);
+      expect(result.current.series[0].timestamps).toEqual([
+        (START - 60) * 1000,
+        START * 1000,
+      ]);
+      for (const [value, timestamp] of [
+        [labels[1], START - 30],
+        [labels[1], NaN],
+        ['invalid', START + 1],
+        [1, START + 1],
+        [null, START + 1],
+        [undefined, START + 1],
+      ] as const) {
+        update(proxy, value, timestamp);
+        rerender();
+      }
+      expect(result.current.series[0].values).toEqual([0, 0]);
+      proxy.root.status = ProxyStatus.OFFLINE;
+      update(proxy, labels[1], START + 1);
+      rerender();
+      proxy.root.status = ProxyStatus.MONITORING;
+      rerender();
+      update(proxy, labels[2], START + 2);
+      rerender();
+      update(proxy, labels[3], START + 3);
+      rerender();
+      expect(result.current.dataRevision).toBe(1);
+      flushIdle();
+      expect(result.current.series[0].values).toEqual([0, 0, 1, 2, 3]);
+      for (let i = 4; i < 1004; i++) {
+        update(proxy, labels[i % 4], START + i);
+        rerender();
+      }
+      flushIdle();
+      expect(result.current.series[0].values).toEqual(
+        Array.from({ length: 900 }, (_, i) => (104 + i) % 4)
+      );
+      expect(result.current.series[0].timestamps).toEqual(
+        Array.from({ length: 900 }, (_, i) => (START + 104 + i) * 1000)
+      );
+    }
+  );
 
   it('coalesces updates across devices without losing intermediate samples', () => {
     const proxies = [makeProxy('A.value', 1), makeProxy('B.value', 2)];

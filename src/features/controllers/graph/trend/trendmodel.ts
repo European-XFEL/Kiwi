@@ -102,3 +102,22 @@ export class TrendModel {
     this.data.values.length = position;
   }
 }
+
+/** Exact, bounded storage for categorical samples; categories must never average. */
+export class CategoricalTrendModel {
+  private readonly data: TrendData = { timestamps: [], values: [] };
+
+  addPoint(timestamp: number, value: number): void {
+    this.data.timestamps.push(timestamp);
+    this.data.values.push(value);
+    const excess = this.data.values.length - 900;
+    if (excess > 0) {
+      this.data.timestamps.splice(0, excess);
+      this.data.values.splice(0, excess);
+    }
+  }
+
+  view(): TrendData {
+    return this.data;
+  }
+}

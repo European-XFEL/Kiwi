@@ -128,3 +128,10 @@ export enum Capabilities {
   PROVIDES_MACROS = 2,
   PROVICES_INTERFACES = 4,
 }
+
+export enum AlarmCondition {
+  NONE = 'none',
+  WARN = 'warn',
+  ALARM = 'alarm',
+  INTERLOCK = 'interlock',
+}

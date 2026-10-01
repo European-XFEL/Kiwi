@@ -2,7 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { ProxyStatus } from '@/lib/binding/api';
 import type { PropertyProxies } from '../../useController';
 import { useIdleScheduler } from '../../useIdleScheduler';
-import { TrendModel, type TrendData } from './trendmodel';
+import { trendValue, type TrendMode } from './categories';
+import {
+  CategoricalTrendModel,
+  TrendModel,
+  type TrendData,
+} from './trendmodel';
 
 export type TrendSeries = TrendData & { key: string };
 
@@ -10,11 +15,20 @@ export type TrendSeries = TrendData & { key: string };
  * Collects timestamped proxy samples into trend series and publishes changed
  * series when the browser is idle. Chart rendering stays with useTrendChart.
  */
-export function useTrendModel(proxies: PropertyProxies, keys: string[]) {
+export function useTrendModel(
+  proxies: PropertyProxies,
+  keys: string[],
+  mode: TrendMode = 'numeric'
+) {
   const [startTime] = useState(Date.now);
   // Keys and proxy order stay fixed for the lifetime of this graph.
   const [curves] = useState(() =>
-    keys.map((key) => ({ key, model: new TrendModel(), timestamp: -Infinity }))
+    keys.map((key) => ({
+      key,
+      model:
+        mode === 'numeric' ? new TrendModel() : new CategoricalTrendModel(),
+      timestamp: -Infinity,
+    }))
   );
   const [{ series, dataRevision }, setPublished] = useState(() => ({
     series: curves.map(({ key, model }): TrendSeries => ({
@@ -31,9 +45,8 @@ export function useTrendModel(proxies: PropertyProxies, keys: string[]) {
     for (const [index, proxy] of proxies.entries()) {
       const curve = curves[index];
       if (proxy.root.status === ProxyStatus.OFFLINE) continue;
-      const raw = proxy.value;
-      if (!['number', 'bigint', 'boolean'].includes(typeof raw)) continue;
-      const value = Number(raw);
+      const value = trendValue(proxy.value, mode);
+      if (value === undefined) continue;
       const timestamp = proxy.timestamp?.toTimestamp() * 1000;
       if (!Number.isFinite(value) || !Number.isFinite(timestamp)) continue;
       if (timestamp <= curve.timestamp) continue;
@@ -65,7 +78,7 @@ export function useTrendModel(proxies: PropertyProxies, keys: string[]) {
         dataRevision: previous.dataRevision + 1,
       }));
     });
-  }, [proxies, curves, startTime, schedulePublish]);
+  }, [proxies, curves, startTime, schedulePublish, mode]);
 
   return { series, startTime, dataRevision };
 }

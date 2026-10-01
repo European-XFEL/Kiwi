@@ -1,4 +1,5 @@
 import React from 'react';
+import { categoryLabels, type TrendMode } from './categories';
 import type { PlotSettings } from '../common/api';
 import type { TrendSeries } from './useTrendModel';
 import { trendDatasets, trendChartOption } from '../chartConfig';
@@ -25,13 +26,16 @@ export function useTrendChart({
   series,
   startTime,
   dataRevision,
+  mode = 'numeric',
 }: {
   plotConfig: PlotSettings;
   series: TrendSeries[];
   startTime: number;
   dataRevision: number;
+  mode?: TrendMode;
 }) {
   const [view, setView] = React.useState<View>({ mode: 'uptime' });
+  const [yAxisWidth, setYAxisWidth] = React.useState(52);
   const [visibleRange, setVisibleRange] = React.useState<Range>();
   const latestSeriesRef = React.useRef(series);
   latestSeriesRef.current = series;
@@ -83,8 +87,13 @@ export function useTrendChart({
   const reset = React.useCallback(() => setView({ mode: 'uptime' }), []);
   const seriesKeys = series.map((item) => item.key).join('\0');
   const axes = React.useMemo(
-    () => buildPlotAxes(plotConfig, { timeX: true }),
-    [plotConfig]
+    () =>
+      buildPlotAxes(plotConfig, {
+        timeX: true,
+        categories: categoryLabels(mode),
+        onYAxisWidth: mode === 'numeric' ? undefined : setYAxisWidth,
+      }),
+    [plotConfig, mode]
   );
   const buildData = React.useCallback(
     () => ({ datasets: trendDatasets(series) }),
@@ -104,7 +113,7 @@ export function useTrendChart({
         undefined,
         axes
       ),
-    identity: [plotConfig, seriesKeys],
+    identity: [plotConfig, seriesKeys, mode],
     xRange,
     yRange: view.yRange,
     onComplete: pause,
@@ -150,6 +159,7 @@ export function useTrendChart({
 
   const yRange = view.yRange;
   return {
+    yAxisWidth,
     containerRef,
     selectionRef,
     tool: chart.tool,
