@@ -17,6 +17,10 @@ export function useIdleScheduler(timeout: number) {
   return useCallback(
     (callback: () => void) => {
       if (pendingId.current !== undefined) return;
+      if (typeof window.requestIdleCallback !== 'function') {
+        callback();
+        return;
+      }
       pendingId.current = window.requestIdleCallback(
         () => {
           pendingId.current = undefined;
