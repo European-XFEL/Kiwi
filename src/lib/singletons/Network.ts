@@ -185,9 +185,13 @@ export class Network {
 
       const authRequired = serverInfo['authRequired'] as boolean;
       const isServerAuthenticated = authRequired;
-      const sessionDataAuthenticated = sessionData.refreshToken != undefined;
+      const refreshTokenPresent = sessionData.refreshToken != undefined;
 
-      if (isServerAuthenticated != sessionDataAuthenticated) {
+      if (
+        isServerAuthenticated &&
+        !refreshTokenPresent &&
+        !sessionData.isReadOnly
+      ) {
         getConfig().deleteSession();
         return Promise.reject(
           'Session authentication mode mismatch. Resume aborted.'
@@ -201,7 +205,11 @@ export class Network {
           port,
           userId: sessionData.userId,
           accessLevel: sessionData.accessLevel!,
-          isReadOnly: serverInfo.readOnly,
+          // Note: it is important to use the read-onlyness from the session
+          // being restored instead of from the GUI server configuration - it
+          // is possible that the session was a read-only session established
+          // with a GUI server that required authentication
+          isReadOnly: sessionData.isReadOnly,
           isAuthSession: false,
           userLogged: false,
         };
@@ -231,7 +239,8 @@ export class Network {
 
         await getConfig().saveAuthSession(
           sessionData.userId,
-          res.refresh_token!
+          res.refresh_token!,
+          sessionData.isReadOnly
         );
       }
 
