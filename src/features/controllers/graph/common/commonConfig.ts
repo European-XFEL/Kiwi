@@ -3,7 +3,7 @@ import type { BasePlotModel } from '@/karabo/common/api';
 import { chartAxes } from './axis';
 import { GRAPH_COLORS, GRAPH_LAYOUT, type Range } from './constants';
 
-export const plotFrame: Plugin<'line'> = {
+export const plotFrame: Plugin<'line' | 'scatter'> = {
   id: 'kiwiPlotFrame',
   beforeDraw(chart) {
     const { left, top, width, height } = chart.chartArea;
@@ -23,10 +23,26 @@ export function commonChartOption(
   logarithmicX: boolean,
   xRange?: Range,
   yRange?: Range,
-  beginAtZero = false
-): ChartConfiguration<'line'> {
+  beginAtZero?: boolean
+): ChartConfiguration<'line'>;
+export function commonChartOption(
+  model: BasePlotModel,
+  logarithmicX: boolean,
+  xRange: Range | undefined,
+  yRange: Range | undefined,
+  beginAtZero: boolean,
+  type: 'scatter'
+): ChartConfiguration<'scatter'>;
+export function commonChartOption(
+  model: BasePlotModel,
+  logarithmicX: boolean,
+  xRange?: Range,
+  yRange?: Range,
+  beginAtZero = false,
+  type: 'line' | 'scatter' = 'line'
+): ChartConfiguration<'line' | 'scatter'> {
   return {
-    type: 'line',
+    type,
     data: { datasets: [{ data: [] }] },
     plugins: [plotFrame],
     options: {

@@ -1,4 +1,5 @@
 import DisplayBarGraph from '../display/DisplayBarGraph';
+import DisplayScatterGraph from '../display/DisplayScatterGraph';
 import DisplayVectorGraph from '../display/DisplayVectorGraph';
 import { bootstrapControllerRenderers } from '../controllerRenderers';
 
@@ -13,5 +14,6 @@ test('registers separate vector line and bar controllers', () => {
   expect(renderers.get('DisplayVectorGraph')).toBe(DisplayVectorGraph);
   expect(renderers.get('VectorGraph')).toBe(DisplayVectorGraph);
   expect(renderers.get('VectorBarGraph')).toBe(DisplayBarGraph);
+  expect(renderers.get('ScatterGraph')).toBe(DisplayScatterGraph);
   expect(DisplayBarGraph).not.toBe(DisplayVectorGraph);
 });

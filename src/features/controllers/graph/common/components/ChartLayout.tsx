@@ -7,11 +7,13 @@ export function ChartLayout({
   viewBox,
   background,
   footer,
+  controls,
 }: {
   children: React.ReactNode;
   viewBox: Pick<ViewBox, 'tool' | 'selectTool' | 'reset'>;
   background: string;
   footer?: React.ReactNode;
+  controls?: React.ReactNode;
 }) {
   return (
     <div
@@ -20,7 +22,7 @@ export function ChartLayout({
     >
       <div className="flex min-h-0 flex-1">
         {children}
-        <ChartToolBar {...viewBox} />
+        <ChartToolBar {...viewBox}>{controls}</ChartToolBar>
       </div>
       {footer && <div className="flex shrink-0 flex-col gap-0.5">{footer}</div>}
     </div>

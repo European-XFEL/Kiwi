@@ -17,10 +17,12 @@ export const ChartToolBar = React.memo(function ChartToolBar({
   tool: selectedTool,
   selectTool,
   reset,
+  children,
 }: {
   tool: ChartMouseTool;
   selectTool: (tool: ChartMouseTool) => void;
   reset: () => void;
+  children?: React.ReactNode;
 }) {
   return (
     <div
@@ -56,6 +58,7 @@ export const ChartToolBar = React.memo(function ChartToolBar({
           <img src={icon} alt="" className="h-4 w-4" />
         </Button>
       ))}
+      {children}
     </div>
   );
 });

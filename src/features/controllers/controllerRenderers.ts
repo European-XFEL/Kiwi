@@ -1,6 +1,7 @@
 import type { Renderer, RendererProps } from '@/features/scene-view/api';
 import DisplayAlarmFloat from '@/features/controllers/display/DisplayAlarmFloat';
 import DisplayBarGraph from './display/DisplayBarGraph';
+import DisplayScatterGraph from './display/DisplayScatterGraph';
 import {
   DisplayCheckBox,
   EditableCheckBox,
@@ -62,6 +63,7 @@ export function bootstrapControllerRenderers(
   registerRenderer('DisplayVectorGraph', DisplayVectorGraph);
   registerRenderer('VectorGraph', DisplayVectorGraph);
   registerRenderer('VectorBarGraph', DisplayBarGraph);
+  registerRenderer('ScatterGraph', DisplayScatterGraph);
   registerRenderer('IntLineEdit', IntLineEdit);
   registerRenderer('DoubleLineEdit', DoubleLineEdit);
   registerRenderer('EditableSpinBox', EditableSpinBox);
