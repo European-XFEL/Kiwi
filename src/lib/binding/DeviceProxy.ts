@@ -190,6 +190,10 @@ export class DeviceProxy {
     if (this.status === ProxyStatus.ONLINEREQUESTED) {
       if (this.monitorCount > 0) {
         this._startMonitoringDevice();
+        // Restore pipeline subscriptions after the device comes back online.
+        for (const path of this.pipeline_subscriptions.keys()) {
+          getNetwork().onSubscribeToOutput(this.deviceId, path, true);
+        }
       }
       this.updateStatus(ProxyStatus.SCHEMA);
     } else if (
