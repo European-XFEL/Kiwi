@@ -1,5 +1,5 @@
 import type { ChartConfiguration } from 'chart.js';
-import type { BasePlotModel } from '@/karabo/common/api';
+import type { PlotSettings } from './buildModelConfig';
 import {
   GRAPH_AXIS_FONT,
   GRAPH_COLORS,
@@ -29,14 +29,14 @@ export function formatValueTick(value: number) {
 }
 
 export function chartAxes(
-  model: BasePlotModel,
+  plotConfig: PlotSettings,
   logarithmicX: boolean,
   xRange?: Range,
   yRange?: Range,
   beginAtZero = false
 ): ChartScales {
-  const xTitle = axisTitle(model.x_label, model.x_units);
-  const yTitle = axisTitle(model.y_label, model.y_units);
+  const xTitle = axisTitle(plotConfig.x_label, plotConfig.x_units);
+  const yTitle = axisTitle(plotConfig.y_label, plotConfig.y_units);
   return {
     x: {
       type: logarithmicX ? 'logarithmic' : 'linear',
@@ -46,7 +46,7 @@ export function chartAxes(
           ? GRAPH_LAYOUT.xAxisSize.titled
           : GRAPH_LAYOUT.xAxisSize.untitled;
       },
-      reverse: model.x_invert,
+      reverse: plotConfig.x_invert,
       min: xRange?.[0],
       max: xRange?.[1],
       title: {
@@ -57,7 +57,7 @@ export function chartAxes(
         padding: 0,
       },
       grid: {
-        drawOnChartArea: model.x_grid,
+        drawOnChartArea: plotConfig.x_grid,
         color: GRAPH_COLORS.grid,
         tickLength: 4,
       },
@@ -71,15 +71,15 @@ export function chartAxes(
       },
     },
     y: {
-      type: model.y_log ? 'logarithmic' : 'linear',
-      beginAtZero: beginAtZero && !model.y_log,
+      type: plotConfig.y_log ? 'logarithmic' : 'linear',
+      beginAtZero: beginAtZero && !plotConfig.y_log,
       position: 'left',
       afterFit: (axis) => {
         axis.width = yTitle
           ? GRAPH_LAYOUT.yAxisSize.titled
           : GRAPH_LAYOUT.yAxisSize.untitled;
       },
-      reverse: model.y_invert,
+      reverse: plotConfig.y_invert,
       min: yRange?.[0],
       max: yRange?.[1],
       title: {
@@ -90,7 +90,7 @@ export function chartAxes(
         padding: 0,
       },
       grid: {
-        drawOnChartArea: model.y_grid,
+        drawOnChartArea: plotConfig.y_grid,
         color: GRAPH_COLORS.grid,
         tickLength: 4,
       },

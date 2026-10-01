@@ -1,3 +1,4 @@
+import { buildModelConfig } from '../../common/api';
 import { DisplayVectorGraphModel } from '@/karabo/common/api';
 import {
   vectorChartOption,
@@ -7,7 +8,7 @@ import { vectorPoints, visibleVectorRange } from '../vectorRange';
 
 describe('vector Chart.js configuration', () => {
   it('uses model axis labels and units', () => {
-    const model = new DisplayVectorGraphModel();
+    const model = buildModelConfig(new DisplayVectorGraphModel());
     model.x_label = 'Position';
     model.x_units = 'mm';
     model.y_label = 'Intensity';
@@ -41,8 +42,9 @@ describe('vector Chart.js configuration', () => {
   });
 
   it('keeps axis gutters constant across tick label changes', () => {
-    const scales = vectorChartOption(new DisplayVectorGraphModel()).options!
-      .scales as unknown as {
+    const scales = vectorChartOption(
+      buildModelConfig(new DisplayVectorGraphModel())
+    ).options!.scales as unknown as {
       x: { afterFit: (axis: { height: number }) => void };
       y: { afterFit: (axis: { width: number }) => void };
     };
@@ -52,7 +54,7 @@ describe('vector Chart.js configuration', () => {
     scales.y.afterFit(y);
     expect(x.height).toBe(34);
     expect(y.width).toBe(52);
-    const titled = new DisplayVectorGraphModel();
+    const titled = buildModelConfig(new DisplayVectorGraphModel());
     titled.x_label = 'Position';
     titled.y_label = 'Intensity';
     const titledScales = vectorChartOption(titled).options!
@@ -64,7 +66,7 @@ describe('vector Chart.js configuration', () => {
   });
 
   it('keeps fixed logarithmic and inverted axes', () => {
-    const model = new DisplayVectorGraphModel();
+    const model = buildModelConfig(new DisplayVectorGraphModel());
     Object.assign(model, {
       x_log: true,
       y_log: true,

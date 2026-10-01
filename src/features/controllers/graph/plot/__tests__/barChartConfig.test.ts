@@ -1,11 +1,13 @@
+import { buildModelConfig } from '../../common/api';
 import { VectorBarGraphModel } from '@/karabo/common/api';
 import { BAR_SAMPLE_LIMIT, barChartOption } from '../configBarChart';
 import { vectorBarPlugin } from '../vectorBarPlugin';
 
 describe('bar Chart.js configuration', () => {
   it('keeps X linear and honors Y options', () => {
-    const model = new VectorBarGraphModel();
-    model.x_log = true;
+    const sceneModel = new VectorBarGraphModel();
+    sceneModel.x_log = true;
+    const model = buildModelConfig(sceneModel);
     model.y_invert = true;
     model.y_grid = true;
     const config = barChartOption(model);

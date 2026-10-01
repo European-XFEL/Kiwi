@@ -1,5 +1,5 @@
 import type { ChartConfiguration } from 'chart.js';
-import type { DisplayVectorGraphModel } from '@/karabo/common/api';
+import type { PlotSettings } from '../common/api';
 import {
   commonChartOption,
   GRAPH_LAYOUT,
@@ -14,11 +14,20 @@ export function chooseVectorTargetPoints(length: number) {
 }
 
 export function vectorChartOption(
-  model: DisplayVectorGraphModel,
+  plotConfig: PlotSettings,
   xRange?: Range,
   yRange?: Range
 ): ChartConfiguration<'line'> {
-  const config = commonChartOption(model, model.x_log, xRange, yRange);
+  const config = commonChartOption(
+    plotConfig,
+    plotConfig.x_log,
+    xRange,
+    yRange
+  );
+  if (plotConfig.step < 0) {
+    config.options!.parsing = {};
+    config.options!.normalized = false;
+  }
   Object.assign(config.data.datasets[0], {
     borderColor: TRACE_COLORS[0],
     backgroundColor: TRACE_COLORS[0],

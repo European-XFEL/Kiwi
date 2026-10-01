@@ -307,7 +307,6 @@ export class DisplayVectorGraphModel extends BasePlotModel {
   klass = 'DisplayVectorGraph';
   offset = 0.0;
   step = 1.0;
-  roi_tool = 0;
 }
 
 export class VectorBarGraphModel extends BasePlotModel {
@@ -351,7 +350,6 @@ registerReader('VectorGraph', (element) => {
   const graph = readVectorPlot(element, new DisplayVectorGraphModel());
   graph.offset = toNum(krbAttr(element, 'offset'));
   graph.step = toNum(krbAttr(element, 'step'), 1.0);
-  graph.roi_tool = toNum(krbAttr(element, 'roi_tool'));
   return graph;
 });
 registerReader('VectorBarGraph', (element) => {

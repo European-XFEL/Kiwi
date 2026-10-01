@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ScatterGraphModel } from '@/karabo/common/api';
+import type { PlotSettings } from '../common/api';
 import type { PropertyProxy } from '@/lib/binding/api';
 import { usePlotItem, useViewBox, type AxisRanges } from '../common/api';
 import { fixedVectorRange } from '../plot/vectorRange';
@@ -7,14 +7,17 @@ import { scatterChartOption } from './configScatterChart';
 import { useScatterData } from './useScatterData';
 
 export function useScatterChart({
-  model,
+  plotConfig,
   proxies,
 }: {
-  model: ScatterGraphModel;
+  plotConfig: PlotSettings;
   proxies: PropertyProxy[];
 }) {
-  const { points, dataRevision, clear } = useScatterData(proxies, model.maxlen);
-  const logarithmicX = model.x_log;
+  const { points, dataRevision, clear } = useScatterData(
+    proxies,
+    plotConfig.maxlen
+  );
+  const logarithmicX = plotConfig.x_log;
   const selectionRef = React.useRef<HTMLDivElement>(null);
   const [ranges, setRanges] = React.useState<AxisRanges>();
   const [revision, setRevision] = React.useState(0);
@@ -32,16 +35,19 @@ export function useScatterChart({
     setRanges(undefined);
     setRevision((current) => current + 1);
   }, []);
-  const plotItem = usePlotItem(() => scatterChartOption(model), [model]);
+  const plotItem = usePlotItem(
+    () => scatterChartOption(plotConfig),
+    [plotConfig]
+  );
   const { containerRef, viewport, update } = plotItem;
 
   const viewBox = useViewBox({
     containerRef,
     selectionRef,
     viewport,
-    inverted: { x: model.x_invert, y: model.y_invert },
+    inverted: { x: plotConfig.x_invert, y: plotConfig.y_invert },
     logarithmicX,
-    logarithmicY: model.y_log,
+    logarithmicY: plotConfig.y_log,
     onComplete: pause,
     onFinish,
     onReset: reset,
@@ -52,18 +58,26 @@ export function useScatterChart({
       const xRange =
         gestureRanges?.x ??
         ranges?.x ??
-        fixedVectorRange(model.x_autorange, model.x_min, model.x_max);
+        fixedVectorRange(
+          plotConfig.x_autorange,
+          plotConfig.x_min,
+          plotConfig.x_max
+        );
       const yRange =
         gestureRanges?.y ??
         ranges?.y ??
-        fixedVectorRange(model.y_autorange, model.y_min, model.y_max);
+        fixedVectorRange(
+          plotConfig.y_autorange,
+          plotConfig.y_min,
+          plotConfig.y_max
+        );
       update([{ data: points }], xRange, yRange);
       viewBox.rangesRef.current = viewport.readRanges(
         xRange && yRange ? { x: xRange, y: yRange } : viewBox.rangesRef.current
       );
       pendingUpdateRef.current = undefined;
     },
-    [model, points, ranges, viewBox.rangesRef, update, viewport]
+    [plotConfig, points, ranges, viewBox.rangesRef, update, viewport]
   );
 
   React.useLayoutEffect(() => {

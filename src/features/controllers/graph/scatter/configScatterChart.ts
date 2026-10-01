@@ -1,11 +1,11 @@
 import type { ScriptableContext } from 'chart.js';
-import type { ScatterGraphModel } from '@/karabo/common/api';
+import type { PlotSettings } from '../common/api';
 import { commonChartOption } from '../common/api';
 
-export function scatterChartOption(model: ScatterGraphModel) {
+export function scatterChartOption(plotConfig: PlotSettings) {
   const config = commonChartOption(
-    model,
-    model.x_log,
+    plotConfig,
+    plotConfig.x_log,
     undefined,
     undefined,
     false,
@@ -19,8 +19,8 @@ export function scatterChartOption(model: ScatterGraphModel) {
     context.dataIndex === context.dataset.data.length - 1 ? 'red' : 'blue';
   Object.assign(config.data.datasets[0], {
     showLine: false,
-    pointRadius: model.psize / 2,
-    pointHoverRadius: model.psize / 2,
+    pointRadius: plotConfig.psize / 2,
+    pointHoverRadius: plotConfig.psize / 2,
     pointBorderWidth: 0,
     pointBackgroundColor: color,
     pointBorderColor: color,

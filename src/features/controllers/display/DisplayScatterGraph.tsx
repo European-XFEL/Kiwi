@@ -1,3 +1,5 @@
+import React from 'react';
+import { buildModelConfig } from '../graph/common/api';
 import { Button } from '@/components/api';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 import type { ScatterGraphModel } from '@/karabo/common/api';
@@ -11,10 +13,11 @@ export default function DisplayScatterGraph({
   model: ScatterGraphModel;
   ctx?: ControllerContainerContext;
 }) {
-  const view = useScatterChart({ model, proxies: ctx?.proxies ?? [] });
+  const plotConfig = React.useMemo(() => buildModelConfig(model), [model]);
+  const view = useScatterChart({ plotConfig, proxies: ctx?.proxies ?? [] });
   return (
     <ChartLayout
-      background={model.background}
+      background={plotConfig.background}
       viewBox={view}
       controls={
         <Button
@@ -34,7 +37,7 @@ export default function DisplayScatterGraph({
         containerRef={view.containerRef}
         selectionRef={view.selectionRef}
         testId="scatter-chart"
-        title={model.title}
+        title={plotConfig.title}
       />
     </ChartLayout>
   );

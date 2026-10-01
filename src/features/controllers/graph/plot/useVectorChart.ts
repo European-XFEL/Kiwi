@@ -1,10 +1,7 @@
 import React from 'react';
-import {
-  DisplayVectorGraphModel,
-  VectorBarGraphModel,
-} from '@/karabo/common/api';
+import type { PlotSettings } from '../common/api';
 import type { PropertyProxy } from '@/lib/binding/api';
-import { lttb } from '../../utils/lttb';
+import { lttbWithCoordinates } from '../../utils/lttb';
 import { BAR_SAMPLE_LIMIT, barChartOption } from './configBarChart';
 import {
   fixedVectorRange,
@@ -24,21 +21,19 @@ import {
 } from '../common/api';
 import { useVectorData } from './useVectorData';
 
-export type VectorPlotModel = DisplayVectorGraphModel | VectorBarGraphModel;
-
 /**
  * Coordinates vector and bar plots: selects the chart configuration, samples
  * visible data, and applies navigation ranges to the shared Chart.js plot.
  */
 export function useVectorChart({
-  model,
+  plotConfig,
   proxy,
 }: {
-  model: VectorPlotModel;
+  plotConfig: PlotSettings;
   proxy: PropertyProxy | undefined;
 }) {
-  const isBar = model instanceof VectorBarGraphModel;
-  const logarithmicX = !isBar && model.x_log;
+  const isBar = 'bar_width' in plotConfig;
+  const logarithmicX = !isBar && plotConfig.x_log;
   const { values } = useVectorData(proxy);
   const selectionRef = React.useRef<HTMLDivElement>(null);
   const [ranges, setRanges] = React.useState<AxisRanges>();
@@ -58,8 +53,8 @@ export function useVectorChart({
     setRevision((current) => current + 1);
   }, []);
   const plotItem = usePlotItem(
-    () => (isBar ? barChartOption(model) : vectorChartOption(model)),
-    [model]
+    () => (isBar ? barChartOption(plotConfig) : vectorChartOption(plotConfig)),
+    [plotConfig]
   );
   const { containerRef, viewport, update } = plotItem;
 
@@ -67,9 +62,9 @@ export function useVectorChart({
     containerRef,
     selectionRef,
     viewport,
-    inverted: { x: model.x_invert, y: model.y_invert },
+    inverted: { x: plotConfig.x_invert, y: plotConfig.y_invert },
     logarithmicX,
-    logarithmicY: model.y_log,
+    logarithmicY: plotConfig.y_log,
     onComplete: pause,
     onFinish,
     onReset: reset,
@@ -80,23 +75,36 @@ export function useVectorChart({
       const xRange =
         gestureRanges?.x ??
         ranges?.x ??
-        fixedVectorRange(model.x_autorange, model.x_min, model.x_max);
+        fixedVectorRange(
+          plotConfig.x_autorange,
+          plotConfig.x_min,
+          plotConfig.x_max
+        );
       const yRange =
         gestureRanges?.y ??
         ranges?.y ??
-        fixedVectorRange(model.y_autorange, model.y_min, model.y_max);
+        fixedVectorRange(
+          plotConfig.y_autorange,
+          plotConfig.y_min,
+          plotConfig.y_max
+        );
       const [start, end] = visibleVectorRange(
         values.length,
         xRange,
-        logarithmicX
+        logarithmicX,
+        isBar ? undefined : plotConfig
       );
-      const visiblePoints = lttb(
+      const visiblePoints = lttbWithCoordinates(
         values,
         isBar
           ? Math.min(BAR_SAMPLE_LIMIT, end - start)
           : chooseVectorTargetPoints(end - start),
-        start,
-        end
+        {
+          start,
+          end,
+          offset: isBar ? 0 : plotConfig.offset,
+          step: isBar ? 1 : plotConfig.step,
+        }
       );
       const pointRadius =
         !isBar && visiblePoints.length / 2 < VECTOR_POINT_LIMIT
@@ -114,7 +122,7 @@ export function useVectorChart({
       pendingUpdateRef.current = undefined;
     },
     [
-      model,
+      plotConfig,
       values,
       ranges,
       viewBox.rangesRef,
