@@ -3,6 +3,7 @@ import * as SelectPrimitive from '@radix-ui/react-select';
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
 
 import { cn } from './utils/cn';
+import { useFullscreenContainer } from './utils/useFullscreenContainer';
 
 function Select({
   ...props
@@ -46,32 +47,6 @@ function SelectTrigger({
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   );
-}
-
-/**
- * Tracks the active native fullscreen element. Portals (Radix content) default
- * to document.body, which is occluded by a fullscreen element's top layer, so
- * dropdowns must be portaled into the fullscreen element to stay interactive.
- */
-function useFullscreenContainer(): HTMLElement | null {
-  const [element, setElement] = React.useState<HTMLElement | null>(() =>
-    typeof document === 'undefined'
-      ? null
-      : ((document.fullscreenElement as HTMLElement | null) ?? null)
-  );
-
-  React.useEffect(() => {
-    const sync = () =>
-      setElement((document.fullscreenElement as HTMLElement | null) ?? null);
-
-    sync();
-    document.addEventListener('fullscreenchange', sync);
-    return () => {
-      document.removeEventListener('fullscreenchange', sync);
-    };
-  }, []);
-
-  return element;
 }
 
 function SelectContent({
