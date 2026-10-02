@@ -34,9 +34,11 @@ test('reads vector bar graph fields and the default width', () => {
 test('keeps vector line fields in its separate reader', () => {
   const graph = readPlot(
     'VectorGraph',
-    'krb:x_label="Index" krb:offset="2" krb:step="0.5" krb:roi_tool="1"'
+    'krb:x_label="Index" krb:offset="2" krb:step="0.5" krb:roi_tool="1" krb:roi_items="legacy"'
   ) as DisplayVectorGraphModel;
   expect(graph).toBeInstanceOf(DisplayVectorGraphModel);
   expect(graph.x_label).toBe('Index');
-  expect([graph.offset, graph.step, graph.roi_tool]).toEqual([2, 0.5, 1]);
+  expect([graph.offset, graph.step]).toEqual([2, 0.5]);
+  expect(graph).not.toHaveProperty('roi_tool');
+  expect(graph).not.toHaveProperty('roi_items');
 });

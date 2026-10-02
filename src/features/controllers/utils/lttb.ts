@@ -1,3 +1,26 @@
+/** Sample in source-index space, then map X into displayed coordinates. */
+export function lttbWithCoordinates(
+  values: ArrayLike<number>,
+  threshold: number,
+  {
+    start = 0,
+    end = values.length,
+    offset = 0,
+    step = 1,
+  }: {
+    start?: number;
+    end?: number;
+    offset?: number;
+    step?: number;
+  } = {}
+): Float64Array {
+  const effectiveStep = step || 1;
+  const points = lttb(values, threshold, start, end);
+  for (let index = 0; index < points.length; index += 2)
+    points[index] = offset + points[index] * effectiveStep;
+  return points;
+}
+
 /**
  * Largest-Triangle-Three-Buckets for vectors where x is the source index.
  * Reads [start, end) without copying; returns interleaved [x, y] points.

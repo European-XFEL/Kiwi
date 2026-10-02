@@ -7,3 +7,5 @@ export type { Range } from './constants';
 export type { AxisRanges } from './useMouseGestures';
 export { usePlotItem } from './usePlotItem';
 export { useViewBox } from './useViewBox';
+export { buildModelConfig, KARABO_BASE_SAVABLE } from './buildModelConfig';
+export type { PlotSettings } from './buildModelConfig';

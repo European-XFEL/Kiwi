@@ -1,5 +1,5 @@
 import React from 'react';
-import type { DisplayTrendGraphModel } from '@/karabo/common/api';
+import type { PlotSettings } from '../common/api';
 import type { TrendSeries } from './useTrendModel';
 import {
   fixedXRange,
@@ -26,12 +26,12 @@ type View = {
  * updates the shared Chart.js plot as published series or navigation change.
  */
 export function useTrendChart({
-  model,
+  plotConfig,
   series,
   startTime,
   dataRevision,
 }: {
-  model: DisplayTrendGraphModel;
+  plotConfig: PlotSettings;
   series: TrendSeries[];
   startTime: number;
   dataRevision: number;
@@ -96,8 +96,8 @@ export function useTrendChart({
   }, []);
   const seriesKeys = series.map((item) => item.key).join('\0');
   const plotItem = usePlotItem(
-    () => trendChartOption(model, latestSeriesRef.current),
-    [model, seriesKeys]
+    () => trendChartOption(plotConfig, latestSeriesRef.current),
+    [plotConfig, seriesKeys]
   );
   const { containerRef, viewport, update, setVisible, isVisible, findDataset } =
     plotItem;
@@ -106,9 +106,9 @@ export function useTrendChart({
     containerRef,
     selectionRef,
     viewport,
-    inverted: { x: model.x_invert, y: model.y_invert },
+    inverted: { x: plotConfig.x_invert, y: plotConfig.y_invert },
     logarithmicX: false,
-    logarithmicY: model.y_log,
+    logarithmicY: plotConfig.y_log,
     onComplete: pause,
     onFinish,
     onReset: reset,
@@ -143,8 +143,8 @@ export function useTrendChart({
   const yRange = view.yRange;
   const applyLatest = React.useCallback(
     (gestureRanges?: AxisRanges) => {
-      const nextX = gestureRanges?.x ?? xRange ?? fixedXRange(model);
-      const nextY = gestureRanges?.y ?? yRange ?? fixedYRange(model);
+      const nextX = gestureRanges?.x ?? xRange ?? fixedXRange(plotConfig);
+      const nextY = gestureRanges?.y ?? yRange ?? fixedYRange(plotConfig);
       update(trendDatasets(series), nextX, nextY);
       const fallback: AxisRanges | undefined = nextX
         ? { x: nextX, y: nextY ?? viewBox.rangesRef.current?.y ?? [0, 1] }
@@ -155,7 +155,7 @@ export function useTrendChart({
       pendingUpdateRef.current = undefined;
     },
     [
-      model,
+      plotConfig,
       rememberRange,
       series,
       xRange,

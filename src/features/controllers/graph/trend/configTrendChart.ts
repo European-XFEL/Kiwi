@@ -1,5 +1,5 @@
 import type { ChartConfiguration } from 'chart.js';
-import type { DisplayTrendGraphModel } from '@/karabo/common/api';
+import type { PlotSettings } from '../common/api';
 import { Timestamp } from '@/karabo/data/api';
 import type { TrendSeries } from './useTrendModel';
 import { trendTimeTicks } from './trendTimeTicks';
@@ -16,14 +16,16 @@ export function formatTrendTime(value: number) {
   return new Timestamp(value / 1000).toLocal(' ', 'seconds');
 }
 
-export function fixedYRange(model: DisplayTrendGraphModel): Range | undefined {
-  if (model.y_autorange || model.y_min === model.y_max) return undefined;
-  return [model.y_min, model.y_max];
+export function fixedYRange(plotConfig: PlotSettings): Range | undefined {
+  if (plotConfig.y_autorange || plotConfig.y_min === plotConfig.y_max)
+    return undefined;
+  return [plotConfig.y_min, plotConfig.y_max];
 }
 
-export function fixedXRange(model: DisplayTrendGraphModel): Range | undefined {
-  if (model.x_autorange || model.x_min === model.x_max) return undefined;
-  return [model.x_min * 1000, model.x_max * 1000];
+export function fixedXRange(plotConfig: PlotSettings): Range | undefined {
+  if (plotConfig.x_autorange || plotConfig.x_min === plotConfig.x_max)
+    return undefined;
+  return [plotConfig.x_min * 1000, plotConfig.x_max * 1000];
 }
 
 export function trendDatasets(
@@ -42,15 +44,15 @@ export function trendDatasets(
 }
 
 export function trendChartOption(
-  model: DisplayTrendGraphModel,
+  plotConfig: PlotSettings,
   series: TrendSeries[],
   xRange?: Range,
   yRange?: Range
 ): ChartConfiguration<'line'> {
-  const config = commonChartOption(model, false, xRange, yRange);
+  const config = commonChartOption(plotConfig, false, xRange, yRange);
   config.data.datasets = trendDatasets(series);
   const x = config.options!.scales!.x!;
-  const yAxisWidth = axisTitle(model.y_label, model.y_units)
+  const yAxisWidth = axisTitle(plotConfig.y_label, plotConfig.y_units)
     ? GRAPH_LAYOUT.yAxisSize.titled
     : GRAPH_LAYOUT.yAxisSize.untitled;
   let tickLabels = new Map<number, string>();

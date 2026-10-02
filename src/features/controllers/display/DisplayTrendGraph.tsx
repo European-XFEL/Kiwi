@@ -1,4 +1,5 @@
 import React from 'react';
+import { buildModelConfig, type PlotSettings } from '../graph/common/api';
 import { Button } from '@/components/api';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 import type { DisplayTrendGraphModel } from '@/karabo/common/api';
@@ -70,20 +71,21 @@ function TrendGraph({
   model: DisplayTrendGraphModel;
   ctx: ControllerContainerContext;
 }) {
+  const plotConfig = React.useMemo(() => buildModelConfig(model), [model]);
   const published = useTrendModel(ctx.proxies, model.keys);
-  return <TrendPlot model={model} {...published} />;
+  return <TrendPlot plotConfig={plotConfig} {...published} />;
 }
 
 const TrendPlot = React.memo(function TrendPlot({
-  model,
+  plotConfig,
   series,
   startTime,
   dataRevision,
-}: { model: DisplayTrendGraphModel } & ReturnType<typeof useTrendModel>) {
-  const view = useTrendChart({ model, series, startTime, dataRevision });
+}: { plotConfig: PlotSettings } & ReturnType<typeof useTrendModel>) {
+  const view = useTrendChart({ plotConfig, series, startTime, dataRevision });
   return (
     <ChartLayout
-      background={model.background}
+      background={plotConfig.background}
       viewBox={{
         tool: view.tool,
         selectTool: view.selectTool,
@@ -100,7 +102,7 @@ const TrendPlot = React.memo(function TrendPlot({
         containerRef={view.containerRef}
         selectionRef={view.selectionRef}
         testId="trend-chart"
-        title={model.title}
+        title={plotConfig.title}
         empty={
           series.every((item) => item.values.length === 0)
             ? 'Waiting for data…'
@@ -110,7 +112,7 @@ const TrendPlot = React.memo(function TrendPlot({
           series.length > 1 && (
             <div
               className="absolute left-[60px] z-10 flex flex-col gap-1 rounded-sm border border-black bg-slate-200/20 p-1 text-xs text-black"
-              style={{ top: model.title ? 26 : 10 }}
+              style={{ top: plotConfig.title ? 26 : 10 }}
               aria-label="Graph legend"
             >
               {series.map((item, index) => (

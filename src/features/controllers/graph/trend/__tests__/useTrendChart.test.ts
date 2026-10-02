@@ -1,3 +1,4 @@
+import { buildModelConfig } from '../../common/api';
 import { DisplayTrendGraphModel } from '@/karabo/common/api';
 import {
   fixedXRange,
@@ -14,7 +15,7 @@ const series = [
 
 describe('trend Chart.js configuration', () => {
   it('keeps independent timestamps and configures the existing colors and axes', () => {
-    const model = new DisplayTrendGraphModel();
+    const model = buildModelConfig(new DisplayTrendGraphModel());
     model.title = 'Temperatures';
     model.x_label = 'Time';
     model.x_units = 's';
@@ -57,7 +58,7 @@ describe('trend Chart.js configuration', () => {
   });
 
   it('applies fixed ranges, logarithmic Y and inversion', () => {
-    const model = new DisplayTrendGraphModel();
+    const model = buildModelConfig(new DisplayTrendGraphModel());
     Object.assign(model, {
       x_autorange: false,
       x_min: 1,
@@ -81,8 +82,10 @@ describe('trend Chart.js configuration', () => {
   });
 
   it('recomputes time ticks for the visible range and chart width', () => {
-    const axis = trendChartOption(new DisplayTrendGraphModel(), series).options!
-      .scales!.x! as unknown as {
+    const axis = trendChartOption(
+      buildModelConfig(new DisplayTrendGraphModel()),
+      series
+    ).options!.scales!.x! as unknown as {
       afterBuildTicks: (scale: unknown) => void;
       ticks: { callback: (value: number) => string };
     };
@@ -115,8 +118,12 @@ describe('trend Chart.js configuration', () => {
   });
 
   it('sizes time tick spacing to the plot area after the Y-axis gutter', () => {
-    const axis = trendChartOption(new DisplayTrendGraphModel(), series).options!
-      .scales!.x! as unknown as { afterBuildTicks: (scale: unknown) => void };
+    const axis = trendChartOption(
+      buildModelConfig(new DisplayTrendGraphModel()),
+      series
+    ).options!.scales!.x! as unknown as {
+      afterBuildTicks: (scale: unknown) => void;
+    };
     const start = new Date('2026-09-30T23:39:12').getTime();
     const scale = {
       min: start,
@@ -143,8 +150,10 @@ describe('trend Chart.js configuration', () => {
   });
 
   it('keeps the plot rectangle stable when tick labels change', () => {
-    const scales = trendChartOption(new DisplayTrendGraphModel(), series)
-      .options!.scales as unknown as {
+    const scales = trendChartOption(
+      buildModelConfig(new DisplayTrendGraphModel()),
+      series
+    ).options!.scales as unknown as {
       x: { afterFit: (axis: { height: number }) => void };
       y: { afterFit: (axis: { width: number }) => void };
     };
@@ -154,7 +163,7 @@ describe('trend Chart.js configuration', () => {
     scales.y.afterFit(y);
     expect(x.height).toBe(34);
     expect(y.width).toBe(52);
-    const titled = new DisplayTrendGraphModel();
+    const titled = buildModelConfig(new DisplayTrendGraphModel());
     titled.x_label = 'Time';
     titled.y_label = 'Value';
     const titledScales = trendChartOption(titled, series).options!

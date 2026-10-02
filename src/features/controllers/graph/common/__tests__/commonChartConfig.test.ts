@@ -1,3 +1,4 @@
+import { buildModelConfig } from '../../common/api';
 import {
   DisplayTrendGraphModel,
   DisplayVectorGraphModel,
@@ -7,9 +8,15 @@ import { barChartOption, vectorChartOption } from '../../plot/api';
 import { trendChartOption } from '../../trend/api';
 
 it.each([
-  ['trend', () => trendChartOption(new DisplayTrendGraphModel(), [])],
-  ['vector line', () => vectorChartOption(new DisplayVectorGraphModel())],
-  ['bar', () => barChartOption(new VectorBarGraphModel())],
+  [
+    'trend',
+    () => trendChartOption(buildModelConfig(new DisplayTrendGraphModel()), []),
+  ],
+  [
+    'vector line',
+    () => vectorChartOption(buildModelConfig(new DisplayVectorGraphModel())),
+  ],
+  ['bar', () => barChartOption(buildModelConfig(new VectorBarGraphModel()))],
 ])(
   'shares frame, numeric Y ticks, and fixed gutters for %s',
   (_, configure) => {

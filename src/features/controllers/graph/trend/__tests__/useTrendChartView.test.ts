@@ -1,3 +1,4 @@
+import { buildModelConfig } from '../../common/api';
 import { act, renderHook } from '@testing-library/react';
 import { DisplayTrendGraphModel } from '@/karabo/common/api';
 import { useTrendChart } from '../useTrendChart';
@@ -11,11 +12,11 @@ const samples = (seconds: number) => [
   },
 ];
 
-const model = new DisplayTrendGraphModel();
+const model = buildModelConfig(new DisplayTrendGraphModel());
 
 const useView = (seconds: number) =>
   useTrendChart({
-    model,
+    plotConfig: model,
     series: samples(seconds),
     startTime: START,
     dataRevision: seconds,

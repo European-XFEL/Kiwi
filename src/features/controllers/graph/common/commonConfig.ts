@@ -1,5 +1,5 @@
 import type { ChartConfiguration, Plugin } from 'chart.js';
-import type { BasePlotModel } from '@/karabo/common/api';
+import type { PlotSettings } from './buildModelConfig';
 import { chartAxes } from './axis';
 import { GRAPH_COLORS, GRAPH_LAYOUT, type Range } from './constants';
 
@@ -19,14 +19,14 @@ export const plotFrame: Plugin<'line' | 'scatter'> = {
 };
 
 export function commonChartOption(
-  model: BasePlotModel,
+  plotConfig: PlotSettings,
   logarithmicX: boolean,
   xRange?: Range,
   yRange?: Range,
   beginAtZero?: boolean
 ): ChartConfiguration<'line'>;
 export function commonChartOption(
-  model: BasePlotModel,
+  plotConfig: PlotSettings,
   logarithmicX: boolean,
   xRange: Range | undefined,
   yRange: Range | undefined,
@@ -34,7 +34,7 @@ export function commonChartOption(
   type: 'scatter'
 ): ChartConfiguration<'scatter'>;
 export function commonChartOption(
-  model: BasePlotModel,
+  plotConfig: PlotSettings,
   logarithmicX: boolean,
   xRange?: Range,
   yRange?: Range,
@@ -55,12 +55,14 @@ export function commonChartOption(
       layout: {
         autoPadding: false,
         padding: {
-          top: model.title ? GRAPH_LAYOUT.titledTop : GRAPH_LAYOUT.insets.top,
+          top: plotConfig.title
+            ? GRAPH_LAYOUT.titledTop
+            : GRAPH_LAYOUT.insets.top,
           right: GRAPH_LAYOUT.insets.right,
         },
       },
       plugins: { legend: { display: false }, tooltip: { enabled: false } },
-      scales: chartAxes(model, logarithmicX, xRange, yRange, beginAtZero),
+      scales: chartAxes(plotConfig, logarithmicX, xRange, yRange, beginAtZero),
     },
   };
 }

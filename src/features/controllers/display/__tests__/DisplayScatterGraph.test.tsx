@@ -1,3 +1,4 @@
+import { buildModelConfig } from '../../graph/common/api';
 import {
   act,
   fireEvent,
@@ -69,7 +70,7 @@ test('clears a shared array safely with the real Chart.js controller', () => {
     }
   ) as unknown as CanvasRenderingContext2D;
   jest.spyOn(canvas, 'getContext').mockReturnValue(context);
-  const config = scatterChartOption(new ScatterGraphModel());
+  const config = scatterChartOption(buildModelConfig(new ScatterGraphModel()));
   config.data.datasets[0].data = result.current.points;
   const chart = new RealChart(canvas, {
     ...config,
@@ -270,7 +271,7 @@ test('Clear points waits for a new X update and does not replay Y', () => {
 test('configures point diameter, newest-point color, and unsorted X data', () => {
   const model = new ScatterGraphModel();
   model.psize = 12;
-  const config = scatterChartOption(model);
+  const config = scatterChartOption(buildModelConfig(model));
   expect(config.type).toBe('scatter');
   const dataset = config.data.datasets[0];
   expect(dataset).toMatchObject({

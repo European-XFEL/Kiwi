@@ -1,17 +1,18 @@
+import { buildModelConfig } from '../../common/api';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Chart } from 'chart.js/auto';
 import { DisplayTrendGraphModel } from '@/karabo/common/api';
 import { useTrendChart } from '../../trend/api';
 
 const START = 1_800_000_000_000;
-const model = new DisplayTrendGraphModel();
+const model = buildModelConfig(new DisplayTrendGraphModel());
 const series = [
   { key: 'A.value', timestamps: [START, START + 1000], values: [1, 2] },
 ];
 
 function TrendHarness() {
   const view = useTrendChart({
-    model,
+    plotConfig: model,
     series,
     startTime: START,
     dataRevision: 0,
