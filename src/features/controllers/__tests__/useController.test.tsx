@@ -1,6 +1,11 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 
-import { PropertyProxy } from '@/lib/binding/api';
+import {
+  BindingRoot,
+  DeviceProxy,
+  DoubleBinding,
+  PropertyProxy,
+} from '@/lib/binding/api';
 import { ProxyStatus } from '@/lib/binding/ProxyStatus';
 import { createMockSystemTopology, SingletonContext } from '@/testing';
 
@@ -12,6 +17,52 @@ const makeTopology = createMockSystemTopology;
 describe('useController', () => {
   afterEach(() => {
     jest.restoreAllMocks();
+  });
+
+  it('keeps the latest action registration and uses current proxies after rerender', () => {
+    const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const device = new DeviceProxy('DEVICE_A');
+    const binding = new BindingRoot();
+    binding.value!.set('speed', new DoubleBinding({ value: 1.25 }));
+    binding.value!.set('temperature', new DoubleBinding({ value: 2.5 }));
+    device.binding = binding;
+    const first = new PropertyProxy(device, 'speed');
+    const second = new PropertyProxy(device, 'temperature');
+    first.edit_value = 3.5;
+    second.edit_value = 9;
+    const { result, rerender, unmount } = renderHook(
+      ({ proxies }) => useController(proxies),
+      { initialProps: { proxies: [first] } }
+    );
+    const oldApply = jest.fn();
+    const removeOld = result.current.editActions!.register({ apply: oldApply });
+    const apply = jest.fn(() => {
+      expect(log).toHaveBeenCalledWith(
+        'DEVICE_A.temperature',
+        second.edit_value
+      );
+    });
+    const removeCurrent = result.current.editActions!.register({ apply });
+    removeOld();
+    rerender({ proxies: [second] });
+
+    result.current.editActions!.apply();
+    expect(oldApply).not.toHaveBeenCalled();
+    expect(apply).toHaveBeenCalledTimes(1);
+    expect(log).toHaveBeenCalledWith('DEVICE_A.temperature', second.edit_value);
+    expect(log).not.toHaveBeenCalledWith('DEVICE_A.speed', first.edit_value);
+
+    removeCurrent();
+    result.current.editActions!.apply();
+    expect(apply).toHaveBeenCalledTimes(1);
+    expect(log).toHaveBeenCalledTimes(2);
+    result.current.editActions!.decline();
+    expect(second.edit_value).toBeUndefined();
+    expect(first.edit_value.value_).toBe(3.5);
+
+    unmount();
+    first.dispose();
+    second.dispose();
   });
 
   it('keeps keys[0] as the controller root even when secondary devices update', async () => {

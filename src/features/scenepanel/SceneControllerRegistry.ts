@@ -5,6 +5,10 @@ import type {
   SceneControllerRegistry as SceneControllerRegistryContract,
 } from '@/features/scene-view/contexts/SceneControllerRegistryContext';
 import type { LoadedSceneRef } from '@/store/api';
+import {
+  applyControllerEdits,
+  declineControllerEdits,
+} from '@/features/controllers/utils/controller_edit_actions';
 
 export interface SceneControllerRegistryOptions {
   id?: string;
@@ -87,6 +91,22 @@ export class SceneControllerRegistry implements SceneControllerRegistryContract 
       }
     }
     return false;
+  }
+
+  applyAll(): void {
+    for (const { model, ctx } of this.values()) {
+      if (model.parent_component !== 'EditableApplyLaterComponent') continue;
+      if (ctx.editActions) ctx.editActions.apply();
+      else applyControllerEdits(ctx.proxies);
+    }
+  }
+
+  declineAll(): void {
+    for (const { model, ctx } of this.values()) {
+      if (model.parent_component !== 'EditableApplyLaterComponent') continue;
+      if (ctx.editActions) ctx.editActions.decline();
+      else declineControllerEdits(ctx.proxies);
+    }
   }
 
   dispose(): void {

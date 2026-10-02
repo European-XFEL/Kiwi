@@ -1,5 +1,6 @@
 import {
   DisplayLabelModel,
+  DoubleLineEditModel,
   type BaseWidgetObjectData,
 } from '@/karabo/common/api';
 import type { ControllerContainerContext } from '@/features/controllers/api';
@@ -24,6 +25,49 @@ const makeCtx = (
 });
 
 describe('SceneControllerRegistry', () => {
+  it('runs actions for each mounted editable controller and skips display or unregistered controllers', () => {
+    const registry = new SceneControllerRegistry();
+    const apply = jest.fn();
+    const decline = jest.fn();
+    const makeActionCtx = () =>
+      makeCtx({
+        proxies: [],
+        editActions: { apply, decline, register: jest.fn() },
+      });
+    registry.registerController(
+      'first',
+      new DoubleLineEditModel(),
+      makeActionCtx()
+    );
+    registry.registerController(
+      'second',
+      new DoubleLineEditModel(),
+      makeActionCtx()
+    );
+    registry.registerController(
+      'display',
+      new DisplayLabelModel(),
+      makeActionCtx()
+    );
+    registry.registerController(
+      'removed',
+      new DoubleLineEditModel(),
+      makeActionCtx()
+    );
+    registry.unregisterController('removed');
+
+    registry.applyAll();
+    registry.declineAll();
+    expect(apply).toHaveBeenCalledTimes(2);
+    expect(decline).toHaveBeenCalledTimes(2);
+
+    registry.dispose();
+    registry.applyAll();
+    registry.declineAll();
+    expect(apply).toHaveBeenCalledTimes(2);
+    expect(decline).toHaveBeenCalledTimes(2);
+  });
+
   it('registers and unregisters a controller by objectId', () => {
     const registry = new SceneControllerRegistry();
     const model = makeControllerModel();

@@ -56,6 +56,8 @@ const ScenePanel: React.FC<ScenePanelProps> = ({
           fitMode={fitMode}
           isUnattachedScene={content.isUnattachedScene}
           onFitModeChange={onFitModeChange}
+          onApplyAll={() => sceneControllerRegistry.applyAll()}
+          onDeclineAll={() => sceneControllerRegistry.declineAll()}
           isFullscreen={isFullscreen}
           onToggleFullscreen={supported ? toggle : undefined}
         />
