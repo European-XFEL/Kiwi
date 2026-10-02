@@ -335,6 +335,12 @@ export class VectorBarGraphModel extends BasePlotModel {
   bar_width = 0.1;
 }
 
+export class VectorXYGraphModel extends BasePlotModel {
+  klass = 'VectorXYGraph';
+  x_grid = true;
+  y_grid = true;
+}
+
 export class ScatterGraphModel extends BasePlotModel {
   klass = 'ScatterGraph';
   maxlen = 100;
@@ -378,6 +384,10 @@ registerReader('VectorBarGraph', (element) => {
   graph.bar_width = toNum(krbAttr(element, 'bar_width'), 0.1);
   return graph;
 });
+
+registerReader('VectorXYGraph', (element) =>
+  readVectorPlot(element, new VectorXYGraphModel())
+);
 
 registerReader('ScatterGraph', (element) => {
   const graph = readVectorPlot(element, new ScatterGraphModel());

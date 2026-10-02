@@ -13,6 +13,7 @@ import DisplayList from '@/features/controllers/display/DisplayList';
 import DisplayStateColor from '@/features/controllers/display/DisplayStateColor';
 import DisplayTrendGraph from '@/features/controllers/display/DisplayTrendGraph';
 import DisplayVectorGraph from './display/DisplayVectorGraph';
+import DisplayVectorXYGraph from './display/DisplayVectorXYGraph';
 import Evaluator from '@/features/controllers/display/Evaluator';
 import {
   DisplayLineEdit,
@@ -64,6 +65,7 @@ export function bootstrapControllerRenderers(
   registerRenderer('DisplayAlarmGraph', DisplayTrendGraph);
   registerRenderer('DisplayVectorGraph', DisplayVectorGraph);
   registerRenderer('VectorGraph', DisplayVectorGraph);
+  registerRenderer('VectorXYGraph', DisplayVectorXYGraph);
   registerRenderer('VectorBarGraph', DisplayBarGraph);
   registerRenderer('ScatterGraph', DisplayScatterGraph);
   registerRenderer('IntLineEdit', IntLineEdit);

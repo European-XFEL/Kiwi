@@ -1,14 +1,13 @@
 import React from 'react';
 import type { PlotSettings } from './common/api';
 import type { PropertyProxy } from '@/lib/binding/api';
-import { lttbWithCoordinates } from '../utils/lttb';
 import { barChartOption, vectorChartOption } from './chartConfig';
 import {
-  visibleVectorRange,
+  padViewportRange,
+  generateDownsample,
   vectorPoints,
   BAR_SAMPLE_LIMIT,
   VECTOR_POINT_LIMIT,
-  chooseVectorTargetPoints,
 } from './utils';
 import {
   GRAPH_LAYOUT,
@@ -33,6 +32,13 @@ export function useVectorChart({
   const isBar = 'bar_width' in plotConfig;
   const logarithmicX = !isBar && plotConfig.x_log;
   const { values } = useVectorData(proxy);
+  const offset = isBar ? 0 : (plotConfig.offset ?? 0);
+  const step = isBar ? 1 : plotConfig.step || 1;
+  const coordinates = React.useMemo(
+    () =>
+      Float64Array.from({ length: values.length }, (_, i) => offset + i * step),
+    [values.length, offset, step]
+  );
   const axes = React.useMemo(
     () => buildPlotAxes(plotConfig, { bar: isBar }),
     [plotConfig, isBar]
@@ -40,31 +46,20 @@ export function useVectorChart({
   const ranges = useChartRanges(axes);
   const buildData = React.useCallback(
     (xRange?: Range) => {
-      const [start, end] = visibleVectorRange(
-        values.length,
-        xRange,
-        logarithmicX,
-        isBar ? undefined : plotConfig
-      );
-      const visiblePoints = lttbWithCoordinates(
+      const samplingRange = padViewportRange(xRange, logarithmicX);
+      const visiblePoints = generateDownsample(
         values,
-        isBar
-          ? Math.min(BAR_SAMPLE_LIMIT, end - start)
-          : chooseVectorTargetPoints(end - start),
-        {
-          start,
-          end,
-          offset: isBar ? 0 : plotConfig.offset,
-          step: isBar ? 1 : plotConfig.step,
-        }
+        coordinates,
+        samplingRange,
+        isBar ? BAR_SAMPLE_LIMIT : undefined
       );
       const pointRadius =
-        !isBar && visiblePoints.length / 2 < VECTOR_POINT_LIMIT
+        !isBar && visiblePoints[0].length < VECTOR_POINT_LIMIT
           ? GRAPH_LAYOUT.vectorPointSize
           : 0;
       return { datasets: [{ data: vectorPoints(visiblePoints) }], pointRadius };
     },
-    [plotConfig, values, isBar, logarithmicX]
+    [values, coordinates, isBar, logarithmicX]
   );
   const chart = useChart({
     axes,
