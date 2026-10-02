@@ -1,7 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Chart } from 'chart.js/auto';
 import { AccessLevel } from '@/karabo/data/api';
-import { DisplayTrendGraphModel } from '@/karabo/common/api';
+import {
+  DisplayTrendGraphModel,
+  DisplayStateGraphModel,
+  DisplayAlarmGraphModel,
+} from '@/karabo/common/api';
 import * as trendData from '../../graph/trend/api';
 import DisplayTrendGraph from '../DisplayTrendGraph';
 
@@ -29,6 +33,55 @@ describe('DisplayTrendGraph with Chart.js', () => {
     charts().length = 0;
   });
   afterEach(() => jest.mocked(trendData.useTrendModel).mockReset());
+
+  it.each([
+    [DisplayStateGraphModel, 'state'],
+    [DisplayAlarmGraphModel, 'alarm'],
+  ] as const)(
+    'selects categorical mode for %p and preserves navigation and curve visibility',
+    (Model, mode) => {
+      const data = published();
+      data.series.push({
+        key: 'B.value',
+        timestamps: [1000, 2000],
+        values: [0, 3],
+      });
+      jest.mocked(trendData.useTrendModel).mockReturnValue(data);
+      const model = new Model();
+      model.y_log = true;
+      model.y_invert = true;
+      const { rerender } = render(
+        <DisplayTrendGraph model={model} ctx={ctx} />
+      );
+      expect(trendData.useTrendModel).toHaveBeenCalledWith(
+        ctx.proxies,
+        model.keys,
+        mode
+      );
+      expect(chart().options.scales?.y).toMatchObject({
+        type: 'linear',
+        reverse: true,
+      });
+      const second = screen.getByRole('button', { name: 'B.value' });
+      fireEvent.click(second);
+      fireEvent.click(screen.getByRole('button', { name: 'Zoom' }));
+      const container = screen.getByTestId('trend-chart');
+      fireEvent.mouseDown(container, { button: 0, clientX: 70, clientY: 20 });
+      fireEvent.mouseUp(document, { button: 0, clientX: 150, clientY: 100 });
+      const range = { ...chart().scales.x };
+      data.series[0] = {
+        key: 'A.value',
+        timestamps: [1000, 2000, 3000],
+        values: [1, 2, 3],
+      };
+      data.dataRevision++;
+      rerender(<DisplayTrendGraph model={model} ctx={{ ...ctx }} />);
+      expect(chart().scales.x).toEqual(range);
+      expect(chart().isDatasetVisible(1)).toBe(false);
+      fireEvent.click(screen.getByRole('button', { name: 'Reset view' }));
+      expect(chart().scales.x).toEqual({ min: 1000, max: 3000 });
+    }
+  );
 
   it('renders controls, data and background, then disposes the chart', () => {
     jest.mocked(trendData.useTrendModel).mockReturnValue(published());

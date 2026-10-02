@@ -30,6 +30,8 @@ export type AxisConfig = {
   range?: Range;
   beginAtZero?: boolean;
   formatTick?: (value: number) => string;
+  categories?: readonly string[];
+  onYAxisWidth?: (width: number) => void;
 };
 
 export type PlotAxesConfig = { x: AxisConfig; y: AxisConfig };
@@ -37,7 +39,17 @@ export type PlotAxesConfig = { x: AxisConfig; y: AxisConfig };
 /** Converts configured time ranges from model seconds to chart milliseconds. */
 export function buildPlotAxes(
   model: PlotSettings,
-  { timeX = false, bar = false } = {}
+  {
+    timeX = false,
+    bar = false,
+    categories,
+    onYAxisWidth,
+  }: {
+    timeX?: boolean;
+    bar?: boolean;
+    categories?: readonly string[];
+    onYAxisWidth?: (width: number) => void;
+  } = {}
 ): PlotAxesConfig {
   const build = (key: 'x' | 'y'): AxisConfig => {
     const time = key === 'x' && timeX;
@@ -46,7 +58,10 @@ export function buildPlotAxes(
     return {
       kind: time ? 'time' : 'numeric',
       scale:
-        !time && !(bar && key === 'x') && model[`${key}_log`]
+        !time &&
+        !(bar && key === 'x') &&
+        !(categories && key === 'y') &&
+        model[`${key}_log`]
           ? 'logarithmic'
           : 'linear',
       label: model[`${key}_label`],
@@ -61,6 +76,8 @@ export function buildPlotAxes(
           ? undefined
           : [min * (time ? 1000 : 1), max * (time ? 1000 : 1)],
       beginAtZero: bar && key === 'y',
+      categories: key === 'y' ? categories : undefined,
+      onYAxisWidth: key === 'y' ? onYAxisWidth : undefined,
     };
   };
   return { x: build('x'), y: build('y') };
@@ -108,9 +125,12 @@ export function chartAxes(axes: PlotAxesConfig): ChartScales {
       beginAtZero: !!axes.y.beginAtZero && axes.y.scale !== 'logarithmic',
       position: 'left',
       afterFit: (axis) => {
-        axis.width = yTitle
-          ? GRAPH_LAYOUT.yAxisSize.titled
-          : GRAPH_LAYOUT.yAxisSize.untitled;
+        if (!axes.y.categories) {
+          axis.width = yTitle
+            ? GRAPH_LAYOUT.yAxisSize.titled
+            : GRAPH_LAYOUT.yAxisSize.untitled;
+        }
+        axes.y.onYAxisWidth?.(axis.width);
       },
       reverse: axes.y.inverted,
       min: axes.y.range?.[0],
@@ -133,10 +153,22 @@ export function chartAxes(axes: PlotAxesConfig): ChartScales {
         font: GRAPH_AXIS_FONT,
         padding: 2,
         callback: (value) =>
-          (axes.y.formatTick ?? formatValueTick)(Number(value)),
+          axes.y.categories
+            ? Number.isInteger(Number(value))
+              ? (axes.y.categories[Number(value)] ?? '')
+              : ''
+            : (axes.y.formatTick ?? formatValueTick)(Number(value)),
       },
     },
   };
+  if (axes.y.categories) {
+    scales.y!.ticks = { ...scales.y!.ticks, autoSkip: false };
+    scales.y!.afterBuildTicks = (axis) => {
+      axis.ticks = axes.y.categories!.flatMap((_, value) =>
+        value >= axis.min && value <= axis.max ? [{ value }] : []
+      );
+    };
+  }
   for (const key of ['x', 'y'] as const) {
     if (axes[key].kind !== 'time') continue;
     const axis = scales[key]!;
@@ -152,9 +184,11 @@ export function chartAxes(axes: PlotAxesConfig): ChartScales {
     };
     axis.afterBuildTicks = (scale) => {
       const { ctx } = scale.chart;
-      const yAxisWidth = yTitle
-        ? GRAPH_LAYOUT.yAxisSize.titled
-        : GRAPH_LAYOUT.yAxisSize.untitled;
+      const yAxisWidth = axes.y.categories
+        ? (scale.chart.scales.y?.width ?? 0)
+        : yTitle
+          ? GRAPH_LAYOUT.yAxisSize.titled
+          : GRAPH_LAYOUT.yAxisSize.untitled;
       const size =
         key === 'x'
           ? Math.min(
@@ -309,6 +343,8 @@ export function trendDatasets(
     pointRadius: GRAPH_LAYOUT.trendPointSize,
     pointHoverRadius: GRAPH_LAYOUT.trendPointSize,
     spanGaps: true,
+    tension: 0,
+    stepped: false,
   }));
 }
 

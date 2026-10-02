@@ -60,6 +60,8 @@ export function bootstrapControllerRenderers(
   registerRenderer('EditableTableElement', TableElement);
   registerRenderer('StatefulIconWidget', StatefulIconWidget);
   registerRenderer('DisplayTrendGraph', DisplayTrendGraph);
+  registerRenderer('DisplayStateGraph', DisplayTrendGraph);
+  registerRenderer('DisplayAlarmGraph', DisplayTrendGraph);
   registerRenderer('DisplayVectorGraph', DisplayVectorGraph);
   registerRenderer('VectorGraph', DisplayVectorGraph);
   registerRenderer('VectorBarGraph', DisplayBarGraph);

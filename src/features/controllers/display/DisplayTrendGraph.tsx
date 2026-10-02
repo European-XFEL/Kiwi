@@ -3,6 +3,7 @@ import { buildModelConfig, type PlotSettings } from '../graph/common/api';
 import { Button } from '@/components/api';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 import type { DisplayTrendGraphModel } from '@/karabo/common/api';
+import type { TrendMode } from '../graph/trend/categories';
 import {
   formatTrendTime,
   useTrendChart,
@@ -72,8 +73,14 @@ function TrendGraph({
   ctx: ControllerContainerContext;
 }) {
   const plotConfig = React.useMemo(() => buildModelConfig(model), [model]);
-  const published = useTrendModel(ctx.proxies, model.keys);
-  return <TrendPlot plotConfig={plotConfig} {...published} />;
+  const mode: TrendMode =
+    model.klass === 'DisplayStateGraph'
+      ? 'state'
+      : model.klass === 'DisplayAlarmGraph'
+        ? 'alarm'
+        : 'numeric';
+  const published = useTrendModel(ctx.proxies, model.keys, mode);
+  return <TrendPlot plotConfig={plotConfig} mode={mode} {...published} />;
 }
 
 const TrendPlot = React.memo(function TrendPlot({
@@ -81,8 +88,17 @@ const TrendPlot = React.memo(function TrendPlot({
   series,
   startTime,
   dataRevision,
-}: { plotConfig: PlotSettings } & ReturnType<typeof useTrendModel>) {
-  const view = useTrendChart({ plotConfig, series, startTime, dataRevision });
+  mode,
+}: { plotConfig: PlotSettings; mode: TrendMode } & ReturnType<
+  typeof useTrendModel
+>) {
+  const view = useTrendChart({
+    plotConfig,
+    series,
+    startTime,
+    dataRevision,
+    mode,
+  });
   return (
     <ChartLayout
       background={plotConfig.background}
@@ -111,8 +127,11 @@ const TrendPlot = React.memo(function TrendPlot({
         legend={
           series.length > 1 && (
             <div
-              className="absolute left-[60px] z-10 flex flex-col gap-1 rounded-sm border border-black bg-slate-200/20 p-1 text-xs text-black"
-              style={{ top: plotConfig.title ? 26 : 10 }}
+              className="absolute z-10 flex flex-col gap-1 rounded-sm border border-black bg-slate-200/20 p-1 text-xs text-black"
+              style={{
+                top: plotConfig.title ? 26 : 10,
+                left: view.yAxisWidth + 8,
+              }}
               aria-label="Graph legend"
             >
               {series.map((item, index) => (

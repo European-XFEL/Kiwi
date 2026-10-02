@@ -16,6 +16,7 @@ export {
 } from './typenums';
 export { Timestamp } from './timestamp';
 export {
+  AlarmCondition,
   AccessLevel,
   Assignment,
   AccessMode,

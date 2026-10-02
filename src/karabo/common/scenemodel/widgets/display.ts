@@ -268,13 +268,27 @@ registerReader('Evaluator', (element) => {
 // DisplayTrendGraph
 // ----------------------------------------------------------------------------
 
-export class DisplayTrendGraphModel extends BasePlotModel {
+export class BaseTrendModel extends BasePlotModel {
+  x_grid = true;
+  y_grid = true;
+}
+
+export class DisplayTrendGraphModel extends BaseTrendModel {
   klass = 'DisplayTrendGraph';
 }
 
-const readTrendGraph = (element: Element) => {
-  const graph = new DisplayTrendGraphModel();
+export class DisplayStateGraphModel extends BaseTrendModel {
+  klass = 'DisplayStateGraph';
+}
 
+export class DisplayAlarmGraphModel extends BaseTrendModel {
+  klass = 'DisplayAlarmGraph';
+}
+
+const readTrendGraph = (
+  element: Element,
+  graph = new DisplayTrendGraphModel()
+) => {
   readBaseWidgetData(element, graph);
   graph.x_label = toStr(krbAttr(element, 'x_label'));
   graph.y_label = toStr(krbAttr(element, 'y_label'));
@@ -299,6 +313,13 @@ const readTrendGraph = (element: Element) => {
 };
 
 registerReader('DisplayTrendGraph', readTrendGraph);
+
+registerReader('DisplayStateGraph', (element) =>
+  readTrendGraph(element, new DisplayStateGraphModel())
+);
+registerReader('DisplayAlarmGraph', (element) =>
+  readTrendGraph(element, new DisplayAlarmGraphModel())
+);
 
 // DisplayVectorGraph
 // ----------------------------------------------------------------------------
