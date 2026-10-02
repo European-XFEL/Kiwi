@@ -12,6 +12,8 @@ export interface SceneToolBarProps {
   fitMode: FitMode;
   isUnattachedScene?: boolean;
   onFitModeChange: (mode: FitMode) => void;
+  onApplyAll?: () => void;
+  onDeclineAll?: () => void;
   isFullscreen?: boolean;
   // When omitted (e.g. fullscreen unsupported), the toggle is not rendered.
   onToggleFullscreen?: () => void;
@@ -28,6 +30,8 @@ export function SceneToolBar({
   fitMode,
   isUnattachedScene = false,
   onFitModeChange,
+  onApplyAll,
+  onDeclineAll,
   isFullscreen = false,
   onToggleFullscreen,
 }: SceneToolBarProps) {
@@ -54,9 +58,9 @@ export function SceneToolBar({
         <Button
           variant="ghost"
           size="icon"
-          aria-disabled="true"
+          disabled={!onApplyAll}
+          onClick={onApplyAll}
           type="button"
-          tabIndex={-1}
           data-testid="scene-apply-all"
           aria-label="Apply all changes"
           className={toolbarButtonClassName}
@@ -66,9 +70,9 @@ export function SceneToolBar({
         <Button
           variant="ghost"
           size="icon"
-          aria-disabled="true"
+          disabled={!onDeclineAll}
+          onClick={onDeclineAll}
           type="button"
-          tabIndex={-1}
           data-testid="scene-decline-all"
           aria-label="Decline all changes"
           className={toolbarButtonClassName}

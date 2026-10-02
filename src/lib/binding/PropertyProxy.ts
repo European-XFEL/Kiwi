@@ -14,6 +14,7 @@ export class PropertyProxy {
 
   public readonly config_update = new Signal<[PropertyProxy]>();
   private readonly binding_update_signal = new Signal<[PropertyProxy]>();
+  private readonly edit_update_signal = new Signal<[PropertyProxy]>();
 
   private removeConfigUpdate?: Unsubscribe;
   private removeBindingUpdate?: Unsubscribe;
@@ -72,11 +73,17 @@ export class PropertyProxy {
   }
 
   set edit_value(value: any) {
+    if (value === undefined) {
+      this.edit_binding = undefined;
+      this.edit_update_signal.fire(this);
+      return;
+    }
     if (!this.edit_binding) {
       const klass = this.binding!.constructor as new () => BaseBinding;
       this.edit_binding = new klass();
     }
     this.edit_binding.setValue(value, undefined);
+    this.edit_update_signal.fire(this);
   }
 
   private setBinding(binding?: BaseBinding): void {
@@ -122,6 +129,10 @@ export class PropertyProxy {
 
   public binding_update(callback: (proxy: PropertyProxy) => void): Unsubscribe {
     return this.binding_update_signal.subscribe(this, callback);
+  }
+
+  public edit_update(callback: (proxy: PropertyProxy) => void): Unsubscribe {
+    return this.edit_update_signal.subscribe(this, callback);
   }
 
   private _get_pipeline_path(): string {

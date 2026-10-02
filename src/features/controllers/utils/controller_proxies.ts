@@ -30,7 +30,7 @@ export const createPropertyProxies = (keys: string[]): PropertyProxies =>
 // State/status subscriptions are deduplicated per device. One subscription per
 // unique device is enough to resnapshot all property contexts that belong to it.
 //
-// PropertyProxy value/binding subscriptions are per entry, not deduplicated,
+// PropertyProxy value/binding/edit subscriptions are per entry, not deduplicated,
 // because each property has its own live value and schema binding.
 //
 // The owner must be stable, usually ownerRef.current from React. Signal keeps
@@ -75,6 +75,9 @@ export const startMonitoring = (
     );
     cleanups.push(
       propertyProxy.binding_update((proxy) => onProxyUpdate(index, proxy))
+    );
+    cleanups.push(
+      propertyProxy.edit_update((proxy) => onProxyUpdate(index, proxy))
     );
   });
 

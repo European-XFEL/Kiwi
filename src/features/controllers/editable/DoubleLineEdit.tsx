@@ -1,4 +1,4 @@
-/** DoubleLineEdit — float input, syncs from device, writes back on blur. */
+/** DoubleLineEdit — float input with pending edits on the property proxy. */
 
 import React from 'react';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
@@ -22,22 +22,33 @@ const DoubleLineEdit: React.FC<{
   model: DoubleLineEditModel;
   ctx?: ControllerContainerContext;
 }> = ({ model, ctx }) => {
-  const proxyValue = ctx?.proxy?.value;
+  const proxy = ctx?.proxy;
+  const proxyValue = proxy?.value;
+  const editValue = proxy?.edit_value?.value_;
   const unit = ctx?.proxy?.binding?.unit_label ?? '';
   const enabled = ctx
     ? isControllerEditable(ctx.proxy, ctx.userAccessLevel)
     : false;
 
   const [localValue, setLocalValue] = React.useState(() =>
-    toFloatString(proxyValue, model.decimals)
+    toFloatString(editValue ?? proxyValue, model.decimals)
   );
   const [isEditing, setIsEditing] = React.useState(false);
 
   React.useEffect(() => {
     if (isEditing) return;
-    const next = toFloatString(proxyValue, model.decimals);
+    const next = toFloatString(editValue ?? proxyValue, model.decimals);
     setLocalValue((prev) => (prev === next ? prev : next));
-  }, [proxyValue, isEditing, model.decimals]);
+  }, [proxyValue, editValue, isEditing, model.decimals]);
+
+  React.useEffect(() => {
+    // Clearing an edit must restore the device text even while focused.
+    return proxy?.edit_update(() => {
+      setLocalValue(
+        toFloatString(proxy.edit_value?.value_ ?? proxy.value, model.decimals)
+      );
+    });
+  }, [proxy, model.decimals]);
 
   return (
     <div className="flex items-center gap-1 w-full h-full">
@@ -47,17 +58,20 @@ const DoubleLineEdit: React.FC<{
         inputMode="decimal"
         value={localValue}
         onFocus={() => setIsEditing(true)}
-        onChange={(e) => setLocalValue(e.target.value)}
-        onBlur={(e) => {
-          setIsEditing(false);
-          const parsed = parseFloat(e.target.value);
-          if (Number.isFinite(parsed)) {
-            setLocalValue(toFloatString(parsed, model.decimals));
-            // TODO: push parsed to backend
-          } else {
-            setLocalValue(toFloatString(proxyValue, model.decimals));
+        onChange={(e) => {
+          const text = e.target.value;
+          const parsed = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(
+            text
+          )
+            ? Number(text)
+            : NaN;
+          if (proxy && enabled) {
+            proxy.edit_value = Number.isFinite(parsed) ? parsed : undefined;
           }
+          // Keep intermediate drafts instead of the formatted edit notification.
+          setLocalValue(text);
         }}
+        onBlur={() => setIsEditing(false)}
         disabled={!enabled}
         className={`border border-solid rounded px-1 flex-1 min-w-0 ${
           enabled

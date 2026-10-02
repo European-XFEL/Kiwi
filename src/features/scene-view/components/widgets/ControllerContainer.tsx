@@ -15,6 +15,10 @@ import {
   type ControllerContainerContext,
 } from '@/features/controllers/api';
 import { useRegisterSceneControllerWidget } from '../../hooks/useRegisterSceneControllerWidget';
+import {
+  applyControllerEdits,
+  declineControllerEdits,
+} from '@/features/controllers/utils/controller_edit_actions';
 import type { Renderer } from '../../renderRegistry';
 import { ControllerOverlay } from './ControllerOverlay';
 
@@ -54,13 +58,46 @@ interface ControllerLayoutProps {
   isEditableWidget: boolean;
 }
 
+function isEditableKeyEvent(
+  event: React.KeyboardEvent<HTMLDivElement>,
+  isEditableWidget: boolean
+): boolean {
+  return (
+    isEditableWidget &&
+    !event.nativeEvent.isComposing &&
+    event.currentTarget.contains(document.activeElement) &&
+    (event.key === 'Enter' || event.key === 'Escape')
+  );
+}
+
 const ContainerLayout = React.memo<ControllerLayoutProps>(
   ({ model, objectId, Renderer, ctx, isEditableWidget }) => (
     <div
       data-testid={`controller-${objectId}`}
       className="w-full h-full"
+      onKeyDownCapture={(event) => {
+        // Run defaults before child handlers can stop the event bubbling.
+        if (!isEditableKeyEvent(event, isEditableWidget)) return;
+        event.preventDefault();
+        if (event.key === 'Enter') {
+          if (ctx.editActions) ctx.editActions.apply();
+          else applyControllerEdits(ctx.proxies);
+        } else {
+          if (ctx.editActions) ctx.editActions.decline();
+          else declineControllerEdits(ctx.proxies);
+        }
+      }}
+      onKeyDown={(event) => {
+        if (isEditableKeyEvent(event, isEditableWidget))
+          event.stopPropagation();
+      }}
       style={{
         boxSizing: 'border-box',
+        backgroundColor:
+          isEditableWidget &&
+          ctx.proxies.some((proxy) => proxy.edit_value !== undefined)
+            ? 'rgba(0, 170, 255, 0.502)'
+            : 'transparent',
         ...(isEditableWidget
           ? EDITABLE_CONTENTS_PADDING
           : DISPLAY_CONTENTS_PADDING),

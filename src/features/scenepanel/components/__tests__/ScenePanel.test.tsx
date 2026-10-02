@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { SceneModel } from '@/karabo/common/api';
 import React from 'react';
 import ScenePanel from '../ScenePanel';
@@ -56,6 +56,42 @@ const sceneRef = {
 };
 
 describe('ScenePanel', () => {
+  it('routes toolbar actions to the current scene registry', () => {
+    const firstRegistry = new SceneControllerRegistry(sceneRef);
+    const secondRegistry = new SceneControllerRegistry({ id: 'scene-2' });
+    const firstApply = jest.spyOn(firstRegistry, 'applyAll');
+    const firstDecline = jest.spyOn(firstRegistry, 'declineAll');
+    const secondApply = jest.spyOn(secondRegistry, 'applyAll');
+    const secondDecline = jest.spyOn(secondRegistry, 'declineAll');
+    const content = {
+      sceneRef,
+      sceneModel: makeScene('scene-1'),
+      sceneControllerRegistry: firstRegistry,
+      fitMode: 'fit-page' as const,
+    };
+    const { rerender } = render(
+      <ScenePanel content={content} onFitModeChange={jest.fn()} />
+    );
+
+    fireEvent.click(screen.getByLabelText('Apply all changes'));
+    fireEvent.click(screen.getByLabelText('Decline all changes'));
+    expect(firstApply).toHaveBeenCalledTimes(1);
+    expect(firstDecline).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <ScenePanel
+        content={{ ...content, sceneControllerRegistry: secondRegistry }}
+        onFitModeChange={jest.fn()}
+      />
+    );
+    fireEvent.click(screen.getByLabelText('Apply all changes'));
+    fireEvent.click(screen.getByLabelText('Decline all changes'));
+    expect(secondApply).toHaveBeenCalledTimes(1);
+    expect(secondDecline).toHaveBeenCalledTimes(1);
+    expect(firstApply).toHaveBeenCalledTimes(1);
+    expect(firstDecline).toHaveBeenCalledTimes(1);
+  });
+
   it('renders left-side apply/decline actions and right-side scene controls', () => {
     render(
       <ScenePanel

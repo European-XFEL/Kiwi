@@ -1,6 +1,7 @@
 import {
   BindingRoot,
   DeviceProxy,
+  DoubleBinding,
   NodeBinding,
   StringBinding,
   PropertyProxy,
@@ -9,6 +10,37 @@ import { ProxyStatus } from '@/lib/binding/ProxyStatus';
 import { StringValue } from '@/karabo/data/api';
 
 describe('The basic proxy test', () => {
+  it('notifies edit subscribers when a numeric edit is staged or cleared', () => {
+    const rootProxy = new DeviceProxy('TEST_KIWI');
+    const rootBinding = new BindingRoot();
+    rootBinding.value!.set('speed', new DoubleBinding({ value: 1.25 }));
+    rootProxy.binding = rootBinding;
+    const proxy = new PropertyProxy(rootProxy, 'speed');
+    const onEdit = jest.fn();
+    const unsubscribe = proxy.edit_update(onEdit);
+
+    proxy.edit_value = 0;
+    expect(proxy.edit_value.value_).toBe(0);
+    expect(proxy.value).toBe(1.25);
+    expect(onEdit).toHaveBeenCalledWith(proxy);
+
+    proxy.edit_value = undefined;
+    expect(proxy.edit_value).toBeUndefined();
+    expect(proxy.value).toBe(1.25);
+    expect(onEdit).toHaveBeenCalledTimes(2);
+
+    unsubscribe();
+    proxy.edit_value = 2;
+    expect(onEdit).toHaveBeenCalledTimes(2);
+    proxy.dispose();
+
+    const missingProxy = new PropertyProxy(rootProxy, 'missing');
+    expect(() => {
+      missingProxy.edit_value = undefined;
+    }).not.toThrow();
+    missingProxy.dispose();
+  });
+
   it('PropertyProxy - Edit', () => {
     const stringProperty = new StringBinding({ value: 'karabo' });
     const rootBinding = new BindingRoot();
