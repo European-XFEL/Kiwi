@@ -10,7 +10,7 @@ export function ChartPlot({
 }: {
   containerRef: React.RefObject<HTMLDivElement | null>;
   selectionRef: React.RefObject<HTMLDivElement | null>;
-  testId: 'trend-chart' | 'vector-chart' | 'scatter-chart';
+  testId: 'trend-chart' | 'vector-chart' | 'vector-xy-chart' | 'scatter-chart';
   title: string;
   legend?: React.ReactNode;
   empty?: string;

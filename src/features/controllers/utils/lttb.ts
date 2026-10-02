@@ -1,70 +1,87 @@
-/** Sample in source-index space, then map X into displayed coordinates. */
 export function lttbWithCoordinates(
-  values: ArrayLike<number>,
-  threshold: number,
+  y: ArrayLike<number>,
+  x?: ArrayLike<number>,
   {
     start = 0,
-    end = values.length,
-    offset = 0,
-    step = 1,
+    end = Math.min(y.length, x?.length ?? y.length),
+    threshold,
   }: {
     start?: number;
     end?: number;
-    offset?: number;
-    step?: number;
+    threshold?: number;
   } = {}
-): Float64Array {
-  const effectiveStep = step || 1;
-  const points = lttb(values, threshold, start, end);
-  for (let index = 0; index < points.length; index += 2)
-    points[index] = offset + points[index] * effectiveStep;
-  return points;
+): [Float64Array, Float64Array] {
+  const length = Math.min(y.length, x?.length ?? y.length);
+  start = Math.max(0, Math.min(start, length));
+  end = Math.max(start, Math.min(end, length));
+  const count = end - start;
+  threshold ??=
+    count > 500_000
+      ? 60_000
+      : count > 400_000
+        ? 50_000
+        : count > 300_000
+          ? 40_000
+          : count > 200_000
+            ? 30_000
+            : 20_000;
+  return lttb(
+    x ?? Float64Array.from({ length }, (_, i) => i),
+    y,
+    threshold,
+    start,
+    end
+  );
 }
 
 /**
- * Largest-Triangle-Three-Buckets for vectors where x is the source index.
- * Reads [start, end) without copying; returns interleaved [x, y] points.
+ * Largest-Triangle-Three-Buckets using actual X coordinates.
+ * Reads the paired [start, end) window without changing the inputs.
  */
 export function lttb(
-  values: ArrayLike<number>,
+  x: ArrayLike<number>,
+  y: ArrayLike<number>,
   threshold: number,
   start = 0,
-  end = values.length
-): Float64Array {
-  const offset = Math.max(0, Math.min(start, values.length));
-  const limit = Math.max(offset, Math.min(end, values.length));
+  end = Math.min(x.length, y.length)
+): [Float64Array, Float64Array] {
+  const length = Math.min(x.length, y.length);
+  const offset = Math.max(0, Math.min(start, length));
+  const limit = Math.max(offset, Math.min(end, length));
   const n = limit - offset;
-  const valueAt = (index: number) => values[offset + index];
+  const valueAt = (index: number) => y[offset + index];
 
   const size = Math.min(Math.max(threshold, 0), n);
-  const points = new Float64Array(size * 2);
+  const sampledX = new Float64Array(size);
+  const sampledY = new Float64Array(size);
+  const points: [Float64Array, Float64Array] = [sampledX, sampledY];
   if (size === 0) return points;
 
   if (threshold >= n) {
     for (let index = 0; index < n; index++) {
-      points[index * 2] = offset + index;
-      points[index * 2 + 1] = values[offset + index];
+      sampledX[index] = x[offset + index];
+      sampledY[index] = y[offset + index];
     }
     return points;
   }
 
   if (threshold === 1) {
-    points[0] = offset;
-    points[1] = values[offset];
+    sampledX[0] = x[offset];
+    sampledY[0] = y[offset];
     return points;
   }
   if (threshold === 2) {
-    points[0] = offset;
-    points[1] = values[offset];
-    points[2] = limit - 1;
-    points[3] = values[limit - 1];
+    sampledX[0] = x[offset];
+    sampledY[0] = y[offset];
+    sampledX[1] = x[limit - 1];
+    sampledY[1] = y[limit - 1];
     return points;
   }
 
-  points[0] = offset;
-  points[1] = values[offset];
-  points[(threshold - 1) * 2] = limit - 1;
-  points[(threshold - 1) * 2 + 1] = values[limit - 1];
+  sampledX[0] = x[offset];
+  sampledY[0] = y[offset];
+  sampledX[threshold - 1] = x[limit - 1];
+  sampledY[threshold - 1] = y[limit - 1];
 
   const bucketSize = (n - 2) / (threshold - 2);
   let lastSelectedIndex = 0;
@@ -83,27 +100,27 @@ export function lttb(
     nextEnd = Math.max(nextStart, Math.min(nextEnd, n));
 
     // Next bucket average: C = (avgX, avgY)
-    // avgY: average of values
+    let sx = 0;
     let sy = 0;
     let c = 0;
     for (let i = nextStart; i < nextEnd; i++) {
+      sx += x[offset + i];
       sy += valueAt(i);
       c++;
     }
     const cy = c === 0 ? valueAt(n - 1) : sy / c;
 
-    // avgX for consecutive integers [nextStart .. nextEnd-1]
-    const cx = c === 0 ? n - 1 : (nextStart + (nextEnd - 1)) / 2;
+    const cx = c === 0 ? x[limit - 1] : sx / c;
 
     // A = last selected
-    const ax = lastSelectedIndex;
+    const ax = x[offset + lastSelectedIndex];
     const ay = valueAt(lastSelectedIndex);
 
     let bestArea2 = -1;
     let bestIndex = currStart;
 
     for (let j = currStart; j < currEnd; j++) {
-      const bx = j;
+      const bx = x[offset + j];
       const by = valueAt(j);
 
       const area2 = Math.abs((ax - cx) * (by - ay) - (ax - bx) * (cy - ay));
@@ -113,8 +130,8 @@ export function lttb(
       }
     }
 
-    points[(bucketIndex + 1) * 2] = offset + bestIndex;
-    points[(bucketIndex + 1) * 2 + 1] = values[offset + bestIndex];
+    sampledX[bucketIndex + 1] = x[offset + bestIndex];
+    sampledY[bucketIndex + 1] = y[offset + bestIndex];
     lastSelectedIndex = bestIndex;
   }
   return points;

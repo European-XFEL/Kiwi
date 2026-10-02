@@ -1,11 +1,7 @@
 import { buildModelConfig } from '../common/api';
 import { DisplayVectorGraphModel } from '@/karabo/common/api';
 import { vectorChartOption } from '../chartConfig';
-import {
-  chooseVectorTargetPoints,
-  vectorPoints,
-  visibleVectorRange,
-} from '../utils';
+import { vectorPoints, padViewportRange } from '../utils';
 
 describe('vector Chart.js configuration', () => {
   it('uses model axis labels and units', () => {
@@ -35,8 +31,10 @@ describe('vector Chart.js configuration', () => {
     });
   });
 
-  it('splits interleaved sampled points into coordinates', () => {
-    expect(vectorPoints(new Float64Array([0, 4, 1, 8]))).toEqual([
+  it('combines sampled vectors into chart coordinates', () => {
+    expect(
+      vectorPoints([new Float64Array([0, 1]), new Float64Array([4, 8])])
+    ).toEqual([
       { x: 0, y: 4 },
       { x: 1, y: 8 },
     ]);
@@ -82,11 +80,12 @@ describe('vector Chart.js configuration', () => {
     });
   });
 
-  it('calculates viewport overscan and downsampling thresholds', () => {
-    expect(visibleVectorRange(10, [4, 5])).toEqual([3, 7]);
-    expect(visibleVectorRange(2, [20, 30])).toEqual([0, 0]);
-    expect(visibleVectorRange(2_000, [10, 100], true)).toEqual([1, 1001]);
-    expect(chooseVectorTargetPoints(1_499_999)).toBe(1_499_999);
-    expect(chooseVectorTargetPoints(1_500_000)).toBe(60_000);
+  it('calculates viewport overscan', () => {
+    expect(padViewportRange([4, 5])).toEqual([3, 6]);
+    expect(padViewportRange([20, 30])).toEqual([10, 40]);
+    expect(padViewportRange([10, 100], true)).toEqual([1, 1000]);
+    expect(padViewportRange()).toBeUndefined();
+    expect(padViewportRange([5, 4])).toEqual([3, 6]);
+    expect(padViewportRange([-1, 1], true)).toEqual([-3, 3]);
   });
 });

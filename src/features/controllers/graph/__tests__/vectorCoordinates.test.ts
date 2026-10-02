@@ -2,34 +2,37 @@ import { Chart, BasicPlatform, registerables } from 'chart.js';
 import { DisplayVectorGraphModel } from '@/karabo/common/api';
 import { buildModelConfig } from '../common/api';
 import { vectorChartOption } from '../chartConfig';
-import { vectorPoints, visibleVectorRange } from '../utils';
+import { vectorPoints, generateDownsample, padViewportRange } from '../utils';
 import { lttbWithCoordinates } from '../../utils/lttb';
 
-test('inverts padded displayed ranges into ordered source bounds', () => {
-  expect(
-    visibleVectorRange(20, [18, 20], false, { offset: 10, step: 2 })
-  ).toEqual([3, 7]);
-  expect(
-    visibleVectorRange(20, [18, 20], false, { offset: 30, step: -2 })
-  ).toEqual([4, 8]);
-  expect(
-    visibleVectorRange(20, [18, 20], false, { offset: 10, step: -2 })
-  ).toEqual([0, 0]);
-  expect(
-    visibleVectorRange(2000, [10, 100], true, { offset: 1, step: 3 })
-  ).toEqual([0, 334]);
-  expect(
-    visibleVectorRange(20, [18, 20], false, { offset: 16, step: 0 })
-  ).toEqual([0, 7]);
-  expect(
-    visibleVectorRange(20, [18, 20], false, { offset: 23, step: 0 })
-  ).toEqual([0, 0]);
-  expect(
-    visibleVectorRange(20, undefined, false, { offset: 23, step: 0 })
-  ).toEqual([0, 20]);
-  expect(
-    visibleVectorRange(0, [18, 20], false, { offset: 19, step: 0 })
-  ).toEqual([0, 0]);
+test.each([
+  { offset: 10, step: 2, expected: [16, 18, 20, 22] },
+  { offset: 30, step: -2, expected: [22, 20, 18, 16] },
+  { offset: 10, step: -2, expected: [] },
+  { offset: 16, step: 0, expected: [16, 17, 18, 19, 20, 21, 22] },
+  { offset: 23, step: 0, expected: [] },
+])(
+  'samples padded ranges in source order with offset=$offset and step=$step',
+  ({ offset, step, expected }) => {
+    const x = Float64Array.from(
+      { length: 201 },
+      (_, i) => offset + i * (step || 1)
+    );
+    const [sampledX] = generateDownsample(x, x, padViewportRange([18, 20]));
+    expect(Array.from(sampledX)).toEqual(expected);
+  }
+);
+
+test('samples logarithmically padded ranges in original X coordinates', () => {
+  const x = Float64Array.from({ length: 2000 }, (_, i) => 1 + i * 3);
+  const [sampledX] = generateDownsample(
+    x,
+    x,
+    padViewportRange([10, 100], true)
+  );
+  expect(sampledX).toHaveLength(334);
+  expect(sampledX[0]).toBe(1);
+  expect(sampledX.at(-1)).toBe(1000);
 });
 
 test.each([-2, 0])(
@@ -51,7 +54,10 @@ test.each([-2, 0])(
     Object.assign(plotConfig, { offset: 20, step });
     const config = vectorChartOption(plotConfig);
     const data = vectorPoints(
-      lttbWithCoordinates([1, -50, 100, 2], 4, plotConfig)
+      lttbWithCoordinates(
+        [1, -50, 100, 2],
+        Float64Array.from({ length: 4 }, (_, i) => 20 + i * (step || 1))
+      )
     );
     config.data.datasets[0].data = data;
     if (step < 0)

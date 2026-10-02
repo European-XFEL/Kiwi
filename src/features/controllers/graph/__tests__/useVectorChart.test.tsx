@@ -99,104 +99,177 @@ describe('useVectorChart with Chart.js', () => {
     expect(chart().options.scales?.x?.min).toEqual(expect.any(Number));
   });
 
-  it('plots transformed line coordinates without recreating the chart on data updates', () => {
-    const originalRequest = window.requestIdleCallback;
-    const originalCancel = window.cancelIdleCallback;
-    jest.useFakeTimers();
-    window.requestIdleCallback = jest.fn((callback: IdleRequestCallback) =>
-      window.setTimeout(
-        () => callback({ didTimeout: false, timeRemaining: () => 50 }),
-        0
-      )
-    );
-    window.cancelIdleCallback = jest.fn((id: number) =>
-      window.clearTimeout(id)
-    );
-    const proxy = {
-      root: { status: ProxyStatus.MONITORING },
-      value: [1, 2, 3],
-    } as PropertyProxy;
-    const model = new DisplayVectorGraphModel();
-    model.offset = 10;
-    model.step = -2;
-    const view = render(<VectorChartHarness model={model} proxy={proxy} />);
-    try {
-      act(() => jest.runOnlyPendingTimers());
-      const currentChart = chart();
-      expect(currentChart.data.datasets[0].data).toEqual([
-        { x: 10, y: 1 },
-        { x: 8, y: 2 },
-        { x: 6, y: 3 },
-      ]);
-      Object.assign(proxy, { value: [4, 5] });
-      view.rerender(<VectorChartHarness model={model} proxy={proxy} />);
-      act(() => jest.runOnlyPendingTimers());
-      expect(chart()).toBe(currentChart);
-      expect(chart().data.datasets[0].data).toEqual([
-        { x: 10, y: 4 },
-        { x: 8, y: 5 },
-      ]);
-    } finally {
-      view.unmount();
-      window.requestIdleCallback = originalRequest;
-      window.cancelIdleCallback = originalCancel;
-      jest.useRealTimers();
+  it.each([-2, 0, 2])(
+    'plots line coordinates with step %s without recreating the chart on data updates',
+    (step) => {
+      const originalRequest = window.requestIdleCallback;
+      const originalCancel = window.cancelIdleCallback;
+      jest.useFakeTimers();
+      window.requestIdleCallback = jest.fn((callback: IdleRequestCallback) =>
+        window.setTimeout(
+          () => callback({ didTimeout: false, timeRemaining: () => 50 }),
+          0
+        )
+      );
+      window.cancelIdleCallback = jest.fn((id: number) =>
+        window.clearTimeout(id)
+      );
+      const proxy = {
+        root: { status: ProxyStatus.MONITORING },
+        value: [1, 2, 3],
+      } as PropertyProxy;
+      const model = new DisplayVectorGraphModel();
+      model.offset = 10;
+      model.step = step;
+      const view = render(<VectorChartHarness model={model} proxy={proxy} />);
+      try {
+        act(() => jest.runOnlyPendingTimers());
+        const currentChart = chart();
+        expect(currentChart.data.datasets[0].data).toEqual([
+          { x: 10, y: 1 },
+          { x: 10 + (step || 1), y: 2 },
+          { x: 10 + 2 * (step || 1), y: 3 },
+        ]);
+        Object.assign(proxy, { value: [4, 5] });
+        view.rerender(<VectorChartHarness model={model} proxy={proxy} />);
+        act(() => jest.runOnlyPendingTimers());
+        expect(chart()).toBe(currentChart);
+        expect(chart().data.datasets[0].data).toEqual([
+          { x: 10, y: 4 },
+          { x: 10 + (step || 1), y: 5 },
+        ]);
+      } finally {
+        view.unmount();
+        window.requestIdleCallback = originalRequest;
+        window.cancelIdleCallback = originalCancel;
+        jest.useRealTimers();
+      }
     }
-  });
+  );
 
-  it('publishes at most 3000 indexed bars and clears stale values', () => {
-    const originalRequest = window.requestIdleCallback;
-    const originalCancel = window.cancelIdleCallback;
-    jest.useFakeTimers();
-    window.requestIdleCallback = jest.fn((callback: IdleRequestCallback) =>
-      window.setTimeout(
-        () => callback({ didTimeout: false, timeRemaining: () => 50 }),
-        0
-      )
-    );
-    window.cancelIdleCallback = jest.fn((id: number) =>
-      window.clearTimeout(id)
-    );
-    const proxy = {
-      root: { status: ProxyStatus.MONITORING },
-      value: Array.from({ length: 4000 }, (_, index) => index),
-    } as PropertyProxy;
-    const model = new VectorBarGraphModel();
-    const view = render(<VectorChartHarness model={model} proxy={proxy} />);
-    try {
-      act(() => jest.runOnlyPendingTimers());
-      const points = chart().data.datasets[0].data as {
-        x: number;
-        y: number;
-      }[];
-      expect(points).toHaveLength(3000);
-      expect(points[0]).toEqual({ x: 0, y: 0 });
-      expect(points.at(-1)).toEqual({ x: 3999, y: 3999 });
-      fireEvent.click(screen.getByRole('button', { name: 'Move' }));
-      fireEvent.mouseDown(screen.getByTestId('vector-chart'), {
-        button: 0,
-        clientX: 90,
-        clientY: 40,
-      });
-      Object.assign(proxy, { value: [-1, 9] });
-      view.rerender(<VectorChartHarness model={model} proxy={proxy} />);
-      act(() => jest.runOnlyPendingTimers());
-      expect(chart().data.datasets[0].data).toHaveLength(3000);
-      fireEvent.mouseUp(document, { button: 0, clientX: 100, clientY: 50 });
-      expect(chart().data.datasets[0].data).toEqual([
-        { x: 0, y: -1 },
-        { x: 1, y: 9 },
-      ]);
-      Object.assign(proxy, { value: [] });
-      view.rerender(<VectorChartHarness model={model} proxy={proxy} />);
-      act(() => jest.runOnlyPendingTimers());
-      expect(chart().data.datasets[0].data).toEqual([]);
-    } finally {
-      view.unmount();
-      expect(chart().destroy).toHaveBeenCalled();
-      window.requestIdleCallback = originalRequest;
-      window.cancelIdleCallback = originalCancel;
-      jest.useRealTimers();
+  it.each([
+    { name: 'varying', constant: false, viewport: false, expected: 30_000 },
+    { name: 'constant', constant: true, viewport: false, expected: 30_000 },
+    { name: 'viewport', constant: false, viewport: true, expected: 20_000 },
+  ])(
+    'samples large $name vector lines and clears them',
+    ({ constant, viewport, expected }) => {
+      const originalRequest = window.requestIdleCallback;
+      const originalCancel = window.cancelIdleCallback;
+      jest.useFakeTimers();
+      window.requestIdleCallback = jest.fn((callback: IdleRequestCallback) =>
+        window.setTimeout(
+          () => callback({ didTimeout: false, timeRemaining: () => 50 }),
+          0
+        )
+      );
+      window.cancelIdleCallback = jest.fn((id: number) =>
+        window.clearTimeout(id)
+      );
+      const proxy = {
+        root: { status: ProxyStatus.MONITORING },
+        value: Float64Array.from({ length: 200_001 }, (_, i) =>
+          constant ? 1 : i
+        ),
+      } as PropertyProxy;
+      const model = new DisplayVectorGraphModel();
+      model.offset = 10;
+      model.step = 2;
+      if (viewport) {
+        model.x_autorange = false;
+        model.x_min = 100_010;
+        model.x_max = 120_010;
+      }
+      const view = render(<VectorChartHarness model={model} proxy={proxy} />);
+      try {
+        act(() => jest.runOnlyPendingTimers());
+        const points = chart().data.datasets[0].data as {
+          x: number;
+          y: number;
+        }[];
+        expect(points).toHaveLength(expected);
+        const first = viewport ? 40_000 : 0;
+        const last = viewport ? 70_000 : 200_000;
+        expect(points[0]).toEqual({
+          x: 10 + first * 2,
+          y: constant ? 1 : first,
+        });
+        expect(points.at(-1)).toEqual({
+          x: 10 + last * 2,
+          y: constant ? 1 : last,
+        });
+        Object.assign(proxy, { value: [] });
+        view.rerender(<VectorChartHarness model={model} proxy={proxy} />);
+        act(() => jest.runOnlyPendingTimers());
+        expect(chart().data.datasets[0].data).toEqual([]);
+      } finally {
+        view.unmount();
+        window.requestIdleCallback = originalRequest;
+        window.cancelIdleCallback = originalCancel;
+        jest.useRealTimers();
+      }
     }
-  });
+  );
+
+  it.each([
+    { name: 'varying', valueAt: (index: number) => index },
+    { name: 'constant', valueAt: () => 1 },
+  ])(
+    'publishes at most 3000 indexed $name bars and clears stale values',
+    ({ valueAt }) => {
+      const originalRequest = window.requestIdleCallback;
+      const originalCancel = window.cancelIdleCallback;
+      jest.useFakeTimers();
+      window.requestIdleCallback = jest.fn((callback: IdleRequestCallback) =>
+        window.setTimeout(
+          () => callback({ didTimeout: false, timeRemaining: () => 50 }),
+          0
+        )
+      );
+      window.cancelIdleCallback = jest.fn((id: number) =>
+        window.clearTimeout(id)
+      );
+      const proxy = {
+        root: { status: ProxyStatus.MONITORING },
+        value: Array.from({ length: 4000 }, (_, index) => valueAt(index)),
+      } as PropertyProxy;
+      const model = new VectorBarGraphModel();
+      const view = render(<VectorChartHarness model={model} proxy={proxy} />);
+      try {
+        act(() => jest.runOnlyPendingTimers());
+        const points = chart().data.datasets[0].data as {
+          x: number;
+          y: number;
+        }[];
+        expect(points).toHaveLength(3000);
+        expect(points[0]).toEqual({ x: 0, y: valueAt(0) });
+        expect(points.at(-1)).toEqual({ x: 3999, y: valueAt(3999) });
+        fireEvent.click(screen.getByRole('button', { name: 'Move' }));
+        fireEvent.mouseDown(screen.getByTestId('vector-chart'), {
+          button: 0,
+          clientX: 90,
+          clientY: 40,
+        });
+        Object.assign(proxy, { value: [-1, 9] });
+        view.rerender(<VectorChartHarness model={model} proxy={proxy} />);
+        act(() => jest.runOnlyPendingTimers());
+        expect(chart().data.datasets[0].data).toHaveLength(3000);
+        fireEvent.mouseUp(document, { button: 0, clientX: 100, clientY: 50 });
+        expect(chart().data.datasets[0].data).toEqual([
+          { x: 0, y: -1 },
+          { x: 1, y: 9 },
+        ]);
+        Object.assign(proxy, { value: [] });
+        view.rerender(<VectorChartHarness model={model} proxy={proxy} />);
+        act(() => jest.runOnlyPendingTimers());
+        expect(chart().data.datasets[0].data).toEqual([]);
+      } finally {
+        view.unmount();
+        expect(chart().destroy).toHaveBeenCalled();
+        window.requestIdleCallback = originalRequest;
+        window.cancelIdleCallback = originalCancel;
+        jest.useRealTimers();
+      }
+    }
+  );
 });

@@ -10,7 +10,7 @@ import {
 import { trendTimeTicks } from './trend/trendTimeTicks';
 import type { TrendSeries } from './trend/useTrendModel';
 import { vectorBarPlugin } from './vectorBarPlugin';
-import { formatValueTick } from './utils';
+import { formatValueTick, VECTOR_POINT_LIMIT } from './utils';
 
 type ChartScales = NonNullable<
   NonNullable<ChartConfiguration<'line'>['options']>['scales']
@@ -306,6 +306,30 @@ export function barChartOption(
     ...(config.plugins ?? []),
     vectorBarPlugin(plotConfig.bar_width),
   ];
+  return config;
+}
+
+export function vectorXYChartOption(
+  plotConfig: PlotSettings,
+  keys: readonly string[],
+  axes: PlotAxesConfig = buildPlotAxes(plotConfig)
+): ChartConfiguration<'line'> {
+  const config = commonChartOption(plotConfig, axes);
+  config.options!.parsing = {};
+  config.options!.normalized = false;
+  config.data.datasets = keys.map((key, index) => ({
+    label: key,
+    data: [],
+    borderColor: TRACE_COLORS[index % TRACE_COLORS.length],
+    backgroundColor: TRACE_COLORS[index % TRACE_COLORS.length],
+    borderWidth: GRAPH_LAYOUT.lineWidth,
+    pointRadius: (context: ScriptableContext<'line'>) =>
+      context.dataset.data.length < VECTOR_POINT_LIMIT
+        ? GRAPH_LAYOUT.vectorPointSize
+        : 0,
+    pointHoverRadius: 0,
+    tension: 0,
+  }));
   return config;
 }
 
