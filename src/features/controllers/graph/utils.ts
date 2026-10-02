@@ -1,17 +1,31 @@
-import type { Range } from '../common/api';
+import type { Range } from './common/constants';
 
-export function fixedVectorRange(
-  autorange: boolean,
-  min: number,
-  max: number
-): Range | undefined {
-  return autorange ||
-    !Number.isFinite(min) ||
-    !Number.isFinite(max) ||
-    min === max
-    ? undefined
-    : [min, max];
+const tickValueFormat = new Intl.NumberFormat(undefined, {
+  maximumFractionDigits: 2,
+});
+export function formatValueTick(value: number) {
+  const magnitude = Math.abs(value);
+  if (magnitude !== 0 && (magnitude < 0.01 || magnitude >= 1e9))
+    return value
+      .toExponential(2)
+      .replace(/\.00e/, 'e')
+      .replace(/(\.\d)0e/, '$1e');
+  return tickValueFormat.format(value);
 }
+
+export function integerTickFormatter(labels: ReadonlyMap<number, string>) {
+  return (value: number) =>
+    (Number.isInteger(value) ? labels.get(value) : undefined) ??
+    formatValueTick(value);
+}
+
+export const VECTOR_POINT_LIMIT = 300;
+
+export function chooseVectorTargetPoints(length: number) {
+  return length >= 1_500_000 ? 60_000 : length;
+}
+
+export const BAR_SAMPLE_LIMIT = 3000;
 
 export function visibleVectorRange(
   pointCount: number,

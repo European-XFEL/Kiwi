@@ -1,11 +1,10 @@
 import { buildModelConfig } from '../../common/api';
 import { DisplayTrendGraphModel } from '@/karabo/common/api';
 import {
-  fixedXRange,
-  fixedYRange,
+  buildPlotAxes,
   trendChartOption,
   trendDatasets,
-} from '../configTrendChart';
+} from '../../chartConfig';
 import { formatValueTick } from '../../common/api';
 
 const series = [
@@ -70,12 +69,10 @@ describe('trend Chart.js configuration', () => {
       y_invert: true,
       y_log: true,
     });
-    expect(fixedXRange(model)).toEqual([1000, 4000]);
-    expect(fixedYRange(model)).toEqual([0.1, 100]);
-    expect(
-      trendChartOption(model, series, fixedXRange(model), fixedYRange(model))
-        .options?.scales
-    ).toMatchObject({
+    const axes = buildPlotAxes(model, { timeX: true });
+    expect(axes.x.range).toEqual([1000, 4000]);
+    expect(axes.y.range).toEqual([0.1, 100]);
+    expect(trendChartOption(model, series).options?.scales).toMatchObject({
       x: { min: 1000, max: 4000, reverse: true },
       y: { min: 0.1, max: 100, type: 'logarithmic', reverse: true },
     });

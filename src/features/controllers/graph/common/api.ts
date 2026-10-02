@@ -1,7 +1,6 @@
 export { ChartLayout } from './components/ChartLayout';
 export { ChartPlot } from './components/ChartPlot';
-export { axisTitle, formatValueTick } from './axis';
-export { commonChartOption } from './commonConfig';
+export { axisTitle, buildPlotAxes, commonChartOption } from '../chartConfig';
 export { GRAPH_AXIS_FONT, GRAPH_LAYOUT, TRACE_COLORS } from './constants';
 export type { Range } from './constants';
 export type { AxisRanges } from './useMouseGestures';
@@ -9,3 +8,6 @@ export { usePlotItem } from './usePlotItem';
 export { useViewBox } from './useViewBox';
 export { buildModelConfig, KARABO_BASE_SAVABLE } from './buildModelConfig';
 export type { PlotSettings } from './buildModelConfig';
+export type { AxisConfig, PlotAxesConfig } from '../chartConfig';
+export { useChart, useChartRanges } from './useChart';
+export { formatValueTick, integerTickFormatter } from '../utils';

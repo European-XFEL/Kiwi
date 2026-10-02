@@ -1,9 +1,9 @@
 import { Chart, BasicPlatform, registerables } from 'chart.js';
 import { DisplayVectorGraphModel } from '@/karabo/common/api';
-import { buildModelConfig } from '../../common/api';
-import { vectorChartOption } from '../configVectorChart';
-import { vectorPoints, visibleVectorRange } from '../vectorRange';
-import { lttbWithCoordinates } from '../../../utils/lttb';
+import { buildModelConfig } from '../common/api';
+import { vectorChartOption } from '../chartConfig';
+import { vectorPoints, visibleVectorRange } from '../utils';
+import { lttbWithCoordinates } from '../../utils/lttb';
 
 test('inverts padded displayed ranges into ordered source bounds', () => {
   expect(

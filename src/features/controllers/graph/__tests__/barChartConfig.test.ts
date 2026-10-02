@@ -1,6 +1,7 @@
-import { buildModelConfig } from '../../common/api';
+import { buildModelConfig } from '../common/api';
 import { VectorBarGraphModel } from '@/karabo/common/api';
-import { BAR_SAMPLE_LIMIT, barChartOption } from '../configBarChart';
+import { barChartOption } from '../chartConfig';
+import { BAR_SAMPLE_LIMIT } from '../utils';
 import { vectorBarPlugin } from '../vectorBarPlugin';
 
 describe('bar Chart.js configuration', () => {

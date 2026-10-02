@@ -1,7 +1,7 @@
 import React from 'react';
 import { Timestamp } from '@/karabo/data/api';
 import type { PropertyProxy } from '@/lib/binding/api';
-import { getBindingValue } from '../../utils/getBindingValue';
+import { getBindingValue } from '../utils/getBindingValue';
 
 export type ScatterPoint = { x: number; y: number };
 

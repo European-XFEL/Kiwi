@@ -1,15 +1,10 @@
 import React from 'react';
 import type { PlotSettings } from '../common/api';
 import type { TrendSeries } from './useTrendModel';
+import { trendDatasets, trendChartOption } from '../chartConfig';
 import {
-  fixedXRange,
-  fixedYRange,
-  trendDatasets,
-  trendChartOption,
-} from './configTrendChart';
-import {
-  usePlotItem,
-  useViewBox,
+  buildPlotAxes,
+  useChart,
   type AxisRanges,
   type Range,
 } from '../common/api';
@@ -38,16 +33,11 @@ export function useTrendChart({
 }) {
   const [view, setView] = React.useState<View>({ mode: 'uptime' });
   const [visibleRange, setVisibleRange] = React.useState<Range>();
-  const selectionRef = React.useRef<HTMLDivElement>(null);
   const latestSeriesRef = React.useRef(series);
   latestSeriesRef.current = series;
   const [hiddenCurves, setHiddenCurves] = React.useState<Set<string>>(
     () => new Set()
   );
-  const pendingUpdateRef = React.useRef<
-    ((ranges?: AxisRanges) => void) | undefined
-  >(undefined);
-
   const xRange = React.useMemo<Range | undefined>(() => {
     if (view.mode === null) return view.xRange;
     const latest = Math.max(
@@ -91,28 +81,46 @@ export function useTrendChart({
     [rememberRange]
   );
   const reset = React.useCallback(() => setView({ mode: 'uptime' }), []);
-  const onFinish = React.useCallback((ranges?: AxisRanges) => {
-    pendingUpdateRef.current?.(ranges);
-  }, []);
   const seriesKeys = series.map((item) => item.key).join('\0');
-  const plotItem = usePlotItem(
-    () => trendChartOption(plotConfig, latestSeriesRef.current),
-    [plotConfig, seriesKeys]
+  const axes = React.useMemo(
+    () => buildPlotAxes(plotConfig, { timeX: true }),
+    [plotConfig]
   );
-  const { containerRef, viewport, update, setVisible, isVisible, findDataset } =
-    plotItem;
-
-  const viewBox = useViewBox({
+  const buildData = React.useCallback(
+    () => ({ datasets: trendDatasets(series) }),
+    [series]
+  );
+  const onRanges = React.useCallback(
+    (ranges: AxisRanges) => rememberRange(ranges.x),
+    [rememberRange]
+  );
+  const chart = useChart({
+    axes,
+    configuration: () =>
+      trendChartOption(
+        plotConfig,
+        latestSeriesRef.current,
+        undefined,
+        undefined,
+        axes
+      ),
+    identity: [plotConfig, seriesKeys],
+    xRange,
+    yRange: view.yRange,
+    onComplete: pause,
+    onReset: reset,
+    onRanges,
+    buildData,
+    dataRevision,
+  });
+  const {
     containerRef,
     selectionRef,
     viewport,
-    inverted: { x: plotConfig.x_invert, y: plotConfig.y_invert },
-    logarithmicX: false,
-    logarithmicY: plotConfig.y_log,
-    onComplete: pause,
-    onFinish,
-    onReset: reset,
-  });
+    setVisible,
+    isVisible,
+    findDataset,
+  } = chart;
 
   React.useLayoutEffect(() => {
     seriesKeys
@@ -122,8 +130,8 @@ export function useTrendChart({
         const visible = !hiddenCurves.has(key);
         setVisible(index, visible);
       });
-    viewBox.rangesRef.current = viewport.readRanges(viewBox.rangesRef.current);
-  }, [seriesKeys, hiddenCurves, viewBox.rangesRef, setVisible, viewport]);
+    chart.rangesRef.current = viewport.readRanges(chart.rangesRef.current);
+  }, [seriesKeys, hiddenCurves, chart.rangesRef, setVisible, viewport]);
   const toggleCurve = React.useCallback(
     (key: string) => {
       const index = findDataset(key);
@@ -141,49 +149,15 @@ export function useTrendChart({
   );
 
   const yRange = view.yRange;
-  const applyLatest = React.useCallback(
-    (gestureRanges?: AxisRanges) => {
-      const nextX = gestureRanges?.x ?? xRange ?? fixedXRange(plotConfig);
-      const nextY = gestureRanges?.y ?? yRange ?? fixedYRange(plotConfig);
-      update(trendDatasets(series), nextX, nextY);
-      const fallback: AxisRanges | undefined = nextX
-        ? { x: nextX, y: nextY ?? viewBox.rangesRef.current?.y ?? [0, 1] }
-        : viewBox.rangesRef.current;
-      const ranges = viewport.readRanges(fallback);
-      viewBox.rangesRef.current = ranges;
-      if (ranges) rememberRange(ranges.x);
-      pendingUpdateRef.current = undefined;
-    },
-    [
-      plotConfig,
-      rememberRange,
-      series,
-      xRange,
-      yRange,
-      viewBox.rangesRef,
-      update,
-      viewport,
-    ]
-  );
-
-  React.useLayoutEffect(() => {
-    if (viewBox.activeRef.current) {
-      // Replace the pending work so finishing a drag applies the latest samples.
-      pendingUpdateRef.current = applyLatest;
-      return;
-    }
-    applyLatest();
-  }, [applyLatest, dataRevision, viewBox.activeRef]);
-
   return {
     containerRef,
     selectionRef,
-    tool: viewBox.tool,
-    selectTool: viewBox.selectTool,
+    tool: chart.tool,
+    selectTool: chart.selectTool,
     mode: view.mode,
     visibleRange,
     follow,
-    reset,
+    reset: chart.reset,
     xRange,
     yRange,
     pause,
