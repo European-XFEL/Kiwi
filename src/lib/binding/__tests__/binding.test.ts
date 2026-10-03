@@ -8,6 +8,7 @@ import {
   BindingRoot,
   BaseBinding,
   BindingNamespace,
+  VectorBinding,
   VectorBoolBinding,
   VectorDoubleBinding,
   VectorUInt32Binding,
@@ -40,6 +41,24 @@ import path from 'path';
 import * as types from '@/karabo/data/types';
 
 describe('check binding', () => {
+  it.each([
+    VectorBoolBinding,
+    VectorDoubleBinding,
+    VectorFloatBinding,
+    VectorHashBinding,
+    VectorInt8Binding,
+    VectorInt16Binding,
+    VectorInt32Binding,
+    VectorInt64Binding,
+    VectorStringBinding,
+    VectorUInt8Binding,
+    VectorUInt16Binding,
+    VectorUInt32Binding,
+    VectorUInt64Binding,
+  ])('inherits VectorBinding for %p', (Binding) => {
+    expect(new Binding()).toBeInstanceOf(VectorBinding);
+  });
+
   it('BaseBinding Mutable', () => {
     const leaf = new BaseBinding({ value: 1 });
     const ns1 = new BindingNamespace<BaseBinding>();

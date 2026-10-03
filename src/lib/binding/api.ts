@@ -9,6 +9,9 @@ export {
   CharBinding,
   ByteArrayBinding,
   NodeBinding,
+  NDArrayBinding,
+  ImageBinding,
+  VectorBinding,
   VectorHashBinding,
   Int16Binding,
   Int32Binding,
@@ -36,3 +39,4 @@ export { buildBinding, buildNode } from './BindingFactory';
 export { applyConfiguration, DeviceProxy } from './DeviceProxy';
 export { PropertyProxy } from './PropertyProxy';
 export { ProxyStatus, PropertyStatus } from './ProxyStatus';
+export { getBindingArrayValue } from './arrays';

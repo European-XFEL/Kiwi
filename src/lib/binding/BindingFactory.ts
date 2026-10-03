@@ -20,6 +20,8 @@ import {
   CharBinding,
   Int16Binding,
   ImageBinding,
+  NDArrayBinding,
+  ByteArrayBinding,
   Int32Binding,
   Int64Binding,
   UInt32Binding,
@@ -108,6 +110,7 @@ function getBindings(): Record<string, BindingCtor> {
       STRING: StringBinding,
       BOOL: BoolBinding,
       CHAR: CharBinding,
+      BYTE_ARRAY: ByteArrayBinding,
       INT8: Int8Binding,
       UINT8: UInt8Binding,
       INT16: Int16Binding,
@@ -141,6 +144,8 @@ function getNodeBindings(): Record<string, BindingCtor> {
     _NODE_BINDINGS = {
       Slot: SlotBinding,
       ImageData: ImageBinding,
+      Image: ImageBinding,
+      NDArray: NDArrayBinding,
     };
   return _NODE_BINDINGS;
 }
