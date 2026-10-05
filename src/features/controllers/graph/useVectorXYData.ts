@@ -1,7 +1,7 @@
 import React from 'react';
 import type { PropertyProxy } from '@/lib/binding/api';
 import { useIdleScheduler } from '../useIdleScheduler';
-import { normalizeVector, type VectorData } from './normalizeVector';
+import { normalizeVector, type VectorData } from './utils';
 
 export type VectorXYSeries = { key: string; values: VectorData };
 
@@ -38,6 +38,8 @@ export function useVectorXYData(
   React.useEffect(() => {
     if (previousKeys.current !== snapshot.keysId) setPublished(empty);
     previousKeys.current = snapshot.keysId;
+    // Publish the latest X and Y vectors together in one idle callback so
+    // coalesced updates cannot mix vectors from different rendered snapshots.
     schedulePublish(() => {
       const { keysId, keys, raw } = latest.current;
       setPublished({

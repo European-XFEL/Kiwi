@@ -1,10 +1,7 @@
 import { buildModelConfig } from '../../common/api';
 import { DisplayTrendGraphModel } from '@/karabo/common/api';
-import {
-  buildPlotAxes,
-  trendChartOption,
-  trendDatasets,
-} from '../../chartConfig';
+import { trendChartOption, trendDatasets } from '../trendConfig';
+import { buildPlotAxes } from '../../graphAxes';
 import { formatValueTick } from '../../common/api';
 import { STATE_LABELS, ALARM_LABELS } from '../categories';
 

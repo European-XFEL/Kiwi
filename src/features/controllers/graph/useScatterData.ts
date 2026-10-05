@@ -2,6 +2,7 @@ import React from 'react';
 import { Timestamp } from '@/karabo/data/api';
 import type { PropertyProxy } from '@/lib/binding/api';
 import { getBindingValue } from '../utils/getBindingValue';
+import { useIdleScheduler } from '../useIdleScheduler';
 
 export type ScatterPoint = { x: number; y: number };
 
@@ -12,7 +13,7 @@ function numericValue(proxy: PropertyProxy | undefined) {
   return Number.isFinite(value) ? value : undefined;
 }
 
-/** Collect the latest proxy values once per published proxy update. */
+/** Collect each rendered proxy update; publish chart revisions when idle. */
 export function useScatterData(proxies: PropertyProxy[], maxlen: number) {
   const previousY = React.useRef<PropertyProxy | undefined>(undefined);
   const lastTimestamp = React.useRef<bigint | undefined>(undefined);
@@ -26,6 +27,18 @@ export function useScatterData(proxies: PropertyProxy[], maxlen: number) {
   >(undefined);
   const points = React.useRef<ScatterPoint[]>([]).current;
   const [dataRevision, setDataRevision] = React.useState(0);
+  const dirty = React.useRef(false);
+  const schedulePublish = useIdleScheduler(1000);
+  const publish = React.useCallback(() => {
+    dirty.current = true;
+    // Keep every collected point in the shared array while coalescing redraws.
+    // The callback reads the current dirty flag, including clears before idle.
+    schedulePublish(() => {
+      if (!dirty.current) return;
+      dirty.current = false;
+      setDataRevision((current) => current + 1);
+    });
+  }, [schedulePublish]);
   const limit = Number.isFinite(maxlen) ? Math.max(1, Math.floor(maxlen)) : 100;
 
   const clear = React.useCallback(() => {
@@ -37,6 +50,8 @@ export function useScatterData(proxies: PropertyProxy[], maxlen: number) {
     };
     // Chart.js observes splice arguments and requires an explicit delete count.
     points.splice(0, points.length);
+    // Explicit clears publish immediately and supersede a pending idle redraw.
+    dirty.current = false;
     setDataRevision((current) => current + 1);
   }, [proxies, points]);
 
@@ -47,12 +62,12 @@ export function useScatterData(proxies: PropertyProxy[], maxlen: number) {
       lastTimestamp.current = undefined;
       if (points.length) {
         points.splice(0, points.length);
-        setDataRevision((current) => current + 1);
+        publish();
       }
     }
     if (points.length > limit) {
       points.splice(0, points.length - limit);
-      setDataRevision((current) => current + 1);
+      publish();
     }
 
     const timestamp = yProxy?.timestamp;
@@ -78,8 +93,8 @@ export function useScatterData(proxies: PropertyProxy[], maxlen: number) {
     clearedX.current = undefined;
     if (points.length === limit) points.shift();
     points.push({ x, y });
-    setDataRevision((current) => current + 1);
-  }, [proxies, limit, points]);
+    publish();
+  }, [proxies, limit, points, publish]);
 
   return { points, dataRevision, clear };
 }

@@ -1,6 +1,11 @@
 import React from 'react';
-import { vectorXYChartOption } from './chartConfig';
-import { vectorPoints, generateDownsample, padViewportRange } from './utils';
+import { vectorXYChartOption } from './plotConfig';
+import {
+  vectorPoints,
+  generateDownsample,
+  padViewportRange,
+  type VectorData,
+} from './utils';
 import {
   buildPlotAxes,
   useChart,
@@ -8,7 +13,6 @@ import {
   type PlotSettings,
   type Range,
 } from './common/api';
-import type { VectorData } from './normalizeVector';
 import type { VectorXYSeries } from './useVectorXYData';
 
 /**

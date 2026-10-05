@@ -2,7 +2,7 @@ import React from 'react';
 import type { PlotSettings } from './common/api';
 import type { PropertyProxy } from '@/lib/binding/api';
 import { buildPlotAxes, useChart, useChartRanges } from './common/api';
-import { scatterChartOption } from './chartConfig';
+import { scatterChartOption } from './plotConfig';
 import { useScatterData } from './useScatterData';
 
 export function useScatterChart({

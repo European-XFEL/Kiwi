@@ -1,0 +1,59 @@
+import { act, cleanup, renderHook } from '@testing-library/react';
+import type { PropertyProxy } from '@/lib/binding/api';
+import { useVectorBarData } from '../useVectorBarData';
+
+const originalRequest = window.requestIdleCallback;
+const originalCancel = window.cancelIdleCallback;
+
+describe('useVectorBarData', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    window.requestIdleCallback = jest.fn((callback: IdleRequestCallback) =>
+      window.setTimeout(
+        () => callback({ didTimeout: false, timeRemaining: () => 50 }),
+        0
+      )
+    );
+    window.cancelIdleCallback = jest.fn((id: number) =>
+      window.clearTimeout(id)
+    );
+  });
+
+  afterEach(() => {
+    cleanup();
+    window.requestIdleCallback = originalRequest;
+    window.cancelIdleCallback = originalCancel;
+    jest.useRealTimers();
+  });
+
+  it('publishes the latest complete vector at idle without downsampling', () => {
+    const proxy = {
+      value: Float64Array.from({ length: 4000 }, (_, index) => -index),
+    } as PropertyProxy;
+    const { result, rerender } = renderHook(() => useVectorBarData(proxy));
+    expect(result.current.values).toHaveLength(0);
+    const latest = Float64Array.from({ length: 5000 }, (_, index) => index);
+    Object.assign(proxy, { value: latest });
+    rerender();
+    expect(window.requestIdleCallback).toHaveBeenCalledTimes(1);
+    act(() => jest.runOnlyPendingTimers());
+    expect(result.current.values).toEqual(latest);
+    expect(result.current.values).toHaveLength(5000);
+  });
+
+  it('clears published bars when the proxy is removed', () => {
+    const { result, rerender } = renderHook(
+      ({ proxy }) => useVectorBarData(proxy),
+      {
+        initialProps: {
+          proxy: { value: [2, -3] } as PropertyProxy | undefined,
+        },
+      }
+    );
+    act(() => jest.runOnlyPendingTimers());
+    expect(result.current.values).toEqual(new Float64Array([2, -3]));
+    rerender({ proxy: undefined });
+    act(() => jest.runOnlyPendingTimers());
+    expect(result.current.values).toHaveLength(0);
+  });
+});

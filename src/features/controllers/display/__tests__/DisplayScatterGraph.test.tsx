@@ -1,6 +1,7 @@
 import { buildModelConfig } from '../../graph/common/api';
 import {
   act,
+  cleanup,
   fireEvent,
   render,
   renderHook,
@@ -18,7 +19,7 @@ import {
   PropertyProxy,
 } from '@/lib/binding/api';
 import { useScatterData } from '../../graph/useScatterData';
-import { scatterChartOption } from '../../graph/chartConfig';
+import { scatterChartOption } from '../../graph/plotConfig';
 import DisplayScatterGraph from '../DisplayScatterGraph';
 
 function property(path: string) {
@@ -52,6 +53,89 @@ function renderData(x: PropertyProxy, y?: PropertyProxy, maxlen = 100) {
       hook.rerender({ proxies: nextY ? [x, nextY] : [x], limit }),
   };
 }
+
+describe('scatter idle publication', () => {
+  const originalRequest = window.requestIdleCallback;
+  const originalCancel = window.cancelIdleCallback;
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    window.requestIdleCallback = jest.fn((callback: IdleRequestCallback) =>
+      window.setTimeout(
+        () => callback({ didTimeout: false, timeRemaining: () => 50 }),
+        0
+      )
+    );
+    window.cancelIdleCallback = jest.fn((id: number) =>
+      window.clearTimeout(id)
+    );
+  });
+
+  afterEach(() => {
+    cleanup();
+    window.requestIdleCallback = originalRequest;
+    window.cancelIdleCallback = originalCancel;
+    jest.useRealTimers();
+  });
+
+  it('collects every rendered sample while coalescing chart revisions', () => {
+    const x = property('x');
+    const y = property('y');
+    const { result, publish } = renderData(x.proxy, y.proxy, 3);
+    x.send(5);
+    for (let time = 1; time <= 4; time++) {
+      y.send(time, time);
+      publish();
+    }
+    expect(result.current.points).toEqual([
+      { x: 5, y: 2 },
+      { x: 5, y: 3 },
+      { x: 5, y: 4 },
+    ]);
+    expect(result.current.dataRevision).toBe(0);
+    expect(window.requestIdleCallback).toHaveBeenCalledTimes(1);
+    expect(window.requestIdleCallback).toHaveBeenCalledWith(
+      expect.any(Function),
+      { timeout: 1000 }
+    );
+    act(() => jest.runOnlyPendingTimers());
+    expect(result.current.dataRevision).toBe(1);
+
+    y.send(5, 5);
+    publish();
+    act(() => jest.runOnlyPendingTimers());
+    expect(result.current.dataRevision).toBe(2);
+    expect(result.current.points.at(-1)).toEqual({ x: 5, y: 5 });
+  });
+
+  it('clears immediately without replaying a pending publication', () => {
+    const x = property('x');
+    const y = property('y');
+    const { result, publish } = renderData(x.proxy, y.proxy);
+    x.send(1);
+    y.send(2, 1);
+    publish();
+    act(() => result.current.clear());
+    expect(result.current.points).toEqual([]);
+    expect(result.current.dataRevision).toBe(1);
+    act(() => jest.runOnlyPendingTimers());
+    expect(result.current.dataRevision).toBe(1);
+    expect(result.current.points).toEqual([]);
+  });
+
+  it('cancels pending publication on unmount', () => {
+    const x = property('x');
+    const y = property('y');
+    const { publish, unmount } = renderData(x.proxy, y.proxy);
+    x.send(1);
+    y.send(2, 1);
+    publish();
+    const requestId = (window.requestIdleCallback as jest.Mock).mock.results[0]
+      .value;
+    unmount();
+    expect(window.cancelIdleCallback).toHaveBeenCalledWith(requestId);
+  });
+});
 
 test('clears a shared array safely with the real Chart.js controller', () => {
   RealChart.register(...registerables);

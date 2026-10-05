@@ -1,8 +1,8 @@
 import { buildModelConfig } from '../common/api';
 import { VectorBarGraphModel } from '@/karabo/common/api';
-import { barChartOption } from '../chartConfig';
+import { barChartOption } from '../plotConfig';
 import { BAR_SAMPLE_LIMIT } from '../utils';
-import { vectorBarPlugin } from '../vectorBarPlugin';
+import { vectorBarPlugin } from '../graphPlugins';
 
 describe('bar Chart.js configuration', () => {
   it('keeps X linear and honors Y options', () => {

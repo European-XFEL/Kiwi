@@ -3,7 +3,7 @@ import { buildModelConfig } from '../graph/common/api';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 import type { VectorBarGraphModel } from '@/karabo/common/api';
 import { ChartLayout, ChartPlot } from '../graph/common/api';
-import { useVectorChart } from '../graph/useVectorChart';
+import { useVectorBarChart } from '../graph/useVectorBarChart';
 
 export default function DisplayBarGraph({
   model,
@@ -14,7 +14,7 @@ export default function DisplayBarGraph({
 }) {
   const plotConfig = React.useMemo(() => buildModelConfig(model), [model]);
   const { containerRef, selectionRef, tool, selectTool, reset } =
-    useVectorChart({ plotConfig, proxy: ctx?.proxy });
+    useVectorBarChart({ plotConfig, proxy: ctx?.proxy });
 
   return (
     <ChartLayout

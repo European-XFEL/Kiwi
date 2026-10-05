@@ -1,9 +1,9 @@
 import React from 'react';
 import { PropertyProxy } from '@/lib/binding/api';
 import { useIdleScheduler } from '../useIdleScheduler';
-import { normalizeVector, type VectorData } from './normalizeVector';
+import { normalizeVector, type VectorData } from './utils';
 
-export type { VectorData } from './normalizeVector';
+export type { VectorData } from './utils';
 
 /**
  * Normalizes proxy values into numeric vectors and publishes the latest value
@@ -25,6 +25,8 @@ export function useVectorData(proxy: PropertyProxy | undefined) {
       );
       return;
     }
+    // Coalesce full-vector replacements and read the latest value at idle.
+    // The scheduler's timeout keeps publication moving on busy pages.
     schedulePublish(() => {
       setPublished(normalizeVector(latestValue.current));
     });
