@@ -216,7 +216,9 @@ export class NodeBinding extends BaseBinding<BindingNamespace<BaseBinding>> {
   }
 }
 
-export class VectorHashBinding extends BaseBinding<any> {
+export class VectorBinding<TValue = any> extends BaseBinding<TValue> {}
+
+export class VectorHashBinding extends VectorBinding<any> {
   private _cachedRowSchema?: Record<string, BaseBinding>;
 
   get rowSchema(): Record<string, BaseBinding> | undefined {
@@ -314,20 +316,21 @@ export class DoubleBinding extends BaseBinding<types.DoubleValue> {
 }
 
 export class ByteArrayBinding extends BaseBinding<types.VectorCharValue> {}
-export class VectorStringBinding extends BaseBinding<types.VectorStringValue> {}
-export class VectorBoolBinding extends BaseBinding<types.VectorBoolValue> {}
-export class VectorFloatBinding extends BaseBinding<types.VectorFloatValue> {}
-export class VectorDoubleBinding extends BaseBinding<types.VectorDoubleValue> {}
+export class VectorStringBinding extends VectorBinding<types.VectorStringValue> {}
+export class VectorBoolBinding extends VectorBinding<types.VectorBoolValue> {}
+export class VectorFloatBinding extends VectorBinding<types.VectorFloatValue> {}
+export class VectorDoubleBinding extends VectorBinding<types.VectorDoubleValue> {}
 
-export class VectorUInt8Binding extends BaseBinding<types.VectorUInt8Value> {}
-export class VectorUInt16Binding extends BaseBinding<types.VectorUInt16Value> {}
-export class VectorUInt32Binding extends BaseBinding<types.VectorUInt32Value> {}
-export class VectorUInt64Binding extends BaseBinding<types.VectorUInt64Value> {}
+export class VectorUInt8Binding extends VectorBinding<types.VectorUInt8Value> {}
+export class VectorUInt16Binding extends VectorBinding<types.VectorUInt16Value> {}
+export class VectorUInt32Binding extends VectorBinding<types.VectorUInt32Value> {}
+export class VectorUInt64Binding extends VectorBinding<types.VectorUInt64Value> {}
 
-export class VectorInt8Binding extends BaseBinding<types.VectorInt8Value> {}
-export class VectorInt16Binding extends BaseBinding<types.VectorInt16Value> {}
-export class VectorInt32Binding extends BaseBinding<types.VectorInt32Value> {}
-export class VectorInt64Binding extends BaseBinding<types.VectorInt64Value> {}
+export class VectorInt8Binding extends VectorBinding<types.VectorInt8Value> {}
+export class VectorInt16Binding extends VectorBinding<types.VectorInt16Value> {}
+export class VectorInt32Binding extends VectorBinding<types.VectorInt32Value> {}
+export class VectorInt64Binding extends VectorBinding<types.VectorInt64Value> {}
 
 export class SlotBinding extends NodeBinding {}
 export class ImageBinding extends NodeBinding {}
+export class NDArrayBinding extends NodeBinding {}
