@@ -6,6 +6,7 @@ import {
   TooltipTrigger,
 } from '@/components/api';
 import type { WorkspaceFooterModel, WorkspaceFooterRuntime } from '../types';
+import WorkspaceLog from './WorkspaceLog';
 
 function FooterText({
   label,
@@ -113,6 +114,7 @@ export default function WorkspaceFooter({
   return (
     <Footer id="workspace-footer" className="shrink-0">
       <div className="flex flex-col">
+        <WorkspaceLog />
         <div className="flex flex-col gap-2 px-4 py-2 text-xs md:hidden">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 space-y-1">

@@ -5,6 +5,7 @@ import { KaraboEvent } from '@/lib/events';
 import { showMessageBox } from '@/lib/messagebox';
 import { Mediator } from '@/lib/singletons/Mediator';
 import { ProjectItemModel } from '@/lib/singletons/ProjectItemModel';
+import { SingletonContext } from '@/testing';
 import {
   clearRootProject,
   loadRootProjectScene,
@@ -16,14 +17,7 @@ let mockProjectModel: ProjectItemModel;
 const mockListProjects = jest.fn();
 const mockLoadProject = jest.fn();
 
-jest.mock('@/lib/singletons/api', () => ({
-  getDbConn: () => ({
-    listProjects: mockListProjects,
-    loadProject: mockLoadProject,
-  }),
-  getMediator: () => mockMediator,
-  getProjectModel: () => mockProjectModel,
-}));
+let context: SingletonContext;
 
 jest.mock('@/lib/messagebox', () => ({ showMessageBox: jest.fn() }));
 
@@ -99,7 +93,15 @@ beforeEach(() => {
   mockLoadProject.mockReset();
   mockMediator = new Mediator();
   mockProjectModel = new ProjectItemModel();
+  context = new SingletonContext({
+    logger: { info: jest.fn() },
+    db_conn: { listProjects: mockListProjects, loadProject: mockLoadProject },
+    mediator: mockMediator,
+    project_model: mockProjectModel,
+  });
 });
+
+afterEach(() => context.restore());
 
 describe('loadRootProjectScene', () => {
   it('loads the bookmarked project and announces its root before opening the scene', async () => {

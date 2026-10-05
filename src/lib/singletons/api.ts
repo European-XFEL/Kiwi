@@ -7,6 +7,7 @@ import { Mediator } from './Mediator';
 import { ConfigurationStore } from './Configuration';
 import { PanelWrangler } from './PanelWrangler';
 import { ProjectItemModel } from './ProjectItemModel';
+import { Logger } from './Logger';
 
 export type { RequestHandler };
 
@@ -44,3 +45,4 @@ export const getMediator = buildGetter('mediator', Mediator);
 export const getConfig = buildGetter('config', ConfigurationStore);
 export const getPanelWrangler = buildGetter('panel_wrangler', PanelWrangler);
 export const getProjectModel = buildGetter('project_model', ProjectItemModel);
+export const getLogger = buildGetter('logger', Logger);

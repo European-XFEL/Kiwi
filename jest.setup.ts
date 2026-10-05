@@ -27,7 +27,11 @@ jest.mock('@/features/controllers/utils/bootstrapStatefulIcons', () => ({
 
 jest.mock('@/assets/icons', () => ({
   __esModule: true,
-  default: { image: 'image-icon', homeEdit: 'home-edit-icon' },
+  default: {
+    image: 'image-icon',
+    homeEdit: 'home-edit-icon',
+    editClear: 'edit-clear-icon',
+  },
 }));
 
 // Mock the simple Vigenère cipher crypto utility for tests

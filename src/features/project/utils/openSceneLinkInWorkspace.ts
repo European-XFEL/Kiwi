@@ -3,7 +3,12 @@ import { findSceneModelInProject } from '@/karabo/common/project/api';
 import { Capabilities } from '@/karabo/data/api';
 import { showMessageBox } from '@/lib/messagebox';
 import { callDeviceSlot, createRequestSceneHandler } from '@/lib/request';
-import { getDbConn, getProjectModel, getTopology } from '@/lib/singletons/api';
+import {
+  getDbConn,
+  getLogger,
+  getProjectModel,
+  getTopology,
+} from '@/lib/singletons/api';
 import {
   openUnattachedSceneInWorkspace,
   openSceneInWorkspace,
@@ -94,6 +99,9 @@ async function _retrieveDeviceScene(
   }
 
   return new Promise((resolve) => {
+    getLogger().info(
+      `Requesting unattached scene "${sceneName}" from device "${deviceId}"`
+    );
     const requestId = callDeviceSlot(
       createRequestSceneHandler(deviceId, sceneName, resolve),
       deviceId,

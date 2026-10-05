@@ -73,7 +73,7 @@ const SceneView: React.FC<SceneViewProps> = React.memo(
       >
         <div
           id={`SceneView-Scene-Inner-${sceneInnerId}`}
-          className="overflow-hidden rounded-md bg-[#eeeeee] shadow-lg"
+          className="overflow-hidden rounded-md bg-canvas shadow-lg"
           onPointerDownCapture={handleScenePointerDown}
           style={{
             position: 'absolute',
