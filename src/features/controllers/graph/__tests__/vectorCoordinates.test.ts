@@ -2,8 +2,18 @@ import { Chart, BasicPlatform, registerables } from 'chart.js';
 import { DisplayVectorGraphModel } from '@/karabo/common/api';
 import { buildModelConfig } from '../common/api';
 import { vectorChartOption } from '../chartConfig';
-import { vectorPoints, generateDownsample, padViewportRange } from '../utils';
+import {
+  vectorPoints,
+  generateBaseline,
+  generateDownsample,
+  padViewportRange,
+} from '../utils';
 import { lttbWithCoordinates } from '../../utils/lttb';
+
+test('generates the default baseline and handles empty data', () => {
+  expect(generateBaseline([7, 8, 9])).toEqual(new Float64Array([0, 1, 2]));
+  expect(generateBaseline([], 10, 2)).toEqual(new Float64Array());
+});
 
 test.each([
   { offset: 10, step: 2, expected: [16, 18, 20, 22] },
@@ -14,10 +24,7 @@ test.each([
 ])(
   'samples padded ranges in source order with offset=$offset and step=$step',
   ({ offset, step, expected }) => {
-    const x = Float64Array.from(
-      { length: 201 },
-      (_, i) => offset + i * (step || 1)
-    );
+    const x = generateBaseline(new Float64Array(201), offset, step);
     const [sampledX] = generateDownsample(x, x, padViewportRange([18, 20]));
     expect(Array.from(sampledX)).toEqual(expected);
   }
@@ -56,7 +63,7 @@ test.each([-2, 0])(
     const data = vectorPoints(
       lttbWithCoordinates(
         [1, -50, 100, 2],
-        Float64Array.from({ length: 4 }, (_, i) => 20 + i * (step || 1))
+        generateBaseline([1, -50, 100, 2], 20, step)
       )
     );
     config.data.datasets[0].data = data;

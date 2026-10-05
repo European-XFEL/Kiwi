@@ -24,6 +24,19 @@ export const VECTOR_POINT_LIMIT = 300;
 
 export const BAR_SAMPLE_LIMIT = 3000;
 
+/** Generate X coordinates from the baseline offset and step. */
+export function generateBaseline(
+  data: ArrayLike<number>,
+  offset = 0,
+  step = 1
+) {
+  step = step || 1;
+  return Float64Array.from(
+    { length: data.length },
+    (_, index) => offset + index * step
+  );
+}
+
 /** Add one viewport of overscan in linear or logarithmic X coordinates. */
 export function padViewportRange(
   range?: Range,
@@ -57,7 +70,7 @@ export function generateDownsample(
   let start = 0;
   let end = length;
   // Like KaraboGui, estimate spacing from the paired endpoints and leave small
-  // or degenerate pairs whole. Read the window directly without vector slices.
+  // or degenerate pairs whole.
   if (range && length > 200 && step !== 0 && Number.isFinite(step)) {
     const first = (range[0] - x[0]) / step;
     const last = (range[1] - x[0]) / step;

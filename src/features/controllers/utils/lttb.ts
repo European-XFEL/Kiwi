@@ -1,3 +1,22 @@
+const SAMPLE_THRESHOLDS: Record<number, number> = {
+  200_000: 30_000,
+  300_000: 40_000,
+  400_000: 50_000,
+  500_000: 60_000,
+};
+
+export function getSampleThreshold(size: number) {
+  let threshold = 20_000;
+  for (const [points, sampleThreshold] of Object.entries(SAMPLE_THRESHOLDS)) {
+    if (size > Number(points)) {
+      threshold = sampleThreshold;
+    } else {
+      break;
+    }
+  }
+  return threshold;
+}
+
 export function lttbWithCoordinates(
   y: ArrayLike<number>,
   x?: ArrayLike<number>,
@@ -15,41 +34,34 @@ export function lttbWithCoordinates(
   start = Math.max(0, Math.min(start, length));
   end = Math.max(start, Math.min(end, length));
   const count = end - start;
-  threshold ??=
-    count > 500_000
-      ? 60_000
-      : count > 400_000
-        ? 50_000
-        : count > 300_000
-          ? 40_000
-          : count > 200_000
-            ? 30_000
-            : 20_000;
-  return lttb(
-    x ?? Float64Array.from({ length }, (_, i) => i),
-    y,
-    threshold,
-    start,
-    end
-  );
+  let clippedX: ArrayLike<number>;
+  if (!x) {
+    clippedX = Float64Array.from({ length: count }, (_, i) => start + i);
+  } else if (start === 0 && end === x.length) {
+    clippedX = x;
+  } else {
+    clippedX = Float64Array.from({ length: count }, (_, i) => x[start + i]);
+  }
+  const clippedY =
+    start === 0 && end === y.length
+      ? y
+      : Float64Array.from({ length: count }, (_, i) => y[start + i]);
+  if (threshold === undefined) {
+    threshold = getSampleThreshold(count);
+  }
+  return lttb(clippedX, clippedY, threshold);
 }
 
 /**
  * Largest-Triangle-Three-Buckets using actual X coordinates.
- * Reads the paired [start, end) window without changing the inputs.
+ * Samples paired vectors without changing the inputs.
  */
 export function lttb(
   x: ArrayLike<number>,
   y: ArrayLike<number>,
-  threshold: number,
-  start = 0,
-  end = Math.min(x.length, y.length)
+  threshold: number
 ): [Float64Array, Float64Array] {
-  const length = Math.min(x.length, y.length);
-  const offset = Math.max(0, Math.min(start, length));
-  const limit = Math.max(offset, Math.min(end, length));
-  const n = limit - offset;
-  const valueAt = (index: number) => y[offset + index];
+  const n = Math.min(x.length, y.length);
 
   const size = Math.min(Math.max(threshold, 0), n);
   const sampledX = new Float64Array(size);
@@ -59,29 +71,29 @@ export function lttb(
 
   if (threshold >= n) {
     for (let index = 0; index < n; index++) {
-      sampledX[index] = x[offset + index];
-      sampledY[index] = y[offset + index];
+      sampledX[index] = x[index];
+      sampledY[index] = y[index];
     }
     return points;
   }
 
   if (threshold === 1) {
-    sampledX[0] = x[offset];
-    sampledY[0] = y[offset];
+    sampledX[0] = x[0];
+    sampledY[0] = y[0];
     return points;
   }
   if (threshold === 2) {
-    sampledX[0] = x[offset];
-    sampledY[0] = y[offset];
-    sampledX[1] = x[limit - 1];
-    sampledY[1] = y[limit - 1];
+    sampledX[0] = x[0];
+    sampledY[0] = y[0];
+    sampledX[1] = x[n - 1];
+    sampledY[1] = y[n - 1];
     return points;
   }
 
-  sampledX[0] = x[offset];
-  sampledY[0] = y[offset];
-  sampledX[threshold - 1] = x[limit - 1];
-  sampledY[threshold - 1] = y[limit - 1];
+  sampledX[0] = x[0];
+  sampledY[0] = y[0];
+  sampledX[threshold - 1] = x[n - 1];
+  sampledY[threshold - 1] = y[n - 1];
 
   const bucketSize = (n - 2) / (threshold - 2);
   let lastSelectedIndex = 0;
@@ -104,24 +116,24 @@ export function lttb(
     let sy = 0;
     let c = 0;
     for (let i = nextStart; i < nextEnd; i++) {
-      sx += x[offset + i];
-      sy += valueAt(i);
+      sx += x[i];
+      sy += y[i];
       c++;
     }
-    const cy = c === 0 ? valueAt(n - 1) : sy / c;
+    const cy = c === 0 ? y[n - 1] : sy / c;
 
-    const cx = c === 0 ? x[limit - 1] : sx / c;
+    const cx = c === 0 ? x[n - 1] : sx / c;
 
     // A = last selected
-    const ax = x[offset + lastSelectedIndex];
-    const ay = valueAt(lastSelectedIndex);
+    const ax = x[lastSelectedIndex];
+    const ay = y[lastSelectedIndex];
 
     let bestArea2 = -1;
     let bestIndex = currStart;
 
     for (let j = currStart; j < currEnd; j++) {
-      const bx = x[offset + j];
-      const by = valueAt(j);
+      const bx = x[j];
+      const by = y[j];
 
       const area2 = Math.abs((ax - cx) * (by - ay) - (ax - bx) * (cy - ay));
       if (area2 > bestArea2) {
@@ -130,8 +142,8 @@ export function lttb(
       }
     }
 
-    sampledX[bucketIndex + 1] = x[offset + bestIndex];
-    sampledY[bucketIndex + 1] = y[offset + bestIndex];
+    sampledX[bucketIndex + 1] = x[bestIndex];
+    sampledY[bucketIndex + 1] = y[bestIndex];
     lastSelectedIndex = bestIndex;
   }
   return points;

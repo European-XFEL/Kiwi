@@ -4,6 +4,7 @@ import type { PropertyProxy } from '@/lib/binding/api';
 import { barChartOption, vectorChartOption } from './chartConfig';
 import {
   padViewportRange,
+  generateBaseline,
   generateDownsample,
   vectorPoints,
   BAR_SAMPLE_LIMIT,
@@ -35,9 +36,8 @@ export function useVectorChart({
   const offset = isBar ? 0 : (plotConfig.offset ?? 0);
   const step = isBar ? 1 : plotConfig.step || 1;
   const coordinates = React.useMemo(
-    () =>
-      Float64Array.from({ length: values.length }, (_, i) => offset + i * step),
-    [values.length, offset, step]
+    () => generateBaseline(values, offset, step),
+    [values, offset, step]
   );
   const axes = React.useMemo(
     () => buildPlotAxes(plotConfig, { bar: isBar }),
