@@ -4,6 +4,7 @@ import { Capabilities, Hash } from '@/karabo/data/api';
 import { showMessageBox } from '@/lib/messagebox';
 import { ProjectItemModel } from '@/lib/singletons/ProjectItemModel';
 import { getProjectModel } from '@/lib/singletons/api';
+import { SingletonContext } from '@/testing';
 import {
   openDeviceSceneLinkInWorkspace,
   openSceneLinkInWorkspace,
@@ -24,6 +25,7 @@ jest.mock('@/lib/messagebox', () => ({
 }));
 
 const mockCallDeviceSlot = jest.fn();
+const mockLogInfo = jest.fn();
 const mockGetDeviceInstanceInfo = jest.fn();
 const mockGetDatabaseScene = jest.fn();
 const mockProjectModel = new ProjectItemModel();
@@ -41,16 +43,19 @@ jest.mock('@/lib/request', () => {
   };
 });
 
-jest.mock('@/lib/singletons/api', () => ({
-  getProjectModel: () => mockProjectModel,
-  getMediator: () => mockMediator,
-  getTopology: () => ({
-    getDeviceInstanceInfo: mockGetDeviceInstanceInfo,
-  }),
-  getDbConn: () => ({
-    getDatabaseScene: mockGetDatabaseScene,
-  }),
-}));
+let context: SingletonContext;
+
+beforeEach(() => {
+  context = new SingletonContext({
+    logger: { info: mockLogInfo },
+    project_model: mockProjectModel,
+    mediator: mockMediator,
+    topology: { getDeviceInstanceInfo: mockGetDeviceInstanceInfo },
+    db_conn: { getDatabaseScene: mockGetDatabaseScene },
+  });
+});
+
+afterEach(() => context.restore());
 
 describe('openSceneLinkInWorkspace', () => {
   beforeEach(() => {
@@ -197,6 +202,9 @@ describe('openDeviceSceneLinkInWorkspace', () => {
 
     await openDeviceSceneLinkInWorkspace('device-1', 'scene-a');
 
+    expect(mockLogInfo).toHaveBeenCalledWith(
+      'Requesting unattached scene "scene-a" from device "device-1"'
+    );
     expect(mockCallDeviceSlot).toHaveBeenCalledWith(
       expect.any(Function),
       'device-1',
@@ -219,6 +227,7 @@ describe('openDeviceSceneLinkInWorkspace', () => {
     await openDeviceSceneLinkInWorkspace('device-1', 'scene-a');
 
     expect(mockCallDeviceSlot).not.toHaveBeenCalled();
+    expect(mockLogInfo).not.toHaveBeenCalled();
     expect(showMessageBox).toHaveBeenCalledWith({
       variant: 'error',
       title: 'Could not open device scene',

@@ -21,6 +21,8 @@ body {
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-canvas: var(--canvas);
+  --color-canvas-foreground: var(--canvas-foreground);
 
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
@@ -71,6 +73,10 @@ body {
   /* Background and foreground - using MUI text.primary */
   --background: #ffffff;
   --foreground: #0d1546; /* MUI text.primary */
+
+  /* Fixed light canvas shared by scenes and application logs. */
+  --canvas: #eeeeee;
+  --canvas-foreground: #0d1546;
 
   --card: #ffffff;
   --card-foreground: #0d1546;

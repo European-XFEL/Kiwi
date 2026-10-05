@@ -28,6 +28,12 @@ export {
 } from './card';
 export { Checkbox } from './checkbox';
 export {
+  ContextMenu,
+  ContextMenuTrigger,
+  ContextMenuContent,
+  ContextMenuItem,
+} from './context-menu';
+export {
   Dialog,
   DialogClose,
   DialogContent,

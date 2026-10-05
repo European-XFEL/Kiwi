@@ -6,7 +6,7 @@ import AuthServerClient from '@/lib/http/AuthServerClient';
 import { encodeBinary, AccessLevel, Hash, HashList } from '@/karabo/data/api';
 import { Deque } from '@datastructures-js/deque';
 
-import { getConfig } from '@/lib/singletons/api';
+import { getConfig, getLogger } from './api';
 import { useAppSettingsStore, useGlobalActivityStore } from '@/store/api';
 import { Websocket, WebsocketBuilder } from 'websocket-ts';
 
@@ -531,6 +531,7 @@ export class Network {
   }
 
   public onExecute(deviceId: string, command: string): void {
+    getLogger().info(`Executing command "${command}" on device "${deviceId}"`);
     // prettier-ignore
     const h = new Hash('type', 'execute', 'deviceId', deviceId, 'command', command, 'reply', true);
     this.sendHash(h);
