@@ -8,6 +8,7 @@ import {
   axisTitle,
   GRAPH_LAYOUT,
   useChart,
+  useCurveVisibility,
   type AxisRanges,
   type Range,
 } from '../common/api';
@@ -41,9 +42,6 @@ export function useTrendChart({
   const [visibleRange, setVisibleRange] = React.useState<Range>();
   const latestSeriesRef = React.useRef(series);
   latestSeriesRef.current = series;
-  const [hiddenCurves, setHiddenCurves] = React.useState<Set<string>>(
-    () => new Set()
-  );
   const xRange = React.useMemo<Range | undefined>(() => {
     if (view.mode === null) return view.xRange;
     const latest = Math.max(
@@ -87,7 +85,7 @@ export function useTrendChart({
     [rememberRange]
   );
   const reset = React.useCallback(() => setView({ mode: 'uptime' }), []);
-  const seriesKeys = series.map((item) => item.key).join('\0');
+  const seriesKeys = JSON.stringify(series.map((item) => item.key));
   const axes = React.useMemo(
     () =>
       buildPlotAxes(plotConfig, {
@@ -127,40 +125,11 @@ export function useTrendChart({
     buildData,
     dataRevision,
   });
-  const {
-    containerRef,
-    selectionRef,
-    viewport,
-    setVisible,
-    isVisible,
-    findDataset,
-  } = chart;
-
-  React.useLayoutEffect(() => {
-    seriesKeys
-      .split('\0')
-      .filter(Boolean)
-      .forEach((key, index) => {
-        const visible = !hiddenCurves.has(key);
-        setVisible(index, visible);
-      });
-    chart.rangesRef.current = viewport.readRanges(chart.rangesRef.current);
-  }, [seriesKeys, hiddenCurves, chart.rangesRef, setVisible, viewport]);
-  const toggleCurve = React.useCallback(
-    (key: string) => {
-      const index = findDataset(key);
-      if (index === undefined || index < 0) return;
-      const visible = !isVisible(index);
-      setVisible(index, visible);
-      setHiddenCurves((current) => {
-        const next = new Set(current);
-        if (visible) next.delete(key);
-        else next.add(key);
-        return next;
-      });
-    },
-    [findDataset, isVisible, setVisible]
-  );
+  const { containerRef, selectionRef } = chart;
+  const { hiddenCurves, toggleCurve } = useCurveVisibility({
+    keys: JSON.parse(seriesKeys),
+    chart,
+  });
 
   const yRange = view.yRange;
   return {

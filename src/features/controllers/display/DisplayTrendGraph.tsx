@@ -9,7 +9,7 @@ import {
   useTrendChart,
   useTrendModel,
 } from '../graph/trend/api';
-import { ChartLayout, ChartPlot, TRACE_COLORS } from '../graph/common/api';
+import { ChartLayout, ChartPlot, ChartLegend } from '../graph/common/api';
 
 const TIME_PRESETS = [
   { mode: 'week', label: 'One Week' },
@@ -102,11 +102,7 @@ const TrendPlot = React.memo(function TrendPlot({
   return (
     <ChartLayout
       background={plotConfig.background}
-      viewBox={{
-        tool: view.tool,
-        selectTool: view.selectTool,
-        reset: view.reset,
-      }}
+      viewBox={view}
       footer={
         <>
           <TrendTimeControls visibleRange={view.visibleRange} />
@@ -115,8 +111,7 @@ const TrendPlot = React.memo(function TrendPlot({
       }
     >
       <ChartPlot
-        containerRef={view.containerRef}
-        selectionRef={view.selectionRef}
+        view={view}
         testId="trend-chart"
         title={plotConfig.title}
         empty={
@@ -125,36 +120,7 @@ const TrendPlot = React.memo(function TrendPlot({
             : undefined
         }
         legend={
-          series.length > 1 && (
-            <div
-              className="absolute z-10 flex flex-col gap-1 rounded-sm border border-black bg-slate-200/20 p-1 text-xs text-black"
-              style={{
-                top: plotConfig.title ? 26 : 10,
-                left: view.yAxisWidth + 8,
-              }}
-              aria-label="Graph legend"
-            >
-              {series.map((item, index) => (
-                <button
-                  key={item.key}
-                  type="button"
-                  aria-pressed={!view.hiddenCurves.has(item.key)}
-                  onClick={() => view.toggleCurve(item.key)}
-                  className="flex items-center gap-1"
-                  style={{ opacity: view.hiddenCurves.has(item.key) ? 0.4 : 1 }}
-                >
-                  <span
-                    className="inline-block h-3 w-3"
-                    style={{
-                      backgroundColor:
-                        TRACE_COLORS[index % TRACE_COLORS.length],
-                    }}
-                  />
-                  {item.key}
-                </button>
-              ))}
-            </div>
-          )
+          <ChartLegend keys={series.map((item) => item.key)} view={view} />
         }
       />
     </ChartLayout>

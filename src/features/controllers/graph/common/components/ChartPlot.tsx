@@ -1,25 +1,31 @@
 import React from 'react';
+import { GRAPH_LAYOUT } from '../constants';
 
 export function ChartPlot({
-  containerRef,
-  selectionRef,
+  view,
   testId,
   title,
   legend,
   empty,
 }: {
-  containerRef: React.RefObject<HTMLDivElement | null>;
-  selectionRef: React.RefObject<HTMLDivElement | null>;
+  view: {
+    containerRef: React.RefObject<HTMLDivElement | null>;
+    selectionRef: React.RefObject<HTMLDivElement | null>;
+    yAxisWidth?: number;
+  };
   testId: 'trend-chart' | 'vector-chart' | 'vector-xy-chart' | 'scatter-chart';
   title: string;
   legend?: React.ReactNode;
   empty?: string;
 }) {
+  const container = view.containerRef;
+  const selection = view.selectionRef;
+  const yAxisWidth = view.yAxisWidth ?? GRAPH_LAYOUT.yAxisSize.untitled;
   const selectionId = testId.replace('-chart', '-zoom-selection');
   return (
     <div className="relative h-full min-h-0 min-w-0 flex-1">
       <div
-        ref={containerRef}
+        ref={container}
         data-testid={testId}
         className="relative h-full w-full min-w-0"
       />
@@ -28,9 +34,16 @@ export function ChartPlot({
           {title}
         </div>
       )}
-      {legend}
+      {legend && (
+        <div
+          className="absolute z-10"
+          style={{ top: title ? 26 : 10, left: yAxisWidth + 8 }}
+        >
+          {legend}
+        </div>
+      )}
       <div
-        ref={selectionRef}
+        ref={selection}
         data-testid={selectionId}
         className="pointer-events-none absolute hidden border border-slate-300 bg-slate-200/30"
       />

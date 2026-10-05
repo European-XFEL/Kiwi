@@ -1,22 +1,20 @@
 import React from 'react';
 import type { PlotSettings } from './common/api';
-import type { PropertyProxy } from '@/lib/binding/api';
 import { vectorChartOption } from './plotConfig';
 import {
   padViewportRange,
   generateBaseline,
   generateDownsample,
   vectorPoints,
-  VECTOR_POINT_LIMIT,
 } from './utils';
 import {
-  GRAPH_LAYOUT,
   buildPlotAxes,
   useChart,
   useChartRanges,
   type Range,
+  useCurveVisibility,
 } from './common/api';
-import { useVectorData } from './useVectorData';
+import type { VectorSeries } from './useVectorSeries';
 
 /**
  * Coordinates vector plots: selects the chart configuration, samples
@@ -24,53 +22,48 @@ import { useVectorData } from './useVectorData';
  */
 export function useVectorChart({
   plotConfig,
-  proxy,
+  series,
 }: {
   plotConfig: PlotSettings;
-  proxy: PropertyProxy | undefined;
+  series: VectorSeries[];
 }) {
   const logarithmicX = plotConfig.x_log;
-  const { values } = useVectorData(proxy);
+  const seriesKeys = JSON.stringify(series.map((item) => item.key));
   const offset = plotConfig.offset ?? 0;
   const step = plotConfig.step || 1;
   const coordinates = React.useMemo(
-    () => generateBaseline(values, offset, step),
-    [values, offset, step]
+    () => series.map((item) => generateBaseline(item.values, offset, step)),
+    [series, offset, step]
   );
   const axes = React.useMemo(() => buildPlotAxes(plotConfig), [plotConfig]);
   const ranges = useChartRanges(axes);
   const buildData = React.useCallback(
     (xRange?: Range) => {
       const samplingRange = padViewportRange(xRange, logarithmicX);
-      const visiblePoints = generateDownsample(
-        values,
-        coordinates,
-        samplingRange
-      );
-      const pointRadius =
-        visiblePoints[0].length < VECTOR_POINT_LIMIT
-          ? GRAPH_LAYOUT.vectorPointSize
-          : 0;
-      return { datasets: [{ data: vectorPoints(visiblePoints) }], pointRadius };
+      return {
+        datasets: series.map((item, index) => ({
+          data: vectorPoints(
+            generateDownsample(item.values, coordinates[index], samplingRange)
+          ),
+        })),
+      };
     },
-    [values, coordinates, logarithmicX]
+    [series, coordinates, logarithmicX]
   );
   const chart = useChart({
     axes,
     configuration: () =>
-      vectorChartOption(plotConfig, undefined, undefined, axes),
-    identity: [plotConfig],
+      vectorChartOption(plotConfig, JSON.parse(seriesKeys), axes),
+    identity: [plotConfig, seriesKeys],
     xRange: ranges.xRange,
     yRange: ranges.yRange,
     onComplete: ranges.pause,
     onReset: ranges.reset,
     buildData,
   });
-  return {
-    containerRef: chart.containerRef,
-    selectionRef: chart.selectionRef,
-    tool: chart.tool,
-    selectTool: chart.selectTool,
-    reset: chart.reset,
-  };
+  const visibility = useCurveVisibility({
+    keys: JSON.parse(seriesKeys),
+    chart,
+  });
+  return { ...chart, ...visibility };
 }

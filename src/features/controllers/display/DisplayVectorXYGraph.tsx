@@ -5,8 +5,7 @@ import {
   buildModelConfig,
   ChartLayout,
   ChartPlot,
-  GRAPH_LAYOUT,
-  TRACE_COLORS,
+  ChartLegend,
 } from '../graph/common/api';
 import { useVectorXYData } from '../graph/useVectorXYData';
 import { useVectorXYChart } from '../graph/useVectorXYChart';
@@ -24,46 +23,11 @@ export default function DisplayVectorXYGraph({
   return (
     <ChartLayout background={plotConfig.background} viewBox={view}>
       <ChartPlot
-        containerRef={view.containerRef}
-        selectionRef={view.selectionRef}
+        view={view}
         testId="vector-xy-chart"
         title={plotConfig.title}
         legend={
-          series.length > 1 && (
-            <div
-              className="absolute z-10 flex flex-col gap-1 rounded-sm border border-black bg-slate-200/20 p-1 text-xs text-black"
-              style={{
-                top: plotConfig.title ? 26 : 10,
-                left:
-                  GRAPH_LAYOUT.yAxisSize[
-                    plotConfig.y_label || plotConfig.y_units
-                      ? 'titled'
-                      : 'untitled'
-                  ] + 8,
-              }}
-              aria-label="Graph legend"
-            >
-              {series.map((item, index) => (
-                <button
-                  key={item.key}
-                  type="button"
-                  aria-pressed={!view.hiddenCurves.has(item.key)}
-                  onClick={() => view.toggleCurve(item.key)}
-                  className="flex items-center gap-1"
-                  style={{ opacity: view.hiddenCurves.has(item.key) ? 0.4 : 1 }}
-                >
-                  <span
-                    className="inline-block h-3 w-3"
-                    style={{
-                      backgroundColor:
-                        TRACE_COLORS[index % TRACE_COLORS.length],
-                    }}
-                  />
-                  {item.key}
-                </button>
-              ))}
-            </div>
-          )
+          <ChartLegend keys={series.map((item) => item.key)} view={view} />
         }
       />
     </ChartLayout>

@@ -1,5 +1,7 @@
 export { ChartLayout } from './components/ChartLayout';
 export { ChartPlot } from './components/ChartPlot';
+export { ChartLegend } from './components/ChartLegend';
+export { useCurveVisibility } from './useCurveVisibility';
 export { axisTitle, buildPlotAxes } from '../graphAxes';
 export { commonChartOption } from './commonConfig';
 export { GRAPH_AXIS_FONT, GRAPH_LAYOUT, TRACE_COLORS } from './constants';

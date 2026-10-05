@@ -18,7 +18,9 @@ it.each([
   const chart = (
     Chart as unknown as { instances: Chart<'line'>[] }
   ).instances.at(-1)!;
-  expect(chart.data.datasets[0].data).toEqual([]);
+  expect(
+    chart.data.datasets.every((dataset) => dataset.data.length === 0)
+  ).toBe(true);
   expect(screen.queryByText('Device offline')).not.toBeInTheDocument();
   expect(screen.queryByText('No vector data')).not.toBeInTheDocument();
 });

@@ -143,9 +143,24 @@ describe('DisplayTrendGraph with Chart.js', () => {
     rerender(<DisplayTrendGraph model={model} ctx={{ ...ctx }} />);
     expect(charts()).toHaveLength(2);
     expect(chart().isDatasetVisible(1)).toBe(false);
+    data.series = [data.series[1], data.series[0], data.series[2]];
+    data.dataRevision++;
+    rerender(<DisplayTrendGraph model={model} ctx={{ ...ctx }} />);
+    expect(chart().isDatasetVisible(0)).toBe(false);
+    const replacement = new DisplayTrendGraphModel();
+    replacement.title = 'Changed';
+    replacement.y_label = 'Value';
+    rerender(<DisplayTrendGraph model={replacement} ctx={{ ...ctx }} />);
+    expect(chart().isDatasetVisible(0)).toBe(false);
+    expect(screen.getByLabelText('Graph legend').parentElement).toHaveStyle({
+      left: '76px',
+      top: '26px',
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Reset view' }));
+    expect(chart().isDatasetVisible(0)).toBe(false);
     fireEvent.click(second);
     expect(second).toHaveAttribute('aria-pressed', 'true');
-    expect(chart().setDatasetVisibility).toHaveBeenCalledWith(1, true);
+    expect(chart().setDatasetVisibility).toHaveBeenCalledWith(0, true);
   });
 
   it('zooms with a bounded rectangle and reset resumes uptime', () => {

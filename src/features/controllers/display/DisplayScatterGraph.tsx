@@ -33,12 +33,7 @@ export default function DisplayScatterGraph({
         </Button>
       }
     >
-      <ChartPlot
-        containerRef={view.containerRef}
-        selectionRef={view.selectionRef}
-        testId="scatter-chart"
-        title={plotConfig.title}
-      />
+      <ChartPlot view={view} testId="scatter-chart" title={plotConfig.title} />
     </ChartLayout>
   );
 }

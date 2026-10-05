@@ -1,9 +1,37 @@
+import { buildPlotAxes } from '../graphAxes';
+import type { ScriptableContext } from 'chart.js';
+import { GRAPH_LAYOUT, TRACE_COLORS } from '../common/api';
 import { buildModelConfig } from '../common/api';
 import { DisplayVectorGraphModel } from '@/karabo/common/api';
 import { vectorChartOption } from '../plotConfig';
 import { vectorPoints, padViewportRange } from '../utils';
 
 describe('vector Chart.js configuration', () => {
+  it('labels ordered datasets, cycles colors and sizes markers per dataset', () => {
+    const keys = Array.from({ length: 7 }, (_, index) => `DEV.value${index}`);
+    const config = vectorChartOption(
+      buildModelConfig(new DisplayVectorGraphModel()),
+      keys
+    );
+    expect(config.data.datasets.map((dataset) => dataset.label)).toEqual(keys);
+    config.data.datasets.forEach((dataset, index) => {
+      expect(dataset.borderColor).toBe(
+        TRACE_COLORS[index % TRACE_COLORS.length]
+      );
+      expect(dataset.backgroundColor).toBe(dataset.borderColor);
+    });
+    for (const [index, length] of [299, 300].entries()) {
+      const dataset = config.data.datasets[index];
+      dataset.data = Array.from({ length }, (_, x) => ({ x, y: x }));
+      const radius = dataset.pointRadius as (
+        ctx: ScriptableContext<'line'>
+      ) => number;
+      expect(radius({ dataset } as ScriptableContext<'line'>)).toBe(
+        index === 0 ? GRAPH_LAYOUT.vectorPointSize : 0
+      );
+    }
+  });
+
   it('uses model axis labels and units', () => {
     const model = buildModelConfig(new DisplayVectorGraphModel());
     model.x_label = 'Position';
@@ -73,7 +101,11 @@ describe('vector Chart.js configuration', () => {
       y_invert: true,
     });
     expect(
-      vectorChartOption(model, [1, 100], [0.1, 10]).options?.scales
+      vectorChartOption(model, [], {
+        ...buildPlotAxes(model),
+        x: { ...buildPlotAxes(model).x, range: [1, 100] },
+        y: { ...buildPlotAxes(model).y, range: [0.1, 10] },
+      }).options?.scales
     ).toMatchObject({
       x: { min: 1, max: 100, type: 'logarithmic', reverse: true },
       y: { min: 0.1, max: 10, type: 'logarithmic', reverse: true },

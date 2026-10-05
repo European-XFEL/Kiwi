@@ -14,8 +14,17 @@ import {
 } from '@/karabo/common/api';
 import type { PropertyProxy } from '@/lib/binding/PropertyProxy';
 import { useVectorChart } from '../useVectorChart';
+import { useVectorSeries } from '../useVectorSeries';
 import { useVectorBarChart } from '../useVectorBarChart';
 import { makeVectorProxy } from '../testing/vectorProxy';
+
+function useVectorLineChart({
+  plotConfig,
+  proxy,
+}: Parameters<typeof useVectorBarChart>[0]) {
+  const series = useVectorSeries([proxy], ['DEV.vector']);
+  return useVectorChart({ plotConfig, series });
+}
 
 function VectorChartHarness({
   model,
@@ -27,7 +36,7 @@ function VectorChartHarness({
   return model instanceof VectorBarGraphModel ? (
     <ChartHarness model={model} proxy={proxy} useGraph={useVectorBarChart} />
   ) : (
-    <ChartHarness model={model} proxy={proxy} useGraph={useVectorChart} />
+    <ChartHarness model={model} proxy={proxy} useGraph={useVectorLineChart} />
   );
 }
 
@@ -38,7 +47,7 @@ function ChartHarness({
 }: {
   model: DisplayVectorGraphModel | VectorBarGraphModel;
   proxy?: PropertyProxy;
-  useGraph: typeof useVectorChart;
+  useGraph: typeof useVectorBarChart;
 }) {
   const plotConfig = React.useMemo(() => buildModelConfig(model), [model]);
   const { containerRef, selectTool } = useGraph({

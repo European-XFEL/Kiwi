@@ -13,20 +13,11 @@ export default function DisplayBarGraph({
   ctx?: ControllerContainerContext;
 }) {
   const plotConfig = React.useMemo(() => buildModelConfig(model), [model]);
-  const { containerRef, selectionRef, tool, selectTool, reset } =
-    useVectorBarChart({ plotConfig, proxy: ctx?.proxy });
+  const view = useVectorBarChart({ plotConfig, proxy: ctx?.proxy });
 
   return (
-    <ChartLayout
-      background={plotConfig.background}
-      viewBox={{ tool, selectTool, reset }}
-    >
-      <ChartPlot
-        containerRef={containerRef}
-        selectionRef={selectionRef}
-        testId="vector-chart"
-        title={plotConfig.title}
-      />
+    <ChartLayout background={plotConfig.background} viewBox={view}>
+      <ChartPlot view={view} testId="vector-chart" title={plotConfig.title} />
     </ChartLayout>
   );
 }
