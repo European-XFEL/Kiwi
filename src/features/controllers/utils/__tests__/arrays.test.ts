@@ -21,12 +21,13 @@ import {
   PropertyProxy,
   VectorBoolBinding,
 } from '@/lib/binding/api';
-import { decodeArrayData, getBindingArrayValue } from '@/lib/binding/arrays';
 import {
+  decodeArrayData,
+  getBindingArrayValue,
   getArrayData,
   getDimensionsAndEncoding,
   getImageData,
-} from '../arrays';
+} from '../../api';
 
 function leaf(hash: Hash, name: string, valueType: string) {
   hash.setElement(
@@ -105,8 +106,11 @@ test.each(['Image', 'ImageData'])(
     const [data, ts] = getArrayData(proxy);
     expect(data).toEqual(new Uint8Array([1, 2, 3, 4, 5, 6]));
     expect(ts).toBe(timestamp);
-    expect(arrayNode.timestamp).toBeUndefined();
-    expect(getImageData(imageNode, 3, 2, undefined)).toEqual({
+    expect(arrayNode.timestamp).toBe(timestamp);
+    expect(imageNode.timestamp).toBe(timestamp);
+    expect(
+      getImageData({ imageNode, width: 3, height: 2, channels: undefined })
+    ).toEqual({
       data,
       shape: [2, 3],
     });
@@ -153,9 +157,7 @@ test('uses only the byte range, reusing aligned storage and copying unaligned st
   expect(copied).toEqual(samples);
   expect(copied.buffer).not.toBe(unaligned.buffer);
   expect(copied.byteLength).toBe(8);
-  expect(() => decodeArrayData(new Uint8Array(3), HashType.Int16)).toThrow(
-    RangeError
-  );
+  expect(decodeArrayData(new Uint8Array(3), HashType.Int16)).toBeUndefined();
 });
 
 test('passes through vectors and their timestamps', () => {
@@ -188,18 +190,27 @@ test('returns fresh fallback timestamps for missing values and unsupported types
   }
   configure(new Uint8Array([1]), HashType.String);
   expect(getBindingArrayValue(arrayNode, null)[0]).toBeNull();
-  expect(() =>
-    getImageData(root.getBinding('image') as ImageBinding, 1, 1, 0)
-  ).toThrow('Unsupported image pixel type');
+  expect(
+    getImageData({
+      imageNode: root.getBinding('image') as ImageBinding,
+      width: 1,
+      height: 1,
+      channels: 0,
+    })
+  ).toBeUndefined();
   arrayNode.value.clear_namespace();
   expect(getBindingArrayValue(arrayNode)[0]).toBeUndefined();
 });
 
 test('empty pixels have no image but decode to an empty NDArray', () => {
   const { root, imageNode, configure } = setup();
-  expect(getImageData(imageNode, 0, 0, 0)).toBeUndefined();
+  expect(
+    getImageData({ imageNode, width: 0, height: 0, channels: 0 })
+  ).toBeUndefined();
   configure(new Uint8Array());
-  expect(getImageData(imageNode, 0, 0, 0)).toBeUndefined();
+  expect(
+    getImageData({ imageNode, width: 0, height: 0, channels: 0 })
+  ).toBeUndefined();
   expect(getArrayData(new PropertyProxy(root, 'image.pixels'))[0]).toEqual(
     new Uint8Array()
   );
@@ -221,11 +232,29 @@ test.each([
     dims.length === 3 ? Number(dims[2]) : undefined,
     encoding,
   ]);
-  expect(getImageData(imageNode, x, y, z)?.shape).toEqual(dims.map(Number));
-  expect(() => getImageData(imageNode, 99, y, z)).toThrow(
-    `Image has improper shape (99, 2, ${z}) for size ${count}`
-  );
+  expect(
+    getImageData({ imageNode, width: x, height: y, channels: z })?.shape
+  ).toEqual(dims.map(Number));
+  expect(
+    getImageData({ imageNode, width: 99, height: y, channels: z })
+  ).toBeUndefined();
 });
+
+test.each([undefined, -1, 1.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1])(
+  'rejects invalid image dimension %s',
+  (dimension) => {
+    const { imageNode, configure } = setup();
+    configure();
+    expect(
+      getImageData({
+        imageNode,
+        width: dimension,
+        height: 2,
+        channels: undefined,
+      })
+    ).toBeUndefined();
+  }
+);
 
 test.each([Encoding.BGR, Encoding.JPEG, Encoding.RGB])(
   'preserves explicit encoding %s',
@@ -248,10 +277,12 @@ test.each([Encoding.BGR, Encoding.JPEG, Encoding.RGB])(
   }
 );
 
-test('rejects unsafe UInt64 dimensions without rounding', () => {
+test('converts UInt64 dimensions to numbers before validating image shape', () => {
   const { imageNode, configure } = setup();
   configure(undefined, undefined, [1n, 9007199254740993n]);
-  expect(() => getDimensionsAndEncoding(imageNode)).toThrow(RangeError);
+  const [width, height, channels] = getDimensionsAndEncoding(imageNode);
+  expect(width).toBe(Number(9007199254740993n));
+  expect(getImageData({ imageNode, width, height, channels })).toBeUndefined();
   configure(undefined, undefined, [1n, BigInt(Number.MAX_SAFE_INTEGER)]);
   expect(getDimensionsAndEncoding(imageNode)[0]).toBe(Number.MAX_SAFE_INTEGER);
 });

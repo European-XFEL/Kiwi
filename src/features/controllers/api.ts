@@ -29,3 +29,11 @@ export {
 
 export * from './utils/controller_proxies';
 export * from './utils/controller_semantics';
+
+export {
+  decodeArrayData,
+  getBindingArrayValue,
+  getArrayData,
+  getDimensionsAndEncoding,
+  getImageData,
+} from './utils/arrays';

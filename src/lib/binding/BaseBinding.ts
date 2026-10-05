@@ -63,6 +63,11 @@ export class BaseBinding<TValue = any> {
     this.update_shortcuts(this._attributes);
   }
 
+  /** Return the raw value, preserving array and namespace references. */
+  public getValue(): types.KaraboValue['value_'] {
+    return (this.value as types.KaraboValue | undefined)?.value_ ?? this.value;
+  }
+
   public setValue(value: any, timestamp: Timestamp | undefined) {
     value = this.validate(value);
     this.value = value;
@@ -213,6 +218,12 @@ export class NodeBinding extends BaseBinding<BindingNamespace<BaseBinding>> {
   }) {
     super({ attributes: opts?.attributes });
     this.value = opts?.value ?? new BindingNamespace<BaseBinding>();
+  }
+
+  /** Notify subscribers after all configured child values are available. */
+  public bindingUpdated(timestamp?: Timestamp): void {
+    this.timestamp = timestamp ?? new Timestamp();
+    this.value_update.fire(this.value, timestamp);
   }
 }
 

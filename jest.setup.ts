@@ -20,8 +20,7 @@ Object.assign(global, { ResizeObserver: ResizeObserverStub });
 // -----------------------------------------------------------------------------
 
 // Mock modules that use import.meta.glob or other unsupported syntax
-jest.mock('@/features/controllers/api', () => ({
-  ...jest.requireActual('@/features/controllers/api'),
+jest.mock('@/features/controllers/utils/bootstrapStatefulIcons', () => ({
   statefulIconModelsById: {},
   bootstrapStatefulIcons: jest.fn(),
 }));
