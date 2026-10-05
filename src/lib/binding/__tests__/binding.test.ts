@@ -41,6 +41,27 @@ import path from 'path';
 import * as types from '@/karabo/data/types';
 
 describe('check binding', () => {
+  it('getValue handles missing, raw and wrapped values without copying', () => {
+    const binding = new BaseBinding();
+    expect(binding.getValue()).toBeUndefined();
+    for (const value of [0, false, '', 7n]) {
+      binding.setValue(value, undefined);
+      expect(binding.getValue()).toBe(value);
+    }
+    const integer = new UInt64Binding();
+    integer.setValue(18446744073709551615n, undefined);
+    expect(integer.getValue()).toBe(18446744073709551615n);
+    const bytes = new Uint8Array([1, 2, 3]);
+    const wrapped = new BaseBinding<types.VectorCharValue>({
+      value: new types.VectorCharValue(bytes),
+    });
+    expect(wrapped.getValue()).toBe(bytes);
+    binding.setValue(bytes, undefined);
+    expect(binding.getValue()).toBe(bytes);
+    const image = new ImageBinding();
+    expect(image.getValue()).toBe(image.value);
+  });
+
   it.each([
     VectorBoolBinding,
     VectorDoubleBinding,

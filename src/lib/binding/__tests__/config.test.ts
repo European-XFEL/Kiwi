@@ -6,6 +6,51 @@ import { decodeBinarySchema } from '@/karabo/data/bin_reader';
 import { VectorInt32Value } from '@/karabo/data/types';
 import { buildBinding } from '@/lib/binding/BindingFactory';
 import { applyConfiguration } from '@/lib/binding/DeviceProxy';
+import { BaseBinding, BindingRoot, NodeBinding } from '../BaseBinding';
+import { Timestamp, unwrap } from '@/karabo/data/api';
+
+test('notifies nested parents after every configured child is updated', () => {
+  const root = new BindingRoot();
+  const outer = new NodeBinding();
+  const inner = new NodeBinding();
+  const first = new BaseBinding();
+  const second = new BaseBinding();
+  root.value!.set('outer', outer);
+  outer.value.set('inner', inner);
+  inner.value.set('first', first);
+  inner.value.set('second', second);
+  const events: string[] = [];
+  const timestamp = new Timestamp();
+  inner.value_update.subscribe(events, (value, ts) => {
+    expect(value).toBe(inner.value);
+    expect(ts).toBe(timestamp);
+    expect(inner.timestamp).toBe(timestamp);
+    expect(unwrap(first.value)).toBe(1);
+    expect(unwrap(second.value)).toBe(2);
+    events.push('inner');
+  });
+  outer.value_update.subscribe(events, (value) => {
+    expect(value).toBe(outer.value);
+    expect(outer.timestamp).toBe(timestamp);
+    events.push('outer');
+  });
+  applyConfiguration(
+    new Hash('outer.inner.first', 1, 'outer.inner.second', 2),
+    root,
+    timestamp
+  );
+  expect(events).toEqual(['inner', 'outer']);
+});
+
+test('bindingUpdated uses the current time when no timestamp is supplied', () => {
+  const binding = new NodeBinding();
+  const before = Date.now();
+  binding.bindingUpdated();
+  expect(binding.timestamp).toBeInstanceOf(Timestamp);
+  const milliseconds = Number(binding.timestamp!.time / 10n ** 15n);
+  expect(milliseconds).toBeGreaterThanOrEqual(before);
+  expect(milliseconds).toBeLessThanOrEqual(Date.now());
+});
 
 describe('check configuration', () => {
   it('check apply', () => {

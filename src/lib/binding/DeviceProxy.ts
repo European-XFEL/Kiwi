@@ -8,10 +8,10 @@ import { Signal } from '../utils';
 
 export function applyConfiguration(
   config: Hash,
-  binding: any,
+  binding: BindingRoot | NodeBinding,
   timestamp?: Timestamp
 ) {
-  const namespace = binding.value;
+  const namespace = binding.value!;
   for (const [key, value, attrs] of config.iterall()) {
     if (!namespace.has(key)) {
       continue;
@@ -20,6 +20,7 @@ export function applyConfiguration(
     const binding = namespace.get(key);
     if (value instanceof Hash && binding instanceof NodeBinding) {
       applyConfiguration(value, binding, timestamp);
+      binding.bindingUpdated(timestamp);
     } else {
       // Set the timestamp no matter what, and take raw value
       const ts = timestamp ?? Timestamp.fromHashAttributes(attrs);

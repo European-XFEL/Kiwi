@@ -5,6 +5,7 @@ export * from './widgets/static';
 export * from './widgets/links';
 export * from './widgets/display';
 export * from './widgets/editable';
+export * from './widgets/images';
 export {
   createModel,
   resolveParentComponent,
