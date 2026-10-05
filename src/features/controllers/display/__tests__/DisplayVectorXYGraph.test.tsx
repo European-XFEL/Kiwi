@@ -20,7 +20,7 @@ import {
   GRAPH_LAYOUT,
   TRACE_COLORS,
 } from '../../graph/common/api';
-import { vectorXYChartOption } from '../../graph/chartConfig';
+import { vectorXYChartOption } from '../../graph/plotConfig';
 import DisplayVectorXYGraph from '../DisplayVectorXYGraph';
 
 const property = (value: unknown) => ({ value }) as PropertyProxy;

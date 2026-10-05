@@ -1,6 +1,6 @@
 import { buildModelConfig } from '../common/api';
 import { DisplayVectorGraphModel } from '@/karabo/common/api';
-import { vectorChartOption } from '../chartConfig';
+import { vectorChartOption } from '../plotConfig';
 import { vectorPoints, padViewportRange } from '../utils';
 
 describe('vector Chart.js configuration', () => {

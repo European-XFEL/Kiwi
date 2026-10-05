@@ -9,6 +9,7 @@ import {
 import type { PropertyProxy } from '@/lib/binding/PropertyProxy';
 import { ProxyStatus } from '@/lib/binding/api';
 import { useVectorChart } from '../useVectorChart';
+import { useVectorBarChart } from '../useVectorBarChart';
 
 function VectorChartHarness({
   model,
@@ -17,8 +18,24 @@ function VectorChartHarness({
   model: DisplayVectorGraphModel | VectorBarGraphModel;
   proxy?: PropertyProxy;
 }) {
+  return model instanceof VectorBarGraphModel ? (
+    <ChartHarness model={model} proxy={proxy} useGraph={useVectorBarChart} />
+  ) : (
+    <ChartHarness model={model} proxy={proxy} useGraph={useVectorChart} />
+  );
+}
+
+function ChartHarness({
+  model,
+  proxy,
+  useGraph,
+}: {
+  model: DisplayVectorGraphModel | VectorBarGraphModel;
+  proxy?: PropertyProxy;
+  useGraph: typeof useVectorChart;
+}) {
   const plotConfig = React.useMemo(() => buildModelConfig(model), [model]);
-  const { containerRef, selectTool } = useVectorChart({
+  const { containerRef, selectTool } = useGraph({
     plotConfig,
     proxy,
   });
@@ -34,7 +51,7 @@ type MockChart = Chart<'line'> & { update: jest.Mock; destroy: jest.Mock };
 const charts = () => (Chart as unknown as { instances: MockChart[] }).instances;
 const chart = () => charts().at(-1)!;
 
-describe('useVectorChart with Chart.js', () => {
+describe('vector line and bar hooks with Chart.js', () => {
   beforeEach(() => {
     charts().length = 0;
   });
@@ -210,6 +227,34 @@ describe('useVectorChart with Chart.js', () => {
       }
     }
   );
+
+  it('samples bars for the padded viewport while preserving the full source', () => {
+    const values = Float64Array.from({ length: 1000 }, (_, index) => -index);
+    const proxy = { value: values } as PropertyProxy;
+    const model = new VectorBarGraphModel();
+    Object.assign(model, {
+      x_autorange: false,
+      x_min: 100,
+      x_max: 120,
+      x_log: true,
+    });
+    const view = render(<VectorChartHarness model={model} proxy={proxy} />);
+    const data = chart().data.datasets[0].data;
+    expect(data).toHaveLength(61);
+    expect(data[0]).toEqual({ x: 80, y: -80 });
+    expect(data.at(-1)).toEqual({ x: 140, y: -140 });
+    expect(chart().options.scales?.x).toMatchObject({
+      type: 'linear',
+      min: 100,
+      max: 120,
+    });
+    const outside = new VectorBarGraphModel();
+    Object.assign(outside, { x_autorange: false, x_min: 2000, x_max: 2100 });
+    view.rerender(<VectorChartHarness model={outside} proxy={proxy} />);
+    expect(chart().data.datasets[0].data).toEqual([]);
+    expect(proxy.value).toBe(values);
+    expect(values).toHaveLength(1000);
+  });
 
   it.each([
     { name: 'varying', valueAt: (index: number) => index },

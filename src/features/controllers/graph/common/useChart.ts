@@ -1,6 +1,6 @@
 import React from 'react';
 import type { ChartConfiguration } from 'chart.js';
-import type { PlotAxesConfig } from '../chartConfig';
+import type { PlotAxesConfig } from '../graphAxes';
 import type { Range } from './constants';
 import type { AxisRanges } from './useMouseGestures';
 import { usePlotItem } from './usePlotItem';

@@ -4,7 +4,7 @@ import {
   DisplayVectorGraphModel,
   VectorBarGraphModel,
 } from '@/karabo/common/api';
-import { barChartOption, vectorChartOption } from '../../chartConfig';
+import { vectorChartOption, barChartOption } from '../../plotConfig';
 import { trendChartOption } from '../../trend/api';
 import { buildPlotAxes, commonChartOption, integerTickFormatter } from '../api';
 

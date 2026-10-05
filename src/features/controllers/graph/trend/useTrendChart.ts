@@ -2,7 +2,7 @@ import React from 'react';
 import { categoryLabels, type TrendMode } from './categories';
 import type { PlotSettings } from '../common/api';
 import type { TrendSeries } from './useTrendModel';
-import { trendDatasets, trendChartOption } from '../chartConfig';
+import { trendDatasets, trendChartOption } from './trendConfig';
 import {
   buildPlotAxes,
   useChart,
