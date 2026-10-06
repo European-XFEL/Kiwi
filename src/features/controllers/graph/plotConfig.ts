@@ -30,25 +30,27 @@ export function scatterChartOption(
 
 export function vectorChartOption(
   plotConfig: PlotSettings,
-  xRange?: Range,
-  yRange?: Range,
+  keys: readonly string[] = [],
   axes: PlotAxesConfig = buildPlotAxes(plotConfig)
 ): ChartConfiguration<'line'> {
-  const config = commonChartOption(plotConfig, {
-    x: { ...axes.x, range: xRange ?? axes.x.range },
-    y: { ...axes.y, range: yRange ?? axes.y.range },
-  });
+  const config = commonChartOption(plotConfig, axes);
   if (plotConfig.step < 0) {
     config.options!.parsing = {};
     config.options!.normalized = false;
   }
-  Object.assign(config.data.datasets[0], {
-    borderColor: TRACE_COLORS[0],
-    backgroundColor: TRACE_COLORS[0],
+  config.data.datasets = keys.map((key, index) => ({
+    label: key,
+    data: [],
+    borderColor: TRACE_COLORS[index % TRACE_COLORS.length],
+    backgroundColor: TRACE_COLORS[index % TRACE_COLORS.length],
     borderWidth: GRAPH_LAYOUT.lineWidth,
-    pointRadius: 0,
+    pointRadius: (context: ScriptableContext<'line'>) =>
+      context.dataset.data.length < VECTOR_POINT_LIMIT
+        ? GRAPH_LAYOUT.vectorPointSize
+        : 0,
     pointHoverRadius: 0,
-  });
+    tension: 0,
+  }));
   return config;
 }
 

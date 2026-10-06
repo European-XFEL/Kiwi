@@ -17,7 +17,7 @@ import {
 } from '@/lib/binding/api';
 import DisplayVectorGraph from '../../display/DisplayVectorGraph';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
-import { useVectorData } from '../useVectorData';
+import { useVectorSeries } from '../useVectorSeries';
 
 function setup() {
   const array = new Hash();
@@ -94,16 +94,16 @@ test.each([
   const { proxy, configure } = setup();
   expect(proxy.binding).toBeInstanceOf(NDArrayBinding);
   configure(samples, type);
-  const { result } = renderHook(() => useVectorData(proxy));
-  expect(result.current.values.length).toBe(0);
+  const { result } = renderHook(() => useVectorSeries([proxy], ['DEV.array']));
+  expect(result.current[0].values.length).toBe(0);
   flushIdle();
   const big =
     samples instanceof BigInt64Array || samples instanceof BigUint64Array;
-  expect(result.current.values).toEqual(
+  expect(result.current[0].values).toEqual(
     big ? Float64Array.from(samples, Number) : samples
   );
   if (!big) {
-    expect((result.current.values as Int16Array).buffer).toBe(
+    expect((result.current[0].values as Int16Array).buffer).toBe(
       proxy.binding!.value.get('data').getValue().buffer
     );
   }
@@ -112,9 +112,11 @@ test.each([
 test('stops scheduling after publishing an unchanged NDArray frame', () => {
   const { proxy, configure } = setup();
   configure(new Int16Array([1, 2]));
-  const { result, rerender } = renderHook(() => useVectorData(proxy));
+  const { result, rerender } = renderHook(() =>
+    useVectorSeries([proxy], ['DEV.array'])
+  );
   flushIdle();
-  expect(result.current.values).toEqual(new Int16Array([1, 2]));
+  expect(result.current[0].values).toEqual(new Int16Array([1, 2]));
   flushIdle();
   flushIdle();
   expect(jest.getTimerCount()).toBe(0);
@@ -126,12 +128,14 @@ test('coalesces frames and detects bytes, type, and timestamp changes in the sam
   const { root, proxy, configure } = setup();
   const namespace = proxy.binding!.value;
   configure(new Int16Array([1, 2]));
-  const { result, rerender } = renderHook(() => useVectorData(proxy));
+  const { result, rerender } = renderHook(() =>
+    useVectorSeries([proxy], ['DEV.array'])
+  );
   configure(new Int16Array([3, 4]));
   rerender();
   expect(window.requestIdleCallback).toHaveBeenCalledTimes(1);
   flushIdle();
-  expect(result.current.values).toEqual(new Int16Array([3, 4]));
+  expect(result.current[0].values).toEqual(new Int16Array([3, 4]));
   expect(proxy.binding!.value).toBe(namespace);
   expect(window.requestIdleCallback).toHaveBeenCalledTimes(1);
   rerender();
@@ -148,7 +152,7 @@ test('coalesces frames and detects bytes, type, and timestamp changes in the sam
   rerender();
   expect(window.requestIdleCallback).toHaveBeenCalledTimes(2);
   flushIdle();
-  expect(result.current.values).toEqual(new Int16Array([5, 6]));
+  expect(result.current[0].values).toEqual(new Int16Array([5, 6]));
 
   applyConfiguration(
     new Hash('array.type', HashType.UInt8),
@@ -157,15 +161,18 @@ test('coalesces frames and detects bytes, type, and timestamp changes in the sam
   );
   rerender();
   flushIdle();
-  expect(result.current.values).toEqual(bytes);
+  expect(result.current[0].values).toEqual(bytes);
 });
 
 test('pending publication uses the replacement proxy and schema', () => {
   const first = setup();
   first.configure(new Int16Array([1]));
-  const { result, rerender } = renderHook(({ proxy }) => useVectorData(proxy), {
-    initialProps: { proxy: first.proxy },
-  });
+  const { result, rerender } = renderHook(
+    ({ proxy }) => useVectorSeries([proxy], ['DEV.array']),
+    {
+      initialProps: { proxy: first.proxy },
+    }
+  );
   const second = setup();
   second.configure(new Int16Array([2]));
   rerender({ proxy: second.proxy });
@@ -176,33 +183,35 @@ test('pending publication uses the replacement proxy and schema', () => {
   expect(second.proxy.binding).not.toBe(oldBinding);
   expect(window.requestIdleCallback).toHaveBeenCalledTimes(1);
   flushIdle();
-  expect(result.current.values).toEqual(new Int16Array([3]));
+  expect(result.current[0].values).toEqual(new Int16Array([3]));
 });
 
 test('clears missing, empty, and unsupported arrays including a pending frame', () => {
   const { root, proxy, schema, configure } = setup();
-  const { result, rerender } = renderHook(() => useVectorData(proxy));
-  expect(result.current.values.length).toBe(0);
+  const { result, rerender } = renderHook(() =>
+    useVectorSeries([proxy], ['DEV.array'])
+  );
+  expect(result.current[0].values.length).toBe(0);
   for (const type of [HashType.Int16, HashType.String]) {
     configure(new Int16Array([1]));
     rerender();
     flushIdle();
-    expect(result.current.values.length).toBe(1);
+    expect(result.current[0].values.length).toBe(1);
     configure(new Int16Array(), type);
     rerender();
     flushIdle();
-    expect(result.current.values.length).toBe(0);
+    expect(result.current[0].values.length).toBe(0);
   }
   configure(new Int16Array([2]), HashType.String);
   rerender();
   flushIdle();
-  expect(result.current.values.length).toBe(0);
+  expect(result.current[0].values.length).toBe(0);
   configure(new Int16Array([3]));
   rerender();
   root.handleDeviceSchema(schema);
   rerender();
   flushIdle();
-  expect(result.current.values.length).toBe(0);
+  expect(result.current[0].values.length).toBe(0);
 });
 
 test('renderer transforms decoded samples, reuses the chart, and clears stale points', () => {
@@ -211,7 +220,8 @@ test('renderer transforms decoded samples, reuses the chart, and clears stale po
   const model = new NDArrayGraphModel();
   model.offset = 10;
   model.step = 0.5;
-  const ctx = { proxy } as ControllerContainerContext;
+  model.keys = ['DEV.array'];
+  const ctx = { proxy, proxies: [proxy] } as ControllerContainerContext;
   const view = render(<DisplayVectorGraph model={model} ctx={ctx} />);
   flushIdle();
   const charts = (Chart as unknown as { instances: Chart<'line'>[] }).instances;

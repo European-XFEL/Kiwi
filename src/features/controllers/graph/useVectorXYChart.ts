@@ -10,6 +10,7 @@ import {
   buildPlotAxes,
   useChart,
   useChartRanges,
+  useCurveVisibility,
   type PlotSettings,
   type Range,
 } from './common/api';
@@ -31,9 +32,6 @@ export function useVectorXYChart({
   const axes = React.useMemo(() => buildPlotAxes(plotConfig), [plotConfig]);
   const ranges = useChartRanges(axes);
   const seriesKeys = JSON.stringify(series.map((item) => item.key));
-  const [hiddenCurves, setHiddenCurves] = React.useState<Set<string>>(
-    () => new Set()
-  );
   const buildData = React.useCallback(
     (xRange?: Range) => {
       // Pad the sampling window, not the displayed axes, so nearby line
@@ -61,23 +59,9 @@ export function useVectorXYChart({
     onReset: ranges.reset,
     buildData,
   });
-  const { setVisible, viewport, rangesRef } = chart;
-  React.useLayoutEffect(() => {
-    // Visibility belongs to property keys, so restore it at the current
-    // dataset indices after curve reordering or chart recreation.
-    const keys: string[] = JSON.parse(seriesKeys);
-    keys.forEach((key, index) => setVisible(index, !hiddenCurves.has(key)));
-    // Hiding a curve can change autorange; navigation must use the new bounds.
-    rangesRef.current = viewport.readRanges(rangesRef.current);
-  }, [plotConfig, seriesKeys, hiddenCurves, setVisible, viewport, rangesRef]);
-  const toggleCurve = React.useCallback((key: string) => {
-    setHiddenCurves((current) => {
-      const next = new Set(current);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  }, []);
-
-  return { ...chart, hiddenCurves, toggleCurve };
+  const visibility = useCurveVisibility({
+    keys: JSON.parse(seriesKeys),
+    chart,
+  });
+  return { ...chart, ...visibility };
 }

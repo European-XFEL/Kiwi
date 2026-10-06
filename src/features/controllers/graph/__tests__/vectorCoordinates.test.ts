@@ -59,7 +59,7 @@ test.each([-2, 0])(
     jest.spyOn(canvas, 'getContext').mockReturnValue(context);
     const plotConfig = buildModelConfig(new DisplayVectorGraphModel());
     Object.assign(plotConfig, { offset: 20, step });
-    const config = vectorChartOption(plotConfig);
+    const config = vectorChartOption(plotConfig, ['DEV.vector']);
     const data = vectorPoints(
       lttbWithCoordinates(
         [1, -50, 100, 2],

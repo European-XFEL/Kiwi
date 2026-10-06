@@ -1,7 +1,7 @@
 import React from 'react';
 import type { ChartConfiguration } from 'chart.js';
 import type { PlotAxesConfig } from '../graphAxes';
-import type { Range } from './constants';
+import { GRAPH_LAYOUT, type Range } from './constants';
 import type { AxisRanges } from './useMouseGestures';
 import { usePlotItem } from './usePlotItem';
 import { useViewBox } from './useViewBox';
@@ -97,7 +97,15 @@ export function useChart<T extends 'line' | 'scatter'>({
     applyLatest();
   }, [applyLatest, revision, dataRevision, viewBox.activeRef]);
 
-  return { ...plotItem, ...viewBox, selectionRef };
+  return {
+    ...plotItem,
+    ...viewBox,
+    selectionRef,
+    yAxisWidth:
+      GRAPH_LAYOUT.yAxisSize[
+        axes.y.label || axes.y.units ? 'titled' : 'untitled'
+      ],
+  };
 }
 
 /** Selected ranges override configured ranges until reset. */

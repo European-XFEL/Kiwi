@@ -126,6 +126,8 @@ test('preserves legend visibility by key through updates, curve reorder, and con
   replacement.title = 'Changed';
   view.rerender(<DisplayVectorXYGraph model={replacement} ctx={ctx} />);
   expect(chart().isDatasetVisible(0)).toBe(false);
+  fireEvent.click(screen.getByRole('button', { name: 'Reset view' }));
+  expect(chart().isDatasetVisible(0)).toBe(false);
 });
 
 test('defers data during gestures and restores configured ranges on reset', () => {
