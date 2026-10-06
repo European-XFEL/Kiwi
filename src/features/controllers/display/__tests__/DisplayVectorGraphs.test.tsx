@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { Chart } from 'chart.js/auto';
 import {
   DisplayVectorGraphModel,
+  NDArrayGraphModel,
   VectorBarGraphModel,
 } from '@/karabo/common/api';
 import DisplayBarGraph from '../DisplayBarGraph';
@@ -9,6 +10,7 @@ import DisplayVectorGraph from '../DisplayVectorGraph';
 
 it.each([
   ['line', <DisplayVectorGraph model={new DisplayVectorGraphModel()} />],
+  ['NDArray', <DisplayVectorGraph model={new NDArrayGraphModel()} />],
   ['bar', <DisplayBarGraph model={new VectorBarGraphModel()} />],
 ])('renders an empty %s chart without a proxy', (_, controller) => {
   render(controller);

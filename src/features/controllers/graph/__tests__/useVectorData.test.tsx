@@ -1,14 +1,12 @@
 import { act, cleanup, renderHook } from '@testing-library/react';
 import type { PropertyProxy } from '@/lib/binding/PropertyProxy';
-import { ProxyStatus } from '@/lib/binding/api';
 import { VectorFloatValue, VectorInt64Value } from '@/karabo/data/types';
 import { useVectorData } from '../useVectorData';
+import { makeVectorProxy } from '../testing/vectorProxy';
 
 const originalRequestIdleCallback = window.requestIdleCallback;
 const originalCancelIdleCallback = window.cancelIdleCallback;
 
-const makeProxy = (value: unknown): PropertyProxy =>
-  ({ root: { status: ProxyStatus.MONITORING }, value }) as PropertyProxy;
 const useData = (proxy: PropertyProxy) => useVectorData(proxy);
 
 function flushIdle() {
@@ -37,11 +35,11 @@ describe('useVectorData', () => {
   });
 
   it('publishes the latest complete vector when the browser is idle', () => {
-    const proxy = makeProxy([1, 2]);
+    const proxy = makeVectorProxy([1, 2]);
     const { result, rerender } = renderHook(() => useData(proxy));
 
     expect(result.current.values).toEqual(new Float64Array());
-    Object.assign(proxy, { value: [3, 4, 5] });
+    proxy.binding!.setValue([3, 4, 5], undefined);
     rerender();
 
     expect(window.requestIdleCallback).toHaveBeenCalledTimes(1);
@@ -51,7 +49,8 @@ describe('useVectorData', () => {
 
   it('keeps non-finite numeric samples for viewport sampling', () => {
     const values = [1, Number.NaN, 3, Number.POSITIVE_INFINITY, 5];
-    const { result } = renderHook(() => useData(makeProxy(values)));
+    const proxy = makeVectorProxy(values);
+    const { result } = renderHook(() => useData(proxy));
 
     flushIdle();
     expect(result.current.values).toEqual(
@@ -61,7 +60,8 @@ describe('useVectorData', () => {
 
   it('reuses the Karabo typed vector including non-finite samples', () => {
     const values = new VectorFloatValue([1, NaN, Infinity]);
-    const { result } = renderHook(() => useData(makeProxy(values)));
+    const proxy = makeVectorProxy(values);
+    const { result } = renderHook(() => useData(proxy));
 
     flushIdle();
     expect(result.current.values).toBe(values);
@@ -69,7 +69,8 @@ describe('useVectorData', () => {
 
   it('converts BigInt samples without changing their Karabo source', () => {
     const values = new VectorInt64Value([1n, -2n]);
-    const { result } = renderHook(() => useData(makeProxy(values)));
+    const proxy = makeVectorProxy(values);
+    const { result } = renderHook(() => useData(proxy));
 
     flushIdle();
     expect(result.current.values).toEqual(new Float64Array([1, -2]));
@@ -80,7 +81,9 @@ describe('useVectorData', () => {
     const { result, rerender } = renderHook(
       ({ proxy }) => useVectorData(proxy),
       {
-        initialProps: { proxy: makeProxy([1, 2]) as PropertyProxy | undefined },
+        initialProps: {
+          proxy: makeVectorProxy([1, 2]) as PropertyProxy | undefined,
+        },
       }
     );
     flushIdle();

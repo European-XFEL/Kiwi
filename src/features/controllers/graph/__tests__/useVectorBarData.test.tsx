@@ -1,6 +1,7 @@
 import { act, cleanup, renderHook } from '@testing-library/react';
 import type { PropertyProxy } from '@/lib/binding/api';
 import { useVectorBarData } from '../useVectorBarData';
+import { makeVectorProxy } from '../testing/vectorProxy';
 
 const originalRequest = window.requestIdleCallback;
 const originalCancel = window.cancelIdleCallback;
@@ -27,13 +28,13 @@ describe('useVectorBarData', () => {
   });
 
   it('publishes the latest complete vector at idle without downsampling', () => {
-    const proxy = {
-      value: Float64Array.from({ length: 4000 }, (_, index) => -index),
-    } as PropertyProxy;
+    const proxy = makeVectorProxy(
+      Float64Array.from({ length: 4000 }, (_, index) => -index)
+    );
     const { result, rerender } = renderHook(() => useVectorBarData(proxy));
     expect(result.current.values).toHaveLength(0);
     const latest = Float64Array.from({ length: 5000 }, (_, index) => index);
-    Object.assign(proxy, { value: latest });
+    proxy.binding!.setValue(latest, undefined);
     rerender();
     expect(window.requestIdleCallback).toHaveBeenCalledTimes(1);
     act(() => jest.runOnlyPendingTimers());
@@ -46,7 +47,7 @@ describe('useVectorBarData', () => {
       ({ proxy }) => useVectorBarData(proxy),
       {
         initialProps: {
-          proxy: { value: [2, -3] } as PropertyProxy | undefined,
+          proxy: makeVectorProxy([2, -3]) as PropertyProxy | undefined,
         },
       }
     );

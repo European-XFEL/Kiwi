@@ -42,3 +42,20 @@ test('keeps vector line fields in its separate reader', () => {
   expect(graph).not.toHaveProperty('roi_tool');
   expect(graph).not.toHaveProperty('roi_items');
 });
+
+test('defaults vector line graphs to enabled grids and an identity transformation', () => {
+  for (const graph of [
+    new DisplayVectorGraphModel(),
+    readPlot('VectorGraph'),
+  ]) {
+    expect(graph).toMatchObject({
+      x_grid: true,
+      y_grid: true,
+      offset: 0,
+      step: 1,
+    });
+  }
+  expect(
+    readPlot('VectorGraph', 'krb:x_grid="false" krb:y_grid="false"')
+  ).toMatchObject({ x_grid: false, y_grid: false });
+});
