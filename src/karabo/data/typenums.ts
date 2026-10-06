@@ -49,7 +49,10 @@ export function getHashTypeFromValue(value: any): HashType {
     case 'object': {
       if (value === null) break;
 
-      if (Object.prototype.hasOwnProperty.call(value, 'type_')) {
+      if (
+        Object.prototype.hasOwnProperty.call(value, 'type_') &&
+        'value_' in value
+      ) {
         return value.type_;
       }
 

@@ -1,4 +1,4 @@
-import { HashType } from './typenums';
+import { HashType, getHashTypeFromValue } from './typenums';
 import {
   Integer,
   BigInteger,
@@ -20,6 +20,12 @@ export type NumericVectorTypes =
   | BigUint64Array
   | Float32Array
   | Float64Array;
+
+export function isTypedArray(
+  value: unknown
+): value is NumericVectorTypes | Uint8ClampedArray {
+  return ArrayBuffer.isView(value) && !(value instanceof DataView);
+}
 
 export type ValueTypes =
   SimpleValueTypes | SimpleValueTypes[] | NumericVectorTypes;
@@ -304,4 +310,54 @@ export function wrapValue(value: ValueTypes, type_: HashType): KaraboValue {
     throw new Error(`Unsupported Karabo type: ${HashType[type_] ?? type_}`);
   }
   return new C(value as any);
+}
+
+function isKaraboValue(value: unknown): value is KaraboValue {
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    Object.prototype.hasOwnProperty.call(value, 'type_') &&
+    'value_' in value
+  );
+}
+
+export function unwrap(data: unknown): KaraboValue['value_'] {
+  return isKaraboValue(data) ? data.value_ : data;
+}
+
+type VectorCtor = {
+  new (buffer: ArrayBuffer, byteOffset: number, length: number): KaraboValue;
+};
+
+const TYPED_ARRAY_VIEWS = new Map<object, VectorCtor>([
+  [Int8Array, VectorInt8Value],
+  [Int16Array, VectorInt16Value],
+  [Uint16Array, VectorUInt16Value],
+  [Int32Array, VectorInt32Value],
+  [Uint32Array, VectorUInt32Value],
+  [BigInt64Array, VectorInt64Value],
+  [BigUint64Array, VectorUInt64Value],
+  [Float32Array, VectorFloatValue],
+  [Float64Array, VectorDoubleValue],
+]);
+
+export function wrap(value: unknown): KaraboValue {
+  if (isKaraboValue(value)) {
+    return value;
+  }
+  if (isTypedArray(value)) {
+    if (value instanceof Uint8Array) {
+      return new VectorCharValue(value);
+    }
+    const Vector = TYPED_ARRAY_VIEWS.get(value.constructor);
+    if (!Vector) {
+      throw new Error('Unsupported Karabo typed array');
+    }
+    return new Vector(
+      value.buffer as ArrayBuffer,
+      value.byteOffset,
+      value.length
+    );
+  }
+  return wrapValue(value as ValueTypes, getHashTypeFromValue(value));
 }

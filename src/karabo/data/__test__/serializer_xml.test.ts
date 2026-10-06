@@ -4,9 +4,20 @@ import * as fs from 'fs';
 import { Hash, HashList, Schema } from '../hash';
 import { decodeXML } from '../xml_reader';
 import { encodeXML } from '../xml_writer';
+import { HashType } from '../typenums';
 import { loadFromFile, saveToFile } from '../xml_file_io';
 
 import {
+  wrap,
+  unwrap,
+  UInt16Value,
+  VectorInt8Value,
+  VectorInt16Value,
+  VectorUInt16Value,
+  VectorUInt32Value,
+  VectorInt64Value,
+  VectorUInt64Value,
+  type KaraboValue,
   BoolValue,
   FloatValue,
   DoubleValue,
@@ -23,6 +34,35 @@ import {
   VectorInt32Value,
   VectorStringValue,
 } from '../types';
+
+const vectors = [
+  [new Int8Array([0, -128, 127]), VectorInt8Value, [-128, 127]],
+  [new Uint8Array([0, 0, 255]), VectorCharValue, [0, 255]],
+  [new Int16Array([0, -32768, 32767]), VectorInt16Value, [-32768, 32767]],
+  [new Uint16Array([0, 0, 65535]), VectorUInt16Value, [0, 65535]],
+  [
+    new Int32Array([0, -2147483648, 2147483647]),
+    VectorInt32Value,
+    [-2147483648, 2147483647],
+  ],
+  [new Uint32Array([0, 0, 4294967295]), VectorUInt32Value, [0, 4294967295]],
+  [
+    new BigInt64Array([0n, -9223372036854775808n, 9223372036854775807n]),
+    VectorInt64Value,
+    [-9223372036854775808n, 9223372036854775807n],
+  ],
+  [
+    new BigUint64Array([0n, 0n, 18446744073709551615n]),
+    VectorUInt64Value,
+    [0n, 18446744073709551615n],
+  ],
+  [new Float32Array([0, -1.5, 2.25]), VectorFloatValue, [-1.5, 2.25]],
+  [
+    new Float64Array([0, -Number.MAX_VALUE, Number.MAX_VALUE]),
+    VectorDoubleValue,
+    [-Number.MAX_VALUE, Number.MAX_VALUE],
+  ],
+] as const;
 
 const BOUND_HASH_XML = `<?xml version="1.0"?>
 <root KRB_Artificial="" KRB_Type="HASH">
@@ -123,16 +163,14 @@ const BOUND_TABLE_SCHEMA_LEGACY_XML = `<?xml version="1.0"?>
 
 /**
  * Creates a Hash with a comprehensive mix of types.
- * Combines implicit value wrapping (basic usage) and explicit KaraboValue creation (complex usage).
+ * Uses explicit Karabo types for direct comparison with decoded Hashes.
  */
 function create_hash(): Hash {
   const h = new Hash();
 
-  // --- Implicit Wrapping Tests ---
-  // These should be automatically wrapped into their default Karabo Types
-  h.set('int_val', 123);
-  h.set('float_val', 12.34);
-  h.set('string_val', 'hello');
+  h.set('int_val', new Int32Value(123));
+  h.set('float_val', new DoubleValue(12.34));
+  h.set('string_val', new StringValue('hello'));
 
   // --- Explicit Primitive Types ---
   h.set('bool_t', new BoolValue(true));
@@ -166,8 +204,8 @@ function create_hash(): Hash {
 
   // --- Nested Structures ---
   const nested = new Hash();
-  nested.set('inner', 'value'); // Implicit
-  nested.set('inner_val', new Int32Value(42)); // Explicit
+  nested.set('inner', new StringValue('value'));
+  nested.set('inner_val', new Int32Value(42));
   h.set('nested', nested);
 
   // --- Vector Hash (Table) ---
@@ -188,9 +226,9 @@ describe('TestSerializers', () => {
 
   // Replicating global HASH from python
   const HASH = new Hash();
-  HASH.set('akey', 'aval');
+  HASH.set('akey', new StringValue('aval'));
   const inner = new Hash();
-  inner.set('nested', 1.618);
+  inner.set('nested', new DoubleValue(1.618));
   HASH.set('another', inner);
 
   beforeEach(() => {
@@ -306,8 +344,8 @@ describe('TestSerializers', () => {
     expect(sch_hash.has('table')).toBeTruthy();
 
     // 1. Verify Structure (Nested objects)
-    const rowSchema = sch_hash.getAttribute('table', 'rowSchema');
-    const defaultValue = sch_hash.getAttribute('table', 'defaultValue');
+    const rowSchema = sch_hash.getAttributeValue('table', 'rowSchema');
+    const defaultValue = sch_hash.getAttributeValue('table', 'defaultValue');
     expect(rowSchema instanceof Schema).toBeTruthy();
 
     expect(defaultValue instanceof HashList).toBeTruthy();
@@ -343,14 +381,14 @@ describe('TestSerializers', () => {
     const sch_hash = decodeXML(BOUND_TABLE_SCHEMA_LEGACY_XML);
     expect(sch_hash.has('table')).toBeTruthy();
 
-    const rowSchema = sch_hash.getAttribute('table', 'rowSchema');
-    const defaultValue = sch_hash.getAttribute('table', 'defaultValue');
+    const rowSchema = sch_hash.getAttributeValue('table', 'rowSchema');
+    const defaultValue = sch_hash.getAttributeValue('table', 'defaultValue');
 
-    expect(typeof rowSchema.value_).toBe('string');
-    expect(rowSchema.value_).toBe('Schema Object');
+    expect(typeof rowSchema).toBe('string');
+    expect(rowSchema).toBe('Schema Object');
 
-    expect(typeof defaultValue.value_).toBe('string');
-    expect((defaultValue.value_ as string).startsWith("'e1'")).toBeTruthy();
+    expect(typeof defaultValue).toBe('string');
+    expect((defaultValue as string).startsWith("'e1'")).toBeTruthy();
   });
 
   test('xml_serialization_roundtrip', () => {
@@ -363,7 +401,7 @@ describe('TestSerializers', () => {
 
     // 3. Assert specific values to ensure precision/types are correct
 
-    // Implicit types
+    // Scalars
     expect(decoded.getValue('int_val')).toBe(123);
     expect(decoded.getValue('float_val')).toBe(12.34);
     expect(decoded.getValue('string_val')).toBe('hello');
@@ -377,6 +415,7 @@ describe('TestSerializers', () => {
 
     // Integers
     expect(decoded.getValue('int8')).toBe(-120);
+    expect(decoded.getValue('int32')).toBe(-99999);
     expect(decoded.getValue('uint32')).toBe(4000000);
     expect(decoded.getValue('int64')).toBe(9007199254740991n); // BigInt
     expect(decoded.getValue('uint64')).toBe(18446744073709551610n); // BigInt
@@ -414,7 +453,6 @@ describe('TestSerializers', () => {
     expect(table[0].getValue('id')).toBe(1);
     expect(table[1].getValue('id')).toBe(2);
 
-    // 4. Full Equality Check
     expect(decoded).toEqual(original);
   });
 
@@ -453,4 +491,178 @@ describe('TestSerializers', () => {
     const decoded = decodeXML(content);
     expect(decoded).toEqual(h);
   });
+});
+
+describe('XML raw serialization', () => {
+  test('returns wrapped scalars after a roundtrip of unwrapped values', () => {
+    const values = {
+      int: 42,
+      double: 1.25,
+      big: 9007199254740993n,
+      bool: false,
+      string: 'Karabo <&> XML',
+    };
+    const original = new Hash(values);
+    for (const [key, value] of Object.entries(values)) {
+      expect(original.get(key)).toBe(value);
+    }
+
+    const decoded: Hash = decodeXML(encodeXML(original));
+    expect(decoded).toEqual(
+      new Hash({
+        int: new Int32Value(42),
+        double: new DoubleValue(1.25),
+        big: new Int64Value(9007199254740993n),
+        bool: new BoolValue(false),
+        string: new StringValue('Karabo <&> XML'),
+      })
+    );
+    for (const [key, value] of Object.entries(values)) {
+      expect(decoded.getValue(key)).toBe(value);
+      expect(original.get(key)).toBe(value);
+    }
+  });
+
+  test('infers defaults, preserves explicit types and leaves source values untouched', () => {
+    const values = {
+      int: 42,
+      double: 1.25,
+      big: -9223372036854775808n,
+      bool: true,
+      string: '<&\'"',
+      ints: [1, 2],
+      doubles: [1.5, 2.5],
+      bools: [true, false],
+      strings: ['<&', 'two'],
+      bigs: [1n, -2n],
+      empty: [],
+      bytes: new Uint8Array([0, 255]),
+      explicit: new UInt64Value(18446744073709551615n),
+      nested: new Hash('value', 7),
+      table: new HashList([new Hash('value', false)]),
+      schema: new Schema('test', new Hash('value', 'schema')),
+    };
+    const hash = new Hash(values);
+    const decoded: Hash = decodeXML(encodeXML(hash));
+    const classes = {
+      int: Int32Value,
+      double: DoubleValue,
+      big: Int64Value,
+      bool: BoolValue,
+      string: StringValue,
+      ints: VectorInt32Value,
+      doubles: VectorDoubleValue,
+      bools: VectorBoolValue,
+      strings: VectorStringValue,
+      bigs: VectorInt64Value,
+      empty: VectorStringValue,
+      bytes: VectorCharValue,
+      explicit: UInt64Value,
+      nested: Hash,
+      table: HashList,
+      schema: Schema,
+    };
+    for (const [key, value] of Object.entries(values)) {
+      expect(hash.get(key)).toBe(value);
+      expect(decoded.get(key)).toBeInstanceOf(classes[key]);
+      expect(decoded.get(key).type_).toBe(wrap(value).type_);
+    }
+    expect(decoded.getValue('int')).toBe(42);
+    expect(decoded.getValue('big')).toBe(values.big);
+    expect(decoded.getValue('explicit')).toBe(values.explicit.value_);
+    expect(decoded.getValue('string')).toBe(values.string);
+    expect(Array.from(decoded.getValue('ints'))).toEqual(values.ints);
+    expect(Array.from(decoded.getValue('doubles'))).toEqual(values.doubles);
+    expect(Array.from(decoded.getValue('bigs'))).toEqual(values.bigs);
+    expect(decoded.getValue('bools')).toEqual(values.bools);
+    expect(decoded.getValue('strings')).toEqual(values.strings);
+    expect(decoded.getValue('empty')).toEqual([]);
+    expect(decoded.getValue('bytes')).toEqual(values.bytes);
+    expect(decoded.getValue('nested.value')).toBe(7);
+    expect(decoded.getValue<HashList>('table')[0].getValue('value')).toBe(
+      false
+    );
+    expect(decoded.getValue<Schema>('schema').hash.getValue('value')).toBe(
+      'schema'
+    );
+    values.ints.push(3);
+    expect(Array.from(decodeXML(encodeXML(hash)).getValue('ints'))).toEqual([
+      1, 2, 3,
+    ]);
+  });
+
+  test('serializes raw and typed attributes, including nested structures', () => {
+    const hash = new Hash();
+    const attrs = {
+      text: '<>&\'" &amp; : newline\n',
+      count: 3,
+      typed: new UInt16Value(65535),
+      vector: new Int16Array([-32768, 32767]),
+      nested: new Hash('value', '<&'),
+      table: new HashList([new Hash('value', true)]),
+      schema: new Schema('test', new Hash('value', 1)),
+    };
+    hash.setElement('value', 'payload', attrs);
+    const decoded: Hash = decodeXML(encodeXML(hash));
+    for (const [key, value] of Object.entries(attrs)) {
+      expect(hash.getAttribute('value', key)).toBe(value);
+      expect((decoded.getAttribute('value', key) as KaraboValue).type_).toBe(
+        wrap(value).type_
+      );
+    }
+    expect(decoded.getAttributeValue('value', 'text')).toBe(attrs.text);
+    expect(decoded.getAttribute('value', 'typed')).toBeInstanceOf(UInt16Value);
+    expect(decoded.getAttributeValue('value', 'count')).toBe(3);
+    expect(Array.from(decoded.getAttributeValue('value', 'vector'))).toEqual([
+      -32768, 32767,
+    ]);
+    expect(decoded.getAttributeValue('value', 'nested').getValue('value')).toBe(
+      '<&'
+    );
+    expect(
+      decoded.getAttributeValue('value', 'table')[0].getValue('value')
+    ).toBe(true);
+    expect(
+      decoded.getAttributeValue('value', 'schema').hash.getValue('value')
+    ).toBe(1);
+  });
+
+  test.each([
+    null,
+    undefined,
+    {},
+    { value_: 1 },
+    { type_: HashType.Int32 },
+    Symbol('unsupported'),
+    () => 1,
+    new DataView(new ArrayBuffer(4)),
+  ])('rejects unsupported values at encoding: %p', (value) => {
+    const hash = new Hash('value', value);
+    expect(hash.getElement('value').data).toBe(value);
+    expect(() => encodeXML(hash)).toThrow(/Cannot infer|Unsupported/);
+    const attrHash = new Hash('value', 1);
+    attrHash.setAttribute('value', 'unsupported', value);
+    expect(() => encodeXML(attrHash)).toThrow(/Cannot infer|Unsupported/);
+  });
+
+  test('rejects unsupported explicit wire types', () => {
+    const hash = new Hash('value', { type_: 24, value_: 1 });
+    expect(() => encodeXML(hash)).toThrow(/Unsupported/);
+  });
+  test.each(vectors)(
+    'serializes %p subviews and empty vectors',
+    (array, Wrapper, limits) => {
+      const subview = array.subarray(1);
+      const hash = new Hash('v', subview);
+      const decoded = decodeXML(encodeXML(hash)).get('v');
+      expect(decoded).toBeInstanceOf(Wrapper);
+      expect(Array.from(unwrap(decoded))).toEqual(limits);
+      expect(hash.get('v')).toBe(subview);
+      expect(
+        decodeXML(encodeXML(new Hash('v', subview.subarray(0, 0)))).getValue(
+          'v'
+        ).length
+      ).toBe(0);
+    }
+  );
 });

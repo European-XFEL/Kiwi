@@ -4,7 +4,7 @@ export {
   HashAttributes,
   HashElement,
   HashList,
-  type HashValues,
+  type HashAny,
 } from './hash';
 export { decodeXML } from './xml_reader';
 export { encodeXML } from './xml_writer';

@@ -1,11 +1,13 @@
-import { HashType, getHashTypeFromValue } from './typenums';
-import { KaraboValue, wrapValue } from './types';
+import { HashType } from './typenums';
+import { unwrap } from './types';
+
+export { wrap } from './types';
 
 const SEPARATOR = '.' as const;
 
-export type HashValues = KaraboValue | Hash | Schema | HashList;
+export type HashAny = unknown;
 
-export class HashAttributes extends Map<string, HashValues> {
+export class HashAttributes extends Map<string, HashAny> {
   constructor(
     init?:
       | HashAttributes
@@ -39,10 +41,6 @@ export class HashAttributes extends Map<string, HashValues> {
     return v;
   }
 
-  override set(key: string, value: any): this {
-    return super.set(key, wrap(value));
-  }
-
   // * This is solely used for the deserializer
   public _set_element(key: string, value: any): void {
     super.set(key, value);
@@ -50,37 +48,27 @@ export class HashAttributes extends Map<string, HashValues> {
 
   public findValue<T = any>(path: string): any | undefined {
     try {
-      return this.get(path).value_ as T;
+      return unwrap(this.get(path)) as T;
     } catch {
       return undefined;
     }
   }
 
   public getValue<T = any>(path: string): T {
-    return this.get(path).value_ as T;
+    return unwrap(this.get(path)) as T;
   }
 }
 
 // ---------------------------------------------------------
 
-function isKaraboValue(v: any): v is HashValues {
-  if (v === null) {
-    return false;
-  }
-
-  return (
-    typeof v === 'object' && Object.prototype.hasOwnProperty.call(v, 'type_')
-  );
-}
-
 export class HashElement {
   // Use Attributes class instead of generic Map
   constructor(
-    public data: HashValues,
+    public data: HashAny,
     public attrs: HashAttributes = new HashAttributes()
   ) {}
 
-  *[Symbol.iterator](): IterableIterator<HashValues | HashAttributes> {
+  *[Symbol.iterator](): IterableIterator<HashAny | HashAttributes> {
     yield this.data;
     yield this.attrs;
   }
@@ -166,11 +154,11 @@ export class Hash extends Map<string, HashElement> {
 
         const created = new HashElement(new Hash(), new HashAttributes());
         s._set_element(p, created);
-        s = created.data.value_ as Hash;
+        s = created.data as Hash;
         continue;
       }
 
-      const data = element.data.value_;
+      const data = unwrap(element.data);
       if (!(data instanceof Hash)) {
         throw new Error(`KeyError: ${path}`);
       }
@@ -218,7 +206,7 @@ export class Hash extends Map<string, HashElement> {
     const key = String(path);
     const elementAttrs =
       attrs instanceof HashAttributes ? attrs : new HashAttributes(attrs);
-    const element = new HashElement(wrap(value), elementAttrs);
+    const element = new HashElement(value, elementAttrs);
 
     if (!key.includes(SEPARATOR)) {
       Map.prototype.set.call(this, key, element);
@@ -236,7 +224,7 @@ export class Hash extends Map<string, HashElement> {
       const existing = Map.prototype.get.call(this, key) as
         HashElement | undefined;
       const attrs = existing ? existing.attrs : new HashAttributes();
-      Map.prototype.set.call(this, key, new HashElement(wrap(value), attrs));
+      Map.prototype.set.call(this, key, new HashElement(value, attrs));
       return this;
     }
 
@@ -244,24 +232,28 @@ export class Hash extends Map<string, HashElement> {
     const existing = Map.prototype.get.call(hash, leaf) as
       HashElement | undefined;
     const attrs = existing ? existing.attrs : new HashAttributes();
-    Map.prototype.set.call(hash, leaf, new HashElement(wrap(value), attrs));
+    Map.prototype.set.call(hash, leaf, new HashElement(value, attrs));
 
     return this;
   }
 
   override get(path: string): any {
-    return this._getElement(path, false).data;
+    const value = this._getElement(path, false).data;
+    if (value === undefined) {
+      throw new Error(`KeyError: ${path}`);
+    }
+    return value;
   }
 
   public getValue<T = any>(path: string): T {
-    return this._getElement(path, false).data.value_ as T;
+    return unwrap(this.get(path)) as T;
   }
 
   public getAttributes(path: string): HashAttributes {
     return this._getElement(path, false).attrs;
   }
 
-  public getAttribute(path: string, attrKey: string): HashValues {
+  public getAttribute(path: string, attrKey: string): HashAny {
     const attrs = this._getElement(path, false).attrs;
     const v = attrs.get(attrKey);
     if (v === undefined) {
@@ -272,7 +264,7 @@ export class Hash extends Map<string, HashElement> {
 
   public getAttributeValue(path: string, attrKey: string): any {
     const v = this.getAttribute(path, attrKey);
-    return v.value_;
+    return unwrap(v);
   }
 
   public setAttribute(path: string, attrKey: string, attrValue: any): void {
@@ -308,10 +300,10 @@ export class Hash extends Map<string, HashElement> {
     for (const [k, element] of this.entries()) {
       const simple: Record<string, any> = {};
       for (const [ak, av] of element.attrs.entries()) {
-        simple[ak] = (av as any).value_ ?? av;
+        simple[ak] = unwrap(av);
       }
       // prettier-ignore
-      yield [k, element.data.value_, simple];
+      yield [k, unwrap(element.data), simple];
     }
   }
 
@@ -336,7 +328,6 @@ export class Hash extends Map<string, HashElement> {
 
       if (mergeAttrs) {
         // For merge, we can just iterate and set.
-        // HashAttributes.set will handle wrapping if needed (though otherAttrs are already wrapped)
         const targetAttrs = this.getAttributes(k);
         for (const [ak, av] of otherAttrs) {
           targetAttrs.set(ak, av);
@@ -411,16 +402,6 @@ export class Hash extends Map<string, HashElement> {
 
     return intermediate ? fullPaths(this) : leafPaths(this);
   }
-}
-
-// * Wrap a value into a KaraboValue
-//
-export function wrap(value: any): HashValues {
-  if (isKaraboValue(value)) {
-    return value;
-  }
-  const ktype = getHashTypeFromValue(value);
-  return wrapValue(value, ktype);
 }
 
 export class Schema {

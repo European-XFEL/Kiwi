@@ -1,4 +1,21 @@
-import { isTypedArray } from '../utils';
+import { HashType } from '../typenums';
+import { isHashTypes, isTypedArray } from '../utils';
+
+describe('isHashTypes', () => {
+  test.each([HashType.Hash, HashType.Schema, HashType.VectorHash])(
+    'recognizes structured type %s',
+    (dtype) => {
+      expect(isHashTypes(dtype)).toBe(true);
+    }
+  );
+
+  test.each([HashType.String, HashType.Int32, HashType.VectorString])(
+    'rejects primitive type %s',
+    (dtype) => {
+      expect(isHashTypes(dtype)).toBe(false);
+    }
+  );
+});
 
 describe('isTypedArray', () => {
   test('recognizes numeric typed arrays', () => {
