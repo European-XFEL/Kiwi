@@ -5,6 +5,8 @@ import type { TrendSeries } from './useTrendModel';
 import { trendDatasets, trendChartOption } from './trendConfig';
 import {
   buildPlotAxes,
+  axisTitle,
+  GRAPH_LAYOUT,
   useChart,
   type AxisRanges,
   type Range,
@@ -91,10 +93,12 @@ export function useTrendChart({
       buildPlotAxes(plotConfig, {
         timeX: true,
         categories: categoryLabels(mode),
-        onYAxisWidth: mode === 'numeric' ? undefined : setYAxisWidth,
       }),
     [plotConfig, mode]
   );
+  const numericYAxisWidth = axisTitle(axes.y.label, axes.y.units)
+    ? GRAPH_LAYOUT.yAxisSize.titled
+    : GRAPH_LAYOUT.yAxisSize.untitled;
   const buildData = React.useCallback(
     () => ({ datasets: trendDatasets(series) }),
     [series]
@@ -111,7 +115,8 @@ export function useTrendChart({
         latestSeriesRef.current,
         undefined,
         undefined,
-        axes
+        axes,
+        setYAxisWidth
       ),
     identity: [plotConfig, seriesKeys, mode],
     xRange,
@@ -159,7 +164,7 @@ export function useTrendChart({
 
   const yRange = view.yRange;
   return {
-    yAxisWidth,
+    yAxisWidth: mode === 'numeric' ? numericYAxisWidth : yAxisWidth,
     containerRef,
     selectionRef,
     tool: chart.tool,

@@ -27,6 +27,26 @@ describe('useTrendChart view state', () => {
   afterEach(() => jest.restoreAllMocks());
 
   it.each([
+    ['', 52],
+    ['Value', 68],
+  ])(
+    'uses the fixed numeric gutter for title %s in the surrounding layout',
+    (label, width) => {
+      const plotConfig = buildModelConfig(new DisplayTrendGraphModel());
+      plotConfig.y_label = label;
+      const { result } = renderHook(() =>
+        useTrendChart({
+          plotConfig,
+          series: samples(10),
+          startTime: START,
+          dataRevision: 0,
+        })
+      );
+      expect(result.current.yAxisWidth).toBe(width);
+    }
+  );
+
+  it.each([
     ['tenMinutes', new Date(2027, 2, 29, 0, 20).getTime()],
     ['hour', new Date(2027, 2, 28, 23, 30).getTime()],
     ['day', new Date(2027, 2, 28, 0, 30).getTime()],

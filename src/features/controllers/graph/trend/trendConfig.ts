@@ -27,12 +27,18 @@ export function trendChartOption(
   series: TrendSeries[],
   xRange?: Range,
   yRange?: Range,
-  axes: PlotAxesConfig = buildPlotAxes(plotConfig, { timeX: true })
+  axes: PlotAxesConfig = buildPlotAxes(plotConfig, { timeX: true }),
+  onYAxisWidth?: (width: number) => void
 ): ChartConfiguration<'line'> {
-  const config = commonChartOption(plotConfig, {
-    x: { ...axes.x, range: xRange ?? axes.x.range },
-    y: { ...axes.y, range: yRange ?? axes.y.range },
-  });
+  const config = commonChartOption(
+    plotConfig,
+    {
+      x: { ...axes.x, range: xRange ?? axes.x.range },
+      y: { ...axes.y, range: yRange ?? axes.y.range },
+    },
+    'line',
+    onYAxisWidth
+  );
   config.data.datasets = trendDatasets(series);
   return config;
 }
