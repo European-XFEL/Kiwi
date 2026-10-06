@@ -116,7 +116,7 @@ export class ConfigurationStore {
     sessionAccessLevel: new Item({
       defaultValue: undefined,
       group: AUTHENTICATION,
-      dtype: 'string',
+      dtype: 'int',
     }),
     sessionRefreshToken: new EncryptedItem({
       defaultValue: undefined,
