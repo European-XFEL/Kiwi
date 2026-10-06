@@ -8,6 +8,7 @@ import {
   EditableCheckBox,
 } from '@/features/controllers/display/CheckBox';
 import DisplayCommand from '@/features/controllers/display/DisplayCommand';
+import DisplayColorBool from '@/features/controllers/display/DisplayColorBool';
 import DisplayFloat from '@/features/controllers/display/DisplayFloat';
 import DisplayLabel from '@/features/controllers/display/DisplayLabel';
 import DisplayList from '@/features/controllers/display/DisplayList';
@@ -50,6 +51,7 @@ export function bootstrapControllerRenderers(
   registerRenderer('DisplayLabel', DisplayLabel);
   registerRenderer('DisplayCommand', DisplayCommand);
   registerRenderer('DisplayFloat', DisplayFloat);
+  registerRenderer('DisplayColorBool', DisplayColorBool);
   registerRenderer('DisplayList', DisplayList);
   registerRenderer('DisplayAlarmFloat', DisplayAlarmFloat);
   registerRenderer('DisplayStateColor', DisplayStateColor);
