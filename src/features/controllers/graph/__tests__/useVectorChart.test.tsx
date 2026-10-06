@@ -1,15 +1,21 @@
 import { buildModelConfig } from '../common/api';
 import React from 'react';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { Chart } from 'chart.js/auto';
 import {
   DisplayVectorGraphModel,
   VectorBarGraphModel,
 } from '@/karabo/common/api';
 import type { PropertyProxy } from '@/lib/binding/PropertyProxy';
-import { ProxyStatus } from '@/lib/binding/api';
 import { useVectorChart } from '../useVectorChart';
 import { useVectorBarChart } from '../useVectorBarChart';
+import { makeVectorProxy } from '../testing/vectorProxy';
 
 function VectorChartHarness({
   model,
@@ -131,10 +137,7 @@ describe('vector line and bar hooks with Chart.js', () => {
       window.cancelIdleCallback = jest.fn((id: number) =>
         window.clearTimeout(id)
       );
-      const proxy = {
-        root: { status: ProxyStatus.MONITORING },
-        value: [1, 2, 3],
-      } as PropertyProxy;
+      const proxy = makeVectorProxy([1, 2, 3]);
       const model = new DisplayVectorGraphModel();
       model.offset = 10;
       model.step = step;
@@ -147,7 +150,7 @@ describe('vector line and bar hooks with Chart.js', () => {
           { x: 10 + (step || 1), y: 2 },
           { x: 10 + 2 * (step || 1), y: 3 },
         ]);
-        Object.assign(proxy, { value: [4, 5] });
+        proxy.binding!.setValue([4, 5], undefined);
         view.rerender(<VectorChartHarness model={model} proxy={proxy} />);
         act(() => jest.runOnlyPendingTimers());
         expect(chart()).toBe(currentChart);
@@ -183,12 +186,9 @@ describe('vector line and bar hooks with Chart.js', () => {
       window.cancelIdleCallback = jest.fn((id: number) =>
         window.clearTimeout(id)
       );
-      const proxy = {
-        root: { status: ProxyStatus.MONITORING },
-        value: Float64Array.from({ length: 200_001 }, (_, i) =>
-          constant ? 1 : i
-        ),
-      } as PropertyProxy;
+      const proxy = makeVectorProxy(
+        Float64Array.from({ length: 200_001 }, (_, i) => (constant ? 1 : i))
+      );
       const model = new DisplayVectorGraphModel();
       model.offset = 10;
       model.step = 2;
@@ -215,7 +215,7 @@ describe('vector line and bar hooks with Chart.js', () => {
           x: 10 + last * 2,
           y: constant ? 1 : last,
         });
-        Object.assign(proxy, { value: [] });
+        proxy.binding!.setValue([], undefined);
         view.rerender(<VectorChartHarness model={model} proxy={proxy} />);
         act(() => jest.runOnlyPendingTimers());
         expect(chart().data.datasets[0].data).toEqual([]);
@@ -228,9 +228,9 @@ describe('vector line and bar hooks with Chart.js', () => {
     }
   );
 
-  it('samples bars for the padded viewport while preserving the full source', () => {
+  it('samples bars for the padded viewport while preserving the full source', async () => {
     const values = Float64Array.from({ length: 1000 }, (_, index) => -index);
-    const proxy = { value: values } as PropertyProxy;
+    const proxy = makeVectorProxy(values);
     const model = new VectorBarGraphModel();
     Object.assign(model, {
       x_autorange: false,
@@ -239,6 +239,7 @@ describe('vector line and bar hooks with Chart.js', () => {
       x_log: true,
     });
     const view = render(<VectorChartHarness model={model} proxy={proxy} />);
+    await waitFor(() => expect(chart().data.datasets[0].data).toHaveLength(61));
     const data = chart().data.datasets[0].data;
     expect(data).toHaveLength(61);
     expect(data[0]).toEqual({ x: 80, y: -80 });
@@ -252,7 +253,7 @@ describe('vector line and bar hooks with Chart.js', () => {
     Object.assign(outside, { x_autorange: false, x_min: 2000, x_max: 2100 });
     view.rerender(<VectorChartHarness model={outside} proxy={proxy} />);
     expect(chart().data.datasets[0].data).toEqual([]);
-    expect(proxy.value).toBe(values);
+    expect(proxy.binding!.getValue()).toBe(values);
     expect(values).toHaveLength(1000);
   });
 
@@ -274,10 +275,9 @@ describe('vector line and bar hooks with Chart.js', () => {
       window.cancelIdleCallback = jest.fn((id: number) =>
         window.clearTimeout(id)
       );
-      const proxy = {
-        root: { status: ProxyStatus.MONITORING },
-        value: Array.from({ length: 4000 }, (_, index) => valueAt(index)),
-      } as PropertyProxy;
+      const proxy = makeVectorProxy(
+        Array.from({ length: 4000 }, (_, index) => valueAt(index))
+      );
       const model = new VectorBarGraphModel();
       const view = render(<VectorChartHarness model={model} proxy={proxy} />);
       try {
@@ -295,7 +295,7 @@ describe('vector line and bar hooks with Chart.js', () => {
           clientX: 90,
           clientY: 40,
         });
-        Object.assign(proxy, { value: [-1, 9] });
+        proxy.binding!.setValue([-1, 9], undefined);
         view.rerender(<VectorChartHarness model={model} proxy={proxy} />);
         act(() => jest.runOnlyPendingTimers());
         expect(chart().data.datasets[0].data).toHaveLength(3000);
@@ -304,7 +304,7 @@ describe('vector line and bar hooks with Chart.js', () => {
           { x: 0, y: -1 },
           { x: 1, y: 9 },
         ]);
-        Object.assign(proxy, { value: [] });
+        proxy.binding!.setValue([], undefined);
         view.rerender(<VectorChartHarness model={model} proxy={proxy} />);
         act(() => jest.runOnlyPendingTimers());
         expect(chart().data.datasets[0].data).toEqual([]);

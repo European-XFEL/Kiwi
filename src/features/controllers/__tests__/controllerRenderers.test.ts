@@ -15,6 +15,7 @@ test('registers separate vector line and bar controllers', () => {
 
   expect(renderers.get('DisplayVectorGraph')).toBe(DisplayVectorGraph);
   expect(renderers.get('VectorGraph')).toBe(DisplayVectorGraph);
+  expect(renderers.get('NDArrayGraph')).toBe(DisplayVectorGraph);
   expect(renderers.get('VectorXYGraph')).toBe(DisplayVectorXYGraph);
   expect(renderers.get('VectorBarGraph')).toBe(DisplayBarGraph);
   expect(renderers.get('ScatterGraph')).toBe(DisplayScatterGraph);

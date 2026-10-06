@@ -20,6 +20,8 @@ export function applyConfiguration(
     const binding = namespace.get(key);
     if (value instanceof Hash && binding instanceof NodeBinding) {
       applyConfiguration(value, binding, timestamp);
+      // The namespace stays the same; advance the node timestamp and notify
+      // its subscribers only after all child values have been configured.
       binding.bindingUpdated(timestamp);
     } else {
       // Set the timestamp no matter what, and take raw value

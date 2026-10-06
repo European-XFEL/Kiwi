@@ -66,6 +66,7 @@ export function bootstrapControllerRenderers(
   registerRenderer('DisplayAlarmGraph', DisplayTrendGraph);
   registerRenderer('DisplayVectorGraph', DisplayVectorGraph);
   registerRenderer('VectorGraph', DisplayVectorGraph);
+  registerRenderer('NDArrayGraph', DisplayVectorGraph);
   registerRenderer('VectorXYGraph', DisplayVectorXYGraph);
   registerRenderer('VectorBarGraph', DisplayBarGraph);
   registerRenderer('ScatterGraph', DisplayScatterGraph);

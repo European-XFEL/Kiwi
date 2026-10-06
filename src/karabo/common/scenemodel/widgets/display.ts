@@ -326,6 +326,16 @@ registerReader('DisplayAlarmGraph', (element) =>
 
 export class DisplayVectorGraphModel extends BasePlotModel {
   klass = 'DisplayVectorGraph';
+  x_grid = true;
+  y_grid = true;
+  offset = 0.0;
+  step = 1.0;
+}
+
+export class NDArrayGraphModel extends BasePlotModel {
+  klass = 'NDArrayGraph';
+  x_grid = true;
+  y_grid = true;
   offset = 0.0;
   step = 1.0;
 }
@@ -375,8 +385,18 @@ const readVectorPlot = <T extends BasePlotModel>(
 
 registerReader('VectorGraph', (element) => {
   const graph = readVectorPlot(element, new DisplayVectorGraphModel());
-  graph.offset = toNum(krbAttr(element, 'offset'));
+  graph.offset = toNum(krbAttr(element, 'offset'), 0.0);
   graph.step = toNum(krbAttr(element, 'step'), 1.0);
+  graph.x_grid = toBool(krbAttr(element, 'x_grid'), true);
+  graph.y_grid = toBool(krbAttr(element, 'y_grid'), true);
+  return graph;
+});
+registerReader('NDArrayGraph', (element) => {
+  const graph = readVectorPlot(element, new NDArrayGraphModel());
+  graph.offset = toNum(krbAttr(element, 'offset'), 0.0);
+  graph.step = toNum(krbAttr(element, 'step'), 1.0);
+  graph.x_grid = toBool(krbAttr(element, 'x_grid'), true);
+  graph.y_grid = toBool(krbAttr(element, 'y_grid'), true);
   return graph;
 });
 registerReader('VectorBarGraph', (element) => {
