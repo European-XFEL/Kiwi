@@ -1,5 +1,6 @@
 import { Hash, HashList, Schema } from './hash';
 import { HashType, HashTypeToXmlType } from './typenums';
+import { wrap } from './types';
 import { escapeXml, isTypedArray, quoteAttr, toBase64, unwrap } from './utils';
 
 function* yield_xml_simple(data: any): Generator<string> {
@@ -46,10 +47,10 @@ function* yield_xml_vector_hash(data: any): Generator<string> {
 }
 
 function* yield_xml_schema(data: any): Generator<string> {
-  yield (data as Schema).name;
+  yield escapeXml((data as Schema).name);
   yield ':';
   // We need to render the internal Hash of the schema to a string
-  const innerHashGen = yield_xml_hash((data as Schema).hash);
+  const innerHashGen = yieldXML((data as Schema).hash);
   let innerXml = '';
   for (const chunk of innerHashGen) {
     innerXml += chunk;
@@ -60,44 +61,59 @@ function* yield_xml_schema(data: any): Generator<string> {
 // ============================================================================
 
 function* yield_xml_hash(data: Hash): Generator<string> {
-  for (const [key, value, attrs] of data.iterall()) {
+  for (const [key, rawValue, attrs] of data.iterall()) {
+    const value = wrap(rawValue);
     const valueType = value.type_ as HashType;
     const valueTypeName = HashTypeToXmlType[valueType];
     const valueWriter = WRITER_MAP[valueType];
+    if (!valueWriter) {
+      throw new Error(`Unsupported XML Karabo type: ${valueType}`);
+    }
+    const structuredAttrs: [string, Hash | HashList | Schema][] = [];
 
     // Open Tag
     yield `<${key} KRB_Type="${valueTypeName}" `;
 
     // Attributes
     if (attrs) {
-      for (const [attrKey, attrVal] of Object.entries(attrs)) {
-        const attrType = attrVal.type_ as HashType;
+      for (const [attrKey, rawAttrVal] of attrs) {
+        const attrVal = wrap(rawAttrVal);
+        const attrType = attrVal.type_;
         const attrTypeName = HashTypeToXmlType[attrType];
-        let attrDataString = '';
-        if (attrTypeName) {
-          // It is a Karabo Attribute (Typed)
-          const attrWriter = WRITER_MAP[attrType];
-          // Since the attrType has been successfuly used as an index to obtain
-          // the attrTypeName, the attrType can be trusted as a WRITER_MAP key
-          // and hence the attrWriter! below should be trustable as well.
-          const generator = attrWriter!(attrVal);
-          for (const chunk of generator) {
-            attrDataString += chunk;
-          }
-          // Format: KRB_[TYPE]:[VALUE]
-          const encodedAttr = `KRB_${attrTypeName}:${attrDataString}`;
-          yield `${attrKey}=${quoteAttr(encodedAttr)} `;
-        } else {
-          // Standard XML Attribute (String)
-          yield `${attrKey}=${quoteAttr(String(attrVal))} `;
+        const attrWriter = WRITER_MAP[attrType];
+        if (!attrWriter) {
+          throw new Error(`Unsupported XML Karabo type: ${attrType}`);
         }
+        if (
+          attrVal instanceof Hash ||
+          attrVal instanceof HashList ||
+          attrVal instanceof Schema
+        ) {
+          const root = `_attr_root_${key}_${attrKey}`;
+          structuredAttrs.push([root, attrVal]);
+          yield `${attrKey}=${quoteAttr(`KRB_${attrTypeName}:${root}`)} `;
+          continue;
+        }
+        let attrDataString = '';
+        for (const chunk of attrWriter(attrVal)) {
+          attrDataString += chunk;
+        }
+        // Writers already escape their text. Add only the surrounding quotes
+        // here, so primitive attributes are escaped exactly once.
+        yield `${attrKey}="KRB_${attrTypeName}:${attrDataString}" `;
       }
     }
 
     yield '>';
 
+    for (const [root, value] of structuredAttrs) {
+      yield `<${root}>`;
+      yield* yield_xml_hash(new Hash(`${root}_value`, value));
+      yield `</${root}>`;
+    }
+
     // Value Content
-    yield* valueWriter!(value);
+    yield* valueWriter(value);
 
     // Close Tag
     yield `</${key}>`;
@@ -155,7 +171,7 @@ function* yieldXML(data: Hash): Generator<string> {
   if (size === 1) {
     // Check if the single element is a Hash
     const firstKey = keys[0];
-    const firstVal = data.get(firstKey);
+    const firstVal = data.getElement(firstKey).data;
 
     if (firstVal instanceof Hash) {
       yield* yield_xml_hash(data);

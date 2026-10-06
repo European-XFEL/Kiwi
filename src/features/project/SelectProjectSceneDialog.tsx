@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/api';
-import { Hash, HashValues } from '@/karabo/data/api';
+import { Hash, HashAny } from '@/karabo/data/api';
 import { Button } from '@/components/api';
 import { Separator } from '@/components/api';
 import { getConfig, getDbConn, getNetwork } from '@/lib/singletons/api';
@@ -245,8 +245,8 @@ export default function SelectProjectSceneDialog({
     }
 
     // Projects were retrieved successfully
-    const itemsHashes = hash.getValue('reply.items') as HashValues[];
-    const projects: ProjectModel[] = itemsHashes.map((hv: HashValues) => {
+    const itemsHashes = hash.getValue('reply.items') as HashAny[];
+    const projects: ProjectModel[] = itemsHashes.map((hv: HashAny) => {
       const item = new Hash(hv);
       return new ProjectModel({
         uuid: item.getValue('uuid'),
@@ -286,8 +286,8 @@ export default function SelectProjectSceneDialog({
       setSelectedScene(undefined);
     } else {
       // Project Scenes were retrieved successfully
-      const itemsHashes = hash.getValue('reply.items') as HashValues[];
-      const scenes: SceneModel[] = itemsHashes.map((hv: HashValues) => {
+      const itemsHashes = hash.getValue('reply.items') as HashAny[];
+      const scenes: SceneModel[] = itemsHashes.map((hv: HashAny) => {
         const sceneItem = new Hash(hv);
         return new SceneModel({
           uuid: sceneItem.getValue('uuid'),

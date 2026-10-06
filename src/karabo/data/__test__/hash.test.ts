@@ -1,14 +1,9 @@
-import { Hash, HashList, Schema } from '@/karabo/data/hash';
+import { Hash, HashAttributes, HashList, Schema } from '@/karabo/data/hash';
 import { HashType } from '@/karabo/data/typenums';
-import {
-  StringValue,
-  DoubleValue,
-  VectorDoubleValue,
-} from '@/karabo/data/types';
+import { StringValue } from '@/karabo/data/types';
 
 import { flatIterall } from '@/karabo/data/utils';
 
-// Helper to check if a value is a wrapped Karabo type (has type_)
 const isWrapped = (v: any) => v && typeof v === 'object' && 'type_' in v;
 
 describe('Karabo Hash Class Tests', () => {
@@ -63,7 +58,7 @@ describe('Karabo Hash Class Tests', () => {
       expect(original.getValue('nested.val')).toBe(200); // Original is updated due to shallow copy
 
       // Check attributes
-      expect(copy.getAttribute('nested.val', 'attr').value_).toBe('test');
+      expect(copy.getAttribute('nested.val', 'attr')).toBe('test');
       expect(copy.getAttributeValue('nested.val', 'attr')).toBe('test');
     });
   });
@@ -72,13 +67,12 @@ describe('Karabo Hash Class Tests', () => {
     let h: Hash;
     beforeEach(() => (h = new Hash()));
 
-    test('set and get (Wrapped vs Unwrapped)', () => {
+    test('set and get raw values', () => {
       h.set('foo', 42);
 
-      // get() returns the Wrapper (e.g. Int32, UInt32 depending on inferrence)
       const wrapped = h.get('foo');
-      expect(isWrapped(wrapped)).toBe(true);
-      expect(wrapped.value_).toBe(42);
+      expect(isWrapped(wrapped)).toBe(false);
+      expect(wrapped).toBe(42);
 
       // getValue() returns the Native value
       expect(h.getValue('foo')).toBe(42);
@@ -100,7 +94,7 @@ describe('Karabo Hash Class Tests', () => {
     let h: Hash;
     beforeEach(() => (h = new Hash()));
 
-    test('set and get (Wrapped vs Unwrapped)', () => {
+    test('set and get raw values', () => {
       h.set('foo', 42);
 
       const value = h.getValue('foo') as number;
@@ -128,8 +122,7 @@ describe('Karabo Hash Class Tests', () => {
     test('get nested path', () => {
       h.set('x.y', 'hello');
       expect(h.getValue('x.y')).toBe('hello');
-      // Wrapped version
-      expect(h.get('x.y').value_).toBe('hello');
+      expect(h.get('x.y')).toBe('hello');
     });
 
     test('has with nested path', () => {
@@ -158,10 +151,8 @@ describe('Karabo Hash Class Tests', () => {
       h.setElement('sensor.val', 15.5, attrs);
 
       const el = h.getElement('sensor.val');
-      // Data should be wrapped
-      expect(el.data.value_).toBe(15.5);
-      // Attrs should be a Map of wrapped values
-      expect(el.attrs.get('unit').value_).toBe('meter');
+      expect(el.data).toBe(15.5);
+      expect(el.attrs.get('unit')).toBe('meter');
     });
   });
 
@@ -175,9 +166,8 @@ describe('Karabo Hash Class Tests', () => {
     test('setAttribute and getAttribute', () => {
       h.setAttribute('data', 'precision', 2);
 
-      // getAttribute returns Wrapped value
       const attr = h.getAttribute('data', 'precision');
-      expect(attr.value_).toBe(2);
+      expect(attr).toBe(2);
     });
 
     test('getAttributes (Bulk)', () => {
@@ -187,7 +177,7 @@ describe('Karabo Hash Class Tests', () => {
       const attrs = h.getAttributes('data');
       expect(attrs).toBeInstanceOf(Map);
       expect(attrs.size).toBe(2);
-      expect(attrs.get('a1').value_).toBe(1);
+      expect(attrs.get('a1')).toBe(1);
 
       expect(attrs.findValue('a1')).toBe(1);
       expect(attrs.findValue('aX')).toBeUndefined();
@@ -195,22 +185,18 @@ describe('Karabo Hash Class Tests', () => {
 
     test('setAttributes (Replace)', () => {
       h.setAttribute('data', 'old', 1);
-      // Manually wrap for this test, or rely on internal wrapping if passing to setElement.
-      // Since we are testing setAttributes directly, we expect it to take Attributes map.
-      // But typically, we'd want to test the full behavior.
-      // Here we assume setElement handles the wrapping for setup.
       h.setElement('data', 100, { new: 99 });
 
       const attrs = h.getAttributes('data');
       expect(attrs.has('old')).toBe(false); // Replaced
       expect(attrs.has('new')).toBe(true);
-      expect(attrs.get('new').value_).toBe(99);
+      expect(attrs.get('new')).toBe(99);
       expect(attrs.getValue<number>('new')).toBe(99);
     });
   });
 
   describe('6. Iteration', () => {
-    test('items() yields [key, wrapped_value]', () => {
+    test('items() yields [key, stored_value]', () => {
       const h = new Hash({ a: 1, b: 2 });
       const items = Array.from(h.items());
 
@@ -218,34 +204,32 @@ describe('Karabo Hash Class Tests', () => {
 
       const [key0, val0] = items[0];
       expect(key0).toBe('a');
-      expect(isWrapped(val0)).toBe(true);
-      expect(val0.value_).toBe(1);
+      expect(isWrapped(val0)).toBe(false);
+      expect(val0).toBe(1);
 
       const [key1, val1] = items[1];
       expect(key1).toBe('b');
-      expect(val1.value_).toBe(2);
+      expect(val1).toBe(2);
     });
 
-    test('iterall() yields [key, wrapped_value, attributes_map]', () => {
+    test('iterall() yields [key, stored_value, attributes_map]', () => {
       const h = new Hash();
       h.setElement('a', 1, { unit: 'm' });
 
       const all = Array.from(h.iterall());
 
-      // Expect: [key, wrapped_value, AttributesMap]
+      // Expect: [key, stored_value, AttributesMap]
       expect(all.length).toBe(1);
 
       const [key, val, attrs] = all[0];
 
       expect(key).toBe('a');
 
-      // Value is wrapped
-      expect(isWrapped(val)).toBe(true);
-      expect(val.value_).toBe(1);
+      expect(isWrapped(val)).toBe(false);
+      expect(val).toBe(1);
 
-      // Attrs is a Map<string, WrappedValue>
       expect(attrs).toBeInstanceOf(Map);
-      expect(attrs.get('unit').value_).toBe('m');
+      expect(attrs.get('unit')).toBe('m');
     });
 
     test('getKeys', () => {
@@ -486,20 +470,117 @@ describe('Karabo Hash Class Tests', () => {
 
         expect(out.map(([k]) => k)).toEqual(['a.b.c', 'a.b.d', 'z']);
 
-        const values = new Map(out.map(([k, v]) => [k, v.value_]));
-
+        const values = new Map(out.map(([k, v]) => [k, v]));
         expect(values.get('a.b.c')).toBe('Karabo');
-        expect(values.get('a.b.d')).toEqual(new VectorDoubleValue([1.2, 1.4]));
+        expect(values.get('a.b.d')).toEqual([1.2, 1.4]);
         expect(values.get('z')).toBe(7.3);
-
-        const karaboValues = new Map(out.map(([k, v]) => [k, v]));
-
-        expect(karaboValues.get('a.b.c')).toBeInstanceOf(StringValue);
-        expect(karaboValues.get('a.b.d')).toBeInstanceOf(VectorDoubleValue);
-        expect(karaboValues.get('z')).toBeInstanceOf(DoubleValue);
       });
     });
 
     // Misc utils
+  });
+});
+
+describe('raw Hash storage', () => {
+  test.each([
+    null,
+    { value_: 42 },
+    { arbitrary: true },
+    [1, 2],
+    new Int32Array([1, 2]),
+    new StringValue('wrapped'),
+  ])('preserves references and values: %p', (value) => {
+    const attrs = new HashAttributes({ value });
+    const hash = new Hash({ value });
+    hash.setElement('nested.value', value, attrs);
+    expect(hash.get('value')).toBe(value);
+    expect(hash.getValue('value')).toBe(
+      value instanceof StringValue ? 'wrapped' : value
+    );
+    expect(hash.getElement('nested.value').data).toBe(value);
+    expect(hash.getAttributes('nested.value')).toBe(attrs);
+    expect(attrs.get('value')).toBe(value);
+    expect(attrs.getValue('value')).toBe(
+      value instanceof StringValue ? 'wrapped' : value
+    );
+    expect(hash.getAttribute('nested.value', 'value')).toBe(value);
+    const copy = new Hash(hash);
+    expect(copy.get('value')).toBe(value);
+    const merged = new Hash();
+    merged.merge(hash);
+    expect(merged.get('value')).toBe(value);
+    expect(merged.getAttribute('nested.value', 'value')).toBe(value);
+  });
+
+  test('unwraps only explicit wrappers in value iteration', () => {
+    const object = { value_: 7 };
+    const hash = new Hash();
+    hash.setElement('value', new StringValue('wrapped'), {
+      raw: object,
+      wrapped: new StringValue('attribute'),
+      none: null,
+      missing: undefined,
+    });
+    expect([...hash.iterallValues()]).toEqual([
+      [
+        'value',
+        'wrapped',
+        { raw: object, wrapped: 'attribute', none: null, missing: undefined },
+      ],
+    ]);
+    expect([...hash.items()][0][1]).toBe(hash.get('value'));
+    expect([...hash.values()][0].data).toBe(hash.get('value'));
+  });
+
+  test('throws when reading undefined values or missing keys', () => {
+    const hash = new Hash('value', undefined);
+    hash.set('nested.value', undefined);
+    hash.setAttribute('value', 'present', undefined);
+    expect(hash.has('value')).toBe(true);
+    expect(hash.getElement('value').data).toBeUndefined();
+    for (const key of ['value', 'nested.value', 'missing']) {
+      expect(() => hash.get(key)).toThrow(`KeyError: ${key}`);
+      expect(() => hash.getValue(key)).toThrow(`KeyError: ${key}`);
+      expect(hash.find(key)).toBeUndefined();
+    }
+    const attrs = hash.getAttributes('value');
+    expect(attrs.has('present')).toBe(true);
+    for (const key of ['present', 'missing']) {
+      expect(() => attrs.get(key)).toThrow(/KeyError/);
+      expect(() => attrs.getValue(key)).toThrow(/KeyError/);
+      expect(attrs.findValue(key)).toBeUndefined();
+      expect(() => hash.getAttribute('value', key)).toThrow(/KeyError/);
+      expect(() => hash.getAttributeValue('value', key)).toThrow(/KeyError/);
+    }
+    expect(() => hash.set('value.child', 1)).toThrow(/KeyError/);
+  });
+
+  test('returns null for raw null and wrapped None values', () => {
+    const none = { type_: HashType.None_, value_: null };
+    const hash = new Hash('raw', null, 'wrapped', none);
+    hash.setElement('nested.none', null, { raw: null, wrapped: none });
+    expect(hash.get('raw')).toBeNull();
+    expect(hash.get('wrapped')).toBe(none);
+    for (const key of ['raw', 'wrapped', 'nested.none']) {
+      expect(hash.getValue(key)).toBeNull();
+    }
+    const attrs = hash.getAttributes('nested.none');
+    expect(attrs.get('raw')).toBeNull();
+    expect(attrs.get('wrapped')).toBe(none);
+    for (const key of ['raw', 'wrapped']) {
+      expect(attrs.getValue(key)).toBeNull();
+      expect(hash.getAttributeValue('nested.none', key)).toBeNull();
+    }
+  });
+
+  test('set preserves attributes while setElement replaces them', () => {
+    const hash = new Hash();
+    hash.setElement('nested.value', null, { unit: 'm' });
+    const attrs = hash.getAttributes('nested.value');
+    hash.set('nested.value', undefined);
+    expect(hash.getAttributes('nested.value')).toBe(attrs);
+    hash.setElement('nested.value', {}, { unit: 's' });
+    expect(hash.getAttributes('nested.value')).not.toBe(attrs);
+    expect(hash.getAttributeValue('nested.value', 'unit')).toBe('s');
   });
 });

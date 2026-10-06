@@ -64,6 +64,9 @@ describe('getHashTypeFromValue', () => {
   });
 
   test('throws for unsupported values', () => {
+    expect(() => getHashTypeFromValue({ type_: HashType.Int32 })).toThrow(
+      /Cannot infer HashType/
+    );
     expect(() => getHashTypeFromValue(undefined)).toThrow(
       /Cannot infer HashType/
     );

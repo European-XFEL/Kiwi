@@ -2,6 +2,7 @@ import sax from 'sax';
 import { Hash, HashList, Schema } from './hash';
 import { HashType, XmlTypeToHashType } from './typenums';
 import * as Types from './types';
+import { isHashTypes } from './utils';
 
 const parseXMLBool = (data: string): boolean => {
   const d = data.trim().toLowerCase();
@@ -135,25 +136,28 @@ const read_xml_char = (data: string) => {
 const read_xml_vector_char = (data: string) =>
   new Types.VectorCharValue(parseXMLByteArray(data));
 
-const read_xml_schema = (data: string): Schema | string => {
+const read_xml_schema = (data: string): Schema | Types.StringValue => {
   // Karabo Schema string format: "[NAME]:[XML_CONTENT]"
   const splitIndex = data.indexOf(':');
   // Handle legacy string case where there is no colon
   if (splitIndex === -1) {
-    return data;
+    return new Types.StringValue(data);
   }
   const xmlPart = data.substring(splitIndex + 1).trim();
   const name = data.substring(0, splitIndex);
 
   // Attempt to parse; if not XML, return original string (Legacy fallback)
   if (!xmlPart.startsWith('<')) {
-    return data;
+    return new Types.StringValue(data);
   }
 
   return new Schema(name, decodeXML(xmlPart) as Hash);
 };
 
-const read_xml_empty = (_data: string) => null;
+const read_xml_empty = (_data: string): Types.KaraboValue => ({
+  type_: HashType.None_,
+  value_: null,
+});
 
 // ============================================================================
 
@@ -277,10 +281,7 @@ export class KaraboXmlParser {
       if (v.startsWith('KRB_') && v.includes(':')) {
         const [dtypeStr, svalue] = v.split(':', 2);
         const dtype = XmlTypeToHashType[dtypeStr.substring(4)];
-        if (
-          (dtype === HashType.Schema || dtype === HashType.VectorHash) &&
-          svalue.startsWith('_attr_root_')
-        ) {
+        if (isHashTypes(dtype) && svalue.startsWith('_attr_root_')) {
           context.schemaAttrs?.add(svalue);
         }
       }
@@ -319,7 +320,7 @@ export class KaraboXmlParser {
         const dtype = XmlTypeToHashType[dtypeStr.substring(4)];
 
         if (dtype !== undefined) {
-          if (dtype === HashType.Schema || dtype === HashType.VectorHash) {
+          if (isHashTypes(dtype)) {
             // Handle Complex Schema Attributes
             if (
               svalue.startsWith('_attr_root_') &&
@@ -327,7 +328,7 @@ export class KaraboXmlParser {
             ) {
               processedAttrs[key] = current.pendingSchemaAttrs.get(svalue);
             } else {
-              processedAttrs[key] = svalue;
+              processedAttrs[key] = new Types.StringValue(svalue);
             }
           } else {
             // Handle Primitive Karabo Attributes
@@ -344,7 +345,7 @@ export class KaraboXmlParser {
           continue;
         }
       } else {
-        processedAttrs[key] = rawVal;
+        processedAttrs[key] = new Types.StringValue(rawVal);
       }
     }
 
@@ -357,7 +358,7 @@ export class KaraboXmlParser {
       const typeName = current.attrs['KRB_Type'] || 'STRING';
       const typeEnum = XmlTypeToHashType[typeName];
       const reader = READER_MAP[typeEnum];
-      finalValue = reader ? reader(fullText) : fullText;
+      finalValue = reader ? reader(fullText) : new Types.StringValue(fullText);
     } else {
       finalValue = current.container;
     }

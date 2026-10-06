@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "benchmark:serialization": "tsx scripts/benchmark-serialization.ts",
+    "benchmark:decoding": "tsx scripts/benchmark-serialization.ts --decode-only",
     "build": "tsc -b && vite build --sourcemap 'hidden'",
     "build-staging": "tsc -b && vite build --mode staging --sourcemap 'hidden'",
     "lint": "eslint .",

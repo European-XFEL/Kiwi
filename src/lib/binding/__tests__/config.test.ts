@@ -3,9 +3,9 @@ import path from 'path';
 
 import { Schema, Hash } from '@/karabo/data/hash';
 import { decodeBinarySchema } from '@/karabo/data/bin_reader';
-import { VectorInt32Value } from '@/karabo/data/types';
 import { buildBinding } from '@/lib/binding/BindingFactory';
-import { applyConfiguration } from '@/lib/binding/DeviceProxy';
+import { applyConfiguration, DeviceProxy } from '../DeviceProxy';
+import { PropertyProxy } from '../PropertyProxy';
 import { BaseBinding, BindingRoot, NodeBinding } from '../BaseBinding';
 import { Timestamp, unwrap } from '@/karabo/data/api';
 
@@ -101,7 +101,15 @@ describe('check configuration', () => {
     expect(leaf?.value.value_).toBe(2);
     expect(string?.value.value_).toBe('karabo');
 
-    expect(nodeVectorInt32?.value.value_).toEqual(new VectorInt32Value([1, 2]));
-    expect(nodeVectorBool?.value.value_).toEqual([true, false]);
+    expect(unwrap(nodeVectorInt32?.value)).toEqual([1, 2]);
+    expect(unwrap(nodeVectorBool?.value)).toEqual([true, false]);
+    const device = new DeviceProxy('TEST_KIWI');
+    device.binding = bindingRoot;
+    const vectorProxy = new PropertyProxy(device, 'vectors.int32Property');
+    const boolProxy = new PropertyProxy(device, 'vectors.boolProperty');
+    expect(vectorProxy.value).toBe(config.get('vectors.int32Property'));
+    expect(boolProxy.value).toBe(config.get('vectors.boolProperty'));
+    vectorProxy.dispose();
+    boolProxy.dispose();
   });
 });

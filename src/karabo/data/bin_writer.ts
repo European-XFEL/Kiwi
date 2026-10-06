@@ -90,7 +90,7 @@ function encodeString(parser: BinaryEncoder, data: string): ArrayBuffer {
   const ret = new Uint8Array(buff.length + 4);
   const dv = new DataView(ret.buffer);
   dv.setUint32(0, buff.length, true);
-  ret.set(new Uint8Array(buff), 4);
+  ret.set(buff, 4);
   return ret.buffer;
 }
 
@@ -127,66 +127,92 @@ function encodeVector<T>(
   return ret.buffer;
 }
 
+function encodeFixedVector<T>(
+  data: ArrayLike<T>,
+  byteWidth: number,
+  write: (view: DataView, offset: number, value: T) => void
+): ArrayBuffer {
+  const buffer = new ArrayBuffer(4 + data.length * byteWidth);
+  const view = new DataView(buffer);
+  view.setUint32(0, data.length, true);
+  for (let i = 0; i < data.length; i++) {
+    write(view, 4 + i * byteWidth, data[i]);
+  }
+  return buffer;
+}
+
 class BinaryEncoder {
   encoder = new TextEncoder();
 
   constructor() {}
 
-  encodeValue(
-    value: Types.KaraboValue | Hash | HashList | Schema
-  ): ArrayBuffer {
+  encodeValue(value: Types.KaraboValue): ArrayBuffer {
     if (value instanceof Types.BoolValue) {
       return encodeBoolean(this, value.value_);
     } else if (value instanceof Types.VectorBoolValue) {
-      return encodeVector(this, value.value_, encodeBoolean);
+      return encodeFixedVector(value.value_, 1, (v, o, x) =>
+        v.setUint8(o, x ? 1 : 0)
+      );
     } else if (value instanceof Types.CharValue) {
       return encodeChar(this, value.value_);
     } else if (value instanceof Types.VectorCharValue) {
-      return encodeVector(this, Array.from(value.value_), encodeChar);
+      return encodeFixedVector(value.value_, 1, (v, o, x) => v.setUint8(o, x));
     } else if (value instanceof Types.Int8Value) {
       return encodeInt8(this, value.value_);
     } else if (value instanceof Types.VectorInt8Value) {
-      return encodeVector(this, value.value_, encodeInt8);
+      return encodeFixedVector(value.value_, 1, (v, o, x) => v.setInt8(o, x));
     } else if (value instanceof Types.UInt8Value) {
       return encodeUInt8(this, value.value_);
     } else if (value instanceof Types.VectorUInt8Value) {
-      return encodeVector(this, value.value_, encodeUInt8);
+      return encodeFixedVector(value.value_, 1, (v, o, x) => v.setUint8(o, x));
     } else if (value instanceof Types.Int16Value) {
       return encodeInt16(this, value.value_);
     } else if (value instanceof Types.VectorInt16Value) {
-      return encodeVector(this, value.value_, encodeInt16);
+      return encodeFixedVector(value.value_, 2, (v, o, x) =>
+        v.setInt16(o, x, true)
+      );
     } else if (value instanceof Types.UInt16Value) {
       return encodeUInt16(this, value.value_);
     } else if (value instanceof Types.VectorUInt16Value) {
-      return encodeVector(this, value.value_, encodeUInt16);
+      return encodeFixedVector(value.value_, 2, (v, o, x) =>
+        v.setUint16(o, x, true)
+      );
     } else if (value instanceof Types.Int32Value) {
       return encodeInt32(this, value.value_);
     } else if (value instanceof Types.VectorInt32Value) {
-      return encodeVector(this, value.value_, encodeInt32);
+      return encodeFixedVector(value.value_, 4, (v, o, x) =>
+        v.setInt32(o, x, true)
+      );
     } else if (value instanceof Types.UInt32Value) {
       return encodeUInt32(this, value.value_);
     } else if (value instanceof Types.VectorUInt32Value) {
-      return encodeVector(this, value.value_, encodeUInt32);
+      return encodeFixedVector(value.value_, 4, (v, o, x) =>
+        v.setUint32(o, x, true)
+      );
     } else if (value instanceof Types.Int64Value) {
       return encodeInt64(this, BigInt(value.value_));
     } else if (value instanceof Types.VectorInt64Value) {
-      return encodeVector(this, value.value_, (p, v) =>
-        encodeInt64(p, BigInt(v))
+      return encodeFixedVector(value.value_, 8, (v, o, x) =>
+        v.setBigInt64(o, x, true)
       );
     } else if (value instanceof Types.UInt64Value) {
       return encodeUInt64(this, BigInt(value.value_));
     } else if (value instanceof Types.VectorUInt64Value) {
-      return encodeVector(this, value.value_, (p, v) =>
-        encodeUInt64(p, BigInt(v))
+      return encodeFixedVector(value.value_, 8, (v, o, x) =>
+        v.setBigUint64(o, x, true)
       );
     } else if (value instanceof Types.FloatValue) {
       return encodeFloat32(this, value.value_);
     } else if (value instanceof Types.VectorFloatValue) {
-      return encodeVector(this, value.value_, encodeFloat32);
+      return encodeFixedVector(value.value_, 4, (v, o, x) =>
+        v.setFloat32(o, x, true)
+      );
     } else if (value instanceof Types.DoubleValue) {
       return encodeFloat64(this, value.value_);
     } else if (value instanceof Types.VectorDoubleValue) {
-      return encodeVector(this, value.value_, encodeFloat64);
+      return encodeFixedVector(value.value_, 8, (v, o, x) =>
+        v.setFloat64(o, x, true)
+      );
     } else if (value instanceof Types.StringValue) {
       return encodeString(this, value.value_);
     } else if (value instanceof Types.VectorStringValue) {
@@ -199,9 +225,7 @@ class BinaryEncoder {
       return this.encodeSchema(value);
     }
 
-    throw new Error(
-      `failed to encode type ${(value as any).type_} ${JSON.stringify(value)}`
-    );
+    throw new Error(`Unsupported binary Karabo type: ${value.type_}`);
   }
 
   encodeKey(key: string): ArrayBuffer {
@@ -220,7 +244,8 @@ class BinaryEncoder {
 
     for (const [key, node] of hash) {
       keyCount += 1;
-      const { data, attrs } = node;
+      const { attrs } = node;
+      const data = Types.wrap(node.data);
 
       // 1. Write Key
       const keyBuff = this.encodeKey(key);
@@ -237,24 +262,25 @@ class BinaryEncoder {
       totalSize += 4;
 
       // 4. Write Attributes
-      for (const [attrsKey, attrValue] of attrs) {
+      for (const [attrsKey, rawAttrValue] of attrs) {
+        const attrValue = Types.wrap(rawAttrValue);
         // Attr Key
         const ak = this.encodeKey(attrsKey);
         buffers.push(ak);
         totalSize += ak.byteLength;
 
         // Attr Type
-        buffers.push(encodeUInt32(this, (attrValue as any).type_));
+        buffers.push(encodeUInt32(this, attrValue.type_));
         totalSize += 4;
 
         // Attr Value
-        const av = this.encodeValue(attrValue as any);
+        const av = this.encodeValue(attrValue);
         buffers.push(av);
         totalSize += av.byteLength;
       }
 
       // 5. Write Value
-      const valueBuff = this.encodeValue(data as any);
+      const valueBuff = this.encodeValue(data);
       buffers.push(valueBuff);
       totalSize += valueBuff.byteLength;
     }

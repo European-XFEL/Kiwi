@@ -1,4 +1,16 @@
-import { Hash, HashList } from '@/karabo/data/hash';
+import { Hash, HashList } from './hash';
+import { HashType } from './typenums';
+import { unwrap } from './types';
+
+export { isTypedArray, unwrap } from './types';
+
+export function isHashTypes(dtype: HashType): boolean {
+  return (
+    dtype === HashType.Hash ||
+    dtype === HashType.Schema ||
+    dtype === HashType.VectorHash
+  );
+}
 
 export function escapeXml(unsafe: string): string {
   return unsafe.replace(/[<>&'"]/g, (c) => {
@@ -59,34 +71,6 @@ const isPlainObject = (value: unknown): value is Record<string, unknown> => {
   const proto = Object.getPrototypeOf(value);
   return proto === Object.prototype || proto === null;
 };
-
-type TypedArray =
-  | Int8Array
-  | Uint8Array
-  | Uint8ClampedArray
-  | Int16Array
-  | Uint16Array
-  | Int32Array
-  | Uint32Array
-  | BigInt64Array
-  | BigUint64Array
-  | Float32Array
-  | Float64Array;
-
-export function isTypedArray(value: unknown): value is TypedArray {
-  return ArrayBuffer.isView(value) && !(value instanceof DataView);
-}
-
-/**
- * Helper to extract the raw primitive value from a KaraboValue.
- * If data is not a wrapper (e.g. raw string), returns data as is.
- */
-export function unwrap(data: any): any {
-  if (data && typeof data === 'object' && 'value_' in data) {
-    return data.value_;
-  }
-  return data;
-}
 
 /**
  * Helper to yield a Hash with full leaf keys

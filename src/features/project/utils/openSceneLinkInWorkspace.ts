@@ -80,7 +80,7 @@ async function _retrieveDeviceScene(
   if (attrs === undefined) {
     errorMessage = `Device "${deviceId}" not online. Cannot retrieve its "${sceneName}" scene.`;
   } else {
-    const capabilities = attrs.get('capabilities').value_ as number;
+    const capabilities = attrs.getValue<number>('capabilities');
     if (
       capabilities === undefined ||
       (capabilities & Capabilities.PROVIDES_SCENES) !== 1

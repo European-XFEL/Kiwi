@@ -4,6 +4,11 @@ import { Hash, Schema, HashList, HashAttributes } from './hash';
 // TextDecoder is a global object and should not be imported
 // import { TextDecoder } from 'util';
 
+// Calls decode complete strings without streaming, so decoder state is reset.
+const stringDecoder = new TextDecoder('utf-8');
+const keyDecoder = new TextDecoder('ascii');
+const littleEndian = new Uint8Array(new Uint16Array([1]).buffer)[0] === 1;
+
 type ParserFunction = (
   parser: BinaryDecoder
 ) => Types.KaraboValue | Hash | HashList | Schema;
@@ -28,10 +33,13 @@ function readInt16(parser: BinaryDecoder): Types.Int16Value {
   return new Types.Int16Value(parser.dataview.getInt16(parser.pos - 2, true));
 }
 
-function readUInt32(parser: BinaryDecoder): Types.UInt32Value {
+function readCount(parser: BinaryDecoder): number {
   parser.pos += 4;
-  const value = parser.dataview.getUint32(parser.pos - 4, true);
-  return new Types.UInt32Value(value);
+  return parser.dataview.getUint32(parser.pos - 4, true);
+}
+
+function readUInt32(parser: BinaryDecoder): Types.UInt32Value {
+  return new Types.UInt32Value(readCount(parser));
 }
 
 function readInt32(parser: BinaryDecoder): Types.Int32Value {
@@ -69,12 +77,13 @@ function readBool(parser: BinaryDecoder): Types.BoolValue {
 }
 
 function readVectorBool(parser: BinaryDecoder): Types.VectorBoolValue {
-  const size = readUInt32(parser).value_;
+  const size = readCount(parser);
   const start = parser.pos;
   parser.pos = start + size;
-  const arr = Array.from(parser.data.slice(start, parser.pos)).map(
-    (m) => m > 0
-  );
+  const arr = new Array<boolean>(size);
+  for (let i = 0; i < size; i++) {
+    arr[i] = parser.data[start + i] > 0;
+  }
   return new Types.VectorBoolValue(arr);
 }
 
@@ -84,46 +93,59 @@ function readChar(parser: BinaryDecoder): Types.CharValue {
 }
 
 function readVectorChar(parser: BinaryDecoder): Types.VectorCharValue {
-  const size = readUInt32(parser).value_;
+  const size = readCount(parser);
   parser.pos += size;
   return new Types.VectorCharValue(
-    parser.data.slice(parser.pos - size, parser.pos)
+    new Uint8Array(parser.data.subarray(parser.pos - size, parser.pos))
   );
 }
 
-function readString(parser: BinaryDecoder): Types.StringValue {
-  const size = readUInt32(parser).value_;
-  const content = parser.data.slice(parser.pos, parser.pos + size);
+function readStringText(parser: BinaryDecoder): string {
+  const size = readCount(parser);
+  const content = parser.data.subarray(parser.pos, parser.pos + size);
   const str = parser.string_encoder.decode(content);
   parser.pos += size;
-  return new Types.StringValue(str);
+  return str;
+}
+
+function readString(parser: BinaryDecoder): Types.StringValue {
+  return new Types.StringValue(readStringText(parser));
 }
 
 function readVectorString(parser: BinaryDecoder): Types.VectorStringValue {
-  let size = readUInt32(parser).value_;
-  const res = new Types.VectorStringValue([]);
-  while (size > 0) {
-    const element = readString(parser);
-    res.value_.push(element.value_);
-    size -= 1;
+  const size = readCount(parser);
+  const values = new Array<string>(size);
+  for (let i = 0; i < size; i++) {
+    values[i] = readStringText(parser);
   }
-  return res;
+  return new Types.VectorStringValue(values);
 }
 
-// DataView keeps wire decoding explicitly little-endian and supports unaligned
-// input. Allocate the Karabo typed-array subclass directly to avoid a second
-// array allocation and copy.
+// Copy wire bytes directly into owned vector storage on little-endian hosts.
+// Byte copies support unaligned input; DataView handles other host byte orders.
 function buildVectorReader<
   T extends number | bigint,
-  V extends Types.KaraboValue & { [index: number]: T },
+  V extends Types.NumericVectorTypes &
+    Types.KaraboValue & { [index: number]: T },
 >(
   byteWidth: number,
   readElement: (view: DataView, offset: number) => T,
   VectorValue: new (length: number) => V
 ) {
   return (parser: BinaryDecoder): V => {
-    const size = readUInt32(parser).value_;
+    const size = readCount(parser);
+    const byteLength = size * byteWidth;
+    if (byteLength > parser.data.byteLength - parser.pos) {
+      throw new RangeError('Truncated vector payload');
+    }
     const values = new VectorValue(size);
+    if (littleEndian || byteWidth === 1) {
+      new Uint8Array(values.buffer, values.byteOffset, byteLength).set(
+        parser.data.subarray(parser.pos, parser.pos + byteLength)
+      );
+      parser.pos += byteLength;
+      return values;
+    }
     for (let i = 0; i < size; i++) {
       values[i] = readElement(parser.dataview, parser.pos);
       parser.pos += byteWidth;
@@ -133,11 +155,11 @@ function buildVectorReader<
 }
 
 function readSchema(parser: BinaryDecoder): Schema {
-  const l = readUInt32(parser).value_;
+  const l = readCount(parser);
   const op = parser.pos;
   const nameSize = parser.data[parser.pos];
   parser.pos++;
-  const content = parser.data.slice(parser.pos, parser.pos + nameSize);
+  const content = parser.data.subarray(parser.pos, parser.pos + nameSize);
   const name = parser.string_encoder.decode(content);
   parser.pos += nameSize;
   const hsh = parser.readHash();
@@ -246,9 +268,9 @@ class BinaryDecoder {
 
   pos = 0;
 
-  string_encoder = new TextDecoder('utf-8');
+  string_encoder = stringDecoder;
 
-  key_decoder = new TextDecoder('ascii');
+  key_decoder = keyDecoder;
 
   constructor(public data: Uint8Array) {
     this.dataview = new DataView(
@@ -262,7 +284,7 @@ class BinaryDecoder {
     const size = this.data[this.pos];
     const start = this.pos + 1;
     this.pos = start + size;
-    return this.key_decoder.decode(this.data.slice(start, this.pos));
+    return this.key_decoder.decode(this.data.subarray(start, this.pos));
   }
 
   read(): Hash {
@@ -270,7 +292,7 @@ class BinaryDecoder {
   }
 
   readVectorHash(): HashList {
-    const size = readUInt32(this).value_;
+    const size = readCount(this);
     const ret = new HashList();
     for (let i = 0; i < size; i++) {
       ret[i] = this.readHash();
@@ -279,14 +301,14 @@ class BinaryDecoder {
   }
 
   readHash(): Hash {
-    let size = readUInt32(this).value_;
+    let size = readCount(this);
     const hash = new Hash();
 
     while (size > 0) {
       const key = this.readKey();
-      const hashType = readUInt32(this).value_;
+      const hashType = readCount(this);
 
-      let asize = readUInt32(this).value_;
+      let asize = readCount(this);
 
       // Collect attributes into a Map for the new Hash
       // This is fine since we pollute with KaraboValues
@@ -294,7 +316,7 @@ class BinaryDecoder {
       const attrs = new HashAttributes();
       while (asize > 0) {
         const attrKey = this.readKey();
-        const attrType = readUInt32(this).value_;
+        const attrType = readCount(this);
         const attrValue = getParser(attrType)(this);
         attrs._set_element(attrKey, attrValue);
         asize -= 1;

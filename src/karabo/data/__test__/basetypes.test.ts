@@ -1,3 +1,5 @@
+import { HashType } from '../typenums';
+import { VectorInt32Value, wrap, wrapValue } from '../types';
 import {
   Integer,
   BigInteger,
@@ -104,5 +106,30 @@ describe('Base Class Value Objects', () => {
       const existing = MyBool.cast(1);
       expect(MyBool.cast(existing).value).toBe(true);
     });
+  });
+
+  test('wrapValue retains copying semantics', () => {
+    const array = new Int32Array([1, 2]);
+    const wrapped = wrapValue(array, HashType.VectorInt32) as VectorInt32Value;
+    expect(wrapped.buffer).not.toBe(array.buffer);
+    array[0] = 9;
+    expect(wrapped[0]).toBe(1);
+  });
+
+  test('wrap preserves the buffer and offset of plain typed-array views', () => {
+    const array = new Int32Array([0, 1, 2]);
+    const subview = array.subarray(1);
+    const wrapped = wrap(subview) as VectorInt32Value;
+    expect(wrapped).toBeInstanceOf(VectorInt32Value);
+    expect(wrapped.buffer).toBe(array.buffer);
+    expect(wrapped.byteOffset).toBe(subview.byteOffset);
+    expect(Array.from(wrapped)).toEqual([1, 2]);
+    array[1] = 9;
+    expect(wrapped[0]).toBe(9);
+    expect(wrap(wrapped)).toBe(wrapped);
+  });
+
+  test('wrap rejects unsupported clamped arrays', () => {
+    expect(() => wrap(new Uint8ClampedArray([1, 2]))).toThrow(/Unsupported/);
   });
 });
