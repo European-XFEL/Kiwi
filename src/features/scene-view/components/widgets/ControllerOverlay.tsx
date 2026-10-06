@@ -12,7 +12,7 @@ const STATUS_INDICATOR_ICON: Partial<Record<ProxyStatus, string>> = {
 const TOOLTIP_CONTENT_CLASSNAME =
   'max-w-[420px] rounded-none border border-[#b88700] bg-[#fff7bf] px-1.5 py-0.5 text-[11px] leading-tight text-black shadow-sm';
 
-const TOOLTIP_DELAY = 1500;
+const TOOLTIP_WAKEUP = 700;
 
 export interface ControllerOverlayProps {
   proxies: PropertyProxies;
@@ -40,7 +40,7 @@ export const ControllerOverlay: React.FC<ControllerOverlayProps> = React.memo(
         {/* Healthy widgets keep their own hover target so the overlay does not shadow them. */}
         {/* OFFLINE — red glass with XIcon */}
         {showOfflineOverlay && (
-          <Tooltip delayDuration={TOOLTIP_DELAY}>
+          <Tooltip delayDuration={TOOLTIP_WAKEUP}>
             <TooltipTrigger asChild>
               <div
                 data-testid="offline-overlay"
@@ -68,7 +68,7 @@ export const ControllerOverlay: React.FC<ControllerOverlayProps> = React.memo(
 
         {/* STATUS INDICATOR — small status ball */}
         {showStatusIndicator && (
-          <Tooltip delayDuration={TOOLTIP_DELAY}>
+          <Tooltip delayDuration={TOOLTIP_WAKEUP}>
             <TooltipTrigger asChild>
               <div className="absolute top-2 right-2 pointer-events-auto">
                 <div
@@ -91,7 +91,7 @@ export const ControllerOverlay: React.FC<ControllerOverlayProps> = React.memo(
 
         {/* PROPERTY MISSING — transparent overlay with green question mark */}
         {showMissingBadge && (
-          <Tooltip delayDuration={TOOLTIP_DELAY}>
+          <Tooltip delayDuration={TOOLTIP_WAKEUP}>
             <TooltipTrigger asChild>
               <div
                 data-testid="missing-property-badge"
