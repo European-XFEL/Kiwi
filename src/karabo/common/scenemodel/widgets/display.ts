@@ -231,6 +231,23 @@ registerReader('DisplayStateColor', (element) => {
   return state;
 });
 
+// DisplayColorBool
+// ----------------------------------------------------------------------------
+
+export class DisplayColorBoolModel extends BaseWidgetObjectData {
+  klass = 'DisplayColorBool';
+  invert = false;
+}
+
+registerReader('DisplayColorBool', (element) => {
+  const colorBool = new DisplayColorBoolModel();
+
+  readBaseWidgetData(element, colorBool);
+  colorBool.invert = toBool(krbAttr(element, 'invert'));
+
+  return colorBool;
+});
+
 // StatefulIconWidget
 // ----------------------------------------------------------------------------
 
