@@ -55,7 +55,7 @@ export function useChart<T extends 'line' | 'scatter'>({
     viewport,
     inverted: { x: axes.x.inverted, y: axes.y.inverted },
     logarithmicX: axes.x.kind === 'numeric' && axes.x.scale === 'logarithmic',
-    logarithmicY: axes.y.kind === 'numeric' && axes.y.scale === 'logarithmic',
+    logarithmicY: axes.y.scale === 'logarithmic',
     onComplete,
     onFinish,
     onReset: reset,

@@ -11,6 +11,31 @@ const series = [
 ];
 
 describe('trend Chart.js configuration', () => {
+  it.each([
+    ['', 52],
+    ['Value', 68],
+  ])(
+    'fixes numeric Y width for title %s without publishing a measured width',
+    (label, width) => {
+      const model = buildModelConfig(new DisplayTrendGraphModel());
+      model.y_label = label;
+      const onYAxisWidth = jest.fn();
+      const axes = buildPlotAxes(model, { timeX: true });
+      const config = trendChartOption(
+        model,
+        series,
+        undefined,
+        undefined,
+        axes,
+        onYAxisWidth
+      );
+      const scale = { width: 120 };
+      config.options!.scales!.y!.afterFit!(scale as never);
+      expect(scale.width).toBe(width);
+      expect(onYAxisWidth).not.toHaveBeenCalled();
+      expect(axes.y).not.toHaveProperty('onYAxisWidth');
+    }
+  );
   it.each([[STATE_LABELS], [ALARM_LABELS]])(
     'uses linear categorical axes with every integer tick and automatic label width',
     (categories) => {
@@ -26,14 +51,14 @@ describe('trend Chart.js configuration', () => {
       const axes = buildPlotAxes(model, {
         timeX: true,
         categories,
-        onYAxisWidth,
       });
       const option = trendChartOption(
         model,
         series,
         undefined,
         undefined,
-        axes
+        axes,
+        onYAxisWidth
       );
       expect(option.options?.scales?.y).toMatchObject({
         type: 'linear',
@@ -120,7 +145,7 @@ describe('trend Chart.js configuration', () => {
           reverse: false,
           title: { text: 'Time (s)' },
           grid: { drawOnChartArea: true },
-          ticks: { align: 'inner' },
+          ticks: { align: 'center' },
         },
         y: {
           type: 'linear',
