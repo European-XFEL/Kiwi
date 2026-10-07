@@ -4,6 +4,7 @@ import type { PropertyProxy } from '@/lib/binding/PropertyProxy';
 import { ProxyStatus } from '@/lib/binding/api';
 import { TrendModel } from '../trendmodel';
 import { useTrendModel } from '../useTrendModel';
+import type { TrendMode } from '../categories';
 
 const START = 1_800_000_000;
 const originalRequestIdleCallback = window.requestIdleCallback;
@@ -49,6 +50,76 @@ describe('useTrendModel', () => {
     jest.useRealTimers();
     jest.restoreAllMocks();
   });
+
+  it.each([
+    {
+      name: 'replacement',
+      keys: ['C.value'],
+      mode: 'numeric' as TrendMode,
+      values: [7],
+    },
+    {
+      name: 'reorder',
+      keys: ['B.value', 'A.value'],
+      mode: 'numeric' as TrendMode,
+      values: [7, 8],
+    },
+    {
+      name: 'addition',
+      keys: ['A.value', 'B.value', 'C.value'],
+      mode: 'numeric' as TrendMode,
+      values: [7, 8, 9],
+    },
+    {
+      name: 'category',
+      keys: ['A.value', 'B.value'],
+      mode: 'state' as TrendMode,
+      values: ['ERROR', 'NORMAL'],
+    },
+  ])(
+    'resets history on $name, including pending samples',
+    ({ keys, mode, values }) => {
+      const proxies = [makeProxy('A.value', 1), makeProxy('B.value', 2)];
+      const { result, rerender } = renderHook(
+        ({ proxies, keys, mode }) => useTrendModel(proxies, keys, mode),
+        {
+          initialProps: {
+            proxies,
+            keys: ['A.value', 'B.value'],
+            mode: 'numeric' as TrendMode,
+          },
+        }
+      );
+      flushIdle();
+      update(proxies[0], 3, START + 1);
+      rerender({
+        proxies: [...proxies],
+        keys: ['A.value', 'B.value'],
+        mode: 'numeric',
+      });
+      rerender({ proxies: [], keys, mode });
+      expect(
+        result.current.series.map((curve) => [curve.key, [...curve.values]])
+      ).toEqual(keys.map((key) => [key, []]));
+      expect(result.current.dataRevision).toBe(0);
+      flushIdle();
+      expect(
+        result.current.series.every((curve) => curve.values.length === 0)
+      ).toBe(true);
+      rerender({
+        proxies: keys.map((key, index) =>
+          makeProxy(key, values[index], START + 2)
+        ),
+        keys,
+        mode,
+      });
+      flushIdle();
+      expect(result.current.series.map((curve) => [...curve.values])).toEqual(
+        mode === 'state' ? [[3], [0]] : values.map((value) => [value])
+      );
+      expect(result.current.series.map((curve) => curve.key)).toEqual(keys);
+    }
+  );
 
   it.each(['state', 'alarm'] as const)(
     'collects %s samples with timestamps, idle publication and offline resume',
@@ -105,6 +176,23 @@ describe('useTrendModel', () => {
       );
     }
   );
+
+  it('publishes the current trend when keys change during a pending publication', () => {
+    const { result, rerender } = renderHook(
+      ({ proxies, keys }) => useTrendModel(proxies, keys),
+      {
+        initialProps: { proxies: [makeProxy('A.value', 1)], keys: ['A.value'] },
+      }
+    );
+    rerender({ proxies: [makeProxy('B.value', 2)], keys: ['B.value'] });
+    expect(result.current.dataRevision).toBe(0);
+    expect(window.requestIdleCallback).toHaveBeenCalledTimes(1);
+    flushIdle();
+    expect(
+      result.current.series.map((curve) => [curve.key, [...curve.values]])
+    ).toEqual([['B.value', [2]]]);
+    expect(result.current.dataRevision).toBe(1);
+  });
 
   it('coalesces updates across devices without losing intermediate samples', () => {
     const proxies = [makeProxy('A.value', 1), makeProxy('B.value', 2)];

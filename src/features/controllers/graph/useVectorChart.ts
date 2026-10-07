@@ -1,11 +1,16 @@
 import React from 'react';
 import type { PlotSettings } from './common/api';
-import { vectorChartOption } from './plotConfig';
+import {
+  vectorChartOption,
+  vectorXYChartOption,
+  vectorScatterChartOption,
+} from './plotConfig';
 import {
   padViewportRange,
   generateBaseline,
   generateDownsample,
   vectorPoints,
+  type VectorData,
 } from './utils';
 import {
   buildPlotAxes,
@@ -22,39 +27,62 @@ import type { VectorSeries } from './useVectorSeries';
  */
 export function useVectorChart({
   plotConfig,
-  series,
+  ySeries,
+  xValues,
+  kind = 'line',
 }: {
   plotConfig: PlotSettings;
-  series: VectorSeries[];
+  ySeries: VectorSeries[];
+  xValues?: VectorData;
+  kind?: 'line' | 'scatter';
 }) {
   const logarithmicX = plotConfig.x_log;
-  const seriesKeys = JSON.stringify(series.map((item) => item.key));
+  const ySeriesKeys = JSON.stringify(ySeries.map((item) => item.key));
   const offset = plotConfig.offset ?? 0;
   const step = plotConfig.step || 1;
   const coordinates = React.useMemo(
-    () => series.map((item) => generateBaseline(item.values, offset, step)),
-    [series, offset, step]
+    () =>
+      ySeries.map(
+        (item) => xValues ?? generateBaseline(item.values, offset, step)
+      ),
+    [ySeries, xValues, offset, step]
   );
   const axes = React.useMemo(() => buildPlotAxes(plotConfig), [plotConfig]);
   const ranges = useChartRanges(axes);
   const buildData = React.useCallback(
     (xRange?: Range) => {
+      // Pad sampling without changing the displayed axes, retaining crossing
+      // segments at the viewport edges. Pair each Y with X independently.
       const samplingRange = padViewportRange(xRange, logarithmicX);
       return {
-        datasets: series.map((item, index) => ({
+        datasets: ySeries.map((item, index) => ({
           data: vectorPoints(
-            generateDownsample(item.values, coordinates[index], samplingRange)
+            // Scatter frames preserve every point, including unordered X.
+            kind === 'scatter'
+              ? [coordinates[index], item.values]
+              : generateDownsample(
+                  item.values,
+                  coordinates[index],
+                  samplingRange
+                )
           ),
         })),
       };
     },
-    [series, coordinates, logarithmicX]
+    [ySeries, coordinates, logarithmicX, kind]
   );
   const chart = useChart({
     axes,
-    configuration: () =>
-      vectorChartOption(plotConfig, JSON.parse(seriesKeys), axes),
-    identity: [plotConfig, seriesKeys],
+    configuration: () => {
+      let option: typeof vectorXYChartOption = vectorChartOption;
+      if (kind === 'scatter') {
+        option = vectorScatterChartOption;
+      } else if (xValues !== undefined) {
+        option = vectorXYChartOption;
+      }
+      return option(plotConfig, JSON.parse(ySeriesKeys), axes);
+    },
+    identity: [plotConfig, ySeriesKeys, xValues !== undefined, kind],
     xRange: ranges.xRange,
     yRange: ranges.yRange,
     onComplete: ranges.pause,
@@ -62,7 +90,7 @@ export function useVectorChart({
     buildData,
   });
   const visibility = useCurveVisibility({
-    keys: JSON.parse(seriesKeys),
+    keys: JSON.parse(ySeriesKeys),
     chart,
   });
   return { ...chart, ...visibility };

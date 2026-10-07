@@ -1,4 +1,4 @@
-import { buildModelConfig } from '../common/api';
+import { buildModelConfig, type PlotSettings } from '../common/api';
 import React from 'react';
 import {
   act,
@@ -17,13 +17,30 @@ import { useVectorChart } from '../useVectorChart';
 import { useVectorSeries } from '../useVectorSeries';
 import { useVectorBarChart } from '../useVectorBarChart';
 import { makeVectorProxy } from '../testing/vectorProxy';
+import DisplayBarGraph from '../../display/DisplayBarGraph';
+import type { ControllerContainerContext } from '@/features/scene-view/api';
+import { VectorBinding } from '@/lib/binding/api';
 
 function useVectorLineChart({
   plotConfig,
   proxy,
-}: Parameters<typeof useVectorBarChart>[0]) {
-  const series = useVectorSeries([proxy], ['DEV.vector']);
-  return useVectorChart({ plotConfig, series });
+}: {
+  plotConfig: PlotSettings;
+  proxy?: PropertyProxy;
+}) {
+  const ySeries = useVectorSeries({ proxies: [proxy], keys: ['DEV.vector'] });
+  return useVectorChart({ plotConfig, ySeries });
+}
+
+function useBarChart({
+  plotConfig,
+  proxy,
+}: {
+  plotConfig: PlotSettings;
+  proxy?: PropertyProxy;
+}) {
+  const [series] = useVectorSeries({ proxies: [proxy], keys: ['DEV.vector'] });
+  return useVectorBarChart({ plotConfig, values: series.values });
 }
 
 function VectorChartHarness({
@@ -34,7 +51,7 @@ function VectorChartHarness({
   proxy?: PropertyProxy;
 }) {
   return model instanceof VectorBarGraphModel ? (
-    <ChartHarness model={model} proxy={proxy} useGraph={useVectorBarChart} />
+    <ChartHarness model={model} proxy={proxy} useGraph={useBarChart} />
   ) : (
     <ChartHarness model={model} proxy={proxy} useGraph={useVectorLineChart} />
   );
@@ -47,7 +64,7 @@ function ChartHarness({
 }: {
   model: DisplayVectorGraphModel | VectorBarGraphModel;
   proxy?: PropertyProxy;
-  useGraph: typeof useVectorBarChart;
+  useGraph: typeof useBarChart;
 }) {
   const plotConfig = React.useMemo(() => buildModelConfig(model), [model]);
   const { containerRef, selectTool } = useGraph({
@@ -69,6 +86,34 @@ const chart = () => charts().at(-1)!;
 describe('vector line and bar hooks with Chart.js', () => {
   beforeEach(() => {
     charts().length = 0;
+  });
+
+  it('publishes bar proxy and binding replacements with equal timestamps', async () => {
+    const model = new VectorBarGraphModel();
+    const proxy = makeVectorProxy([1]);
+    const context = (proxy: PropertyProxy) =>
+      ({ proxy }) as ControllerContainerContext;
+    const view = render(<DisplayBarGraph model={model} ctx={context(proxy)} />);
+    await waitFor(() =>
+      expect(chart().data.datasets[0].data).toEqual([{ x: 0, y: 1 }])
+    );
+    const first = chart();
+    const replacement = makeVectorProxy([2]);
+    replacement.binding!.timestamp = proxy.binding!.timestamp;
+    view.rerender(<DisplayBarGraph model={model} ctx={context(replacement)} />);
+    await waitFor(() =>
+      expect(first.data.datasets[0].data).toEqual([{ x: 0, y: 2 }])
+    );
+    const binding = new VectorBinding();
+    binding.setValue([3], undefined);
+    binding.timestamp = replacement.binding!.timestamp;
+    replacement.root.binding.value!.set('vector', binding);
+    replacement.root.schema_update.fire();
+    view.rerender(<DisplayBarGraph model={model} ctx={context(replacement)} />);
+    await waitFor(() =>
+      expect(first.data.datasets[0].data).toEqual([{ x: 0, y: 3 }])
+    );
+    expect(chart()).toBe(first);
   });
 
   it('creates and disposes charts in strict mode', () => {

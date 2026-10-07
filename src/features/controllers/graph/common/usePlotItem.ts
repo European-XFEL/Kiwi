@@ -98,22 +98,21 @@ export function usePlotItem<T extends 'line' | 'scatter' = 'line'>(
     },
     []
   );
-  const setVisible = React.useCallback((index: number, visible: boolean) => {
+  const setVisible = React.useCallback((visibility: readonly boolean[]) => {
     const chart = chartRef.current;
-    if (!chart || chart.isDatasetVisible(index) === visible) return;
-    chart.setDatasetVisibility(index, visible);
-    chart.update('none');
+    if (!chart) {
+      return;
+    }
+    let changed = false;
+    visibility.forEach((visible, index) => {
+      if (chart.isDatasetVisible(index) !== visible) {
+        chart.setDatasetVisibility(index, visible);
+        changed = true;
+      }
+    });
+    if (changed) {
+      chart.update('none');
+    }
   }, []);
-  const isVisible = React.useCallback(
-    (index: number) => chartRef.current?.isDatasetVisible(index),
-    []
-  );
-  const findDataset = React.useCallback(
-    (label: string) =>
-      chartRef.current?.data.datasets.findIndex(
-        (dataset) => dataset.label === label
-      ),
-    []
-  );
-  return { containerRef, viewport, update, setVisible, isVisible, findDataset };
+  return { containerRef, viewport, update, setVisible };
 }

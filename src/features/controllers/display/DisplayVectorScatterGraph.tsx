@@ -1,22 +1,17 @@
 import React from 'react';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
-import type { VectorXYGraphModel } from '@/karabo/common/api';
-import {
-  buildModelConfig,
-  ChartLayout,
-  ChartPlot,
-  ChartLegend,
-} from '../graph/common/api';
+import type { VectorScatterGraphModel } from '@/karabo/common/api';
+import { buildModelConfig, ChartLayout, ChartPlot } from '../graph/common/api';
 import { useVectorSeries } from '../graph/useVectorSeries';
 import { useVectorChart } from '../graph/useVectorChart';
 
 const emptyVector = new Float64Array();
 
-export default function DisplayVectorXYGraph({
+export default function DisplayVectorScatterGraph({
   model,
   ctx,
 }: {
-  model: VectorXYGraphModel;
+  model: VectorScatterGraphModel;
   ctx?: ControllerContainerContext;
 }) {
   const plotConfig = React.useMemo(() => buildModelConfig(model), [model]);
@@ -31,19 +26,18 @@ export default function DisplayVectorXYGraph({
     }),
     [published]
   );
-  const plotWindow = useVectorChart({ plotConfig, xValues, ySeries });
+  const plotWindow = useVectorChart({
+    plotConfig,
+    xValues,
+    ySeries,
+    kind: 'scatter',
+  });
   return (
     <ChartLayout background={plotConfig.background} viewBox={plotWindow}>
       <ChartPlot
         view={plotWindow}
-        testId="vector-xy-chart"
+        testId="vector-scatter-chart"
         title={plotConfig.title}
-        legend={
-          <ChartLegend
-            keys={ySeries.map((item) => item.key)}
-            view={plotWindow}
-          />
-        }
       />
     </ChartLayout>
   );

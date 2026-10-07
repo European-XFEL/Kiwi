@@ -1,19 +1,21 @@
 import { act, cleanup, renderHook } from '@testing-library/react';
 import type { PropertyProxy } from '@/lib/binding/PropertyProxy';
 import { VectorFloatValue, VectorInt64Value } from '@/karabo/data/types';
-import { useVectorData } from '../useVectorData';
+import { useVectorSeries } from '../useVectorSeries';
 import { makeVectorProxy } from '../testing/vectorProxy';
 
 const originalRequestIdleCallback = window.requestIdleCallback;
 const originalCancelIdleCallback = window.cancelIdleCallback;
 
-const useData = (proxy: PropertyProxy) => useVectorData(proxy);
+const useData = (proxy: PropertyProxy | undefined) => ({
+  values: useVectorSeries({ proxies: [proxy], keys: ['vector'] })[0].values,
+});
 
 function flushIdle() {
   act(() => jest.runOnlyPendingTimers());
 }
 
-describe('useVectorData', () => {
+describe('single vector publication', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     window.requestIdleCallback = jest.fn((callback: IdleRequestCallback) =>
@@ -78,14 +80,11 @@ describe('useVectorData', () => {
   });
 
   it('publishes an empty vector when the proxy is absent', () => {
-    const { result, rerender } = renderHook(
-      ({ proxy }) => useVectorData(proxy),
-      {
-        initialProps: {
-          proxy: makeVectorProxy([1, 2]) as PropertyProxy | undefined,
-        },
-      }
-    );
+    const { result, rerender } = renderHook(({ proxy }) => useData(proxy), {
+      initialProps: {
+        proxy: makeVectorProxy([1, 2]) as PropertyProxy | undefined,
+      },
+    });
     flushIdle();
     expect(result.current.values).toEqual(new Float64Array([1, 2]));
 

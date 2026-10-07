@@ -16,6 +16,7 @@ import DisplayStateColor from '@/features/controllers/display/DisplayStateColor'
 import DisplayTrendGraph from '@/features/controllers/display/DisplayTrendGraph';
 import DisplayVectorGraph from './display/DisplayVectorGraph';
 import DisplayVectorXYGraph from './display/DisplayVectorXYGraph';
+import DisplayVectorScatterGraph from './display/DisplayVectorScatterGraph';
 import Evaluator from '@/features/controllers/display/Evaluator';
 import {
   DisplayLineEdit,
@@ -70,6 +71,7 @@ export function bootstrapControllerRenderers(
   registerRenderer('VectorGraph', DisplayVectorGraph);
   registerRenderer('NDArrayGraph', DisplayVectorGraph);
   registerRenderer('VectorXYGraph', DisplayVectorXYGraph);
+  registerRenderer('VectorScatterGraph', DisplayVectorScatterGraph);
   registerRenderer('VectorBarGraph', DisplayBarGraph);
   registerRenderer('ScatterGraph', DisplayScatterGraph);
   registerRenderer('WebCamGraph', DisplayWebcamGraph);

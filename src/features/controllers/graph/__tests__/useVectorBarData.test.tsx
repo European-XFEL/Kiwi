@@ -1,12 +1,16 @@
 import { act, cleanup, renderHook } from '@testing-library/react';
 import type { PropertyProxy } from '@/lib/binding/api';
-import { useVectorBarData } from '../useVectorBarData';
+import { useVectorSeries } from '../useVectorSeries';
+
+const useData = (proxy: PropertyProxy | undefined) => ({
+  values: useVectorSeries({ proxies: [proxy], keys: ['vector'] })[0].values,
+});
 import { makeVectorProxy } from '../testing/vectorProxy';
 
 const originalRequest = window.requestIdleCallback;
 const originalCancel = window.cancelIdleCallback;
 
-describe('useVectorBarData', () => {
+describe('complete vector publication', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     window.requestIdleCallback = jest.fn((callback: IdleRequestCallback) =>
@@ -31,7 +35,7 @@ describe('useVectorBarData', () => {
     const proxy = makeVectorProxy(
       Float64Array.from({ length: 4000 }, (_, index) => -index)
     );
-    const { result, rerender } = renderHook(() => useVectorBarData(proxy));
+    const { result, rerender } = renderHook(() => useData(proxy));
     expect(result.current.values).toHaveLength(0);
     const latest = Float64Array.from({ length: 5000 }, (_, index) => index);
     proxy.binding!.setValue(latest, undefined);
@@ -43,14 +47,11 @@ describe('useVectorBarData', () => {
   });
 
   it('clears published bars when the proxy is removed', () => {
-    const { result, rerender } = renderHook(
-      ({ proxy }) => useVectorBarData(proxy),
-      {
-        initialProps: {
-          proxy: makeVectorProxy([2, -3]) as PropertyProxy | undefined,
-        },
-      }
-    );
+    const { result, rerender } = renderHook(({ proxy }) => useData(proxy), {
+      initialProps: {
+        proxy: makeVectorProxy([2, -3]) as PropertyProxy | undefined,
+      },
+    });
     act(() => jest.runOnlyPendingTimers());
     expect(result.current.values).toEqual(new Float64Array([2, -3]));
     rerender({ proxy: undefined });

@@ -2,9 +2,9 @@ import React from 'react';
 import type { ChartConfiguration } from 'chart.js';
 import type { PlotAxesConfig } from '../graphAxes';
 import { GRAPH_LAYOUT, type Range } from './constants';
-import type { AxisRanges } from './useMouseGestures';
+import { useMouseGestures, type AxisRanges } from './useMouseGestures';
+import type { ChartMouseTool } from './components/ChartToolBar';
 import { usePlotItem } from './usePlotItem';
-import { useViewBox } from './useViewBox';
 
 type ChartData<T extends 'line' | 'scatter'> = {
   datasets: ChartConfiguration<T>['data']['datasets'];
@@ -36,12 +36,15 @@ export function useChart<T extends 'line' | 'scatter'>({
   dataRevision?: number;
 }) {
   const selectionRef = React.useRef<HTMLDivElement>(null);
+  const [tool, setTool] = React.useState<ChartMouseTool>('pointer');
+  const rangesRef = React.useRef<AxisRanges | undefined>(undefined);
+  const activeRef = React.useRef(false);
   const [revision, setRevision] = React.useState(0);
   const pendingUpdateRef = React.useRef<
     ((ranges?: AxisRanges) => void) | undefined
   >(undefined);
-  const onFinish = React.useCallback((ranges?: AxisRanges) => {
-    pendingUpdateRef.current?.(ranges);
+  const finish = React.useCallback(() => {
+    pendingUpdateRef.current?.(rangesRef.current);
   }, []);
   const reset = React.useCallback(() => {
     onReset();
@@ -49,16 +52,33 @@ export function useChart<T extends 'line' | 'scatter'>({
   }, [onReset]);
   const plotItem = usePlotItem(configuration, identity);
   const { containerRef, viewport, update } = plotItem;
-  const viewBox = useViewBox({
+  const getRanges = React.useCallback(() => rangesRef.current, []);
+  const setRanges = React.useCallback(
+    (ranges: AxisRanges) => {
+      rangesRef.current = ranges;
+      viewport.setRanges(ranges);
+    },
+    [viewport]
+  );
+  const selectTool = React.useCallback(
+    (next: ChartMouseTool) =>
+      setTool((current) => (current === next ? 'pointer' : next)),
+    []
+  );
+  useMouseGestures({
     containerRef,
     selectionRef,
     viewport,
     inverted: { x: axes.x.inverted, y: axes.y.inverted },
     logarithmicX: axes.x.kind === 'numeric' && axes.x.scale === 'logarithmic',
     logarithmicY: axes.y.scale === 'logarithmic',
-    onComplete,
-    onFinish,
-    onReset: reset,
+    tool,
+    activeRef,
+    getRanges,
+    setRanges,
+    complete: onComplete,
+    finish,
+    reset,
   });
   const applyLatest = React.useCallback(
     (gestureRanges?: AxisRanges) => {
@@ -69,37 +89,32 @@ export function useChart<T extends 'line' | 'scatter'>({
       const fallback = nextX
         ? {
             x: nextX,
-            y: nextY ?? viewBox.rangesRef.current?.y ?? ([0, 1] as Range),
+            y: nextY ?? rangesRef.current?.y ?? ([0, 1] as Range),
           }
-        : viewBox.rangesRef.current;
+        : rangesRef.current;
       const ranges = viewport.readRanges(fallback);
-      viewBox.rangesRef.current = ranges;
+      rangesRef.current = ranges;
       if (ranges) onRanges?.(ranges);
       pendingUpdateRef.current = undefined;
     },
-    [
-      axes,
-      xRange,
-      yRange,
-      buildData,
-      update,
-      viewport,
-      viewBox.rangesRef,
-      onRanges,
-    ]
+    [axes, xRange, yRange, buildData, update, viewport, onRanges]
   );
 
   React.useLayoutEffect(() => {
-    if (viewBox.activeRef.current) {
+    if (activeRef.current) {
       pendingUpdateRef.current = applyLatest;
       return;
     }
     applyLatest();
-  }, [applyLatest, revision, dataRevision, viewBox.activeRef]);
+  }, [applyLatest, revision, dataRevision]);
 
   return {
     ...plotItem,
-    ...viewBox,
+    tool,
+    selectTool,
+    reset,
+    rangesRef,
+    activeRef,
     selectionRef,
     yAxisWidth:
       GRAPH_LAYOUT.yAxisSize[

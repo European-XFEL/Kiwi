@@ -1,6 +1,6 @@
 import React from 'react';
 import { ChartToolBar } from './ChartToolBar';
-import type { ViewBox } from '../useViewBox';
+import type { useChart } from '../useChart';
 
 export function ChartLayout({
   children,
@@ -10,7 +10,7 @@ export function ChartLayout({
   controls,
 }: {
   children: React.ReactNode;
-  viewBox: Pick<ViewBox, 'tool' | 'selectTool' | 'reset'>;
+  viewBox: Pick<ReturnType<typeof useChart>, 'tool' | 'selectTool' | 'reset'>;
   background: string;
   footer?: React.ReactNode;
   controls?: React.ReactNode;
