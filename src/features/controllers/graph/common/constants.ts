@@ -16,7 +16,8 @@ export const GRAPH_LAYOUT = {
   insets: { right: 2, top: 2 },
   titledTop: 18,
   xAxisSize: { titled: 42, untitled: 34 },
-  yAxisSize: { titled: 68, untitled: 52 },
+  // Reserve room for signed compact labels before the first data update.
+  yAxisSize: { titled: 80, untitled: 64 },
   lineWidth: 1.5,
   trendPointSize: 2.5,
   vectorPointSize: 2,

@@ -109,7 +109,7 @@ test('preserves visibility across updates, reorder, configuration and reset', ()
   );
   expect(chart().isDatasetVisible(0)).toBe(false);
   expect(screen.getByLabelText('Graph legend').parentElement).toHaveStyle({
-    left: '76px',
+    left: '88px',
     top: '26px',
   });
   fireEvent.click(screen.getByRole('button', { name: 'Reset view' }));

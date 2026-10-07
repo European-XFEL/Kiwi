@@ -117,6 +117,7 @@ export function useChart<T extends 'line' | 'scatter'>({
     activeRef,
     selectionRef,
     yAxisWidth:
+      plotItem.yAxisWidth ??
       GRAPH_LAYOUT.yAxisSize[
         axes.y.label || axes.y.units ? 'titled' : 'untitled'
       ],

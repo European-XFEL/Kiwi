@@ -133,7 +133,8 @@ export function useTrendChart({
 
   const yRange = view.yRange;
   return {
-    yAxisWidth: mode === 'numeric' ? numericYAxisWidth : yAxisWidth,
+    yAxisWidth:
+      mode === 'numeric' ? (chart.yAxisWidth ?? numericYAxisWidth) : yAxisWidth,
     containerRef,
     selectionRef,
     tool: chart.tool,

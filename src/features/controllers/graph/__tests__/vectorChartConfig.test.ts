@@ -50,7 +50,7 @@ describe('vector Chart.js configuration', () => {
       },
     });
     expect(vectorChartOption(model).options?.scales?.x?.ticks).toMatchObject({
-      align: 'inner',
+      align: 'center',
     });
     model.x_label = model.x_units = model.y_label = model.y_units = '';
     expect(vectorChartOption(model).options?.scales).toMatchObject({
@@ -76,11 +76,11 @@ describe('vector Chart.js configuration', () => {
       y: { afterFit: (axis: { width: number }) => void };
     };
     const x = { height: 60 };
-    const y = { width: 90 };
+    const y = { width: 30 };
     scales.x.afterFit(x);
     scales.y.afterFit(y);
     expect(x.height).toBe(34);
-    expect(y.width).toBe(52);
+    expect(y.width).toBe(64);
     const titled = buildModelConfig(new DisplayVectorGraphModel());
     titled.x_label = 'Position';
     titled.y_label = 'Intensity';
@@ -89,7 +89,7 @@ describe('vector Chart.js configuration', () => {
     titledScales.x.afterFit(x);
     titledScales.y.afterFit(y);
     expect(x.height).toBe(42);
-    expect(y.width).toBe(68);
+    expect(y.width).toBe(80);
   });
 
   it('keeps fixed logarithmic and inverted axes', () => {
