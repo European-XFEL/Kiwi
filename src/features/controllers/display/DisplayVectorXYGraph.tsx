@@ -8,7 +8,7 @@ import {
   ChartLegend,
 } from '../graph/common/api';
 import { useVectorSeries } from '../graph/useVectorSeries';
-import { useVectorChart } from '../graph/useVectorChart';
+import { usePlotChart } from '../graph/usePlotChart';
 
 const emptyVector = new Float64Array();
 
@@ -31,7 +31,7 @@ export default function DisplayVectorXYGraph({
     }),
     [published]
   );
-  const plotWindow = useVectorChart({ plotConfig, xValues, ySeries });
+  const plotWindow = usePlotChart({ plotConfig, xValues, ySeries });
   return (
     <ChartLayout background={plotConfig.background} viewBox={plotWindow}>
       <ChartPlot

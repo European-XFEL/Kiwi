@@ -88,11 +88,11 @@ export function barChartOption(
   plotConfig: PlotSettings,
   xRange?: Range,
   yRange?: Range,
-  axes: PlotAxesConfig = buildPlotAxes(plotConfig, { bar: true })
+  axes: PlotAxesConfig = buildPlotAxes(plotConfig)
 ): ChartConfiguration<'line'> {
   const config = commonChartOption(plotConfig, {
     x: { ...axes.x, range: xRange ?? axes.x.range },
-    y: { ...axes.y, range: yRange ?? axes.y.range },
+    y: { ...axes.y, range: yRange ?? axes.y.range, beginAtZero: true },
   });
   config.data.datasets[0].showLine = false;
   config.data.datasets[0].pointRadius = 0;

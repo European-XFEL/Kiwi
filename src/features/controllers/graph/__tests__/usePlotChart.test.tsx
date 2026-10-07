@@ -13,9 +13,9 @@ import {
   VectorBarGraphModel,
 } from '@/karabo/common/api';
 import type { PropertyProxy } from '@/lib/binding/PropertyProxy';
-import { useVectorChart } from '../useVectorChart';
+import { usePlotChart } from '../usePlotChart';
 import { useVectorSeries } from '../useVectorSeries';
-import { useVectorBarChart } from '../useVectorBarChart';
+import { generateBaseline } from '../utils';
 import { makeVectorProxy } from '../testing/vectorProxy';
 import DisplayBarGraph from '../../display/DisplayBarGraph';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
@@ -29,7 +29,7 @@ function useVectorLineChart({
   proxy?: PropertyProxy;
 }) {
   const ySeries = useVectorSeries({ proxies: [proxy], keys: ['DEV.vector'] });
-  return useVectorChart({ plotConfig, ySeries });
+  return usePlotChart({ plotConfig, ySeries });
 }
 
 function useBarChart({
@@ -39,8 +39,13 @@ function useBarChart({
   plotConfig: PlotSettings;
   proxy?: PropertyProxy;
 }) {
-  const [series] = useVectorSeries({ proxies: [proxy], keys: ['DEV.vector'] });
-  return useVectorBarChart({ plotConfig, values: series.values });
+  const ySeries = useVectorSeries({ proxies: [proxy], keys: ['DEV.vector'] });
+  const length = ySeries[0].values.length;
+  const xValues = React.useMemo(
+    () => generateBaseline({ length }, 0, 1),
+    [length]
+  );
+  return usePlotChart({ plotConfig, xValues, ySeries, kind: 'bar' });
 }
 
 function VectorChartHarness({
@@ -290,7 +295,6 @@ describe('vector line and bar hooks with Chart.js', () => {
       x_autorange: false,
       x_min: 100,
       x_max: 120,
-      x_log: true,
     });
     const view = render(<VectorChartHarness model={model} proxy={proxy} />);
     await waitFor(() => expect(chart().data.datasets[0].data).toHaveLength(61));
@@ -371,4 +375,77 @@ describe('vector line and bar hooks with Chart.js', () => {
       }
     }
   );
+});
+
+function PlotHarness(props: Parameters<typeof usePlotChart>[0]) {
+  const plotWindow = usePlotChart(props);
+  return <div ref={plotWindow.containerRef} data-testid="plot" />;
+}
+
+test.each(['line', 'bar', 'scatter-line', 'scatter'] as const)(
+  '%s uses supplied X coordinates and baseline coordinates when omitted',
+  (kind) => {
+    const model = new DisplayVectorGraphModel();
+    model.offset = 10;
+    model.step = 2;
+    const plotConfig = buildModelConfig(model);
+    const ySeries = [{ key: 'y', values: [1, 2, 3] }];
+    const view = render(
+      <PlotHarness
+        plotConfig={plotConfig}
+        ySeries={ySeries}
+        xValues={[8, 4, 6]}
+        kind={kind}
+      />
+    );
+    expect(chart().data.datasets[0].data).toEqual([
+      { x: 8, y: 1 },
+      { x: 4, y: 2 },
+      { x: 6, y: 3 },
+    ]);
+    view.rerender(
+      <PlotHarness plotConfig={plotConfig} ySeries={ySeries} kind={kind} />
+    );
+    expect(chart().data.datasets[0].data).toEqual([
+      { x: 10, y: 1 },
+      { x: 12, y: 2 },
+      { x: 14, y: 3 },
+    ]);
+  }
+);
+
+test('recreates on kind and key changes and retains visibility on recreation', () => {
+  const plotConfig = buildModelConfig(new DisplayVectorGraphModel());
+  function Harness({
+    kind,
+    keyName,
+  }: {
+    kind: 'line' | 'scatter-line';
+    keyName: string;
+  }) {
+    const plotWindow = usePlotChart({
+      plotConfig,
+      kind,
+      ySeries: [{ key: keyName, values: [1] }],
+    });
+    return (
+      <>
+        <div ref={plotWindow.containerRef} />
+        <button onClick={() => plotWindow.toggleCurve(keyName)}>Toggle</button>
+      </>
+    );
+  }
+  const view = render(<Harness kind="line" keyName="y" />);
+  const first = chart();
+  fireEvent.click(screen.getByText('Toggle'));
+  expect(first.isDatasetVisible(0)).toBe(false);
+  view.rerender(<Harness kind="scatter-line" keyName="y" />);
+  const second = chart();
+  expect(first.destroy).toHaveBeenCalled();
+  expect(second).not.toBe(first);
+  expect(second.isDatasetVisible(0)).toBe(false);
+  view.rerender(<Harness kind="scatter-line" keyName="newY" />);
+  expect(second.destroy).toHaveBeenCalled();
+  expect(chart().data.datasets[0].label).toBe('newY');
+  expect(chart().isDatasetVisible(0)).toBe(true);
 });

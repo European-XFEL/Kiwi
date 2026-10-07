@@ -31,21 +31,20 @@ export type PlotAxesConfig = {
 
 type PlotAxesOptions = {
   timeX?: boolean;
-  bar?: boolean;
   categories?: readonly string[];
 };
 
 function buildXAxisConfig(
   model: PlotSettings,
-  { timeX = false, bar = false }: PlotAxesOptions
+  { timeX = false }: PlotAxesOptions
 ): AxisConfig {
   const min = model.x_min;
   const max = model.x_max;
   const factor = timeX ? 1000 : 1;
   return {
     kind: timeX ? 'time' : 'numeric',
-    // Time coordinates and bar indices stay linear, regardless of x_log.
-    scale: !timeX && !bar && model.x_log ? 'logarithmic' : 'linear',
+    // Time coordinates stay linear, regardless of x_log.
+    scale: !timeX && model.x_log ? 'logarithmic' : 'linear',
     label: model.x_label,
     units: model.x_units,
     inverted: model.x_invert,
@@ -63,7 +62,7 @@ function buildXAxisConfig(
 
 function buildYAxisConfig(
   model: PlotSettings,
-  { bar = false, categories }: PlotAxesOptions
+  { categories }: PlotAxesOptions
 ): PlotAxesConfig['y'] {
   const min = model.y_min;
   const max = model.y_max;
@@ -82,8 +81,6 @@ function buildYAxisConfig(
       min === max
         ? undefined
         : [min, max],
-    // Bar Y may include zero; the renderer disables this on log scales.
-    beginAtZero: bar,
     categories,
   };
 }

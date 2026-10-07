@@ -4,8 +4,11 @@ import {
   vectorChartOption,
   vectorXYChartOption,
   vectorScatterChartOption,
+  barChartOption,
+  scatterChartOption,
 } from './plotConfig';
 import {
+  BAR_SAMPLE_LIMIT,
   padViewportRange,
   generateBaseline,
   generateDownsample,
@@ -22,10 +25,10 @@ import {
 import type { VectorSeries } from './useVectorSeries';
 
 /**
- * Coordinates vector plots: selects the chart configuration, samples
+ * Coordinates plots: selects the chart configuration, samples
  * visible data, and applies navigation ranges to the shared Chart.js plot.
  */
-export function useVectorChart({
+export function usePlotChart({
   plotConfig,
   ySeries,
   xValues,
@@ -34,7 +37,7 @@ export function useVectorChart({
   plotConfig: PlotSettings;
   ySeries: VectorSeries[];
   xValues?: VectorData;
-  kind?: 'line' | 'scatter';
+  kind?: 'line' | 'bar' | 'scatter-line' | 'scatter';
 }) {
   const logarithmicX = plotConfig.x_log;
   const ySeriesKeys = JSON.stringify(ySeries.map((item) => item.key));
@@ -55,18 +58,27 @@ export function useVectorChart({
       // segments at the viewport edges. Pair each Y with X independently.
       const samplingRange = padViewportRange(xRange, logarithmicX);
       return {
-        datasets: ySeries.map((item, index) => ({
-          data: vectorPoints(
+        datasets: ySeries.map((item, index) => {
+          let points: [VectorData, VectorData];
+          if (kind === 'scatter-line' || kind === 'scatter') {
             // Scatter frames preserve every point, including unordered X.
-            kind === 'scatter'
-              ? [coordinates[index], item.values]
-              : generateDownsample(
-                  item.values,
-                  coordinates[index],
-                  samplingRange
-                )
-          ),
-        })),
+            points = [coordinates[index], item.values];
+          } else if (kind === 'bar') {
+            points = generateDownsample(
+              item.values,
+              coordinates[index],
+              samplingRange,
+              BAR_SAMPLE_LIMIT
+            );
+          } else {
+            points = generateDownsample(
+              item.values,
+              coordinates[index],
+              samplingRange
+            );
+          }
+          return { data: vectorPoints(points) };
+        }),
       };
     },
     [ySeries, coordinates, logarithmicX, kind]
@@ -74,13 +86,27 @@ export function useVectorChart({
   const chart = useChart({
     axes,
     configuration: () => {
-      let option: typeof vectorXYChartOption = vectorChartOption;
-      if (kind === 'scatter') {
-        option = vectorScatterChartOption;
-      } else if (xValues !== undefined) {
-        option = vectorXYChartOption;
+      switch (kind) {
+        case 'line':
+          if (xValues !== undefined) {
+            return vectorXYChartOption(
+              plotConfig,
+              JSON.parse(ySeriesKeys),
+              axes
+            );
+          }
+          return vectorChartOption(plotConfig, JSON.parse(ySeriesKeys), axes);
+        case 'bar':
+          return barChartOption(plotConfig, undefined, undefined, axes);
+        case 'scatter-line':
+          return vectorScatterChartOption(
+            plotConfig,
+            JSON.parse(ySeriesKeys),
+            axes
+          );
+        case 'scatter':
+          return scatterChartOption(plotConfig, axes);
       }
-      return option(plotConfig, JSON.parse(ySeriesKeys), axes);
     },
     identity: [plotConfig, ySeriesKeys, xValues !== undefined, kind],
     xRange: ranges.xRange,

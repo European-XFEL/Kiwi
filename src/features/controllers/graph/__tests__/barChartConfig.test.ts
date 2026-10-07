@@ -5,9 +5,8 @@ import { BAR_SAMPLE_LIMIT } from '../utils';
 import { vectorBarPlugin } from '../graphPlugins';
 
 describe('bar Chart.js configuration', () => {
-  it('keeps X linear and honors Y options', () => {
+  it('uses model X settings and honors Y options', () => {
     const sceneModel = new VectorBarGraphModel();
-    sceneModel.x_log = true;
     const model = buildModelConfig(sceneModel);
     model.y_invert = true;
     model.y_grid = true;
@@ -25,6 +24,7 @@ describe('bar Chart.js configuration', () => {
     expect(barChartOption(model).options?.scales?.y).toMatchObject({
       type: 'logarithmic',
       reverse: true,
+      beginAtZero: false,
     });
   });
 

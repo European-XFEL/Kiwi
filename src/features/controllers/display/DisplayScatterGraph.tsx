@@ -4,7 +4,8 @@ import { Button } from '@/components/api';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 import type { ScatterGraphModel } from '@/karabo/common/api';
 import { ChartLayout, ChartPlot } from '../graph/common/api';
-import { useScatterChart } from '../graph/useScatterChart';
+import { usePlotChart } from '../graph/usePlotChart';
+import { useScatterData } from '../graph/useScatterData';
 
 export default function DisplayScatterGraph({
   model,
@@ -14,11 +15,21 @@ export default function DisplayScatterGraph({
   ctx?: ControllerContainerContext;
 }) {
   const plotConfig = React.useMemo(() => buildModelConfig(model), [model]);
-  const view = useScatterChart({ plotConfig, proxies: ctx?.proxies ?? [] });
+  const { xValues, ySeries, clear } = useScatterData({
+    proxies: ctx?.proxies ?? [],
+    keys: model.keys,
+    maxlen: plotConfig.maxlen,
+  });
+  const plotWindow = usePlotChart({
+    plotConfig,
+    xValues,
+    ySeries,
+    kind: 'scatter',
+  });
   return (
     <ChartLayout
       background={plotConfig.background}
-      viewBox={view}
+      viewBox={plotWindow}
       controls={
         <Button
           type="button"
@@ -27,13 +38,17 @@ export default function DisplayScatterGraph({
           aria-label="Clear points"
           title="Clear points"
           className="h-7 w-7 rounded-sm"
-          onClick={view.clear}
+          onClick={clear}
         >
           <span aria-hidden="true">×</span>
         </Button>
       }
     >
-      <ChartPlot view={view} testId="scatter-chart" title={plotConfig.title} />
+      <ChartPlot
+        view={plotWindow}
+        testId="scatter-chart"
+        title={plotConfig.title}
+      />
     </ChartLayout>
   );
 }

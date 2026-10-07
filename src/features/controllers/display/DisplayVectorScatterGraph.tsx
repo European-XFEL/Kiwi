@@ -3,7 +3,7 @@ import type { ControllerContainerContext } from '@/features/scene-view/api';
 import type { VectorScatterGraphModel } from '@/karabo/common/api';
 import { buildModelConfig, ChartLayout, ChartPlot } from '../graph/common/api';
 import { useVectorSeries } from '../graph/useVectorSeries';
-import { useVectorChart } from '../graph/useVectorChart';
+import { usePlotChart } from '../graph/usePlotChart';
 
 const emptyVector = new Float64Array();
 
@@ -26,11 +26,11 @@ export default function DisplayVectorScatterGraph({
     }),
     [published]
   );
-  const plotWindow = useVectorChart({
+  const plotWindow = usePlotChart({
     plotConfig,
     xValues,
     ySeries,
-    kind: 'scatter',
+    kind: 'scatter-line',
   });
   return (
     <ChartLayout background={plotConfig.background} viewBox={plotWindow}>
