@@ -4,7 +4,7 @@ import { Chart } from 'chart.js/auto';
 import type { ChartConfiguration, LineElement } from 'chart.js';
 import { VectorXYGraphModel } from '@/karabo/common/api';
 import { buildModelConfig } from '../common/api';
-import { useVectorChart } from '../useVectorChart';
+import { usePlotChart } from '../usePlotChart';
 
 jest.mock('chart.js/auto', () => {
   const actual = jest.requireActual<typeof import('chart.js')>('chart.js');
@@ -42,7 +42,7 @@ function Harness({
   y: Float64Array;
 }) {
   const plotConfig = React.useMemo(() => buildModelConfig(model), [model]);
-  const plotWindow = useVectorChart({
+  const plotWindow = usePlotChart({
     plotConfig,
     xValues: x,
     ySeries: [{ key: 'y', values: y }],

@@ -1,5 +1,8 @@
 import { BasicPlatform, Chart, registerables } from 'chart.js';
-import { DisplayVectorGraphModel } from '@/karabo/common/api';
+import {
+  DisplayVectorGraphModel,
+  VectorBarGraphModel,
+} from '@/karabo/common/api';
 import { buildModelConfig } from '../common/buildModelConfig';
 import { commonChartOption } from '../common/commonConfig';
 import { buildPlotAxes } from '../graphAxes';
@@ -24,14 +27,12 @@ it.each([[STATE_LABELS], [ALARM_LABELS]])(
   }
 );
 
-it('keeps bar X indices linear while preserving logarithmic Y settings', () => {
-  const model = buildModelConfig(new DisplayVectorGraphModel());
-  model.x_log = true;
+it('uses bar model axis settings without overrides', () => {
+  const model = buildModelConfig(new VectorBarGraphModel());
   model.y_log = true;
-  const axes = buildPlotAxes(model, { bar: true });
+  const axes = buildPlotAxes(model);
   expect(axes.x.scale).toBe('linear');
-  expect(axes.x).not.toHaveProperty('beginAtZero');
-  expect(axes.y).toMatchObject({ scale: 'logarithmic', beginAtZero: true });
+  expect(axes.y.scale).toBe('logarithmic');
 });
 
 afterEach(() => {

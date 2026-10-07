@@ -3,7 +3,7 @@ import { buildModelConfig } from '../graph/common/api';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 import type { DisplayVectorGraphModel } from '@/karabo/common/api';
 import { ChartLayout, ChartPlot, ChartLegend } from '../graph/common/api';
-import { useVectorChart } from '../graph/useVectorChart';
+import { usePlotChart } from '../graph/usePlotChart';
 import { useVectorSeries } from '../graph/useVectorSeries';
 
 export default function DisplayVectorGraph({
@@ -18,7 +18,7 @@ export default function DisplayVectorGraph({
     proxies: ctx?.proxies ?? [],
     keys: model.keys,
   });
-  const plotWindow = useVectorChart({ plotConfig, ySeries });
+  const plotWindow = usePlotChart({ plotConfig, ySeries });
 
   return (
     <ChartLayout background={plotConfig.background} viewBox={plotWindow}>
