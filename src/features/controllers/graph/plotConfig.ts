@@ -59,22 +59,28 @@ export function vectorXYChartOption(
   keys: readonly string[],
   axes: PlotAxesConfig = buildPlotAxes(plotConfig)
 ): ChartConfiguration<'line'> {
-  const config = commonChartOption(plotConfig, axes);
+  const config = vectorChartOption(plotConfig, keys, axes);
   config.options!.parsing = {};
   config.options!.normalized = false;
-  config.data.datasets = keys.map((key, index) => ({
-    label: key,
-    data: [],
-    borderColor: TRACE_COLORS[index % TRACE_COLORS.length],
-    backgroundColor: TRACE_COLORS[index % TRACE_COLORS.length],
-    borderWidth: GRAPH_LAYOUT.lineWidth,
-    pointRadius: (context: ScriptableContext<'line'>) =>
-      context.dataset.data.length < VECTOR_POINT_LIMIT
-        ? GRAPH_LAYOUT.vectorPointSize
-        : 0,
-    pointHoverRadius: 0,
-    tension: 0,
-  }));
+  return config;
+}
+
+export function vectorScatterChartOption(
+  plotConfig: PlotSettings,
+  keys: readonly string[],
+  axes: PlotAxesConfig = buildPlotAxes(plotConfig)
+): ChartConfiguration<'line'> {
+  const config = vectorXYChartOption(plotConfig, keys, axes);
+  config.data.datasets.forEach((dataset) => {
+    Object.assign(dataset, {
+      showLine: false,
+      pointRadius: plotConfig.psize / 2,
+      pointHoverRadius: plotConfig.psize / 2,
+      pointBorderWidth: 0,
+      pointBackgroundColor: 'blue',
+      pointBorderColor: 'blue',
+    });
+  });
   return config;
 }
 

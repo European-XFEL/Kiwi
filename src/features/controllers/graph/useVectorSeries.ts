@@ -7,17 +7,25 @@ import { normalizeVector, type VectorData } from './utils';
 export type VectorSeries = { key: string; values: VectorData };
 const emptyVector = new Float64Array();
 
-/** Publish every configured vector together, decoding only at idle. */
-export function useVectorSeries(
-  proxies: readonly (PropertyProxy | undefined)[],
-  keys: readonly string[]
-) {
+/**
+ * Publish every configured vector together, decoding only at idle.
+ * Any configured proxy update schedules a frame using all latest values.
+ */
+export function useVectorSeries({
+  proxies,
+  keys,
+}: {
+  proxies: readonly (PropertyProxy | undefined)[];
+  keys: readonly string[];
+}) {
   const keysId = JSON.stringify(keys);
   const latest = React.useRef({ proxies, keys });
   latest.current = { proxies, keys };
-  const inputs = keys.flatMap((_, index) => {
-    const proxy = proxies[index];
-    return [proxy, proxy?.binding, proxy?.binding?.timestamp];
+  // Proxies and keys share the same slot order, including missing proxies.
+  const inputs = keys.flatMap((_, slot) => {
+    const proxy = proxies[slot];
+    const binding = proxy?.binding;
+    return [proxy, binding, binding?.timestamp];
   });
   const previous = React.useRef({ keysId, inputs });
   if (

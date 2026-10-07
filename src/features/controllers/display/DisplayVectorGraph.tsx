@@ -14,17 +14,23 @@ export default function DisplayVectorGraph({
   ctx?: ControllerContainerContext;
 }) {
   const plotConfig = React.useMemo(() => buildModelConfig(model), [model]);
-  const series = useVectorSeries(ctx?.proxies ?? [], model.keys);
-  const view = useVectorChart({ plotConfig, series });
+  const ySeries = useVectorSeries({
+    proxies: ctx?.proxies ?? [],
+    keys: model.keys,
+  });
+  const plotWindow = useVectorChart({ plotConfig, ySeries });
 
   return (
-    <ChartLayout background={plotConfig.background} viewBox={view}>
+    <ChartLayout background={plotConfig.background} viewBox={plotWindow}>
       <ChartPlot
-        view={view}
+        view={plotWindow}
         testId="vector-chart"
         title={plotConfig.title}
         legend={
-          <ChartLegend keys={series.map((item) => item.key)} view={view} />
+          <ChartLegend
+            keys={ySeries.map((item) => item.key)}
+            view={plotWindow}
+          />
         }
       />
     </ChartLayout>

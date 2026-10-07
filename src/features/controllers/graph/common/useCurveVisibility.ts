@@ -16,10 +16,7 @@ export function useCurveVisibility({
   );
   React.useLayoutEffect(() => {
     // Run after chart creation and data updates, including recreation and reset.
-    // setVisible only updates the chart when visibility actually changes.
-    keys.forEach((key, index) =>
-      chart.setVisible(index, !hiddenCurves.has(key))
-    );
+    chart.setVisible(keys.map((key) => !hiddenCurves.has(key)));
     chart.rangesRef.current = chart.viewport.readRanges(
       chart.rangesRef.current
     );

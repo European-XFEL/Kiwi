@@ -94,7 +94,9 @@ test.each([
   const { proxy, configure } = setup();
   expect(proxy.binding).toBeInstanceOf(NDArrayBinding);
   configure(samples, type);
-  const { result } = renderHook(() => useVectorSeries([proxy], ['DEV.array']));
+  const { result } = renderHook(() =>
+    useVectorSeries({ proxies: [proxy], keys: ['DEV.array'] })
+  );
   expect(result.current[0].values.length).toBe(0);
   flushIdle();
   const big =
@@ -113,7 +115,7 @@ test('stops scheduling after publishing an unchanged NDArray frame', () => {
   const { proxy, configure } = setup();
   configure(new Int16Array([1, 2]));
   const { result, rerender } = renderHook(() =>
-    useVectorSeries([proxy], ['DEV.array'])
+    useVectorSeries({ proxies: [proxy], keys: ['DEV.array'] })
   );
   flushIdle();
   expect(result.current[0].values).toEqual(new Int16Array([1, 2]));
@@ -129,7 +131,7 @@ test('coalesces frames and detects bytes, type, and timestamp changes in the sam
   const namespace = proxy.binding!.value;
   configure(new Int16Array([1, 2]));
   const { result, rerender } = renderHook(() =>
-    useVectorSeries([proxy], ['DEV.array'])
+    useVectorSeries({ proxies: [proxy], keys: ['DEV.array'] })
   );
   configure(new Int16Array([3, 4]));
   rerender();
@@ -168,7 +170,7 @@ test('pending publication uses the replacement proxy and schema', () => {
   const first = setup();
   first.configure(new Int16Array([1]));
   const { result, rerender } = renderHook(
-    ({ proxy }) => useVectorSeries([proxy], ['DEV.array']),
+    ({ proxy }) => useVectorSeries({ proxies: [proxy], keys: ['DEV.array'] }),
     {
       initialProps: { proxy: first.proxy },
     }
@@ -189,7 +191,7 @@ test('pending publication uses the replacement proxy and schema', () => {
 test('clears missing, empty, and unsupported arrays including a pending frame', () => {
   const { root, proxy, schema, configure } = setup();
   const { result, rerender } = renderHook(() =>
-    useVectorSeries([proxy], ['DEV.array'])
+    useVectorSeries({ proxies: [proxy], keys: ['DEV.array'] })
   );
   expect(result.current[0].values.length).toBe(0);
   for (const type of [HashType.Int16, HashType.String]) {

@@ -13,7 +13,12 @@ export function ChartPlot({
     selectionRef: React.RefObject<HTMLDivElement | null>;
     yAxisWidth?: number;
   };
-  testId: 'trend-chart' | 'vector-chart' | 'vector-xy-chart' | 'scatter-chart';
+  testId:
+    | 'trend-chart'
+    | 'vector-chart'
+    | 'vector-xy-chart'
+    | 'scatter-chart'
+    | 'vector-scatter-chart';
   title: string;
   legend?: React.ReactNode;
   empty?: string;

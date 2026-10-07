@@ -374,6 +374,11 @@ export class ScatterGraphModel extends BasePlotModel {
   psize = 7;
 }
 
+export class VectorScatterGraphModel extends BasePlotModel {
+  klass = 'VectorScatterGraph';
+  psize = 7;
+}
+
 const readVectorPlot = <T extends BasePlotModel>(
   element: Element,
   graph: T
@@ -429,6 +434,12 @@ registerReader('VectorXYGraph', (element) =>
 registerReader('ScatterGraph', (element) => {
   const graph = readVectorPlot(element, new ScatterGraphModel());
   graph.maxlen = toNum(krbAttr(element, 'maxlen'), 100);
+  graph.psize = toNum(krbAttr(element, 'psize'), 7);
+  return graph;
+});
+
+registerReader('VectorScatterGraph', (element) => {
+  const graph = readVectorPlot(element, new VectorScatterGraphModel());
   graph.psize = toNum(krbAttr(element, 'psize'), 7);
   return graph;
 });

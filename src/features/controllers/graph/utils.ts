@@ -69,10 +69,12 @@ export function padViewportRange(
   return [min - span, max + span];
 }
 
-export function vectorPoints([x, y]: [Float64Array, Float64Array]) {
+export function vectorPoints([x, y]: [VectorData, VectorData]) {
   const data: { x: number; y: number }[] = [];
-  for (let index = 0; index < x.length; index++)
+  const length = Math.min(x.length, y.length);
+  for (let index = 0; index < length; index++) {
     data.push({ x: x[index], y: y[index] });
+  }
   return data;
 }
 

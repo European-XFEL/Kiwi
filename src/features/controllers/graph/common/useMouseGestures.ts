@@ -160,7 +160,7 @@ function setSelection(
 
 /**
  * Attaches mouse and keyboard listeners and turns gestures into range changes.
- * Reads and writes ranges through callbacks supplied by useViewBox.
+ * Reads and writes ranges through callbacks supplied by useChart.
  *
  * Zoom is a primary-button rectangle, Move is a primary-button pan, middle-button
  * dragging always pans, and right-button horizontal dragging continuously zooms.

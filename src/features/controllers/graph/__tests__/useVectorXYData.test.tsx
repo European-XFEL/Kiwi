@@ -1,16 +1,24 @@
 import { act, cleanup, renderHook } from '@testing-library/react';
 import React from 'react';
-import type { PropertyProxy } from '@/lib/binding/api';
-import { useVectorXYData } from '../useVectorXYData';
+import { useVectorSeries } from '../useVectorSeries';
+import { makeVectorProxy } from '../testing/vectorProxy';
 
-const property = (value: unknown) => ({ value }) as PropertyProxy;
+const useXYSeries = (
+  proxies: Parameters<typeof useVectorSeries>[0]['proxies'],
+  keys: string[]
+) => {
+  const published = useVectorSeries({ proxies, keys });
+  return { x: published[0].values, series: published.slice(1) };
+};
+
+const property = makeVectorProxy;
 const originalRequest = window.requestIdleCallback;
 const originalCancel = window.cancelIdleCallback;
 const flush = () => act(() => jest.runOnlyPendingTimers());
 
 test('publishes after Strict Mode cancels and restarts mount effects', () => {
   const proxies = [property([1]), property([2])];
-  const { result } = renderHook(() => useVectorXYData(proxies, ['x', 'y']), {
+  const { result } = renderHook(() => useXYSeries(proxies, ['x', 'y']), {
     wrapper: React.StrictMode,
   });
   flush();
@@ -40,12 +48,12 @@ test('coalesces independent updates into one publication of latest X and every Y
   const y = property([4, 5]);
   const z = property(new Int16Array([6, 7, 8, 9]));
   const { result, rerender } = renderHook(() =>
-    useVectorXYData([x, y, z], ['x', 'y', 'z'])
+    useXYSeries([x, y, z], ['x', 'y', 'z'])
   );
   expect(result.current.x.length).toBe(0);
-  Object.assign(x, { value: [10, 20, 30] });
+  x.binding!.setValue([10, 20, 30], undefined);
   rerender();
-  Object.assign(y, { value: [40] });
+  y.binding!.setValue([40], undefined);
   rerender();
   expect(window.requestIdleCallback).toHaveBeenCalledTimes(1);
   expect(window.requestIdleCallback).toHaveBeenCalledWith(
@@ -59,7 +67,7 @@ test('coalesces independent updates into one publication of latest X and every Y
     { key: 'z', values: z.value },
   ]);
   expect(result.current.series[1].values).toBe(z.value);
-  Object.assign(z, { value: new BigInt64Array([9n, -2n]) });
+  z.binding!.setValue(new BigInt64Array([9n, -2n]), undefined);
   rerender();
   flush();
   expect(result.current.series[1].values).toEqual(new Float64Array([9, -2]));
@@ -69,7 +77,7 @@ test('retains missing slots and clears vectors without retaining history', () =>
   const x = property([1, 2]);
   const y = property([3, 4]);
   const { result, rerender } = renderHook(
-    ({ proxies }) => useVectorXYData(proxies, ['x', 'y', 'z']),
+    ({ proxies }) => useXYSeries(proxies, ['x', 'y', 'z']),
     {
       initialProps: { proxies: [x, y, undefined] },
     }
@@ -79,7 +87,7 @@ test('retains missing slots and clears vectors without retaining history', () =>
   rerender({ proxies: [x, undefined, property([8])] });
   flush();
   expect(result.current.series.map((s) => s.values.length)).toEqual([0, 1]);
-  Object.assign(x, { value: [] });
+  x.binding!.setValue([], undefined);
   rerender({ proxies: [x, y, undefined] });
   flush();
   expect(result.current.x.length).toBe(0);
@@ -90,7 +98,7 @@ test('retains missing slots and clears vectors without retaining history', () =>
 
 test('discards obsolete data immediately on key replacement and publishes new pending values', () => {
   const { result, rerender, unmount } = renderHook(
-    ({ keys, proxies }) => useVectorXYData(proxies, keys),
+    ({ keys, proxies }) => useXYSeries(proxies, keys),
     {
       initialProps: {
         keys: ['x', 'y'],

@@ -1,5 +1,4 @@
 import React from 'react';
-import type { PropertyProxy } from '@/lib/binding/api';
 import {
   buildPlotAxes,
   useChart,
@@ -8,23 +7,22 @@ import {
   type Range,
 } from './common/api';
 import { barChartOption } from './plotConfig';
-import { useVectorBarData } from './useVectorBarData';
 import {
   BAR_SAMPLE_LIMIT,
   generateDownsample,
   padViewportRange,
   vectorPoints,
+  type VectorData,
 } from './utils';
 
 /** Samples indexed bars for the viewport and applies chart navigation ranges. */
 export function useVectorBarChart({
   plotConfig,
-  proxy,
+  values,
 }: {
   plotConfig: PlotSettings;
-  proxy: PropertyProxy | undefined;
+  values: VectorData;
 }) {
-  const { values } = useVectorBarData(proxy);
   const coordinates = React.useMemo(
     () => Float64Array.from({ length: values.length }, (_, index) => index),
     [values.length]

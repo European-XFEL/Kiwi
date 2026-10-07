@@ -22,8 +22,9 @@ import {
 } from '../../graph/common/api';
 import { vectorXYChartOption } from '../../graph/plotConfig';
 import DisplayVectorXYGraph from '../DisplayVectorXYGraph';
+import { makeVectorProxy } from '../../graph/testing/vectorProxy';
 
-const property = (value: unknown) => ({ value }) as PropertyProxy;
+const property = makeVectorProxy;
 const context = (proxies: PropertyProxy[]) =>
   ({ proxies }) as ControllerContainerContext;
 type MockChart = Chart<'line'> & { destroy: jest.Mock; update: jest.Mock };
@@ -76,20 +77,66 @@ test('pairs each Y independently, updates without recreation, and clears missing
   expect(first.data.datasets.map((s) => s.borderColor)).toEqual(
     TRACE_COLORS.slice(0, 2)
   );
-  Object.assign(y, { value: undefined });
+  y.binding!.setValue(undefined, undefined);
   view.rerender(<DisplayVectorXYGraph model={model} ctx={ctx} />);
   flush();
   expect(chart()).toBe(first);
   expect(first.data.datasets[0].data).toEqual([]);
   expect(first.data.datasets[1].data).toHaveLength(3);
-  Object.assign(x, { value: [] });
+  x.binding!.setValue([], undefined);
   view.rerender(<DisplayVectorXYGraph model={model} ctx={ctx} />);
   flush();
   expect(first.data.datasets.map((s) => s.data)).toEqual([[], []]);
-  Object.assign(x, { value: undefined });
+  x.binding!.setValue(undefined, undefined);
   view.rerender(<DisplayVectorXYGraph model={model} ctx={ctx} />);
   flush();
   expect(first.data.datasets.map((s) => s.data)).toEqual([[], []]);
+});
+
+test('publishes replacement X and Y vectors and retains data on unchanged renders', () => {
+  const model = new VectorXYGraphModel();
+  model.keys = ['x', 'y'];
+  const x = new Float64Array([1, 2]);
+  const y = new Float64Array([3, 4]);
+  const proxies = [property(x), property(y)];
+  const ctx = context(proxies);
+  const view = render(<DisplayVectorXYGraph model={model} ctx={ctx} />);
+  flush();
+  const first = chart();
+  const update = first.update;
+  update.mockClear();
+  // An unchanged render retains the memoized X/Y split and sampled data.
+  view.rerender(<DisplayVectorXYGraph model={model} ctx={ctx} />);
+  expect(update).not.toHaveBeenCalled();
+  proxies[0].binding!.setValue(new Float64Array([10, 2]), undefined);
+  proxies[1].binding!.setValue(new Float64Array([30, 4]), undefined);
+  view.rerender(<DisplayVectorXYGraph model={model} ctx={ctx} />);
+  expect(first.data.datasets[0].data[0]).toEqual({ x: 1, y: 3 });
+  flush();
+  expect(chart()).toBe(first);
+  expect(first.data.datasets[0].data).toEqual([
+    { x: 10, y: 30 },
+    { x: 2, y: 4 },
+  ]);
+});
+
+test('restores multiple hidden curves with one visibility redraw on recreation', () => {
+  const model = new VectorXYGraphModel();
+  model.keys = ['x', 'y', 'z'];
+  const ctx = context([property([1]), property([2]), property([3])]);
+  const view = render(<DisplayVectorXYGraph model={model} ctx={ctx} />);
+  flush();
+  fireEvent.click(screen.getByRole('button', { name: 'y' }));
+  fireEvent.click(screen.getByRole('button', { name: 'z' }));
+  const replacement = new VectorXYGraphModel();
+  replacement.keys = model.keys;
+  view.rerender(<DisplayVectorXYGraph model={replacement} ctx={ctx} />);
+  expect(chart().isDatasetVisible(0)).toBe(false);
+  expect(chart().isDatasetVisible(1)).toBe(false);
+  // One data update followed by one batched visibility update.
+  expect(
+    chart().update.mock.calls.filter(([mode]) => mode === 'none')
+  ).toHaveLength(2);
 });
 
 test('preserves legend visibility by key through updates, curve reorder, and configuration changes', () => {
@@ -101,7 +148,7 @@ test('preserves legend visibility by key through updates, curve reorder, and con
   fireEvent.click(screen.getByRole('button', { name: 'z' }));
   expect(chart().isDatasetVisible(1)).toBe(false);
   const first = chart();
-  Object.assign(ctx.proxies[1], { value: [4] });
+  ctx.proxies[1].binding!.setValue([4], undefined);
   view.rerender(<DisplayVectorXYGraph model={model} ctx={ctx} />);
   flush();
   expect(chart()).toBe(first);
@@ -143,7 +190,7 @@ test('defers data during gestures and restores configured ranges on reset', () =
   flush();
   const container = screen.getByTestId('vector-xy-chart');
   fireEvent.mouseDown(container, { button: 2, clientX: 90, clientY: 40 });
-  Object.assign(y, { value: [9, 8] });
+  y.binding!.setValue([9, 8], undefined);
   rendered.rerender(<DisplayVectorXYGraph model={model} ctx={ctx} />);
   flush();
   expect(chart().data.datasets[0].data).toEqual([
@@ -228,13 +275,14 @@ test.each([
     flush();
     const current = chart();
     for (const shift of [0, 0.5, 0, 0.5]) {
-      Object.assign(x, {
-        value: Float64Array.from(
+      x.binding!.setValue(
+        Float64Array.from(
           { length: 201 },
           (_, i) => (descending ? 200 - i : i) + shift
         ),
-      });
-      Object.assign(y, { value: new Float64Array(201).fill(shift + 1) });
+        undefined
+      );
+      y.binding!.setValue(new Float64Array(201).fill(shift + 1), undefined);
       view.rerender(<DisplayVectorXYGraph model={model} ctx={ctx} />);
       flush();
       const points = chart().data.datasets[0].data as {

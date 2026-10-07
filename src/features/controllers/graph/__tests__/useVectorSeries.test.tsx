@@ -29,7 +29,7 @@ test('coalesces vectors of independent lengths and retains missing slots', () =>
   const a = makeVectorProxy([1, 2]);
   const b = makeVectorProxy(new Int16Array([3]));
   const { result, rerender } = renderHook(() =>
-    useVectorSeries([a, undefined, b], ['a', 'missing', 'b'])
+    useVectorSeries({ proxies: [a, undefined, b], keys: ['a', 'missing', 'b'] })
   );
   a.binding!.setValue([4, 5, 6], undefined);
   rerender();
@@ -53,7 +53,7 @@ test('coalesces vectors of independent lengths and retains missing slots', () =>
 test('detects proxy and binding replacements even without timestamp changes', () => {
   const a = makeVectorProxy([1]);
   const { result, rerender } = renderHook(
-    ({ proxy }) => useVectorSeries([proxy], ['a']),
+    ({ proxy }) => useVectorSeries({ proxies: [proxy], keys: ['a'] }),
     { initialProps: { proxy: a } }
   );
   flush();
@@ -72,11 +72,28 @@ test('detects proxy and binding replacements even without timestamp changes', ()
   expect(Array.from(result.current[0].values)).toEqual([3]);
 });
 
+test('publishes replacement vectors when the timestamp advances', () => {
+  const proxy = makeVectorProxy(new Float64Array([1]));
+  const { result, rerender } = renderHook(() =>
+    useVectorSeries({ proxies: [proxy], keys: ['a'] })
+  );
+  flush();
+  proxy.binding!.setValue(new Float64Array([2]), undefined);
+  rerender();
+  flush();
+  expect(Array.from(result.current[0].values)).toEqual([2]);
+
+  const published = result.current;
+  rerender();
+  expect(jest.getTimerCount()).toBe(0);
+  expect(result.current).toBe(published);
+});
+
 test('clears obsolete key slots and reads the latest pending proxies in Strict Mode', () => {
   const a = makeVectorProxy([1]);
   const b = makeVectorProxy([2]);
   const { result, rerender, unmount } = renderHook(
-    ({ keys, proxies }) => useVectorSeries(proxies, keys),
+    ({ keys, proxies }) => useVectorSeries({ proxies, keys }),
     {
       initialProps: { keys: ['a'], proxies: [a] },
       wrapper: React.StrictMode,
