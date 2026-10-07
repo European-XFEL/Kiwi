@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ImageBinding, type PropertyProxy } from '@/lib/binding/api';
 import { getFrame, hasImageData } from './pixels';
 
@@ -66,6 +66,10 @@ function drawPlaceholder(
 export function useWebcam(proxy: PropertyProxy | undefined, colormap: string) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<ImageData | undefined>(undefined);
+  const [imageSize, setImageSize] = useState({
+    width: PLACEHOLDER_WIDTH_PX,
+    height: PLACEHOLDER_HEIGHT_PX,
+  });
   useEffect(() => {
     const pending = requestAnimationFrame(() => {
       const canvas = canvasRef.current;
@@ -73,14 +77,27 @@ export function useWebcam(proxy: PropertyProxy | undefined, colormap: string) {
       if (!canvas || !context) {
         return;
       }
+      // Each drawing branch calls this once. Reusing unchanged size state lets
+      // React skip an overlay render for steady-size frames.
+      const updateImageSize = () => {
+        const { width, height } = canvas;
+        setImageSize((current) => {
+          if (current.width === width && current.height === height) {
+            return current;
+          }
+          return { width, height };
+        });
+      };
       const binding = proxy?.binding;
       if (!(binding instanceof ImageBinding) || !hasImageData(binding)) {
         drawPlaceholder(canvas, context, 'Image');
+        updateImageSize();
         return;
       }
       const frame = getFrame(binding, colormap, imageRef.current?.data);
       if (!frame) {
         drawPlaceholder(canvas, context, 'Unsupported Encoding');
+        updateImageSize();
         return;
       }
       resizeCanvas(canvas, frame);
@@ -94,8 +111,9 @@ export function useWebcam(proxy: PropertyProxy | undefined, colormap: string) {
         image.data.set(frame.pixels);
       }
       context.putImageData(image, 0, 0);
+      updateImageSize();
     });
     return () => cancelAnimationFrame(pending);
   });
-  return canvasRef;
+  return { canvasRef, imageSize };
 }
