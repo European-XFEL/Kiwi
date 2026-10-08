@@ -1,21 +1,21 @@
 import React from 'react';
 import icons from '@/assets/icons';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
-import type { DisplayColorBoolModel } from '@/karabo/common/api';
+import type { DisplayErrorBoolModel } from '@/karabo/common/api';
 import { useBoolIndicator } from './useBoolIndicator';
 
-const DisplayColorBool: React.FC<{
-  model: DisplayColorBoolModel;
+const DisplayErrorBool: React.FC<{
+  model: DisplayErrorBoolModel;
   ctx?: ControllerContainerContext;
 }> = ({ model, ctx }) => {
   const value = useBoolIndicator(model, ctx);
   let icon = icons.unknownBool;
   if (value !== undefined) {
-    icon = value ? icons.switchBoolActive : icons.switchBoolPassive;
+    icon = value ? icons.okBool : icons.errorBool;
   }
   return (
     <div
-      data-testid="display-color-bool"
+      data-testid="display-error-bool"
       className="flex items-center justify-center w-full h-full overflow-hidden"
     >
       <img
@@ -28,4 +28,4 @@ const DisplayColorBool: React.FC<{
   );
 };
 
-export default DisplayColorBool;
+export default DisplayErrorBool;

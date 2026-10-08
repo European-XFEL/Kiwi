@@ -8,12 +8,19 @@ import {
 } from '@testing-library/react';
 import {
   BindingRoot,
+  BoolBinding,
   DoubleBinding,
   PropertyProxy,
   ProxyStatus,
 } from '@/lib/binding/api';
 import { AccessMode } from '@/karabo/data/enums';
-import { DoubleLineEditModel } from '@/karabo/common/api';
+import {
+  DisplayColorBoolModel,
+  DisplayErrorBoolModel,
+  DoubleLineEditModel,
+} from '@/karabo/common/api';
+import DisplayColorBool from '@/features/controllers/display/DisplayColorBool';
+import DisplayErrorBool from '@/features/controllers/display/DisplayErrorBool';
 import DoubleLineEdit from '@/features/controllers/editable/DoubleLineEdit';
 import type { ControllerContainerContext } from '@/features/controllers/useController';
 import type { RendererProps } from '../../renderRegistry';
@@ -172,6 +179,69 @@ describe('ControllerContainer integration', () => {
   afterEach(() => {
     jest.restoreAllMocks();
   });
+
+  it.each([
+    ['color', DisplayColorBool, DisplayColorBoolModel],
+    ['error', DisplayErrorBool, DisplayErrorBoolModel],
+  ] as const)(
+    'updates the %s boolean indicator through the proxy lifecycle',
+    async (kind, Widget, Model) => {
+      const topology = makeTopology();
+      const device = topology.getDevice('DEVICE_A');
+      device.binding = new BindingRoot();
+      const binding = new BoolBinding();
+      device.binding.value!.set('enabled', binding);
+      device.status = ProxyStatus.MONITORING;
+      const model = new Model();
+      model.keys = ['DEVICE_A.enabled'];
+      const Renderer = ({ model, ctx }: RendererProps) => (
+        <Widget
+          model={model as DisplayColorBoolModel}
+          ctx={ctx as ControllerContainerContext}
+        />
+      );
+
+      await SingletonContext.run({ topology }, async () => {
+        const { unmount } = render(
+          <ControllerContainer
+            width={120}
+            height={40}
+            model={model}
+            objectId="bool"
+            Renderer={Renderer}
+          />
+        );
+        const readIcon = () =>
+          screen
+            .getByTestId(`display-${kind}-bool`)
+            .querySelector('img')
+            ?.getAttribute('src');
+        const passive =
+          kind === 'color' ? 'switch-bool-passive-icon' : 'error-bool-icon';
+        const active =
+          kind === 'color' ? 'switch-bool-active-icon' : 'ok-bool-icon';
+        expect(readIcon()).toBe('unknown-bool-icon');
+        act(() => binding.setValue(true, undefined));
+        await waitFor(() => expect(readIcon()).toBe(active));
+        act(() => binding.setValue(false, undefined));
+        await waitFor(() => expect(readIcon()).toBe(passive));
+
+        const replacement = new BoolBinding();
+        replacement.setValue(true, undefined);
+        act(() => {
+          device.binding!.value!.set('enabled', replacement);
+          device.schema_update.fire();
+        });
+        await waitFor(() => expect(readIcon()).toBe(active));
+        act(() => {
+          device.binding!.value!.set('enabled', new BoolBinding());
+          device.schema_update.fire();
+        });
+        await waitFor(() => expect(readIcon()).toBe('unknown-bool-icon'));
+        unmount();
+      });
+    }
+  );
 
   it('applies and declines all mounted editable controllers from the toolbar', async () => {
     const log = jest.spyOn(console, 'log').mockImplementation(() => {});

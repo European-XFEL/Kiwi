@@ -1,6 +1,13 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { BaseWidgetObjectData } from '@/karabo/common/api';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { TooltipProvider } from '@/components/api';
+import type { ControllerContainerContext } from '@/features/controllers/useController';
+import type { RendererProps } from '../../renderRegistry';
+import { getModelKeys } from '@/features/controllers/api';
+import {
+  BaseWidgetObjectData,
+  DisplayColorBoolModel,
+} from '@/karabo/common/api';
 import { AccessLevel, AccessMode } from '@/karabo/data/enums';
 import { ProxyStatus } from '@/lib/binding/api';
 
@@ -93,7 +100,7 @@ describe('ControllerContainer', () => {
     expect(mockUseController).toHaveBeenCalledWith(proxies);
     expect(Renderer).toHaveBeenCalled();
     expect(Renderer.mock.calls[0][0]).toEqual(
-      expect.objectContaining({ model, ctx })
+      expect.objectContaining({ model, ctx: expect.objectContaining(ctx) })
     );
     expect(screen.getByTestId('renderer')).toHaveTextContent('DEVICE_A.speed');
     expect(mockOverlaySpy).toHaveBeenCalledWith(
@@ -208,5 +215,48 @@ describe('ControllerContainer', () => {
 
     expect(tooltipTrigger).toBeInTheDocument();
     expect(tooltipTrigger).toHaveClass('pointer-events-auto');
+  });
+
+  it('shows multiline overrides, keeps the setter stable, and restores the standard tooltip on cleanup', async () => {
+    const { ctx, proxies } = makeControllerContext();
+    mockUseProxies.mockReturnValue(proxies);
+    mockUseController.mockReturnValue(ctx);
+    jest.mocked(getModelKeys).mockReturnValue('DEVICE_A.speed');
+    const setters: ControllerContainerContext['setTooltip'][] = [];
+    const Renderer = ({ ctx }: RendererProps) => {
+      const context = ctx as ControllerContainerContext | undefined;
+      setters.push(context?.setTooltip);
+      const setTooltip = context?.setTooltip;
+      React.useEffect(() => {
+        setTooltip?.('DEVICE_A.speed\nInverted: False');
+        return () => setTooltip?.(undefined);
+      }, [setTooltip]);
+      return <div data-testid="renderer" />;
+    };
+    const model = new DisplayColorBoolModel();
+    model.keys = ['DEVICE_A.speed'];
+    const view = (component: typeof PlainRenderer | typeof Renderer) => (
+      <TooltipProvider>
+        <ControllerContainer
+          width={140}
+          height={32}
+          model={model}
+          objectId="scene.0"
+          Renderer={component}
+        />
+      </TooltipProvider>
+    );
+    const PlainRenderer = () => <div data-testid="renderer" />;
+    const { rerender } = render(view(Renderer));
+    fireEvent.focus(
+      screen.getByTestId('renderer').closest('[data-slot="tooltip-trigger"]')!
+    );
+    const tooltip = await screen.findByRole('tooltip');
+    expect(tooltip.textContent).toContain('DEVICE_A.speed\nInverted: False');
+    expect(tooltip.querySelector('p')).toHaveStyle({ whiteSpace: 'pre-line' });
+    expect(setters[0]).toEqual(expect.any(Function));
+    expect(setters.every((setter) => setter === setters[0])).toBe(true);
+    rerender(view(PlainRenderer));
+    expect(screen.getByRole('tooltip').textContent).toBe('DEVICE_A.speed');
   });
 });

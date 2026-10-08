@@ -248,6 +248,21 @@ registerReader('DisplayColorBool', (element) => {
   return colorBool;
 });
 
+// DisplayErrorBool
+// ----------------------------------------------------------------------------
+
+export class DisplayErrorBoolModel extends BaseWidgetObjectData {
+  klass = 'DisplayErrorBool';
+  invert = false;
+}
+
+registerReader('DisplayErrorBool', (element) => {
+  const errorBool = new DisplayErrorBoolModel();
+  readBaseWidgetData(element, errorBool);
+  errorBool.invert = toBool(krbAttr(element, 'invert'));
+  return errorBool;
+});
+
 // StatefulIconWidget
 // ----------------------------------------------------------------------------
 

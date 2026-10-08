@@ -147,7 +147,7 @@ const ControllerTooltip = React.memo<ControllerTooltipProps>(
     return (
       <Tooltip
         delayDuration={TOOLTIP_WAKEUP}
-        open={isTooltipOpen}
+        open={!!tooltipContent && isTooltipOpen}
         onOpenChange={handleTooltipOpenChange}
       >
         <TooltipTrigger asChild>
@@ -173,7 +173,12 @@ export const ControllerContainer: React.FC<ControllerContainerProps> =
   React.memo(({ width, height, objectId, model, Renderer }) => {
     const { containerStyle, contentsStyle } = useContainer();
     const proxies = useProxies(model.keys);
-    const ctx = useController(proxies);
+    const controller = useController(proxies);
+    const [tooltipOverride, setTooltip] = React.useState<string | undefined>();
+    const ctx = React.useMemo(
+      () => ({ ...controller, setTooltip }),
+      [controller]
+    );
     const propertyTooltipText = getModelKeys(model.keys);
     const isEditableWidget =
       model.parent_component === EDITABLE_PARENT_COMPONENT;
@@ -184,7 +189,7 @@ export const ControllerContainer: React.FC<ControllerContainerProps> =
     const tooltipBody = propertyTooltipText ? (
       <p>{propertyTooltipText}</p>
     ) : null;
-    const tooltipContent = isEditableWidget ? (
+    const standardTooltip = isEditableWidget ? (
       <div className="space-y-0.5">
         <p>
           AccessLevel: {AccessLevel[ctx.userAccessLevel]} - Access:{' '}
@@ -195,6 +200,12 @@ export const ControllerContainer: React.FC<ControllerContainerProps> =
     ) : (
       tooltipBody
     );
+    const tooltipContent =
+      tooltipOverride !== undefined ? (
+        <p style={{ whiteSpace: 'pre-line' }}>{tooltipOverride}</p>
+      ) : (
+        standardTooltip
+      );
     const containerContent = React.useMemo(
       () => (
         <ContainerLayout
@@ -221,13 +232,9 @@ export const ControllerContainer: React.FC<ControllerContainerProps> =
       >
         <div style={contentsStyle}>
           <ControllerOverlay proxies={ctx.proxies}>
-            {tooltipContent ? (
-              <ControllerTooltip tooltipContent={tooltipContent}>
-                {containerContent}
-              </ControllerTooltip>
-            ) : (
-              containerContent
-            )}
+            <ControllerTooltip tooltipContent={tooltipContent}>
+              {containerContent}
+            </ControllerTooltip>
           </ControllerOverlay>
         </div>
       </div>
