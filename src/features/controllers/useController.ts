@@ -2,10 +2,7 @@ import React from 'react';
 import { AccessLevel } from '@/karabo/data/enums';
 import { useGlobalStore } from '@/store/api';
 import type { PropertyProxies } from './utils/controller_proxies';
-import {
-  applyControllerEdits,
-  declineControllerEdits,
-} from './utils/controller_edit_actions';
+import { declineControllerEdits } from './utils/controller_edit_actions';
 
 // ControllerContainerContext
 // ---
@@ -63,7 +60,6 @@ export function useController(
   const editActions = React.useMemo<ControllerEditActions>(
     () => ({
       apply: () => {
-        applyControllerEdits(propertyProxies);
         handlersRef.current?.apply?.();
       },
       decline: () => {

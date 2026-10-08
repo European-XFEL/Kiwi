@@ -564,6 +564,10 @@ export class Network {
   }
 
   public onReconfigure(deviceId: string, configuration: Hash): void {
+    const properties = configuration.paths().join(', ');
+    getLogger().info(
+      `Request to reconfigure the properties "${properties}" of device "${deviceId}"`
+    );
     const h = new Hash({
       type: 'reconfigure',
       deviceId: deviceId,

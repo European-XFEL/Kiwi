@@ -5,10 +5,8 @@ import type {
   SceneControllerRegistry as SceneControllerRegistryContract,
 } from '@/features/scene-view/contexts/SceneControllerRegistryContext';
 import type { LoadedSceneRef } from '@/store/api';
-import {
-  applyControllerEdits,
-  declineControllerEdits,
-} from '@/features/controllers/utils/controller_edit_actions';
+import { declineControllerEdits } from '@/features/controllers/utils/controller_edit_actions';
+import { send_property_changes } from '@/lib/request';
 
 export interface SceneControllerRegistryOptions {
   id?: string;
@@ -94,10 +92,14 @@ export class SceneControllerRegistry implements SceneControllerRegistryContract 
   }
 
   applyAll(): void {
-    for (const { model, ctx } of this.values()) {
-      if (model.parent_component !== 'EditableApplyLaterComponent') continue;
-      if (ctx.editActions) ctx.editActions.apply();
-      else applyControllerEdits(ctx.proxies);
+    const editable = this.values().filter(
+      ({ model }) => model.parent_component === 'EditableApplyLaterComponent'
+    );
+    send_property_changes(
+      editable.flatMap(({ ctx }) => ctx.proxies.filter(isDirtyProxy))
+    );
+    for (const { ctx } of editable) {
+      ctx.editActions?.apply();
     }
   }
 
