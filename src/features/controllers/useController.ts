@@ -32,6 +32,7 @@ export interface ControllerContainerContext {
   proxies: PropertyProxies;
   userAccessLevel: AccessLevel;
   editActions?: ControllerEditActions;
+  setTooltip?: (text: string | undefined) => void;
 }
 
 const getProxy = (

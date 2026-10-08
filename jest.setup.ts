@@ -31,6 +31,12 @@ jest.mock('@/assets/icons', () => ({
     image: 'image-icon',
     homeEdit: 'home-edit-icon',
     editClear: 'edit-clear-icon',
+    okBool: 'ok-bool-icon',
+    errorBool: 'error-bool-icon',
+    unknownBool: 'unknown-bool-icon',
+    switchBool: 'switch-bool-icon',
+    switchBoolActive: 'switch-bool-active-icon',
+    switchBoolPassive: 'switch-bool-passive-icon',
   },
 }));
 
