@@ -1,7 +1,28 @@
 import { Hash } from '@/karabo/data/api';
-import { getManager, RequestHandler } from './singletons/api';
+import { getManager, getNetwork, RequestHandler } from './singletons/api';
+import type { DeviceProxy, PropertyProxy } from './binding/api';
 import { readScene, type SceneModel } from '@/karabo/common/api';
 import { showMessageBox } from '@/lib/messagebox';
+
+export function send_property_changes(proxies: readonly PropertyProxy[]): void {
+  const devices = new Map<
+    string,
+    { device: DeviceProxy; properties: PropertyProxy[]; configuration: Hash }
+  >();
+  for (const proxy of new Set(proxies)) {
+    let group = devices.get(proxy.root.deviceId);
+    if (!group) {
+      group = { device: proxy.root, properties: [], configuration: new Hash() };
+      devices.set(proxy.root.deviceId, group);
+    }
+    group.properties.push(proxy);
+    group.configuration.set(proxy.path, proxy.edit_value);
+  }
+  for (const { device, properties, configuration } of devices.values()) {
+    getManager().expect_properties(device, properties);
+    getNetwork().onReconfigure(device.deviceId, configuration);
+  }
+}
 
 export function callDeviceSlot(
   handler: RequestHandler,

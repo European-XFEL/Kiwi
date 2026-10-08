@@ -80,8 +80,8 @@ const ContainerLayout = React.memo<ControllerLayoutProps>(
         if (!isEditableKeyEvent(event, isEditableWidget)) return;
         event.preventDefault();
         if (event.key === 'Enter') {
-          if (ctx.editActions) ctx.editActions.apply();
-          else applyControllerEdits(ctx.proxies);
+          applyControllerEdits(ctx.proxies);
+          ctx.editActions?.apply();
         } else {
           if (ctx.editActions) ctx.editActions.decline();
           else declineControllerEdits(ctx.proxies);

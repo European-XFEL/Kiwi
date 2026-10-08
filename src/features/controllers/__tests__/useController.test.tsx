@@ -6,6 +6,8 @@ import {
   DoubleBinding,
   PropertyProxy,
 } from '@/lib/binding/api';
+import { AccessMode } from '@/karabo/data/api';
+import { getNetwork } from '@/lib/singletons/api';
 import { ProxyStatus } from '@/lib/binding/ProxyStatus';
 import { createMockSystemTopology, SingletonContext } from '@/testing';
 
@@ -20,12 +22,17 @@ describe('useController', () => {
   });
 
   it('keeps the latest action registration and uses current proxies after rerender', () => {
-    const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const send = jest
+      .spyOn(getNetwork(), 'onReconfigure')
+      .mockImplementation(() => {});
     const device = new DeviceProxy('DEVICE_A');
     const binding = new BindingRoot();
     binding.value!.set('speed', new DoubleBinding({ value: 1.25 }));
     binding.value!.set('temperature', new DoubleBinding({ value: 2.5 }));
     device.binding = binding;
+    device.status = ProxyStatus.MONITORING;
+    binding.value!.get('speed').accessMode = AccessMode.RECONFIGURABLE;
+    binding.value!.get('temperature').accessMode = AccessMode.RECONFIGURABLE;
     const first = new PropertyProxy(device, 'speed');
     const second = new PropertyProxy(device, 'temperature');
     first.edit_value = 3.5;
@@ -36,12 +43,7 @@ describe('useController', () => {
     );
     const oldApply = jest.fn();
     const removeOld = result.current.editActions!.register({ apply: oldApply });
-    const apply = jest.fn(() => {
-      expect(log).toHaveBeenCalledWith(
-        'DEVICE_A.temperature',
-        second.edit_value
-      );
-    });
+    const apply = jest.fn();
     const removeCurrent = result.current.editActions!.register({ apply });
     removeOld();
     rerender({ proxies: [second] });
@@ -49,13 +51,12 @@ describe('useController', () => {
     result.current.editActions!.apply();
     expect(oldApply).not.toHaveBeenCalled();
     expect(apply).toHaveBeenCalledTimes(1);
-    expect(log).toHaveBeenCalledWith('DEVICE_A.temperature', second.edit_value);
-    expect(log).not.toHaveBeenCalledWith('DEVICE_A.speed', first.edit_value);
+    expect(send).not.toHaveBeenCalled();
 
     removeCurrent();
     result.current.editActions!.apply();
     expect(apply).toHaveBeenCalledTimes(1);
-    expect(log).toHaveBeenCalledTimes(2);
+    expect(send).not.toHaveBeenCalled();
     result.current.editActions!.decline();
     expect(second.edit_value).toBeUndefined();
     expect(first.edit_value.value_).toBe(3.5);

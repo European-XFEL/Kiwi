@@ -6,6 +6,7 @@ import { getConfig, getNetwork, getTopology } from '@/lib/singletons/api';
 import { v4 as uuidv4 } from 'uuid';
 import { get_reason_parts } from './util';
 import { showMessageBox } from '../messagebox';
+import type { DeviceProxy, PropertyProxy } from '../binding/api';
 
 export interface RequestHandler {
   (success: boolean, reply: any): void;
@@ -18,6 +19,8 @@ export class Manager {
 
   private _hashHandlers = new Map<string, (hash: Hash) => void>();
   private _requestHandlers = new Map<string, RequestHandler>();
+  private _waitingDevices = new Map<string, WeakRef<DeviceProxy>>();
+  private _waitingProperties = new WeakMap<DeviceProxy, Set<PropertyProxy>>();
 
   public constructor() {
     this._network = getNetwork();
@@ -34,6 +37,8 @@ export class Manager {
     );
     if (!connected) {
       this._requestHandlers.clear();
+      this._waitingDevices.clear();
+      this._waitingProperties = new WeakMap();
       this._topology.clear();
     }
   }
@@ -277,6 +282,63 @@ export class Manager {
         variant: 'error',
         title,
         msg: msg,
+        details,
+      });
+    }
+  }
+
+  public expect_properties(
+    device: DeviceProxy,
+    properties: readonly PropertyProxy[]
+  ): void {
+    const pending =
+      this._waitingProperties.get(device) ?? new Set<PropertyProxy>();
+    for (const proxy of properties) {
+      pending.add(proxy);
+    }
+    this._waitingDevices.set(device.deviceId, new WeakRef(device));
+    this._waitingProperties.set(device, pending);
+  }
+
+  public handle_reconfigureReply(hash: Hash): void {
+    const input = hash.getValue<Hash>('input');
+    const deviceId = input.getValue<string>('deviceId');
+    const configuration = input.getValue<Hash>('configuration');
+    const device = this._waitingDevices.get(deviceId)?.deref();
+    if (!device) {
+      this._waitingDevices.delete(deviceId);
+    }
+    const pending = device && this._waitingProperties.get(device);
+    if (device && pending) {
+      for (const proxy of pending) {
+        if (!configuration.has(proxy.path)) {
+          continue;
+        }
+        pending.delete(proxy);
+        if (
+          hash.getValue<boolean>('success') &&
+          proxy.edit_value !== undefined
+        ) {
+          proxy.clearEditValue();
+        }
+      }
+      if (pending.size === 0) {
+        this._waitingDevices.delete(deviceId);
+        this._waitingProperties.delete(device);
+      }
+    }
+    if (!hash.getValue<boolean>('success')) {
+      let reason = '';
+      if (hash.has('failureReason')) {
+        reason = hash.getValue<string>('failureReason');
+      } else if (hash.has('reason')) {
+        reason = hash.getValue<string>('reason');
+      }
+      const [msg, details] = get_reason_parts(reason);
+      showMessageBox({
+        variant: 'error',
+        title: `Reconfigure device ${deviceId} failed.`,
+        msg,
         details,
       });
     }

@@ -10,9 +10,15 @@ import {
   BindingRoot,
   BoolBinding,
   DoubleBinding,
+  FloatBinding,
   PropertyProxy,
   ProxyStatus,
 } from '@/lib/binding/api';
+import { Hash, HashAttributes } from '@/karabo/data/api';
+import { FloatValue } from '@/karabo/data/types';
+import { getManager } from '@/lib/singletons/api';
+import { Network } from '@/lib/singletons/Network';
+import { Manager } from '@/lib/singletons/Manager';
 import { AccessMode } from '@/karabo/data/enums';
 import {
   DisplayColorBoolModel,
@@ -28,6 +34,8 @@ import { createMockSystemTopology, SingletonContext } from '@/testing';
 import { SceneControllerRegistry } from '@/features/scenepanel/SceneControllerRegistry';
 import SceneToolBar from '@/features/scenepanel/components/SceneToolBar';
 import { SceneControllerRegistryProvider } from '../../contexts/SceneControllerRegistryContext';
+
+let send: jest.SpyInstance;
 
 const mockUseContainer = jest.fn();
 const mockOverlaySpy = jest.fn();
@@ -113,7 +121,10 @@ const withEditableControllers = async (
     );
   };
 
-  await SingletonContext.run({ topology }, async () => {
+  const network = new Network();
+  send = jest.spyOn(network, 'onReconfigure').mockImplementation(() => {});
+  await SingletonContext.run({ topology, network }, async () => {
+    const managerContext = new SingletonContext({ manager: new Manager() });
     const { unmount } = render(
       <SceneControllerRegistryProvider registry={registry}>
         <SceneToolBar
@@ -163,6 +174,7 @@ const withEditableControllers = async (
       });
     } finally {
       unmount();
+      managerContext.restore();
     }
   });
 };
@@ -244,7 +256,7 @@ describe('ControllerContainer integration', () => {
   );
 
   it('applies and declines all mounted editable controllers from the toolbar', async () => {
-    const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'log').mockImplementation(() => {});
     await withEditableControllers(
       ({
         ctx,
@@ -263,20 +275,22 @@ describe('ControllerContainer integration', () => {
         act(() => {
           ctx.proxies[1].edit_value = 10;
         });
-        log.mockClear();
+        send.mockClear();
 
         fireEvent.click(applyButton);
-        expect(log).toHaveBeenCalledTimes(3);
-        expect(log).toHaveBeenCalledWith(
-          'DEVICE_A.speed',
+        expect(send).toHaveBeenCalledTimes(1);
+        expect((send.mock.calls[0][1] as Hash).paths().sort()).toEqual([
+          'position',
+          'speed',
+          'temperature',
+        ]);
+        expect((send.mock.calls.at(-1)![1] as Hash).get('speed')).toEqual(
           ctx.proxy!.edit_value
         );
-        expect(log).toHaveBeenCalledWith(
-          'DEVICE_A.position',
+        expect((send.mock.calls.at(-1)![1] as Hash).get('position')).toEqual(
           ctx.proxies[1].edit_value
         );
-        expect(log).toHaveBeenCalledWith(
-          'DEVICE_A.temperature',
+        expect((send.mock.calls.at(-1)![1] as Hash).get('temperature')).toEqual(
           otherCtx.proxy!.edit_value
         );
         expect(input).toHaveValue('3.5');
@@ -303,7 +317,7 @@ describe('ControllerContainer integration', () => {
   });
 
   it('runs defaults before additional actions for keyboard and toolbar, including controllers without pending edits', async () => {
-    const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'log').mockImplementation(() => {});
     await withEditableControllers(
       ({
         ctx,
@@ -316,8 +330,7 @@ describe('ControllerContainer integration', () => {
         declineButton,
       }) => {
         const apply = jest.fn(() => {
-          expect(log).toHaveBeenCalledWith(
-            'DEVICE_A.speed',
+          expect((send.mock.calls.at(-1)![1] as Hash).get('speed')).toEqual(
             ctx.proxy!.edit_value
           );
         });
@@ -338,13 +351,13 @@ describe('ControllerContainer integration', () => {
 
         act(() => input.focus());
         fireEvent.change(input, { target: { value: '6.25' } });
-        log.mockClear();
+        send.mockClear();
         fireEvent.keyDown(input, { key: 'Enter' });
         expect(apply).toHaveBeenCalledTimes(1);
-        expect(log).toHaveBeenCalledWith(
-          'DEVICE_A.speed',
+        expect((send.mock.calls.at(-1)![1] as Hash).get('speed')).toEqual(
           ctx.proxy!.edit_value
         );
+        act(() => input.focus());
         fireEvent.keyDown(input, { key: 'Escape' });
         expect(decline).toHaveBeenCalledTimes(1);
         expect(ctx.proxy!.edit_value).toBeUndefined();
@@ -355,6 +368,7 @@ describe('ControllerContainer integration', () => {
         fireEvent.click(applyButton);
         expect(apply).toHaveBeenCalledTimes(2);
         expect(otherApply).toHaveBeenCalledTimes(1);
+        expect(send).toHaveBeenCalledTimes(2);
         expect(ctx.proxy!.edit_value.value_).toBe(6.25);
         act(() => otherInput.focus());
         fireEvent.change(otherInput, { target: { value: '9' } });
@@ -382,7 +396,7 @@ describe('ControllerContainer integration', () => {
   ])(
     'runs the $key default before controller key handlers with stopPropagation=$stopPropagation',
     async ({ key, stopPropagation }) => {
-      const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+      jest.spyOn(console, 'log').mockImplementation(() => {});
       const onKeyDown = jest.fn(
         (
           event: React.KeyboardEvent<HTMLDivElement>,
@@ -391,13 +405,12 @@ describe('ControllerContainer integration', () => {
           if (event.key !== key) return;
           if (key === 'Enter') {
             expect(ctx.proxy!.edit_value.value_).toBe(3.5);
-            expect(log).toHaveBeenCalledWith(
-              'DEVICE_A.speed',
+            expect((send.mock.calls.at(-1)![1] as Hash).get('speed')).toEqual(
               ctx.proxy!.edit_value
             );
           } else {
             expect(ctx.proxy!.edit_value).toBeUndefined();
-            expect(log).not.toHaveBeenCalled();
+            expect(send).not.toHaveBeenCalled();
           }
           if (stopPropagation) {
             event.preventDefault();
@@ -409,13 +422,12 @@ describe('ControllerContainer integration', () => {
       await withEditableControllers(({ ctx, input, layout }) => {
         act(() => input.focus());
         fireEvent.change(input, { target: { value: '3.5' } });
-        log.mockClear();
+        send.mockClear();
         fireEvent.keyDown(input, { key });
 
         expect(onKeyDown).toHaveBeenCalledTimes(1);
         if (key === 'Enter') {
-          expect(log).toHaveBeenCalledWith(
-            'DEVICE_A.speed',
+          expect((send.mock.calls.at(-1)![1] as Hash).get('speed')).toEqual(
             ctx.proxy!.edit_value
           );
           expect(ctx.proxy!.edit_value.value_).toBe(3.5);
@@ -427,7 +439,7 @@ describe('ControllerContainer integration', () => {
           expect(ctx.proxy!.edit_value).toBeUndefined();
           expect(input).toHaveValue('1.25');
           expect(layout.style.backgroundColor).toBe('transparent');
-          expect(log).not.toHaveBeenCalled();
+          expect(send).not.toHaveBeenCalled();
         }
       }, onKeyDown);
     }
@@ -455,7 +467,7 @@ describe('ControllerContainer integration', () => {
   });
 
   it('handles Enter and Escape for all proxies of the focused controller only', async () => {
-    const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'log').mockImplementation(() => {});
     await withEditableControllers(
       ({ ctx, otherCtx, input, otherInput, layout, otherLayout }) => {
         act(() => otherInput.focus());
@@ -468,20 +480,22 @@ describe('ControllerContainer integration', () => {
           backgroundColor: 'rgba(0, 170, 255, 0.502)',
         });
         fireEvent.change(input, { target: { value: '3.5' } });
-        log.mockClear();
+        send.mockClear();
 
         fireEvent.keyDown(input, { key: 'Enter', isComposing: true });
-        expect(log).not.toHaveBeenCalled();
+        expect(send).not.toHaveBeenCalled();
         fireEvent.keyDown(document.body, { key: 'Enter' });
-        expect(log).not.toHaveBeenCalled();
+        expect(send).not.toHaveBeenCalled();
         fireEvent.keyDown(input, { key: 'Enter' });
-        expect(log).toHaveBeenCalledTimes(2);
-        expect(log).toHaveBeenCalledWith(
-          'DEVICE_A.speed',
+        expect(send).toHaveBeenCalledTimes(1);
+        expect((send.mock.calls[0][1] as Hash).paths().sort()).toEqual([
+          'position',
+          'speed',
+        ]);
+        expect((send.mock.calls.at(-1)![1] as Hash).get('speed')).toEqual(
           ctx.proxy!.edit_value
         );
-        expect(log).toHaveBeenCalledWith(
-          'DEVICE_A.position',
+        expect((send.mock.calls.at(-1)![1] as Hash).get('position')).toEqual(
           ctx.proxies[1].edit_value
         );
         expect(ctx.proxy!.edit_value.value_).toBe(3.5);
@@ -489,6 +503,7 @@ describe('ControllerContainer integration', () => {
           backgroundColor: 'rgba(0, 170, 255, 0.502)',
         });
 
+        act(() => input.focus());
         fireEvent.keyDown(input, { key: 'Escape' });
         expect(
           ctx.proxies.every((proxy) => proxy.edit_value === undefined)
@@ -520,22 +535,217 @@ describe('ControllerContainer integration', () => {
     });
   });
 
-  it.each(['', '-', '1e', '12abc', 'Infinity', '0x10'])(
-    'clears invalid input %j while retaining its focused draft',
+  it.each(['', '-', '1e'])(
+    'clears intermediate input %j while retaining its focused red draft',
     async (text) => {
-      const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+      jest.spyOn(console, 'log').mockImplementation(() => {});
       await withEditableControllers(({ ctx, input, layout }) => {
         act(() => input.focus());
         fireEvent.change(input, { target: { value: '3.5' } });
         fireEvent.change(input, { target: { value: text } });
         expect(ctx.proxy!.edit_value).toBeUndefined();
         expect(input).toHaveValue(text);
+        expect(input).toHaveStyle({ color: 'rgb(255, 0, 0)' });
         expect(layout.style.backgroundColor).toBe('transparent');
-        log.mockClear();
+        send.mockClear();
         fireEvent.keyDown(input, { key: 'Enter' });
-        expect(log).not.toHaveBeenCalled();
+        expect(send).not.toHaveBeenCalled();
+        act(() => input.focus());
         fireEvent.keyDown(input, { key: 'Escape' });
         expect(input).toHaveValue('1.25');
+        expect(input).toHaveStyle({ color: 'rgb(0, 0, 0)' });
+      });
+    }
+  );
+
+  it.each(['3.5', '1e-'])(
+    'prevents invalid typing or paste after draft %j',
+    async (draft) => {
+      await withEditableControllers(({ ctx, input }) => {
+        act(() => input.focus());
+        fireEvent.change(input, { target: { value: draft } });
+        const edit = ctx.proxy!.edit_value;
+        for (const invalid of ['abc', '12abc', 'Infinity', '0x10', '3 ']) {
+          fireEvent.change(input, { target: { value: invalid } });
+          expect(input).toHaveValue(draft);
+          expect(ctx.proxy!.edit_value).toBe(edit);
+          expect(input).toHaveStyle({
+            color: draft === '3.5' ? 'rgb(0, 0, 0)' : 'rgb(255, 0, 0)',
+          });
+        }
+      });
+    }
+  );
+
+  it.each(['6.25', '1e-'])(
+    'preserves a newer draft %j across device updates and pending replies',
+    async (draft) => {
+      await withEditableControllers(({ ctx, input }) => {
+        act(() => input.focus());
+        fireEvent.change(input, { target: { value: '3.5' } });
+        fireEvent.keyDown(input, { key: 'Enter' });
+        const configuration = send.mock.calls[0][1] as Hash;
+        expect(input).toBeEnabled();
+        act(() => input.focus());
+        fireEvent.change(input, { target: { value: draft } });
+        act(() => {
+          ctx.proxy!.binding!.setValue(7.5, undefined);
+          getManager().handle_reconfigureReply(
+            new Hash(
+              'success',
+              true,
+              'input',
+              new Hash('deviceId', 'DEVICE_A', 'configuration', configuration)
+            )
+          );
+        });
+        expect(input).toHaveValue(draft);
+        expect(input).toHaveStyle({
+          color: draft === '6.25' ? 'rgb(0, 0, 0)' : 'rgb(255, 0, 0)',
+        });
+        act(() => input.focus());
+        fireEvent.keyDown(input, { key: 'Escape' });
+        expect(input).toHaveValue('7.5');
+        expect(input).toHaveStyle({ color: 'rgb(0, 0, 0)' });
+      });
+    }
+  );
+
+  it('revalidates a focused draft when the schema limits change', async () => {
+    await withEditableControllers(({ ctx, input }) => {
+      act(() => input.focus());
+      fireEvent.change(input, { target: { value: '3.5' } });
+      act(() => {
+        const replacement = new DoubleBinding({
+          value: 1.25,
+          attributes: new HashAttributes({ maxInc: 2 }),
+        });
+        replacement.accessMode = AccessMode.RECONFIGURABLE;
+        ctx.proxy!.root.binding.value!.set('speed', replacement);
+        ctx.proxy!.root.schema_update.fire();
+      });
+      expect(input).toHaveValue('3.5');
+      expect(input).toHaveStyle({ color: 'rgb(255, 0, 0)' });
+      expect(ctx.proxy!.edit_value).toBeUndefined();
+      fireEvent.keyDown(input, { key: 'Enter' });
+      expect(send).not.toHaveBeenCalled();
+    });
+  });
+
+  it('clears an unfocused staged edit when the schema limits change', async () => {
+    await withEditableControllers(({ ctx, input }) => {
+      act(() => input.focus());
+      fireEvent.change(input, { target: { value: '3.5' } });
+      act(() => input.blur());
+      act(() => {
+        const replacement = new DoubleBinding({
+          value: 1.25,
+          attributes: new HashAttributes({ maxInc: 2 }),
+        });
+        replacement.accessMode = AccessMode.RECONFIGURABLE;
+        ctx.proxy!.root.binding.value!.set('speed', replacement);
+        ctx.proxy!.root.schema_update.fire();
+      });
+      expect(ctx.proxy!.edit_value).toBeUndefined();
+      expect(input).toHaveValue('1.25');
+    });
+  });
+
+  it('keeps the exact float32 boundary intermediate without applying', async () => {
+    await withEditableControllers(({ ctx, input }) => {
+      act(() => {
+        const replacement = new FloatBinding({ value: 1.25 });
+        replacement.accessMode = AccessMode.RECONFIGURABLE;
+        ctx.proxy!.root.binding.value!.set('speed', replacement);
+        ctx.proxy!.root.schema_update.fire();
+      });
+      const maximum = Math.fround(FloatValue.MAX);
+      act(() => input.focus());
+      fireEvent.change(input, { target: { value: String(maximum) } });
+      expect(ctx.proxy!.edit_value).toEqual(undefined);
+      fireEvent.keyDown(input, { key: 'Enter' });
+      expect(send).not.toHaveBeenCalled();
+    });
+  });
+
+  it.each([false, true])(
+    'keeps a focused clean editor clean across schema refresh, declined=%p',
+    async (declined) => {
+      await withEditableControllers(({ ctx, input, registry }) => {
+        act(() => input.focus());
+        if (declined) {
+          fireEvent.change(input, { target: { value: '3.5' } });
+          act(() => input.focus());
+          fireEvent.keyDown(input, { key: 'Escape' });
+        }
+        act(() => {
+          const replacement = new DoubleBinding({ value: 1.25 });
+          replacement.accessMode = AccessMode.RECONFIGURABLE;
+          ctx.proxy!.root.binding.value!.set('speed', replacement);
+          ctx.proxy!.root.schema_update.fire();
+        });
+        expect(ctx.proxy!.edit_value).toBeUndefined();
+        expect(registry.hasDirtyProxies()).toBe(false);
+        fireEvent.keyDown(input, { key: 'Enter' });
+        expect(send).not.toHaveBeenCalled();
+      });
+    }
+  );
+
+  it('leaves focus after Enter and displays the later binding configuration', async () => {
+    await withEditableControllers(({ ctx, input }) => {
+      act(() => input.focus());
+      fireEvent.change(input, { target: { value: '3.5' } });
+      fireEvent.keyDown(input, { key: 'Enter' });
+      expect(input).not.toHaveFocus();
+      const configuration = send.mock.calls[0][1] as Hash;
+      act(() =>
+        getManager().handle_reconfigureReply(
+          new Hash(
+            'success',
+            true,
+            'input',
+            new Hash('deviceId', 'DEVICE_A', 'configuration', configuration)
+          )
+        )
+      );
+      expect(ctx.proxy!.edit_value).toBeUndefined();
+      expect(ctx.proxy!.value).toBe(1.25);
+      expect(input).toHaveValue('3.5');
+      act(() =>
+        ctx.proxy!.root.handleDeviceConfiguration(new Hash('speed', 3.5))
+      );
+      expect(input).toHaveValue('3.5');
+      act(() =>
+        ctx.proxy!.root.handleDeviceConfiguration(new Hash('speed', 4.5))
+      );
+      expect(input).toHaveValue('4.5');
+    });
+  });
+
+  it.each([
+    ['4.2', 4.199999809265137],
+    ['100.000015', 100.00001525878906],
+  ] as const)(
+    'displays float32 decimal %s after applying without exposing binary rounding',
+    async (text, wireValue) => {
+      await withEditableControllers(({ ctx, input }) => {
+        act(() => {
+          const replacement = new FloatBinding({ value: Number(text) });
+          replacement.accessMode = AccessMode.RECONFIGURABLE;
+          ctx.proxy!.root.binding.value!.set('speed', replacement);
+          ctx.proxy!.root.schema_update.fire();
+        });
+        expect(input).toHaveValue(text);
+        act(() => input.focus());
+        fireEvent.change(input, { target: { value: '1' } });
+        fireEvent.change(input, { target: { value: text } });
+        expect(ctx.proxy!.edit_value.value_).toBe(wireValue);
+        fireEvent.keyDown(input, { key: 'Enter' });
+        expect(input).toHaveValue(text);
+        expect((send.mock.calls[0][1] as Hash).getValue('speed')).toBe(
+          wireValue
+        );
       });
     }
   );

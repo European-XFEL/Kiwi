@@ -73,17 +73,23 @@ export class PropertyProxy {
   }
 
   set edit_value(value: any) {
-    if (value === undefined) {
+    const binding = this.binding;
+    if (value === undefined || !binding) {
       this.edit_binding = undefined;
       this.edit_update_signal.fire(this);
       return;
     }
     if (!this.edit_binding) {
-      const klass = this.binding!.constructor as new () => BaseBinding;
+      const klass = binding.constructor as new () => BaseBinding;
       this.edit_binding = new klass();
     }
     this.edit_binding.setValue(value, undefined);
     this.edit_update_signal.fire(this);
+  }
+
+  /** Clear a submitted edit silently; the configuration update notifies views. */
+  public clearEditValue(): void {
+    this.edit_binding!.value = undefined;
   }
 
   private setBinding(binding?: BaseBinding): void {
@@ -107,7 +113,12 @@ export class PropertyProxy {
   }
 
   private onSchemaUpdate(): void {
+    const edit = this.edit_value;
+    this.edit_binding = undefined;
     this.setBinding(this.root_proxy.getBinding(this.path));
+    if (edit !== undefined) {
+      this.edit_value = edit;
+    }
     this.binding_update_signal.fire(this);
 
     const old_path = this.pipeline_parent_path;

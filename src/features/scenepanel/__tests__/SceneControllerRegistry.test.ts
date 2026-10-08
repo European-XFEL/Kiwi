@@ -59,6 +59,7 @@ describe('SceneControllerRegistry', () => {
     registry.applyAll();
     registry.declineAll();
     expect(apply).toHaveBeenCalledTimes(2);
+    expect(apply).toHaveBeenCalledWith();
     expect(decline).toHaveBeenCalledTimes(2);
 
     registry.dispose();

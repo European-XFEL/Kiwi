@@ -10,6 +10,28 @@ import { ProxyStatus } from '@/lib/binding/ProxyStatus';
 import { StringValue } from '@/karabo/data/api';
 
 describe('The basic proxy test', () => {
+  it('clears a submitted edit without notifying subscribers or changing the binding', () => {
+    const device = new DeviceProxy('TEST_KIWI');
+    device.binding = new BindingRoot();
+    device.binding.value!.set('speed', new DoubleBinding({ value: 1.25 }));
+    const proxy = new PropertyProxy(device, 'speed');
+    const onEdit = jest.fn();
+    const unsubscribe = proxy.edit_update(onEdit);
+    proxy.edit_value = 3.5;
+    onEdit.mockClear();
+
+    proxy.clearEditValue();
+
+    expect(proxy.edit_value).toBeUndefined();
+    expect(proxy.value).toBe(1.25);
+    expect(onEdit).not.toHaveBeenCalled();
+    proxy.edit_value = 4.5;
+    expect(proxy.edit_value.value_).toBe(4.5);
+    expect(onEdit).toHaveBeenCalledTimes(1);
+    unsubscribe();
+    proxy.dispose();
+  });
+
   it('notifies edit subscribers when a numeric edit is staged or cleared', () => {
     const rootProxy = new DeviceProxy('TEST_KIWI');
     const rootBinding = new BindingRoot();
