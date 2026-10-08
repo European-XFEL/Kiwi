@@ -29,6 +29,8 @@ jest.mock('@/assets/icons', () => ({
   __esModule: true,
   default: {
     image: 'image-icon',
+    checkboxChecked: 'checkbox-checked-icon',
+    checkboxUnchecked: 'checkbox-unchecked-icon',
     homeEdit: 'home-edit-icon',
     editClear: 'edit-clear-icon',
   },

@@ -35,6 +35,8 @@ const iconDefinitions = {
   bringToFront: 'bring-to-front1-32x32.png',
   camera: 'camera.svg',
   change: 'change.svg',
+  checkboxChecked: 'checkbox-checked.svg',
+  checkboxUnchecked: 'checkbox-unchecked.svg',
   consoleMenu: 'console-menu.svg',
   clock: 'clock.svg',
   close: 'close-icon.svg',
