@@ -1,3 +1,5 @@
+import { isTypedArray } from '@/karabo/data/api';
+
 const SAMPLE_THRESHOLDS: Record<number, number> = {
   200_000: 30_000,
   300_000: 40_000,
@@ -17,83 +19,98 @@ export function getSampleThreshold(size: number) {
   return threshold;
 }
 
-export function lttbWithCoordinates(
-  y: ArrayLike<number>,
-  x?: ArrayLike<number>,
-  {
-    start = 0,
-    end = Math.min(y.length, x?.length ?? y.length),
-    threshold,
-  }: {
-    start?: number;
-    end?: number;
-    threshold?: number;
-  } = {}
-): [Float64Array, Float64Array] {
-  const length = Math.min(y.length, x?.length ?? y.length);
+/**
+ * Apply the controller's sampling window before LTTB selection. Typed vectors
+ * use views; other array-like inputs copy only the selected window. Complete
+ * vectors are reused. The controller supplies equal lengths and the threshold.
+ */
+export function lttbWithCoordinates({
+  x,
+  y,
+  start = 0,
+  end = x.length,
+  threshold,
+}: {
+  x: ArrayLike<number>;
+  y: ArrayLike<number>;
+  start?: number;
+  end?: number;
+  threshold: number;
+}): { x: number; y: number }[] {
+  const length = x.length;
   start = Math.max(0, Math.min(start, length));
   end = Math.max(start, Math.min(end, length));
-  const count = end - start;
-  let clippedX: ArrayLike<number>;
-  if (!x) {
-    clippedX = Float64Array.from({ length: count }, (_, i) => start + i);
-  } else if (start === 0 && end === x.length) {
-    clippedX = x;
-  } else {
-    clippedX = Float64Array.from({ length: count }, (_, i) => x[start + i]);
-  }
-  const clippedY =
-    start === 0 && end === y.length
-      ? y
-      : Float64Array.from({ length: count }, (_, i) => y[start + i]);
-  if (threshold === undefined) {
-    threshold = getSampleThreshold(count);
-  }
-  return lttb(clippedX, clippedY, threshold);
+  return lttb({
+    x: sliceVector({ values: x, start, end }),
+    y: sliceVector({ values: y, start, end }),
+    threshold,
+  });
 }
 
-/**
- * Largest-Triangle-Three-Buckets using actual X coordinates.
- * Samples paired vectors without changing the inputs.
- */
-export function lttb(
-  x: ArrayLike<number>,
-  y: ArrayLike<number>,
-  threshold: number
-): [Float64Array, Float64Array] {
-  const n = Math.min(x.length, y.length);
+function sliceVector({
+  values,
+  start,
+  end,
+}: {
+  values: ArrayLike<number>;
+  start: number;
+  end: number;
+}): ArrayLike<number> {
+  if (start === 0 && end === values.length) {
+    return values;
+  }
+  if (
+    isTypedArray(values) &&
+    !(values instanceof BigInt64Array) &&
+    !(values instanceof BigUint64Array)
+  ) {
+    return values.subarray(start, end);
+  }
+  if (Array.isArray(values)) {
+    return values.slice(start, end);
+  }
+  return Float64Array.from(
+    { length: end - start },
+    (_, index) => values[start + index]
+  );
+}
 
+/** Select Chart.js points from equally sized vectors using actual X coordinates. */
+export function lttb({
+  x,
+  y,
+  threshold,
+}: {
+  x: ArrayLike<number>;
+  y: ArrayLike<number>;
+  threshold: number;
+}): { x: number; y: number }[] {
+  const n = x.length;
   const size = Math.min(Math.max(threshold, 0), n);
-  const sampledX = new Float64Array(size);
-  const sampledY = new Float64Array(size);
-  const points: [Float64Array, Float64Array] = [sampledX, sampledY];
-  if (size === 0) return points;
+  const points: { x: number; y: number }[] = new Array(size);
+  if (size === 0) {
+    return points;
+  }
 
   if (threshold >= n) {
     for (let index = 0; index < n; index++) {
-      sampledX[index] = x[index];
-      sampledY[index] = y[index];
+      points[index] = { x: x[index], y: y[index] };
     }
     return points;
   }
 
   if (threshold === 1) {
-    sampledX[0] = x[0];
-    sampledY[0] = y[0];
+    points[0] = { x: x[0], y: y[0] };
     return points;
   }
   if (threshold === 2) {
-    sampledX[0] = x[0];
-    sampledY[0] = y[0];
-    sampledX[1] = x[n - 1];
-    sampledY[1] = y[n - 1];
+    points[0] = { x: x[0], y: y[0] };
+    points[1] = { x: x[n - 1], y: y[n - 1] };
     return points;
   }
 
-  sampledX[0] = x[0];
-  sampledY[0] = y[0];
-  sampledX[threshold - 1] = x[n - 1];
-  sampledY[threshold - 1] = y[n - 1];
+  points[0] = { x: x[0], y: y[0] };
+  points[threshold - 1] = { x: x[n - 1], y: y[n - 1] };
 
   const bucketSize = (n - 2) / (threshold - 2);
   let lastSelectedIndex = 0;
@@ -120,9 +137,12 @@ export function lttb(
       sy += y[i];
       c++;
     }
-    const cy = c === 0 ? y[n - 1] : sy / c;
-
-    const cx = c === 0 ? x[n - 1] : sx / c;
+    let cy = y[n - 1];
+    let cx = x[n - 1];
+    if (c > 0) {
+      cy = sy / c;
+      cx = sx / c;
+    }
 
     // A = last selected
     const ax = x[lastSelectedIndex];
@@ -142,8 +162,10 @@ export function lttb(
       }
     }
 
-    sampledX[bucketIndex + 1] = x[bestIndex];
-    sampledY[bucketIndex + 1] = y[bestIndex];
+    points[bucketIndex + 1] = {
+      x: x[bestIndex],
+      y: y[bestIndex],
+    };
     lastSelectedIndex = bestIndex;
   }
   return points;

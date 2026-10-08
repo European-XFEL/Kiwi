@@ -3,9 +3,8 @@ import { DisplayVectorGraphModel } from '@/karabo/common/api';
 import { buildModelConfig } from '../common/api';
 import { vectorChartOption } from '../plotConfig';
 import {
-  vectorPoints,
   generateBaseline,
-  generateDownsample,
+  getSamplingWindow,
   padViewportRange,
 } from '../utils';
 import { lttbWithCoordinates } from '../../utils/lttb';
@@ -25,21 +24,27 @@ test.each([
   'samples padded ranges in source order with offset=$offset and step=$step',
   ({ offset, step, expected }) => {
     const x = generateBaseline(new Float64Array(201), offset, step);
-    const [sampledX] = generateDownsample(x, x, padViewportRange([18, 20]));
-    expect(Array.from(sampledX)).toEqual(expected);
+    const window = getSamplingWindow({ x, range: padViewportRange([18, 20]) });
+    const points = lttbWithCoordinates({
+      x,
+      y: x,
+      ...window,
+      threshold: 20_000,
+    });
+    expect(points.map((point) => point.x)).toEqual(expected);
   }
 );
 
 test('samples logarithmically padded ranges in original X coordinates', () => {
   const x = Float64Array.from({ length: 2000 }, (_, i) => 1 + i * 3);
-  const [sampledX] = generateDownsample(
+  const window = getSamplingWindow({
     x,
-    x,
-    padViewportRange([10, 100], true)
-  );
-  expect(sampledX).toHaveLength(334);
-  expect(sampledX[0]).toBe(1);
-  expect(sampledX.at(-1)).toBe(1000);
+    range: padViewportRange([10, 100], true),
+  });
+  const points = lttbWithCoordinates({ x, y: x, ...window, threshold: 20_000 });
+  expect(points).toHaveLength(334);
+  expect(points[0].x).toBe(1);
+  expect(points.at(-1)?.x).toBe(1000);
 });
 
 test.each([-2, 0])(
@@ -60,12 +65,11 @@ test.each([-2, 0])(
     const plotConfig = buildModelConfig(new DisplayVectorGraphModel());
     Object.assign(plotConfig, { offset: 20, step });
     const config = vectorChartOption(plotConfig, ['DEV.vector']);
-    const data = vectorPoints(
-      lttbWithCoordinates(
-        [1, -50, 100, 2],
-        generateBaseline([1, -50, 100, 2], 20, step)
-      )
-    );
+    const data = lttbWithCoordinates({
+      y: [1, -50, 100, 2],
+      x: generateBaseline([1, -50, 100, 2], 20, step),
+      threshold: 20_000,
+    });
     config.data.datasets[0].data = data;
     if (step < 0)
       expect(config.options).toMatchObject({ parsing: {}, normalized: false });

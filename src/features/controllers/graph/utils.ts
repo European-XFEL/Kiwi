@@ -1,5 +1,4 @@
 import type { Range } from './common/constants';
-import { lttbWithCoordinates } from '../utils/lttb';
 import { isTypedArray } from '@/karabo/data/api';
 
 export type VectorData = ArrayLike<number>;
@@ -90,23 +89,18 @@ export function padViewportRange(
   return [min - span, max + span];
 }
 
-export function vectorPoints([x, y]: [VectorData, VectorData]) {
-  const data: { x: number; y: number }[] = [];
-  const length = Math.min(x.length, y.length);
-  for (let index = 0; index < length; index++) {
-    data.push({ x: x[index], y: y[index] });
-  }
-  return data;
-}
-
-/** Sample complete paired vectors within a range; viewport padding is separate. */
-export function generateDownsample(
-  y: ArrayLike<number>,
-  x: ArrayLike<number>,
-  range?: Range,
-  threshold?: number
-) {
-  const length = Math.min(x.length, y.length);
+/**
+ * Locate the sampling window in source coordinates. The controller pads the
+ * viewport and chooses the threshold from the returned window length.
+ */
+export function getSamplingWindow({
+  x,
+  range,
+}: {
+  x: VectorData;
+  range?: Range;
+}): { start: number; end: number } {
+  const length = x.length;
   const step = (x[length - 1] - x[0]) / (length - 1);
   let start = 0;
   let end = length;
@@ -127,5 +121,5 @@ export function generateDownsample(
       }
     }
   }
-  return lttbWithCoordinates(y, x, { start, end, threshold });
+  return { start, end };
 }

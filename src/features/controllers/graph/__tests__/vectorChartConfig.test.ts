@@ -4,7 +4,7 @@ import { GRAPH_LAYOUT, TRACE_COLORS } from '../common/api';
 import { buildModelConfig } from '../common/api';
 import { DisplayVectorGraphModel } from '@/karabo/common/api';
 import { vectorChartOption } from '../plotConfig';
-import { vectorPoints, padViewportRange } from '../utils';
+import { padViewportRange } from '../utils';
 
 describe('vector Chart.js configuration', () => {
   it('labels ordered datasets, cycles colors and sizes markers per dataset', () => {
@@ -57,15 +57,6 @@ describe('vector Chart.js configuration', () => {
       x: { title: { display: false } },
       y: { title: { display: false } },
     });
-  });
-
-  it('combines sampled vectors into chart coordinates', () => {
-    expect(
-      vectorPoints([new Float64Array([0, 1]), new Float64Array([4, 8])])
-    ).toEqual([
-      { x: 0, y: 4 },
-      { x: 1, y: 8 },
-    ]);
   });
 
   it('keeps axis gutters constant across tick label changes', () => {
