@@ -1,4 +1,5 @@
 import React from 'react';
+import { isTypedArray } from '@/karabo/data/api';
 import type { PlotSettings } from './common/api';
 import {
   vectorChartOption,
@@ -11,8 +12,7 @@ import {
   BAR_SAMPLE_LIMIT,
   padViewportRange,
   generateBaseline,
-  generateDownsample,
-  vectorPoints,
+  getSamplingWindow,
   type VectorData,
 } from './utils';
 import {
@@ -23,6 +23,21 @@ import {
   useCurveVisibility,
 } from './common/api';
 import type { VectorSeries } from './useVectorSeries';
+import { getSampleThreshold, lttbWithCoordinates } from '../utils/lttb';
+
+function trimVector(values: VectorData, length: number): VectorData {
+  if (values.length === length) {
+    return values;
+  }
+  if (
+    isTypedArray(values) &&
+    !(values instanceof BigInt64Array) &&
+    !(values instanceof BigUint64Array)
+  ) {
+    return values.subarray(0, length);
+  }
+  return Float64Array.from({ length }, (_, index) => values[index]);
+}
 
 /**
  * Coordinates plots: selects the chart configuration, samples
@@ -43,11 +58,14 @@ export function usePlotChart({
   const ySeriesKeys = JSON.stringify(ySeries.map((item) => item.key));
   const offset = plotConfig.offset ?? 0;
   const step = plotConfig.step || 1;
-  const coordinates = React.useMemo(
+  const vectors = React.useMemo(
     () =>
-      ySeries.map(
-        (item) => xValues ?? generateBaseline(item.values, offset, step)
-      ),
+      ySeries.map((item) => {
+        const x = xValues ?? generateBaseline(item.values, offset, step);
+        const length = Math.min(x.length, item.values.length);
+        // Align each series once per frame; typed vectors retain their storage.
+        return { x: trimVector(x, length), y: trimVector(item.values, length) };
+      }),
     [ySeries, xValues, offset, step]
   );
   const axes = React.useMemo(() => buildPlotAxes(plotConfig), [plotConfig]);
@@ -58,30 +76,32 @@ export function usePlotChart({
       // segments at the viewport edges. Pair each Y with X independently.
       const samplingRange = padViewportRange(xRange, logarithmicX);
       return {
-        datasets: ySeries.map((item, index) => {
-          let points: [VectorData, VectorData];
-          if (kind === 'scatter-line' || kind === 'scatter') {
-            // Scatter frames preserve every point, including unordered X.
-            points = [coordinates[index], item.values];
-          } else if (kind === 'bar') {
-            points = generateDownsample(
-              item.values,
-              coordinates[index],
-              samplingRange,
-              BAR_SAMPLE_LIMIT
-            );
-          } else {
-            points = generateDownsample(
-              item.values,
-              coordinates[index],
-              samplingRange
-            );
+        datasets: vectors.map(({ x, y }) => {
+          let start = 0;
+          let end = x.length;
+          let threshold: number;
+          switch (kind) {
+            case 'scatter':
+              // Scatter frames preserve every point, including unordered X.
+              threshold = x.length;
+              break;
+            case 'scatter-line':
+            case 'line':
+              ({ start, end } = getSamplingWindow({ x, range: samplingRange }));
+              threshold = getSampleThreshold(end - start);
+              break;
+            case 'bar':
+              ({ start, end } = getSamplingWindow({ x, range: samplingRange }));
+              threshold = BAR_SAMPLE_LIMIT;
+              break;
           }
-          return { data: vectorPoints(points) };
+          return {
+            data: lttbWithCoordinates({ y, x, start, end, threshold }),
+          };
         }),
       };
     },
-    [ySeries, coordinates, logarithmicX, kind]
+    [vectors, logarithmicX, kind]
   );
   const chart = useChart({
     axes,

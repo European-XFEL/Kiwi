@@ -19,7 +19,6 @@ import {
   PropertyProxy,
 } from '@/lib/binding/api';
 import { useScatterData } from '../../graph/useScatterData';
-import { vectorPoints } from '../../graph/utils';
 import { scatterChartOption } from '../../graph/plotConfig';
 import DisplayScatterGraph from '../DisplayScatterGraph';
 
@@ -92,13 +91,8 @@ describe('scatter idle publication', () => {
       y.send(time, time);
       publish();
     }
-    expect(
-      vectorPoints([result.current.xValues, result.current.ySeries[0].values])
-    ).toEqual([
-      { x: 5, y: 2 },
-      { x: 5, y: 3 },
-      { x: 5, y: 4 },
-    ]);
+    expect(result.current.xValues).toEqual([5, 5, 5]);
+    expect(result.current.ySeries[0].values).toEqual([2, 3, 4]);
     expect(result.current.ySeries).toBe(initialSeries);
     expect(window.requestIdleCallback).toHaveBeenCalledTimes(1);
     expect(window.requestIdleCallback).toHaveBeenCalledWith(
@@ -116,12 +110,8 @@ describe('scatter idle publication', () => {
     act(() => jest.runOnlyPendingTimers());
     expect(result.current.ySeries).not.toBe(publishedSeries);
     expect(result.current.ySeries[0].values).toBe(yBuffer);
-    expect(
-      vectorPoints([
-        result.current.xValues,
-        result.current.ySeries[0].values,
-      ]).at(-1)
-    ).toEqual({ x: 5, y: 5 });
+    expect(result.current.xValues.at(-1)).toBe(5);
+    expect(yBuffer[yBuffer.length - 1]).toBe(5);
   });
 
   it('clears immediately without replaying a pending publication', () => {
@@ -133,16 +123,14 @@ describe('scatter idle publication', () => {
     publish();
     const pendingSeries = result.current.ySeries;
     act(() => result.current.clear());
-    expect(
-      vectorPoints([result.current.xValues, result.current.ySeries[0].values])
-    ).toEqual([]);
+    expect(result.current.xValues).toEqual([]);
+    expect(result.current.ySeries[0].values).toEqual([]);
     const clearedSeries = result.current.ySeries;
     expect(clearedSeries).not.toBe(pendingSeries);
     act(() => jest.runOnlyPendingTimers());
     expect(result.current.ySeries).toBe(clearedSeries);
-    expect(
-      vectorPoints([result.current.xValues, result.current.ySeries[0].values])
-    ).toEqual([]);
+    expect(result.current.xValues).toEqual([]);
+    expect(result.current.ySeries[0].values).toEqual([]);
   });
 
   it('redraws scalar history only at idle and clears the rendered chart immediately', () => {
@@ -218,20 +206,20 @@ test('renders unordered pairs, repeated clears and resumed collection with real 
   ) as unknown as CanvasRenderingContext2D;
   jest.spyOn(canvas, 'getContext').mockReturnValue(context);
   const config = scatterChartOption(buildModelConfig(new ScatterGraphModel()));
-  config.data.datasets[0].data = vectorPoints([
-    result.current.xValues,
-    result.current.ySeries[0].values,
-  ]);
+  config.data.datasets[0].data = result.current.xValues.map((x, index) => ({
+    x,
+    y: result.current.ySeries[0].values[index],
+  }));
   const chart = new RealChart(canvas, {
     ...config,
     options: { ...config.options, responsive: false },
     platform: BasicPlatform,
   });
   const update = () => {
-    chart.data.datasets[0].data = vectorPoints([
-      result.current.xValues,
-      result.current.ySeries[0].values,
-    ]);
+    chart.data.datasets[0].data = result.current.xValues.map((x, index) => ({
+      x,
+      y: result.current.ySeries[0].values[index],
+    }));
     chart.update('none');
   };
   try {
@@ -280,9 +268,8 @@ test('pairs published Y updates with latest X, deduplicates and evicts oldest po
   const yBuffer = result.current.ySeries[0].values;
   y.send(9, 1);
   publish();
-  expect(
-    vectorPoints([result.current.xValues, result.current.ySeries[0].values])
-  ).toEqual([]);
+  expect(result.current.xValues).toEqual([]);
+  expect(result.current.ySeries[0].values).toEqual([]);
   x.send(3);
   y.send(10, 2);
   publish();
@@ -293,26 +280,15 @@ test('pairs published Y updates with latest X, deduplicates and evicts oldest po
   publish();
   y.send(12, 4);
   publish();
-  expect(
-    vectorPoints([result.current.xValues, result.current.ySeries[0].values])
-  ).toEqual([
-    { x: 3, y: 10 },
-    { x: 4, y: 11 },
-    { x: 4, y: 12 },
-  ]);
+  expect(result.current.xValues).toEqual([3, 4, 4]);
+  expect(result.current.ySeries[0].values).toEqual([10, 11, 12]);
   y.send(13, 5);
   publish();
-  expect(
-    vectorPoints([result.current.xValues, result.current.ySeries[0].values])
-  ).toEqual([
-    { x: 4, y: 11 },
-    { x: 4, y: 12 },
-    { x: 4, y: 13 },
-  ]);
+  expect(result.current.xValues).toEqual([4, 4, 4]);
+  expect(result.current.ySeries[0].values).toEqual([11, 12, 13]);
   publish(y.proxy, 1);
-  expect(
-    vectorPoints([result.current.xValues, result.current.ySeries[0].values])
-  ).toEqual([{ x: 4, y: 13 }]);
+  expect(result.current.xValues).toEqual([4]);
+  expect(result.current.ySeries[0].values).toEqual([13]);
   expect(result.current.xValues).toBe(xBuffer);
   expect(result.current.ySeries[0].values).toBe(yBuffer);
   act(() => result.current.clear());
@@ -332,13 +308,11 @@ test('collects only the latest values when notifications are batched before a re
   y.send(2, 1);
   y.send(3, 2);
   x.send(4);
-  expect(
-    vectorPoints([result.current.xValues, result.current.ySeries[0].values])
-  ).toEqual([]);
+  expect(result.current.xValues).toEqual([]);
+  expect(result.current.ySeries[0].values).toEqual([]);
   publish();
-  expect(
-    vectorPoints([result.current.xValues, result.current.ySeries[0].values])
-  ).toEqual([{ x: 4, y: 3 }]);
+  expect(result.current.xValues).toEqual([4]);
+  expect(result.current.ySeries[0].values).toEqual([3]);
   expect(valueUpdate).not.toHaveBeenCalled();
   expect(bindingUpdate).not.toHaveBeenCalled();
 });
@@ -375,13 +349,8 @@ test('accepts booleans and numeric values, ignores invalid values and missing ti
   x.send(0);
   y.send(false, 22);
   publish();
-  expect(
-    vectorPoints([result.current.xValues, result.current.ySeries[0].values])
-  ).toEqual([
-    { x: 0, y: 1 },
-    { x: 0, y: 2 },
-    { x: 0, y: 0 },
-  ]);
+  expect(result.current.xValues).toEqual([0, 0, 0]);
+  expect(result.current.ySeries[0].values).toEqual([1, 2, 0]);
 });
 
 test('deduplicates timestamps without losing sub-millisecond precision', () => {
@@ -395,12 +364,8 @@ test('deduplicates timestamps without losing sub-millisecond precision', () => {
   publish();
   y.send(3, 1800000000000000000000000001n);
   publish();
-  expect(
-    vectorPoints([result.current.xValues, result.current.ySeries[0].values])
-  ).toEqual([
-    { x: 1, y: 1 },
-    { x: 1, y: 2 },
-  ]);
+  expect(result.current.xValues).toEqual([1, 1]);
+  expect(result.current.ySeries[0].values).toEqual([1, 2]);
 });
 
 test('clears on Y removal/replacement', () => {
@@ -411,22 +376,18 @@ test('clears on Y removal/replacement', () => {
   const { result, rerender, publish } = renderData(x.proxy, y.proxy);
   y.send(2, 1);
   publish();
-  expect(
-    vectorPoints([result.current.xValues, result.current.ySeries[0].values])
-  ).toHaveLength(1);
+  expect(result.current.xValues).toHaveLength(1);
+  expect(result.current.ySeries[0].values).toHaveLength(1);
   publish(replacement.proxy);
-  expect(
-    vectorPoints([result.current.xValues, result.current.ySeries[0].values])
-  ).toEqual([]);
+  expect(result.current.xValues).toEqual([]);
+  expect(result.current.ySeries[0].values).toEqual([]);
   replacement.send(4, 1);
   publish(replacement.proxy);
-  expect(
-    vectorPoints([result.current.xValues, result.current.ySeries[0].values])
-  ).toEqual([{ x: 1, y: 4 }]);
+  expect(result.current.xValues).toEqual([1]);
+  expect(result.current.ySeries[0].values).toEqual([4]);
   rerender({ proxies: [x.proxy], limit: 100 });
-  expect(
-    vectorPoints([result.current.xValues, result.current.ySeries[0].values])
-  ).toEqual([]);
+  expect(result.current.xValues).toEqual([]);
+  expect(result.current.ySeries[0].values).toEqual([]);
 });
 
 test('clears when Y binding disappears and ignores a removed X binding', () => {
@@ -439,14 +400,12 @@ test('clears when Y binding disappears and ignores a removed X binding', () => {
   x.removeBinding();
   y.send(3, 2);
   publish();
-  expect(
-    vectorPoints([result.current.xValues, result.current.ySeries[0].values])
-  ).toEqual([{ x: 1, y: 2 }]);
+  expect(result.current.xValues).toEqual([1]);
+  expect(result.current.ySeries[0].values).toEqual([2]);
   y.removeBinding();
   publish();
-  expect(
-    vectorPoints([result.current.xValues, result.current.ySeries[0].values])
-  ).toEqual([]);
+  expect(result.current.xValues).toEqual([]);
+  expect(result.current.ySeries[0].values).toEqual([]);
 });
 
 test('Clear points waits for a new X update and does not replay Y', () => {
@@ -460,19 +419,16 @@ test('Clear points waits for a new X update and does not replay Y', () => {
   publish();
   y.send(3, 2);
   publish();
-  expect(
-    vectorPoints([result.current.xValues, result.current.ySeries[0].values])
-  ).toEqual([]);
+  expect(result.current.xValues).toEqual([]);
+  expect(result.current.ySeries[0].values).toEqual([]);
   x.send(1, 2);
   publish();
-  expect(
-    vectorPoints([result.current.xValues, result.current.ySeries[0].values])
-  ).toEqual([]);
+  expect(result.current.xValues).toEqual([]);
+  expect(result.current.ySeries[0].values).toEqual([]);
   y.send(5, 3);
   publish();
-  expect(
-    vectorPoints([result.current.xValues, result.current.ySeries[0].values])
-  ).toEqual([{ x: 1, y: 5 }]);
+  expect(result.current.xValues).toEqual([1]);
+  expect(result.current.ySeries[0].values).toEqual([5]);
 });
 
 test('configures point diameter, newest-point color, and unsorted X data', () => {

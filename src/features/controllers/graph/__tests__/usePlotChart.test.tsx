@@ -16,6 +16,7 @@ import type { PropertyProxy } from '@/lib/binding/PropertyProxy';
 import { usePlotChart } from '../usePlotChart';
 import { useVectorSeries } from '../useVectorSeries';
 import { generateBaseline } from '../utils';
+import * as sampling from '../../utils/lttb';
 import { makeVectorProxy } from '../testing/vectorProxy';
 import DisplayBarGraph from '../../display/DisplayBarGraph';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
@@ -381,6 +382,163 @@ function PlotHarness(props: Parameters<typeof usePlotChart>[0]) {
   const plotWindow = usePlotChart(props);
   return <div ref={plotWindow.containerRef} data-testid="plot" />;
 }
+
+test('controller supplies equally sized vectors for each series', () => {
+  const sample = jest.spyOn(sampling, 'lttbWithCoordinates');
+  const x = new Float64Array([10, 20, 30]);
+  const shortY = new Float64Array([1, 2]);
+  const longY = new Float64Array([4, 5, 6, 7]);
+  try {
+    render(
+      <PlotHarness
+        plotConfig={buildModelConfig(new DisplayVectorGraphModel())}
+        xValues={x}
+        ySeries={[
+          { key: 'short', values: shortY },
+          { key: 'long', values: longY },
+        ]}
+        kind="line"
+      />
+    );
+    for (const [{ y, x: pairedX }] of sample.mock.calls) {
+      expect(pairedX.length).toBe(y.length);
+      expect((pairedX as Float64Array).buffer).toBe(x.buffer);
+    }
+    expect(chart().data.datasets.map((dataset) => dataset.data)).toEqual([
+      [
+        { x: 10, y: 1 },
+        { x: 20, y: 2 },
+      ],
+      [
+        { x: 10, y: 4 },
+        { x: 20, y: 5 },
+        { x: 30, y: 6 },
+      ],
+    ]);
+    expect(x).toHaveLength(3);
+    expect(shortY).toHaveLength(2);
+    expect(longY).toHaveLength(4);
+  } finally {
+    sample.mockRestore();
+  }
+});
+
+test.each([
+  { kind: 'line' as const, min: 0, max: 300_000, threshold: 40_000 },
+  { kind: 'line' as const, min: 100_000, max: 110_000, threshold: 20_000 },
+  { kind: 'scatter-line' as const, min: 0, max: 300_000, threshold: 40_000 },
+  {
+    kind: 'scatter-line' as const,
+    min: 100_000,
+    max: 110_000,
+    threshold: 20_000,
+  },
+  { kind: 'bar' as const, min: 0, max: 300_000, threshold: 3000 },
+])(
+  'controller supplies threshold $threshold for $kind viewport $min..$max',
+  ({ kind, min, max, threshold }) => {
+    const sample = jest.spyOn(sampling, 'lttbWithCoordinates');
+    const model = new DisplayVectorGraphModel();
+    Object.assign(model, { x_autorange: false, x_min: min, x_max: max });
+    try {
+      render(
+        <PlotHarness
+          plotConfig={buildModelConfig(model)}
+          ySeries={[{ key: 'y', values: new Float64Array(300_001) }]}
+          kind={kind}
+        />
+      );
+      expect(sample).toHaveBeenCalledWith(
+        expect.objectContaining({ threshold })
+      );
+      expect(chart().data.datasets[0].data).toHaveLength(threshold);
+    } finally {
+      sample.mockRestore();
+    }
+  }
+);
+
+test.each(['scatter'] as const)(
+  '%s emits every unordered point through the sampler without viewport clipping',
+  (kind) => {
+    const sample = jest.spyOn(sampling, 'lttbWithCoordinates');
+    const x = Float64Array.from({ length: 20_001 }, (_, index) => index % 7);
+    const y = Float64Array.from({ length: x.length }, (_, index) => index);
+    const model = new DisplayVectorGraphModel();
+    Object.assign(model, { x_autorange: false, x_min: 2, x_max: 3 });
+    try {
+      render(
+        <PlotHarness
+          plotConfig={buildModelConfig(model)}
+          xValues={x}
+          ySeries={[{ key: 'y', values: y }]}
+          kind={kind}
+        />
+      );
+      expect(sample).toHaveBeenCalledWith({
+        x,
+        y,
+        start: 0,
+        end: x.length,
+        threshold: x.length,
+      });
+      expect(chart().data.datasets[0].data).toEqual(
+        Array.from(y, (value, index) => ({ x: index % 7, y: value }))
+      );
+    } finally {
+      sample.mockRestore();
+    }
+  }
+);
+
+test.each(['line', 'bar', 'scatter-line', 'scatter'] as const)(
+  '%s trims mismatched vectors and handles empty pairs',
+  (kind) => {
+    const plotConfig = buildModelConfig(new DisplayVectorGraphModel());
+    const view = render(
+      <PlotHarness
+        plotConfig={plotConfig}
+        xValues={[10, 20, 30]}
+        ySeries={[{ key: 'y', values: [1, 2] }]}
+        kind={kind}
+      />
+    );
+    expect(chart().data.datasets[0].data).toEqual([
+      { x: 10, y: 1 },
+      { x: 20, y: 2 },
+    ]);
+    view.rerender(
+      <PlotHarness
+        plotConfig={plotConfig}
+        xValues={[10, 20]}
+        ySeries={[{ key: 'y', values: [1, 2, 3] }]}
+        kind={kind}
+      />
+    );
+    expect(chart().data.datasets[0].data).toEqual([
+      { x: 10, y: 1 },
+      { x: 20, y: 2 },
+    ]);
+    view.rerender(
+      <PlotHarness
+        plotConfig={plotConfig}
+        xValues={[]}
+        ySeries={[{ key: 'y', values: [1] }]}
+        kind={kind}
+      />
+    );
+    expect(chart().data.datasets[0].data).toEqual([]);
+    view.rerender(
+      <PlotHarness
+        plotConfig={plotConfig}
+        xValues={[10]}
+        ySeries={[{ key: 'y', values: [] }]}
+        kind={kind}
+      />
+    );
+    expect(chart().data.datasets[0].data).toEqual([]);
+  }
+);
 
 test.each(['line', 'bar', 'scatter-line', 'scatter'] as const)(
   '%s uses supplied X coordinates and baseline coordinates when omitted',

@@ -82,28 +82,32 @@ test('publishes one full paired frame on X or Y updates', () => {
   ]);
 });
 
-test('retains every unordered point with a fixed marker size beyond line sampling thresholds', () => {
+test('samples the padded viewport with a fixed marker size beyond line sampling thresholds', () => {
   const model = new VectorScatterGraphModel();
   model.keys = ['x', 'y'];
   model.psize = 2.7;
   model.x_autorange = false;
-  model.x_min = 0;
-  model.x_max = 10;
+  model.x_min = 100;
+  model.x_max = 120;
   const values = Float64Array.from({ length: 40_001 }, (_, i) =>
     i % 2 ? i : -i
   );
   render(
     <DisplayVectorScatterGraph
       model={model}
-      ctx={context([makeVectorProxy(values), makeVectorProxy(values)])}
+      ctx={context([
+        makeVectorProxy(Float64Array.from(values, (_, index) => index)),
+        makeVectorProxy(values),
+      ])}
     />
   );
   flush();
-  expect(chart().data.datasets[0].data).toHaveLength(values.length);
-  expect(chart().data.datasets[0].data[20_000]).toEqual({
-    x: -20_000,
-    y: -20_000,
+  expect(chart().data.datasets[0].data).toHaveLength(61);
+  expect(chart().data.datasets[0].data[0]).toEqual({
+    x: 80,
+    y: -80,
   });
+  expect(chart().data.datasets[0].data.at(-1)).toEqual({ x: 140, y: -140 });
   expect(chart().data.datasets[0].pointRadius).toBe(1.35);
 });
 
