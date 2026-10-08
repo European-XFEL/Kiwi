@@ -38,6 +38,7 @@ describe('bar Chart.js configuration', () => {
         clip: jest.fn(),
         fillRect,
         restore: jest.fn(),
+        fillStyle: '',
       },
       chartArea: { left: 0, top: 0, width: 200, height: 100 },
       scales: {
@@ -60,6 +61,7 @@ describe('bar Chart.js configuration', () => {
     };
     const draw = vectorBarPlugin(0.8).afterDatasetsDraw!;
     draw(chart as never, {} as never, {} as never, false);
+    expect(chart.ctx.fillStyle).toBe(`rgba(51, 153, 255, ${180 / 255})`);
     expect(fillRect.mock.calls).toEqual([
       [16, 20, 8, 30],
       [46, 50, 8, 20],

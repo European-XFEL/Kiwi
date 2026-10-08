@@ -123,17 +123,17 @@ describe('trend Chart.js configuration', () => {
     model.x_grid = true;
     model.y_grid = true;
     const option = trendChartOption(model, series);
-    expect(trendDatasets(series)).toMatchObject([
+    expect(trendDatasets(series, model)).toMatchObject([
       {
         label: 'A.value',
         data: [
           { x: 1000, y: 1 },
           { x: 2000, y: 2 },
         ],
-        borderColor: '#009be5',
+        borderColor: '#3399ff',
         spanGaps: true,
       },
-      { label: 'B.value', data: [{ x: 1500, y: 3 }], borderColor: '#ff0040' },
+      { label: 'B.value', data: [{ x: 1500, y: 3 }], borderColor: '#ff3333' },
     ]);
     expect(option.options).toMatchObject({
       animation: false,

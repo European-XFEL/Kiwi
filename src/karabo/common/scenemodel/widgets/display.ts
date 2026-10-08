@@ -12,7 +12,7 @@ import {
   BaseDisplayEditableWidget,
   BasePlotModel,
 } from '../bases';
-import { FONT_SIZE_DEFAULT } from '../constants';
+import { FONT_SIZE_DEFAULT, NS_KARABO } from '../constants';
 import { krbAttr, readBaseWidgetData, toBool, toNum, toStr } from '../util';
 import { registerReader } from '../Registry';
 
@@ -354,7 +354,39 @@ registerReader('Evaluator', (element) => {
 // DisplayTrendGraph
 // ----------------------------------------------------------------------------
 
+export type CurveOptions = {
+  key: string;
+  name: string;
+  pen_color: string;
+  curve_type: 1 | 2;
+};
+
+function readCurveOptions(element: Element): CurveOptions[] {
+  const options: CurveOptions[] = [];
+  for (const child of element.children) {
+    if (
+      child.namespaceURI !== NS_KARABO ||
+      child.localName !== 'curve_options'
+    ) {
+      continue;
+    }
+    const curveType = Number(child.getAttribute('curve_type'));
+    if (curveType !== 1 && curveType !== 2) {
+      continue;
+    }
+    const key = child.getAttribute('key') ?? '';
+    options.push({
+      key,
+      name: child.getAttribute('name') ?? '',
+      pen_color: child.getAttribute('pen_color') ?? '',
+      curve_type: curveType,
+    });
+  }
+  return options;
+}
+
 export class BaseTrendModel extends BasePlotModel {
+  curve_options: CurveOptions[] = [];
   x_grid = true;
   y_grid = true;
 }
@@ -395,6 +427,8 @@ const readTrendGraph = (
   graph.title = toStr(krbAttr(element, 'title'));
   graph.background = toStr(krbAttr(element, 'background'), 'transparent');
 
+  graph.curve_options = readCurveOptions(element);
+
   return graph;
 };
 
@@ -411,6 +445,7 @@ registerReader('DisplayAlarmGraph', (element) =>
 // ----------------------------------------------------------------------------
 
 export class DisplayVectorGraphModel extends BasePlotModel {
+  curve_options: CurveOptions[] = [];
   klass = 'DisplayVectorGraph';
   x_grid = true;
   y_grid = true;
@@ -419,6 +454,7 @@ export class DisplayVectorGraphModel extends BasePlotModel {
 }
 
 export class NDArrayGraphModel extends BasePlotModel {
+  curve_options: CurveOptions[] = [];
   klass = 'NDArrayGraph';
   x_grid = true;
   y_grid = true;
@@ -476,6 +512,7 @@ const readVectorPlot = <T extends BasePlotModel>(
 
 registerReader('VectorGraph', (element) => {
   const graph = readVectorPlot(element, new DisplayVectorGraphModel());
+  graph.curve_options = readCurveOptions(element);
   graph.offset = toNum(krbAttr(element, 'offset'), 0.0);
   graph.step = toNum(krbAttr(element, 'step'), 1.0);
   graph.x_grid = toBool(krbAttr(element, 'x_grid'), true);
@@ -484,6 +521,7 @@ registerReader('VectorGraph', (element) => {
 });
 registerReader('NDArrayGraph', (element) => {
   const graph = readVectorPlot(element, new NDArrayGraphModel());
+  graph.curve_options = readCurveOptions(element);
   graph.offset = toNum(krbAttr(element, 'offset'), 0.0);
   graph.step = toNum(krbAttr(element, 'step'), 1.0);
   graph.x_grid = toBool(krbAttr(element, 'x_grid'), true);

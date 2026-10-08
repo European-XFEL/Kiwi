@@ -1,25 +1,34 @@
 import type { ChartConfiguration } from 'chart.js';
 import type { PlotSettings } from '../common/buildModelConfig';
-import { GRAPH_LAYOUT, TRACE_COLORS, type Range } from '../common/constants';
+import { GRAPH_LAYOUT, type Range } from '../common/constants';
+import { resolveCurveStyle } from '../common/curveStyle';
 import { buildPlotAxes, type PlotAxesConfig } from '../graphAxes';
 import { commonChartOption } from '../common/commonConfig';
 import type { TrendSeries } from './useTrendModel';
 
 export function trendDatasets(
-  series: TrendSeries[]
+  series: TrendSeries[],
+  plotConfig: PlotSettings
 ): ChartConfiguration<'line'>['data']['datasets'] {
-  return series.map((item, index) => ({
-    label: item.key,
-    data: item.timestamps.map((x, point) => ({ x, y: item.values[point] })),
-    borderColor: TRACE_COLORS[index % TRACE_COLORS.length],
-    backgroundColor: TRACE_COLORS[index % TRACE_COLORS.length],
-    borderWidth: GRAPH_LAYOUT.lineWidth,
-    pointRadius: GRAPH_LAYOUT.trendPointSize,
-    pointHoverRadius: GRAPH_LAYOUT.trendPointSize,
-    spanGaps: true,
-    tension: 0,
-    stepped: false,
-  }));
+  return series.map((item, index) => {
+    const { label, color } = resolveCurveStyle({
+      key: item.key,
+      index,
+      plotConfig,
+    });
+    return {
+      label,
+      data: item.timestamps.map((x, point) => ({ x, y: item.values[point] })),
+      borderColor: color,
+      backgroundColor: color,
+      borderWidth: GRAPH_LAYOUT.lineWidth,
+      pointRadius: GRAPH_LAYOUT.trendPointSize,
+      pointHoverRadius: GRAPH_LAYOUT.trendPointSize,
+      spanGaps: true,
+      tension: 0,
+      stepped: false,
+    };
+  });
 }
 
 export function trendChartOption(
@@ -39,6 +48,6 @@ export function trendChartOption(
     'line',
     onYAxisWidth
   );
-  config.data.datasets = trendDatasets(series);
+  config.data.datasets = trendDatasets(series, plotConfig);
   return config;
 }

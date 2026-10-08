@@ -10,6 +10,53 @@ import {
 import { padViewportRange } from '../utils';
 
 describe('vector Chart.js configuration', () => {
+  it('uses the twelve desktop colors and wraps on the thirteenth curve', () => {
+    const keys = Array.from({ length: 13 }, (_, index) => `DEV.${index}`);
+    const datasets = vectorChartOption(
+      buildModelConfig(new DisplayVectorGraphModel()),
+      keys
+    ).data.datasets;
+    expect(datasets.map((dataset) => dataset.borderColor)).toEqual([
+      '#3399ff',
+      '#ff3333',
+      '#33a02c',
+      '#a6cee3',
+      '#6a3d9a',
+      '#ffff00',
+      '#fb9a99',
+      '#b15928',
+      '#ff7f00',
+      '#b2df8a',
+      '#cab2d6',
+      '#000000',
+      '#3399ff',
+    ]);
+  });
+
+  it('matches full keys, preserves blank names and keeps custom curves in the palette cycle', () => {
+    const config = buildModelConfig(new DisplayVectorGraphModel());
+    config.curve_options = [
+      { key: 'DEV.a', name: 'Saved', pen_color: '#123456', curve_type: 1 },
+      { key: 'DEV.b', name: '', pen_color: ' ', curve_type: 1 },
+      {
+        key: 'OTHER.c',
+        name: 'Unmatched',
+        pen_color: '#abcdef',
+        curve_type: 1,
+      },
+    ];
+    const keys = ['DEV.b', 'DEV.a', 'DEV.c'];
+    expect(vectorChartOption(config, keys).data.datasets).toMatchObject([
+      { label: '', borderColor: '#3399ff', backgroundColor: '#3399ff' },
+      { label: 'Saved', borderColor: '#123456', backgroundColor: '#123456' },
+      { label: 'DEV.c', borderColor: '#33a02c' },
+    ]);
+    expect(vectorXYChartOption(config, keys).data.datasets).toMatchObject([
+      { label: 'DEV.b', borderColor: '#3399ff' },
+      { label: 'DEV.a', borderColor: '#ff3333' },
+      { label: 'DEV.c', borderColor: '#33a02c' },
+    ]);
+  });
   it('labels ordered datasets, cycles colors and disables line markers', () => {
     const keys = Array.from({ length: 7 }, (_, index) => `DEV.value${index}`);
     const config = vectorChartOption(

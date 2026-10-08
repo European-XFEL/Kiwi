@@ -6,7 +6,10 @@ import {
   screen,
 } from '@testing-library/react';
 import { Chart } from 'chart.js/auto';
-import { DisplayVectorGraphModel } from '@/karabo/common/api';
+import {
+  DisplayVectorGraphModel,
+  NDArrayGraphModel,
+} from '@/karabo/common/api';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 import type { PropertyProxy } from '@/lib/binding/api';
 import { makeVectorProxy } from '../../graph/testing/vectorProxy';
@@ -116,6 +119,43 @@ test('preserves visibility across updates, reorder, configuration and reset', ()
   fireEvent.click(screen.getByRole('button', { name: 'b' }));
   expect(chart().isDatasetVisible(0)).toBe(true);
 });
+
+test.each([DisplayVectorGraphModel, NDArrayGraphModel])(
+  '%p plots saved labels and colors matching the legend across data updates',
+  (Model) => {
+    const model = new Model();
+    model.keys = ['DEV.a', 'DEV.b'];
+    model.curve_options = [
+      { key: 'DEV.a', name: 'Saved', pen_color: '#123456', curve_type: 1 },
+    ];
+    const a = makeVectorProxy([1]);
+    const b = makeVectorProxy([2]);
+    const ctx = context([a, b]);
+    const view = render(<DisplayVectorGraph model={model} ctx={ctx} />);
+    flush();
+    expect(chart().data.datasets[0]).toMatchObject({
+      label: 'Saved',
+      borderColor: '#123456',
+    });
+    const button = screen.getByRole('button', { name: 'Saved' });
+    expect(button.firstElementChild).toHaveStyle({
+      backgroundColor: '#123456',
+    });
+    fireEvent.click(button);
+    a.binding!.setValue([3, 4], undefined);
+    view.rerender(<DisplayVectorGraph model={model} ctx={ctx} />);
+    flush();
+    expect(chart().data.datasets[0]).toMatchObject({
+      label: 'Saved',
+      borderColor: '#123456',
+      data: [
+        { x: 0, y: 3 },
+        { x: 1, y: 4 },
+      ],
+    });
+    expect(chart().isDatasetVisible(0)).toBe(false);
+  }
+);
 
 test('samples each curve independently and keeps line markers disabled', () => {
   const model = new DisplayVectorGraphModel();
