@@ -9,62 +9,71 @@
 import React from 'react';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 import { DisplayCommandModel } from '@/karabo/common/api';
-import { useGlobalStore } from '@/store/api';
 import { AccessLevel } from '@/karabo/data/api';
-import { ProxyStatus } from '@/lib/binding/api';
-import { getNetwork } from '@/lib/singletons/api';
+import { PropertyProxy, ProxyStatus } from '@/lib/binding/api';
+import { SlotBinding } from '@/lib/binding/BaseBinding';
 import { getControllerFontStyle } from '../utils/fonts';
 import { CommandButton } from '@/components/api';
 
-// DisplayCommand
-// ----------------------------------------------------------------------------
+function isCommandEnabled(
+  proxy: PropertyProxy,
+  userAccessLevel: AccessLevel
+): boolean {
+  const binding = proxy.binding;
+  const state = proxy.root.state;
+  return (
+    binding instanceof SlotBinding &&
+    !!proxy.root.deviceId &&
+    !!proxy.path &&
+    proxy.root.status !== ProxyStatus.OFFLINE &&
+    !!state &&
+    binding.is_allowed(state) &&
+    userAccessLevel >= binding.requiredAccessLevel
+  );
+}
 
 const DisplayCommand: React.FC<{
   model: DisplayCommandModel;
   ctx?: ControllerContainerContext;
 }> = ({ model, ctx }) => {
-  const deviceId = ctx?.proxy?.root.deviceId;
-  const propertyPath = ctx?.proxy?.path;
-  const proxyStatus = ctx?.proxy?.root.status ?? ProxyStatus.OFFLINE;
-  const deviceState = ctx?.proxy?.root.state;
-  const binding = ctx?.proxy?.binding;
-
-  const userAccessLevel = useGlobalStore(
-    (s) => s.sessionInfo?.accessLevel ?? AccessLevel.OBSERVER
+  const userAccessLevel = ctx?.userAccessLevel ?? AccessLevel.OBSERVER;
+  // XXX: find returns the first enabled proxy here
+  const enabledProxy = ctx?.proxies.find((proxy) =>
+    isCommandEnabled(proxy, userAccessLevel)
   );
-
-  const requiredAccessLevel =
-    binding?.requiredAccessLevel ?? AccessLevel.OPERATOR;
-  const hasCommandPermission = userAccessLevel >= requiredAccessLevel;
-
-  const isDeviceOnline = proxyStatus !== ProxyStatus.OFFLINE;
-
-  // Core start/stop logic — binding.is_allowed() knows which states permit this command
-  const stateAllowsCommand =
-    !!deviceId &&
-    deviceState != null &&
-    (binding?.is_allowed?.(deviceState) ?? false);
-
-  const buttonCaption = binding?.displayedName ?? propertyPath ?? '';
-
-  const isEnabled =
-    hasCommandPermission && isDeviceOnline && stateAllowsCommand;
+  const proxy = enabledProxy ?? ctx?.proxies[0];
+  const binding = proxy?.binding;
+  let buttonCaption = 'NO TEXT';
+  if (proxy && binding) {
+    buttonCaption = binding.displayedName || proxy.path || 'NO TEXT';
+  }
+  const isEnabled = enabledProxy !== undefined;
+  const setTooltip = ctx?.setTooltip;
+  const tooltip = proxy?.key;
+  React.useEffect(() => {
+    setTooltip?.(tooltip);
+    return () => setTooltip?.(undefined);
+  }, [setTooltip, tooltip]);
 
   const onSubmitCommand = React.useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
-      if (!deviceId || !propertyPath) return;
+      if (!proxy || !isEnabled) {
+        return;
+      }
 
       if (model.requires_confirmation) {
         const confirmed = window.confirm(
           `Are you sure you want to execute "${buttonCaption}"?`
         );
-        if (!confirmed) return;
+        if (!confirmed) {
+          return;
+        }
       }
 
-      getNetwork().onExecute(deviceId, propertyPath);
+      proxy.execute();
     },
-    [deviceId, propertyPath, model.requires_confirmation, buttonCaption]
+    [proxy, isEnabled, model.requires_confirmation, buttonCaption]
   );
 
   return (
@@ -72,14 +81,19 @@ const DisplayCommand: React.FC<{
       width={model.width}
       height={model.height}
       disabled={!isEnabled}
+      hasMultipleCommands={(ctx?.proxies.length ?? 0) > 1}
       data-testid="controller-command"
       ariaLabel={`Command: ${buttonCaption}`}
-      style={getControllerFontStyle(model.font_size, model.font_weight)}
+      style={{
+        ...getControllerFontStyle(model.font_size, model.font_weight),
+        ...(model.requires_confirmation && {
+          fontWeight: 'bold',
+          color: isEnabled ? 'rgb(255, 145, 255)' : undefined,
+        }),
+      }}
       onClick={onSubmitCommand}
     >
-      {model.requires_confirmation
-        ? `${buttonCaption} (Confirm)`
-        : buttonCaption}
+      {buttonCaption}
     </CommandButton>
   );
 };

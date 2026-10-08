@@ -75,9 +75,31 @@ describe('Network command logging', () => {
         'command',
         'start',
         'reply',
-        true
+        true,
+        'timeout',
+        5
       )
     );
     unsubscribe();
+  });
+
+  it('omits the timeout for macros while requesting a reply', () => {
+    const network = getNetwork();
+    const sendHash = jest
+      .spyOn(network, 'sendHash')
+      .mockImplementation(() => {});
+    network.onExecute('MACRO', 'start', true);
+    expect(sendHash).toHaveBeenCalledWith(
+      new Hash(
+        'type',
+        'execute',
+        'deviceId',
+        'MACRO',
+        'command',
+        'start',
+        'reply',
+        true
+      )
+    );
   });
 });
