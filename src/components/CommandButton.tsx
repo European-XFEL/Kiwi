@@ -4,6 +4,7 @@ type CommandButtonProps = {
   width: number;
   height: number;
   disabled: boolean;
+  hasMultipleCommands?: boolean;
   title?: string;
   ariaLabel: string;
   style?: React.CSSProperties;
@@ -15,6 +16,7 @@ export default function CommandButton({
   width,
   height,
   disabled,
+  hasMultipleCommands = false,
   title,
   ariaLabel,
   style,
@@ -22,7 +24,7 @@ export default function CommandButton({
   children,
 }: CommandButtonProps) {
   const baseClasses =
-    'inline-flex appearance-none items-center justify-center rounded-[3px] px-3 select-none transition-all duration-75 outline-none overflow-hidden';
+    'relative inline-flex appearance-none items-center justify-center rounded-[3px] px-3 select-none transition-all duration-75 outline-none overflow-hidden';
 
   const enabledClasses =
     'text-[#222] border border-[#a0a0a0] bg-gradient-to-b from-[#fdfdfd] to-[#dedede] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] hover:from-[#ffffff] hover:to-[#e8e8e8] active:bg-none active:bg-[#d0d0d0] active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.15)] active:border-[#888888] cursor-default';
@@ -57,6 +59,20 @@ export default function CommandButton({
       >
         {children}
       </span>
+      {hasMultipleCommands && (
+        <svg
+          data-testid="command-multiple-indicator"
+          aria-hidden="true"
+          focusable="false"
+          className="pointer-events-none absolute right-[2px] bottom-[2px]"
+          width="6"
+          height="4"
+          viewBox="0 0 6 4"
+          fill="currentColor"
+        >
+          <path d="M0 0h6L3 3z" />
+        </svg>
+      )}
     </button>
   );
 }

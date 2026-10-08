@@ -1,7 +1,8 @@
-import { BaseBinding } from './BaseBinding';
+import { BaseBinding, SlotBinding } from './BaseBinding';
 import type { DeviceProxy } from './DeviceProxy';
 import { Signal } from '../utils';
 import { AccessLevel, AccessMode } from '@/karabo/data/enums';
+import { getNetwork, getTopology } from '@/lib/singletons/api';
 
 type Unsubscribe = () => void;
 
@@ -49,6 +50,24 @@ export class PropertyProxy {
 
   get root(): DeviceProxy {
     return this.root_proxy;
+  }
+
+  public execute(): void {
+    const binding = this.binding;
+    const state = this.root.state;
+    if (
+      !(binding instanceof SlotBinding) ||
+      !state ||
+      !binding.is_allowed(state)
+    ) {
+      return;
+    }
+    const deviceId = this.root.deviceId;
+    getNetwork().onExecute(
+      deviceId,
+      this.path,
+      getTopology().isMacro(deviceId)
+    );
   }
 
   get value(): any {

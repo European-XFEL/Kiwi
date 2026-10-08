@@ -530,10 +530,17 @@ export class Network {
     this.sendHash(h);
   }
 
-  public onExecute(deviceId: string, command: string): void {
+  public onExecute(
+    deviceId: string,
+    command: string,
+    ignoreTimeouts = false
+  ): void {
     getLogger().info(`Executing command "${command}" on device "${deviceId}"`);
     // prettier-ignore
     const h = new Hash('type', 'execute', 'deviceId', deviceId, 'command', command, 'reply', true);
+    if (!ignoreTimeouts) {
+      h.set('timeout', REQUEST_REPLY_TIMEOUT);
+    }
     this.sendHash(h);
   }
 

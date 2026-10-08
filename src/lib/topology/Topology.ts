@@ -17,6 +17,10 @@ export class SystemTopology {
     return this._system_hash != null;
   }
 
+  public isMacro(deviceId: string): boolean {
+    return this._system_hash?.getValue('macro')?.has(deviceId) ?? false;
+  }
+
   public isDeviceOnline = (deviceId: string): boolean => {
     if (this._system_hash?.getValue('device').has(deviceId)) {
       return true;
