@@ -54,6 +54,21 @@ registerReader('DisplayList', (element) => {
   return list;
 });
 
+// DisplayTextLog
+// ----------------------------------------------------------------------------
+
+export class DisplayTextLogModel extends BaseWidgetObjectData {
+  klass = 'DisplayTextLog';
+}
+
+registerReader('DisplayTextLog', (element) => {
+  const textLog = new DisplayTextLogModel();
+
+  readBaseWidgetData(element, textLog);
+
+  return textLog;
+});
+
 // DisplayFloat
 // ----------------------------------------------------------------------------
 
