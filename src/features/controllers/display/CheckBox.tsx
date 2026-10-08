@@ -4,6 +4,7 @@ import React from 'react';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 import { CheckBoxModel } from '@/karabo/common/api';
 import { Checkbox } from '@/components/api';
+import icons from '@/assets/icons';
 import { isControllerEditable } from '../utils/controller_semantics';
 //import { Hash } from '@/karabo/data/hash';
 //import { getNetwork } from '@/lib/singletons/api';
@@ -15,7 +16,6 @@ const CHECKBOX_BASE =
   'border border-gray-700 rounded-none ' +
   'data-[state=checked]:bg-white data-[state=checked]:text-black data-[state=checked]:border-black';
 
-const DISPLAY_CHECKBOX_CLASSNAME = CHECKBOX_BASE + ' pointer-events-none';
 const EDITABLE_CHECKBOX_CLASSNAME = CHECKBOX_BASE;
 
 function toBool(value: unknown): boolean {
@@ -32,11 +32,13 @@ export const DisplayCheckBox: React.FC<{
   const checked = toBool(ctx?.proxy?.value);
   return (
     <div className="w-full h-full flex items-center justify-center">
-      <Checkbox
-        checked={checked}
-        aria-readonly="true"
+      <img
+        src={checked ? icons.checkboxChecked : icons.checkboxUnchecked}
+        alt={String(checked)}
+        width={20}
+        height={20}
         data-testid="display-checkbox"
-        className={DISPLAY_CHECKBOX_CLASSNAME}
+        className="w-5 h-5 shrink-0 max-w-none"
       />
     </div>
   );
