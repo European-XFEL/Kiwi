@@ -6,6 +6,11 @@ import { ProjectItemModel } from '@/lib/singletons/ProjectItemModel';
 import { getProjectModel } from '@/lib/singletons/api';
 import { SingletonContext } from '@/testing';
 import {
+  DeviceProxy,
+  ProxyStatus,
+  VectorStringBinding,
+} from '@/lib/binding/api';
+import {
   openDeviceSceneLinkInWorkspace,
   openSceneLinkInWorkspace,
   sceneUuidFromLinkTarget,
@@ -27,6 +32,7 @@ jest.mock('@/lib/messagebox', () => ({
 const mockCallDeviceSlot = jest.fn();
 const mockLogInfo = jest.fn();
 const mockGetDeviceInstanceInfo = jest.fn();
+const mockGetDevice = jest.fn();
 const mockGetDatabaseScene = jest.fn();
 const mockProjectModel = new ProjectItemModel();
 const mockMediator = { postEvent: jest.fn() };
@@ -50,7 +56,10 @@ beforeEach(() => {
     logger: { info: mockLogInfo },
     project_model: mockProjectModel,
     mediator: mockMediator,
-    topology: { getDeviceInstanceInfo: mockGetDeviceInstanceInfo },
+    topology: {
+      getDeviceInstanceInfo: mockGetDeviceInstanceInfo,
+      getDevice: mockGetDevice,
+    },
     db_conn: { getDatabaseScene: mockGetDatabaseScene },
   });
 });
@@ -254,4 +263,93 @@ describe('openDeviceSceneLinkInWorkspace', () => {
     });
     expect(openUnattachedSceneInWorkspace).not.toHaveBeenCalled();
   });
+
+  it('resolves the first available scene and releases temporary monitoring', async () => {
+    const root = new DeviceProxy('device-1');
+    root.status = ProxyStatus.ALIVE;
+    const scenes = new VectorStringBinding();
+    root.binding.value!.set('availableScenes', scenes);
+    const release = jest.fn();
+    jest.spyOn(root, 'addMonitor').mockReturnValue(release);
+    mockGetDevice.mockReturnValue(root);
+    mockGetDeviceInstanceInfo.mockReturnValue(
+      new Hash('capabilities', Capabilities.PROVIDES_SCENES)
+    );
+    mockCallDeviceSlot.mockImplementation((handler) => {
+      handler(
+        true,
+        new Hash({
+          payload: new Hash({ data: '<svg width="100" height="100"></svg>' }),
+        })
+      );
+      return 'request-token';
+    });
+    const pending = openDeviceSceneLinkInWorkspace('device-1');
+    expect(root.addMonitor).toHaveBeenCalledTimes(1);
+    expect(release).not.toHaveBeenCalled();
+    scenes.setValue(['first', 'second'], undefined);
+    await pending;
+    expect(mockCallDeviceSlot).toHaveBeenCalledWith(
+      expect.any(Function),
+      'device-1',
+      'requestScene',
+      { name: 'first' }
+    );
+    expect(release).toHaveBeenCalledTimes(1);
+    scenes.setValue(['third'], undefined);
+    expect(mockCallDeviceSlot).toHaveBeenCalledTimes(1);
+  });
+
+  it('releases default-scene monitoring on disconnect without requesting a scene', async () => {
+    const root = new DeviceProxy('device-1');
+    root.status = ProxyStatus.ALIVE;
+    const release = jest.fn();
+    jest.spyOn(root, 'addMonitor').mockReturnValue(release);
+    mockGetDevice.mockReturnValue(root);
+    const pending = openDeviceSceneLinkInWorkspace('device-1');
+    root.setOnlineFlag(false);
+    await pending;
+    expect(release).toHaveBeenCalledTimes(1);
+    expect(mockCallDeviceSlot).not.toHaveBeenCalled();
+  });
+
+  const gcTest = global.gc ? it : it.skip;
+  gcTest(
+    'keeps a default-scene resolver alive until the monitored value arrives',
+    async () => {
+      const root = new DeviceProxy('device-1');
+      root.status = ProxyStatus.ALIVE;
+      const scenes = new VectorStringBinding();
+      root.binding.value!.set('availableScenes', scenes);
+      const release = jest.fn();
+      jest.spyOn(root, 'addMonitor').mockReturnValue(release);
+      mockGetDevice.mockReturnValue(root);
+      mockGetDeviceInstanceInfo.mockReturnValue(
+        new Hash('capabilities', Capabilities.PROVIDES_SCENES)
+      );
+      mockCallDeviceSlot.mockImplementation((handler) => {
+        handler(
+          true,
+          new Hash({
+            payload: new Hash({ data: '<svg width="100" height="100"></svg>' }),
+          })
+        );
+        return 'request-token';
+      });
+      void openDeviceSceneLinkInWorkspace('device-1');
+      for (let index = 0; index < 5; index++) {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        global.gc!();
+      }
+      scenes.setValue(['first'], undefined);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(mockCallDeviceSlot).toHaveBeenCalledWith(
+        expect.any(Function),
+        'device-1',
+        'requestScene',
+        { name: 'first' }
+      );
+      expect(release).toHaveBeenCalledTimes(1);
+    }
+  );
 });

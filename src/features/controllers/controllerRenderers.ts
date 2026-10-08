@@ -24,7 +24,9 @@ import {
   EditableLineEdit,
 } from '@/features/controllers/display/LineEdit';
 import StatefulIconWidget from '@/features/controllers/display/StatefulIconWidget';
-import TableElement from '@/features/controllers/display/TableElement';
+import TableElement, {
+  FilterTableElement,
+} from '@/features/controllers/display/TableElement';
 import EditableComboBox from '@/features/controllers/editable/EditableComboBox';
 import {
   EditableList,
@@ -65,6 +67,8 @@ export function bootstrapControllerRenderers(
   registerRenderer('EditableLineEdit', EditableLineEdit);
   registerRenderer('DisplayTableElement', TableElement);
   registerRenderer('EditableTableElement', TableElement);
+  registerRenderer('DisplayFilterTableElement', FilterTableElement);
+  registerRenderer('EditableFilterTableElement', FilterTableElement);
   registerRenderer('StatefulIconWidget', StatefulIconWidget);
   registerRenderer('DisplayTrendGraph', DisplayTrendGraph);
   registerRenderer('DisplayStateGraph', DisplayTrendGraph);

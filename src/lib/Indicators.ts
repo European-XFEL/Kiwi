@@ -18,14 +18,15 @@ const StateColors = {
  * Return the rgba color for a given state string.
  */
 export function getStateColor(
-  value: string
-): (typeof StateColors)[keyof typeof StateColors] {
+  value: string,
+  failureColor: string = StateColors.NONE
+): string {
   let state: State;
 
   try {
     state = new State(value);
   } catch {
-    return StateColors.NONE;
+    return failureColor;
   }
 
   let colorState: State = State.UNKNOWN;

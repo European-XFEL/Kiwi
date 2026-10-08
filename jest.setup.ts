@@ -4,6 +4,19 @@ import { TextEncoder, TextDecoder } from 'util';
 
 Object.assign(global, { TextDecoder, TextEncoder });
 
+// jsdom lacks CSS.supports; use its declaration parser for property checks.
+const cssSupportsStyle = document.createElement('div').style;
+Object.assign(global, {
+  CSS: {
+    ...global.CSS,
+    supports(property: string, value: string): boolean {
+      cssSupportsStyle.cssText = '';
+      cssSupportsStyle.setProperty(property, value);
+      return cssSupportsStyle.getPropertyValue(property) !== '';
+    },
+  },
+});
+
 // jsdom does not implement ResizeObserver. Radix ScrollArea reads it during
 // table interaction tests, so use a no-op observer to keep those tests focused
 // on component behavior instead of browser API availability.
