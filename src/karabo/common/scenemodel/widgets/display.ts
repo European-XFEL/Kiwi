@@ -107,6 +107,21 @@ registerReader('DisplayAlarmFloat', (element) => {
   return alarm;
 });
 
+// GlobalAlarm
+// ----------------------------------------------------------------------------
+
+export class GlobalAlarmModel extends BaseWidgetObjectData {
+  klass = 'GlobalAlarm';
+}
+
+const readGlobalAlarm = (element: Element) => {
+  const alarm = new GlobalAlarmModel();
+  readBaseWidgetData(element, alarm);
+  return alarm;
+};
+
+registerReader('GlobalAlarm', readGlobalAlarm);
+
 // CheckBox — dual-mode (Display/Editable)
 // ----------------------------------------------------------------------------
 

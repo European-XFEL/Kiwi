@@ -1,4 +1,5 @@
 import DisplayBarGraph from '../display/DisplayBarGraph';
+import DisplayAlarm from '../display/DisplayAlarm';
 import DisplayColorBool from '../display/DisplayColorBool';
 import DisplayErrorBool from '../display/DisplayErrorBool';
 import DisplayScatterGraph from '../display/DisplayScatterGraph';
@@ -19,6 +20,7 @@ test('registers separate vector line and bar controllers', () => {
   expect(renderers.get('DisplayVectorGraph')).toBe(DisplayVectorGraph);
   expect(renderers.get('DisplayColorBool')).toBe(DisplayColorBool);
   expect(renderers.get('DisplayErrorBool')).toBe(DisplayErrorBool);
+  expect(renderers.get('GlobalAlarm')).toBe(DisplayAlarm);
   expect(renderers.get('VectorGraph')).toBe(DisplayVectorGraph);
   expect(renderers.get('NDArrayGraph')).toBe(DisplayVectorGraph);
   expect(renderers.get('VectorXYGraph')).toBe(DisplayVectorXYGraph);

@@ -1,6 +1,7 @@
 import type { Renderer, RendererProps } from '@/features/scene-view/api';
 import DisplayAlarmFloat from '@/features/controllers/display/DisplayAlarmFloat';
 import DisplayBarGraph from './display/DisplayBarGraph';
+import DisplayAlarm from './display/DisplayAlarm';
 import DisplayWebcamGraph from './display/DisplayWebcamGraph';
 import DisplayScatterGraph from './display/DisplayScatterGraph';
 import {
@@ -57,6 +58,7 @@ export function bootstrapControllerRenderers(
   registerRenderer('DisplayErrorBool', DisplayErrorBool);
   registerRenderer('DisplayList', DisplayList);
   registerRenderer('DisplayAlarmFloat', DisplayAlarmFloat);
+  registerRenderer('GlobalAlarm', DisplayAlarm);
   registerRenderer('DisplayStateColor', DisplayStateColor);
   registerRenderer('Evaluator', Evaluator);
   registerRenderer('DisplayCheckBox', DisplayCheckBox);
