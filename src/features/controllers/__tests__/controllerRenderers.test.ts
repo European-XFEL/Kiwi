@@ -5,9 +5,19 @@ import DisplayVectorGraph from '../display/DisplayVectorGraph';
 import DisplayVectorXYGraph from '../display/DisplayVectorXYGraph';
 import DisplayVectorScatterGraph from '../display/DisplayVectorScatterGraph';
 import DisplayTrendGraph from '../display/DisplayTrendGraph';
+import { FilterTableElement } from '../display/TableElement';
 import { bootstrapControllerRenderers } from '../controllerRenderers';
 
 jest.mock('../display/StatefulIconWidget', () => () => null);
+
+test('editable filter tables use the display filter renderer', () => {
+  const renderers = new Map<string, unknown>();
+  bootstrapControllerRenderers((klass, renderer) => {
+    renderers.set(klass, renderer);
+  }, true);
+  expect(renderers.get('DisplayFilterTableElement')).toBe(FilterTableElement);
+  expect(renderers.get('EditableFilterTableElement')).toBe(FilterTableElement);
+});
 
 test('registers separate vector line and bar controllers', () => {
   const renderers = new Map<string, unknown>();

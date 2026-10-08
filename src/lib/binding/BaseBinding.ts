@@ -75,6 +75,10 @@ export class BaseBinding<TValue = any> {
     this.value_update.fire(value, timestamp);
   }
 
+  public validateValue(value: unknown): TValue | undefined {
+    return this.validate(value);
+  }
+
   protected validate(value: any): TValue | undefined {
     return value;
   }

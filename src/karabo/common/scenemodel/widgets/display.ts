@@ -185,6 +185,30 @@ registerReader('EditableTableElement', (element) => {
   return table;
 });
 
+export class FilterTableElementModel extends BaseWidgetObjectData {
+  klass = 'DisplayFilterTableElement';
+  resizeToContents = false;
+  sortingEnabled = false;
+  filterKeyColumn = 0;
+  showFilterKeyColumn = false;
+}
+
+for (const klass of [
+  'DisplayFilterTableElement',
+  'EditableFilterTableElement',
+]) {
+  registerReader(klass, (element) => {
+    const table = new FilterTableElementModel();
+    table.klass = klass;
+    readBaseWidgetData(element, table);
+    table.resizeToContents = toBool(krbAttr(element, 'resizeToContents'));
+    table.sortingEnabled = toBool(krbAttr(element, 'sortingEnabled'));
+    table.filterKeyColumn = toNum(krbAttr(element, 'filterKeyColumn'), 0);
+    table.showFilterKeyColumn = toBool(krbAttr(element, 'showFilterKeyColumn'));
+    return table;
+  });
+}
+
 // DisplayCommand
 // ----------------------------------------------------------------------------
 

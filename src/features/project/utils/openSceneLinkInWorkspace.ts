@@ -2,6 +2,7 @@ import { type SceneModel } from '@/karabo/common/api';
 import { findSceneModelInProject } from '@/karabo/common/project/api';
 import { Capabilities } from '@/karabo/data/api';
 import { showMessageBox } from '@/lib/messagebox';
+import { PropertyProxy, ProxyStatus } from '@/lib/binding/api';
 import { callDeviceSlot, createRequestSceneHandler } from '@/lib/request';
 import {
   getDbConn,
@@ -59,8 +60,10 @@ export async function openSceneLinkInWorkspace(
 
 export async function openDeviceSceneLinkInWorkspace(
   deviceId: string,
-  sceneName: string
+  sceneName?: string
 ): Promise<void> {
+  if (!sceneName) sceneName = await resolveDefaultDeviceScene(deviceId);
+  if (!sceneName) return;
   console.log(`Opening scene "${sceneName}" of device "${deviceId}" ...`);
   const result = await _retrieveDeviceScene(deviceId, sceneName);
   if (result) {
@@ -69,6 +72,46 @@ export async function openDeviceSceneLinkInWorkspace(
     result.simple_name = `${deviceId}|${sceneName}`;
     openUnattachedSceneInWorkspace(result);
   }
+}
+
+function resolveDefaultDeviceScene(
+  deviceId: string
+): Promise<string | undefined> {
+  const root = getTopology().getDevice(deviceId);
+  if (root.status === ProxyStatus.OFFLINE) return Promise.resolve(undefined);
+  const proxy = new PropertyProxy(root, 'availableScenes');
+  return new Promise((resolve) => {
+    let ready = false;
+    const cleanups: (() => void)[] = [];
+    const finish = (name?: string) => {
+      cleanups.forEach((cleanup) => cleanup());
+      proxy.dispose();
+      resolve(name);
+    };
+    const check = () => {
+      if (!ready) return;
+      if (root.status === ProxyStatus.OFFLINE) {
+        finish();
+        return;
+      }
+      const scenes: unknown = proxy.value;
+      if (Array.isArray(scenes)) {
+        finish(typeof scenes[0] === 'string' ? scenes[0] : undefined);
+      } else if (root.hasSchema() && !proxy.binding) {
+        finish();
+      }
+    };
+    cleanups.push(
+      proxy.value_update(check),
+      proxy.binding_update(check),
+      // The topology owns root strongly; retain check and its temporary proxy
+      // while waiting, since Signal holds its subscription owners weakly.
+      root.status_update.subscribe(root, check)
+    );
+    proxy.startMonitoring();
+    ready = true;
+    check();
+  });
 }
 
 async function _retrieveDeviceScene(

@@ -1,18 +1,39 @@
 import { render, screen, within } from '@testing-library/react';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 import { TableElementModel } from '@/karabo/common/api';
-import { AccessLevel, Hash, HashList, HashType } from '@/karabo/data/api';
-import { BoolBinding, StringBinding } from '@/lib/binding/api';
+import {
+  AccessLevel,
+  Hash,
+  HashList,
+  HashAttributes,
+  Schema,
+} from '@/karabo/data/api';
+import { VectorHashBinding } from '@/lib/binding/api';
 import TableElement from '../TableElement';
 
 function renderTable() {
-  const select = new BoolBinding();
-  select.displayedName = 'Select';
-  select.hashType = HashType.Bool;
-
-  const channel = new StringBinding();
-  channel.displayedName = 'Channel';
-  channel.hashType = HashType.String;
+  const schema = new Hash();
+  schema.setElement(
+    'select',
+    new Hash(),
+    new HashAttributes({
+      nodeType: 0,
+      valueType: 'BOOL',
+      displayedName: 'Select',
+    })
+  );
+  schema.setElement(
+    'channel',
+    new Hash(),
+    new HashAttributes({
+      nodeType: 0,
+      valueType: 'STRING',
+      displayedName: 'Channel',
+    })
+  );
+  const binding = new VectorHashBinding({
+    attributes: new HashAttributes({ rowSchema: new Schema('row', schema) }),
+  });
 
   const ctx = {
     proxy: {
@@ -20,9 +41,7 @@ function renderTable() {
         new Hash({ select: true, channel: 'channel_1_C' }),
         new Hash({ select: false, channel: 'channel_1_A' }),
       ]),
-      binding: {
-        rowSchema: { select, channel },
-      },
+      binding,
     },
     proxies: [],
     userAccessLevel: AccessLevel.OBSERVER,
