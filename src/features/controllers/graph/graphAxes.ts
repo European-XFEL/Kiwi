@@ -141,7 +141,11 @@ function buildNumericAxis(
           config.scale !== 'logarithmic' ||
           !ticks.some((tick) => tick.major)
         ) {
-          return formatValueTick(Number(value));
+          const neighbor = ticks[index + 1] ?? ticks[index - 1];
+          const spacing = neighbor
+            ? Math.abs(neighbor.value - Number(value))
+            : undefined;
+          return formatValueTick(Number(value), spacing);
         }
         // Like PyQt, label log Y decades. Empty strings retain minor marks and
         // gridlines; null/undefined would remove them. Narrow views without a
@@ -257,6 +261,12 @@ function buildXAxis(axes: PlotAxesConfig): ChartAxis {
       scale.height = title
         ? GRAPH_LAYOUT.xAxisSize.titled
         : GRAPH_LAYOUT.xAxisSize.untitled;
+      if (config.kind === 'numeric') {
+        // The label plugin hides text crossing plot boundaries. Do not reserve
+        // endpoint-dependent side padding for labels that will not be drawn.
+        scale.paddingLeft = 0;
+        scale.paddingRight = 0;
+      }
     },
     // Titles combine labels and units; shared fonts and zero extra padding.
     title: {
@@ -277,9 +287,8 @@ function buildXAxis(axes: PlotAxesConfig): ChartAxis {
       color: GRAPH_COLORS.frame,
       font: GRAPH_AXIS_FONT,
       padding: 2,
-      // Numeric edge labels stay inside the available width. Time overrides
-      // this with centered labels and measures their extents before drawing.
-      align: 'inner',
+      // Center labels on their ticks, matching pyqtgraph's AxisItem.
+      align: 'center',
       ...axis.ticks,
     },
   };
@@ -294,6 +303,7 @@ function buildYAxis(
   const axis = config.categories
     ? buildStateAlarmAxis(config.categories, onYAxisWidth)
     : buildNumericAxis(config, { decadeLabels: true });
+  const widths = new WeakMap<Scale, number>();
   return {
     position: 'left',
     beginAtZero: !!config.beginAtZero && config.scale !== 'logarithmic',
@@ -302,11 +312,15 @@ function buildYAxis(
     min: config.range?.[0],
     max: config.range?.[1],
     afterFit: (scale) => {
-      // Numeric Y has a fixed gutter. State/alarm overrides this with its
-      // measured-width callback from the builder above.
-      scale.width = title
+      // Keep the minimum gutter, but allow full labels to fit. Retain the
+      // widest measured gutter so shorter labels after zoom do not shift it.
+      // State/alarm overrides this callback with its own measured sizing.
+      const minimum = title
         ? GRAPH_LAYOUT.yAxisSize.titled
         : GRAPH_LAYOUT.yAxisSize.untitled;
+      scale.width = Math.max(minimum, scale.width, widths.get(scale) ?? 0);
+      widths.set(scale, scale.width);
+      onYAxisWidth?.(scale.width);
     },
     ...axis,
     title: {

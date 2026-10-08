@@ -20,12 +20,21 @@ export function usePlotItem<T extends 'line' | 'scatter' = 'line'>(
 ) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const chartRef = React.useRef<Chart<T> | null>(null);
+  const [yAxisWidth, setYAxisWidth] = React.useState<number>();
   React.useLayoutEffect(() => {
     const container = containerRef.current;
     if (!container) return;
     const canvas = document.createElement('canvas');
     container.appendChild(canvas);
-    const chart = new Chart(canvas, configuration());
+    const config = configuration();
+    config.plugins = [
+      ...(config.plugins ?? []),
+      {
+        id: 'yAxisWidth',
+        afterLayout: (chart) => setYAxisWidth(chart.scales.y.width),
+      },
+    ];
+    const chart = new Chart(canvas, config);
     chartRef.current = chart;
     return () => {
       chart.destroy();
@@ -114,5 +123,5 @@ export function usePlotItem<T extends 'line' | 'scatter' = 'line'>(
       chart.update('none');
     }
   }, []);
-  return { containerRef, viewport, update, setVisible };
+  return { containerRef, viewport, update, setVisible, yAxisWidth };
 }

@@ -27,8 +27,8 @@ describe('useTrendChart view state', () => {
   afterEach(() => jest.restoreAllMocks());
 
   it.each([
-    ['', 52],
-    ['Value', 68],
+    ['', 64],
+    ['Value', 80],
   ])(
     'uses the fixed numeric gutter for title %s in the surrounding layout',
     (label, width) => {

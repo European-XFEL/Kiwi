@@ -35,7 +35,7 @@ it('pairs adaptive time ticks with mapped numeric Y labels and numeric fallbacks
   expect(format(1)).toBe('On');
   expect(format(2)).toBe('2');
   expect(format(0.5)).toBe('0.5');
-  expect(format(0.001234)).toBe('1.23e-3');
+  expect(format(0.001234)).toBe('0.001234');
 });
 
 it.each([
@@ -54,13 +54,15 @@ it.each([
     const config = configure();
     const scales = config.options!.scales!;
     const x = { height: 100 };
-    const y = { width: 100 };
+    const y = { width: 30 };
     scales.x!.afterFit!(x as never);
     scales.y!.afterFit!(y as never);
     expect(x.height).toBe(34);
-    expect(y.width).toBe(52);
-    const formatTick = scales.y!.ticks!.callback as (value: number) => string;
-    expect(formatTick(1.234)).toBe('1.23');
+    expect(y.width).toBe(64);
+    const formatTick = scales.y!.ticks!.callback!;
+    expect(formatTick.call({} as never, 1.234, 0, [{ value: 1.234 }])).toBe(
+      '1.234'
+    );
     expect(config.plugins?.[0]?.id).toBe('kiwiPlotFrame');
   }
 );

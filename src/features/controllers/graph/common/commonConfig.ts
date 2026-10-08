@@ -3,6 +3,7 @@ import type { PlotSettings } from './buildModelConfig';
 import { GRAPH_LAYOUT } from './constants';
 import { plotFrame } from './plotFrame';
 import { chartAxes, type PlotAxesConfig } from '../graphAxes';
+import { numericXLabels } from '../graphPlugins';
 
 export function commonChartOption(
   plotConfig: PlotSettings,
@@ -27,7 +28,8 @@ export function commonChartOption(
     data: { datasets: [{ data: [] }] },
     // Paint a white plot area before datasets and a complete border afterward;
     // the frame remains visible even when endpoint ticks/gridlines are absent.
-    plugins: [plotFrame],
+    plugins:
+      axes.x.kind === 'numeric' ? [plotFrame, numericXLabels] : [plotFrame],
     options: {
       // Follow the container's size; the graph layout supplies height rather
       // than deriving it from Chart.js's default aspect ratio.

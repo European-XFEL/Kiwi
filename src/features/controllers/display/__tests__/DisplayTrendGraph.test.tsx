@@ -153,7 +153,7 @@ describe('DisplayTrendGraph with Chart.js', () => {
     rerender(<DisplayTrendGraph model={replacement} ctx={{ ...ctx }} />);
     expect(chart().isDatasetVisible(0)).toBe(false);
     expect(screen.getByLabelText('Graph legend').parentElement).toHaveStyle({
-      left: '76px',
+      left: '88px',
       top: '26px',
     });
     fireEvent.click(screen.getByRole('button', { name: 'Reset view' }));

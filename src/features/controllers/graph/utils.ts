@@ -19,17 +19,38 @@ export function normalizeVector(raw: unknown): VectorData {
   return normalized;
 }
 
-const tickValueFormat = new Intl.NumberFormat(undefined, {
-  maximumFractionDigits: 2,
-});
-export function formatValueTick(value: number) {
+const GENERAL_TICK_PRECISION = 6;
+const TICK_SPACING_PRECISION = 12;
+
+export function formatValueTick(value: number, spacing?: number) {
+  if (spacing) {
+    // Remove subtraction noise before logarithms choose the decimal precision.
+    spacing = Number(spacing.toPrecision(TICK_SPACING_PRECISION));
+  }
   const magnitude = Math.abs(value);
-  if (magnitude !== 0 && (magnitude < 0.01 || magnitude >= 1e9))
-    return value
-      .toExponential(2)
-      .replace(/\.00e/, 'e')
-      .replace(/(\.\d)0e/, '$1e');
-  return tickValueFormat.format(value);
+  // Like AxisItem.tickStrings, derive fixed-point decimals from tick spacing
+  // and use compact general notation for small and large magnitudes.
+  if (spacing && magnitude >= 0.001 && magnitude < 10000) {
+    const places = Math.min(20, Math.max(0, Math.ceil(-Math.log10(spacing))));
+    return value.toFixed(places);
+  }
+  let precision = GENERAL_TICK_PRECISION;
+  if (spacing && magnitude > 0) {
+    // Keep close large ticks distinct when zoomed beyond six significant digits.
+    precision = Math.min(
+      17,
+      Math.max(
+        precision,
+        Math.floor(Math.log10(magnitude)) - Math.floor(Math.log10(spacing)) + 1
+      )
+    );
+  }
+  const rounded = Number(value.toPrecision(precision));
+  const exponent = Math.floor(Math.log10(Math.abs(rounded)));
+  if (rounded !== 0 && (exponent < -4 || exponent >= precision)) {
+    return rounded.toExponential();
+  }
+  return String(rounded);
 }
 
 export function integerTickFormatter(labels: ReadonlyMap<number, string>) {

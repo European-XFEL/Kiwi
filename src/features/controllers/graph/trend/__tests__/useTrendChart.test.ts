@@ -12,10 +12,10 @@ const series = [
 
 describe('trend Chart.js configuration', () => {
   it.each([
-    ['', 52],
-    ['Value', 68],
+    ['', 64],
+    ['Value', 80],
   ])(
-    'fixes numeric Y width for title %s without publishing a measured width',
+    'reserves the minimum numeric Y width for title %s and publishes it',
     (label, width) => {
       const model = buildModelConfig(new DisplayTrendGraphModel());
       model.y_label = label;
@@ -29,10 +29,10 @@ describe('trend Chart.js configuration', () => {
         axes,
         onYAxisWidth
       );
-      const scale = { width: 120 };
+      const scale = { width: 30 };
       config.options!.scales!.y!.afterFit!(scale as never);
       expect(scale.width).toBe(width);
-      expect(onYAxisWidth).not.toHaveBeenCalled();
+      expect(onYAxisWidth).toHaveBeenCalledWith(width);
       expect(axes.y).not.toHaveProperty('onYAxisWidth');
     }
   );
@@ -269,11 +269,11 @@ describe('trend Chart.js configuration', () => {
       y: { afterFit: (axis: { width: number }) => void };
     };
     const x = { height: 60 };
-    const y = { width: 90 };
+    const y = { width: 30 };
     scales.x.afterFit(x);
     scales.y.afterFit(y);
     expect(x.height).toBe(34);
-    expect(y.width).toBe(52);
+    expect(y.width).toBe(64);
     const titled = buildModelConfig(new DisplayTrendGraphModel());
     titled.x_label = 'Time';
     titled.y_label = 'Value';
@@ -282,16 +282,47 @@ describe('trend Chart.js configuration', () => {
     titledScales.x.afterFit(x);
     titledScales.y.afterFit(y);
     expect(x.height).toBe(42);
-    expect(y.width).toBe(68);
+    expect(y.width).toBe(80);
   });
 
   it.each([
     [1, '1'],
     [1.2, '1.2'],
-    [1.234, '1.23'],
-    [0.001234, '1.23e-3'],
+    [1.234, '1.234'],
+    [0.001234, '0.001234'],
+    [1250000, '1.25e+6'],
+    [20000, '20000'],
     [1e9, '1e+9'],
   ])('formats numeric tick %s', (value, expected) => {
     expect(formatValueTick(value)).toBe(expected);
+  });
+
+  it.each([
+    [0.1, ['0.3', '0.4', '0.5', '0.6', '0.7']],
+    [0.01, ['0.30', '0.31', '0.32', '0.33', '0.34']],
+    [0.009, ['0.300', '0.309', '0.318', '0.327', '0.336']],
+  ])('keeps consistent decimal precision for spacing %s', (spacing, labels) => {
+    const model = buildModelConfig(new DisplayTrendGraphModel());
+    const config = trendChartOption(model, []);
+    const format = config.options!.scales!.y!.ticks!.callback!;
+    const ticks = labels.map((_, index) => ({ value: 0.3 + index * spacing }));
+    expect(
+      ticks.map(({ value }, index) =>
+        format.call({} as never, value, index, ticks)
+      )
+    ).toEqual(labels);
+  });
+
+  it('uses tick spacing for decimal precision without merging close large values', () => {
+    const model = buildModelConfig(new DisplayTrendGraphModel());
+    const config = trendChartOption(model, []);
+    const format = config.options!.scales!.y!.ticks!.callback!;
+    const scale = {} as never;
+    const small = [{ value: 0.012 }, { value: 0.014 }];
+    expect(format.call(scale, 0.012, 0, small)).toBe('0.012');
+    const large = [{ value: 123456789.1 }, { value: 123456789.2 }];
+    expect(format.call(scale, large[0].value, 0, large)).not.toBe(
+      format.call(scale, large[1].value, 1, large)
+    );
   });
 });
