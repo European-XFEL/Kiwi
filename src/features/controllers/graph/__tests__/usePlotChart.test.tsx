@@ -383,6 +383,54 @@ function PlotHarness(props: Parameters<typeof usePlotChart>[0]) {
   return <div ref={plotWindow.containerRef} data-testid="plot" />;
 }
 
+test('reuses one baseline across replacement frames and aligns shorter series', () => {
+  const sample = jest.spyOn(sampling, 'lttbWithCoordinates');
+  const plotConfig = buildModelConfig(new DisplayVectorGraphModel());
+  const series = (lengths: number[]) =>
+    lengths.map((length, index) => ({
+      key: String(index),
+      values: new Float64Array(length).fill(index + 1),
+    }));
+  const renderPlot = (lengths: number[], config = plotConfig) => (
+    <PlotHarness plotConfig={config} ySeries={series(lengths)} />
+  );
+  try {
+    const view = render(renderPlot([3, 3, 2, 0]));
+    const baselines = sample.mock.calls.slice(-4).map(([args]) => args.x);
+    expect(baselines[0]).toBe(baselines[1]);
+    sample.mockClear();
+    view.rerender(renderPlot([3, 2, 0]));
+    expect(sample.mock.calls[0][0].x).toBe(baselines[0]);
+    expect((sample.mock.calls[1][0].x as Float64Array).buffer).toBe(
+      (baselines[0] as Float64Array).buffer
+    );
+    expect((sample.mock.calls[2][0].x as Float64Array).buffer).toBe(
+      (baselines[0] as Float64Array).buffer
+    );
+    sample.mockClear();
+    view.rerender(renderPlot([3]));
+    view.rerender(renderPlot([2]));
+    expect((sample.mock.calls.at(-1)![0].x as Float64Array).buffer).not.toBe(
+      (baselines[0] as Float64Array).buffer
+    );
+    for (const config of [
+      { ...plotConfig, offset: 10, step: 1 },
+      { ...plotConfig, offset: 0, step: -2 },
+      { ...plotConfig, offset: 0, step: 0 },
+    ]) {
+      view.rerender(renderPlot([3], config));
+      expect(Array.from(sample.mock.calls.at(-1)![0].x)).toEqual(
+        Array.from(generateBaseline({ length: 3 }, config.offset, config.step))
+      );
+    }
+    const defaultStep = sample.mock.calls.at(-1)![0].x;
+    view.rerender(renderPlot([3], { ...plotConfig, offset: 0, step: 1 }));
+    expect(sample.mock.calls.at(-1)![0].x).toBe(defaultStep);
+  } finally {
+    sample.mockRestore();
+  }
+});
+
 test('controller supplies equally sized vectors for each series', () => {
   const sample = jest.spyOn(sampling, 'lttbWithCoordinates');
   const x = new Float64Array([10, 20, 30]);

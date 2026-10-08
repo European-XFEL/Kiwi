@@ -58,15 +58,25 @@ export function usePlotChart({
   const ySeriesKeys = JSON.stringify(ySeries.map((item) => item.key));
   const offset = plotConfig.offset ?? 0;
   const step = plotConfig.step || 1;
+  const length = ySeries.reduce(
+    (length, item) => Math.max(length, item.values.length),
+    0
+  );
+  const xBaseline = React.useMemo(
+    () => xValues ?? generateBaseline({ length }, offset, step),
+    [xValues, length, offset, step]
+  );
   const vectors = React.useMemo(
     () =>
       ySeries.map((item) => {
-        const x = xValues ?? generateBaseline(item.values, offset, step);
-        const length = Math.min(x.length, item.values.length);
+        const length = Math.min(xBaseline.length, item.values.length);
         // Align each series once per frame; typed vectors retain their storage.
-        return { x: trimVector(x, length), y: trimVector(item.values, length) };
+        return {
+          x: trimVector(xBaseline, length),
+          y: trimVector(item.values, length),
+        };
       }),
-    [ySeries, xValues, offset, step]
+    [ySeries, xBaseline]
   );
   const axes = React.useMemo(() => buildPlotAxes(plotConfig), [plotConfig]);
   const ranges = useChartRanges(axes);
