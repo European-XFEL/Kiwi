@@ -15,6 +15,7 @@ import DisplayFloat from '@/features/controllers/display/DisplayFloat';
 import DisplayLabel from '@/features/controllers/display/DisplayLabel';
 import DisplayList from '@/features/controllers/display/DisplayList';
 import DisplayStateColor from '@/features/controllers/display/DisplayStateColor';
+import DisplayTextLog from '@/features/controllers/display/DisplayTextLog';
 import DisplayTrendGraph from '@/features/controllers/display/DisplayTrendGraph';
 import DisplayVectorGraph from './display/DisplayVectorGraph';
 import DisplayVectorXYGraph from './display/DisplayVectorXYGraph';
@@ -59,6 +60,7 @@ export function bootstrapControllerRenderers(
   registerRenderer('DisplayColorBool', DisplayColorBool);
   registerRenderer('DisplayErrorBool', DisplayErrorBool);
   registerRenderer('DisplayList', DisplayList);
+  registerRenderer('DisplayTextLog', DisplayTextLog);
   registerRenderer('DisplayAlarmFloat', DisplayAlarmFloat);
   registerRenderer('GlobalAlarm', DisplayAlarm);
   registerRenderer('DisplayStateColor', DisplayStateColor);
