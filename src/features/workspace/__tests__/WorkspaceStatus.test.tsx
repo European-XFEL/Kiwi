@@ -4,7 +4,12 @@ import { getPanelWrangler, singletons } from '@/lib/singletons/api';
 import { useGlobalActivityStore, useGlobalStore } from '@/store/api';
 import WorkspacePage from '../WorkspacePage';
 
-jest.mock('@/features/scenepanel/api', () => ({ ScenePanel: () => null }));
+jest.mock('@/features/scenepanel/api', () => ({
+  ScenePanel: () => null,
+  useFullscreen: jest.requireActual<
+    typeof import('@/features/scenepanel/hooks/useFullscreen')
+  >('@/features/scenepanel/hooks/useFullscreen').useFullscreen,
+}));
 jest.mock('@/app/HomePanel', () => ({ __esModule: true, default: () => null }));
 
 const mockHeader = jest.fn(() => null);

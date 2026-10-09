@@ -11,7 +11,6 @@ import React from 'react';
 import ScenePanelShell from './ScenePanelShell';
 import ScenePanelViewport from './ScenePanelViewport';
 import SceneToolBar from './SceneToolBar';
-import { useFullscreen } from '../hooks/useFullscreen';
 import type { SceneControllerRegistry } from '../SceneControllerRegistry';
 
 export interface ScenePanelContent {
@@ -25,16 +24,18 @@ export interface ScenePanelContent {
 export interface ScenePanelProps {
   content: ScenePanelContent;
   onFitModeChange: (mode: FitMode) => void;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 }
 
 const ScenePanel: React.FC<ScenePanelProps> = ({
   content,
   onFitModeChange,
+  isFullscreen,
+  onToggleFullscreen,
 }) => {
   const { sceneRef, sceneModel, sceneControllerRegistry, fitMode } = content;
   const containerRef = React.useRef<HTMLDivElement | null>(null);
-  const shellRef = React.useRef<HTMLDivElement | null>(null);
-  const { isFullscreen, supported, toggle } = useFullscreen(shellRef);
   const sceneDimensions = React.useMemo(
     () => ({ width: sceneModel.width, height: sceneModel.height }),
     [sceneModel.width, sceneModel.height]
@@ -47,7 +48,6 @@ const ScenePanel: React.FC<ScenePanelProps> = ({
 
   return (
     <ScenePanelShell
-      rootRef={shellRef}
       header={
         <SceneToolBar
           width={sceneRef.width}
@@ -59,7 +59,7 @@ const ScenePanel: React.FC<ScenePanelProps> = ({
           onApplyAll={() => sceneControllerRegistry.applyAll()}
           onDeclineAll={() => sceneControllerRegistry.declineAll()}
           isFullscreen={isFullscreen}
-          onToggleFullscreen={supported ? toggle : undefined}
+          onToggleFullscreen={onToggleFullscreen}
         />
       }
       viewport={

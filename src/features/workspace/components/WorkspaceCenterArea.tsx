@@ -1,5 +1,10 @@
-import { memo } from 'react';
-import { ScenePanel, type ScenePanelContent } from '@/features/scenepanel/api';
+import { memo, useRef } from 'react';
+import {
+  ScenePanel,
+  useFullscreen,
+  type ScenePanelContent,
+  type ScenePanelProps,
+} from '@/features/scenepanel/api';
 import { SceneOpenError } from '@/features/scene-view/components/SceneStatusViews';
 import { getPanelWrangler } from '@/lib/singletons/api';
 import {
@@ -22,7 +27,11 @@ function isLoadedSceneContent(
   );
 }
 
-function renderCenterPanel(tab: PanelTab, isVisible: boolean) {
+function renderCenterPanel(
+  tab: PanelTab,
+  isVisible: boolean,
+  fullscreen: Pick<ScenePanelProps, 'isFullscreen' | 'onToggleFullscreen'>
+) {
   if (tab.id === HOME_TAB_ID) {
     return <HomePanel />;
   }
@@ -43,6 +52,7 @@ function renderCenterPanel(tab: PanelTab, isVisible: boolean) {
   }
   return (
     <ScenePanel
+      {...fullscreen}
       content={{
         ...content,
         isUnattachedScene: snapshot?.isUnattachedScene === true,
@@ -53,10 +63,19 @@ function renderCenterPanel(tab: PanelTab, isVisible: boolean) {
 }
 
 function WorkspaceCenterArea({ isVisible }: { isVisible: boolean }) {
+  const containerRef = useRef<HTMLElement | null>(null);
+  const { isFullscreen, supported, toggle } = useFullscreen(containerRef);
+
   return (
     <PanelContainer
       area="center"
-      renderPanel={(tab) => renderCenterPanel(tab, isVisible)}
+      containerRef={containerRef}
+      renderPanel={(tab) =>
+        renderCenterPanel(tab, isVisible, {
+          isFullscreen,
+          onToggleFullscreen: supported ? toggle : undefined,
+        })
+      }
       // The scene viewport owns its overflow and spacing.
       panelClassName="overflow-hidden"
       emptyState={
