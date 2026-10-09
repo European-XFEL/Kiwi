@@ -285,6 +285,19 @@ registerReader('DisplayStateColor', (element) => {
   return state;
 });
 
+// Lamp
+// ----------------------------------------------------------------------------
+
+export class LampModel extends BaseWidgetObjectData {
+  klass = 'Lamp';
+}
+
+registerReader('Lamp', (element) => {
+  const lamp = new LampModel();
+  readBaseWidgetData(element, lamp);
+  return lamp;
+});
+
 // DisplayColorBool
 // ----------------------------------------------------------------------------
 

@@ -26,6 +26,7 @@ import {
   EditableLineEdit,
 } from '@/features/controllers/display/LineEdit';
 import StatefulIconWidget from '@/features/controllers/display/StatefulIconWidget';
+import Lamp from './display/Lamp';
 import TableElement, {
   FilterTableElement,
 } from '@/features/controllers/display/TableElement';
@@ -74,6 +75,7 @@ export function bootstrapControllerRenderers(
   registerRenderer('DisplayFilterTableElement', FilterTableElement);
   registerRenderer('EditableFilterTableElement', FilterTableElement);
   registerRenderer('StatefulIconWidget', StatefulIconWidget);
+  registerRenderer('Lamp', Lamp);
   registerRenderer('DisplayTrendGraph', DisplayTrendGraph);
   registerRenderer('DisplayStateGraph', DisplayTrendGraph);
   registerRenderer('DisplayAlarmGraph', DisplayTrendGraph);

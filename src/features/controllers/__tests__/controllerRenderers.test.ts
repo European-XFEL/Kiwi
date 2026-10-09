@@ -9,6 +9,7 @@ import DisplayVectorScatterGraph from '../display/DisplayVectorScatterGraph';
 import DisplayTrendGraph from '../display/DisplayTrendGraph';
 import { FilterTableElement } from '../display/TableElement';
 import DisplayTextLog from '../display/DisplayTextLog';
+import Lamp from '../display/Lamp';
 import { bootstrapControllerRenderers } from '../controllerRenderers';
 
 jest.mock('../display/StatefulIconWidget', () => () => null);
@@ -33,6 +34,7 @@ test('registers separate vector line and bar controllers', () => {
   expect(renderers.get('DisplayErrorBool')).toBe(DisplayErrorBool);
   expect(renderers.get('GlobalAlarm')).toBe(DisplayAlarm);
   expect(renderers.get('DisplayTextLog')).toBe(DisplayTextLog);
+  expect(renderers.get('Lamp')).toBe(Lamp);
   expect(renderers.get('VectorGraph')).toBe(DisplayVectorGraph);
   expect(renderers.get('NDArrayGraph')).toBe(DisplayVectorGraph);
   expect(renderers.get('VectorXYGraph')).toBe(DisplayVectorXYGraph);
