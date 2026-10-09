@@ -13,11 +13,18 @@ import DisplayWebcamGraph from '../DisplayWebcamGraph';
 
 let resize: (width: number, height: number) => void;
 const disconnect = jest.fn();
+const fillRect = jest.fn();
+const fillText = jest.fn();
+const fillColors: string[] = [];
+let context: CanvasRenderingContext2D;
 
 beforeEach(() => {
   jest.useFakeTimers();
   resize = () => {};
   disconnect.mockClear();
+  fillRect.mockClear();
+  fillText.mockClear();
+  fillColors.length = 0;
   jest.spyOn(window, 'ResizeObserver').mockImplementation((callback) => {
     const observer = { observe() {}, unobserve() {}, disconnect };
     resize = (width, height) => {
@@ -30,17 +37,24 @@ beforeEach(() => {
     };
     return observer;
   });
-  jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
-    fillRect() {},
+  context = {
+    fillStyle: '',
+    fillRect: (...args: Parameters<CanvasRenderingContext2D['fillRect']>) => {
+      fillColors.push(context.fillStyle as string);
+      fillRect(...args);
+    },
     strokeRect() {},
-    fillText() {},
+    fillText,
     createImageData: (width: number, height: number) => ({
       width,
       height,
       data: new Uint8ClampedArray(width * height * 4),
     }),
     putImageData() {},
-  } as unknown as CanvasRenderingContext2D);
+  } as unknown as CanvasRenderingContext2D;
+  jest
+    .spyOn(HTMLCanvasElement.prototype, 'getContext')
+    .mockReturnValue(context);
 });
 
 afterEach(() => {
@@ -79,30 +93,43 @@ function overlay() {
 }
 
 test.each([
-  [600, 600, { left: '0px', top: '75px', width: '600px', height: '450px' }],
-  [600, 300, { left: '100px', top: '0px', width: '400px', height: '300px' }],
-  [400, 300, { left: '0px', top: '0px', width: '400px', height: '300px' }],
-])(
-  'fits the placeholder overlay inside a %s by %s view',
-  (width, height, bounds) => {
-    render(<DisplayWebcamGraph model={new WebCamGraphModel()} />);
-    drawFrame();
-    resize(width, height);
-    expect(overlay()).toHaveStyle(bounds);
-  }
-);
+  [600, 600],
+  [600, 300],
+  [400, 300],
+])('fits the placeholder overlay inside a %s by %s view', (width, height) => {
+  render(<DisplayWebcamGraph model={new WebCamGraphModel()} />);
+  drawFrame();
+  resize(width, height);
+  drawFrame();
+  expect(overlay()).toHaveStyle({
+    left: '0px',
+    top: '0px',
+    width: `${width}px`,
+    height: `${height}px`,
+  });
+  expect(screen.getByLabelText('Webcam image')).toHaveProperty('width', width);
+  expect(screen.getByLabelText('Webcam image')).toHaveProperty(
+    'height',
+    height
+  );
+  expect(fillRect).toHaveBeenLastCalledWith(0, 0, width, height);
+  expect(fillColors.at(-1)).toBe('#000');
+  expect(context.fillStyle).toBe('#fff');
+});
 
 test('updates overlay bounds when the widget resizes', () => {
   render(<DisplayWebcamGraph model={new WebCamGraphModel()} />);
   drawFrame();
   resize(600, 600);
   resize(600, 300);
+  drawFrame();
   expect(overlay()).toHaveStyle({
-    left: '100px',
+    left: '0px',
     top: '0px',
-    width: '400px',
+    width: '600px',
     height: '300px',
   });
+  expect(fillRect).toHaveBeenLastCalledWith(0, 0, 600, 300);
 });
 
 test('follows frame dimension changes with the same pixel count', () => {
@@ -141,10 +168,19 @@ test('uses placeholder bounds after an unsupported frame', () => {
   drawFrame();
   expect(overlay()).toHaveStyle({
     left: '0px',
-    top: '75px',
+    top: '0px',
     width: '600px',
-    height: '450px',
+    height: '600px',
   });
+  expect(fillRect).toHaveBeenLastCalledWith(0, 0, 600, 600);
+  expect(fillColors.at(-1)).toBe('#000');
+  expect(fillText).toHaveBeenLastCalledWith(
+    'Unsupported Encoding',
+    300,
+    300,
+    560
+  );
+  expect(context.fillStyle).toBe('#fff');
 });
 
 test('hides the overlay in a zero-size view and disconnects on unmount', () => {
@@ -155,6 +191,7 @@ test('hides the overlay in a zero-size view and disconnects on unmount', () => {
   resize(0, 0);
   expect(screen.getByLabelText('Waiting for image')).not.toBeVisible();
   resize(400, 300);
+  drawFrame();
   expect(screen.getByLabelText('Waiting for image')).toBeVisible();
   unmount();
   expect(disconnect).toHaveBeenCalledTimes(1);

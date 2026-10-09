@@ -7,6 +7,7 @@ import DisplayVectorGraph from '../display/DisplayVectorGraph';
 import DisplayVectorXYGraph from '../display/DisplayVectorXYGraph';
 import DisplayVectorScatterGraph from '../display/DisplayVectorScatterGraph';
 import DisplayTrendGraph from '../display/DisplayTrendGraph';
+import DisplayWebcamGraph from '../display/DisplayWebcamGraph';
 import { FilterTableElement } from '../display/TableElement';
 import DisplayTextLog from '../display/DisplayTextLog';
 import Lamp from '../display/Lamp';
@@ -43,5 +44,6 @@ test('registers separate vector line and bar controllers', () => {
   expect(renderers.get('ScatterGraph')).toBe(DisplayScatterGraph);
   expect(renderers.get('DisplayStateGraph')).toBe(DisplayTrendGraph);
   expect(renderers.get('DisplayAlarmGraph')).toBe(DisplayTrendGraph);
+  expect(renderers.get('DetectorGraph')).toBe(DisplayWebcamGraph);
   expect(DisplayBarGraph).not.toBe(DisplayVectorGraph);
 });

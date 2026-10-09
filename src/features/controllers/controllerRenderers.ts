@@ -88,6 +88,7 @@ export function bootstrapControllerRenderers(
   registerRenderer('ScatterGraph', DisplayScatterGraph);
   registerRenderer('WebCamGraph', DisplayWebcamGraph);
   registerRenderer('ImageGraph', DisplayWebcamGraph);
+  registerRenderer('DetectorGraph', DisplayWebcamGraph);
   registerRenderer('IntLineEdit', IntLineEdit);
   registerRenderer('DoubleLineEdit', DoubleLineEdit);
   registerRenderer('EditableSpinBox', EditableSpinBox);

@@ -15,9 +15,13 @@ export default function DisplayWebcamGraph({
   model: WebCamGraphModel;
   ctx?: ControllerContainerContext;
 }) {
-  const { canvasRef, imageSize } = useWebcam(ctx?.proxy, model.colormap);
   const viewRef = useRef<HTMLDivElement>(null);
   const [viewSize, setViewSize] = useState({ width: 0, height: 0 });
+  const { canvasRef, imageSize } = useWebcam(
+    ctx?.proxy,
+    model.colormap,
+    viewSize
+  );
   useEffect(() => {
     const view = viewRef.current;
     if (!view) {
@@ -36,10 +40,13 @@ export default function DisplayWebcamGraph({
     return () => observer.disconnect();
   }, []);
   // object-fit centers the image within the canvas's full-size element box.
-  const scale = Math.min(
-    viewSize.width / imageSize.width,
-    viewSize.height / imageSize.height
-  );
+  const scale =
+    imageSize.width > 0 && imageSize.height > 0
+      ? Math.min(
+          viewSize.width / imageSize.width,
+          viewSize.height / imageSize.height
+        )
+      : 0;
   const imageWidth = imageSize.width * scale;
   const imageHeight = imageSize.height * scale;
   const binding = ctx?.proxy?.binding;

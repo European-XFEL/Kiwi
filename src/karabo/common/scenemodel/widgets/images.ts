@@ -12,6 +12,10 @@ export class ImageGraphModel extends WebCamGraphModel {
   klass = 'ImageGraph';
 }
 
+export class DetectorGraphModel extends WebCamGraphModel {
+  klass = 'DetectorGraph';
+}
+
 function readImageGraph(element: Element, model = new WebCamGraphModel()) {
   readBaseWidgetData(element, model);
   model.colormap = toStr(krbAttr(element, 'colormap'), 'viridis');
@@ -21,4 +25,7 @@ function readImageGraph(element: Element, model = new WebCamGraphModel()) {
 registerReader('WebCamGraph', readImageGraph);
 registerReader('ImageGraph', (element) =>
   readImageGraph(element, new ImageGraphModel())
+);
+registerReader('DetectorGraph', (element) =>
+  readImageGraph(element, new DetectorGraphModel())
 );
