@@ -1,6 +1,7 @@
 import React from 'react';
 import { buildModelConfig, type PlotSettings } from '../graph/common/api';
 import { Button } from '@/components/api';
+import icons from '@/assets/icons';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 import type { DisplayTrendGraphModel } from '@/karabo/common/api';
 import type { TrendMode } from '../graph/trend/categories';
@@ -88,6 +89,8 @@ const TrendPlot = React.memo(function TrendPlot({
   series,
   startTime,
   dataRevision,
+  requestHistory,
+  resetHistory,
   mode,
 }: { plotConfig: PlotSettings; mode: TrendMode } & ReturnType<
   typeof useTrendModel
@@ -97,12 +100,27 @@ const TrendPlot = React.memo(function TrendPlot({
     series,
     startTime,
     dataRevision,
+    requestHistory,
+    resetHistory,
     mode,
   });
   return (
     <ChartLayout
       background={plotConfig.background}
       viewBox={view}
+      controls={
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="Reset"
+          title="Clear curves and reload historic data"
+          className="h-7 w-7 rounded-sm border border-transparent"
+          onClick={view.reloadHistory}
+        >
+          <img src={icons.reset} alt="" className="h-4 w-4" />
+        </Button>
+      }
       footer={
         <>
           <TrendTimeControls visibleRange={view.visibleRange} />

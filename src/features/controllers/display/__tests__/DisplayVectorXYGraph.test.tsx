@@ -164,11 +164,11 @@ test('preserves legend visibility by key through updates, curve reorder, and con
   replacement.title = 'Changed';
   view.rerender(<DisplayVectorXYGraph model={replacement} ctx={ctx} />);
   expect(chart().isDatasetVisible(0)).toBe(false);
-  fireEvent.click(screen.getByRole('button', { name: 'Reset view' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Reset View' }));
   expect(chart().isDatasetVisible(0)).toBe(false);
 });
 
-test('defers data during gestures and restores configured ranges on reset', () => {
+test('defers data during gestures and restores model ranges on Reset', () => {
   const model = new VectorXYGraphModel();
   model.keys = ['x', 'y'];
   model.x_autorange = false;
@@ -196,7 +196,7 @@ test('defers data during gestures and restores configured ranges on reset', () =
     { x: 15, y: 8 },
   ]);
   expect(chart().options.scales?.x?.min).not.toBe(10);
-  fireEvent.click(screen.getByRole('button', { name: 'Reset view' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Reset View' }));
   expect(chart().options.scales?.x).toMatchObject({ min: 10, max: 20 });
 });
 
@@ -212,7 +212,7 @@ test('keeps line markers disabled across sampled dataset sizes', () => {
   }
 });
 
-test('clips each paired length independently and resets a box zoom', () => {
+test('clips each paired length independently and resets the view after a box zoom', () => {
   const model = new VectorXYGraphModel();
   model.keys = ['x', 'short', 'long'];
   model.x_autorange = false;
@@ -236,7 +236,7 @@ test('clips each paired length independently and resets a box zoom', () => {
   fireEvent.mouseUp(document, { button: 0, clientX: 120, clientY: 100 });
   expect(chart().options.scales?.x?.min).toBeGreaterThan(50);
   expect(chart().options.scales?.x?.max).toBeLessThan(100);
-  fireEvent.click(screen.getByRole('button', { name: 'Reset view' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Reset View' }));
   expect(chart().options.scales?.x).toMatchObject({ min: 50, max: 100 });
   expect(chart().data.datasets.map((s) => s.data.length)).toEqual([200, 151]);
 });

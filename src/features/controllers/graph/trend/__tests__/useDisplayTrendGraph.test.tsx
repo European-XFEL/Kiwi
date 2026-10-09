@@ -1,3 +1,4 @@
+import { Signal } from '@/lib/utils';
 import { StrictMode } from 'react';
 import { act, cleanup, renderHook } from '@testing-library/react';
 import type { PropertyProxy } from '@/lib/binding/PropertyProxy';
@@ -16,6 +17,7 @@ const makeProxy = (
 ): PropertyProxy =>
   ({
     key,
+    historic_data: new Signal(),
     root: { status: ProxyStatus.MONITORING },
     value,
     timestamp: { toTimestamp: () => seconds },

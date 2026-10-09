@@ -52,6 +52,31 @@ export class PropertyProxy {
     return this.root_proxy;
   }
 
+  get historic_data() {
+    return this.root.getHistorySignal(this.path);
+  }
+
+  public getHistory({
+    timeStart,
+    timeEnd,
+    maxValueCount = -1,
+  }: {
+    timeStart: string;
+    timeEnd: string;
+    maxValueCount?: number;
+  }): void {
+    if (!this.binding) {
+      return;
+    }
+    getNetwork().onGetPropertyHistory({
+      deviceId: this.root.deviceId,
+      property: this.path,
+      t0: timeStart,
+      t1: timeEnd,
+      maxNumData: maxValueCount,
+    });
+  }
+
   public execute(): void {
     const binding = this.binding;
     const state = this.root.state;

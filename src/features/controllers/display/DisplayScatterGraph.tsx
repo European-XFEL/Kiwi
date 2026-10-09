@@ -1,6 +1,7 @@
 import React from 'react';
 import { buildModelConfig } from '../graph/common/api';
 import { Button } from '@/components/api';
+import icons from '@/assets/icons';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 import type { ScatterGraphModel } from '@/karabo/common/api';
 import { ChartLayout, ChartPlot } from '../graph/common/api';
@@ -40,7 +41,7 @@ export default function DisplayScatterGraph({
           className="h-7 w-7 rounded-sm"
           onClick={clear}
         >
-          <span aria-hidden="true">×</span>
+          <img src={icons.reset} alt="" className="h-4 w-4" />
         </Button>
       }
     >

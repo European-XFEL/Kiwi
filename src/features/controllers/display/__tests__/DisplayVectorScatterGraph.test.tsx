@@ -191,7 +191,7 @@ test('defers a frame during navigation, cancels the gesture, and restores config
   fireEvent.mouseMove(document, { button: 2, clientX: 120, clientY: 40 });
   fireEvent.keyDown(document, { key: 'Escape' });
   expect(chart().data.datasets[0].data[0]).toEqual({ x: 1, y: 3 });
-  fireEvent.click(screen.getByRole('button', { name: 'Reset view' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Reset View' }));
   expect(chart().options.scales?.x).toMatchObject({
     type: 'logarithmic',
     min: 1,

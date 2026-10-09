@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { Chart } from 'chart.js/auto';
 import type { ChartConfiguration, LineElement } from 'chart.js';
 import { VectorXYGraphModel } from '@/karabo/common/api';
@@ -47,7 +47,12 @@ function Harness({
     xValues: x,
     ySeries: [{ key: 'y', values: y }],
   });
-  return <div ref={plotWindow.containerRef} data-testid="plot" />;
+  return (
+    <>
+      <div ref={plotWindow.containerRef} data-testid="plot" />
+      <button onClick={plotWindow.reset}>Reset</button>
+    </>
+  );
 }
 
 test.each([false, true])(
@@ -141,3 +146,101 @@ test.each([
     }
   }
 );
+
+test.each([false, true])(
+  'Reset restores automatic model ranges after zoom (descending=%s)',
+  (descending) => {
+    const model = new VectorXYGraphModel();
+    const x = Float64Array.from({ length: 100001 }, (_, i) =>
+      descending ? 100000 - i : i
+    );
+    const y = Float64Array.from(x, (value) => (value === 90000 ? 500 : 1));
+    render(<Harness model={model} x={x} y={y} />);
+    const chart = Chart.getChart(
+      screen.getByTestId('plot').querySelector('canvas')!
+    )!;
+    const container = screen.getByTestId('plot');
+    const xPixel = (chart.chartArea.left + chart.chartArea.right) / 2;
+    const yPixel = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+    fireEvent.mouseDown(container, {
+      button: 2,
+      clientX: xPixel,
+      clientY: yPixel,
+    });
+    fireEvent.mouseUp(document, {
+      button: 2,
+      clientX: xPixel - 30,
+      clientY: yPixel,
+    });
+    expect(chart.scales.x.min).toBeGreaterThan(0);
+    fireEvent.click(screen.getByText('Reset'));
+    expect(chart.scales.x.min).toBeLessThanOrEqual(0);
+    expect(chart.scales.x.max).toBeGreaterThanOrEqual(100000);
+    expect(chart.scales.y.max).toBeGreaterThanOrEqual(500);
+    expect(model.x_autorange).toBe(true);
+    const update = jest.spyOn(chart, 'update');
+    fireEvent.click(screen.getByText('Reset'));
+    expect(update).toHaveBeenCalledWith('none');
+  }
+);
+
+test.each([{ values: [] }, { values: [10] }, { values: [1, 10, 100] }])(
+  'Reset retains valid logarithmic and inverted scales for $values',
+  ({ values }) => {
+    const model = new VectorXYGraphModel();
+    Object.assign(model, {
+      x_log: true,
+      y_log: true,
+      x_invert: true,
+      y_invert: true,
+    });
+    render(
+      <Harness
+        model={model}
+        x={Float64Array.from(values)}
+        y={Float64Array.from(values)}
+      />
+    );
+    const chart = Chart.getChart(
+      screen.getByTestId('plot').querySelector('canvas')!
+    )!;
+    fireEvent.click(screen.getByText('Reset'));
+    for (const key of ['x', 'y']) {
+      expect(chart.scales[key].type).toBe('logarithmic');
+      expect(chart.scales[key].options.reverse).toBe(true);
+      expect(chart.scales[key].min).toBeGreaterThan(0);
+      expect(chart.scales[key].max).toBeGreaterThan(chart.scales[key].min);
+      for (const value of values) {
+        expect(chart.scales[key].min).toBeLessThanOrEqual(value);
+        expect(chart.scales[key].max).toBeGreaterThanOrEqual(value);
+      }
+    }
+  }
+);
+
+test('Reset restores configured model bounds rather than fitting out-of-range data', () => {
+  const model = new VectorXYGraphModel();
+  Object.assign(model, {
+    x_autorange: false,
+    x_min: 200,
+    x_max: 300,
+    y_autorange: false,
+    y_min: 10,
+    y_max: 20,
+  });
+  render(
+    <Harness
+      model={model}
+      x={Float64Array.from([0, 1000])}
+      y={Float64Array.from([1, 500])}
+    />
+  );
+  const chart = Chart.getChart(
+    screen.getByTestId('plot').querySelector('canvas')!
+  )!;
+  fireEvent.click(screen.getByText('Reset'));
+  expect(chart.scales.x.min).toBe(200);
+  expect(chart.scales.x.max).toBe(300);
+  expect(chart.scales.y.min).toBe(10);
+  expect(chart.scales.y.max).toBe(20);
+});

@@ -1,5 +1,5 @@
 import { ProxyStatus } from './ProxyStatus';
-import { Hash, Schema, Timestamp } from '@/karabo/data/api';
+import { Hash, HashList, Schema, Timestamp } from '@/karabo/data/api';
 import { buildBinding } from './BindingFactory';
 
 import { getNetwork } from '@/lib/singletons/api';
@@ -46,6 +46,21 @@ export class DeviceProxy {
   private currentRootRevision = 0;
 
   public pipeline_subscriptions = new Map<string, number>();
+
+  private readonly historySignals = new Map<string, Signal<[HashList]>>();
+
+  public getHistorySignal(path: string): Signal<[HashList]> {
+    let signal = this.historySignals.get(path);
+    if (!signal) {
+      signal = new Signal<[HashList]>();
+      this.historySignals.set(path, signal);
+    }
+    return signal;
+  }
+
+  public handlePropertyHistory(path: string, data: HashList): void {
+    this.historySignals.get(path)?.fire(data);
+  }
 
   config_update = new Signal<[]>();
   schema_update = new Signal<[]>();

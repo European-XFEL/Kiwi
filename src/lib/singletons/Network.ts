@@ -510,6 +510,37 @@ export class Network {
     this._sessionStartResolvers = undefined;
   }
 
+  public onGetPropertyHistory({
+    deviceId,
+    property,
+    t0,
+    t1,
+    maxNumData,
+  }: {
+    deviceId: string;
+    property: string;
+    t0: string;
+    t1: string;
+    maxNumData: number;
+  }): void {
+    this.sendHash(
+      new Hash(
+        'type',
+        'getPropertyHistory',
+        'deviceId',
+        deviceId,
+        'property',
+        property,
+        't0',
+        t0,
+        't1',
+        t1,
+        'maxNumData',
+        maxNumData
+      )
+    );
+  }
+
   public onGetDeviceConfiguration(deviceId: string): void {
     const h = new Hash('type', 'getDeviceConfiguration', 'deviceId', deviceId);
     this.sendHash(h);
