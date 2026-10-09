@@ -2,8 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { ImageBinding, type PropertyProxy } from '@/lib/binding/api';
 import { getFrame, hasImageData } from './pixels';
 
-const PLACEHOLDER_WIDTH_PX = 640;
-const PLACEHOLDER_HEIGHT_PX = 480;
 const PLACEHOLDER_FONT_SIZE_PX = 72;
 const PLACEHOLDER_TEXT_PADDING_PX = 20;
 const PLACEHOLDER_BORDER_WIDTH_PX = 2;
@@ -31,15 +29,14 @@ function hasMatchingDimensions(
   return image.width === frame.width && image.height === frame.height;
 }
 
-/** Use a fixed aspect ratio so the placeholder fits the same way as a frame. */
 function drawPlaceholder(
   canvas: HTMLCanvasElement,
   context: CanvasRenderingContext2D,
-  text: string
+  text: string,
+  size: { width: number; height: number }
 ) {
-  canvas.width = PLACEHOLDER_WIDTH_PX;
-  canvas.height = PLACEHOLDER_HEIGHT_PX;
-  context.fillStyle = '#ccc';
+  resizeCanvas(canvas, size);
+  context.fillStyle = '#000';
   context.fillRect(0, 0, canvas.width, canvas.height);
   // Inset the stroke by half its width so the entire border stays visible.
   const borderInset = PLACEHOLDER_BORDER_WIDTH_PX / 2;
@@ -51,7 +48,7 @@ function drawPlaceholder(
     canvas.width - PLACEHOLDER_BORDER_WIDTH_PX,
     canvas.height - PLACEHOLDER_BORDER_WIDTH_PX
   );
-  context.fillStyle = '#333';
+  context.fillStyle = '#fff';
   context.font = `bold ${PLACEHOLDER_FONT_SIZE_PX}px sans-serif`;
   context.textAlign = 'center';
   context.textBaseline = 'middle';
@@ -63,13 +60,14 @@ function drawPlaceholder(
   );
 }
 
-export function useWebcam(proxy: PropertyProxy | undefined, colormap: string) {
+export function useWebcam(
+  proxy: PropertyProxy | undefined,
+  colormap: string,
+  viewSize: { width: number; height: number }
+) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<ImageData | undefined>(undefined);
-  const [imageSize, setImageSize] = useState({
-    width: PLACEHOLDER_WIDTH_PX,
-    height: PLACEHOLDER_HEIGHT_PX,
-  });
+  const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
   useEffect(() => {
     const pending = requestAnimationFrame(() => {
       const canvas = canvasRef.current;
@@ -90,13 +88,13 @@ export function useWebcam(proxy: PropertyProxy | undefined, colormap: string) {
       };
       const binding = proxy?.binding;
       if (!(binding instanceof ImageBinding) || !hasImageData(binding)) {
-        drawPlaceholder(canvas, context, 'Image');
+        drawPlaceholder(canvas, context, 'Image', viewSize);
         updateImageSize();
         return;
       }
       const frame = getFrame(binding, colormap, imageRef.current?.data);
       if (!frame) {
-        drawPlaceholder(canvas, context, 'Unsupported Encoding');
+        drawPlaceholder(canvas, context, 'Unsupported Encoding', viewSize);
         updateImageSize();
         return;
       }

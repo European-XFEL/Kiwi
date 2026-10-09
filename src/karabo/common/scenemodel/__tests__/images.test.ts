@@ -1,8 +1,14 @@
-import { ImageGraphModel, readScene, WebCamGraphModel } from '../api';
+import {
+  DetectorGraphModel,
+  ImageGraphModel,
+  readScene,
+  WebCamGraphModel,
+} from '../api';
 
 test.each([
   ['WebCamGraph', WebCamGraphModel],
   ['ImageGraph', ImageGraphModel],
+  ['DetectorGraph', DetectorGraphModel],
 ] as const)(
   '%s defaults and scene reader preserve keys, geometry and palette',
   (klass, Model) => {
