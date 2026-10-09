@@ -61,7 +61,7 @@ test('publishes one full paired frame on X or Y updates', () => {
   expect(first.data.datasets[0]).toMatchObject({
     showLine: false,
     pointRadius: 3.5,
-    pointBackgroundColor: 'blue',
+    pointBackgroundColor: `rgba(51, 153, 255, ${200 / 255})`,
   });
   first.update.mockClear();
   x.binding!.setValue([9, 5], undefined);
@@ -268,7 +268,7 @@ test('real Chart.js renders repeated, unordered coordinates with uniform scatter
     for (const point of real.getDatasetMeta(0).data) {
       expect(point.options).toMatchObject({
         radius: 3.5,
-        backgroundColor: 'blue',
+        backgroundColor: `rgba(51, 153, 255, ${200 / 255})`,
         borderWidth: 0,
       });
     }

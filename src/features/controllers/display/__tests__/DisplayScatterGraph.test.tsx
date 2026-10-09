@@ -234,8 +234,8 @@ test('renders unordered pairs, repeated clears and resumed collection with real 
     update();
     const markers = chart.getDatasetMeta(0).data;
     expect(markers.map((point) => point.options.backgroundColor)).toEqual([
-      'blue',
-      'red',
+      `rgba(51, 153, 255, ${200 / 255})`,
+      `rgba(255, 51, 51, ${200 / 255})`,
     ]);
     expect(markers.map((point) => point.x)).toEqual(
       [5, 1].map((value) => chart.scales.x.getPixelForValue(value))
@@ -455,7 +455,11 @@ test('configures point diameter, newest-point color, and unsorted X data', () =>
     [0, 1, 2].map((dataIndex) =>
       color({ dataIndex, dataset } as ScriptableContext<'scatter'>)
     )
-  ).toEqual(['blue', 'blue', 'red']);
+  ).toEqual([
+    `rgba(51, 153, 255, ${200 / 255})`,
+    `rgba(51, 153, 255, ${200 / 255})`,
+    `rgba(255, 51, 51, ${200 / 255})`,
+  ]);
 });
 
 test('uses scene settings, ignores extra proxies, retains navigation ranges on clear, resets and cleans up', () => {

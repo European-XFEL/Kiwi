@@ -1,3 +1,5 @@
+import type { CurveOptions } from '@/karabo/common/api';
+
 export const KARABO_BASE_SAVABLE = [
   'x',
   'y',
@@ -10,6 +12,7 @@ export const KARABO_BASE_SAVABLE = [
 ];
 
 export type PlotSettings = {
+  curve_options?: CurveOptions[];
   // Plot settings intentionally accept arbitrary model fields and values.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [name: string]: any;

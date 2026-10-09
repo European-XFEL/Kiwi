@@ -120,7 +120,11 @@ const TrendPlot = React.memo(function TrendPlot({
             : undefined
         }
         legend={
-          <ChartLegend keys={series.map((item) => item.key)} view={view} />
+          <ChartLegend
+            keys={series.map((item) => item.key)}
+            view={view}
+            plotConfig={plotConfig}
+          />
         }
       />
     </ChartLayout>

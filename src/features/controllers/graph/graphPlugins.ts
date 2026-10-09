@@ -1,5 +1,5 @@
 import type { Plugin } from 'chart.js';
-import { TRACE_COLORS } from './common/constants';
+import { BAR_BLUE } from './common/constants';
 
 // A small clearance prevents touching text without dropping otherwise fitting
 // labels when the number of digits changes along an axis.
@@ -66,7 +66,7 @@ export function vectorBarPlugin(width: number): Plugin<'line'> {
         chartArea.height
       );
       ctx.clip();
-      ctx.fillStyle = TRACE_COLORS[0];
+      ctx.fillStyle = BAR_BLUE;
       for (const point of chart.data.datasets[0].data) {
         if (typeof point !== 'object' || point === null) continue;
         const { x, y } = point as { x: number; y: number };

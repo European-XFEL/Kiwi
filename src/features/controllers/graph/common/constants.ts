@@ -1,13 +1,22 @@
 export type Range = [number, number];
 
 export const TRACE_COLORS = [
-  '#009be5',
-  '#ff0040',
-  '#2ca02c',
-  '#ff9f1a',
-  '#8a2be2',
-  '#00a3a3',
+  '#3399ff',
+  '#ff3333',
+  '#33a02c',
+  '#a6cee3',
+  '#6a3d9a',
+  '#ffff00',
+  '#fb9a99',
+  '#b15928',
+  '#ff7f00',
+  '#b2df8a',
+  '#cab2d6',
+  '#000000',
 ];
+export const SCATTER_BLUE = `rgba(51, 153, 255, ${200 / 255})`;
+export const SCATTER_RED = `rgba(255, 51, 51, ${200 / 255})`;
+export const BAR_BLUE = `rgba(51, 153, 255, ${180 / 255})`;
 export const GRAPH_AXIS_FONT = {
   family: 'Source Sans Pro, sans-serif',
   size: 13.333,

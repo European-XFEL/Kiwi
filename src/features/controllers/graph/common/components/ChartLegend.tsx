@@ -1,10 +1,13 @@
-import { TRACE_COLORS } from '../constants';
+import type { PlotSettings } from '../buildModelConfig';
+import { resolveCurveStyle } from '../curveStyle';
 
 export function ChartLegend({
   keys,
   view,
+  plotConfig = {},
 }: {
   keys: readonly string[];
+  plotConfig?: PlotSettings;
   view: {
     hiddenCurves: ReadonlySet<string>;
     toggleCurve: (key: string) => void;
@@ -20,24 +23,27 @@ export function ChartLegend({
       className="flex flex-col gap-1 rounded-sm border border-black bg-slate-200/20 p-1 text-xs text-black"
       aria-label="Graph legend"
     >
-      {keys.map((key, index) => (
-        <button
-          key={key}
-          type="button"
-          aria-pressed={!hiddenCurves.has(key)}
-          onClick={() => toggleCurve(key)}
-          className="flex items-center gap-1"
-          style={{ opacity: hiddenCurves.has(key) ? 0.4 : 1 }}
-        >
-          <span
-            className="inline-block h-3 w-3"
-            style={{
-              backgroundColor: TRACE_COLORS[index % TRACE_COLORS.length],
-            }}
-          />
-          {key}
-        </button>
-      ))}
+      {keys.map((key, index) => {
+        const { label, color } = resolveCurveStyle({ key, index, plotConfig });
+        return (
+          <button
+            key={key}
+            type="button"
+            aria-pressed={!hiddenCurves.has(key)}
+            onClick={() => toggleCurve(key)}
+            className="flex items-center gap-1"
+            style={{ opacity: hiddenCurves.has(key) ? 0.4 : 1 }}
+          >
+            <span
+              className="inline-block h-3 w-3"
+              style={{
+                backgroundColor: color,
+              }}
+            />
+            {label}
+          </button>
+        );
+      })}
     </div>
   );
 }

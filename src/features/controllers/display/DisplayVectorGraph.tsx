@@ -28,6 +28,7 @@ export default function DisplayVectorGraph({
         title={plotConfig.title}
         legend={
           <ChartLegend
+            plotConfig={plotConfig}
             keys={ySeries.map((item) => item.key)}
             view={plotWindow}
           />

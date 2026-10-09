@@ -98,8 +98,8 @@ export function useTrendChart({
     ? GRAPH_LAYOUT.yAxisSize.titled
     : GRAPH_LAYOUT.yAxisSize.untitled;
   const buildData = React.useCallback(
-    () => ({ datasets: trendDatasets(series) }),
-    [series]
+    () => ({ datasets: trendDatasets(series, plotConfig) }),
+    [series, plotConfig]
   );
   const onRanges = React.useCallback(
     (ranges: AxisRanges) => rememberRange(ranges.x),
