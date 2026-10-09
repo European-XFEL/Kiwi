@@ -20,7 +20,11 @@ export const GRAPH_LAYOUT = {
   yAxisSize: { titled: 80, untitled: 64 },
   lineWidth: 1.5,
   trendPointSize: 2.5,
-  vectorPointSize: 2,
+} as const;
+export const GRAPH_TICK_DENSITY = {
+  density: 1,
+  minimum: 2.25,
+  referenceLength: 300,
 } as const;
 export const GRAPH_COLORS = {
   plotBackground: '#fff',

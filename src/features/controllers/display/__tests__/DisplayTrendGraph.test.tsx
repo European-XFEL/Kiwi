@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { Chart } from 'chart.js/auto';
 import { AccessLevel } from '@/karabo/data/api';
 import {
@@ -206,7 +206,7 @@ describe('DisplayTrendGraph with Chart.js', () => {
     expect(chart().update).toHaveBeenCalled();
   });
 
-  it('restores the view when a pan is cancelled', () => {
+  it('restores the view when a pan is cancelled', async () => {
     jest.mocked(trendData.useTrendModel).mockReturnValue(published());
     render(
       <DisplayTrendGraph model={new DisplayTrendGraphModel()} ctx={ctx} />
@@ -216,7 +216,7 @@ describe('DisplayTrendGraph with Chart.js', () => {
     const original = { ...chart().scales.x };
     fireEvent.mouseDown(container, { button: 0, clientX: 90, clientY: 40 });
     fireEvent.mouseMove(document, { clientX: 100, clientY: 50 });
-    expect(chart().scales.x).not.toEqual(original);
+    await waitFor(() => expect(chart().scales.x).not.toEqual(original));
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(chart().scales.x).toEqual(original);
   });

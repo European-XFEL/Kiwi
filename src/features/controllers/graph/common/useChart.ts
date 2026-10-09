@@ -79,6 +79,7 @@ export function useChart<T extends 'line' | 'scatter'>({
     complete: onComplete,
     finish,
     reset,
+    resetRevision: revision,
   });
   const applyLatest = React.useCallback(
     (gestureRanges?: AxisRanges) => {

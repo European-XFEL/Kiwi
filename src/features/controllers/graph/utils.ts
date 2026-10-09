@@ -58,8 +58,6 @@ export function integerTickFormatter(labels: ReadonlyMap<number, string>) {
     formatValueTick(value);
 }
 
-export const VECTOR_POINT_LIMIT = 300;
-
 export const BAR_SAMPLE_LIMIT = 3000;
 
 /** Generate X coordinates from the baseline offset and step. */

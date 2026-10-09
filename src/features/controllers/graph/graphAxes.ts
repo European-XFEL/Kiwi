@@ -1,9 +1,10 @@
-import type { ChartConfiguration, Scale } from 'chart.js';
+import type { ChartConfiguration, LinearScale, Scale } from 'chart.js';
 import type { PlotSettings } from './common/buildModelConfig';
 import {
   GRAPH_AXIS_FONT,
   GRAPH_COLORS,
   GRAPH_LAYOUT,
+  GRAPH_TICK_DENSITY,
   type Range,
 } from './common/constants';
 import { trendTimeTicks } from './trend/trendTimeTicks';
@@ -118,12 +119,71 @@ export function axisTitle(label: string, units: string) {
 
 type ChartAxis = NonNullable<ChartScales[string]>;
 
+function minimumTickIntervals(scale: Scale) {
+  const length = scale.isHorizontal() ? scale.width : scale.height;
+  const { density, minimum, referenceLength } = GRAPH_TICK_DENSITY;
+  return Math.max(
+    minimum,
+    minimum * density * Math.sqrt(length / referenceLength)
+  );
+}
+
+function roundedTickSpacing(maximumSpacing: number) {
+  const unit = 10 ** Math.floor(Math.log10(maximumSpacing));
+  let spacing = unit;
+  if (maximumSpacing >= 5 * unit) {
+    spacing *= 5;
+  } else if (maximumSpacing >= 2 * unit) {
+    spacing *= 2;
+  }
+  return spacing;
+}
+
+function setLinearTickDensity(scale: Scale) {
+  const minimumIntervals = minimumTickIntervals(scale);
+  const spacing = roundedTickSpacing(
+    (scale.max - scale.min) / minimumIntervals
+  );
+  // Pyqtgraph rounds spacing DOWN to meet a minimum density. Chart.js rounds
+  // it UP to stay below maxTicksLimit. Budget enough intervals for the chosen
+  // 1/2/5 spacing, including rounded bounds outside an offset visible range.
+  const intervals =
+    Math.ceil(scale.max / spacing) - Math.floor(scale.min / spacing);
+  (scale as LinearScale).options.ticks.maxTicksLimit = Number.isFinite(
+    intervals
+  )
+    ? intervals + 1
+    : Math.ceil(minimumIntervals) + 1;
+}
+
+function setLogTickDensity(scale: Scale) {
+  const spacing = Math.max(
+    1,
+    roundedTickSpacing(
+      (Math.log10(scale.max) - Math.log10(scale.min)) /
+        minimumTickIntervals(scale)
+    )
+  );
+  // Select major decades in log coordinates. Keep the other ticks as minor
+  // marks so Chart.js can still skip them to fit the available label space.
+  // Sub-decade views retain Chart.js's numeric ticks and labels.
+  for (const tick of scale.ticks) {
+    if (tick.major) {
+      tick.major = Math.round(Math.log10(tick.value)) % spacing === 0;
+    }
+  }
+}
+
 function buildNumericAxis(
   config: AxisConfig,
   { decadeLabels = false } = {}
 ): ChartAxis {
   return {
     type: config.scale,
+    beforeBuildTicks:
+      config.scale === 'linear' ? setLinearTickDensity : undefined,
+    afterBuildTicks:
+      config.scale === 'logarithmic' ? setLogTickDensity : undefined,
     ticks: {
       // Chart.js autoSkip defaults to true. Skip rather than rotate labels.
       // https://www.chartjs.org/docs/latest/axes/cartesian/#tick-configuration
