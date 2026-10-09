@@ -1,6 +1,10 @@
 import { act, cleanup, render, screen } from '@testing-library/react';
-import { WebCamGraphModel } from '@/karabo/common/api';
-import { AccessLevel, Encoding, HashType } from '@/karabo/data/api';
+import {
+  DetectorGraphModel,
+  ImageGraphModel,
+  WebCamGraphModel,
+} from '@/karabo/common/api';
+import { AccessLevel, Encoding, HashType, Timestamp } from '@/karabo/data/api';
 import {
   BaseBinding,
   BindingRoot,
@@ -9,6 +13,9 @@ import {
   NodeBinding,
   PropertyProxy,
 } from '@/lib/binding/api';
+import { createMockSystemTopology, SingletonContext } from '@/testing';
+import { useController } from '../../useController';
+import { useProxies } from '../../useProxies';
 import DisplayWebcamGraph from '../DisplayWebcamGraph';
 
 let resize: (width: number, height: number) => void;
@@ -77,10 +84,16 @@ function frameContext(width: number, height: number, encoding = Encoding.GRAY) {
   encodingBinding.setValue(encoding, undefined);
   binding.value.set('encoding', encodingBinding);
   const root = new DeviceProxy('CAMERA');
+  root.setOnlineFlag(true);
   root.binding = new BindingRoot();
   root.binding.value!.set('image', binding);
   const proxy = new PropertyProxy(root, 'image');
-  return { proxy, proxies: [proxy], userAccessLevel: AccessLevel.OBSERVER };
+  return {
+    binding,
+    proxy,
+    proxies: [proxy],
+    userAccessLevel: AccessLevel.OBSERVER,
+  };
 }
 
 function drawFrame() {
@@ -91,6 +104,53 @@ function overlay() {
   return screen.getByLabelText('Waiting for image').parentElement!
     .parentElement!;
 }
+
+test.each([WebCamGraphModel, ImageGraphModel, DetectorGraphModel])(
+  '%p shows the placeholder when its device goes offline with a cached frame',
+  async (Model) => {
+    const topology = createMockSystemTopology();
+    const device = topology.getDevice('CAMERA');
+    const fixture = frameContext(2, 2);
+    const binding = fixture.binding;
+    binding.bindingUpdated(new Timestamp(new Date()));
+    device.binding = fixture.proxy.root.binding;
+    device.setOnlineFlag(true);
+    const draw = jest.spyOn(context, 'putImageData');
+    const model = new Model();
+    model.keys = ['CAMERA.image'];
+    function ConnectedImage() {
+      const ctx = useController(useProxies(model.keys));
+      return <DisplayWebcamGraph model={model} ctx={ctx} />;
+    }
+
+    await SingletonContext.run({ topology }, () => {
+      const { unmount } = render(<ConnectedImage />);
+      try {
+        resize(400, 300);
+        drawFrame();
+        expect(draw).toHaveBeenCalled();
+        expect(screen.getByLabelText('Image timestamp')).toBeVisible();
+        draw.mockClear();
+
+        act(() => device.setOnlineFlag(false));
+        drawFrame();
+        expect(device.getBinding('image')).toBe(binding);
+        expect(fillText).toHaveBeenLastCalledWith('Image', 200, 150, 360);
+        expect(draw).not.toHaveBeenCalled();
+        expect(screen.getByLabelText('Waiting for image')).toBeVisible();
+        expect(screen.queryByLabelText('Image timestamp')).toBeNull();
+
+        resize(600, 300);
+        drawFrame();
+        expect(fillText).toHaveBeenLastCalledWith('Image', 300, 150, 560);
+        expect(draw).not.toHaveBeenCalled();
+      } finally {
+        unmount();
+        fixture.proxy.dispose();
+      }
+    });
+  }
+);
 
 test.each([
   [600, 600],

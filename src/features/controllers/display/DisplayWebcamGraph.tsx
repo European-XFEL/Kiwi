@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 import type { WebCamGraphModel } from '@/karabo/common/api';
-import { ImageBinding } from '@/lib/binding/api';
+import { ImageBinding, ProxyStatus } from '@/lib/binding/api';
 import { useWebcam } from '../graph/image/useWebcam';
 import { getImageTimestamp } from '../graph/image/pixels';
 import { WebcamLiveIndicator } from '../graph/image/WebcamLiveIndicator';
@@ -51,7 +51,10 @@ export default function DisplayWebcamGraph({
   const imageHeight = imageSize.height * scale;
   const binding = ctx?.proxy?.binding;
   const timestamp =
-    binding instanceof ImageBinding ? getImageTimestamp(binding) : undefined;
+    ctx?.proxy?.root.status !== ProxyStatus.OFFLINE &&
+    binding instanceof ImageBinding
+      ? getImageTimestamp(binding)
+      : undefined;
   return (
     <div
       style={{
