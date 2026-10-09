@@ -6,7 +6,6 @@ import {
   screen,
 } from '@testing-library/react';
 import { Chart } from 'chart.js/auto';
-import type { ScriptableContext } from 'chart.js';
 import { DisplayVectorGraphModel } from '@/karabo/common/api';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 import type { PropertyProxy } from '@/lib/binding/api';
@@ -118,7 +117,7 @@ test('preserves visibility across updates, reorder, configuration and reset', ()
   expect(chart().isDatasetVisible(0)).toBe(true);
 });
 
-test('samples each curve independently and selects marker sizes from sampled lengths', () => {
+test('samples each curve independently and keeps line markers disabled', () => {
   const model = new DisplayVectorGraphModel();
   Object.assign(model, {
     keys: ['small', 'large'],
@@ -137,10 +136,7 @@ test('samples each curve independently and selects marker sizes from sampled len
   ]);
   expect(chart().data.datasets[1].data.at(-1)).toEqual({ x: 150, y: 3 });
   for (const dataset of chart().data.datasets) {
-    const radius = dataset.pointRadius as (
-      ctx: ScriptableContext<'line'>
-    ) => number;
-    expect(radius({ dataset } as ScriptableContext<'line'>)).toBe(2);
+    expect(dataset.pointRadius).toBe(0);
   }
   fireEvent.click(screen.getByRole('button', { name: 'Reset view' }));
 });

@@ -6,20 +6,11 @@ import {
   screen,
 } from '@testing-library/react';
 import { Chart } from 'chart.js/auto';
-import {
-  Chart as RealChart,
-  BasicPlatform,
-  registerables,
-  type ScriptableContext,
-} from 'chart.js';
+import { Chart as RealChart, BasicPlatform, registerables } from 'chart.js';
 import { VectorXYGraphModel } from '@/karabo/common/api';
 import type { PropertyProxy } from '@/lib/binding/api';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
-import {
-  buildModelConfig,
-  GRAPH_LAYOUT,
-  TRACE_COLORS,
-} from '../../graph/common/api';
+import { buildModelConfig, TRACE_COLORS } from '../../graph/common/api';
 import { vectorXYChartOption } from '../../graph/plotConfig';
 import DisplayVectorXYGraph from '../DisplayVectorXYGraph';
 import { makeVectorProxy } from '../../graph/testing/vectorProxy';
@@ -209,7 +200,7 @@ test('defers data during gestures and restores configured ranges on reset', () =
   expect(chart().options.scales?.x).toMatchObject({ min: 10, max: 20 });
 });
 
-test('selects marker sizes per dataset after sampling', () => {
+test('keeps line markers disabled across sampled dataset sizes', () => {
   const config = vectorXYChartOption(
     buildModelConfig(new VectorXYGraphModel()),
     ['small', 'large']
@@ -217,12 +208,7 @@ test('selects marker sizes per dataset after sampling', () => {
   for (const [index, length] of [299, 300].entries()) {
     const dataset = config.data.datasets[index];
     dataset.data = Array.from({ length }, (_, x) => ({ x, y: x }));
-    const radius = dataset.pointRadius as (
-      ctx: ScriptableContext<'line'>
-    ) => number;
-    expect(radius({ dataset } as ScriptableContext<'line'>)).toBe(
-      index === 0 ? GRAPH_LAYOUT.vectorPointSize : 0
-    );
+    expect(dataset.pointRadius).toBe(0);
   }
 });
 

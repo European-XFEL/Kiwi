@@ -152,14 +152,14 @@ it.each([false, true])(
     }
     chart.resize(240, 400);
     const narrow = expectXLabelSpacing(chart).length;
-    chart.resize(800, 400);
+    chart.resize(1200, 400);
     expectXLabelSpacing(chart);
     expect(visibleXLabels(chart).length).toBeGreaterThan(narrow);
   }
 );
 
 it.each([false, true])(
-  'retains every fitting interior X label from axes3.png (reverse=%s)',
+  'retains rounded interior X labels within the density budget (reverse=%s)',
   (reverse) => {
     const model = buildModelConfig(new DisplayVectorGraphModel());
     Object.assign(model, {
@@ -171,12 +171,92 @@ it.each([false, true])(
     const chart = createChart(model);
     chart.resize(499, 400);
     const labels = expectXLabelSpacing(chart).map(({ label }) => label);
-    const expected = Array.from({ length: 9 }, (_, index) =>
-      String((index + 1) * 2000)
-    );
+    const expected = ['5000', '10000', '15000'];
     expect(labels).toEqual(reverse ? expected.reverse() : expected);
   }
 );
+
+it.each([false, true])(
+  'budgets linear ticks before generation on resize (reverse=%s)',
+  (reverse) => {
+    const model = buildModelConfig(new DisplayVectorGraphModel());
+    Object.assign(model, {
+      x_autorange: false,
+      x_min: 0,
+      x_max: 20000,
+      x_invert: reverse,
+      y_invert: reverse,
+    });
+    const chart = createChart(model);
+    for (const [width, height, xLimit, yLimit] of [
+      [800, 400, 5, 6],
+      [240, 200, 5, 6],
+      [1200, 800, 11, 6],
+    ]) {
+      chart.resize(width, height);
+      for (const key of ['x', 'y']) {
+        const axis = chart.scales[key];
+        const limit = key === 'x' ? xLimit : yLimit;
+        expect(chart.options.scales![key]!.ticks!.maxTicksLimit).toBe(limit);
+        expect(axis.ticks.length).toBeLessThanOrEqual(limit);
+      }
+      expectXLabelSpacing(chart);
+    }
+  }
+);
+
+it.each([false, true])(
+  'matches Qt major X ticks for the screenshot range (reverse=%s)',
+  (reverse) => {
+    const model = buildModelConfig(new DisplayVectorGraphModel());
+    Object.assign(model, {
+      x_autorange: false,
+      x_min: -900,
+      x_max: 20900,
+      x_invert: reverse,
+      y_autorange: false,
+      y_min: 1.5e6,
+      y_max: 1.8e6,
+    });
+    const chart = createChart(model);
+    chart.resize(600, 292);
+    const expected = ['0', '5000', '10000', '15000', '20000'];
+    expect(expectXLabelSpacing(chart).map(({ label }) => label)).toEqual(
+      reverse ? expected.reverse() : expected
+    );
+  }
+);
+
+it.each([
+  { min: 12300, max: 22300, expected: [14000, 16000, 18000, 20000, 22000] },
+  { min: -20900, max: 900, expected: [-20000, -15000, -10000, -5000, 0] },
+])(
+  'keeps rounded spacing for offset bounds $min..$max',
+  ({ min, max, expected }) => {
+    const model = buildModelConfig(new DisplayVectorGraphModel());
+    Object.assign(model, { x_autorange: false, x_min: min, x_max: max });
+    const chart = createChart(model);
+    chart.resize(600, 292);
+    expect(chart.scales.x.ticks.map(({ value }) => value)).toEqual(expected);
+  }
+);
+
+it.each([
+  [1e-100, 9e-100],
+  [-1e100, 1e100],
+  [123456789.1, 123456789.2],
+])('fits long labels and extreme linear ranges %s..%s', (min, max) => {
+  const model = buildModelConfig(new DisplayVectorGraphModel());
+  Object.assign(model, { x_autorange: false, x_min: min, x_max: max });
+  const axes = buildPlotAxes(model);
+  axes.x.formatTick = (value) => `position=${value}`;
+  const chart = createChart(model, axes);
+  expect(chart.scales.x.ticks.length).toBeGreaterThan(0);
+  expect(
+    chart.scales.x.ticks.every(({ value }) => Number.isFinite(value))
+  ).toBe(true);
+  expectXLabelSpacing(chart);
+});
 
 it.each([false, true])(
   'keeps logarithmic X labels apart through zoom and resize (reverse=%s)',
@@ -227,7 +307,7 @@ it.each([false, true])(
     chart.resize(92, 400);
     expect(expectXLabelSpacing(chart)).toEqual([]);
     chart.resize(800, 400);
-    expect(expectXLabelSpacing(chart).length).toBeGreaterThan(1);
+    expect(expectXLabelSpacing(chart).length).toBeGreaterThan(0);
   }
 );
 
@@ -383,11 +463,7 @@ it.each([false, true])(
     const ticks = chart.scales.y.ticks;
     expect(
       ticks.filter(({ label }) => label !== '').map(({ label }) => label)
-    ).toEqual(
-      reverse
-        ? ['10³', '10²', '10¹', '1', '10⁻¹']
-        : ['10⁻¹', '1', '10¹', '10²', '10³']
-    );
+    ).toEqual(reverse ? ['10²', '1'] : ['1', '10²']);
     expect(ticks.some(({ major, label }) => !major && label === '')).toBe(true);
     Object.assign(chart.options.scales!.y!, { min: 50.2, max: 51.8 });
     chart.update('none');
@@ -397,6 +473,71 @@ it.each([false, true])(
     });
   }
 );
+
+it.each([false, true])(
+  'selects log decades by density on resize (reverse=%s)',
+  (reverse) => {
+    const model = buildModelConfig(new DisplayVectorGraphModel());
+    Object.assign(model, {
+      x_log: true,
+      x_invert: reverse,
+      x_autorange: false,
+      x_min: 1e-6,
+      x_max: 1e6,
+      y_log: true,
+      y_invert: reverse,
+      y_autorange: false,
+      y_min: 1e-6,
+      y_max: 1e6,
+    });
+    const chart = createChart(model);
+    chart.options.scales!.x!.ticks!.autoSkip = false;
+    chart.options.scales!.y!.ticks!.autoSkip = false;
+    for (const [width, exponents] of [
+      [240, [-5, 0, 5]],
+      [1200, [-6, -4, -2, 0, 2, 4, 6]],
+    ] as const) {
+      chart.resize(width, width);
+      for (const key of ['x', 'y']) {
+        const ticks = chart.scales[key].ticks;
+        const expected = exponents.map((exponent) => 10 ** exponent);
+        expect(
+          ticks.filter(({ major }) => major).map(({ value }) => value)
+        ).toEqual(reverse ? expected.reverse() : expected);
+        expect(ticks.some(({ value, major }) => value === 2 && !major)).toBe(
+          true
+        );
+      }
+      expectXLabelSpacing(chart);
+    }
+    Object.assign(chart.options.scales!.x!, { min: 50.2, max: 51.8 });
+    chart.update('none');
+    expect(chart.scales.x.ticks.some(({ label }) => label !== '')).toBe(true);
+  }
+);
+
+it.each([
+  [1e-100, 1e100],
+  [1e-100, 1e-90],
+  [1e90, 1e100],
+])('keeps log ticks finite and in range for %s..%s', (min, max) => {
+  const model = buildModelConfig(new DisplayVectorGraphModel());
+  Object.assign(model, {
+    x_log: true,
+    x_autorange: false,
+    x_min: min,
+    x_max: max,
+  });
+  const chart = createChart(model);
+  const ticks = chart.scales.x.ticks;
+  expect(ticks.some(({ major }) => major)).toBe(true);
+  expect(
+    ticks.every(
+      ({ value }) => Number.isFinite(value) && value >= min && value <= max
+    )
+  ).toBe(true);
+  expectXLabelSpacing(chart);
+});
 
 it('preserves custom log Y formatting', () => {
   const model = buildModelConfig(new DisplayVectorGraphModel());
@@ -489,12 +630,13 @@ it.each([false, true])(
       y_label: 'Value',
       x_autorange: false,
       y_autorange: false,
-      x_min: 1,
+      x_min: log ? 1 : 0,
       x_max: 1e6,
       y_min: 1,
       y_max: 1e6,
     });
     const chart = createChart(model);
+    chart.resize(1200, 400);
     const wide = chart.scales.x.ticks.length;
     chart.resize(240, 400);
     expect(chart.scales.x.ticks.length).toBeLessThan(wide);

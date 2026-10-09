@@ -1,13 +1,16 @@
 import { buildPlotAxes } from '../graphAxes';
-import type { ScriptableContext } from 'chart.js';
-import { GRAPH_LAYOUT, TRACE_COLORS } from '../common/api';
+import { TRACE_COLORS } from '../common/api';
 import { buildModelConfig } from '../common/api';
 import { DisplayVectorGraphModel } from '@/karabo/common/api';
-import { vectorChartOption } from '../plotConfig';
+import {
+  vectorChartOption,
+  vectorXYChartOption,
+  vectorScatterChartOption,
+} from '../plotConfig';
 import { padViewportRange } from '../utils';
 
 describe('vector Chart.js configuration', () => {
-  it('labels ordered datasets, cycles colors and sizes markers per dataset', () => {
+  it('labels ordered datasets, cycles colors and disables line markers', () => {
     const keys = Array.from({ length: 7 }, (_, index) => `DEV.value${index}`);
     const config = vectorChartOption(
       buildModelConfig(new DisplayVectorGraphModel()),
@@ -23,13 +26,18 @@ describe('vector Chart.js configuration', () => {
     for (const [index, length] of [299, 300].entries()) {
       const dataset = config.data.datasets[index];
       dataset.data = Array.from({ length }, (_, x) => ({ x, y: x }));
-      const radius = dataset.pointRadius as (
-        ctx: ScriptableContext<'line'>
-      ) => number;
-      expect(radius({ dataset } as ScriptableContext<'line'>)).toBe(
-        index === 0 ? GRAPH_LAYOUT.vectorPointSize : 0
-      );
+      expect(dataset.pointRadius).toBe(0);
     }
+  });
+
+  it('disables XY line markers while retaining scatter markers', () => {
+    const model = buildModelConfig(new DisplayVectorGraphModel());
+    expect(
+      vectorXYChartOption(model, ['xy']).data.datasets[0].pointRadius
+    ).toBe(0);
+    expect(
+      vectorScatterChartOption(model, ['xy']).data.datasets[0].pointRadius
+    ).toBe(model.psize / 2);
   });
 
   it('uses model axis labels and units', () => {

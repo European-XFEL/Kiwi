@@ -4,7 +4,6 @@ import { GRAPH_LAYOUT, TRACE_COLORS, type Range } from './common/constants';
 import { commonChartOption } from './common/commonConfig';
 import { buildPlotAxes, type PlotAxesConfig } from './graphAxes';
 import { vectorBarPlugin } from './graphPlugins';
-import { VECTOR_POINT_LIMIT } from './utils';
 
 export function scatterChartOption(
   plotConfig: PlotSettings,
@@ -44,10 +43,7 @@ export function vectorChartOption(
     borderColor: TRACE_COLORS[index % TRACE_COLORS.length],
     backgroundColor: TRACE_COLORS[index % TRACE_COLORS.length],
     borderWidth: GRAPH_LAYOUT.lineWidth,
-    pointRadius: (context: ScriptableContext<'line'>) =>
-      context.dataset.data.length < VECTOR_POINT_LIMIT
-        ? GRAPH_LAYOUT.vectorPointSize
-        : 0,
+    pointRadius: 0,
     pointHoverRadius: 0,
     tension: 0,
   }));

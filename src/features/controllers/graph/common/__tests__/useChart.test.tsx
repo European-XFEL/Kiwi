@@ -1,5 +1,11 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from '@testing-library/react';
 import { Chart } from 'chart.js/auto';
 import { DisplayTrendGraphModel } from '@/karabo/common/api';
 import {
@@ -160,4 +166,112 @@ it('publishes mutations of stable data through a revision without recreating the
   expect(chart()).toBe(current);
   expect(update).toHaveBeenCalledWith('none');
   expect(current.scales.x.max).toBe(2000);
+});
+
+describe('gesture animation frames', () => {
+  let frames: Map<number, FrameRequestCallback>;
+  let nextId: number;
+  beforeEach(() => {
+    frames = new Map();
+    nextId = 0;
+    jest
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((callback) => {
+        frames.set(++nextId, callback);
+        return nextId;
+      });
+    jest.spyOn(window, 'cancelAnimationFrame').mockImplementation((id) => {
+      frames.delete(id);
+    });
+  });
+  afterEach(() => {
+    cleanup();
+    jest.restoreAllMocks();
+  });
+  function flush() {
+    act(() => {
+      const pending = [...frames.values()];
+      frames.clear();
+      pending.forEach((callback) => callback(0));
+    });
+  }
+  function start(button: number) {
+    fireEvent.mouseDown(screen.getByTestId('plot'), {
+      button,
+      clientX: 90,
+      clientY: 40,
+    });
+  }
+  function move(clientX: number) {
+    fireEvent.mouseMove(document, { clientX, clientY: 40 });
+  }
+  it.each([1, 2])(
+    'coalesces button %s bursts and applies exact release coordinates',
+    (button) => {
+      render(<Harness axes={mappedAxes} />);
+      const current = chart();
+      const update = current.update as jest.Mock;
+      update.mockClear();
+      start(button);
+      move(100);
+      move(110);
+      move(120);
+      expect(update).not.toHaveBeenCalled();
+      expect(frames.size).toBe(1);
+      flush();
+      expect(update).toHaveBeenCalledTimes(1);
+      if (button === 1) expect(current.scales.x.min).toBeCloseTo(-30000 / 146);
+      else
+        expect(current.scales.x.max - current.scales.x.min).toBeCloseTo(
+          1000 * Math.exp(0.3)
+        );
+      move(130);
+      fireEvent.mouseUp(document, { button, clientX: 140, clientY: 40 });
+      expect(frames.size).toBe(0);
+      if (button === 1) expect(current.scales.x.min).toBeCloseTo(-50000 / 146);
+      else
+        expect(current.scales.x.max - current.scales.x.min).toBeCloseTo(
+          1000 * Math.exp(0.5)
+        );
+      update.mockClear();
+      flush();
+      expect(update).not.toHaveBeenCalled();
+    }
+  );
+  it.each(['Escape', 'blur', 'reset', 'unmount'])(
+    'cancels queued frames on %s',
+    (outcome) => {
+      const view = render(<Harness axes={mappedAxes} />);
+      const current = chart();
+      start(1);
+      move(120);
+      expect(frames.size).toBe(1);
+      if (outcome === 'Escape') fireEvent.keyDown(document, { key: 'Escape' });
+      else if (outcome === 'blur') fireEvent.blur(window);
+      else if (outcome === 'reset') fireEvent.click(screen.getByText('Reset'));
+      else view.unmount();
+      expect(frames.size).toBe(0);
+      const update = current.update as jest.Mock;
+      update.mockClear();
+      flush();
+      expect(update).not.toHaveBeenCalled();
+      if (outcome !== 'unmount') {
+        expect(current.scales.x).toMatchObject({ min: 0, max: 1000 });
+        fireEvent.mouseUp(document, { button: 1, clientX: 140, clientY: 40 });
+        expect(update).not.toHaveBeenCalled();
+      }
+    }
+  );
+  it('defers replacement data while a gesture frame is pending', () => {
+    const view = render(<Harness axes={mappedAxes} />);
+    start(1);
+    move(120);
+    const latest = [{ x: 500, y: 0.5 }];
+    view.rerender(<Harness axes={mappedAxes} data={latest} />);
+    flush();
+    expect(chart().data.datasets[0].data).toEqual(points);
+    fireEvent.mouseUp(document, { button: 1, clientX: 140, clientY: 40 });
+    expect(chart().data.datasets[0].data).toEqual(latest);
+    expect(chart().scales.x.min).toBeCloseTo(-50000 / 146);
+  });
 });

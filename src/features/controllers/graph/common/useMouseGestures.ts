@@ -179,6 +179,7 @@ export function useMouseGestures({
   complete,
   finish,
   reset,
+  resetRevision,
 }: {
   containerRef: React.RefObject<HTMLDivElement | null>;
   selectionRef: React.RefObject<HTMLDivElement | null>;
@@ -193,6 +194,7 @@ export function useMouseGestures({
   complete: (xRange: Range, yRange: Range) => void;
   finish: () => void;
   reset: () => void;
+  resetRevision: number;
 }) {
   React.useLayoutEffect(() => {
     const container = containerRef.current;
@@ -208,12 +210,30 @@ export function useMouseGestures({
           button: number;
         }
       | undefined;
+    let frame: number | undefined;
+    let pendingRanges: AxisRanges | undefined;
+    const cancelFrame = () => {
+      if (frame !== undefined) cancelAnimationFrame(frame);
+      frame = undefined;
+      pendingRanges = undefined;
+    };
+    const scheduleRanges = (ranges: AxisRanges) => {
+      pendingRanges = ranges;
+      if (frame !== undefined) return;
+      frame = requestAnimationFrame(() => {
+        frame = undefined;
+        const next = pendingRanges;
+        pendingRanges = undefined;
+        if (next) setRanges(next);
+      });
+    };
     // The preview only belongs to rectangle zoom and must disappear after every outcome.
     const hideSelection = () => {
       if (selectionRef.current) selectionRef.current.style.display = 'none';
     };
     // Escape, blur, and unmount restore the captured range instead of leaving a half-pan.
     const cancel = () => {
+      cancelFrame();
       if (!gesture) return;
       const { ranges } = gesture;
       gesture = undefined;
@@ -255,15 +275,16 @@ export function useMouseGestures({
       if (gesture.tool === 'zoom') {
         setSelection(selectionRef.current, start, current, bounds);
       } else if (gesture.tool === 'pan') {
-        setRanges(shiftedRanges(ranges, pixels, start, current));
+        scheduleRanges(shiftedRanges(ranges, pixels, start, current));
       } else {
-        setRanges(scaledRanges(ranges, pixels, start, current));
+        scheduleRanges(scaledRanges(ranges, pixels, start, current));
       }
       event.preventDefault();
     };
     // Commit the final range once, which pauses following only after the user finishes.
     const onMouseUp = (event: MouseEvent) => {
       if (!gesture || event.button !== gesture.button) return;
+      cancelFrame();
       const current = mousePosition(container, event);
       const { start, ranges, bounds, pixels, tool: gestureTool } = gesture;
       gesture = undefined;
@@ -402,5 +423,6 @@ export function useMouseGestures({
     setRanges,
     tool,
     reset,
+    resetRevision,
   ]);
 }
