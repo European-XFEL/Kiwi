@@ -1,18 +1,21 @@
 import React from 'react';
-import type { ChartConfiguration } from 'chart.js';
+import type { ChartConfiguration, DefaultDataPoint } from 'chart.js';
 import type { PlotAxesConfig } from '../graphAxes';
 import { GRAPH_LAYOUT, type Range } from './constants';
 import { useMouseGestures, type AxisRanges } from './useMouseGestures';
 import type { ChartMouseTool } from './components/ChartToolBar';
 import { usePlotItem } from './usePlotItem';
 
-type ChartData<T extends 'line' | 'scatter'> = {
-  datasets: ChartConfiguration<T>['data']['datasets'];
+type ChartData<T extends 'line' | 'scatter' | 'bar', TData> = {
+  datasets: ChartConfiguration<T, TData>['data']['datasets'];
   pointRadius?: number;
 };
 
 /** Publishes the latest data after navigation and keeps gesture ranges in sync. */
-export function useChart<T extends 'line' | 'scatter'>({
+export function useChart<
+  T extends 'line' | 'scatter' | 'bar',
+  TData = DefaultDataPoint<T>,
+>({
   axes,
   configuration,
   identity,
@@ -25,14 +28,14 @@ export function useChart<T extends 'line' | 'scatter'>({
   dataRevision,
 }: {
   axes: PlotAxesConfig;
-  configuration: () => ChartConfiguration<T>;
+  configuration: () => ChartConfiguration<T, TData>;
   identity: readonly unknown[];
   xRange?: Range;
   yRange?: Range;
   onComplete: (x: Range, y: Range) => void;
   onReset: () => void;
   onRanges?: (ranges: AxisRanges) => void;
-  buildData: (xRange?: Range, yRange?: Range) => ChartData<T>;
+  buildData: (xRange?: Range, yRange?: Range) => ChartData<T, TData>;
   dataRevision?: number;
 }) {
   const selectionRef = React.useRef<HTMLDivElement>(null);

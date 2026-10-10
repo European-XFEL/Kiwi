@@ -1,4 +1,4 @@
-import type { ChartConfiguration } from 'chart.js';
+import type { ChartConfiguration, Point } from 'chart.js';
 import type { PlotSettings } from './buildModelConfig';
 import { GRAPH_LAYOUT } from './constants';
 import { plotFrame } from './plotFrame';
@@ -20,9 +20,15 @@ export function commonChartOption(
 export function commonChartOption(
   plotConfig: PlotSettings,
   axes: PlotAxesConfig,
-  type: 'line' | 'scatter' = 'line',
+  type: 'bar',
   onYAxisWidth?: (width: number) => void
-): ChartConfiguration<'line' | 'scatter'> {
+): ChartConfiguration<'bar', Point[]>;
+export function commonChartOption(
+  plotConfig: PlotSettings,
+  axes: PlotAxesConfig,
+  type: 'line' | 'scatter' | 'bar' = 'line',
+  onYAxisWidth?: (width: number) => void
+): ChartConfiguration<'line' | 'scatter' | 'bar'> {
   return {
     type,
     data: { datasets: [{ data: [] }] },

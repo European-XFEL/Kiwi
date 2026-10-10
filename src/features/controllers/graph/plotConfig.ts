@@ -1,7 +1,8 @@
-import type { ChartConfiguration, ScriptableContext } from 'chart.js';
+import type { ChartConfiguration, Point, ScriptableContext } from 'chart.js';
 import type { PlotSettings } from './common/buildModelConfig';
 import {
   GRAPH_LAYOUT,
+  BAR_BLUE,
   SCATTER_BLUE,
   SCATTER_RED,
   type Range,
@@ -9,7 +10,6 @@ import {
 import { resolveCurveStyle } from './common/curveStyle';
 import { commonChartOption } from './common/commonConfig';
 import { buildPlotAxes, type PlotAxesConfig } from './graphAxes';
-import { vectorBarPlugin } from './graphPlugins';
 
 export function scatterChartOption(
   plotConfig: PlotSettings,
@@ -100,16 +100,27 @@ export function barChartOption(
   xRange?: Range,
   yRange?: Range,
   axes: PlotAxesConfig = buildPlotAxes(plotConfig)
-): ChartConfiguration<'line'> {
-  const config = commonChartOption(plotConfig, {
-    x: { ...axes.x, range: xRange ?? axes.x.range },
-    y: { ...axes.y, range: yRange ?? axes.y.range, beginAtZero: true },
+): ChartConfiguration<'bar', Point[]> {
+  const config = commonChartOption(
+    plotConfig,
+    {
+      x: { ...axes.x, range: xRange ?? axes.x.range },
+      y: { ...axes.y, range: yRange ?? axes.y.range, beginAtZero: true },
+    },
+    'bar'
+  );
+  Object.assign(config.data.datasets[0], {
+    backgroundColor: BAR_BLUE,
+    borderColor: 'black',
+    borderWidth: 1,
+    inflateAmount: 0,
+    grouped: false,
+    categoryPercentage: 1,
+    barPercentage: Math.min(plotConfig.bar_width, 1),
+    clip: 0,
   });
-  config.data.datasets[0].showLine = false;
-  config.data.datasets[0].pointRadius = 0;
-  config.plugins = [
-    ...(config.plugins ?? []),
-    vectorBarPlugin(plotConfig.bar_width),
-  ];
+  const xAxis = config.options!.scales!.x!;
+  xAxis.offset = false;
+  xAxis.grid!.offset = false;
   return config;
 }

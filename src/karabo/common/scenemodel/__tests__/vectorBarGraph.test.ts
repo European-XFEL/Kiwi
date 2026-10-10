@@ -25,6 +25,7 @@ test('reads vector bar graph fields and the default width', () => {
   expect(graph.y_label).toBe('Signal');
   expect(graph.y_invert).toBe(true);
   expect(graph.bar_width).toBe(0.1);
+  expect(new VectorBarGraphModel().bar_width).toBe(0.1);
   expect(
     (readPlot('VectorBarGraph', 'krb:bar_width="0.75"') as VectorBarGraphModel)
       .bar_width
