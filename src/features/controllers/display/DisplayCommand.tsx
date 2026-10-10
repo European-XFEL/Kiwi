@@ -10,27 +10,9 @@ import React from 'react';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 import { DisplayCommandModel } from '@/karabo/common/api';
 import { AccessLevel } from '@/karabo/data/api';
-import { PropertyProxy, ProxyStatus } from '@/lib/binding/api';
-import { SlotBinding } from '@/lib/binding/BaseBinding';
 import { getControllerFontStyle } from '../utils/fonts';
 import { CommandButton } from '@/components/api';
-
-function isCommandEnabled(
-  proxy: PropertyProxy,
-  userAccessLevel: AccessLevel
-): boolean {
-  const binding = proxy.binding;
-  const state = proxy.root.state;
-  return (
-    binding instanceof SlotBinding &&
-    !!proxy.root.deviceId &&
-    !!proxy.path &&
-    proxy.root.status !== ProxyStatus.OFFLINE &&
-    !!state &&
-    binding.is_allowed(state) &&
-    userAccessLevel >= binding.requiredAccessLevel
-  );
-}
+import { isControllerExecutable } from '../utils/controller_semantics';
 
 const DisplayCommand: React.FC<{
   model: DisplayCommandModel;
@@ -39,7 +21,7 @@ const DisplayCommand: React.FC<{
   const userAccessLevel = ctx?.userAccessLevel ?? AccessLevel.OBSERVER;
   // XXX: find returns the first enabled proxy here
   const enabledProxy = ctx?.proxies.find((proxy) =>
-    isCommandEnabled(proxy, userAccessLevel)
+    isControllerExecutable(proxy, userAccessLevel)
   );
   const proxy = enabledProxy ?? ctx?.proxies[0];
   const binding = proxy?.binding;

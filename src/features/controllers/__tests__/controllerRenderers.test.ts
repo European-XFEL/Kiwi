@@ -47,3 +47,13 @@ test('registers separate vector line and bar controllers', () => {
   expect(renderers.get('DetectorGraph')).toBe(DisplayWebcamGraph);
   expect(DisplayBarGraph).not.toBe(DisplayVectorGraph);
 });
+test('registers an icon command renderer distinct from the text command', () => {
+  const renderers = new Map<string, unknown>();
+  bootstrapControllerRenderers((klass, renderer) => {
+    renderers.set(klass, renderer);
+  }, true);
+  expect(renderers.get('DisplayIconCommand')).toEqual(expect.any(Function));
+  expect(renderers.get('DisplayIconCommand')).not.toBe(
+    renderers.get('DisplayCommand')
+  );
+});

@@ -36,3 +36,12 @@ export const isControllerEditable = (
     isProxyAllowed(proxy, userAccessLevel)
   );
 };
+
+// Command permission plus the controller's online guard.
+export const isControllerExecutable = (
+  proxy: PropertyProxy | undefined,
+  userAccessLevel: AccessLevel
+): boolean =>
+  !!proxy &&
+  proxy.root.status !== ProxyStatus.OFFLINE &&
+  proxy.isExecutable(userAccessLevel);

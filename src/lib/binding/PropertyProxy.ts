@@ -91,6 +91,17 @@ export class PropertyProxy {
     return binding.is_allowed(this.root_proxy.state ?? '');
   }
 
+  isExecutable(userAccessLevel: AccessLevel): boolean {
+    const binding = this.binding;
+    const state = this.root_proxy.state;
+    return (
+      binding instanceof SlotBinding &&
+      !!state &&
+      binding.is_allowed(state) &&
+      userAccessLevel >= binding.requiredAccessLevel
+    );
+  }
+
   set edit_value(value: any) {
     const binding = this.binding;
     if (value === undefined || !binding) {
