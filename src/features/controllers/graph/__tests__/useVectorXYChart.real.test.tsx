@@ -169,7 +169,7 @@ test.each([false, true])(
     });
     fireEvent.mouseUp(document, {
       button: 2,
-      clientX: xPixel - 30,
+      clientX: xPixel + 30,
       clientY: yPixel,
     });
     expect(chart.scales.x.min).toBeGreaterThan(0);

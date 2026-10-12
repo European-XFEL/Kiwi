@@ -10,10 +10,10 @@ const series = [
   { key: 'A.value', timestamps: [START, START + 1000], values: [1, 2] },
 ];
 
-function TrendHarness() {
+function TrendHarness({ data = series }: { data?: typeof series }) {
   const view = useTrendChart({
     plotConfig: model,
-    series,
+    series: data,
     startTime: START,
     dataRevision: 0,
   });
@@ -21,6 +21,8 @@ function TrendHarness() {
     <>
       <div ref={view.containerRef} data-testid="trend-chart" />
       <div ref={view.selectionRef} />
+      <button onClick={() => view.selectTool('pointer')}>Pointer</button>
+      <button onClick={() => view.selectTool('zoom')}>Zoom</button>
       <button onClick={() => view.selectTool('pan')}>Move</button>
       <button onClick={view.reset}>Reset</button>
       <output>{view.mode ?? 'paused'}</output>
@@ -65,3 +67,32 @@ test('trend chart handles a right-button drag before using the toolbar', () => {
   expect(screen.getByText('paused')).toBeTruthy();
   expect(chart.options.scales?.x?.min).toEqual(expect.any(Number));
 });
+
+test.each(['Pointer', 'Zoom', 'Move'])(
+  'middle-drag pauses and middle-click resumes trend uptime in %s mode',
+  (tool) => {
+    const view = render(<TrendHarness />);
+    const chart = (
+      Chart as unknown as { instances: Chart<'line'>[] }
+    ).instances.at(-1)!;
+    const container = screen.getByTestId('trend-chart');
+    const initialX = { ...chart.scales.x };
+    fireEvent.click(screen.getByRole('button', { name: tool }));
+    fireEvent.mouseDown(container, { button: 1, clientX: 90, clientY: 40 });
+    fireEvent.mouseUp(document, { button: 1, clientX: 110, clientY: 50 });
+    expect(screen.getByText('paused')).toBeTruthy();
+    expect(chart.scales.x).not.toEqual(initialX);
+    fireEvent.mouseDown(container, { button: 1, clientX: 90, clientY: 40 });
+    fireEvent.mouseUp(document, { button: 1, clientX: 92, clientY: 41 });
+    expect(screen.getByText('uptime')).toBeTruthy();
+    expect(chart.scales.x.min).toBe(initialX.min);
+    view.rerender(
+      <TrendHarness
+        data={[
+          { key: 'A.value', timestamps: [START, START + 2000], values: [1, 3] },
+        ]}
+      />
+    );
+    expect(chart.scales.x.max).toBe(START + 2000);
+  }
+);

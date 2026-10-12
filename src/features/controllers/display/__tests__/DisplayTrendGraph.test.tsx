@@ -254,18 +254,40 @@ describe('DisplayTrendGraph with Chart.js', () => {
     expect(chart().scales.y.min).toBeGreaterThan(0);
   });
 
-  it('supports middle click reset and right drag zoom', () => {
+  it.each([
+    { direction: 'right', dx: 20 },
+    { direction: 'left', dx: -20 },
+  ])('zooms X on a $direction drag and resets on middle click', ({ dx }) => {
     jest.mocked(trendData.useTrendModel).mockReturnValue(published());
     render(
       <DisplayTrendGraph model={new DisplayTrendGraphModel()} ctx={ctx} />
     );
+    const current = chart();
+    const initialX = { ...current.scales.x };
+    const initialY = { ...current.scales.y };
+    const initialSpan = initialX.max - initialX.min;
+    const { left, right, top, bottom } = current.chartArea;
+    const start = { clientX: (left + right) / 2, clientY: (top + bottom) / 2 };
+    const rightMouseButton = 2;
+    const middleMouseButton = 1;
     const container = screen.getByTestId('trend-chart');
-    fireEvent.mouseDown(container, { button: 2, clientX: 90, clientY: 40 });
-    fireEvent.mouseUp(document, { button: 2, clientX: 70, clientY: 40 });
-    expect(chart().scales.x.max - chart().scales.x.min).toBeLessThan(1000);
-    fireEvent.mouseDown(container, { button: 1, clientX: 90, clientY: 40 });
-    fireEvent.mouseUp(document, { button: 1, clientX: 90, clientY: 40 });
-    expect(chart().scales.x).toEqual({ min: 1000, max: 2000 });
+    fireEvent.mouseDown(container, { button: rightMouseButton, ...start });
+    fireEvent.mouseUp(document, {
+      button: rightMouseButton,
+      clientX: start.clientX + dx,
+      clientY: start.clientY,
+    });
+    const zoomedSpan = current.scales.x.max - current.scales.x.min;
+    if (dx > 0) {
+      expect(zoomedSpan).toBeLessThan(initialSpan);
+    } else {
+      expect(zoomedSpan).toBeGreaterThan(initialSpan);
+    }
+    expect(current.scales.y).toEqual(initialY);
+    fireEvent.mouseDown(container, { button: middleMouseButton, ...start });
+    fireEvent.mouseUp(document, { button: middleMouseButton, ...start });
+    expect(current.scales.x).toEqual(initialX);
+    expect(current.scales.y).toEqual(initialY);
   });
 });
 
