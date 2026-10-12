@@ -37,3 +37,6 @@ export const isControllerWidget = (
 ): model is BaseWidgetObjectData =>
   model instanceof BaseWidgetObjectData &&
   !DIRECT_RENDER_WIDGET_MODELS.has(model.constructor);
+
+export const isEditableWidget = (model: BaseWidgetObjectData): boolean =>
+  model.parent_component === 'EditableApplyLaterComponent';

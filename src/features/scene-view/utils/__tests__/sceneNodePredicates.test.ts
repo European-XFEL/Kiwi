@@ -1,6 +1,7 @@
 import {
   BoxLayoutModel,
   DisplayLabelModel,
+  EditableComboBoxModel,
   LabelModel,
   RectangleModel,
   SceneLinkModel,
@@ -9,7 +10,12 @@ import {
   UnknownXMLDataModel,
   WebLinkModel,
 } from '@/karabo/common/api';
-import { isControllerWidget, isLayout, isShape } from '../sceneNodePredicates';
+import {
+  isControllerWidget,
+  isEditableWidget,
+  isLayout,
+  isShape,
+} from '../sceneNodePredicates';
 
 describe('sceneNodePredicates', () => {
   it('identifies layout models', () => {
@@ -35,5 +41,18 @@ describe('sceneNodePredicates', () => {
 
   it('identifies controller widgets', () => {
     expect(isControllerWidget(new DisplayLabelModel())).toBe(true);
+  });
+
+  it('identifies editable widgets', () => {
+    expect(isEditableWidget(new EditableComboBoxModel())).toBe(true);
+    expect(isEditableWidget(new DisplayLabelModel())).toBe(false);
+  });
+
+  it('uses the parent component for widgets that can change modes', () => {
+    const model = new DisplayLabelModel();
+    model.parent_component = 'EditableApplyLaterComponent';
+    expect(isEditableWidget(model)).toBe(true);
+    model.parent_component = 'DisplayComponent';
+    expect(isEditableWidget(model)).toBe(false);
   });
 });

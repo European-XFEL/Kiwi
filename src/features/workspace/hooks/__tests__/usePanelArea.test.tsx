@@ -26,7 +26,12 @@ function makePanelState(): PanelAreaState {
       tabs: [{ id: 'center-1', title: 'Scene', closable: true }],
       activeTabId: 'center-1',
     },
-    right: { id: 'right', tabs: [], activeTabId: undefined },
+    right: {
+      id: 'right',
+      tabs: [{ id: 'controllers', title: 'Controllers', closable: false }],
+      activeTabId: 'controllers',
+      controllerPanels: [],
+    },
   };
 }
 

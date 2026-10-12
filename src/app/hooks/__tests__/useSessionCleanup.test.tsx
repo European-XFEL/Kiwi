@@ -1,15 +1,21 @@
 import { act, renderHook } from '@testing-library/react';
 import { ProjectModel } from '@/karabo/common/project/api';
+import { DisplayTextLogModel, SceneModel } from '@/karabo/common/api';
+import { broadcast_event, KaraboEvent } from '@/lib/events';
 import { Mediator } from '@/lib/singletons/Mediator';
 import { ProjectItemModel } from '@/lib/singletons/ProjectItemModel';
+import { PanelWrangler } from '@/lib/singletons/PanelWrangler';
 
-const mockResetWorkspace = jest.fn();
+let mockPanelWrangler: PanelWrangler;
+let mockResetWorkspace: jest.SpyInstance;
 const mockResetDb = jest.fn();
 const mockProjectModel = new ProjectItemModel();
 const mockMediator = new Mediator();
 
 jest.mock('@/lib/singletons/api', () => ({
-  getPanelWrangler: () => ({ resetWorkspace: mockResetWorkspace }),
+  getPanelWrangler: () => ({
+    resetWorkspace: () => mockPanelWrangler.resetWorkspace(),
+  }),
   getDbConn: () => ({ reset: mockResetDb }),
   getProjectModel: () => mockProjectModel,
   getMediator: () => mockMediator,
@@ -43,6 +49,12 @@ describe('useSessionCleanup', () => {
     act(() => {
       useGlobalStore.getState().reset();
     });
+    mockPanelWrangler = new PanelWrangler();
+    mockResetWorkspace = jest.spyOn(mockPanelWrangler, 'resetWorkspace');
+  });
+
+  afterEach(() => {
+    mockPanelWrangler.dispose();
   });
 
   it('does not clear when the app starts without a session', () => {
@@ -68,7 +80,25 @@ describe('useSessionCleanup', () => {
 
   it('clears the workspace and project when the user logs out', () => {
     login();
-    mockProjectModel.setRoot('CONTROLS', new ProjectModel({ uuid: 'root' }));
+    const scene = new SceneModel({
+      uuid: 'session-scene',
+      simple_name: 'Session scene',
+      width: 800,
+      height: 600,
+      initialized: true,
+    });
+    const project = new ProjectModel({ uuid: 'root' });
+    project.initialized = true;
+    project.scenes = [scene];
+    mockProjectModel.setRoot('CONTROLS', project);
+    broadcast_event(KaraboEvent.OpenScene, { model: scene });
+    const registry = mockPanelWrangler.getContent(
+      'scene:session-scene'
+    )!.sceneControllerRegistry!;
+    const dispose = jest.spyOn(registry, 'dispose');
+    const controller = new DisplayTextLogModel();
+    controller.keys = ['DEV.value'];
+    mockPanelWrangler.openControllerPanel(controller);
     renderHook(() => useSessionCleanup());
 
     act(() => {
@@ -76,6 +106,10 @@ describe('useSessionCleanup', () => {
     });
 
     expect(mockResetWorkspace).toHaveBeenCalledTimes(1);
+    expect(dispose).toHaveBeenCalledTimes(1);
+    expect(mockPanelWrangler.getSnapshot().right.controllerPanels).toEqual([]);
+    expect(mockPanelWrangler.getSnapshot().center.activeTabId).toBe('home');
+    expect(mockPanelWrangler.getContent('scene:session-scene')).toBeUndefined();
     expect(mockResetDb).toHaveBeenCalledTimes(1);
     expect(mockProjectModel.root).toBeUndefined();
     expect(mockProjectModel.domain).toBeUndefined();

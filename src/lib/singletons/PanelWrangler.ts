@@ -1,4 +1,7 @@
-import type { SceneModel } from '@/karabo/common/scenemodel/api';
+import type {
+  BaseWidgetObjectData,
+  SceneModel,
+} from '@/karabo/common/scenemodel/api';
 import type { FitMode } from '@/features/scene-view/api';
 import type { LoadedSceneRef } from '@/store/api';
 import { SceneControllerRegistry } from '@/features/scenepanel/SceneControllerRegistry';
@@ -17,7 +20,9 @@ import type {
   PanelState,
   PanelTab,
   SceneTabSnapshot,
+  RightPanelState,
 } from '@/features/workspace/types';
+import { CONTROLLERS_TAB_ID } from '@/features/workspace/utils';
 import {
   findProjectModelInProject,
   walkProjectModels,
@@ -47,6 +52,15 @@ const HOME_TAB: PanelTab = { id: HOME_TAB_ID, title: 'Home', closable: false };
 
 function createEmptyArea(id: PanelSlot): PanelState {
   return { id, tabs: [], activeTabId: undefined };
+}
+
+function createRightArea(): RightPanelState {
+  return {
+    id: 'right',
+    tabs: [{ id: CONTROLLERS_TAB_ID, title: 'Controllers', closable: false }],
+    activeTabId: CONTROLLERS_TAB_ID,
+    controllerPanels: [],
+  };
 }
 
 function createCenterArea(tabs?: PanelTab[], activeTabId?: string): PanelState {
@@ -106,7 +120,7 @@ export class PanelWrangler {
     projectLoading: false,
     left: createEmptyArea('left'),
     center: createCenterArea(),
-    right: createEmptyArea('right'),
+    right: createRightArea(),
   };
 
   private content = new Map<string, SceneTabContent>();
@@ -119,6 +133,7 @@ export class PanelWrangler {
     this.eventMap = {
       [KaraboEvent.OpenScene]: this.onEventOpenScene,
       [KaraboEvent.OpenUnattachedScene]: this.onEventOpenUnattachedScene,
+      [KaraboEvent.OpenControllerPanel]: this.onEventOpenControllerPanel,
       [KaraboEvent.GoToHomeTab]: this.onEventGoToHomeTab,
       [KaraboEvent.DatabaseBusy]: this.onEventDatabaseBusy,
     };
@@ -135,6 +150,10 @@ export class PanelWrangler {
     this.content.clear();
     this.sceneTabs.clear();
     this.deviceSceneTabs.clear();
+    this.commit({
+      ...this.state,
+      right: createRightArea(),
+    });
   }
 
   getSnapshot = () => {
@@ -152,6 +171,44 @@ export class PanelWrangler {
 
   getContent(tabId: string): SceneTabContent | undefined {
     return this.content.get(tabId);
+  }
+
+  openControllerPanel(model: BaseWidgetObjectData): string | undefined {
+    const key = model.keys[0];
+    if (!key) {
+      return undefined;
+    }
+    const right = this.state.right;
+    const existing = right.controllerPanels.find(
+      (panel) => panel.model.keys[0] === key
+    );
+    const panel = existing ?? { id: `controller:${key}`, title: key, model };
+    if (!existing || right.activeTabId !== CONTROLLERS_TAB_ID) {
+      let controllerPanels = right.controllerPanels;
+      if (!existing) {
+        controllerPanels = [...controllerPanels, panel];
+      }
+      this.commit({
+        ...this.state,
+        right: { ...right, activeTabId: CONTROLLERS_TAB_ID, controllerPanels },
+      });
+    }
+    broadcast_event(KaraboEvent.ControllerPanelActivated, { id: panel.id });
+    return panel.id;
+  }
+
+  closeControllerPanel(id: string): void {
+    const right = this.state.right;
+    const controllerPanels = right.controllerPanels.filter(
+      (panel) => panel.id !== id
+    );
+    if (controllerPanels.length === right.controllerPanels.length) {
+      return;
+    }
+    this.commit({
+      ...this.state,
+      right: { ...right, controllerPanels },
+    });
   }
 
   getSceneTab(
@@ -242,7 +299,7 @@ export class PanelWrangler {
       ...this.state,
       left: createEmptyArea('left'),
       center,
-      right: createEmptyArea('right'),
+      right: createRightArea(),
     });
   }
 
@@ -296,11 +353,12 @@ export class PanelWrangler {
   }
 
   closeTab(area: PanelSlot, tabId: string): void {
-    if (tabId === HOME_TAB_ID) {
+    const areaModel = this.state[area];
+    const tab = areaModel.tabs.find((tab) => tab.id === tabId);
+    if (!tab || !tab.closable) {
       return;
     }
 
-    const areaModel = this.state[area];
     const nextTabs = areaModel.tabs.filter((tab) => tab.id !== tabId);
 
     this.content.get(tabId)?.sceneControllerRegistry?.dispose();
@@ -565,7 +623,9 @@ export class PanelWrangler {
   // root are torn down as GoToHomeTab does, so a failed load also ends at Home.
   private onEventDatabaseBusy = (data: Hash): void => {
     const projectLoading = data.getValue<boolean>('is_processing');
-    if (this.state.projectLoading === projectLoading) return;
+    if (this.state.projectLoading === projectLoading) {
+      return;
+    }
     if (!projectLoading) {
       this.commit({ ...this.state, projectLoading });
       return;
@@ -590,6 +650,12 @@ export class PanelWrangler {
     }
 
     this.openScene(sceneData.snapshot, sceneData.content);
+  };
+
+  private onEventOpenControllerPanel = (data: {
+    model: BaseWidgetObjectData;
+  }): void => {
+    this.openControllerPanel(data.model);
   };
 
   private onEventOpenUnattachedScene = (data: { model: SceneModel }): void => {

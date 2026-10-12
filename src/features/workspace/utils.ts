@@ -6,6 +6,14 @@ import type {
   PanelSlot,
 } from './types';
 
+export const WORKSPACE_PANEL_AREA_ID = 'workspace-panel-area';
+export const WORKSPACE_PANEL_IDS = [
+  'workspace-left',
+  'workspace-center',
+  'workspace-right',
+] as const;
+export const CONTROLLERS_TAB_ID = 'controllers';
+
 function createBodyPanel(options: {
   id: string;
   slot: PanelSlot;
@@ -42,7 +50,7 @@ function createBodyPanel(options: {
 function createDefaultWorkspaceBodyModel(): WorkspaceBodyModel {
   return {
     panelArea: {
-      id: 'workspace-panel-area',
+      id: WORKSPACE_PANEL_AREA_ID,
       orientation: 'horizontal',
       // Startup rule: left and right are closed; the scene owns the initial space.
       // The handles can still resize panels back out, and the model keeps their normal open widths.
@@ -75,18 +83,17 @@ function createDefaultWorkspaceBodyModel(): WorkspaceBodyModel {
         lastExpandedWidthPercent: 0,
       }),
       right: createBodyPanel({
-        id: 'workspace-configurator-panel',
+        id: 'workspace-right-panel',
         slot: 'right',
-        content: 'configurator',
-        title: 'Configurator',
-        description:
-          'This region hosts the configurator panel on the right side of the workspace.',
+        content: 'right-area',
+        title: 'Right area',
+        description: 'This region hosts workspace tabs, including Controllers.',
         defaultWidthPercent: 0,
         minWidthPercent: 0,
         collapsible: true,
         collapsed: true,
         collapsedWidthPercent: 0,
-        lastExpandedWidthPercent: 0,
+        lastExpandedWidthPercent: 35,
       }),
     },
   };

@@ -1,4 +1,5 @@
 import type { RootProjectBrowser } from '@/features/project/api';
+import type { BaseWidgetObjectData } from '@/karabo/common/api';
 import type { ActiveIndicatorProps } from '@/features/status';
 import type {
   AccessLevelSelectorProps,
@@ -36,7 +37,7 @@ export interface WorkspaceHeaderModel {
 // One of the three regions of the panel area.
 export type PanelSlot = 'left' | 'center' | 'right';
 export type PanelAreaOrientation = 'horizontal';
-export type WorkspacePanelContent = 'topology' | 'scene' | 'configurator';
+export type WorkspacePanelContent = 'topology' | 'scene' | 'right-area';
 
 export interface WorkspaceBodyModel {
   panelArea: PanelAreaModel;
@@ -132,10 +133,22 @@ export interface PanelState {
   activeTabId?: PanelTabId;
 }
 
+// Session descriptors only. Mounted containers own their proxies and contexts.
+export interface ControllerPanelModel {
+  id: string;
+  title: string;
+  model: BaseWidgetObjectData;
+}
+
+export interface RightPanelState extends PanelState {
+  id: 'right';
+  controllerPanels: ControllerPanelModel[];
+}
+
 export interface PanelAreaState {
   left: PanelState;
   center: PanelState;
-  right: PanelState;
+  right: RightPanelState;
 }
 
 // Scene tab

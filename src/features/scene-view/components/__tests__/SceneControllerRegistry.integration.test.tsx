@@ -1,4 +1,10 @@
-import { render, waitFor } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 
 import {
   BoxLayoutModel,
@@ -7,8 +13,11 @@ import {
   LabelModel,
   SceneModel,
 } from '@/karabo/common/api';
-import { DeviceProxy } from '@/lib/binding/api';
+import { BindingRoot, DeviceProxy, DoubleBinding } from '@/lib/binding/api';
 import { SingletonContext } from '@/testing';
+import { PanelWrangler } from '@/lib/singletons/PanelWrangler';
+import { getMediator } from '@/lib/singletons/api';
+import { KaraboEvent } from '@/lib/events';
 
 jest.mock('@/features/controllers/api', () => ({
   bootstrapControllerRenderers: jest.fn(),
@@ -40,6 +49,10 @@ jest.mock('../../renderers', () => {
   >('@/features/controllers/display/DisplayLabel').default;
 
   registerRenderer('DisplayLabel', DisplayLabel);
+  const DisplayTrendGraph = jest.requireActual<
+    typeof import('@/features/controllers/display/DisplayTrendGraph')
+  >('@/features/controllers/display/DisplayTrendGraph').default;
+  registerRenderer('DisplayTrendGraph', DisplayTrendGraph);
   return {};
 });
 
@@ -97,6 +110,107 @@ const makeTopology = () => {
 };
 
 describe('Scene controller registry integration', () => {
+  it('broadcasts a derived controller from a double-click inside a nested layout and consumes the event', async () => {
+    const { topology } = makeTopology();
+    const device = topology.getDevice('DEV');
+    const binding = new BindingRoot();
+    binding.value!.set('speed', new DoubleBinding({ value: 12 }));
+    device.binding = binding;
+    const wrangler = new PanelWrangler();
+    const registry = new SceneControllerRegistry();
+    const onDoubleClick = jest.fn();
+    const onOpenControllerPanel = jest.fn();
+    const unsubscribe = getMediator().on(
+      KaraboEvent.OpenControllerPanel,
+      onOpenControllerPanel
+    );
+    await SingletonContext.run(
+      { topology, panel_wrangler: wrangler },
+      async () => {
+        try {
+          render(
+            <div onDoubleClick={onDoubleClick}>
+              <SceneControllerRegistryProvider registry={registry}>
+                <SceneView
+                  sceneModel={makeScene('scene-1')}
+                  scale={0.5}
+                  fitMode="fit-page"
+                />
+              </SceneControllerRegistryProvider>
+            </div>
+          );
+          fireEvent.doubleClick(
+            screen.getByTestId(`controller-${controllerObjectId}`)
+          );
+          expect(wrangler.getSnapshot().right.controllerPanels).toHaveLength(1);
+          expect(
+            wrangler.getSnapshot().right.controllerPanels[0].model.klass
+          ).toBe('DisplayTrendGraph');
+          expect(
+            wrangler.getSnapshot().right.controllerPanels[0].model.keys
+          ).toEqual(['DEV.speed']);
+          expect(onOpenControllerPanel).toHaveBeenCalledTimes(1);
+          expect(onOpenControllerPanel).toHaveBeenCalledWith({
+            model: wrangler.getSnapshot().right.controllerPanels[0].model,
+          });
+          expect(onDoubleClick).not.toHaveBeenCalled();
+          const panel = wrangler.getSnapshot().right.controllerPanels[0];
+          fireEvent.doubleClick(
+            screen.getByTestId(`controller-${controllerObjectId}`)
+          );
+          expect(wrangler.getSnapshot().right.controllerPanels).toEqual([
+            panel,
+          ]);
+          expect(onOpenControllerPanel).toHaveBeenCalledTimes(2);
+        } finally {
+          cleanup();
+          wrangler.dispose();
+          unsubscribe();
+        }
+      }
+    );
+  });
+
+  it('leaves decorative and unbound double-clicks unconsumed', async () => {
+    const { topology } = makeTopology();
+    const wrangler = new PanelWrangler();
+    const registry = new SceneControllerRegistry();
+    const onDoubleClick = jest.fn();
+    const onOpenControllerPanel = jest.fn();
+    const unsubscribe = getMediator().on(
+      KaraboEvent.OpenControllerPanel,
+      onOpenControllerPanel
+    );
+    await SingletonContext.run(
+      { topology, panel_wrangler: wrangler },
+      async () => {
+        try {
+          render(
+            <div onDoubleClick={onDoubleClick}>
+              <SceneControllerRegistryProvider registry={registry}>
+                <SceneView
+                  sceneModel={makeScene('scene-1')}
+                  scale={1}
+                  fitMode="fit-page"
+                />
+              </SceneControllerRegistryProvider>
+            </div>
+          );
+          fireEvent.doubleClick(screen.getByText('Static'));
+          fireEvent.doubleClick(
+            screen.getByTestId(`controller-${controllerObjectId}`)
+          );
+          expect(wrangler.getSnapshot().right.controllerPanels).toEqual([]);
+          expect(onDoubleClick).toHaveBeenCalledTimes(2);
+          expect(onOpenControllerPanel).not.toHaveBeenCalled();
+        } finally {
+          cleanup();
+          wrangler.dispose();
+          unsubscribe();
+        }
+      }
+    );
+  });
   it('registers mounted controllers only and unregisters them on unmount', async () => {
     const { topology } = makeTopology();
     const scene = makeScene('scene-1');

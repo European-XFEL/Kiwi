@@ -15,6 +15,7 @@ import {
   type ControllerContainerContext,
 } from '@/features/controllers/api';
 import { useRegisterSceneControllerWidget } from '../../hooks/useRegisterSceneControllerWidget';
+import { isEditableWidget } from '../../utils/sceneNodePredicates';
 import {
   applyControllerEdits,
   declineControllerEdits,
@@ -24,7 +25,6 @@ import { ControllerOverlay } from './ControllerOverlay';
 
 export type { ControllerContainerContext };
 
-const EDITABLE_PARENT_COMPONENT = 'EditableApplyLaterComponent';
 const TOOLTIP_WAKEUP = 700;
 const TOOLTIP_FALL_ASLEEP = 2000;
 
@@ -77,19 +77,25 @@ const ContainerLayout = React.memo<ControllerLayoutProps>(
       className="w-full h-full"
       onKeyDownCapture={(event) => {
         // Run defaults before child handlers can stop the event bubbling.
-        if (!isEditableKeyEvent(event, isEditableWidget)) return;
+        if (!isEditableKeyEvent(event, isEditableWidget)) {
+          return;
+        }
         event.preventDefault();
         if (event.key === 'Enter') {
           applyControllerEdits(ctx.proxies);
           ctx.editActions?.apply();
         } else {
-          if (ctx.editActions) ctx.editActions.decline();
-          else declineControllerEdits(ctx.proxies);
+          if (ctx.editActions) {
+            ctx.editActions.decline();
+          } else {
+            declineControllerEdits(ctx.proxies);
+          }
         }
       }}
       onKeyDown={(event) => {
-        if (isEditableKeyEvent(event, isEditableWidget))
+        if (isEditableKeyEvent(event, isEditableWidget)) {
           event.stopPropagation();
+        }
       }}
       style={{
         boxSizing: 'border-box',
@@ -121,7 +127,9 @@ const ControllerTooltip = React.memo<ControllerTooltipProps>(
     const tooltipAutoCloseRef = React.useRef<number | null>(null);
 
     const clearTooltipAutoClose = React.useCallback(() => {
-      if (tooltipAutoCloseRef.current == null) return;
+      if (tooltipAutoCloseRef.current == null) {
+        return;
+      }
 
       window.clearTimeout(tooltipAutoCloseRef.current);
       tooltipAutoCloseRef.current = null;
@@ -180,8 +188,7 @@ export const ControllerContainer: React.FC<ControllerContainerProps> =
       [controller]
     );
     const propertyTooltipText = getModelKeys(model.keys);
-    const isEditableWidget =
-      model.parent_component === EDITABLE_PARENT_COMPONENT;
+    const editable = isEditableWidget(model);
     const hasEditAccess =
       ctx.proxy?.binding?.accessMode === AccessMode.RECONFIGURABLE &&
       ctx.userAccessLevel >=
@@ -189,7 +196,7 @@ export const ControllerContainer: React.FC<ControllerContainerProps> =
     const tooltipBody = propertyTooltipText ? (
       <p>{propertyTooltipText}</p>
     ) : null;
-    const standardTooltip = isEditableWidget ? (
+    const standardTooltip = editable ? (
       <div className="space-y-0.5">
         <p>
           AccessLevel: {AccessLevel[ctx.userAccessLevel]} - Access:{' '}
@@ -213,10 +220,10 @@ export const ControllerContainer: React.FC<ControllerContainerProps> =
           objectId={objectId}
           Renderer={Renderer}
           ctx={ctx}
-          isEditableWidget={isEditableWidget}
+          isEditableWidget={editable}
         />
       ),
-      [Renderer, ctx, isEditableWidget, model, objectId]
+      [Renderer, ctx, editable, model, objectId]
     );
 
     useRegisterSceneControllerWidget(objectId, model, ctx);
