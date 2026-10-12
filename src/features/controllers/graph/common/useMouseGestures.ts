@@ -14,7 +14,11 @@ export type AxisRanges = { x: Range; y: Range };
 const PRIMARY_MOUSE_BUTTON = 0;
 const MIDDLE_MOUSE_BUTTON = 1;
 const RIGHT_MOUSE_BUTTON = 2;
-const RIGHT_DRAG_ZOOM_PIXELS = 100;
+// Match pyqtgraph: each viewport pixel changes the axis span by 2%.
+export const ZOOM_FACTOR_PER_PIXEL = 1.02;
+// Allow small mouse jitter when distinguishing a middle click from a pan.
+const MIDDLE_CLICK_TOLERANCE_PIXELS = 3;
+const MIN_SELECTION_SIZE_PIXELS = 1;
 
 /** Keeps selection edges inside the plot so a drag ending outside still has valid ranges. */
 function clamp(value: number, min: number, max: number) {
@@ -31,7 +35,9 @@ function axisValue(
 ) {
   // A logarithmic axis is evenly spaced in log space, not value space.
   const ratio = (pixel - pixelAtMin) / (pixelAtMax - pixelAtMin);
-  if (!logarithmic) return range[0] + ratio * (range[1] - range[0]);
+  if (!logarithmic) {
+    return range[0] + ratio * (range[1] - range[0]);
+  }
   const min = Math.log(range[0]);
   return Math.exp(min + ratio * (Math.log(range[1]) - min));
 }
@@ -65,35 +71,44 @@ function shiftedRange(
   return [range[0] + shift, range[1] + shift];
 }
 
-/** Recenters a visible range on a fixed pixel, then scales it for a drag zoom. */
+/** Scales a visible range around the data value at the initial clicked pixel. */
 function scaledRange(
   range: Range,
-  centerPixel: number,
+  anchorPixel: number,
   pixelAtMin: number,
   pixelAtMax: number,
   logarithmic: boolean,
   scale: number
 ): Range {
-  // A zoom should make the clicked point the view center, rather than leave it
-  // at its old relative position. This is how a wheel zoom around a point feels.
-  const center = axisValue(
-    centerPixel,
-    pixelAtMin,
-    pixelAtMax,
-    range,
-    logarithmic
-  );
-  if (!logarithmic) {
-    const halfSpan = ((range[1] - range[0]) * scale) / 2;
-    return [center - halfSpan, center + halfSpan];
+  // No movement on this axis: preserve its exact range, avoiding log rounding.
+  if (scale === 1) {
+    return range;
   }
-  const logarithmicCenter = Math.log(center);
-  const logarithmicHalfSpan =
-    ((Math.log(range[1]) - Math.log(range[0])) * scale) / 2;
-  return [
-    Math.exp(logarithmicCenter - logarithmicHalfSpan),
-    Math.exp(logarithmicCenter + logarithmicHalfSpan),
-  ];
+  // Work with data values for linear axes and their logarithms for log axes.
+  // Scaling log distances changes visible ratios rather than value differences.
+  const min = logarithmic ? Math.log(range[0]) : range[0];
+  const max = logarithmic ? Math.log(range[1]) : range[1];
+  // Find the pressed point's fraction along the axis, then its axis value.
+  // Pixel endpoints are ordered by data min/max, including inverted axes.
+  const ratio = (anchorPixel - pixelAtMin) / (pixelAtMax - pixelAtMin);
+  const anchor = min + ratio * (max - min);
+  // Multiply each endpoint's distance from the anchor. A factor below 1 shrinks
+  // the span (zoom in); above 1 expands it (zoom out). The anchor keeps the same
+  // relative position on screen. E.g. [0, 100], anchor 25, scale 0.5 -> [12.5, 62.5].
+  const scaledMin = anchor + (min - anchor) * scale;
+  const scaledMax = anchor + (max - anchor) * scale;
+  // Convert logarithmic coordinates back to data values before applying ranges.
+  const scaled: Range = logarithmic
+    ? [Math.exp(scaledMin), Math.exp(scaledMax)]
+    : [scaledMin, scaledMax];
+  // Long drags can overflow or collapse endpoints to the same floating-point value.
+  // Keep this axis usable while allowing the other axis to zoom independently.
+  return scaled.every(Number.isFinite) &&
+    Number.isFinite(scaled[1] - scaled[0]) &&
+    scaled[0] < scaled[1] &&
+    (!logarithmic || scaled[0] > 0)
+    ? scaled
+    : range;
 }
 
 /** Converts viewport coordinates to unscaled chart pixels, including scene CSS scaling. */
@@ -147,7 +162,9 @@ function setSelection(
   end: Point,
   bounds: PlotBounds
 ) {
-  if (!element) return;
+  if (!element) {
+    return;
+  }
   const { left, right, top, bottom } = selectionBounds(start, end, bounds);
   Object.assign(element.style, {
     display: 'block',
@@ -163,7 +180,40 @@ function setSelection(
  * Reads and writes ranges through callbacks supplied by useChart.
  *
  * Zoom is a primary-button rectangle, Move is a primary-button pan, middle-button
- * dragging always pans, and right-button horizontal dragging continuously zooms.
+ * dragging always pans, and right-button dragging independently zooms each axis.
+ * A middle click resets the view; Escape or window blur cancels an active drag.
+ *
+ * Configuration properties:
+ * - `containerRef`: Chart container used to attach mouse listeners and convert
+ *   browser coordinates to unscaled chart pixels, including scene CSS scaling.
+ * - `selectionRef`: Overlay div used to preview a rectangle zoom. The preview
+ *   is hidden when the gesture ends or is cancelled.
+ * - `viewport`: Provides plot geometry through `readBounds()`. Bounds are in
+ *   unscaled chart pixels and constrain where gestures start and zoom selections.
+ * - `tool`: Controls primary-button input: `pointer` ignores it, `zoom` selects
+ *   a rectangle, and `pan` translates the view. Middle/right shortcuts remain
+ *   available in every mode.
+ * - `inverted`: X/Y flags that reverse the mapping between axis data values and
+ *   chart pixel endpoints to match the displayed axis directions.
+ * - `logarithmicX`: Uses logarithmic coordinates for X pan, zoom, and selection
+ *   calculations. Defaults to false; logarithmic ranges must be positive.
+ * - `logarithmicY`: Uses logarithmic coordinates for Y pan, zoom, and selection
+ *   calculations. Logarithmic ranges must be positive.
+ * - `activeRef`: Shared flag set on an accepted mouse press and cleared on
+ *   release or cancellation. Lets `useChart` defer data updates during a drag.
+ * - `getRanges`: Reads the current X/Y data ranges, captured at mouse-down so
+ *   calculations stay relative to the initial view. Undefined prevents a gesture.
+ * - `setRanges`: Updates the displayed ranges and the caller's range reference
+ *   for live previews, final results, and restoration after cancellation.
+ * - `complete`: Commits the final X/Y data ranges on release so the caller can
+ *   preserve the selected view or pause live following.
+ * - `finish`: Runs after gesture completion or cancellation. `useChart` uses
+ *   this callback to publish data updates deferred while the gesture was active.
+ * - `reset`: Restores the caller's default view on middle-click, using the same
+ *   reset behavior as the toolbar.
+ * - `resetRevision`: Counter changed by the caller when resetting the view.
+ *   Changing it triggers effect cleanup, cancelling an active gesture and queued
+ *   preview frames even when the reset callback itself has not changed.
  */
 export function useMouseGestures({
   containerRef,
@@ -198,43 +248,60 @@ export function useMouseGestures({
 }) {
   React.useLayoutEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+    if (!container) {
+      return;
+    }
 
     let gesture:
       | {
+          // Mouse-down position relative to the container, in unscaled chart pixels.
           start: Point;
+          // Mouse-down clientX/clientY in browser viewport pixels. These raw
+          // coordinates keep zoom sensitivity independent of scene CSS scaling.
+          startClientPosition: Point;
           ranges: AxisRanges;
           bounds: PlotBounds;
-          pixels: AxisRanges;
+          axisPixels: AxisRanges;
           tool: 'zoom' | 'pan' | 'scale';
           button: number;
+          dragged: boolean;
         }
       | undefined;
     let frame: number | undefined;
     let pendingRanges: AxisRanges | undefined;
     const cancelFrame = () => {
-      if (frame !== undefined) cancelAnimationFrame(frame);
+      if (frame !== undefined) {
+        cancelAnimationFrame(frame);
+      }
       frame = undefined;
       pendingRanges = undefined;
     };
     const scheduleRanges = (ranges: AxisRanges) => {
       pendingRanges = ranges;
-      if (frame !== undefined) return;
+      if (frame !== undefined) {
+        return;
+      }
       frame = requestAnimationFrame(() => {
         frame = undefined;
         const next = pendingRanges;
         pendingRanges = undefined;
-        if (next) setRanges(next);
+        if (next) {
+          setRanges(next);
+        }
       });
     };
     // The preview only belongs to rectangle zoom and must disappear after every outcome.
     const hideSelection = () => {
-      if (selectionRef.current) selectionRef.current.style.display = 'none';
+      if (selectionRef.current) {
+        selectionRef.current.style.display = 'none';
+      }
     };
     // Escape, blur, and unmount restore the captured range instead of leaving a half-pan.
     const cancel = () => {
       cancelFrame();
-      if (!gesture) return;
+      if (!gesture) {
+        return;
+      }
       const { ranges } = gesture;
       gesture = undefined;
       hideSelection();
@@ -245,48 +312,102 @@ export function useMouseGestures({
     // Movement and release use the same pan calculation, including logarithmic Y.
     const shiftedRanges = (
       ranges: AxisRanges,
-      pixels: AxisRanges,
+      axisPixels: AxisRanges,
       start: Point,
       current: Point
     ): AxisRanges => ({
-      x: shiftedRange(ranges.x, start.x, current.x, ...pixels.x, logarithmicX),
-      y: shiftedRange(ranges.y, start.y, current.y, ...pixels.y, logarithmicY),
+      x: shiftedRange(
+        ranges.x,
+        start.x,
+        current.x,
+        ...axisPixels.x,
+        logarithmicX
+      ),
+      y: shiftedRange(
+        ranges.y,
+        start.y,
+        current.y,
+        ...axisPixels.y,
+        logarithmicY
+      ),
     });
-    // Both axes scale together so right-drag behaves like a conventional chart zoom.
+    // Map the anchor in chart pixels; measure drag distance in browser viewport
+    // pixels so scene CSS scaling does not change how sensitive the zoom feels.
     const scaledRanges = (
       ranges: AxisRanges,
-      pixels: AxisRanges,
+      axisPixels: AxisRanges,
       start: Point,
-      current: Point
+      startClientPosition: Point,
+      event: MouseEvent
     ) => {
-      // Keep the data point under the initial cursor position fixed. Exponential
-      // scaling makes equal horizontal drags feel consistent at every zoom level.
-      const scale = Math.exp((current.x - start.x) / RIGHT_DRAG_ZOOM_PIXELS);
+      // Measure total movement from the original press and scale the captured
+      // starting ranges, rather than repeatedly scaling the previous preview.
+      // Exponential factors give equal drags the same proportional span change
+      // at every zoom level. Horizontal and vertical movement act independently.
+      // Negative X exponent: dragging right shrinks X (zoom in).
+      const scaleX =
+        ZOOM_FACTOR_PER_PIXEL ** -(event.clientX - startClientPosition.x);
+      // clientY grows downward: down expands Y (zoom out), up shrinks it.
+      const scaleY =
+        ZOOM_FACTOR_PER_PIXEL ** (event.clientY - startClientPosition.y);
       return {
-        x: scaledRange(ranges.x, start.x, ...pixels.x, logarithmicX, scale),
-        y: scaledRange(ranges.y, start.y, ...pixels.y, logarithmicY, scale),
+        x: scaledRange(
+          ranges.x,
+          start.x,
+          ...axisPixels.x,
+          logarithmicX,
+          scaleX
+        ),
+        y: scaledRange(
+          ranges.y,
+          start.y,
+          ...axisPixels.y,
+          logarithmicY,
+          scaleY
+        ),
       };
     };
     // Apply temporary ranges while dragging to give immediate feedback before committing.
     const onMouseMove = (event: MouseEvent) => {
-      if (!gesture) return;
+      if (!gesture) {
+        return;
+      }
       const current = mousePosition(container, event);
-      const { ranges, pixels, start, bounds } = gesture;
+      const { ranges, axisPixels, start, startClientPosition, bounds } =
+        gesture;
+      if (
+        Math.hypot(current.x - start.x, current.y - start.y) >=
+        MIDDLE_CLICK_TOLERANCE_PIXELS
+      ) {
+        gesture.dragged = true;
+      }
       if (gesture.tool === 'zoom') {
         setSelection(selectionRef.current, start, current, bounds);
       } else if (gesture.tool === 'pan') {
-        scheduleRanges(shiftedRanges(ranges, pixels, start, current));
+        scheduleRanges(shiftedRanges(ranges, axisPixels, start, current));
       } else {
-        scheduleRanges(scaledRanges(ranges, pixels, start, current));
+        scheduleRanges(
+          scaledRanges(ranges, axisPixels, start, startClientPosition, event)
+        );
       }
       event.preventDefault();
     };
     // Commit the final range once, which pauses following only after the user finishes.
     const onMouseUp = (event: MouseEvent) => {
-      if (!gesture || event.button !== gesture.button) return;
+      if (!gesture || event.button !== gesture.button) {
+        return;
+      }
       cancelFrame();
       const current = mousePosition(container, event);
-      const { start, ranges, bounds, pixels, tool: gestureTool } = gesture;
+      const {
+        start,
+        startClientPosition,
+        ranges,
+        bounds,
+        axisPixels,
+        dragged,
+        tool: gestureTool,
+      } = gesture;
       gesture = undefined;
       hideSelection();
       activeRef.current = false;
@@ -295,7 +416,9 @@ export function useMouseGestures({
       // still counts as a click, so releasing a steady mouse cannot pan by accident.
       if (
         event.button === MIDDLE_MOUSE_BUTTON &&
-        Math.hypot(current.x - start.x, current.y - start.y) < 3
+        !dragged &&
+        Math.hypot(current.x - start.x, current.y - start.y) <
+          MIDDLE_CLICK_TOLERANCE_PIXELS
       ) {
         reset();
         event.preventDefault();
@@ -303,27 +426,36 @@ export function useMouseGestures({
       }
       let next = ranges;
       if (gestureTool === 'pan') {
-        next = shiftedRanges(ranges, pixels, start, current);
+        next = shiftedRanges(ranges, axisPixels, start, current);
       } else if (gestureTool === 'scale') {
-        next = scaledRanges(ranges, pixels, start, current);
+        next = scaledRanges(
+          ranges,
+          axisPixels,
+          start,
+          startClientPosition,
+          event
+        );
       } else {
         const { left, right, top, bottom } = selectionBounds(
           start,
           current,
           bounds
         );
-        if (right - left < 1 || bottom - top < 1) {
+        if (
+          right - left < MIN_SELECTION_SIZE_PIXELS ||
+          bottom - top < MIN_SELECTION_SIZE_PIXELS
+        ) {
           setRanges(ranges);
           finish();
           return;
         }
         const xValues = [
-          axisValue(left, ...pixels.x, ranges.x, logarithmicX),
-          axisValue(right, ...pixels.x, ranges.x, logarithmicX),
+          axisValue(left, ...axisPixels.x, ranges.x, logarithmicX),
+          axisValue(right, ...axisPixels.x, ranges.x, logarithmicX),
         ].sort((a, b) => a - b) as Range;
         const yValues = [
-          axisValue(top, ...pixels.y, ranges.y, logarithmicY),
-          axisValue(bottom, ...pixels.y, ranges.y, logarithmicY),
+          axisValue(top, ...axisPixels.y, ranges.y, logarithmicY),
+          axisValue(bottom, ...axisPixels.y, ranges.y, logarithmicY),
         ].sort((a, b) => a - b) as Range;
         next = { x: xValues, y: yValues };
       }
@@ -335,27 +467,35 @@ export function useMouseGestures({
     // Capture a stable range and grid rectangle so one gesture is not affected by live updates.
     const onMouseDown = (event: MouseEvent) => {
       const bounds = viewport.readBounds();
-      if (!bounds) return;
+      if (!bounds) {
+        return;
+      }
       if (
         event.button !== PRIMARY_MOUSE_BUTTON &&
         event.button !== MIDDLE_MOUSE_BUTTON &&
         event.button !== RIGHT_MOUSE_BUTTON
-      )
+      ) {
         return;
-      if (tool === 'pointer' && event.button === PRIMARY_MOUSE_BUTTON) return;
+      }
+      if (tool === 'pointer' && event.button === PRIMARY_MOUSE_BUTTON) {
+        return;
+      }
       const ranges = getRanges();
-      if (!ranges) return;
+      if (!ranges) {
+        return;
+      }
       const start = mousePosition(container, event);
       if (
         start.x < bounds.left ||
         start.x > bounds.right ||
         start.y < bounds.top ||
         start.y > bounds.bottom
-      )
+      ) {
         return;
+      }
       // The toolbar controls primary-button dragging. The two shortcuts remain
       // available in every mode: middle-button drag pans, right-button drag
-      // scales both axes around the cursor (left zooms in, right zooms out).
+      // scales around the clicked point (right zooms X in, up zooms Y in).
       const gestureTool =
         event.button === MIDDLE_MOUSE_BUTTON
           ? 'pan'
@@ -366,11 +506,12 @@ export function useMouseGestures({
               : 'zoom';
       gesture = {
         start,
+        startClientPosition: { x: event.clientX, y: event.clientY },
         ranges,
         bounds,
         // Store endpoints in data-min/data-max order so every gesture handles
         // inversion identically, using the geometry captured before any movement.
-        pixels: {
+        axisPixels: {
           x: inverted.x
             ? [bounds.right, bounds.left]
             : [bounds.left, bounds.right],
@@ -380,15 +521,19 @@ export function useMouseGestures({
         },
         tool: gestureTool,
         button: event.button,
+        dragged: false,
       };
       activeRef.current = true;
-      if (gestureTool === 'zoom')
+      if (gestureTool === 'zoom') {
         setSelection(selectionRef.current, start, start, bounds);
+      }
       event.preventDefault();
     };
     // Escape is the keyboard equivalent of abandoning an unfinished drag.
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') cancel();
+      if (event.key === 'Escape') {
+        cancel();
+      }
     };
     // Right-button dragging is a chart gesture, so it must not open a browser menu.
     const onContextMenu = (event: MouseEvent) => event.preventDefault();
