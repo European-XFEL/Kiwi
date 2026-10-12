@@ -9,7 +9,7 @@ import {
   isScrollableMode,
 } from '../utils/sceneLayout';
 import { getChildObjectId } from '../utils/objectId';
-import { useSceneObjectInteractionLogger } from '../hooks/useSceneObjectInteractionLogger';
+import { useSceneObjectInteraction } from '../hooks/useSceneObjectInteraction';
 
 // Bootstrap — triggers all registerRenderer() calls
 import '../renderers';
@@ -44,7 +44,7 @@ const SceneView: React.FC<SceneViewProps> = React.memo(
     const scrollableAlignment = getScrollableAlignment(fitMode);
     const scaledSize = getScaledSceneSize(sceneDimensions, scale);
     const spacer = getSpacerSize(scaledSize.width, scaledSize.height);
-    const handleScenePointerDown = useSceneObjectInteractionLogger(scale);
+    const sceneInteraction = useSceneObjectInteraction({ scale });
     const sceneOuterId = useId();
     const sceneInnerId = useId();
     const scrollableId = useId();
@@ -74,7 +74,7 @@ const SceneView: React.FC<SceneViewProps> = React.memo(
         <div
           id={`SceneView-Scene-Inner-${sceneInnerId}`}
           className="overflow-hidden rounded-md bg-canvas shadow-lg"
-          onPointerDownCapture={handleScenePointerDown}
+          {...sceneInteraction}
           style={{
             position: 'absolute',
             left: 0,
@@ -91,22 +91,25 @@ const SceneView: React.FC<SceneViewProps> = React.memo(
       </div>
     );
 
-    return scrollable ? (
-      <div
-        id={`SceneView-Scrollable-${scrollableId}`}
-        style={{
-          width: spacer.width,
-          height: spacer.height,
-          minWidth: '100%',
-          minHeight: '100%',
-          display: 'grid',
-          justifyItems: scrollableAlignment.justifyItems,
-          alignItems: scrollableAlignment.alignItems,
-        }}
-      >
-        {scene}
-      </div>
-    ) : (
+    if (scrollable) {
+      return (
+        <div
+          id={`SceneView-Scrollable-${scrollableId}`}
+          style={{
+            width: spacer.width,
+            height: spacer.height,
+            minWidth: '100%',
+            minHeight: '100%',
+            display: 'grid',
+            justifyItems: scrollableAlignment.justifyItems,
+            alignItems: scrollableAlignment.alignItems,
+          }}
+        >
+          {scene}
+        </div>
+      );
+    }
+    return (
       <div
         id={`SceneView-${sceneViewId}`}
         className="grid min-h-full min-w-full place-items-center"

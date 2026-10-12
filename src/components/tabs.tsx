@@ -1,4 +1,10 @@
-import { memo, type ReactNode, useCallback, useState } from 'react';
+import {
+  memo,
+  type KeyboardEvent,
+  type ReactNode,
+  useCallback,
+  useState,
+} from 'react';
 import { X } from 'lucide-react';
 import { cn } from './utils/cn';
 
@@ -12,6 +18,8 @@ export interface TabItem {
   closable?: boolean;
   disabled?: boolean;
   dirty?: boolean;
+  // Retain local content state while its tab is hidden.
+  keepMounted?: boolean;
 }
 
 export interface TabsProps {
@@ -31,6 +39,7 @@ interface TabButtonProps {
   tab: TabItem;
   isActive: boolean;
   onSelect: (tabId: TabId) => void;
+  onKeyDown: (event: KeyboardEvent<HTMLButtonElement>, tabId: TabId) => void;
   onClose?: (tabId: TabId) => void;
 }
 
@@ -39,6 +48,7 @@ const TabButton = memo(function TabButton({
   tab,
   isActive,
   onSelect,
+  onKeyDown,
   onClose,
 }: TabButtonProps) {
   const tabButtonId = `${groupId}-${tab.id}`;
@@ -65,6 +75,7 @@ const TabButton = memo(function TabButton({
         id={tabButtonId}
         data-testid={`tab-${tab.id}`}
         onClick={() => onSelect(tab.id)}
+        onKeyDown={(event) => onKeyDown(event, tab.id)}
         role="tab"
         tabIndex={isActive ? 0 : -1}
         type="button"
@@ -174,6 +185,32 @@ export function Tabs({
     [isControlled, items, onTabSelect]
   );
 
+  const handleTabKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLButtonElement>, tabId: TabId) => {
+      const enabledTabs = getEnabledTabs(items);
+      let index = enabledTabs.findIndex((tab) => tab.id === tabId);
+      if (index === -1) {
+        return;
+      }
+      if (event.key === 'ArrowRight') {
+        index = (index + 1) % enabledTabs.length;
+      } else if (event.key === 'ArrowLeft') {
+        index = (index + enabledTabs.length - 1) % enabledTabs.length;
+      } else if (event.key === 'Home') {
+        index = 0;
+      } else if (event.key === 'End') {
+        index = enabledTabs.length - 1;
+      } else {
+        return;
+      }
+      event.preventDefault();
+      const nextTab = enabledTabs[index];
+      handleTabSelect(nextTab.id);
+      document.getElementById(`${id}-${nextTab.id}`)?.focus();
+    },
+    [handleTabSelect, id, items]
+  );
+
   return (
     <div
       className={cn(
@@ -194,6 +231,7 @@ export function Tabs({
             key={tab.id}
             onClose={onTabClose}
             onSelect={handleTabSelect}
+            onKeyDown={handleTabKeyDown}
             tab={tab}
           />
         ))}
@@ -202,6 +240,10 @@ export function Tabs({
       <div className="min-h-0 flex-1 bg-background">
         {items.map((tab) => {
           const isActive = tab.id === activeTab?.id;
+          let content: ReactNode = null;
+          if (isActive || tab.keepMounted) {
+            content = tab.panel;
+          }
 
           return (
             <section
@@ -216,7 +258,7 @@ export function Tabs({
                 panelClassName ?? 'overflow-auto bg-background p-5'
               )}
             >
-              {isActive ? tab.panel : null}
+              {content}
             </section>
           );
         })}

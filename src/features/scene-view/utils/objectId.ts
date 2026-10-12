@@ -8,8 +8,7 @@
  * shape/widget render passes.
  *
  * The root token is supplied by the caller, so this helper stays generic. The
- * same scheme can later identify configurator or device-property nodes, not
- * just scene objects.
+ * same scheme can identify nodes in other trees as well as scene objects.
  */
 
 /** DOM attribute linking a wrapper element to its scene objectId. */

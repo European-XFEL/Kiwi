@@ -3,8 +3,6 @@ import { getDbConn, getPanelWrangler } from '@/lib/singletons/api';
 import { clearRootProject } from '@/features/project/api';
 import { useGlobalStore } from '@/store/api';
 
-// These singletons must not keep the previous session's project or scenes
-// reachable by the next login.
 function clearSessionState(): void {
   getPanelWrangler().resetWorkspace();
   clearRootProject();

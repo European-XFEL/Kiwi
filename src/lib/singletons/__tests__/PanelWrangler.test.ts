@@ -5,6 +5,7 @@ import { KaraboEvent, broadcast_event } from '@/lib/events';
 import { getMediator, getProjectModel } from '../api';
 import { SceneControllerRegistry } from '@/features/scenepanel/SceneControllerRegistry';
 import { HOME_TAB_ID, PanelWrangler } from '../PanelWrangler';
+import { DisplayTextLogModel } from '@/karabo/common/api';
 
 jest.mock('@/store/api', () => ({
   useGlobalStore: {
@@ -71,6 +72,133 @@ describe('PanelWrangler', () => {
 
   afterEach(() => {
     wrangler.dispose();
+  });
+
+  function textModel(key: string) {
+    const model = new DisplayTextLogModel();
+    model.keys = [key];
+    return model;
+  }
+
+  it('selects Controllers on every open and preserves its panels when selecting another tab', () => {
+    wrangler
+      .getSnapshot()
+      .right.tabs.push({ id: 'other', title: 'Other', closable: false });
+    wrangler.selectTab('right', 'other');
+    const id = wrangler.openControllerPanel(textModel('DEV.first'));
+    const right = wrangler.getSnapshot().right;
+    expect(right.activeTabId).toBe('controllers');
+    expect(right.controllerPanels).toHaveLength(1);
+
+    wrangler.selectTab('right', 'other');
+    expect(wrangler.getSnapshot().right.activeTabId).toBe('other');
+    expect(wrangler.getSnapshot().right.controllerPanels).toBe(
+      right.controllerPanels
+    );
+
+    expect(wrangler.openControllerPanel(textModel('DEV.first'))).toBe(id);
+    expect(wrangler.getSnapshot().right.activeTabId).toBe('controllers');
+    expect(wrangler.getSnapshot().right.controllerPanels).toBe(
+      right.controllerPanels
+    );
+  });
+
+  it('keeps the Controllers tab after panel closure and workspace reset', () => {
+    const id = wrangler.openControllerPanel(textModel('DEV.first'))!;
+    wrangler.closeControllerPanel(id);
+    for (const tab of wrangler.getSnapshot().right.tabs) {
+      wrangler.closeTab('right', tab.id);
+    }
+    expect(wrangler.getSnapshot().right.tabs.map((tab) => tab.id)).toEqual([
+      'controllers',
+    ]);
+    wrangler.resetWorkspace();
+    wrangler.selectTab('right', 'controllers');
+    expect(wrangler.getSnapshot().right.activeTabId).toBe('controllers');
+    expect(wrangler.getSnapshot().right.controllerPanels).toEqual([]);
+    expect(wrangler.getSnapshot().right.tabs.map((tab) => tab.id)).toEqual([
+      'controllers',
+    ]);
+  });
+
+  it('announces every successful activation while retaining only the panel list', () => {
+    const activated = jest.fn(() => {
+      expect(wrangler.getSnapshot().right.controllerPanels).toHaveLength(1);
+    });
+    const unsubscribe = getMediator().on(
+      KaraboEvent.ControllerPanelActivated,
+      activated
+    );
+    try {
+      const id = wrangler.openControllerPanel(textModel('DEV.first'))!;
+      const snapshot = wrangler.getSnapshot();
+      wrangler.openControllerPanel(textModel('DEV.first'));
+      expect(wrangler.getSnapshot()).toBe(snapshot);
+      expect(activated.mock.calls).toEqual([[{ id }], [{ id }]]);
+      wrangler.openControllerPanel(textModel(''));
+      expect(activated).toHaveBeenCalledTimes(2);
+    } finally {
+      unsubscribe();
+    }
+  });
+
+  it('opens and reuses controller panels from broadcasts and unsubscribes on disposal', () => {
+    const model = textModel('DEV.first');
+    broadcast_event(KaraboEvent.OpenControllerPanel, { model });
+    const panel = wrangler.getSnapshot().right.controllerPanels[0];
+    expect(panel).toEqual({
+      id: 'controller:DEV.first',
+      title: 'DEV.first',
+      model,
+    });
+    broadcast_event(KaraboEvent.OpenControllerPanel, {
+      model: textModel('DEV.first'),
+    });
+    expect(wrangler.getSnapshot().right.controllerPanels).toEqual([panel]);
+    expect(wrangler.getSnapshot().right.controllerPanels[0]).toBe(panel);
+    wrangler.dispose();
+    broadcast_event(KaraboEvent.OpenControllerPanel, { model });
+    expect(wrangler.getSnapshot().right.controllerPanels).toEqual([]);
+  });
+
+  it('keeps one controller per primary property in opening order', () => {
+    const first = textModel('DEV.first');
+    const firstId = wrangler.openControllerPanel(first);
+    const secondId = wrangler.openControllerPanel(textModel('DEV.second'));
+    const firstPanel = wrangler.getSnapshot().right.controllerPanels[0];
+    expect(wrangler.openControllerPanel(textModel('DEV.first'))).toBe(firstId);
+    expect(
+      wrangler.getSnapshot().right.controllerPanels.map((panel) => panel.id)
+    ).toEqual([firstId, secondId]);
+    expect(wrangler.getSnapshot().right.controllerPanels[0]).toBe(firstPanel);
+    expect(firstPanel?.model).toBe(first);
+    expect(firstPanel?.title).toBe('DEV.first');
+  });
+
+  it('closes controllers independently and keeps them across scene closure and Home', () => {
+    const scene = makeScene('source-scene');
+    setProject('CONTROLS', 'ProjectA', [scene]);
+    openScene(scene);
+    const firstId = wrangler.openControllerPanel(textModel('DEV.first'))!;
+    const secondId = wrangler.openControllerPanel(textModel('DEV.second'))!;
+    wrangler.closeTab('center', 'scene:source-scene');
+    expect(wrangler.getSnapshot().right.controllerPanels).toHaveLength(2);
+    broadcast_event(KaraboEvent.GoToHomeTab, {});
+    expect(wrangler.getSnapshot().right.controllerPanels).toHaveLength(2);
+    wrangler.closeControllerPanel(firstId);
+    expect(
+      wrangler.getSnapshot().right.controllerPanels.map((panel) => panel.id)
+    ).toEqual([secondId]);
+    wrangler.resetWorkspace();
+    expect(wrangler.getSnapshot().right.controllerPanels).toEqual([]);
+  });
+
+  it('ignores empty models and clears controller descriptors on disposal', () => {
+    expect(wrangler.openControllerPanel(textModel(''))).toBeUndefined();
+    expect(wrangler.getSnapshot().right.controllerPanels).toEqual([]);
+    wrangler.openControllerPanel(textModel('DEV.first'));
+    wrangler.dispose();
+    expect(wrangler.getSnapshot().right.controllerPanels).toEqual([]);
   });
 
   it.each(['resetCenter', 'resetWorkspace'] as const)(
@@ -577,7 +705,7 @@ describe('PanelWrangler', () => {
       expect(wrangler.getSceneTab('scene:scene-a')).toBeUndefined();
     });
 
-    it('recreates all three panel slots as empty', () => {
+    it('resets side contents and recreates the fixed right-area tabs', () => {
       const scene = makeScene('scene-a');
       setProject('CONTROLS', 'ProjectA', [scene]);
       openScene(scene);
@@ -592,8 +720,9 @@ describe('PanelWrangler', () => {
       });
       expect(state.right).toEqual({
         id: 'right',
-        tabs: [],
-        activeTabId: undefined,
+        tabs: [{ id: 'controllers', title: 'Controllers', closable: false }],
+        activeTabId: 'controllers',
+        controllerPanels: [],
       });
     });
 

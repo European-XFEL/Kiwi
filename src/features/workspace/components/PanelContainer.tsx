@@ -23,6 +23,7 @@ export default function PanelContainer({
   className,
   panelClassName,
 }: PanelContainerProps) {
+  // TODO: Make usePanelArea subscribe only to this area to avoid unrelated updates.
   const { area: areaModel, onTabSelect, onTabClose } = usePanelArea(area);
 
   if (areaModel.tabs.length === 0) {

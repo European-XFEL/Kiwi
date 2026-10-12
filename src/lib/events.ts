@@ -20,6 +20,10 @@ enum KaraboEvent {
   Notification = 'Notification',
   OpenScene = 'OpenScene',
   OpenUnattachedScene = 'OpenUnattachedScene',
+  // Opens a derived display controller in the workspace. Payload: { model }.
+  OpenControllerPanel = 'OpenControllerPanel',
+  // Successful opens, including reuse. Payload: { id }; the UI reveals/focuses it.
+  ControllerPanelActivated = 'ControllerPanelActivated',
   // Tab changes within a session only. GoToHomeTab and session end reset the
   // workspace instead.
   // No payload; read the active scene tab from PanelWrangler.

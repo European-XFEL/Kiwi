@@ -29,6 +29,44 @@ function makeItems(overrides: Partial<TabItem>[] = []): TabItem[] {
 }
 
 describe('Tabs', () => {
+  it('selects and focuses enabled tabs with arrow, Home, and End keys', async () => {
+    const user = userEvent.setup();
+    render(<Tabs id="workspace-tabs" items={makeItems()} />);
+    await user.click(screen.getByRole('tab', { name: 'Tab A' }));
+    for (const [key, title] of [
+      ['{ArrowRight}', 'Tab B'],
+      ['{ArrowRight}', 'Tab A'],
+      ['{ArrowLeft}', 'Tab B'],
+      ['{Home}', 'Tab A'],
+      ['{End}', 'Tab B'],
+    ]) {
+      await user.keyboard(key);
+      const tab = screen.getByRole('tab', { name: title });
+      expect(tab).toHaveFocus();
+      expect(tab).toHaveAttribute('aria-selected', 'true');
+      expect(screen.getByRole('tabpanel', { name: title })).toBeVisible();
+    }
+  });
+
+  it('preserves explicitly retained content while hiding its inactive tab', async () => {
+    const user = userEvent.setup();
+    render(
+      <Tabs
+        id="workspace-tabs"
+        items={makeItems([{ keepMounted: true }])}
+        defaultActiveTabId="tab-a"
+      />
+    );
+    const content = screen.getByText('panel:tab-a');
+    await user.click(screen.getByRole('tab', { name: 'Tab B' }));
+    expect(content).toBeInTheDocument();
+    expect(content).not.toBeVisible();
+    expect(screen.getByRole('tabpanel', { name: 'Tab B' })).toBeVisible();
+    await user.click(screen.getByRole('tab', { name: 'Tab A' }));
+    expect(screen.getByText('panel:tab-a')).toBe(content);
+    expect(content).toBeVisible();
+  });
+
   it('uses defaultActiveTabId in uncontrolled mode and updates the active panel on click', async () => {
     const user = userEvent.setup();
     const onTabSelect = jest.fn();
