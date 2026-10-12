@@ -1,4 +1,5 @@
 import { ProxyStatus } from './ProxyStatus';
+import { InstanceStatus } from './InstanceStatus';
 import { Hash, HashList, Schema, Timestamp } from '@/karabo/data/api';
 import { buildBinding } from './BindingFactory';
 
@@ -41,6 +42,7 @@ export class DeviceProxy {
   public classId: string = '';
 
   public isOnline: boolean = false;
+  public instanceStatus = InstanceStatus.NONE;
 
   private monitorCount = 0;
   private currentRootRevision = 0;
@@ -66,6 +68,7 @@ export class DeviceProxy {
   schema_update = new Signal<[]>();
   state_update = new Signal<[string | undefined]>();
   status_update = new Signal<[string]>();
+  instance_status_update = new Signal<[InstanceStatus]>();
 
   constructor(deviceId: string) {
     this.deviceId = deviceId;
@@ -100,6 +103,13 @@ export class DeviceProxy {
       this.status = newStatus;
       this.onRootUpdated();
       this.status_update.fire(newStatus);
+    }
+  }
+
+  public setInstanceStatus(status: InstanceStatus): void {
+    if (this.instanceStatus !== status) {
+      this.instanceStatus = status;
+      this.instance_status_update.fire(status);
     }
   }
 

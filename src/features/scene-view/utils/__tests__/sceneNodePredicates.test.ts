@@ -1,7 +1,9 @@
 import {
   BoxLayoutModel,
   DisplayLabelModel,
+  DeviceSceneLinkModel,
   EditableComboBoxModel,
+  InstanceStatusModel,
   LabelModel,
   RectangleModel,
   SceneLinkModel,
@@ -30,6 +32,8 @@ describe('sceneNodePredicates', () => {
 
   it.each([
     ['LabelModel', new LabelModel()],
+    ['DeviceSceneLinkModel', new DeviceSceneLinkModel()],
+    ['InstanceStatusModel', new InstanceStatusModel()],
     ['StickerModel', new StickerModel()],
     ['SceneLinkModel', new SceneLinkModel()],
     ['WebLinkModel', new WebLinkModel()],

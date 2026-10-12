@@ -230,7 +230,7 @@ describe('openDeviceSceneLinkInWorkspace', () => {
     expect(showMessageBox).not.toHaveBeenCalled();
   });
 
-  it('shows an error message when the device is offline', async () => {
+  it('shows an informational message when the device is offline', async () => {
     mockGetDeviceInstanceInfo.mockReturnValue(undefined);
 
     await openDeviceSceneLinkInWorkspace('device-1', 'scene-a');
@@ -238,9 +238,9 @@ describe('openDeviceSceneLinkInWorkspace', () => {
     expect(mockCallDeviceSlot).not.toHaveBeenCalled();
     expect(mockLogInfo).not.toHaveBeenCalled();
     expect(showMessageBox).toHaveBeenCalledWith({
-      variant: 'error',
-      title: 'Could not open device scene',
-      msg: 'Device "device-1" not online. Cannot retrieve its "scene-a" scene.',
+      variant: 'info',
+      title: 'Device not online',
+      msg: 'Device "device-1" is not online. Cannot open its "scene-a" scene.',
     });
     expect(openUnattachedSceneInWorkspace).not.toHaveBeenCalled();
   });
