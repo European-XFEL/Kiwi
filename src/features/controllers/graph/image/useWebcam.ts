@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { ImageBinding, type PropertyProxy } from '@/lib/binding/api';
+import {
+  ImageBinding,
+  ProxyStatus,
+  type PropertyProxy,
+} from '@/lib/binding/api';
 import { getFrame, hasImageData } from './pixels';
 
 const PLACEHOLDER_FONT_SIZE_PX = 72;
@@ -87,7 +91,11 @@ export function useWebcam(
         });
       };
       const binding = proxy?.binding;
-      if (!(binding instanceof ImageBinding) || !hasImageData(binding)) {
+      if (
+        proxy?.root.status === ProxyStatus.OFFLINE ||
+        !(binding instanceof ImageBinding) ||
+        !hasImageData(binding)
+      ) {
         drawPlaceholder(canvas, context, 'Image', viewSize);
         updateImageSize();
         return;
