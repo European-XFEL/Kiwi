@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, Ref } from 'react';
 import { cn, Tabs, type TabItem } from '@/components/api';
 import icons from '@/assets/icons';
 import { HOME_TAB_ID } from '@/lib/singletons/PanelWrangler';
@@ -10,6 +10,7 @@ interface PanelContainerProps {
   renderPanel: (tab: PanelTab) => ReactNode;
   emptyState?: ReactNode;
   className?: string;
+  containerRef?: Ref<HTMLElement>;
   // Overrides the default tab-panel styling. Pass this when the rendered panel
   // owns its own overflow/layout (e.g. a scene viewport) so the generic
   // overflow-auto/padding don't create nested scroll.
@@ -21,6 +22,7 @@ export default function PanelContainer({
   renderPanel,
   emptyState,
   className,
+  containerRef,
   panelClassName,
 }: PanelContainerProps) {
   // TODO: Make usePanelArea subscribe only to this area to avoid unrelated updates.
@@ -29,6 +31,7 @@ export default function PanelContainer({
   if (areaModel.tabs.length === 0) {
     return (
       <section
+        ref={containerRef}
         data-testid="workspace-panel"
         id={`workspace-panel-${area}`}
         className={cn(
@@ -58,6 +61,7 @@ export default function PanelContainer({
 
   return (
     <section
+      ref={containerRef}
       data-testid="workspace-panel"
       id={`workspace-panel-${area}`}
       className={cn(
