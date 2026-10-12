@@ -1,6 +1,8 @@
 import {
   BaseSceneObjectData,
   BaseWidgetObjectData,
+  DeviceSceneLinkModel,
+  InstanceStatusModel,
   LabelModel,
   SceneLinkModel,
   StickerModel,
@@ -14,6 +16,8 @@ import {
 
 // Widgets in this set render directly and do not go through ControllerContainer.
 const DIRECT_RENDER_WIDGET_MODELS = new Set<Function>([
+  DeviceSceneLinkModel,
+  InstanceStatusModel,
   LabelModel,
   StickerModel,
   SceneLinkModel,

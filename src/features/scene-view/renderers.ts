@@ -24,6 +24,7 @@ import './components/shapes/Path';
 import './components/widgets/Label';
 import './components/widgets/Sticker';
 import './components/widgets/Links';
+import './components/widgets/InstanceStatus';
 
 //controllers bootstraping
 bootstrapControllerRenderers(registerRenderer);

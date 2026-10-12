@@ -39,4 +39,5 @@ export { buildBinding, buildNode } from './BindingFactory';
 export { applyConfiguration, DeviceProxy } from './DeviceProxy';
 export { PropertyProxy } from './PropertyProxy';
 export { ProxyStatus, PropertyStatus } from './ProxyStatus';
+export { InstanceStatus } from './InstanceStatus';
 export { getEditorValue } from './utils/getEditorValue';

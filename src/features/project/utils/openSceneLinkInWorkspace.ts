@@ -119,19 +119,20 @@ async function _retrieveDeviceScene(
   sceneName: string
 ): Promise<SceneModel | undefined> {
   const attrs = getTopology().getDeviceInstanceInfo(deviceId);
-  let errorMessage: string | undefined = undefined;
   if (attrs === undefined) {
-    errorMessage = `Device "${deviceId}" not online. Cannot retrieve its "${sceneName}" scene.`;
-  } else {
-    const capabilities = attrs.getValue<number>('capabilities');
-    if (
-      capabilities === undefined ||
-      (capabilities & Capabilities.PROVIDES_SCENES) !== 1
-    ) {
-      errorMessage = `Device "${deviceId}" does not provide a scene`;
-    }
+    showMessageBox({
+      variant: 'info',
+      title: 'Device not online',
+      msg: `Device "${deviceId}" is not online. Cannot open its "${sceneName}" scene.`,
+    });
+    return undefined;
   }
-  if (errorMessage) {
+  const capabilities = attrs.getValue<number>('capabilities');
+  if (
+    capabilities === undefined ||
+    (capabilities & Capabilities.PROVIDES_SCENES) !== 1
+  ) {
+    const errorMessage = `Device "${deviceId}" does not provide a scene`;
     showMessageBox({
       variant: 'error',
       title: 'Could not open device scene',

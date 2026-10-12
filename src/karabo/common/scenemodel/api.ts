@@ -2,6 +2,7 @@ export * from './bases';
 export * from './layouts';
 export * from './shapes';
 export * from './widgets/static';
+export * from './widgets/topology';
 export * from './widgets/links';
 export * from './widgets/display';
 export * from './widgets/editable';

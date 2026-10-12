@@ -5,7 +5,11 @@ import {
   Schema,
   Timestamp,
 } from '@/karabo/data/api';
-import { applyConfiguration, DeviceProxy } from '@/lib/binding/api';
+import {
+  applyConfiguration,
+  DeviceProxy,
+  InstanceStatus,
+} from '@/lib/binding/api';
 
 export class SystemTopology {
   public _system_hash: Hash | null = null;
@@ -17,6 +21,21 @@ export class SystemTopology {
     console.log('Received SystemTopology ...');
     this._system_hash = systemTopology;
     this._ensureTopologyKeys();
+    const devices = systemTopology.getValue<Hash>('device');
+    const macros = systemTopology.getValue<Hash>('macro');
+    for (const [deviceId, proxy] of this.devices) {
+      let attrs: HashAttributes | undefined;
+      if (devices.has(deviceId)) {
+        attrs = devices.getAttributes(deviceId);
+      } else if (macros.has(deviceId)) {
+        attrs = macros.getAttributes(deviceId);
+      }
+      this.updateInstance(
+        proxy,
+        attrs !== undefined,
+        attrs?.findValue('status')
+      );
+    }
   }
 
   public get initialized(): boolean {
@@ -40,54 +59,78 @@ export class SystemTopology {
   public getDeviceInstanceInfo = (
     deviceId: string
   ): HashAttributes | undefined => {
-    const devicesHash = this._system_hash?.getValue('device') as Hash;
-    const deviceNode = devicesHash.getElement(deviceId);
-    return deviceNode?.attrs;
+    for (const kind of ['device', 'macro']) {
+      const instances = this._system_hash?.getValue<Hash>(kind);
+      if (instances?.has(deviceId)) {
+        return instances.getAttributes(deviceId);
+      }
+    }
+    return undefined;
   };
 
   public updateTopology(hash: Hash) {
-    const changes = hash.getValue('changes') as Hash;
-    const gone = changes.getValue('gone') as Hash;
-
-    // first evaluate the gone
+    const systemTopology = this._system_hash;
+    if (!systemTopology) {
+      return;
+    }
+    const changes = hash.getValue<Hash>('changes');
+    const gone = changes.getValue<Hash>('gone');
     if (!gone.empty()) {
-      for (const item of ['device', 'macro'] as const) {
-        if (!gone.has(item)) continue;
+      this.instanceGone(gone, systemTopology);
+    }
+    const added = changes.getValue<Hash>('new');
+    if (!added.empty()) {
+      this.instanceNew(added, systemTopology);
+    }
+    const updated = changes.getValue<Hash>('update');
+    if (!updated.empty()) {
+      this.instanceUpdated(updated, systemTopology);
+    }
+  }
 
-        const gone_instances = gone.getValue(item) as Hash;
-        for (const [deviceId, , ,] of gone_instances.iterall()) {
-          this.setOnlineFlag(deviceId, false);
-          this._system_hash?.erase(`${item}.${deviceId}`);
+  private instanceGone(gone: Hash, systemTopology: Hash): void {
+    for (const kind of ['device', 'macro', 'server'] as const) {
+      if (!gone.has(kind)) {
+        continue;
+      }
+      const instances = systemTopology.getValue<Hash>(kind);
+      for (const instanceId of gone.getValue<Hash>(kind).keys()) {
+        instances.erase(instanceId);
+        if (kind === 'server') {
+          continue;
+        }
+        const proxy = this.devices.get(instanceId);
+        if (proxy) {
+          this.updateInstance(proxy, false, undefined);
         }
       }
+    }
+  }
 
-      if (gone.has('server')) {
-        for (const [deviceId, , ,] of gone.getValue('server').iterall()) {
-          this._system_hash?.erase(`${'server'}.${deviceId}`);
+  private instanceNew(added: Hash, systemTopology: Hash): void {
+    systemTopology.merge(added);
+    this.updateInstances(added);
+  }
+
+  private instanceUpdated(updated: Hash, systemTopology: Hash): void {
+    systemTopology.merge(updated);
+    this.updateInstances(updated);
+  }
+
+  private updateInstances(entries: Hash): void {
+    for (const kind of ['device', 'macro'] as const) {
+      if (!entries.has(kind)) {
+        continue;
+      }
+      const instances = entries.getValue<Hash>(kind);
+      for (const [deviceId, , attrs] of instances.iterallValues()) {
+        const proxy = this.devices.get(deviceId);
+        if (proxy) {
+          const status =
+            'status' in attrs ? attrs.status : proxy.instanceStatus;
+          this.updateInstance(proxy, true, status);
         }
       }
-    } // gone end
-
-    const neew = changes.getValue('new') as Hash;
-    if (!neew.empty()) {
-      // merge the hash
-      this._system_hash?.merge(neew);
-
-      for (const item of ['device', 'macro'] as const) {
-        if (!neew.has(item)) continue;
-
-        const new_instances = neew.getValue(item) as Hash;
-        for (const [deviceId, , ,] of new_instances.iterall()) {
-          // Update proxy (device became visible in topology)
-          this.setOnlineFlag(deviceId, true);
-        }
-      }
-    } // new end
-
-    // merge update as last step
-    const update = changes.getValue('update') as Hash;
-    if (!update.empty()) {
-      this._system_hash?.merge(update);
     }
   }
 
@@ -96,20 +139,48 @@ export class SystemTopology {
     if (!proxy) {
       proxy = DeviceProxy.createDeviceProxy(deviceId);
       this.devices.set(deviceId, proxy);
-      if (this.isDeviceOnline(deviceId)) {
-        proxy.setOnlineFlag(true);
-      }
+      const attrs = this.getDeviceInstanceInfo(deviceId);
+      this.updateInstance(
+        proxy,
+        attrs !== undefined,
+        attrs?.findValue('status')
+      );
     }
     return proxy;
   }
 
   public clear(): void {
-    this.devices.clear();
     this._system_hash = null;
+    for (const proxy of this.devices.values()) {
+      this.updateInstance(proxy, false, undefined);
+    }
+    this.devices.clear();
+  }
+
+  private updateInstance(
+    proxy: DeviceProxy,
+    isOnline: boolean,
+    status: unknown
+  ): void {
+    let instanceStatus = InstanceStatus.UNKNOWN;
+    if (status === undefined) {
+      instanceStatus = InstanceStatus.NONE;
+    } else if (
+      status === InstanceStatus.NONE ||
+      status === InstanceStatus.OK ||
+      status === InstanceStatus.UNKNOWN ||
+      status === InstanceStatus.ERROR
+    ) {
+      instanceStatus = status;
+    }
+    proxy.setInstanceStatus(instanceStatus);
+    if (proxy.isOnline !== isOnline) {
+      proxy.setOnlineFlag(isOnline);
+    }
   }
 
   public setOnlineFlag(deviceId: string, isOnline: boolean): void {
-    let proxy = this.devices.get(deviceId);
+    const proxy = this.devices.get(deviceId);
     if (proxy) {
       proxy.setOnlineFlag(isOnline);
     }

@@ -1,4 +1,4 @@
-/** Links — DeviceSceneLink (controller), SceneLink, WebLink. */
+/** Links — DeviceSceneLink, SceneLink, WebLink. */
 
 import React from 'react';
 import { Cpu, ExternalLink, Film } from 'lucide-react';
@@ -7,15 +7,14 @@ import {
   SceneLinkModel,
   WebLinkModel,
 } from '@/karabo/common/scenemodel/widgets/links';
-import type { ControllerContainerContext } from './ControllerContainer';
+import icons from '@/assets/icons';
+import { useDeviceProxy } from '../../hooks/useDeviceProxy';
 import { registerRenderer } from '../../renderRegistry';
 import { getQFontTextStyle } from '@/features/controllers/api';
 import {
   openSceneLinkInWorkspace,
   openDeviceSceneLinkInWorkspace,
 } from '@/features/project/api';
-
-import { splitKaraboKeys } from '@/lib/binding/utils/splitKaraboKeys';
 
 // useSceneNavigate
 // ----------------------------------------------------------------------------
@@ -64,6 +63,7 @@ function LinkButton({
   onClick,
   Icon,
   iconColor,
+  isOffline = false,
 }: {
   text: string;
   font: string;
@@ -74,6 +74,7 @@ function LinkButton({
   onClick?: () => void;
   Icon: React.ElementType;
   iconColor: string;
+  isOffline?: boolean;
 }) {
   return (
     <button
@@ -108,6 +109,20 @@ function LinkButton({
         style={{ position: 'absolute', top: 2, left: 2 }}
       />
       {text}
+      {isOffline && (
+        <img
+          src={icons.deviceOffline}
+          alt="Device offline"
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            right: 0,
+            width: 16,
+            height: 16,
+            pointerEvents: 'none',
+          }}
+        />
+      )}
     </button>
   );
 }
@@ -117,9 +132,9 @@ function LinkButton({
 
 const DeviceSceneLink: React.FC<{
   model: DeviceSceneLinkModel;
-  ctx?: ControllerContainerContext;
 }> = ({ model }) => {
-  const { deviceId } = splitKaraboKeys(model.keys[0]);
+  const deviceId = model.keys[0]?.split('.')[0] ?? '';
+  const proxy = useDeviceProxy(deviceId);
   const sceneName = model.target;
   const go = useDeviceSceneNavigate(deviceId, sceneName, model.target_window);
   return (
@@ -129,10 +144,11 @@ const DeviceSceneLink: React.FC<{
       foreground={model.foreground}
       background={model.background}
       frame_width={model.frame_width}
-      title={sceneName}
+      title={`${deviceId}|${sceneName}`}
       onClick={sceneName ? go : undefined}
       Icon={Cpu}
       iconColor="#0ea5e9"
+      isOffline={!proxy?.isOnline}
     />
   );
 };
