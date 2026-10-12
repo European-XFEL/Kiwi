@@ -1,17 +1,29 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { Chart } from 'chart.js/auto';
-import { AccessLevel } from '@/karabo/data/api';
+import { AccessLevel, Timestamp } from '@/karabo/data/api';
+import { DeviceProxy, DoubleBinding, PropertyProxy } from '@/lib/binding/api';
 import {
   DisplayTrendGraphModel,
   DisplayStateGraphModel,
   DisplayAlarmGraphModel,
 } from '@/karabo/common/api';
 import * as trendData from '../../graph/trend/api';
+import { useTrendModel } from '../../graph/trend/useTrendModel';
 import DisplayTrendGraph from '../DisplayTrendGraph';
 
 jest.mock('../../graph/trend/api', () => ({
   ...jest.requireActual('../../graph/trend/api'),
   useTrendModel: jest.fn(),
+  useTrendChart: jest.fn(
+    jest.requireActual('../../graph/trend/api').useTrendChart
+  ),
 }));
 
 const ctx = {
@@ -20,6 +32,8 @@ const ctx = {
   userAccessLevel: AccessLevel.OBSERVER,
 };
 const published = () => ({
+  requestHistory: jest.fn(),
+  resetHistory: jest.fn(),
   startTime: 1000,
   series: [{ key: 'A.value', timestamps: [1000, 2000], values: [1, 2] }],
   dataRevision: 1,
@@ -78,7 +92,7 @@ describe('DisplayTrendGraph with Chart.js', () => {
       rerender(<DisplayTrendGraph model={model} ctx={{ ...ctx }} />);
       expect(chart().scales.x).toEqual(range);
       expect(chart().isDatasetVisible(1)).toBe(false);
-      fireEvent.click(screen.getByRole('button', { name: 'Reset view' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Reset View' }));
       expect(chart().scales.x).toEqual({ min: 1000, max: 3000 });
     }
   );
@@ -156,14 +170,14 @@ describe('DisplayTrendGraph with Chart.js', () => {
       left: '88px',
       top: '26px',
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Reset view' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Reset View' }));
     expect(chart().isDatasetVisible(0)).toBe(false);
     fireEvent.click(second);
     expect(second).toHaveAttribute('aria-pressed', 'true');
     expect(chart().setDatasetVisibility).toHaveBeenCalledWith(0, true);
   });
 
-  it('zooms with a bounded rectangle and reset resumes uptime', () => {
+  it('zooms with a bounded rectangle and Reset View restores Uptime', () => {
     jest.mocked(trendData.useTrendModel).mockReturnValue(published());
     render(
       <DisplayTrendGraph model={new DisplayTrendGraphModel()} ctx={ctx} />
@@ -178,7 +192,7 @@ describe('DisplayTrendGraph with Chart.js', () => {
     expect(selection).toHaveStyle({ display: 'none' });
     expect(chart().scales.x.min).toBeGreaterThan(1000);
     expect(chart().scales.x.max).toBeLessThan(2000);
-    fireEvent.click(screen.getByRole('button', { name: 'Reset view' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Reset View' }));
     expect(screen.getByRole('button', { name: 'Uptime' })).toHaveAttribute(
       'aria-pressed',
       'true'
@@ -254,3 +268,149 @@ describe('DisplayTrendGraph with Chart.js', () => {
     expect(chart().scales.x).toEqual({ min: 1000, max: 2000 });
   });
 });
+
+describe('DisplayTrendGraph live publication', () => {
+  const requestIdle = window.requestIdleCallback;
+  const cancelIdle = window.cancelIdleCallback;
+  beforeEach(() => {
+    charts().length = 0;
+    jest.useFakeTimers();
+    window.requestIdleCallback = (callback) =>
+      window.setTimeout(
+        () => callback({ didTimeout: false, timeRemaining: () => 50 }),
+        0
+      );
+    window.cancelIdleCallback = (id) => window.clearTimeout(id);
+    jest.mocked(trendData.useTrendModel).mockImplementation(useTrendModel);
+  });
+  afterEach(() => {
+    cleanup();
+    window.requestIdleCallback = requestIdle;
+    window.cancelIdleCallback = cancelIdle;
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+    jest.mocked(trendData.useTrendModel).mockReset();
+  });
+
+  it('only renders the plot after changed live samples publish at idle', () => {
+    const root = new DeviceProxy('A');
+    root.binding.value!.set('value', new DoubleBinding());
+    const proxy = new PropertyProxy(root, 'value');
+    const now = 1_800_000_000_000;
+    jest.spyOn(Date, 'now').mockReturnValue(now);
+    proxy.binding!.setValue(1, new Timestamp(now / 1000));
+    const model = new DisplayTrendGraphModel();
+    model.keys = [proxy.key];
+    const plot = jest.mocked(trendData.useTrendChart);
+    const { rerender, unmount } = render(
+      <DisplayTrendGraph model={model} ctx={{ ...ctx, proxies: [proxy] }} />
+    );
+    act(() => jest.runOnlyPendingTimers());
+    plot.mockClear();
+
+    rerender(
+      <DisplayTrendGraph model={model} ctx={{ ...ctx, proxies: [proxy] }} />
+    );
+    expect(plot).not.toHaveBeenCalled();
+    proxy.binding!.setValue(2, new Timestamp((now + 1000) / 1000));
+    rerender(
+      <DisplayTrendGraph model={model} ctx={{ ...ctx, proxies: [proxy] }} />
+    );
+    expect(plot).not.toHaveBeenCalled();
+    expect(chart().data.datasets[0].data).toHaveLength(1);
+    act(() => jest.runOnlyPendingTimers());
+    expect(plot).toHaveBeenCalled();
+    expect(chart().data.datasets[0].data).toEqual([
+      { x: now, y: 1 },
+      { x: now + 1000, y: 2 },
+    ]);
+    unmount();
+    proxy.dispose();
+  });
+
+  it('reloads hidden curves for presets and Reset', () => {
+    const proxies = ['A', 'B'].map((device) => {
+      const root = new DeviceProxy(device);
+      root.binding.value!.set('value', new DoubleBinding());
+      const proxy = new PropertyProxy(root, 'value');
+      jest.spyOn(proxy, 'getHistory').mockImplementation(() => {});
+      return proxy;
+    });
+    const model = new DisplayTrendGraphModel();
+    model.keys = proxies.map((proxy) => proxy.key);
+    const { unmount } = render(
+      <DisplayTrendGraph model={model} ctx={{ ...ctx, proxies }} />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'B.value' }));
+    expect(proxies[1].getHistory).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'One Hour' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
+    for (const proxy of proxies) {
+      expect(proxy.getHistory).toHaveBeenCalledTimes(2);
+    }
+    unmount();
+    proxies.forEach((proxy) => proxy.dispose());
+  });
+});
+
+it.each([
+  DisplayTrendGraphModel,
+  DisplayStateGraphModel,
+  DisplayAlarmGraphModel,
+])(
+  'provides separate view reset and history reload actions for %p',
+  (Model) => {
+    jest.useFakeTimers();
+    const data = published();
+    data.series[0] = {
+      key: 'A.value',
+      timestamps: [0, 1000, 2000],
+      values: [0, 1, 3],
+    };
+    data.series.push({ key: 'B.value', timestamps: [0, 2000], values: [1, 2] });
+    jest.mocked(trendData.useTrendModel).mockReturnValue(data);
+    const model = new Model();
+    const view = render(<DisplayTrendGraph model={model} ctx={ctx} />);
+    const current = chart();
+    fireEvent.click(screen.getByRole('button', { name: 'B.value' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Move' }));
+    const container = screen.getByTestId('trend-chart');
+    fireEvent.mouseDown(container, { button: 0, clientX: 90, clientY: 40 });
+    fireEvent.mouseUp(document, { button: 0, clientX: 100, clientY: 50 });
+    fireEvent.click(screen.getByRole('button', { name: 'Reset View' }));
+    expect(current.scales.x).toEqual({ min: 1000, max: 2000 });
+    expect(screen.getByRole('button', { name: 'Uptime' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+    jest.advanceTimersByTime(1000);
+    expect(data.requestHistory).not.toHaveBeenCalled();
+    const range = [current.scales.x.min, current.scales.x.max];
+    const y = { ...current.scales.y };
+    const reset = screen.getByRole('button', { name: 'Reset' });
+    expect(reset).toHaveAttribute(
+      'title',
+      'Clear curves and reload historic data'
+    );
+    fireEvent.click(reset);
+    expect(data.resetHistory).toHaveBeenCalledWith(range);
+    data.series = data.series.map(({ key }) => ({
+      key,
+      timestamps: [],
+      values: [],
+    }));
+    data.dataRevision++;
+    view.rerender(<DisplayTrendGraph model={model} ctx={{ ...ctx }} />);
+    expect(current.scales.x).toEqual({ min: range[0], max: range[1] });
+    expect(current.scales.y).toEqual(y);
+    expect(current.data.datasets[0].data).toEqual([]);
+    fireEvent.click(screen.getByRole('button', { name: 'Uptime' }));
+    expect(screen.getByRole('button', { name: 'Uptime' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+    view.unmount();
+    jest.useRealTimers();
+    jest.mocked(trendData.useTrendModel).mockReset();
+  }
+);

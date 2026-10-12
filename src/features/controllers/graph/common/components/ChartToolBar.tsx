@@ -1,16 +1,13 @@
 import React from 'react';
 import { Button } from '@/components/api';
-import pointerIcon from '@/assets/icons/general/pointer.svg?url';
-import zoomIcon from '@/assets/icons/general/zoom.svg?url';
-import moveIcon from '@/assets/icons/general/move.svg?url';
-import resetIcon from '@/assets/icons/general/reset.svg?url';
+import icons from '@/assets/icons';
 
 export type ChartMouseTool = 'pointer' | 'zoom' | 'pan';
 
 const MOUSE_TOOLS = [
-  { tool: 'pointer', label: 'Pointer', icon: pointerIcon },
-  { tool: 'zoom', label: 'Zoom', icon: zoomIcon },
-  { tool: 'pan', label: 'Move', icon: moveIcon },
+  { tool: 'pointer', label: 'Pointer', icon: icons.pointer },
+  { tool: 'zoom', label: 'Zoom', icon: icons.zoom },
+  { tool: 'pan', label: 'Move', icon: icons.move },
 ] as const;
 
 export const ChartToolBar = React.memo(function ChartToolBar({
@@ -38,8 +35,8 @@ export const ChartToolBar = React.memo(function ChartToolBar({
           onClick: () => selectTool(tool),
         })),
         {
-          label: 'Reset view',
-          icon: resetIcon,
+          label: 'Reset View',
+          icon: icons.maximize,
           checked: undefined,
           onClick: reset,
         },

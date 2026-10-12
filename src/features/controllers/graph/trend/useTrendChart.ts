@@ -13,6 +13,19 @@ import {
   type Range,
 } from '../common/api';
 
+const HISTORY_DEBOUNCE_MS = 1000;
+
+function presetRange(mode: Exclude<TimeRangeMode, 'uptime'>): Range {
+  const end = Date.now();
+  const start = new Date(end);
+  if (mode === 'day' || mode === 'week') {
+    start.setDate(start.getDate() - (mode === 'week' ? 7 : 1));
+  } else {
+    start.setTime(end - (mode === 'hour' ? 3600 : 600) * 1000);
+  }
+  return [start.getTime(), end];
+}
+
 type TimeRangeMode = 'uptime' | 'week' | 'day' | 'hour' | 'tenMinutes';
 type View = {
   mode: TimeRangeMode | null;
@@ -30,12 +43,16 @@ export function useTrendChart({
   startTime,
   dataRevision,
   mode = 'numeric',
+  requestHistory,
+  resetHistory,
 }: {
   plotConfig: PlotSettings;
   series: TrendSeries[];
   startTime: number;
   dataRevision: number;
   mode?: TrendMode;
+  requestHistory?: (range: Range) => void;
+  resetHistory?: (range: Range) => void;
 }) {
   const [view, setView] = React.useState<View>({ mode: 'uptime' });
   const [yAxisWidth, setYAxisWidth] = React.useState(52);
@@ -51,30 +68,64 @@ export function useTrendChart({
     if (view.mode === 'uptime') {
       return [startTime, Math.max(startTime + 1000, latest)];
     }
-    const end = Date.now();
-    const start = new Date(end);
-    if (view.mode === 'day' || view.mode === 'week') {
-      start.setDate(start.getDate() - (view.mode === 'week' ? 7 : 1));
-    } else {
-      start.setTime(end - (view.mode === 'hour' ? 3600 : 600) * 1000);
-    }
-    return [start.getTime(), end];
+    return presetRange(view.mode);
   }, [view, startTime, series]);
+
+  const xRangeRef = React.useRef(xRange);
+  xRangeRef.current = xRange;
+  const pendingHistory = React.useRef<
+    ReturnType<typeof setTimeout> | undefined
+  >(undefined);
+  const displayedRange = React.useRef<Range | undefined>(undefined);
+  const requestRef = React.useRef(requestHistory);
+  requestRef.current = requestHistory;
+  const resetRef = React.useRef(resetHistory);
+  resetRef.current = resetHistory;
+  const cancelHistory = React.useCallback(() => {
+    clearTimeout(pendingHistory.current);
+    pendingHistory.current = undefined;
+  }, []);
+  const requestAll = React.useCallback((range: Range) => {
+    if (latestSeriesRef.current.length) {
+      requestRef.current?.(range);
+    }
+  }, []);
 
   const rememberRange = React.useCallback((range: Range) => {
     const values = [...range].sort((a, b) => a - b) as Range;
+    displayedRange.current = values;
     setVisibleRange((current) =>
       current?.[0] === values[0] && current?.[1] === values[1]
         ? current
         : values
     );
   }, []);
-  const follow = React.useCallback((mode: TimeRangeMode) => {
-    setView((current) => ({ ...current, mode }));
-  }, []);
+  const follow = React.useCallback(
+    (mode: TimeRangeMode) => {
+      cancelHistory();
+      if (mode !== 'uptime') {
+        const range = presetRange(mode);
+        requestAll(range);
+      }
+      setView((current) => ({ ...current, mode }));
+    },
+    [cancelHistory, requestAll]
+  );
   const pause = React.useCallback(
     (nextXRange: Range, nextYRange?: Range) => {
+      const currentXRange = displayedRange.current ?? xRangeRef.current;
       rememberRange(nextXRange);
+      if (
+        nextXRange[0] !== currentXRange?.[0] ||
+        nextXRange[1] !== currentXRange?.[1]
+      ) {
+        cancelHistory();
+        const range = [...nextXRange].sort((a, b) => a - b) as Range;
+        pendingHistory.current = setTimeout(() => {
+          pendingHistory.current = undefined;
+          requestAll(range);
+        }, HISTORY_DEBOUNCE_MS);
+      }
       setView((current) => ({
         ...current,
         mode: null,
@@ -82,10 +133,17 @@ export function useTrendChart({
         yRange: nextYRange ?? current.yRange,
       }));
     },
-    [rememberRange]
+    [rememberRange, cancelHistory, requestAll]
   );
-  const reset = React.useCallback(() => setView({ mode: 'uptime' }), []);
+  const onReset = React.useCallback(() => {
+    cancelHistory();
+    setView({ mode: 'uptime' });
+  }, [cancelHistory]);
   const seriesKeys = JSON.stringify(series.map((item) => item.key));
+  React.useEffect(
+    () => cancelHistory,
+    [seriesKeys, mode, startTime, plotConfig, cancelHistory]
+  );
   const axes = React.useMemo(
     () =>
       buildPlotAxes(plotConfig, {
@@ -120,7 +178,7 @@ export function useTrendChart({
     xRange,
     yRange: view.yRange,
     onComplete: pause,
-    onReset: reset,
+    onReset,
     onRanges,
     buildData,
     dataRevision,
@@ -130,6 +188,18 @@ export function useTrendChart({
     keys: JSON.parse(seriesKeys),
     chart,
   });
+
+  const reloadHistory = React.useCallback(() => {
+    const range = displayedRange.current ?? xRangeRef.current;
+    if (!range) {
+      return;
+    }
+    cancelHistory();
+    const yRange = chart.rangesRef.current?.y ?? view.yRange ?? axes.y.range;
+    rememberRange(range);
+    setView({ mode: null, xRange: range, yRange });
+    resetRef.current?.(range);
+  }, [cancelHistory, rememberRange, chart.rangesRef, view.yRange, axes]);
 
   const yRange = view.yRange;
   return {
@@ -143,6 +213,7 @@ export function useTrendChart({
     visibleRange,
     follow,
     reset: chart.reset,
+    reloadHistory,
     xRange,
     yRange,
     pause,

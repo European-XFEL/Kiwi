@@ -1,4 +1,10 @@
-import { Hash, HashAttributes, Schema, Timestamp } from '@/karabo/data/api';
+import {
+  Hash,
+  HashList,
+  HashAttributes,
+  Schema,
+  Timestamp,
+} from '@/karabo/data/api';
 import { applyConfiguration, DeviceProxy } from '@/lib/binding/api';
 
 export class SystemTopology {
@@ -117,6 +123,14 @@ export class SystemTopology {
       return;
     }
     proxy.handleDeviceConfiguration(config);
+  }
+
+  public handlePropertyHistory(
+    deviceId: string,
+    property: string,
+    data: HashList
+  ): void {
+    this.devices.get(deviceId)?.handlePropertyHistory(property, data);
   }
 
   public handleDeviceSchema(deviceId: string, schema: Schema): void {

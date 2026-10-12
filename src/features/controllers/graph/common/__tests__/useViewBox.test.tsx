@@ -28,7 +28,7 @@ function TrendHarness() {
   );
 }
 
-test('trend chart shares viewport pan and reset navigation', () => {
+test('trend chart shares viewport pan and Reset navigation', () => {
   const { unmount } = render(<TrendHarness />);
   const chart = (
     Chart as unknown as { instances: Chart<'line'>[] }
@@ -49,6 +49,7 @@ test('trend chart shares viewport pan and reset navigation', () => {
   expect(chart.options.scales?.x?.min).not.toBe(initialMin);
   fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
   expect(screen.getByText('uptime')).toBeTruthy();
+  expect(chart.scales.x).toEqual({ min: START, max: START + 1000 });
   unmount();
 });
 

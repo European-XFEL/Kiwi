@@ -114,7 +114,7 @@ test('preserves visibility across updates, reorder, configuration and reset', ()
     left: '88px',
     top: '26px',
   });
-  fireEvent.click(screen.getByRole('button', { name: 'Reset view' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Reset View' }));
   expect(chart().isDatasetVisible(0)).toBe(false);
   fireEvent.click(screen.getByRole('button', { name: 'b' }));
   expect(chart().isDatasetVisible(0)).toBe(true);
@@ -178,7 +178,7 @@ test('samples each curve independently and keeps line markers disabled', () => {
   for (const dataset of chart().data.datasets) {
     expect(dataset.pointRadius).toBe(0);
   }
-  fireEvent.click(screen.getByRole('button', { name: 'Reset view' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Reset View' }));
 });
 
 test('defers all vector publications until the active gesture ends', () => {

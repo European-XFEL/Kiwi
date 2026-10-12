@@ -1,7 +1,12 @@
 import { broadcast_event, KaraboEvent } from '@/lib/events';
 import { AccessControlManager } from '@/features/user/utils/AccessLevel';
-import { decodeBinary, Hash, Schema } from '@/karabo/data/api';
-import { getConfig, getNetwork, getTopology } from '@/lib/singletons/api';
+import { decodeBinary, Hash, HashList, Schema } from '@/karabo/data/api';
+import {
+  getConfig,
+  getLogger,
+  getNetwork,
+  getTopology,
+} from '@/lib/singletons/api';
 
 import { v4 as uuidv4 } from 'uuid';
 import { get_reason_parts } from './util';
@@ -259,6 +264,26 @@ export class Manager {
     const configurations = hash.getValue('configurations') as Hash;
     for (const [deviceId, properties] of configurations.items()) {
       this._topology.handleDeviceConfiguration(deviceId, properties);
+    }
+  }
+
+  public handle_propertyHistory(hash: Hash): void {
+    if (!hash.getValue<boolean>('success')) {
+      getLogger().debug(
+        `Property history failed: ${hash.has('reason') ? hash.getValue('reason') : ''}`
+      );
+      return;
+    }
+    if (!hash.has('data') || !hash.has('deviceId') || !hash.has('property')) {
+      return;
+    }
+    const data = hash.getValue<HashList>('data');
+    if (data instanceof HashList) {
+      this._topology.handlePropertyHistory(
+        hash.getValue<string>('deviceId'),
+        hash.getValue<string>('property'),
+        data
+      );
     }
   }
 

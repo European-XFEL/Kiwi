@@ -46,12 +46,15 @@ export function useChart<T extends 'line' | 'scatter'>({
   const finish = React.useCallback(() => {
     pendingUpdateRef.current?.(rangesRef.current);
   }, []);
-  const reset = React.useCallback(() => {
-    onReset();
-    setRevision((current) => current + 1);
-  }, [onReset]);
   const plotItem = usePlotItem(configuration, identity);
   const { containerRef, viewport, update } = plotItem;
+  const resetRef = React.useRef(() => {});
+  resetRef.current = () => {
+    pendingUpdateRef.current = undefined;
+    onReset();
+    setRevision((current) => current + 1);
+  };
+  const reset = React.useCallback(() => resetRef.current(), []);
   const getRanges = React.useCallback(() => rangesRef.current, []);
   const setRanges = React.useCallback(
     (ranges: AxisRanges) => {

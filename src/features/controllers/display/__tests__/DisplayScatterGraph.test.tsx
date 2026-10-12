@@ -539,8 +539,9 @@ test('uses scene settings, ignores extra proxies, retains navigation ranges on c
     y.send(4, 3);
   });
   rerender(controller());
-  fireEvent.click(screen.getByRole('button', { name: 'Reset view' }));
-  expect(chart.options.scales?.x?.min).toBe(1);
+  fireEvent.click(screen.getByRole('button', { name: 'Reset View' }));
+  expect(chart.scales.x.min).toBe(1);
+  expect(chart.scales.x.max).toBe(100);
   expect(chart.data.datasets[0].data).toEqual([{ x: 6, y: 4 }]);
   unmount();
   expect(chart.destroy).toHaveBeenCalledTimes(1);

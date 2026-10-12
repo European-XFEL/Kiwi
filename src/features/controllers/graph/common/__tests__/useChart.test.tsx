@@ -132,10 +132,10 @@ it.each(['complete', 'Escape', 'blur'])(
   }
 );
 
-it('refreshes unchanged data on reset and restores configured ranges', () => {
+it('refreshes unchanged data on Reset and restores model ranges', () => {
   const axes: PlotAxesConfig = {
-    x: { ...timeAxes.x, range: [0, 2000] },
-    y: { ...mappedAxes.y, range: [-1, 2] },
+    x: { ...timeAxes.x, range: [200, 300] },
+    y: { ...mappedAxes.y, range: [10, 20] },
   };
   render(<Harness axes={axes} />);
   fireEvent.click(screen.getByText('Move'));
@@ -146,8 +146,8 @@ it('refreshes unchanged data on reset and restores configured ranges', () => {
   });
   fireEvent.mouseUp(document, { button: 0, clientX: 100, clientY: 50 });
   fireEvent.click(screen.getByText('Reset'));
-  expect(chart().scales.x).toMatchObject({ min: 0, max: 2000 });
-  expect(chart().scales.y).toMatchObject({ min: -1, max: 2 });
+  expect(chart().scales.x).toMatchObject({ min: 200, max: 300 });
+  expect(chart().scales.y).toMatchObject({ min: 10, max: 20 });
   const update = chart().update as jest.Mock;
   update.mockClear();
   fireEvent.click(screen.getByText('Reset'));
@@ -274,4 +274,17 @@ describe('gesture animation frames', () => {
     expect(chart().data.datasets[0].data).toEqual(latest);
     expect(chart().scales.x.min).toBeCloseTo(-50000 / 146);
   });
+});
+
+it('middle click fits the latest pending data without restoring the previous gesture range', () => {
+  const view = render(<Harness axes={mappedAxes} />);
+  const container = screen.getByTestId('plot');
+  fireEvent.mouseDown(container, { button: 1, clientX: 90, clientY: 40 });
+  const latest = [...points, { x: 2000, y: 2 }];
+  view.rerender(<Harness axes={mappedAxes} data={latest} />);
+  expect(chart().data.datasets[0].data).toEqual(points);
+  fireEvent.mouseUp(document, { button: 1, clientX: 90, clientY: 40 });
+  expect(chart().data.datasets[0].data).toEqual(latest);
+  expect(chart().scales.x).toMatchObject({ min: 0, max: 2000 });
+  expect(chart().scales.y).toMatchObject({ min: 0, max: 2 });
 });
