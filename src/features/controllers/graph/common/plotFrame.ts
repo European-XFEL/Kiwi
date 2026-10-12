@@ -1,7 +1,7 @@
 import type { Plugin } from 'chart.js';
 import { GRAPH_COLORS } from './constants';
 
-export const plotFrame: Plugin<'line' | 'scatter'> = {
+export const plotFrame: Plugin<'line' | 'scatter' | 'bar'> = {
   id: 'kiwiPlotFrame',
   beforeDraw(chart) {
     const { left, top, width, height } = chart.chartArea;

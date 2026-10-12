@@ -1,6 +1,6 @@
 import React from 'react';
 import { Chart } from 'chart.js/auto';
-import type { ChartConfiguration } from 'chart.js';
+import type { ChartConfiguration, DefaultDataPoint } from 'chart.js';
 import type { Range } from './constants';
 import type { AxisRanges, PlotBounds } from './useMouseGestures';
 
@@ -14,12 +14,15 @@ export type PlotViewport = {
  * Owns the Chart.js canvas and instance lifecycle for every graph type.
  * Exposes chart bounds, ranges, data updates, and dataset visibility to callers.
  */
-export function usePlotItem<T extends 'line' | 'scatter' = 'line'>(
-  configuration: () => ChartConfiguration<T>,
+export function usePlotItem<
+  T extends 'line' | 'scatter' | 'bar' = 'line',
+  TData = DefaultDataPoint<T>,
+>(
+  configuration: () => ChartConfiguration<T, TData>,
   identity: readonly unknown[]
 ) {
   const containerRef = React.useRef<HTMLDivElement>(null);
-  const chartRef = React.useRef<Chart<T> | null>(null);
+  const chartRef = React.useRef<Chart<T, TData> | null>(null);
   const [yAxisWidth, setYAxisWidth] = React.useState<number>();
   React.useLayoutEffect(() => {
     const container = containerRef.current;
@@ -27,13 +30,12 @@ export function usePlotItem<T extends 'line' | 'scatter' = 'line'>(
     const canvas = document.createElement('canvas');
     container.appendChild(canvas);
     const config = configuration();
-    config.plugins = [
-      ...(config.plugins ?? []),
-      {
-        id: 'yAxisWidth',
-        afterLayout: (chart) => setYAxisWidth(chart.scales.y.width),
-      },
-    ];
+    const yAxis = config.options!.scales!.y!;
+    const afterFit = yAxis.afterFit;
+    yAxis.afterFit = (scale) => {
+      afterFit?.(scale);
+      setYAxisWidth(scale.width);
+    };
     const chart = new Chart(canvas, config);
     chartRef.current = chart;
     return () => {
@@ -87,7 +89,7 @@ export function usePlotItem<T extends 'line' | 'scatter' = 'line'>(
 
   const update = React.useCallback(
     (
-      datasets: ChartConfiguration<T>['data']['datasets'],
+      datasets: ChartConfiguration<T, TData>['data']['datasets'],
       xRange?: Range,
       yRange?: Range,
       pointRadius?: number
@@ -98,7 +100,7 @@ export function usePlotItem<T extends 'line' | 'scatter' = 'line'>(
         chart.data.datasets[index].data = dataset.data;
       });
       if (pointRadius !== undefined)
-        chart.data.datasets[0].pointRadius = pointRadius;
+        Object.assign(chart.data.datasets[0], { pointRadius });
       chart.options!.scales!.x!.min = xRange?.[0];
       chart.options!.scales!.x!.max = xRange?.[1];
       chart.options!.scales!.y!.min = yRange?.[0];

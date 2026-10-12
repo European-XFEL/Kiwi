@@ -8,6 +8,7 @@ import {
 } from '@testing-library/react';
 import { Chart } from 'chart.js/auto';
 import { DisplayTrendGraphModel } from '@/karabo/common/api';
+import { STATE_LABELS } from '../../trend/categories';
 import {
   buildModelConfig,
   buildPlotAxes,
@@ -44,16 +45,18 @@ function Harness({
   axes,
   data = points,
   revision = 0,
+  onYAxisWidth,
 }: {
   axes: PlotAxesConfig;
   data?: Point[];
   revision?: number;
+  onYAxisWidth?: (width: number) => void;
 }) {
   const ranges = useChartRanges(axes);
   const buildData = React.useCallback(() => ({ datasets: [{ data }] }), [data]);
   const plot = useChart({
     axes,
-    configuration: () => commonChartOption(model, axes),
+    configuration: () => commonChartOption(model, axes, 'line', onYAxisWidth),
     identity: [axes],
     xRange: ranges.xRange,
     yRange: ranges.yRange,
@@ -66,11 +69,44 @@ function Harness({
     <>
       <div ref={plot.containerRef} data-testid="plot" />
       <div ref={plot.selectionRef} />
+      <output data-testid="y-axis-width">{plot.yAxisWidth}</output>
       <button onClick={() => plot.selectTool('pan')}>Move</button>
       <button onClick={plot.reset}>Reset</button>
     </>
   );
 }
+
+it.each([
+  { axes: timeAxes, minimum: 64, narrowed: 120 },
+  {
+    axes: { ...timeAxes, y: { ...timeAxes.y, categories: STATE_LABELS } },
+    minimum: 30,
+    narrowed: 30,
+  },
+])(
+  'publishes fitted Y widths while preserving the axis callback ($minimum)',
+  ({ axes, minimum, narrowed }) => {
+    const onYAxisWidth = jest.fn();
+    render(<Harness axes={axes} onYAxisWidth={onYAxisWidth} />);
+    const afterFit = chart().options.scales!.y!.afterFit!;
+    const scale = { width: 30 };
+    act(() => afterFit(scale as never));
+    expect(screen.getByTestId('y-axis-width')).toHaveTextContent(
+      String(minimum)
+    );
+    expect(onYAxisWidth).toHaveBeenLastCalledWith(minimum);
+    scale.width = 120;
+    act(() => afterFit(scale as never));
+    expect(screen.getByTestId('y-axis-width')).toHaveTextContent('120');
+    expect(onYAxisWidth).toHaveBeenLastCalledWith(120);
+    scale.width = 30;
+    act(() => afterFit(scale as never));
+    expect(screen.getByTestId('y-axis-width')).toHaveTextContent(
+      String(narrowed)
+    );
+    expect(onYAxisWidth).toHaveBeenLastCalledWith(narrowed);
+  }
+);
 
 it.each([timeAxes, mappedAxes])(
   'keeps time coordinates and numeric Y coordinates while panning and zooming',

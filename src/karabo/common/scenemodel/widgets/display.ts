@@ -492,6 +492,7 @@ export class NDArrayGraphModel extends BasePlotModel {
 
 export class VectorBarGraphModel extends BasePlotModel {
   klass = 'VectorBarGraph';
+  // Fraction of the available sample width.
   bar_width = 0.1;
 }
 

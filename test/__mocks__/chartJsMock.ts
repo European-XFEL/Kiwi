@@ -16,9 +16,13 @@ export class Chart {
     x: { min: 0, max: 1 },
     y: { min: 0, max: 1 },
   };
-  data: ChartConfiguration<'line'>['data'];
-  options: NonNullable<ChartConfiguration<'line'>['options']>;
-  datasetReferences: ChartConfiguration<'line'>['data']['datasets'] = [];
+  data: ChartConfiguration<'line' | 'scatter' | 'bar'>['data'];
+  options: NonNullable<
+    ChartConfiguration<'line' | 'scatter' | 'bar'>['options']
+  >;
+  datasetReferences: ChartConfiguration<
+    'line' | 'scatter' | 'bar'
+  >['data']['datasets'] = [];
   visibility = new Map<number, boolean>();
   isDatasetVisible = jest.fn(
     (index: number) =>
@@ -65,7 +69,10 @@ export class Chart {
     }
   });
 
-  constructor(_canvas: HTMLCanvasElement, config: ChartConfiguration<'line'>) {
+  constructor(
+    _canvas: HTMLCanvasElement,
+    config: ChartConfiguration<'line' | 'scatter' | 'bar'>
+  ) {
     this.data = config.data;
     this.options = config.options ?? {};
     Chart.instances.push(this);
