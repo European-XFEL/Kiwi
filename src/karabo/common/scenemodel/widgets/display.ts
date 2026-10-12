@@ -264,6 +264,21 @@ registerReader('DisplayCommand', (element) => {
   return command;
 });
 
+// DisplayIconCommand
+// ----------------------------------------------------------------------------
+
+export class DisplayIconCommandModel extends BaseWidgetObjectData {
+  klass = 'DisplayIconCommand';
+  icon_name = '';
+}
+
+registerReader('DisplayIconCommand', (element) => {
+  const command = new DisplayIconCommandModel();
+  readBaseWidgetData(element, command);
+  command.icon_name = toStr(krbAttr(element, 'icon_name'));
+  return command;
+});
+
 // DisplayStateColor — extends DisplayLabelModel (Python: complex.py:72)
 // ----------------------------------------------------------------------------
 
