@@ -8944,6 +8944,7 @@ __metadata:
     react-plotly.js: "npm:^2.6.0"
     react-resizable-panels: "npm:^4"
     react-router-dom: "npm:^6.26.2"
+    react-virtuoso: "npm:^4.18.16"
     sax: "npm:^1.4.3"
     sonner: "npm:^2.0.7"
     tailwind-merge: "npm:^3.3.1"
@@ -10545,6 +10546,16 @@ __metadata:
     "@types/react":
       optional: true
   checksum: 10c0/841938ff16d16a6b76895f4cb2e1fea957e5fe3b30febbf03a54892dae1c9153f2383e231dea0b3ba41192ad2f2849448fa859caccd288943bce32639e971bee
+  languageName: node
+  linkType: hard
+
+"react-virtuoso@npm:^4.18.16":
+  version: 4.18.16
+  resolution: "react-virtuoso@npm:4.18.16"
+  peerDependencies:
+    react: ">=16 || >=17 || >= 18 || >= 19"
+    react-dom: ">=16 || >=17 || >= 18 || >=19"
+  checksum: 10c0/32069fdcafe1de7d9246e8a5018fbbbd20377ced0a6bb8f896e5fdd0a0514754de701c889c1c2ed4a9c850e93f4ee3a17ed647e3533d7c9c226706df78f7b645
   languageName: node
   linkType: hard
 

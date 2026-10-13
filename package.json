@@ -48,6 +48,7 @@
     "react-plotly.js": "^2.6.0",
     "react-resizable-panels": "^4",
     "react-router-dom": "^6.26.2",
+    "react-virtuoso": "^4.18.16",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.13",
