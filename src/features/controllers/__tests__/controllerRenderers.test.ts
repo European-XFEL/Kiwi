@@ -11,9 +11,18 @@ import DisplayWebcamGraph from '../display/DisplayWebcamGraph';
 import { FilterTableElement } from '../display/TableElement';
 import DisplayTextLog from '../display/DisplayTextLog';
 import Lamp from '../display/Lamp';
+import SingleBit from '../display/SingleBit';
 import { bootstrapControllerRenderers } from '../controllerRenderers';
 
 jest.mock('../display/StatefulIconWidget', () => () => null);
+
+test('registers the SingleBit controller', () => {
+  const renderers = new Map<string, unknown>();
+  bootstrapControllerRenderers((klass, renderer) => {
+    renderers.set(klass, renderer);
+  }, true);
+  expect(renderers.get('SingleBit')).toBe(SingleBit);
+});
 
 test('editable filter tables use the display filter renderer', () => {
   const renderers = new Map<string, unknown>();

@@ -330,6 +330,23 @@ registerReader('DisplayColorBool', (element) => {
   return colorBool;
 });
 
+// SingleBit
+// ----------------------------------------------------------------------------
+
+export class SingleBitModel extends BaseWidgetObjectData {
+  klass = 'SingleBit';
+  invert = false;
+  bit = 0;
+}
+
+registerReader('SingleBit', (element) => {
+  const singleBit = new SingleBitModel();
+  readBaseWidgetData(element, singleBit);
+  singleBit.invert = toBool(krbAttr(element, 'invert'));
+  singleBit.bit = toNum(krbAttr(element, 'bit'));
+  return singleBit;
+});
+
 // DisplayErrorBool
 // ----------------------------------------------------------------------------
 
