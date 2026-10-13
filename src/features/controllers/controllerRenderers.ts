@@ -12,6 +12,7 @@ import DisplayCommand from '@/features/controllers/display/DisplayCommand';
 import DisplayIconCommand from './display/DisplayIconCommand';
 import DisplayColorBool from '@/features/controllers/display/DisplayColorBool';
 import DisplayErrorBool from './display/DisplayErrorBool';
+import SingleBit from './display/SingleBit';
 import DisplayFloat from '@/features/controllers/display/DisplayFloat';
 import DisplayLabel from '@/features/controllers/display/DisplayLabel';
 import DisplayList from '@/features/controllers/display/DisplayList';
@@ -62,6 +63,7 @@ export function bootstrapControllerRenderers(
   registerRenderer('DisplayFloat', DisplayFloat);
   registerRenderer('DisplayColorBool', DisplayColorBool);
   registerRenderer('DisplayErrorBool', DisplayErrorBool);
+  registerRenderer('SingleBit', SingleBit);
   registerRenderer('DisplayList', DisplayList);
   registerRenderer('DisplayTextLog', DisplayTextLog);
   registerRenderer('DisplayAlarmFloat', DisplayAlarmFloat);
