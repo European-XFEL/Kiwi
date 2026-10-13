@@ -79,6 +79,8 @@ export type ScenesTableProps = {
   onSceneClick: (scene: SceneModel) => void;
   onSceneDoubleClick: (scene: SceneModel) => void;
   onSceneBookmark?: (scene: SceneModel) => void;
+  onSceneCopyCinema?: (scene: SceneModel) => void;
+  cinemaCopyDisabled?: boolean;
   query?: string;
   onQueryChange?: (q: string) => void;
   selectionDisabled?: boolean;

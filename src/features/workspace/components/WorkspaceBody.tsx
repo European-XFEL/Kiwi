@@ -18,6 +18,7 @@ const sidePanelIds = { left: leftPanelId, right: rightPanelId };
 interface WorkspaceBodyProps {
   body: WorkspaceBodyModel;
   isPageVisible?: boolean;
+  showProjectNavigation?: boolean;
 }
 
 function toSize(value: number | undefined): string | undefined {
@@ -34,7 +35,11 @@ function getStartingWidth(panel: PanelModel): number {
   return panel.defaultWidthPercent;
 }
 
-function WorkspaceBody({ body, isPageVisible = true }: WorkspaceBodyProps) {
+function WorkspaceBody({
+  body,
+  isPageVisible = true,
+  showProjectNavigation = true,
+}: WorkspaceBodyProps) {
   const { panelArea } = body;
 
   const groupRef = useRef<GroupImperativeHandle | null>(null);
@@ -185,7 +190,10 @@ function WorkspaceBody({ body, isPageVisible = true }: WorkspaceBodyProps) {
           collapsedSize={toSize(panelArea.center.collapsedWidthPercent)}
           className="min-h-0 overflow-hidden"
         >
-          <WorkspaceCenterArea isVisible={isPageVisible} />
+          <WorkspaceCenterArea
+            isVisible={isPageVisible}
+            showProjectNavigation={showProjectNavigation}
+          />
         </ResizablePanel>
 
         <ResizableHandle elementRef={rightSeparatorRef} />

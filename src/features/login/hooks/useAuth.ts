@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { getConfig, getNetwork } from '@/lib/singletons/api';
 import type { SessionStartData } from '@/lib/singletons/Network';
 import AuthServerClient from '@/lib/http/AuthServerClient';
-import { useGlobalStore } from '@/store/api';
+import { useGlobalStore, useApplicationModeStore } from '@/store/api';
+import { applicationPath } from '@/features/cinema/api';
 import { ActivityStatus, GuiServerInfo } from '../auth.types';
 
 interface UseAuthProps {
@@ -31,6 +32,7 @@ export function useAuth({
   setActivityStatus,
   setErrorMessage,
 }: UseAuthProps): UseAuthReturn {
+  const mode = useApplicationModeStore((state) => state.mode);
   const setLoggedIn = useGlobalStore((s) => s.setLoggedIn);
   const navigate = useNavigate();
 
@@ -66,9 +68,9 @@ export function useAuth({
         sessionStartEpoc: Date.now(),
       });
 
-      navigate('/main');
+      navigate(applicationPath(mode));
     },
-    [setLoggedIn, navigate, setActivityStatus]
+    [setLoggedIn, navigate, setActivityStatus, mode]
   );
 
   authServerURLRef.current = probedServerInfo?.authServer ?? '';

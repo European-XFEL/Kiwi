@@ -6,8 +6,10 @@ import { getMediator, getProjectModel } from '../api';
 import { SceneControllerRegistry } from '@/features/scenepanel/SceneControllerRegistry';
 import { HOME_TAB_ID, PanelWrangler } from '../PanelWrangler';
 import { DisplayTextLogModel } from '@/karabo/common/api';
+import { createWorkspacePolicy } from '@/features/workspace/configuration';
 
 jest.mock('@/store/api', () => ({
+  ...jest.requireActual('@/store/api'),
   useGlobalStore: {
     getState: () => ({
       sessionInfo: {
@@ -79,6 +81,49 @@ describe('PanelWrangler', () => {
     model.keys = [key];
     return model;
   }
+
+  it.each(['close', 'resetCenter', 'resetWorkspace', 'Home'] as const)(
+    'restores the cinema default on %s without changing normal saved-tab storage',
+    (operation) => {
+      wrangler.dispose();
+      wrangler = new PanelWrangler(createWorkspacePolicy('cinema'));
+      const storageKey = 'kiwi/workspace:activeTab';
+      const stored = JSON.stringify({
+        host: 'host-a',
+        port: 44444,
+        domain: 'CONTROLS',
+        projectUuid: 'project',
+        sceneUuid: 'normal-scene',
+      });
+      sessionStorage.setItem(storageKey, stored);
+      const model = makeScene('cinema-scene', 'Overview');
+      setProject('CONTROLS', 'Cinema project', [model]);
+      openScene(model);
+      const dispose = jest.spyOn(
+        wrangler.getContent('scene:cinema-scene')!.sceneControllerRegistry!,
+        'dispose'
+      );
+      expect(wrangler.getSavedActiveTab()).toBeUndefined();
+      wrangler.selectTab('center', 'scene:cinema-scene');
+      expect(sessionStorage.getItem(storageKey)).toBe(stored);
+      if (operation === 'close') {
+        wrangler.closeTab('center', 'scene:cinema-scene');
+      } else if (operation === 'Home') {
+        broadcast_event(KaraboEvent.GoToHomeTab, {});
+      } else {
+        wrangler[operation]();
+      }
+      expect(wrangler.getSnapshot().center).toEqual({
+        id: 'center',
+        tabs: [{ id: 'cinema', title: 'Cinema', closable: false }],
+        activeTabId: 'cinema',
+      });
+      expect(dispose).toHaveBeenCalledTimes(1);
+      expect(wrangler.getContent('scene:cinema-scene')).toBeUndefined();
+      expect(wrangler.getSceneTab('scene:cinema-scene')).toBeUndefined();
+      expect(sessionStorage.getItem(storageKey)).toBe(stored);
+    }
+  );
 
   it('starts with a selected, nonclosable SystemTopology tab', () => {
     expect(wrangler.getSnapshot().left).toEqual({

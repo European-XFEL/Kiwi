@@ -53,7 +53,7 @@ export async function openSceneLinkInWorkspace(
       // For orphan scenes the deviceId is the ProjectManager - they are exposed
       // as "scenes from the ProjectManager device".
       model.simple_name = `KaraboProjectDB|${name ?? target})`;
-      openUnattachedSceneInWorkspace(model);
+      openUnattachedSceneInWorkspace(model, `database-scene:${uuid}`);
     }
   }
 }

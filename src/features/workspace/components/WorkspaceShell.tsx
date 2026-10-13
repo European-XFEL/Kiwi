@@ -27,15 +27,26 @@ export default function WorkspaceShell({
   runtime: WorkspaceRuntime;
 }) {
   const isPageVisible = usePageVisibility();
+  const { showProjectNavigation } = workspace.policy;
 
   let header: ReactNode = null;
   if (workspace.header.visible) {
-    header = <WorkspaceHeader header={workspace.header} runtime={runtime} />;
+    header = (
+      <WorkspaceHeader
+        header={workspace.header}
+        runtime={runtime}
+        showProjectNavigation={showProjectNavigation}
+      />
+    );
   }
   let content = (
-    <WorkspaceBody body={workspace.body} isPageVisible={isPageVisible} />
+    <WorkspaceBody
+      body={workspace.body}
+      isPageVisible={isPageVisible}
+      showProjectNavigation={showProjectNavigation}
+    />
   );
-  if (runtime.projectLoading) {
+  if (showProjectNavigation && runtime.projectLoading) {
     content = <ProjectLoading />;
   }
   let footer: ReactNode = null;

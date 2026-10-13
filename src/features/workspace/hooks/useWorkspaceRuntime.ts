@@ -3,11 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { useRootProject } from '@/features/project/api';
 import { useAccessLevel } from '@/features/user';
 import { getNetwork, getPanelWrangler } from '@/lib/singletons/api';
-import { useGlobalActivityStore, useGlobalStore } from '@/store/api';
+import {
+  useGlobalActivityStore,
+  useGlobalStore,
+  useApplicationModeStore,
+} from '@/store/api';
 import { broadcast_event, KaraboEvent } from '@/lib/events';
+import { CINEMA_PATH } from '@/features/cinema/api';
 import type { WorkspaceRuntime } from '../types';
 
 export default function useWorkspaceRuntime(): WorkspaceRuntime {
+  const mode = useApplicationModeStore((state) => state.mode);
   const navigate = useNavigate();
   const sessionInfo = useGlobalStore((state) => state.sessionInfo);
   const globalState = useGlobalStore((state) => state.globalState);
@@ -34,8 +40,8 @@ export default function useWorkspaceRuntime(): WorkspaceRuntime {
   const onLogout = useCallback(() => {
     getNetwork().finishSession();
     setLoggedOut();
-    navigate('/', { replace: true });
-  }, [navigate, setLoggedOut]);
+    navigate(mode === 'cinema' ? CINEMA_PATH : '/', { replace: true });
+  }, [navigate, setLoggedOut, mode]);
 
   let guiServerDesc: string | undefined = undefined;
   if (sessionInfo?.guiServerHost && sessionInfo?.guiServerPort) {

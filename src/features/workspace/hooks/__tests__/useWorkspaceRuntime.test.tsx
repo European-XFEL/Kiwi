@@ -12,7 +12,7 @@ import {
   getProjectModel,
   singletons,
 } from '@/lib/singletons/api';
-import { useGlobalStore } from '@/store/api';
+import { useGlobalStore, useApplicationModeStore } from '@/store/api';
 import useWorkspaceRuntime from '../useWorkspaceRuntime';
 
 describe('useWorkspaceRuntime', () => {
@@ -42,6 +42,7 @@ describe('useWorkspaceRuntime', () => {
     singletons.delete('config');
     localStorage.clear();
     jest.restoreAllMocks();
+    useApplicationModeStore.setState({ mode: 'normal' }, true);
   });
 
   it('reports whether a scene tab is open', () => {
@@ -254,4 +255,46 @@ describe('useWorkspaceRuntime', () => {
     expect(useGlobalStore.getState().sessionInfo).toBeUndefined();
     expect(result.current.location.pathname).toBe('/');
   });
+});
+
+it('retains cinema and its original launch on logout', () => {
+  useApplicationModeStore.setState(
+    { mode: 'cinema', launch: { sceneUuids: ['a'] } },
+    true
+  );
+  const finishSession = jest
+    .spyOn(getNetwork(), 'finishSession')
+    .mockImplementation(() => undefined);
+  useGlobalStore.getState().setLoggedIn({
+    loggedUser: 'test',
+    accessLevel: 0,
+    isReadOnly: true,
+    guiServerHost: 'gui',
+    guiServerPort: 1234,
+    guiServerTopic: 'TOPIC',
+    guiServerVersion: '2.20',
+    sessionStartEpoc: 1,
+  });
+  const { result, unmount } = renderHook(
+    () => ({ runtime: useWorkspaceRuntime(), location: useLocation() }),
+    {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <MemoryRouter initialEntries={['/cinema']}>{children}</MemoryRouter>
+      ),
+    }
+  );
+  expect(result.current.runtime.onGoToHomeTab).toEqual(expect.any(Function));
+  expect(result.current.runtime.browser).toBeDefined();
+  act(() => result.current.runtime.user!.onLogout());
+  expect(finishSession).toHaveBeenCalledTimes(1);
+  expect(result.current.location.pathname).toBe('/cinema');
+  expect(useApplicationModeStore.getState().launch).toEqual({
+    sceneUuids: ['a'],
+  });
+  unmount();
+  finishSession.mockRestore();
+  getPanelWrangler().dispose();
+  singletons.delete('panel_wrangler');
+  useGlobalStore.getState().reset();
+  useApplicationModeStore.setState({ mode: 'normal' }, true);
 });

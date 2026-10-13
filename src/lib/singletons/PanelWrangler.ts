@@ -2,11 +2,18 @@ import type {
   BaseWidgetObjectData,
   SceneModel,
 } from '@/karabo/common/scenemodel/api';
+import {
+  type ApplicationMode,
+  type LoadedSceneRef,
+  useGlobalStore,
+} from '@/store/api';
+import {
+  createWorkspacePolicy,
+  HOME_TAB_ID,
+} from '@/features/workspace/configuration';
 import type { FitMode } from '@/features/scene-view/api';
-import type { LoadedSceneRef } from '@/store/api';
 import { SceneControllerRegistry } from '@/features/scenepanel/SceneControllerRegistry';
 import type { Hash } from '@/karabo/data/api';
-import { useGlobalStore } from '@/store/api';
 import {
   KaraboEvent,
   KaraboEventMap,
@@ -21,6 +28,8 @@ import type {
   PanelTab,
   SceneTabSnapshot,
   RightPanelState,
+  WorkspacePolicy,
+  PanelAreaState,
 } from '@/features/workspace/types';
 import {
   CONTROLLERS_TAB_ID,
@@ -48,11 +57,9 @@ export type SceneTabContent = {
   error?: string;
 };
 
-export const HOME_TAB_ID = 'home' as const;
+export { HOME_TAB_ID } from '@/features/workspace/configuration';
 
 const DEFAULT_FIT_MODE: FitMode = 'fit-page';
-
-const HOME_TAB: PanelTab = { id: HOME_TAB_ID, title: 'Home', closable: false };
 
 function createLeftArea(): PanelState {
   return {
@@ -76,20 +83,8 @@ function createRightArea(): RightPanelState {
   };
 }
 
-function createCenterArea(tabs?: PanelTab[], activeTabId?: string): PanelState {
-  if (!tabs || tabs.length === 0) {
-    return {
-      id: 'center',
-      tabs: [HOME_TAB],
-      activeTabId: HOME_TAB_ID,
-    };
-  }
-
-  return {
-    id: 'center',
-    tabs,
-    activeTabId: activeTabId ?? tabs[0]?.id,
-  };
+function createCenterArea(defaultTab: PanelTab): PanelState {
+  return { id: 'center', tabs: [defaultTab], activeTabId: defaultTab.id };
 }
 
 function toSceneTabId(uuid: string): string {
@@ -129,12 +124,7 @@ function isSameSceneRef(
 export class PanelWrangler {
   // Mirrors DatabaseBusy: the database connection alone decides when a project
   // is loading, so resets leave this flag untouched.
-  private state = {
-    projectLoading: false,
-    left: createLeftArea(),
-    center: createCenterArea(),
-    right: createRightArea(),
-  };
+  private state: PanelAreaState & { projectLoading: boolean };
 
   private content = new Map<string, SceneTabContent>();
   private sceneTabs = new Map<string, SceneTabSnapshot>();
@@ -142,7 +132,18 @@ export class PanelWrangler {
   private listeners = new Set<() => void>();
   private readonly eventMap: KaraboEventMap;
 
-  public constructor() {
+  public constructor(
+    private policy: Pick<
+      WorkspacePolicy,
+      'defaultCenterTab' | 'persistActiveTab'
+    > = createWorkspacePolicy()
+  ) {
+    this.state = {
+      projectLoading: false,
+      left: createLeftArea(),
+      center: createCenterArea(policy.defaultCenterTab),
+      right: createRightArea(),
+    };
     this.eventMap = {
       [KaraboEvent.OpenScene]: this.onEventOpenScene,
       [KaraboEvent.OpenUnattachedScene]: this.onEventOpenUnattachedScene,
@@ -152,6 +153,15 @@ export class PanelWrangler {
     };
 
     register_for_broadcasts(this.eventMap);
+  }
+
+  setMode(mode: ApplicationMode): void {
+    const policy = createWorkspacePolicy(mode);
+    if (this.policy.defaultCenterTab.id === policy.defaultCenterTab.id) {
+      return;
+    }
+    this.policy = policy;
+    this.resetWorkspace();
   }
 
   dispose() {
@@ -180,7 +190,7 @@ export class PanelWrangler {
     };
   };
 
-  isSceneTabOpen = (): boolean => !this.isHomeOnly();
+  isSceneTabOpen = (): boolean => !this.isDefaultOnly();
 
   getContent(tabId: string): SceneTabContent | undefined {
     return this.content.get(tabId);
@@ -327,10 +337,13 @@ export class PanelWrangler {
     }
 
     this.clearSavedActiveTab();
-    return createCenterArea();
+    return createCenterArea(this.policy.defaultCenterTab);
   }
 
   getSavedActiveTab(): SavedActiveTab | undefined {
+    if (!this.policy.persistActiveTab) {
+      return undefined;
+    }
     const saved = readActiveTab();
     const session = useGlobalStore.getState().sessionInfo;
     if (!saved || !session) {
@@ -346,7 +359,9 @@ export class PanelWrangler {
   }
 
   clearSavedActiveTab(): void {
-    writeActiveTab(undefined);
+    if (this.policy.persistActiveTab) {
+      writeActiveTab(undefined);
+    }
   }
 
   selectTab(area: PanelSlot, tabId: string): void {
@@ -458,7 +473,7 @@ export class PanelWrangler {
       tabs = center.tabs.map((tab, tabIndex) =>
         tabIndex === index ? nextTab : tab
       );
-    } else if (this.isHomeOnly()) {
+    } else if (this.isDefaultOnly()) {
       tabs = [nextTab];
     } else {
       tabs = [...center.tabs, nextTab];
@@ -490,7 +505,7 @@ export class PanelWrangler {
       tabs = center.tabs.map((tab, tabIndex) =>
         tabIndex === index ? nextTab : tab
       );
-    } else if (this.isHomeOnly()) {
+    } else if (this.isDefaultOnly()) {
       tabs = [nextTab];
     } else {
       tabs = [...center.tabs, nextTab];
@@ -524,17 +539,19 @@ export class PanelWrangler {
   private onActiveSceneTabChanged(): void {
     const scene = this.getActiveCenterSceneTab();
     const session = useGlobalStore.getState().sessionInfo;
-    writeActiveTab(
-      scene && session
-        ? {
-            host: session.guiServerHost,
-            port: session.guiServerPort,
-            domain: scene.domain,
-            projectUuid: scene.projectUuid,
-            sceneUuid: scene.uuid,
-          }
-        : undefined
-    );
+    if (this.policy.persistActiveTab) {
+      writeActiveTab(
+        scene && session
+          ? {
+              host: session.guiServerHost,
+              port: session.guiServerPort,
+              domain: scene.domain,
+              projectUuid: scene.projectUuid,
+              sceneUuid: scene.uuid,
+            }
+          : undefined
+      );
+    }
     broadcast_event(KaraboEvent.ActiveSceneTabChanged, {});
   }
 
@@ -598,7 +615,8 @@ export class PanelWrangler {
 
   private createUnattachedSceneOpenData(
     model: SceneModel,
-    deviceId: string | undefined
+    deviceId: string | undefined,
+    tabId: string
   ):
     | {
         snapshot: UnnatachedSceneTabSnapshot;
@@ -619,7 +637,7 @@ export class PanelWrangler {
 
     const snapshot: UnnatachedSceneTabSnapshot = {
       isUnattachedScene: true,
-      id: sceneId,
+      id: tabId,
       title: sceneId,
       deviceId,
       sceneName: sceneId,
@@ -671,7 +689,10 @@ export class PanelWrangler {
     this.openControllerPanel(data.model);
   };
 
-  private onEventOpenUnattachedScene = (data: { model: SceneModel }): void => {
+  private onEventOpenUnattachedScene = (data: {
+    model: SceneModel;
+    tabId?: string;
+  }): void => {
     const model = data.model;
     // Unattached scenes whose names have a pipe '|' are assumed to be
     // device provided scenes and the deviceId comes before the pipe.
@@ -682,7 +703,8 @@ export class PanelWrangler {
     }
     const unattachedSceneData = this.createUnattachedSceneOpenData(
       model,
-      deviceId
+      deviceId,
+      data.tabId ?? model.simple_name
     );
     if (!unattachedSceneData) {
       return;
@@ -717,9 +739,12 @@ export class PanelWrangler {
     };
   }
 
-  private isHomeOnly(): boolean {
+  private isDefaultOnly(): boolean {
     const center = this.state.center;
-    return center.tabs.length === 1 && center.tabs[0]?.id === HOME_TAB_ID;
+    return (
+      center.tabs.length === 1 &&
+      center.tabs[0]?.id === this.policy.defaultCenterTab.id
+    );
   }
 
   private emit(): void {

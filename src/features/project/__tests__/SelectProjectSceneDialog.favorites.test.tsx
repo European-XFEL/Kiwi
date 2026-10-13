@@ -15,6 +15,8 @@ import { useGlobalStore } from '@/store/api';
 import { SingletonContext } from '@/testing';
 import SelectProjectSceneDialog from '../SelectProjectSceneDialog';
 
+jest.mock('sonner', () => ({ toast: { success: jest.fn() } }));
+
 describe('Load Project favorites', () => {
   let context: SingletonContext;
   let config: ConfigurationStore;
@@ -54,7 +56,7 @@ describe('Load Project favorites', () => {
     localStorage.clear();
   });
 
-  function showScenes() {
+  function showScenes(secondUuid = 'scene-b') {
     act(() => {
       mediator.postEvent(
         KaraboEvent.ListDomains,
@@ -92,7 +94,7 @@ describe('Load Project favorites', () => {
               date: '2026-07-01T00:00:00',
             }),
             new Hash({
-              uuid: 'scene-b',
+              uuid: secondUuid,
               simple_name: 'Second Scene',
               date: '2026-07-01T00:00:00',
             }),
@@ -186,5 +188,112 @@ describe('Load Project favorites', () => {
     expect(
       localStorage.getItem('kiwi/project:projectFavoritesByTopic')
     ).toBeNull();
+  });
+
+  it.each(['right click', 'ContextMenu', 'Shift+F10'])(
+    'copies the unselected row through %s and leaves the dialog open',
+    async (access) => {
+      const user = userEvent.setup();
+      const writeText = jest
+        .spyOn(navigator.clipboard, 'writeText')
+        .mockResolvedValue();
+      const onSceneSelected = jest.fn();
+      const onCancel = jest.fn();
+      render(
+        <SelectProjectSceneDialog
+          open
+          onSceneSelected={onSceneSelected}
+          onCancel={onCancel}
+        />
+      );
+      showScenes('scene/+?&');
+      await user.click(screen.getByText('First Scene'));
+      const target = screen.getByRole('button', { name: /^Second Scene/ });
+      target.focus();
+      if (access === 'right click') fireEvent.contextMenu(target);
+      else
+        fireEvent.keyDown(target, {
+          key: access === 'ContextMenu' ? 'ContextMenu' : 'F10',
+          shiftKey: access === 'Shift+F10',
+        });
+      const requestsBefore = listProjects.mock.calls.length;
+      await user.click(
+        await screen.findByRole('menuitem', {
+          name: 'Copy cinema URL',
+        })
+      );
+      expect(writeText).toHaveBeenCalledTimes(1);
+      const url = new URL(writeText.mock.calls[0][0]);
+      expect(url.origin).toBe(window.location.origin);
+      expect(url.pathname).toBe('/cinema');
+      expect(Array.from(url.searchParams)).toEqual([
+        ['scene_uuid', 'scene/+?&'],
+        ['host', 'host-a'],
+        ['port', '44444'],
+      ]);
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(onSceneSelected).not.toHaveBeenCalled();
+      expect(onCancel).not.toHaveBeenCalled();
+      expect(loadProject).not.toHaveBeenCalled();
+      expect(listProjects).toHaveBeenCalledTimes(requestsBefore);
+    }
+  );
+
+  it.each(['unavailable', 'rejected'])(
+    'shows an error when clipboard access is %s',
+    async (failure) => {
+      const user = userEvent.setup();
+      if (failure === 'unavailable')
+        Object.defineProperty(navigator, 'clipboard', {
+          configurable: true,
+          value: undefined,
+        });
+      else
+        jest
+          .spyOn(navigator.clipboard, 'writeText')
+          .mockRejectedValue(new Error('Permission denied'));
+      const onSceneSelected = jest.fn();
+      render(
+        <SelectProjectSceneDialog
+          open
+          onSceneSelected={onSceneSelected}
+          onCancel={jest.fn()}
+        />
+      );
+      showScenes();
+      fireEvent.contextMenu(screen.getByTestId('scene-row-scene-b'));
+      await user.click(
+        await screen.findByRole('menuitem', {
+          name: 'Copy cinema URL',
+        })
+      );
+      expect(
+        await screen.findByText(/Could not copy cinema URL:/)
+      ).toBeInTheDocument();
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(onSceneSelected).not.toHaveBeenCalled();
+      expect(loadProject).not.toHaveBeenCalled();
+    }
+  );
+
+  it('disables copying without a GUI-server session', async () => {
+    const user = userEvent.setup();
+    const writeText = jest.spyOn(navigator.clipboard, 'writeText');
+    useGlobalStore.getState().reset();
+    render(
+      <SelectProjectSceneDialog
+        open
+        onSceneSelected={jest.fn()}
+        onCancel={jest.fn()}
+      />
+    );
+    showScenes();
+    fireEvent.contextMenu(screen.getByTestId('scene-row-scene-b'));
+    const item = await screen.findByRole('menuitem', {
+      name: 'Copy cinema URL',
+    });
+    expect(item).toHaveAttribute('aria-disabled', 'true');
+    await user.click(item);
+    expect(writeText).not.toHaveBeenCalled();
   });
 });

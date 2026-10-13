@@ -66,6 +66,7 @@ describe('WorkspaceShell', () => {
     expect(mockBody).toHaveBeenCalledWith({
       body: workspace.body,
       isPageVisible: true,
+      showProjectNavigation: true,
     });
     expect(mockHeader).toHaveBeenCalledWith(
       expect.objectContaining({ header: workspace.header, runtime })

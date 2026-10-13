@@ -21,6 +21,8 @@ export default function ScenesTable({
   onSceneClick,
   onSceneDoubleClick,
   onSceneBookmark,
+  onSceneCopyCinema,
+  cinemaCopyDisabled = false,
   query,
   onQueryChange,
   selectionDisabled = false,
@@ -67,10 +69,15 @@ export default function ScenesTable({
                   <ContextMenu key={`${index}::${scene.uuid}`}>
                     <ContextMenuTrigger
                       asChild
-                      disabled={selectionDisabled || !onSceneBookmark}
+                      disabled={!onSceneBookmark && !onSceneCopyCinema}
                     >
                       <TableRow
                         data-testid={`scene-row-${scene.uuid}`}
+                        onContextMenu={
+                          selectionDisabled
+                            ? undefined
+                            : () => onSceneClick(scene)
+                        }
                         onClick={
                           selectionDisabled
                             ? undefined
@@ -118,14 +125,24 @@ export default function ScenesTable({
                         </TableCell>
                       </TableRow>
                     </ContextMenuTrigger>
-                    {onSceneBookmark && (
+                    {(onSceneBookmark || onSceneCopyCinema) && (
                       <ContextMenuContent>
-                        <ContextMenuItem
-                          disabled={selectionDisabled}
-                          onSelect={() => onSceneBookmark(scene)}
-                        >
-                          Add to Favorites
-                        </ContextMenuItem>
+                        {onSceneBookmark && (
+                          <ContextMenuItem
+                            disabled={selectionDisabled}
+                            onSelect={() => onSceneBookmark(scene)}
+                          >
+                            Add to Favorites
+                          </ContextMenuItem>
+                        )}
+                        {onSceneCopyCinema && (
+                          <ContextMenuItem
+                            disabled={selectionDisabled || cinemaCopyDisabled}
+                            onSelect={() => onSceneCopyCinema(scene)}
+                          >
+                            Copy cinema URL
+                          </ContextMenuItem>
+                        )}
                       </ContextMenuContent>
                     )}
                   </ContextMenu>

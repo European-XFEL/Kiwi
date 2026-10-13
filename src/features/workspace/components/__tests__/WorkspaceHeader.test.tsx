@@ -47,6 +47,7 @@ describe('WorkspaceHeader', () => {
     });
 
     expect(mockNavBar).toHaveBeenCalledWith({
+      showProjectNavigation: true,
       browser,
       sceneOpen: true,
       onGoHome: onGoToHomeTab,

@@ -97,7 +97,7 @@ describe('ScenesTable', () => {
 
       expect(onSceneBookmark).toHaveBeenCalledTimes(1);
       expect(onSceneBookmark).toHaveBeenCalledWith(scenes[1]);
-      expect(onSceneClick).not.toHaveBeenCalled();
+      expect(onSceneClick).toHaveBeenCalledWith(scenes[1]);
       expect(onSceneDoubleClick).not.toHaveBeenCalled();
     }
   );
@@ -136,4 +136,26 @@ describe('ScenesTable', () => {
       screen.queryByRole('menuitem', { name: 'Add to Favorites' })
     ).not.toBeInTheDocument();
   });
+});
+
+it('disables the cinema action while selection is disabled', async () => {
+  const onCopy = jest.fn();
+  const onSceneClick = jest.fn();
+  render(
+    <ScenesTable
+      scenes={scenes}
+      onSceneClick={onSceneClick}
+      onSceneDoubleClick={jest.fn()}
+      onSceneCopyCinema={onCopy}
+      selectionDisabled
+    />
+  );
+  fireEvent.contextMenu(screen.getByTestId('scene-row-scene-b'));
+  const item = await screen.findByRole('menuitem', {
+    name: 'Copy cinema URL',
+  });
+  expect(item).toHaveAttribute('aria-disabled', 'true');
+  fireEvent.click(item);
+  expect(onCopy).not.toHaveBeenCalled();
+  expect(onSceneClick).not.toHaveBeenCalled();
 });

@@ -36,6 +36,8 @@ export {
   retrieveDefaultDeviceScene,
 } from './utils/openSceneLinkInWorkspace';
 
+export { openUnattachedSceneInWorkspace } from './utils/openSceneInWorkspace';
+
 // Types
 export type {
   RootProjectBrowser,

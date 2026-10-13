@@ -7,6 +7,7 @@ export const appRoutes: RouteProp[] = [
     path: '/',
     element: <AppBody />,
     children: [
+      { path: 'cinema', element: <WorkspacePage /> },
       {
         path: 'main/*',
         element: <WorkspacePage />,

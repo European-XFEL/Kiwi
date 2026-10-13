@@ -183,7 +183,10 @@ describe('openSceneLinkInWorkspace', () => {
 
     expect(mockGetDatabaseScene).toHaveBeenCalledWith('scene-b');
     expect(openSceneInWorkspace).not.toHaveBeenCalled();
-    expect(openUnattachedSceneInWorkspace).toHaveBeenCalledWith(orphanScene);
+    expect(openUnattachedSceneInWorkspace).toHaveBeenCalledWith(
+      orphanScene,
+      'database-scene:scene-b'
+    );
   });
 });
 

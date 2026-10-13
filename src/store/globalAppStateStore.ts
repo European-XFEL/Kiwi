@@ -31,6 +31,7 @@ export type GlobalState =
   | 'SESSION_EXPIRED'
   | 'LOGGED_OUT'
   | 'UNRECOVERABLE_ERROR'
+  | 'CINEMA_ERROR'
   | 'SCENE_OPEN_ERROR'
   | 'SCENE_DISPLAY_ERROR';
 
@@ -46,6 +47,7 @@ export interface GlobalAppState {
 /** Actions */
 export interface GlobalActions {
   setError: (msg: string) => void;
+  setCinemaError: (msg: string) => void;
   setSceneOpenError: (msg: string) => void;
   setSceneDisplayError: (msg: string) => void;
   setLoggedIn: (session: GuiServerSessionInfo) => void;
@@ -80,6 +82,12 @@ export const useGlobalStore = create<GlobalStore>((set) => ({
       sessionInfo: undefined,
     }),
 
+  setCinemaError: (msg) =>
+    set({
+      globalState: 'CINEMA_ERROR',
+      lastGlobalError: msg,
+    }),
+
   setSceneOpenError: (sceneOPenErrorMessage: string) =>
     set({
       globalState: 'SCENE_OPEN_ERROR',
@@ -101,10 +109,13 @@ export const useGlobalStore = create<GlobalStore>((set) => ({
     }),
 
   setNotifiedSessionExpiration: (secondsToExpiration: number) => {
-    set({
-      globalState: 'NOTIFIED_SESSION_EXPIRATION',
+    set((state) => ({
+      globalState:
+        state.globalState === 'CINEMA_ERROR'
+          ? state.globalState
+          : 'NOTIFIED_SESSION_EXPIRATION',
       secondsToSessionExpiration: secondsToExpiration,
-    });
+    }));
   },
 
   setSessionExpired: () =>

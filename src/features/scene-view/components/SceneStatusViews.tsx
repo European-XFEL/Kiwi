@@ -8,7 +8,13 @@ import { broadcast_event, KaraboEvent } from '@/lib/events';
 // Shown when the DB connector fails to deliver the scene.
 // Offers a way back since the scene URL may be stale or the DB unavailable.
 
-export function SceneOpenError({ message }: { message: string }) {
+export function SceneOpenError({
+  message,
+  showHomeAction = true,
+}: {
+  message: string;
+  showHomeAction?: boolean;
+}) {
   return (
     <div className="flex h-full w-full items-center justify-center bg-muted/20 p-4">
       <div className="flex w-full max-w-2xl flex-col gap-3">
@@ -23,15 +29,17 @@ export function SceneOpenError({ message }: { message: string }) {
             {message}
           </AlertDescription>
         </Alert>
-        <Button
-          className="self-start"
-          variant="outline"
-          data-testid="scene-error-back"
-          onClick={() => broadcast_event(KaraboEvent.GoToHomeTab, {})}
-        >
-          <ArrowLeft aria-hidden="true" className="h-4 w-4" />
-          Back to Start
-        </Button>
+        {showHomeAction && (
+          <Button
+            className="self-start"
+            variant="outline"
+            data-testid="scene-error-back"
+            onClick={() => broadcast_event(KaraboEvent.GoToHomeTab, {})}
+          >
+            <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+            Back to Start
+          </Button>
+        )}
       </div>
     </div>
   );

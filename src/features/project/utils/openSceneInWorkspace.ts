@@ -15,6 +15,10 @@ export function openSceneInWorkspace({
   broadcast_event(KaraboEvent.OpenScene, { model });
 }
 
-export function openUnattachedSceneInWorkspace(model: SceneModel): void {
-  broadcast_event(KaraboEvent.OpenUnattachedScene, { model });
+export function openUnattachedSceneInWorkspace(
+  model: SceneModel,
+  tabId = model.simple_name
+): string {
+  broadcast_event(KaraboEvent.OpenUnattachedScene, { model, tabId });
+  return tabId;
 }

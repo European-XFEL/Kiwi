@@ -105,9 +105,9 @@ export function useServerProbe({
   useEffect(() => {
     if (!didInitialProbeRef.current) {
       const lastHost = getConfig().lastHost;
-      const savedHost = lastHost ?? initialHost;
+      const savedHost = initialHost || lastHost;
       const lastPort = getConfig().lastPort;
-      const savedPort = lastPort === 0 ? initialPort : `${lastPort}`;
+      const savedPort = initialPort || (lastPort === 0 ? '' : `${lastPort}`);
 
       setHost(savedHost);
       setPort(savedPort);
