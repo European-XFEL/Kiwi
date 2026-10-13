@@ -80,6 +80,39 @@ describe('PanelWrangler', () => {
     return model;
   }
 
+  it('starts with a selected, nonclosable SystemTopology tab', () => {
+    expect(wrangler.getSnapshot().left).toEqual({
+      id: 'left',
+      tabs: [
+        { id: 'system-topology', title: 'SystemTopology', closable: false },
+      ],
+      activeTabId: 'system-topology',
+    });
+    wrangler.closeTab('left', 'system-topology');
+    expect(wrangler.getSnapshot().left.tabs).toHaveLength(1);
+    expect(wrangler.getSnapshot().left.activeTabId).toBe('system-topology');
+  });
+
+  it('preserves left tabs and selection during center navigation', () => {
+    wrangler.getSnapshot().left.tabs.push({
+      id: 'other-left',
+      title: 'Other left',
+      closable: false,
+    });
+    wrangler.selectTab('left', 'other-left');
+    wrangler.resetCenter();
+    expect(wrangler.getSnapshot().left.tabs.map((tab) => tab.id)).toEqual([
+      'system-topology',
+      'other-left',
+    ]);
+    expect(wrangler.getSnapshot().left.activeTabId).toBe('other-left');
+    wrangler.resetWorkspace();
+    expect(wrangler.getSnapshot().left.tabs.map((tab) => tab.id)).toEqual([
+      'system-topology',
+    ]);
+    expect(wrangler.getSnapshot().left.activeTabId).toBe('system-topology');
+  });
+
   it('selects Controllers on every open and preserves its panels when selecting another tab', () => {
     wrangler
       .getSnapshot()
@@ -705,7 +738,7 @@ describe('PanelWrangler', () => {
       expect(wrangler.getSceneTab('scene:scene-a')).toBeUndefined();
     });
 
-    it('resets side contents and recreates the fixed right-area tabs', () => {
+    it('resets side contents and recreates the fixed side-area tabs', () => {
       const scene = makeScene('scene-a');
       setProject('CONTROLS', 'ProjectA', [scene]);
       openScene(scene);
@@ -715,8 +748,10 @@ describe('PanelWrangler', () => {
       const state = wrangler.getSnapshot();
       expect(state.left).toEqual({
         id: 'left',
-        tabs: [],
-        activeTabId: undefined,
+        tabs: [
+          { id: 'system-topology', title: 'SystemTopology', closable: false },
+        ],
+        activeTabId: 'system-topology',
       });
       expect(state.right).toEqual({
         id: 'right',

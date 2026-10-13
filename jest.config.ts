@@ -19,6 +19,13 @@ export default {
   },
 
   transform: {
+    '^.+\\.m?js$': [
+      'babel-jest',
+      {
+        babelrc: false,
+        presets: [['@babel/preset-env', { targets: { node: 'current' } }]],
+      },
+    ],
     '^.+\\.tsx?$': [
       'ts-jest',
       {
@@ -28,4 +35,7 @@ export default {
       },
     ],
   },
+  transformIgnorePatterns: [
+    '/node_modules/(?!(react-arborist|react-dnd|react-dnd-html5-backend|dnd-core|@react-dnd|react-resizable-panels)/)',
+  ],
 } satisfies Config;

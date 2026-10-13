@@ -36,6 +36,9 @@ enum KaraboEvent {
   OpenSceneBrowser = 'OpenSceneBrowser',
   DatabaseBusy = 'DatabaseBusy',
   NetworkConnectStatus = 'NetworkConnectStatus',
+  // Monitor-count transitions 0 → 1 and 1 → 0. Payload: { device_id }.
+  StartMonitoringDevice = 'StartMonitoringDevice',
+  StopMonitoringDevice = 'StopMonitoringDevice',
 }
 
 function broadcast_event(sender: KaraboEvent, data: any) {

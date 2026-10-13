@@ -10,10 +10,12 @@ import {
   DeviceProxy,
   InstanceStatus,
 } from '@/lib/binding/api';
+import { SystemTree } from './SystemTree';
 
 export class SystemTopology {
   public _system_hash: Hash | null = null;
   protected devices = new Map<string, DeviceProxy>();
+  public readonly systemTree = new SystemTree();
 
   public constructor() {}
 
@@ -21,6 +23,7 @@ export class SystemTopology {
     console.log('Received SystemTopology ...');
     this._system_hash = systemTopology;
     this._ensureTopologyKeys();
+    this.systemTree.initialize(systemTopology);
     const devices = systemTopology.getValue<Hash>('device');
     const macros = systemTopology.getValue<Hash>('macro');
     for (const [deviceId, proxy] of this.devices) {
@@ -68,24 +71,30 @@ export class SystemTopology {
     return undefined;
   };
 
+  public getDeviceMonitoringState(deviceId: string): boolean | undefined {
+    return this.devices.get(deviceId)?.isMonitoring;
+  }
+
   public updateTopology(hash: Hash) {
     const systemTopology = this._system_hash;
     if (!systemTopology) {
       return;
     }
     const changes = hash.getValue<Hash>('changes');
-    const gone = changes.getValue<Hash>('gone');
-    if (!gone.empty()) {
-      this.instanceGone(gone, systemTopology);
-    }
-    const added = changes.getValue<Hash>('new');
-    if (!added.empty()) {
-      this.instanceNew(added, systemTopology);
-    }
-    const updated = changes.getValue<Hash>('update');
-    if (!updated.empty()) {
-      this.instanceUpdated(updated, systemTopology);
-    }
+    this.systemTree.batch(() => {
+      const gone = changes.getValue<Hash>('gone');
+      if (!gone.empty()) {
+        this.instanceGone(gone, systemTopology);
+      }
+      const added = changes.getValue<Hash>('new');
+      if (!added.empty()) {
+        this.instanceNew(added, systemTopology);
+      }
+      const updated = changes.getValue<Hash>('update');
+      if (!updated.empty()) {
+        this.instanceUpdated(updated, systemTopology);
+      }
+    });
   }
 
   private instanceGone(gone: Hash, systemTopology: Hash): void {
@@ -96,6 +105,7 @@ export class SystemTopology {
       const instances = systemTopology.getValue<Hash>(kind);
       for (const instanceId of gone.getValue<Hash>(kind).keys()) {
         instances.erase(instanceId);
+        this.systemTree.removeInstance(instanceId);
         if (kind === 'server') {
           continue;
         }
@@ -109,11 +119,13 @@ export class SystemTopology {
 
   private instanceNew(added: Hash, systemTopology: Hash): void {
     systemTopology.merge(added);
+    this.systemTree.update(added, systemTopology);
     this.updateInstances(added);
   }
 
   private instanceUpdated(updated: Hash, systemTopology: Hash): void {
     systemTopology.merge(updated);
+    this.systemTree.update(updated, systemTopology);
     this.updateInstances(updated);
   }
 
@@ -150,6 +162,7 @@ export class SystemTopology {
   }
 
   public clear(): void {
+    this.systemTree.clear();
     this._system_hash = null;
     for (const proxy of this.devices.values()) {
       this.updateInstance(proxy, false, undefined);

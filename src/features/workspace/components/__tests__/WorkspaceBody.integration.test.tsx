@@ -17,6 +17,7 @@ import { DisplayTextLogModel, SceneModel } from '@/karabo/common/api';
 import { broadcast_event, KaraboEvent } from '@/lib/events';
 import { PanelWrangler } from '@/lib/singletons/PanelWrangler';
 import { SingletonContext } from '@/testing';
+import { SystemTree } from '@/lib/topology/SystemTree';
 import { createDefaultWorkspaceModel } from '../../utils';
 import WorkspaceBody from '../WorkspaceBody';
 
@@ -64,6 +65,41 @@ describe('WorkspaceBody layout lifetime', () => {
   afterEach(() => {
     jest.restoreAllMocks();
     localStorage.clear();
+  });
+
+  it('starts folded with SystemTopology selected and shows Service Manager when unfolded', async () => {
+    const wrangler = new PanelWrangler();
+    await SingletonContext.run({ panel_wrangler: wrangler }, async () => {
+      try {
+        mountWorkspace();
+        expect(wrangler.getSnapshot().left.activeTabId).toBe('system-topology');
+        expect(
+          screen.getByRole('button', { name: 'Unfold left panel' })
+        ).toHaveAttribute('aria-expanded', 'false');
+        await waitFor(() => {
+          expect(
+            document.getElementById('workspace-left')!.style.flexGrow
+          ).toBe('0');
+        });
+        fireEvent.click(
+          screen.getByRole('button', { name: 'Unfold left panel' })
+        );
+        await waitFor(() => {
+          expect(
+            document.getElementById('workspace-left')!.style.flexGrow
+          ).toBe('24');
+        });
+        expect(
+          screen.getByRole('tab', { name: 'SystemTopology' })
+        ).toHaveAttribute('aria-selected', 'true');
+        expect(
+          screen.getByRole('button', { name: 'Service Manager' })
+        ).toBeVisible();
+      } finally {
+        cleanup();
+        wrangler.dispose();
+      }
+    });
   });
 
   it('renders Home from its own center area, including when the page is hidden', async () => {
@@ -189,7 +225,7 @@ describe('WorkspaceBody layout lifetime', () => {
     await SingletonContext.run(
       {
         panel_wrangler: wrangler,
-        topology: { getDevice: () => device },
+        topology: { getDevice: () => device, systemTree: new SystemTree() },
         network: { onStopMonitoringDevice: jest.fn() },
       },
       async () => {
@@ -256,7 +292,7 @@ describe('WorkspaceBody layout lifetime', () => {
     await SingletonContext.run(
       {
         panel_wrangler: wrangler,
-        topology: { getDevice: () => device },
+        topology: { getDevice: () => device, systemTree: new SystemTree() },
         network,
       },
       async () => {
@@ -340,7 +376,7 @@ describe('WorkspaceBody layout lifetime', () => {
     await SingletonContext.run(
       {
         panel_wrangler: wrangler,
-        topology: { getDevice: () => device },
+        topology: { getDevice: () => device, systemTree: new SystemTree() },
         network: { onStopMonitoringDevice: jest.fn() },
       },
       async () => {

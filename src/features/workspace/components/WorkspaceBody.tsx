@@ -42,7 +42,7 @@ function WorkspaceBody({ body, isPageVisible = true }: WorkspaceBodyProps) {
   const leftSeparatorRef = useRef<HTMLDivElement>(null);
   const rightSeparatorRef = useRef<HTMLDivElement>(null);
   const lastWidths = useRef({
-    left: panelArea.left.lastExpandedWidthPercent || 20,
+    left: panelArea.left.lastExpandedWidthPercent || 24,
     right: panelArea.right.lastExpandedWidthPercent || 35,
   });
   const [layout, setLayout] = useState<Layout>(() => ({
