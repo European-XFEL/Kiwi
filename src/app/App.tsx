@@ -1,20 +1,35 @@
 import React, { useEffect } from 'react';
 import { bootstrapStatefulIcons } from '@/features/controllers/api';
 import { initAppSettings } from './AppSettings';
-import { useAppSettingsStore, useGlobalStore } from '@/store/api';
-import { getNetwork, getManager, getConfig } from '@/lib/singletons/api';
+import {
+  useAppSettingsStore,
+  useGlobalStore,
+  useApplicationModeStore,
+} from '@/store/api';
+import {
+  getNetwork,
+  getManager,
+  getConfig,
+  getPanelWrangler,
+} from '@/lib/singletons/api';
 import { TooltipProvider } from '@/components/api';
 import { Toaster } from '@/components/api';
 import { KaraboEvent, useKaraboEvent } from '@/lib/events';
 import { Hash } from '@/karabo/data/hash';
 import { toast } from 'sonner';
 import useSessionCleanup from './hooks/useSessionCleanup';
+import {
+  cinemaServer,
+  CINEMA_BOOKMARK_INSTRUCTION,
+} from '@/features/cinema/api';
 
 const App: React.FC = () => {
+  const { mode, launch, launchError } = useApplicationModeStore();
   const executedOnceRef = React.useRef('');
   const { setWsProxyUrl, setTopicGuiServerMapping } = useAppSettingsStore();
   const {
     setError,
+    setCinemaError,
     setLoggedIn,
     setNotifiedSessionExpiration,
     setSessionExpired,
@@ -27,7 +42,7 @@ const App: React.FC = () => {
     setError(hash.getValue('message'));
   });
 
-  useKaraboEvent(KaraboEvent.SessionExpired, (_: Hash) => {
+  useKaraboEvent(KaraboEvent.SessionExpired, () => {
     setSessionExpired();
   });
 
@@ -73,12 +88,25 @@ const App: React.FC = () => {
     if (!executedOnceRef.current) {
       executedOnceRef.current = 'true';
 
+      getPanelWrangler().setMode(mode);
+      if (mode === 'cinema' && (launchError || !launch)) {
+        setCinemaError(launchError ?? CINEMA_BOOKMARK_INSTRUCTION);
+        return;
+      }
+
       bootstrapStatefulIcons();
 
       // Initialize the Manager singleton;
       getManager();
 
-      const { lastHost: host, lastPort: port } = getConfig();
+      const { host, port, canResume } = cinemaServer(
+        mode === 'cinema' ? launch : undefined,
+        getConfig()
+      );
+      if (!canResume) {
+        setLoggedOut();
+        return;
+      }
       getNetwork()
         .resumeGuiSession(host, port)
         .then((sessionData) => {
@@ -116,7 +144,17 @@ const App: React.FC = () => {
           setError(errorMsg);
         });
     }
-  }, [setWsProxyUrl, setError, setLoggedIn, setLoggedOut]);
+  }, [
+    setWsProxyUrl,
+    setTopicGuiServerMapping,
+    setError,
+    setCinemaError,
+    setLoggedIn,
+    setLoggedOut,
+    mode,
+    launch,
+    launchError,
+  ]);
 
   return (
     <TooltipProvider delayDuration={150} skipDelayDuration={300}>

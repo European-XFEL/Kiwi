@@ -11,6 +11,7 @@ import {
   HOME_TAB_ID,
   type SceneTabContent,
 } from '@/lib/singletons/PanelWrangler';
+import { CINEMA_TAB_ID } from '@/features/cinema/api';
 import HomePanel from '@/app/HomePanel';
 import type { PanelTab } from '../types';
 import PanelContainer from './PanelContainer';
@@ -27,11 +28,24 @@ function isLoadedSceneContent(
   );
 }
 
-function renderCenterPanel(
-  tab: PanelTab,
-  isVisible: boolean,
-  fullscreen: Pick<ScenePanelProps, 'isFullscreen' | 'onToggleFullscreen'>
-) {
+function renderCenterPanel({
+  tab,
+  isVisible,
+  showProjectNavigation,
+  fullscreen,
+}: {
+  tab: PanelTab;
+  isVisible: boolean;
+  showProjectNavigation: boolean;
+  fullscreen: Pick<ScenePanelProps, 'isFullscreen' | 'onToggleFullscreen'>;
+}) {
+  if (tab.id === CINEMA_TAB_ID) {
+    return (
+      <div className="flex h-full items-center justify-center text-muted-foreground">
+        No scene open
+      </div>
+    );
+  }
   if (tab.id === HOME_TAB_ID) {
     return <HomePanel />;
   }
@@ -43,11 +57,19 @@ function renderCenterPanel(
   const content = wrangler.getContent(tab.id);
   const snapshot = wrangler.getSceneTab(tab.id);
   if (content?.error) {
-    return <SceneOpenError message={content.error} />;
+    return (
+      <SceneOpenError
+        message={content.error}
+        showHomeAction={showProjectNavigation}
+      />
+    );
   }
   if (!isLoadedSceneContent(content)) {
     return (
-      <SceneOpenError message="The scene is unavailable. Try opening it again." />
+      <SceneOpenError
+        message="The scene is unavailable. Try opening it again."
+        showHomeAction={showProjectNavigation}
+      />
     );
   }
   return (
@@ -62,7 +84,13 @@ function renderCenterPanel(
   );
 }
 
-function WorkspaceCenterArea({ isVisible }: { isVisible: boolean }) {
+function WorkspaceCenterArea({
+  isVisible,
+  showProjectNavigation = true,
+}: {
+  isVisible: boolean;
+  showProjectNavigation?: boolean;
+}) {
   const containerRef = useRef<HTMLElement | null>(null);
   const { isFullscreen, supported, toggle } = useFullscreen(containerRef);
 
@@ -71,9 +99,14 @@ function WorkspaceCenterArea({ isVisible }: { isVisible: boolean }) {
       area="center"
       containerRef={containerRef}
       renderPanel={(tab) =>
-        renderCenterPanel(tab, isVisible, {
-          isFullscreen,
-          onToggleFullscreen: supported ? toggle : undefined,
+        renderCenterPanel({
+          tab,
+          isVisible,
+          showProjectNavigation,
+          fullscreen: {
+            isFullscreen,
+            onToggleFullscreen: supported ? toggle : undefined,
+          },
         })
       }
       // The scene viewport owns its overflow and spacing.

@@ -5,6 +5,8 @@ import type {
   PanelModel,
   PanelSlot,
 } from './types';
+import type { ApplicationMode } from '@/store/api';
+import { createWorkspacePolicy } from './configuration';
 
 export const WORKSPACE_PANEL_AREA_ID = 'workspace-panel-area';
 export const WORKSPACE_PANEL_IDS = [
@@ -101,10 +103,13 @@ function createDefaultWorkspaceBodyModel(): WorkspaceBodyModel {
   };
 }
 
-export function createDefaultWorkspaceModel(): WorkspaceModel {
+export function createDefaultWorkspaceModel(
+  mode: ApplicationMode = 'normal'
+): WorkspaceModel {
   return {
     id: 'workspace-main',
     title: 'Main Workspace',
+    policy: createWorkspacePolicy(mode),
     header: {
       kind: 'app-navbar',
       visible: true,

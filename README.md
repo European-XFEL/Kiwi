@@ -25,6 +25,37 @@ yarn install
 yarn dev
 ```
 
+## Cinema mode
+
+Kiwi defaults to normal mode. Opening a `/cinema` bookmark selects cinema mode.
+
+In the Load Project dialog, right-click a scene row (or focus its selection button
+and press the context-menu key or Shift+F10) and choose
+**Copy cinema URL**.
+The action copies a bookmarkable URL for that scene and the connected GUI server
+without opening the scene or closing the dialog. Save the copied URL as a browser
+bookmark.
+
+Bookmarks use this syntax (values are URL-encoded):
+
+```text
+https://kiwi.example/cinema?scene_uuid=<uuid>&host=<gui-host>&port=<gui-port>
+```
+
+At least one `scene_uuid` is required. Repeat `scene_uuid` to open several scenes
+in bookmark order; the first successfully loaded scene is selected. `host` and
+`port` are optional and must be supplied together. When omitted, Kiwi uses its
+saved GUI server. Do not include a domain or project UUID: cinema retrieves scenes
+directly and opens them as unattached scenes.
+
+Kiwi captures the bookmark before connecting and replaces the address with bare
+`/cinema`. Refresh and re-login reopen the original bookmark scenes from this
+browser tab's session storage. Opening or closing scenes does not change that
+launch. Opening a new bookmark replaces it; invalid bookmarks display an error
+and do not reuse the previous launch. Without a stored launch, `/cinema` asks you
+to open a cinema bookmark. Credentials resume only for the matching saved server;
+other servers show login with the supplied host and port filled in.
+
 ## Testing
 
 `Jest` is used for unit and integration testing with `React Testing Library` for component testing.

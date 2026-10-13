@@ -4,6 +4,7 @@ import InitializingState from './states/InitializingState';
 import LoggedInState from './states/LoggedInState';
 import LoggedOutState from './states/LoggedOutState';
 import ErrorState from './states/ErrorState';
+import CinemaErrorState from './states/CinemaErrorState';
 import SessionExpiredState from './states/SessionExpiredState';
 
 const AppBody: React.FC = () => {
@@ -17,6 +18,7 @@ const AppBody: React.FC = () => {
       INIT: null, // handled by overlay
       LOGGED_OUT: <LoggedOutState />,
       UNRECOVERABLE_ERROR: <ErrorState error={lastError} />,
+      CINEMA_ERROR: <CinemaErrorState error={lastError} />,
       LOGGED_IN: <LoggedInState />,
       // Notification for session expiration doesn't change the UI state heavily - just
       // presents a temporary notification to the user

@@ -1,4 +1,6 @@
 import React, { useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import { buildCinemaUrl } from '@/features/cinema/api';
 import { ChevronLeft } from 'lucide-react';
 import {
   Dialog,
@@ -179,6 +181,29 @@ export default function SelectProjectSceneDialog({
       sceneUuid: scene.uuid,
       sceneName: scene.simple_name,
     });
+  };
+
+  const handleCopyCinema = async (scene: SceneModel) => {
+    if (isBusy || !sessionInfo?.guiServerHost || !sessionInfo.guiServerPort)
+      return;
+    try {
+      if (!navigator.clipboard?.writeText)
+        throw new Error('Clipboard access is unavailable.');
+      await navigator.clipboard.writeText(
+        buildCinemaUrl(
+          window.location.origin,
+          scene.uuid,
+          sessionInfo.guiServerHost,
+          sessionInfo.guiServerPort
+        )
+      );
+      setErrorMessage('');
+      toast.success('Cinema URL copied', { duration: 2500 });
+    } catch (error) {
+      setErrorMessage(
+        `Could not copy cinema URL: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
   };
 
   const getStatusText = () => {
@@ -427,6 +452,10 @@ export default function SelectProjectSceneDialog({
                   onSceneDoubleClick={handleSceneDoubleClick}
                   onSceneBookmark={
                     canBookmark ? handleSceneBookmark : undefined
+                  }
+                  onSceneCopyCinema={handleCopyCinema}
+                  cinemaCopyDisabled={
+                    !sessionInfo?.guiServerHost || !sessionInfo.guiServerPort
                   }
                   query={sceneSearch.query}
                   onQueryChange={sceneSearch.setQuery}

@@ -1,10 +1,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
-import { KiwiApp } from '@/app/api';
+import { KiwiApp, initializeApplicationMode } from '@/app/api';
 import { BrowserRouter } from 'react-router-dom';
 import AppRouter from '@/app/router/AppRouter';
 import { appRoutes } from '@/app/routes';
+
+initializeApplicationMode();
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement

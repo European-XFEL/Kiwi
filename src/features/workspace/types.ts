@@ -11,9 +11,16 @@ import type {
 
 export type WorkspaceId = string;
 
+export interface WorkspacePolicy {
+  readonly defaultCenterTab: PanelTab;
+  readonly persistActiveTab: boolean;
+  readonly showProjectNavigation: boolean;
+}
+
 export interface WorkspaceModel {
   id: WorkspaceId;
   title: string;
+  policy: WorkspacePolicy;
   header: WorkspaceHeaderModel;
   body: WorkspaceBodyModel;
   footer: WorkspaceFooterModel;

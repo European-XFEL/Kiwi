@@ -5,6 +5,8 @@ import { broadcast_event, KaraboEvent } from '@/lib/events';
 import { Mediator } from '@/lib/singletons/Mediator';
 import { ProjectItemModel } from '@/lib/singletons/ProjectItemModel';
 import { PanelWrangler } from '@/lib/singletons/PanelWrangler';
+import { CINEMA_TAB_ID } from '@/features/cinema/api';
+import { createWorkspacePolicy } from '@/features/workspace/configuration';
 
 let mockPanelWrangler: PanelWrangler;
 let mockResetWorkspace: jest.SpyInstance;
@@ -76,6 +78,32 @@ describe('useSessionCleanup', () => {
     expect(mockResetDb).not.toHaveBeenCalled();
     expect(mockProjectModel.root).toBe(project);
     expect(mockProjectModel.domain).toBe('CONTROLS');
+  });
+
+  it('keeps cinema failures active until the session actually ends', () => {
+    login();
+    mockPanelWrangler.dispose();
+    mockPanelWrangler = new PanelWrangler(createWorkspacePolicy('cinema'));
+    mockResetWorkspace = jest.spyOn(mockPanelWrangler, 'resetWorkspace');
+    renderHook(() => useSessionCleanup());
+
+    act(() => {
+      useGlobalStore.getState().setCinemaError('Scene missing');
+      useGlobalStore.getState().setNotifiedSessionExpiration(30);
+    });
+
+    expect(mockResetWorkspace).not.toHaveBeenCalled();
+    expect(mockResetDb).not.toHaveBeenCalled();
+    expect(useGlobalStore.getState().sessionInfo).toEqual(SESSION);
+    expect(useGlobalStore.getState().globalState).toBe('CINEMA_ERROR');
+
+    act(() => useGlobalStore.getState().setSessionExpired());
+
+    expect(mockResetWorkspace).toHaveBeenCalledTimes(1);
+    expect(mockResetDb).toHaveBeenCalledTimes(1);
+    expect(mockPanelWrangler.getSnapshot().center.activeTabId).toBe(
+      CINEMA_TAB_ID
+    );
   });
 
   it('clears the workspace and project when the user logs out', () => {

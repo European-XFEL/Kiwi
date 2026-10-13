@@ -14,6 +14,7 @@ import { NavItem } from './components/NavItem';
 import icons from '@/assets/icons';
 
 export function NavBar({
+  showProjectNavigation = true,
   browser,
   sceneOpen,
   onGoHome,
@@ -23,6 +24,7 @@ export function NavBar({
   access,
   user,
 }: {
+  showProjectNavigation?: boolean;
   browser?: RootProjectBrowser;
   sceneOpen: boolean;
   onGoHome?: () => void;
@@ -52,50 +54,54 @@ export function NavBar({
             <img src={icons.logo} alt="Karabo" className="h-8 w-auto" />
           </NavItem>
 
-          <Separator orientation="vertical" className={separatorClass} />
-
-          <NavItem>
-            <LoadProjectScene
-              variant="ghost"
-              className="h-8 gap-1.5 border-2 border-secondary/50 bg-secondary/10 text-base text-foreground hover:border-secondary/70 hover:bg-secondary/20 px-2 lg:px-2.5"
-              iconClassName="size-5 text-secondary lg:size-4"
-              labelClassName="sr-only lg:not-sr-only"
-            />
-          </NavItem>
-
-          <Separator orientation="vertical" className={separatorClass} />
+          {showProjectNavigation && (
+            <>
+              <Separator orientation="vertical" className={separatorClass} />
+              <NavItem>
+                <LoadProjectScene
+                  variant="ghost"
+                  className="h-8 gap-1.5 border-2 border-secondary/50 bg-secondary/10 text-base text-foreground hover:border-secondary/70 hover:bg-secondary/20 px-2 lg:px-2.5"
+                  iconClassName="size-5 text-secondary lg:size-4"
+                  labelClassName="sr-only lg:not-sr-only"
+                />
+              </NavItem>
+              <Separator orientation="vertical" className={separatorClass} />
+            </>
+          )}
 
           <NavItem className="flex-1 min-w-0 overflow-hidden">
-            <div className="flex items-center gap-2 overflow-hidden w-full sm:gap-3">
-              {sceneOpen && (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={onGoHome}
-                    data-testid="workspace-home-button"
-                    aria-label="Go home"
-                    title="Go home"
-                    className="size-8 shrink-0"
-                  >
-                    <img src={icons.homeEdit} alt="" className="size-5" />
-                  </Button>
-                  <Separator
-                    orientation="vertical"
-                    className="hidden h-6 shrink-0 sm:block"
-                  />
-                </>
-              )}
-              {browser?.rootProject ? (
-                <div className="min-w-0 flex-1 overflow-hidden">
-                  <ProjectBrowser browser={browser} className="w-fit" />
-                </div>
-              ) : (
-                <span className="hidden sm:inline text-base text-muted-foreground italic truncate">
-                  No project loaded
-                </span>
-              )}
-            </div>
+            {showProjectNavigation && (
+              <div className="flex items-center gap-2 overflow-hidden w-full sm:gap-3">
+                {sceneOpen && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={onGoHome}
+                      data-testid="workspace-home-button"
+                      aria-label="Go home"
+                      title="Go home"
+                      className="size-8 shrink-0"
+                    >
+                      <img src={icons.homeEdit} alt="" className="size-5" />
+                    </Button>
+                    <Separator
+                      orientation="vertical"
+                      className="hidden h-6 shrink-0 sm:block"
+                    />
+                  </>
+                )}
+                {browser?.rootProject ? (
+                  <div className="min-w-0 flex-1 overflow-hidden">
+                    <ProjectBrowser browser={browser} className="w-fit" />
+                  </div>
+                ) : (
+                  <span className="hidden sm:inline text-base text-muted-foreground italic truncate">
+                    No project loaded
+                  </span>
+                )}
+              </div>
+            )}
           </NavItem>
 
           <NavItem className="px-1">

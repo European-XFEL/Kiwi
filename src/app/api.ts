@@ -6,6 +6,7 @@
  */
 
 export { default as KiwiApp } from './App';
+export { initializeApplicationMode } from './initializeApplicationMode';
 
 export { default as KiwiLayout } from './layouts/Layout';
 export type { LayoutProps as KiwiLayoutProps } from './layouts/Layout';

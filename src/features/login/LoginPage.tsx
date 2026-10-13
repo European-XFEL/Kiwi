@@ -8,7 +8,7 @@ import { useServerProbe } from './hooks/useServerProbe';
 import { useAuth } from './hooks/useAuth';
 import { ActivityStatus } from './auth.types';
 import ReadOnlyAccessForm from './components/ReadOnlyAccessForm';
-import { useAppSettingsStore } from '@/store/api';
+import { useApplicationModeStore, useAppSettingsStore } from '@/store/api';
 
 /**
  * LoginPage - Main login interface
@@ -19,6 +19,8 @@ import { useAppSettingsStore } from '@/store/api';
  * - Access level selection (for non-auth mode)
  */
 export function LoginPage() {
+  const { mode, launch } = useApplicationModeStore();
+  const suppliedServer = mode === 'cinema' && launch?.host !== undefined;
   const topicServerMapping = useAppSettingsStore(
     (state) => state.topicServerMapping
   );
@@ -39,7 +41,11 @@ export function LoginPage() {
     doProbeServer,
     setActivityStatus,
     setErrorMessage,
-  } = useServerProbe({ debounceMs: debounceServerProbing });
+  } = useServerProbe({
+    debounceMs: debounceServerProbing,
+    initialHost: suppliedServer ? launch.host : undefined,
+    initialPort: suppliedServer ? String(launch.port) : undefined,
+  });
 
   // Auth state and logic
   const {
@@ -135,7 +141,7 @@ export function LoginPage() {
           port={port}
           onHostChange={setHost}
           onPortChange={setPort}
-          topicServerSettings={topicServerMapping}
+          topicServerSettings={mode === 'cinema' ? '' : topicServerMapping}
           topic={probedServerInfo?.topic}
           disabled={activityStatus !== ActivityStatus.NO_ACTIVITY}
           onCommit={(h, p) => {
