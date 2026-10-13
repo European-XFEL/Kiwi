@@ -10,6 +10,10 @@ import { ProjectItemModel } from './ProjectItemModel';
 import { Logger } from './Logger';
 
 export type { RequestHandler };
+export type {
+  StoredProjectFavorite,
+  ProjectFavoriteSelection,
+} from './Configuration';
 
 // We use a Map for better performance and clarity than a plain object
 export const singletons = new Map<string, any>();

@@ -24,6 +24,7 @@ import { getDomains } from './utils/getDomains';
 import { useDeferredSearch } from './hooks/useDeferredSearch';
 import { filterByQuery } from './utils/filterByQuery';
 import { SceneModel } from '@/karabo/common/scenemodel/api';
+import { addProjectFavorite } from './utils/projectFavoriteActions';
 
 // Below lg the projects and scenes panes are a navigation stack: only one is
 // shown and choosing a project slides to its scenes. From lg up both are
@@ -159,6 +160,25 @@ export default function SelectProjectSceneDialog({
     if (selectedScene) {
       onSceneSelected(selectedDomain, selectedProject!, selectedScene);
     }
+  };
+
+  const canBookmark =
+    !isBusy &&
+    !!selectedDomain &&
+    !!selectedProject?.uuid &&
+    !!sessionInfo?.guiServerTopic;
+
+  const handleSceneBookmark = (scene: SceneModel) => {
+    if (!canBookmark || !selectedProject || !scene.uuid) {
+      return;
+    }
+    addProjectFavorite(sessionInfo!.guiServerTopic, {
+      domain: selectedDomain,
+      projectUuid: selectedProject.uuid,
+      projectName: selectedProject.simple_name,
+      sceneUuid: scene.uuid,
+      sceneName: scene.simple_name,
+    });
   };
 
   const getStatusText = () => {
@@ -405,6 +425,9 @@ export default function SelectProjectSceneDialog({
                   selectedScene={selectedScene}
                   onSceneClick={handleSceneClick}
                   onSceneDoubleClick={handleSceneDoubleClick}
+                  onSceneBookmark={
+                    canBookmark ? handleSceneBookmark : undefined
+                  }
                   query={sceneSearch.query}
                   onQueryChange={sceneSearch.setQuery}
                   selectionDisabled={isBusy}

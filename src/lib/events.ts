@@ -13,6 +13,9 @@ enum KaraboEvent {
   // Every set/clear broadcasts, even when unchanged.
   // Empty Hash; read root and domain from ProjectItemModel.
   RootProjectChanged = 'RootProjectChanged',
+  // Feature actions broadcast after storing favorites. Hash contains 'topic';
+  // read the favorites from Configuration.
+  ProjectFavoritesChanged = 'ProjectFavoritesChanged',
   ProjectUpdated = 'ProjectUpdated', // uuids of updated projects as string[] under 'uuids' key
   SessionDropped = 'SessionDropped',
   SessionExpired = 'SessionExpired',

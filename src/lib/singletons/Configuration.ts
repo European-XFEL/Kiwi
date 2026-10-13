@@ -9,6 +9,33 @@ export interface SessionData {
   isReadOnly: boolean;
 }
 
+export interface StoredProjectFavorite {
+  domain: string;
+  projectUuid: string;
+  projectName: string;
+  sceneUuid: string;
+  sceneName: string;
+}
+
+export type ProjectFavoriteSelection = Pick<
+  StoredProjectFavorite,
+  'domain' | 'projectUuid' | 'sceneUuid'
+>;
+
+type ProjectFavoritesByTopic = Record<string, readonly StoredProjectFavorite[]>;
+const emptyProjectFavorites: readonly StoredProjectFavorite[] = [];
+
+function matchesProjectFavorite(
+  favorite: StoredProjectFavorite,
+  selection: ProjectFavoriteSelection
+): boolean {
+  return (
+    favorite.domain === selection.domain &&
+    favorite.projectUuid === selection.projectUuid &&
+    favorite.sceneUuid === selection.sceneUuid
+  );
+}
+
 export const AUTHENTICATION = 'authentication';
 export const NETWORK = 'network';
 export const PROJECT = 'project';
@@ -133,6 +160,11 @@ export class ConfigurationStore {
       defaultValue: '',
       group: PROJECT,
       dtype: 'string',
+    }),
+    projectFavoritesByTopic: new Item({
+      defaultValue: {},
+      group: PROJECT,
+      dtype: 'json',
     }),
   };
 
@@ -309,6 +341,56 @@ export class ConfigurationStore {
     return Object.keys(this.storage_items) as Array<
       keyof typeof this.storage_items
     >;
+  }
+
+  // #endregion
+
+  // #region Project Favorites
+
+  public getProjectFavorites(topic: string): readonly StoredProjectFavorite[] {
+    const byTopic: ProjectFavoritesByTopic = this.getItem(
+      this.storage_items.projectFavoritesByTopic
+    );
+    return Object.prototype.hasOwnProperty.call(byTopic, topic)
+      ? byTopic[topic]
+      : emptyProjectFavorites;
+  }
+
+  public addProjectFavorite(
+    topic: string,
+    favorite: StoredProjectFavorite
+  ): void {
+    const favorites = this.getProjectFavorites(topic);
+    const index = favorites.findIndex((entry) =>
+      matchesProjectFavorite(entry, favorite)
+    );
+    const next = [...favorites];
+    if (index === -1) {
+      next.unshift({ ...favorite });
+    } else {
+      next[index] = { ...favorite };
+    }
+    this.setValue('projectFavoritesByTopic', {
+      ...this.getItem(this.storage_items.projectFavoritesByTopic),
+      [topic]: next,
+    });
+  }
+
+  public removeProjectFavorite(
+    topic: string,
+    selection: ProjectFavoriteSelection
+  ): void {
+    const favorites = this.getProjectFavorites(topic);
+    const next = favorites.filter(
+      (entry) => !matchesProjectFavorite(entry, selection)
+    );
+    if (next.length === favorites.length) {
+      return;
+    }
+    this.setValue('projectFavoritesByTopic', {
+      ...this.getItem(this.storage_items.projectFavoritesByTopic),
+      [topic]: next,
+    });
   }
 
   // #endregion

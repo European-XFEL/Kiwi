@@ -10,6 +10,9 @@ export { default as LoadProjectScene } from './LoadProjectScene';
 export { default as ProjectBrowser } from './components/ProjectBrowser';
 export { default as SelectProjectSceneDialog } from './SelectProjectSceneDialog';
 export { ProjectLoading } from './components/ProjectLoading';
+export { default as ProjectFavoritesList } from './components/ProjectFavoritesList';
+export type { ProjectFavoritesListProps } from './components/ProjectFavoritesList';
+export { useProjectFavorites } from './hooks/useProjectFavorites';
 
 // Browser controller
 export { useRootProject } from './hooks/useRootProject';
@@ -19,6 +22,10 @@ export { useDeferredSearch } from './hooks/useDeferredSearch';
 export { filterByQuery } from './utils/filterByQuery';
 
 // Route / scene-loading helpers
+export {
+  addProjectFavorite,
+  removeProjectFavorite,
+} from './utils/projectFavoriteActions';
 export {
   loadRootProjectScene,
   clearRootProject,
