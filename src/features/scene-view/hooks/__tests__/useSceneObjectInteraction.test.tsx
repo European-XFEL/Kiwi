@@ -17,7 +17,7 @@ import {
 import { AccessLevel } from '@/karabo/data/enums';
 import { getMediator } from '@/lib/singletons/api';
 import { KaraboEvent } from '@/lib/events';
-import { registerRenderer } from '../../renderRegistry';
+import * as renderRegistry from '../../renderRegistry';
 import { useSceneObjectInteraction } from '../useSceneObjectInteraction';
 
 interface SurfaceProps {
@@ -69,10 +69,13 @@ describe('useSceneObjectInteraction', () => {
   }
 
   beforeEach(() => {
-    registerRenderer('DisplayTrendGraph', () => null);
+    renderRegistry.registerRenderer('DisplayTrendGraph', () => null);
   });
 
   it('broadcasts a derived model and consumes supported double-clicks directly', () => {
+    const renderer = jest
+      .spyOn(renderRegistry, 'getRenderer')
+      .mockReturnValue(undefined);
     const controller = supportedController();
     controller.model.keys = ['DEV.speed', 'DEV.other'];
     const registry = createSceneControllerRegistryMock(controller);
@@ -96,7 +99,9 @@ describe('useSceneObjectInteraction', () => {
       expect(controller.model.keys).toEqual(['DEV.speed', 'DEV.other']);
       expect(registry.getController).toHaveBeenCalledWith('scene.0');
       expect(bubbled).not.toHaveBeenCalled();
+      expect(renderer).not.toHaveBeenCalled();
     } finally {
+      renderer.mockRestore();
       unsubscribe();
     }
   });

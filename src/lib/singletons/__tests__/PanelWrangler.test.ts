@@ -144,6 +144,7 @@ describe('PanelWrangler', () => {
     }
     expect(wrangler.getSnapshot().right.tabs.map((tab) => tab.id)).toEqual([
       'controllers',
+      'configuration',
     ]);
     wrangler.resetWorkspace();
     wrangler.selectTab('right', 'controllers');
@@ -151,6 +152,7 @@ describe('PanelWrangler', () => {
     expect(wrangler.getSnapshot().right.controllerPanels).toEqual([]);
     expect(wrangler.getSnapshot().right.tabs.map((tab) => tab.id)).toEqual([
       'controllers',
+      'configuration',
     ]);
   });
 
@@ -755,7 +757,10 @@ describe('PanelWrangler', () => {
       });
       expect(state.right).toEqual({
         id: 'right',
-        tabs: [{ id: 'controllers', title: 'Controllers', closable: false }],
+        tabs: [
+          { id: 'controllers', title: 'Controllers', closable: false },
+          { id: 'configuration', title: 'Configuration', closable: false },
+        ],
         activeTabId: 'controllers',
         controllerPanels: [],
       });

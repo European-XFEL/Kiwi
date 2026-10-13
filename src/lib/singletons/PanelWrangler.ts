@@ -24,6 +24,7 @@ import type {
 } from '@/features/workspace/types';
 import {
   CONTROLLERS_TAB_ID,
+  CONFIGURATION_TAB_ID,
   SYSTEM_TOPOLOGY_TAB_ID,
 } from '@/features/workspace/utils';
 import {
@@ -66,7 +67,10 @@ function createLeftArea(): PanelState {
 function createRightArea(): RightPanelState {
   return {
     id: 'right',
-    tabs: [{ id: CONTROLLERS_TAB_ID, title: 'Controllers', closable: false }],
+    tabs: [
+      { id: CONTROLLERS_TAB_ID, title: 'Controllers', closable: false },
+      { id: CONFIGURATION_TAB_ID, title: 'Configuration', closable: false },
+    ],
     activeTabId: CONTROLLERS_TAB_ID,
     controllerPanels: [],
   };

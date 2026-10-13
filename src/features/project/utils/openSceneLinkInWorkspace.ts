@@ -58,7 +58,9 @@ export async function openSceneLinkInWorkspace(
   }
 }
 
-export function retrieveDefaultDeviceScene(deviceId: string): Promise<void> {
+export async function retrieveDefaultDeviceScene(
+  deviceId: string
+): Promise<void> {
   return openDeviceSceneLinkInWorkspace(deviceId);
 }
 

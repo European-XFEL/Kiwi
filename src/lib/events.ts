@@ -22,6 +22,8 @@ enum KaraboEvent {
   OpenUnattachedScene = 'OpenUnattachedScene',
   // Opens a derived display controller in the workspace. Payload: { model }.
   OpenControllerPanel = 'OpenControllerPanel',
+  // Topology-owned DeviceProxy, or undefined to clear. Payload: { proxy }.
+  ShowConfiguration = 'ShowConfiguration',
   // Successful opens, including reuse. Payload: { id }; the UI reveals/focuses it.
   ControllerPanelActivated = 'ControllerPanelActivated',
   // Tab changes within a session only. GoToHomeTab and session end reset the

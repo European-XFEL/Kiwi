@@ -13,6 +13,7 @@ export const WORKSPACE_PANEL_IDS = [
   'workspace-right',
 ] as const;
 export const CONTROLLERS_TAB_ID = 'controllers';
+export const CONFIGURATION_TAB_ID = 'configuration';
 export const SYSTEM_TOPOLOGY_TAB_ID = 'system-topology';
 
 function createBodyPanel(options: {
