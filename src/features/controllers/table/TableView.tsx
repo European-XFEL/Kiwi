@@ -1,4 +1,5 @@
 import React from 'react';
+import { TableVirtuoso, type TableComponents } from 'react-virtuoso';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 import {
   FilterTableElementModel,
@@ -210,6 +211,7 @@ function TableRenderer({
   onSort?: (key: string) => void;
   children?: React.ReactNode;
 }) {
+  const actionAllowed = canAct(ctx);
   return (
     <div className="border border-gray-400 bg-white overflow-hidden flex flex-col w-full h-full">
       {children}
@@ -218,116 +220,163 @@ function TableRenderer({
           No data
         </div>
       ) : (
-        <div className="flex-1 min-h-0 overflow-auto">
-          <Table
-            className="border-collapse text-xs"
-            style={{
-              width: model.resizeToContents ? 'max-content' : '100%',
-              minWidth: '100%',
-            }}
-          >
-            <TableHeader>
-              <TableRow className="border-b border-gray-300">
-                <TableHead className="sticky left-0 top-0 z-20 w-7 min-w-7 border border-gray-300 bg-gray-100 px-1 py-1 text-right align-middle font-normal text-gray-600" />
-                {columns.map(({ key, binding }, column) => (
-                  <TableHead
-                    key={key}
-                    style={{
-                      width: column === columns.length - 1 ? 'auto' : '1%',
-                    }}
-                    aria-sort={
-                      onSort && key === sortKey
-                        ? ascending
-                          ? 'ascending'
-                          : 'descending'
-                        : undefined
-                    }
-                    className="sticky top-0 z-10 border border-gray-300 bg-gray-100 px-2 py-1 text-left align-middle font-semibold text-gray-800 whitespace-nowrap"
-                  >
-                    {onSort ? (
-                      <button
-                        type="button"
-                        className="w-full text-left"
-                        onClick={() => onSort(key)}
-                      >
-                        {binding.displayedName || key}
-                      </button>
-                    ) : (
-                      binding.displayedName || key
-                    )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <MemoizedTableDataBody
+        <TableVirtuoso
+          className="flex-1 min-h-0"
+          data={rows}
+          context={model.resizeToContents}
+          components={tableComponents}
+          computeItemKey={sourceRowKey}
+          fixedHeaderContent={() => (
+            <TableRow className="border-b border-gray-300">
+              <TableHead className="sticky left-0 top-0 z-20 w-7 min-w-7 border border-gray-300 bg-gray-100 px-1 py-1 text-right align-middle font-normal text-gray-600" />
+              {columns.map(({ key, binding }, column) => (
+                <TableHead
+                  key={key}
+                  style={{
+                    width: column === columns.length - 1 ? 'auto' : '1%',
+                  }}
+                  aria-sort={
+                    onSort && key === sortKey
+                      ? ascending
+                        ? 'ascending'
+                        : 'descending'
+                      : undefined
+                  }
+                  className="sticky top-0 z-10 border border-gray-300 bg-gray-100 px-2 py-1 text-left align-middle font-semibold text-gray-800 whitespace-nowrap"
+                >
+                  {onSort ? (
+                    <button
+                      type="button"
+                      className="w-full text-left"
+                      onClick={() => onSort(key)}
+                    >
+                      {binding.displayedName || key}
+                    </button>
+                  ) : (
+                    binding.displayedName || key
+                  )}
+                </TableHead>
+              ))}
+            </TableRow>
+          )}
+          itemContent={(row, { data }) => (
+            <MemoizedTableDataCells
               columns={columns}
-              rows={rows}
+              data={data}
+              row={row}
               ctx={ctx}
               proxy={ctx?.proxy}
-              actionAllowed={canAct(ctx)}
+              actionAllowed={actionAllowed}
             />
-          </Table>
-        </div>
+          )}
+        />
       )}
     </div>
   );
 }
 
-function TableDataBody({
+// Keep adapter identities stable so value updates retain the scroller and measurements.
+const tableComponents: TableComponents<Row, boolean> = {
+  Table: ({ children, style, context: resizeToContents }) => (
+    <Table
+      className="border-separate text-xs"
+      style={{
+        ...style,
+        width: resizeToContents ? 'max-content' : '100%',
+        minWidth: '100%',
+      }}
+    >
+      {children}
+    </Table>
+  ),
+  TableHead: ({ children, style, ref }) => (
+    <TableHeader ref={ref} style={{ ...style, zIndex: 20 }}>
+      {children}
+    </TableHeader>
+  ),
+  TableBody: ({ children, style, ref, 'data-testid': testId }) => (
+    <TableBody
+      ref={ref}
+      style={style}
+      data-testid={testId}
+      className="[&_tr:last-child]:border-b"
+    >
+      {children}
+    </TableBody>
+  ),
+  TableRow: ({
+    children,
+    style,
+    'data-index': index,
+    'data-item-index': itemIndex,
+    'data-known-size': knownSize,
+  }) => (
+    <TableRow
+      style={style}
+      data-index={index}
+      data-item-index={itemIndex}
+      data-known-size={knownSize}
+      className="border-b border-gray-300 hover:bg-gray-50"
+    >
+      {children}
+    </TableRow>
+  ),
+};
+
+function sourceRowKey(_row: number, { index }: Row) {
+  return index;
+}
+
+function TableDataCells({
   columns,
-  rows,
+  data,
+  row,
   ctx,
 }: {
   columns: Column[];
-  rows: Row[];
+  data: Hash;
+  row: number;
   ctx?: ControllerContainerContext;
   // Snapshot mutable action context so memoization cannot retain stale buttons.
   proxy: ControllerContainerContext['proxy'];
   actionAllowed: boolean;
 }) {
   return (
-    <TableBody className="[&_tr:last-child]:border-b">
-      {rows.map(({ data, index }, row) => (
-        <TableRow
-          key={index}
-          className="border-b border-gray-300 hover:bg-gray-50"
-        >
+    <>
+      <TableCell
+        role="rowheader"
+        className="sticky left-0 z-10 w-7 min-w-7 border border-gray-300 bg-gray-100 px-1 py-0.5 text-right align-middle text-gray-600"
+      >
+        {row}
+      </TableCell>
+      {columns.map(({ key, binding, delegate, className }, column) => {
+        const value = data.getValue(key);
+        const props = {
+          value,
+          binding,
+          ctx,
+          rowData: data,
+          row,
+          column,
+          header: key,
+        };
+        const Component = delegate.Component;
+        return (
           <TableCell
-            role="rowheader"
-            className="sticky left-0 z-10 w-7 min-w-7 border border-gray-300 bg-gray-100 px-1 py-0.5 text-right align-middle text-gray-600"
+            key={key}
+            style={delegate.getStyle?.(props)}
+            className={className}
           >
-            {row}
+            {Component ? (
+              <Component {...props} />
+            ) : (
+              formatTableCell(value, binding)
+            )}
           </TableCell>
-          {columns.map(({ key, binding, delegate, className }, column) => {
-            const value = data.getValue(key);
-            const props = {
-              value,
-              binding,
-              ctx,
-              rowData: data,
-              row,
-              column,
-              header: key,
-            };
-            const Component = delegate.Component;
-            return (
-              <TableCell
-                key={key}
-                style={delegate.getStyle?.(props)}
-                className={className}
-              >
-                {Component ? (
-                  <Component {...props} />
-                ) : (
-                  formatTableCell(value, binding)
-                )}
-              </TableCell>
-            );
-          })}
-        </TableRow>
-      ))}
-    </TableBody>
+        );
+      })}
+    </>
   );
 }
 
-const MemoizedTableDataBody = React.memo(TableDataBody);
+const MemoizedTableDataCells = React.memo(TableDataCells);

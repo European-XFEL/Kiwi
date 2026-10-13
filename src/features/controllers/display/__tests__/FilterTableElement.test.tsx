@@ -1,8 +1,14 @@
+import { VirtuosoMockContext } from 'react-virtuoso';
 import React from 'react';
 import * as formatting from '../../table/formatTableCell';
 import * as delegateSelection from '../../table/getDisplayDelegate';
 import * as limits from '../../table/getMinMax';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import {
+  fireEvent,
+  render as renderView,
+  screen,
+  within,
+} from '@testing-library/react';
 import {
   FilterTableElementModel,
   TableElementModel,
@@ -630,3 +636,15 @@ test('style delegates refresh row context when the table is replaced', () => {
     opacity: 0.5,
   });
 });
+
+function render(view: React.ReactElement) {
+  return renderView(view, {
+    wrapper: ({ children }) => (
+      <VirtuosoMockContext.Provider
+        value={{ viewportHeight: 240, itemHeight: 24 }}
+      >
+        {children}
+      </VirtuosoMockContext.Provider>
+    ),
+  });
+}

@@ -1,4 +1,5 @@
-import { render, screen, within } from '@testing-library/react';
+import { VirtuosoMockContext } from 'react-virtuoso';
+import { render as renderView, screen, within } from '@testing-library/react';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 import { TableElementModel } from '@/karabo/common/api';
 import {
@@ -74,3 +75,15 @@ test('renders a row number gutter before table data', () => {
   expect(within(firstDataRow).getByText('channel_1_C')).toBeInTheDocument();
   expect(within(secondDataRow).getByText('channel_1_A')).toBeInTheDocument();
 });
+
+function render(view: React.ReactElement) {
+  return renderView(view, {
+    wrapper: ({ children }) => (
+      <VirtuosoMockContext.Provider
+        value={{ viewportHeight: 240, itemHeight: 24 }}
+      >
+        {children}
+      </VirtuosoMockContext.Provider>
+    ),
+  });
+}
