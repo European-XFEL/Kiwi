@@ -6,6 +6,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  ContextMenu,
+  ContextMenuTrigger,
+  ContextMenuContent,
+  ContextMenuItem,
 } from '@/components/api';
 import { KiwiSearchInput } from '@/components/api';
 import { asLocalDateTimeString } from '@/karabo/common/project/api';
@@ -16,6 +20,7 @@ export default function ScenesTable({
   selectedScene,
   onSceneClick,
   onSceneDoubleClick,
+  onSceneBookmark,
   query,
   onQueryChange,
   selectionDisabled = false,
@@ -59,53 +64,71 @@ export default function ScenesTable({
                 </TableRow>
               ) : (
                 scenes.map((scene, index) => (
-                  <TableRow
-                    key={`${index}::${scene.uuid}`}
-                    data-testid={`scene-row-${scene.uuid}`}
-                    onClick={
-                      selectionDisabled ? undefined : () => onSceneClick(scene)
-                    }
-                    onDoubleClick={
-                      selectionDisabled
-                        ? undefined
-                        : () => onSceneDoubleClick(scene)
-                    }
-                    aria-disabled={selectionDisabled || undefined}
-                    className={
-                      selectionDisabled
-                        ? `cursor-not-allowed opacity-60 ${
-                            selectedScene?.uuid === scene.uuid
-                              ? 'bg-secondary/15'
-                              : ''
-                          }`
-                        : `cursor-pointer ${
-                            selectedScene?.uuid === scene.uuid
-                              ? 'bg-secondary/15 hover:bg-secondary/20'
-                              : 'hover:bg-accent/50'
-                          }`
-                    }
-                  >
-                    <TableCell className="py-3 font-medium sm:max-w-xs lg:py-2">
-                      {/* Keyboard access to the row: activating the button
-                          clicks it, and that click reaches the row handler */}
-                      <button
-                        data-testid="scene-select"
-                        type="button"
-                        disabled={selectionDisabled}
-                        className="block w-full min-w-0 cursor-[inherit] rounded-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  <ContextMenu key={`${index}::${scene.uuid}`}>
+                    <ContextMenuTrigger
+                      asChild
+                      disabled={selectionDisabled || !onSceneBookmark}
+                    >
+                      <TableRow
+                        data-testid={`scene-row-${scene.uuid}`}
+                        onClick={
+                          selectionDisabled
+                            ? undefined
+                            : () => onSceneClick(scene)
+                        }
+                        onDoubleClick={
+                          selectionDisabled
+                            ? undefined
+                            : () => onSceneDoubleClick(scene)
+                        }
+                        aria-disabled={selectionDisabled || undefined}
+                        className={
+                          selectionDisabled
+                            ? `cursor-not-allowed opacity-60 ${
+                                selectedScene?.uuid === scene.uuid
+                                  ? 'bg-secondary/15'
+                                  : ''
+                              }`
+                            : `cursor-pointer ${
+                                selectedScene?.uuid === scene.uuid
+                                  ? 'bg-secondary/15 hover:bg-secondary/20'
+                                  : 'hover:bg-accent/50'
+                              }`
+                        }
                       >
-                        <span className="block truncate">
-                          {scene.simple_name}
-                        </span>
-                        <span className="block truncate text-xs font-normal text-muted-foreground sm:hidden">
+                        <TableCell className="py-3 font-medium sm:max-w-xs lg:py-2">
+                          {/* Keyboard access to the row: activating the button
+                          clicks it, and that click reaches the row handler */}
+                          <button
+                            data-testid="scene-select"
+                            type="button"
+                            disabled={selectionDisabled}
+                            className="block w-full min-w-0 cursor-[inherit] rounded-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          >
+                            <span className="block truncate">
+                              {scene.simple_name}
+                            </span>
+                            <span className="block truncate text-xs font-normal text-muted-foreground sm:hidden">
+                              {asLocalDateTimeString(scene.date)}
+                            </span>
+                          </button>
+                        </TableCell>
+                        <TableCell className="hidden truncate sm:table-cell">
                           {asLocalDateTimeString(scene.date)}
-                        </span>
-                      </button>
-                    </TableCell>
-                    <TableCell className="hidden truncate sm:table-cell">
-                      {asLocalDateTimeString(scene.date)}
-                    </TableCell>
-                  </TableRow>
+                        </TableCell>
+                      </TableRow>
+                    </ContextMenuTrigger>
+                    {onSceneBookmark && (
+                      <ContextMenuContent>
+                        <ContextMenuItem
+                          disabled={selectionDisabled}
+                          onSelect={() => onSceneBookmark(scene)}
+                        >
+                          Add to Favorites
+                        </ContextMenuItem>
+                      </ContextMenuContent>
+                    )}
+                  </ContextMenu>
                 ))
               )}
             </TableBody>
