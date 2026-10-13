@@ -3,9 +3,11 @@
 
 export {
   registerRenderer,
+  getRenderer,
   type Renderer,
   type RendererProps,
 } from './renderRegistry';
+export { deriveControllerModel } from './utils/deriveControllerModel';
 export {
   SceneControllerRegistryProvider,
   type SceneControllerRegistry,

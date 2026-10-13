@@ -117,6 +117,54 @@ describe('WorkspaceBody layout lifetime', () => {
     });
   });
 
+  it('activates and unfolds Configuration, retaining its monitor and navigation while hidden', async () => {
+    const wrangler = new PanelWrangler();
+    const device = createDevice();
+    device.isOnline = true;
+    device.status = ProxyStatus.SCHEMA;
+    const network = {
+      onStartMonitoringDevice: jest.fn(),
+      onStopMonitoringDevice: jest.fn(),
+    };
+    await SingletonContext.run(
+      { panel_wrangler: wrangler, network },
+      async () => {
+        try {
+          const workspace = mountWorkspace();
+          act(() =>
+            broadcast_event(KaraboEvent.ShowConfiguration, { proxy: device })
+          );
+          expect(wrangler.getSnapshot().right.activeTabId).toBe(
+            'configuration'
+          );
+          expect(
+            screen.getByRole('tab', { name: 'Configuration' })
+          ).toHaveAttribute('aria-selected', 'true');
+          expect(
+            screen.getByRole('button', { name: 'Fold right panel' })
+          ).toHaveAttribute('aria-expanded', 'true');
+          expect(device.isMonitoring).toBe(true);
+          const configuration = screen.getByRole('region', {
+            name: 'Configuration',
+          });
+          fireEvent.click(screen.getByRole('tab', { name: 'Controllers' }));
+          expect(configuration).not.toBeVisible();
+          expect(device.isMonitoring).toBe(true);
+          fireEvent.click(screen.getByRole('tab', { name: 'Configuration' }));
+          expect(screen.getByRole('region', { name: 'Configuration' })).toBe(
+            configuration
+          );
+          expect(configuration).toBeVisible();
+          workspace.unmount();
+          expect(device.isMonitoring).toBe(false);
+        } finally {
+          cleanup();
+          wrangler.dispose();
+        }
+      }
+    );
+  });
+
   it('renders the active scene and restores its fit mode after page visibility changes', async () => {
     const wrangler = new PanelWrangler();
     const model = new SceneModel({
@@ -193,7 +241,7 @@ describe('WorkspaceBody layout lifetime', () => {
     });
   });
 
-  it('starts with a single Controllers tab', async () => {
+  it('starts with permanent Controllers and Configuration tabs', async () => {
     const wrangler = new PanelWrangler();
     await SingletonContext.run({ panel_wrangler: wrangler }, async () => {
       try {
@@ -204,13 +252,16 @@ describe('WorkspaceBody layout lifetime', () => {
         const controllers = screen.getByRole('tab', { name: 'Controllers' });
         expect(controllers).toHaveAttribute('aria-selected', 'true');
         fireEvent.keyDown(controllers, { key: 'ArrowLeft' });
-        expect(controllers).toHaveFocus();
-        expect(controllers).toHaveAttribute('aria-selected', 'true');
+        const configuration = screen.getByRole('tab', {
+          name: 'Configuration',
+        });
+        expect(configuration).toHaveFocus();
+        expect(configuration).toHaveAttribute('aria-selected', 'true');
         expect(
           within(
             screen.getByRole('tablist', { name: 'Right area' })
           ).getAllByRole('tab')
-        ).toHaveLength(1);
+        ).toHaveLength(2);
       } finally {
         cleanup();
         wrangler.dispose();

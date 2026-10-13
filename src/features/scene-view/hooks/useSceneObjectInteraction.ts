@@ -1,6 +1,5 @@
 import React from 'react';
 import { broadcast_event, KaraboEvent } from '@/lib/events';
-import { getRenderer } from '../renderRegistry';
 import { deriveControllerModel } from '../utils/deriveControllerModel';
 import { isEditableWidget } from '../utils/sceneNodePredicates';
 import {
@@ -76,7 +75,7 @@ export function useSceneObjectInteraction({
         return;
       }
       const model = deriveControllerModel(controller.ctx.proxy?.binding);
-      if (!model || !getRenderer(model)) {
+      if (!model) {
         return;
       }
       model.keys = [key];

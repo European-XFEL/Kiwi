@@ -15,6 +15,8 @@ import { Logger } from '@/lib/singletons/Logger';
 import { SingletonContext } from '@/testing';
 import { retrieveDefaultDeviceScene } from '@/features/project/api';
 import SystemTopologyPanel from '../SystemTopologyPanel';
+import { KaraboEvent } from '@/lib/events';
+import { getMediator } from '@/lib/singletons/api';
 
 jest.mock('@/features/project/api', () => ({
   retrieveDefaultDeviceScene: jest.fn(),
@@ -127,6 +129,21 @@ test('uses clickable rows without selectable text and places Service Manager abo
   expect(
     button.compareDocumentPosition(header) & Node.DOCUMENT_POSITION_FOLLOWING
   ).toBeTruthy();
+});
+
+test('selection broadcasts the topology-owned device or macro proxy and ignores namespaces', () => {
+  const selected: unknown[] = [];
+  const remove = getMediator().on(KaraboEvent.ShowConfiguration, (data) =>
+    selected.push(data.proxy)
+  );
+  render(<SystemTopologyPanel />);
+  fireEvent.click(row('DEV'));
+  fireEvent.click(row('Class'));
+  fireEvent.click(row('MACRO'));
+  expect(selected).toHaveLength(2);
+  expect(selected[0]).toBe(topology.getDevice('DEV'));
+  expect(selected[1]).toBe(topology.getDevice('MACRO'));
+  remove();
 });
 
 test('logs a device without scene capability instead of retrieving its scene', () => {

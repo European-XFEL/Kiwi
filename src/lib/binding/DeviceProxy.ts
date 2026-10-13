@@ -250,6 +250,7 @@ export class DeviceProxy {
       this.state_update.fire(this.state);
     }
     this._config_update_fired();
+    this.config_update.fire();
   }
 
   destroy(): void {

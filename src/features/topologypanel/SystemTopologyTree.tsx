@@ -23,6 +23,8 @@ import {
   initializeMonitoring,
 } from './utils';
 import useTopologyMonitoring from './useTopologyMonitoring';
+import { broadcast_event, KaraboEvent } from '@/lib/events';
+import { getTopology } from '@/lib/singletons/api';
 
 const ROW_HEIGHT = 20;
 const INDENT = 20;
@@ -252,6 +254,17 @@ function SystemTopologyTree({ model }: { model: SystemTree }) {
           renderRow={RowRenderer}
           onActivate={activate}
           onFocus={onFocus}
+          onSelect={(nodes) => {
+            const selected = nodes[0];
+            if (
+              selected?.data.kind === 'device' ||
+              selected?.data.kind === 'macro'
+            ) {
+              broadcast_event(KaraboEvent.ShowConfiguration, {
+                proxy: getTopology().getDevice(selected.id),
+              });
+            }
+          }}
           aria-label="System topology"
         >
           {NodeRenderer}

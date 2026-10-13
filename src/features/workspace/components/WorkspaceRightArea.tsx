@@ -2,7 +2,8 @@ import { memo, useEffect, useRef, type ReactNode } from 'react';
 import { Tabs, type TabItem } from '@/components/api';
 import { KaraboEvent, useKaraboEvent } from '@/lib/events';
 import usePanelArea from '../hooks/usePanelArea';
-import { CONTROLLERS_TAB_ID } from '../utils';
+import { ConfigurationPanel } from '@/features/configurationpanel/api';
+import { CONFIGURATION_TAB_ID, CONTROLLERS_TAB_ID } from '../utils';
 import ControllerPanelStack from './ControllerPanelStack';
 
 interface WorkspaceRightAreaProps {
@@ -42,8 +43,14 @@ function WorkspaceRightArea({
     onExpandedChange(true);
   });
 
+  useKaraboEvent(KaraboEvent.ShowConfiguration, () => {
+    onTabSelect(CONFIGURATION_TAB_ID);
+    onExpandedChange(true);
+  });
+
   const items: TabItem[] = right.tabs.map((tab) => {
     const isControllersTab = tab.id === CONTROLLERS_TAB_ID;
+    const isConfigurationTab = tab.id === CONFIGURATION_TAB_ID;
     let content: ReactNode = null;
     if (isControllersTab) {
       content = (
@@ -53,10 +60,13 @@ function WorkspaceRightArea({
         />
       );
     }
+    if (isConfigurationTab) {
+      content = <ConfigurationPanel />;
+    }
     return {
       ...tab,
       panel: content,
-      keepMounted: isControllersTab,
+      keepMounted: isControllersTab || isConfigurationTab,
     };
   });
 
