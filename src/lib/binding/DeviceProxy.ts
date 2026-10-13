@@ -6,6 +6,7 @@ import { buildBinding } from './BindingFactory';
 import { getNetwork } from '@/lib/singletons/api';
 import { BaseBinding, BindingRoot, NodeBinding } from './BaseBinding';
 import { Signal } from '../utils';
+import { broadcast_event, KaraboEvent } from '../events';
 
 export function applyConfiguration(
   config: Hash,
@@ -69,6 +70,10 @@ export class DeviceProxy {
   state_update = new Signal<[string | undefined]>();
   status_update = new Signal<[string]>();
   instance_status_update = new Signal<[InstanceStatus]>();
+
+  public get isMonitoring(): boolean {
+    return this.monitorCount > 0;
+  }
 
   constructor(deviceId: string) {
     this.deviceId = deviceId;
@@ -136,6 +141,9 @@ export class DeviceProxy {
     this.monitorCount += 1;
 
     if (this.monitorCount === 1) {
+      broadcast_event(KaraboEvent.StartMonitoringDevice, {
+        device_id: this.deviceId,
+      });
       if (this.status === ProxyStatus.ONLINE) {
         this.refreshDeviceSchema();
       } else if (!ignoredStatuses.has(this.status)) {
@@ -148,6 +156,9 @@ export class DeviceProxy {
   public removeMonitor(): void {
     this.monitorCount -= 1;
     if (this.monitorCount === 0) {
+      broadcast_event(KaraboEvent.StopMonitoringDevice, {
+        device_id: this.deviceId,
+      });
       this._stopMonitoringDevice();
     }
   }
@@ -242,7 +253,13 @@ export class DeviceProxy {
   }
 
   destroy(): void {
+    const wasMonitoring = this.isMonitoring;
     this.monitorCount = 0;
+    if (wasMonitoring) {
+      broadcast_event(KaraboEvent.StopMonitoringDevice, {
+        device_id: this.deviceId,
+      });
+    }
     this._stopMonitoringDevice();
   }
 

@@ -26,6 +26,7 @@ export {
 export {
   openSceneLinkInWorkspace,
   openDeviceSceneLinkInWorkspace,
+  retrieveDefaultDeviceScene,
 } from './utils/openSceneLinkInWorkspace';
 
 // Types

@@ -1,6 +1,17 @@
 import PanelContainer from './PanelContainer';
+import { SystemTopologyPanel } from '@/features/topologypanel/api';
+import { SYSTEM_TOPOLOGY_TAB_ID } from '../utils';
 
 export default function WorkspaceLeftArea() {
-  // TODO: Render the topology panel (device/instance tree).
-  return <PanelContainer area="left" renderPanel={() => null} />;
+  return (
+    <PanelContainer
+      area="left"
+      renderPanel={(tab) => {
+        if (tab.id === SYSTEM_TOPOLOGY_TAB_ID) {
+          return <SystemTopologyPanel />;
+        }
+        return null;
+      }}
+    />
+  );
 }

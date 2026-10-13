@@ -5,6 +5,7 @@ import { showMessageBox } from '@/lib/messagebox';
 import { ProjectItemModel } from '@/lib/singletons/ProjectItemModel';
 import { getProjectModel } from '@/lib/singletons/api';
 import { SingletonContext } from '@/testing';
+import { retrieveDefaultDeviceScene } from '../../api';
 import {
   DeviceProxy,
   ProxyStatus,
@@ -284,7 +285,7 @@ describe('openDeviceSceneLinkInWorkspace', () => {
       );
       return 'request-token';
     });
-    const pending = openDeviceSceneLinkInWorkspace('device-1');
+    const pending = retrieveDefaultDeviceScene('device-1');
     expect(root.addMonitor).toHaveBeenCalledTimes(1);
     expect(release).not.toHaveBeenCalled();
     scenes.setValue(['first', 'second'], undefined);
@@ -296,6 +297,9 @@ describe('openDeviceSceneLinkInWorkspace', () => {
       { name: 'first' }
     );
     expect(release).toHaveBeenCalledTimes(1);
+    expect(openUnattachedSceneInWorkspace).toHaveBeenCalledWith(
+      expect.objectContaining({ simple_name: 'device-1|first' })
+    );
     scenes.setValue(['third'], undefined);
     expect(mockCallDeviceSlot).toHaveBeenCalledTimes(1);
   });
@@ -312,6 +316,36 @@ describe('openDeviceSceneLinkInWorkspace', () => {
     expect(release).toHaveBeenCalledTimes(1);
     expect(mockCallDeviceSlot).not.toHaveBeenCalled();
   });
+
+  it.each(['empty', 'missing'])(
+    'does not request a scene when availableScenes is %s',
+    async (kind) => {
+      const root = new DeviceProxy('device-1');
+      root.status = ProxyStatus.ALIVE;
+      if (kind === 'empty') {
+        root.binding.value!.set(
+          'availableScenes',
+          new VectorStringBinding({
+            value: [],
+          })
+        );
+      } else {
+        root.binding.value!.set('other', new VectorStringBinding());
+      }
+      const release = jest.fn();
+      jest.spyOn(root, 'addMonitor').mockReturnValue(release);
+      mockGetDevice.mockReturnValue(root);
+
+      await retrieveDefaultDeviceScene('device-1');
+
+      expect(release).toHaveBeenCalledTimes(1);
+      expect(mockCallDeviceSlot).not.toHaveBeenCalled();
+      expect(openUnattachedSceneInWorkspace).not.toHaveBeenCalled();
+      expect(mockLogInfo).toHaveBeenCalledWith(
+        'Device "device-1" does not provide a scene.'
+      );
+    }
+  );
 
   const gcTest = global.gc ? it : it.skip;
   gcTest(

@@ -22,7 +22,10 @@ import type {
   SceneTabSnapshot,
   RightPanelState,
 } from '@/features/workspace/types';
-import { CONTROLLERS_TAB_ID } from '@/features/workspace/utils';
+import {
+  CONTROLLERS_TAB_ID,
+  SYSTEM_TOPOLOGY_TAB_ID,
+} from '@/features/workspace/utils';
 import {
   findProjectModelInProject,
   walkProjectModels,
@@ -50,8 +53,14 @@ const DEFAULT_FIT_MODE: FitMode = 'fit-page';
 
 const HOME_TAB: PanelTab = { id: HOME_TAB_ID, title: 'Home', closable: false };
 
-function createEmptyArea(id: PanelSlot): PanelState {
-  return { id, tabs: [], activeTabId: undefined };
+function createLeftArea(): PanelState {
+  return {
+    id: 'left',
+    tabs: [
+      { id: SYSTEM_TOPOLOGY_TAB_ID, title: 'SystemTopology', closable: false },
+    ],
+    activeTabId: SYSTEM_TOPOLOGY_TAB_ID,
+  };
 }
 
 function createRightArea(): RightPanelState {
@@ -118,7 +127,7 @@ export class PanelWrangler {
   // is loading, so resets leave this flag untouched.
   private state = {
     projectLoading: false,
-    left: createEmptyArea('left'),
+    left: createLeftArea(),
     center: createCenterArea(),
     right: createRightArea(),
   };
@@ -297,7 +306,7 @@ export class PanelWrangler {
 
     this.commit({
       ...this.state,
-      left: createEmptyArea('left'),
+      left: createLeftArea(),
       center,
       right: createRightArea(),
     });

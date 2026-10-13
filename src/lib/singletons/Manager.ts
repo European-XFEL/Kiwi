@@ -9,7 +9,7 @@ import {
 } from '@/lib/singletons/api';
 
 import { v4 as uuidv4 } from 'uuid';
-import { get_reason_parts } from './util';
+import { get_reason_parts, sortTopologyServersByHost } from './util';
 import { showMessageBox } from '../messagebox';
 import type { DeviceProxy, PropertyProxy } from '../binding/api';
 
@@ -231,7 +231,14 @@ export class Manager {
   }
 
   public handle_systemTopology(hash: Hash): void {
-    this._topology.initialize(hash.get('systemTopology'));
+    const topology = hash.getValue<Hash>('systemTopology');
+    if (topology.has('server')) {
+      topology.set(
+        'server',
+        sortTopologyServersByHost(topology.getValue<Hash>('server'))
+      );
+    }
+    this._topology.initialize(topology);
   }
 
   public handle_topologyUpdate(hash: Hash): void {

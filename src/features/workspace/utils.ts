@@ -13,6 +13,7 @@ export const WORKSPACE_PANEL_IDS = [
   'workspace-right',
 ] as const;
 export const CONTROLLERS_TAB_ID = 'controllers';
+export const SYSTEM_TOPOLOGY_TAB_ID = 'system-topology';
 
 function createBodyPanel(options: {
   id: string;
@@ -66,7 +67,7 @@ function createDefaultWorkspaceBodyModel(): WorkspaceBodyModel {
         collapsible: true,
         collapsed: true,
         collapsedWidthPercent: 0,
-        lastExpandedWidthPercent: 20,
+        lastExpandedWidthPercent: 24,
       }),
       center: createBodyPanel({
         id: 'workspace-scene-panel',

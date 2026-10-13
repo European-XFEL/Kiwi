@@ -254,14 +254,14 @@ describe('WorkspaceBody fold controls', () => {
     expect(screen.getByTestId('resizable-group')).not.toContainElement(left);
     fireEvent.click(left);
     expect(mockLayout).toEqual({
-      'workspace-left': 20,
-      'workspace-center': 80,
+      'workspace-left': 24,
+      'workspace-center': 76,
       'workspace-right': 0,
     });
     fireEvent.click(screen.getByRole('button', { name: 'Unfold right panel' }));
     expect(mockLayout).toEqual({
-      'workspace-left': 20,
-      'workspace-center': 45,
+      'workspace-left': 24,
+      'workspace-center': 41,
       'workspace-right': 35,
     });
     expect(screen.getByTestId('controller-stack')).toHaveAttribute(

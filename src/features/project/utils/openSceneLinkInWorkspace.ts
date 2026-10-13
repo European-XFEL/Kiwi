@@ -58,6 +58,10 @@ export async function openSceneLinkInWorkspace(
   }
 }
 
+export function retrieveDefaultDeviceScene(deviceId: string): Promise<void> {
+  return openDeviceSceneLinkInWorkspace(deviceId);
+}
+
 export async function openDeviceSceneLinkInWorkspace(
   deviceId: string,
   sceneName?: string
@@ -86,6 +90,9 @@ function resolveDefaultDeviceScene(
     const finish = (name?: string) => {
       cleanups.forEach((cleanup) => cleanup());
       proxy.dispose();
+      if (!name && root.status !== ProxyStatus.OFFLINE) {
+        getLogger().info(`Device "${deviceId}" does not provide a scene.`);
+      }
       resolve(name);
     };
     const check = () => {
