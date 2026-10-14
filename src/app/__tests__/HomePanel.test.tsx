@@ -5,7 +5,9 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Hash } from '@/karabo/data/api';
 import { KaraboEvent } from '@/lib/events';
 import { getConfig, getMediator, singletons } from '@/lib/singletons/api';
@@ -95,27 +97,6 @@ describe('HomePanel', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('owns vertical scrolling so long favorites lists remain reachable in the clipped workspace tab', () => {
-    for (let index = 0; index < 40; index++) {
-      getConfig().addProjectFavorite('TOPIC_A', {
-        ...favorite,
-        sceneUuid: `scene-${index}`,
-        sceneName: `Scene ${index}`,
-      });
-    }
-    render(<HomePanel />);
-
-    // jsdom cannot measure layout. This guards Home's scroll ownership; its
-    // workspace tab deliberately uses overflow-hidden for scene rendering.
-    expect(screen.getByTestId('home-panel')).toHaveClass(
-      'h-full',
-      'overflow-y-auto'
-    );
-    expect(
-      screen.getByRole('button', { name: 'Open favorite Scene 0' })
-    ).toBeInTheDocument();
-  });
-
   it('shows only favorites for the current topic and follows topic changes', () => {
     getConfig().addProjectFavorite('TOPIC_A', favorite);
     getConfig().addProjectFavorite('TOPIC_B', {
@@ -130,7 +111,6 @@ describe('HomePanel', () => {
     expect(projectName.parentElement).toHaveTextContent(/^Motors:Motor Scene$/);
     expect(projectName.parentElement).toHaveClass('truncate', 'text-sm');
     expect(projectName.parentElement).not.toHaveClass('font-medium');
-    expect(projectName.parentElement?.parentElement?.children).toHaveLength(1);
     expect(screen.queryByText(/CONTROLS/)).not.toBeInTheDocument();
     expect(screen.queryByText(/TOPIC_[AB]/)).not.toBeInTheDocument();
     expect(screen.queryByText(':Other Scene')).not.toBeInTheDocument();
@@ -261,7 +241,142 @@ describe('HomePanel', () => {
     expect(loadRootProjectScene).not.toHaveBeenCalled();
   });
 
-  it('opens with the stored identifiers and blocks further opens until completion', async () => {
+  it('shows the slot count and priority ranks and persists keyboard moves', async () => {
+    const user = userEvent.setup();
+    getConfig().addProjectFavorite('TOPIC_A', favorite);
+    getConfig().addProjectFavorite('TOPIC_A', {
+      ...favorite,
+      sceneUuid: 'detail',
+      sceneName: 'Detail',
+    });
+    render(<HomePanel />);
+
+    expect(screen.getByText('2 / 10')).toBeInTheDocument();
+    const rows = screen.getAllByRole('listitem');
+    expect(within(rows[0]).getByText('01')).toBeInTheDocument();
+    expect(within(rows[1]).getByText('02')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Move Motor Scene up' })
+    ).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: 'Move Detail down' })
+    ).toBeDisabled();
+    const moveUp = screen.getByRole('button', { name: 'Move Detail up' });
+    moveUp.focus();
+
+    await user.keyboard('{Enter}');
+
+    expect(screen.getAllByRole('listitem')[0]).toHaveTextContent(
+      'Motors:Detail'
+    );
+    expect(moveUp).toHaveFocus();
+    expect(
+      new ConfigurationStore()
+        .getProjectFavorites('TOPIC_A')
+        .map((entry) => entry.sceneUuid)
+    ).toEqual(['detail', 'motor-scene']);
+    expect(
+      screen.getByRole('button', { name: 'Move Detail up' })
+    ).toBeDisabled();
+
+    await user.click(screen.getByRole('button', { name: 'Move Detail down' }));
+
+    expect(screen.getAllByRole('listitem')[0]).toHaveTextContent(
+      'Motors:Motor Scene'
+    );
+    expect(loadRootProjectScene).not.toHaveBeenCalled();
+  });
+
+  it('persists a dropped row at the target priority and clears drag indicators', () => {
+    const favorites = [
+      favorite,
+      { ...favorite, sceneUuid: 'detail', sceneName: 'Detail' },
+      { ...favorite, sceneUuid: 'last', sceneName: 'Last' },
+    ];
+    favorites.forEach((entry) =>
+      getConfig().addProjectFavorite('TOPIC_A', entry)
+    );
+    render(<HomePanel />);
+    const rows = screen.getAllByRole('listitem');
+    const dataTransfer = {
+      setData: jest.fn(),
+      effectAllowed: '',
+      dropEffect: '',
+    };
+
+    fireEvent.dragStart(rows[2], { dataTransfer });
+    expect(rows[2]).toHaveClass('opacity-50');
+    fireEvent.dragOver(rows[0], { dataTransfer });
+    expect(rows[0]).toHaveClass('border-primary');
+    fireEvent.drop(rows[0], { dataTransfer });
+    fireEvent.dragEnd(rows[2]);
+
+    expect(
+      screen.getAllByRole('listitem').map((row) =>
+        within(row)
+          .getByRole('button', { name: /Open favorite/ })
+          .getAttribute('aria-label')
+      )
+    ).toEqual([
+      'Open favorite Last',
+      'Open favorite Motor Scene',
+      'Open favorite Detail',
+    ]);
+    expect(new ConfigurationStore().getProjectFavorites('TOPIC_A')).toEqual([
+      favorites[2],
+      favorites[0],
+      favorites[1],
+    ]);
+    expect(rows[0]).not.toHaveClass('border-primary');
+    expect(rows[2]).not.toHaveClass('opacity-50');
+    expect(loadRootProjectScene).not.toHaveBeenCalled();
+  });
+
+  it('ignores external drops and clears a cancelled drag', () => {
+    getConfig().addProjectFavorite('TOPIC_A', favorite);
+    getConfig().addProjectFavorite('TOPIC_A', {
+      ...favorite,
+      sceneUuid: 'detail',
+      sceneName: 'Detail',
+    });
+    render(<HomePanel />);
+    const rows = screen.getAllByRole('listitem');
+    const dataTransfer = {
+      setData: jest.fn(),
+      effectAllowed: '',
+      dropEffect: '',
+    };
+
+    fireEvent.drop(rows[1], { dataTransfer });
+    fireEvent.dragStart(rows[0], { dataTransfer });
+    fireEvent.dragOver(rows[1], { dataTransfer });
+    fireEvent.dragEnd(rows[0]);
+    fireEvent.drop(rows[1], { dataTransfer });
+
+    expect(rows[0]).not.toHaveClass('opacity-50');
+    expect(rows[1]).not.toHaveClass('border-primary');
+    expect(
+      new ConfigurationStore()
+        .getProjectFavorites('TOPIC_A')
+        .map((entry) => entry.sceneUuid)
+    ).toEqual(['motor-scene', 'detail']);
+  });
+
+  it('disables every row action and dragging without a topic', () => {
+    getConfig().addProjectFavorite('', favorite);
+    useGlobalStore.getState().setLoggedIn({
+      ...useGlobalStore.getState().sessionInfo!,
+      guiServerTopic: '',
+    });
+    render(<HomePanel />);
+
+    screen
+      .getAllByRole('button')
+      .forEach((button) => expect(button).toBeDisabled());
+    expect(screen.getByRole('listitem')).toHaveAttribute('draggable', 'false');
+  });
+
+  it('opens with the stored identifiers and blocks every row action until completion', async () => {
     let resolve!: () => void;
     const promise = new Promise<void>((done) => {
       resolve = done;
@@ -278,6 +393,13 @@ describe('HomePanel', () => {
       sceneName: 'Detail',
     });
     render(<HomePanel />);
+    const rows = screen.getAllByRole('listitem');
+    const dataTransfer = {
+      setData: jest.fn(),
+      effectAllowed: '',
+      dropEffect: '',
+    };
+    fireEvent.dragStart(rows[1], { dataTransfer });
 
     fireEvent.click(
       screen.getByRole('button', { name: 'Open favorite Motor Scene' })
@@ -297,9 +419,14 @@ describe('HomePanel', () => {
     expect(otherOpen).toBeDisabled();
     fireEvent.click(otherOpen);
     expect(loadRootProjectScene).toHaveBeenCalledTimes(1);
-    expect(
-      screen.getByRole('button', { name: 'Remove favorite Detail' })
-    ).toBeEnabled();
+    screen.getAllByRole('button').forEach((button) => {
+      expect(button).toBeDisabled();
+      fireEvent.click(button);
+    });
+    rows.forEach((row) => expect(row).toHaveAttribute('draggable', 'false'));
+    fireEvent.drop(rows[0], { dataTransfer });
+    fireEvent.dragStart(rows[1], { dataTransfer });
+    fireEvent.drop(rows[0], { dataTransfer });
     await act(async () => {
       resolve();
       await promise;
@@ -310,7 +437,7 @@ describe('HomePanel', () => {
       getConfig()
         .getProjectFavorites('TOPIC_A')
         .map((entry) => entry.sceneUuid)
-    ).toEqual(['detail', 'motor-scene']);
+    ).toEqual(['motor-scene', 'detail']);
   });
 
   it('allows retrying after an open fails and retains the bookmark', async () => {

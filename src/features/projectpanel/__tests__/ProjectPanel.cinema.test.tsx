@@ -93,6 +93,7 @@ function Favorites() {
       favorites={favorites}
       onOpen={() => {}}
       onRemove={() => {}}
+      onMove={() => {}}
     />
   );
 }

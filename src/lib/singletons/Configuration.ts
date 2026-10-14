@@ -23,6 +23,7 @@ export type ProjectFavoriteSelection = Pick<
 >;
 
 type ProjectFavoritesByTopic = Record<string, readonly StoredProjectFavorite[]>;
+export const MAX_PROJECT_FAVORITES = 10;
 const emptyProjectFavorites: readonly StoredProjectFavorite[] = [];
 
 function matchesProjectFavorite(
@@ -359,17 +360,43 @@ export class ConfigurationStore {
   public addProjectFavorite(
     topic: string,
     favorite: StoredProjectFavorite
-  ): void {
+  ): boolean {
     const favorites = this.getProjectFavorites(topic);
     const index = favorites.findIndex((entry) =>
       matchesProjectFavorite(entry, favorite)
     );
+    if (index === -1 && favorites.length >= MAX_PROJECT_FAVORITES) {
+      return false;
+    }
     const next = [...favorites];
     if (index === -1) {
-      next.unshift({ ...favorite });
+      next.push({ ...favorite });
     } else {
       next[index] = { ...favorite };
     }
+    this.setValue('projectFavoritesByTopic', {
+      ...this.getItem(this.storage_items.projectFavoritesByTopic),
+      [topic]: next,
+    });
+    return true;
+  }
+
+  public moveProjectFavorite(
+    topic: string,
+    selection: ProjectFavoriteSelection,
+    toIndex: number
+  ): void {
+    const favorites = this.getProjectFavorites(topic);
+    const fromIndex = favorites.findIndex((entry) =>
+      matchesProjectFavorite(entry, selection)
+    );
+    const targetIndex = Math.max(0, Math.min(toIndex, favorites.length - 1));
+    if (fromIndex === -1 || fromIndex === targetIndex) {
+      return;
+    }
+    const next = [...favorites];
+    const [favorite] = next.splice(fromIndex, 1);
+    next.splice(targetIndex, 0, favorite);
     this.setValue('projectFavoritesByTopic', {
       ...this.getItem(this.storage_items.projectFavoritesByTopic),
       [topic]: next,

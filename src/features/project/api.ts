@@ -11,7 +11,7 @@ export { default as ProjectBrowser } from './components/ProjectBrowser';
 export { default as SelectProjectSceneDialog } from './SelectProjectSceneDialog';
 export { ProjectLoading } from './components/ProjectLoading';
 export { default as ProjectFavoritesList } from './components/ProjectFavoritesList';
-export type { ProjectFavoritesListProps } from './components/ProjectFavoritesList';
+export type { ProjectFavoritesListProps } from './types/projectFavorites.types';
 export { useProjectFavorites } from './hooks/useProjectFavorites';
 
 // Browser controller
@@ -24,6 +24,7 @@ export { filterByQuery } from './utils/filterByQuery';
 // Route / scene-loading helpers
 export {
   addProjectFavorite,
+  moveProjectFavorite,
   removeProjectFavorite,
 } from './utils/projectFavoriteActions';
 export {

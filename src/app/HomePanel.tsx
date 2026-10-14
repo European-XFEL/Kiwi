@@ -4,6 +4,7 @@ import {
   ProjectFavoritesList,
   useProjectFavorites,
   loadRootProjectScene,
+  moveProjectFavorite,
   removeProjectFavorite,
 } from '@/features/project/api';
 import type { StoredProjectFavorite } from '@/lib/singletons/api';
@@ -37,17 +38,23 @@ const HomePanel: React.FC = () => {
   };
 
   const handleRemove = (favorite: StoredProjectFavorite) => {
-    if (topic) {
+    if (topic && !opening) {
       removeProjectFavorite(topic, favorite);
+    }
+  };
+
+  const handleMove = (favorite: StoredProjectFavorite, toIndex: number) => {
+    if (topic && !opening) {
+      moveProjectFavorite(topic, favorite, toIndex);
     }
   };
 
   return (
     <div
       data-testid="home-panel"
-      className="flex h-full justify-center overflow-y-auto p-4"
+      className="flex h-full items-start justify-center overflow-y-auto px-4"
     >
-      <div className="w-full max-w-2xl space-y-6">
+      <div className="w-full max-w-2xl space-y-2 pt-4 pb-6">
         {/* Header */}
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">
@@ -56,15 +63,13 @@ const HomePanel: React.FC = () => {
               {appVersion}
             </span>
           </h1>
-          <p className="text-muted-foreground">
-            View Karabo scenes in the browser
-          </p>
+          <Separator />
         </div>
-        <Separator />
         <ProjectFavoritesList
           favorites={favorites}
           onOpen={handleOpen}
           onRemove={handleRemove}
+          onMove={handleMove}
           disabled={!topic || opening}
         />
       </div>
