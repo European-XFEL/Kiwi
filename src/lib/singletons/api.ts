@@ -10,6 +10,7 @@ import { ProjectItemModel } from './ProjectItemModel';
 import { Logger } from './Logger';
 
 export type { RequestHandler };
+export { MAX_PROJECT_FAVORITES } from './Configuration';
 export type {
   StoredProjectFavorite,
   ProjectFavoriteSelection,
