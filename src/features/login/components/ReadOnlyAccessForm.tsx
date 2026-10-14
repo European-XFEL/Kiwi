@@ -2,18 +2,18 @@ import { useRef } from 'react';
 import { Input } from '@/components/api';
 import { Label } from '@/components/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/api';
+import { ActivityStatus } from '../auth.types';
+import { useLoginContext } from '../LoginContext';
 
 export type ReadOnlyAccessFormProps = {
-  onUserNameChange: (username: string) => void;
   onSubmit: () => void;
-  disabled?: boolean;
 };
 
 export default function ReadOnlyAccessForm({
-  onUserNameChange,
   onSubmit,
-  disabled = false,
 }: ReadOnlyAccessFormProps) {
+  const { userName, setUserName, activityStatus } = useLoginContext();
+  const disabled = activityStatus !== ActivityStatus.NO_ACTIVITY;
   const userRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -30,7 +30,8 @@ export default function ReadOnlyAccessForm({
             data-testid="login-username"
             id="username-al"
             ref={userRef}
-            onChange={(e) => onUserNameChange(e.target.value)}
+            value={userName}
+            onChange={(e) => setUserName(e.target.value)}
             onKeyDown={(e) => {
               if (
                 e.key === 'Enter' &&

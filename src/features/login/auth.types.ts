@@ -7,6 +7,12 @@ export enum ActivityStatus {
   AUTH_USER = 'AUTH_USER',
 }
 
+export enum GuiServerType {
+  READ_ONLY = 'read-only',
+  NON_AUTH = 'non-auth',
+  AUTH = 'auth',
+}
+
 export interface LoginCredentials {
   username: string;
   password: string;
@@ -18,10 +24,10 @@ export interface AuthState {
   accessLevel?: AccessLevel;
 }
 
-export interface ServerProbeResult {
-  serverInfo: GuiServerInfo | null;
-  error?: string;
-}
+export type ServerProbeResult =
+  | { status: 'idle' }
+  | { status: 'success'; serverInfo: GuiServerInfo }
+  | { status: 'failure'; error: unknown };
 
 export interface LoginFormState {
   host: string;
