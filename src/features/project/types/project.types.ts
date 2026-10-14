@@ -3,7 +3,6 @@
  */
 
 import { ProjectModel } from '@/karabo/common/project/api';
-import { SceneModel } from '@/karabo/common/scenemodel/api';
 import type {
   ProjectBrowserEntry,
   ProjectBrowserSceneEntry,
@@ -46,11 +45,7 @@ export type LoadProjectSceneProps = {
 
 export type SelectProjectSceneDialogProps = {
   open: boolean;
-  onSceneSelected: (
-    domain: string,
-    project: ProjectModel,
-    scene: SceneModel
-  ) => void;
+  onProjectSelected: (domain: string, project: ProjectModel) => void;
   onCancel: () => void;
 };
 
@@ -66,22 +61,10 @@ export type ProjectsTableProps = {
   projects: ProjectModel[];
   selectedProject?: ProjectModel;
   onProjectClick: (project: ProjectModel) => void;
+  onProjectDoubleClick?: (project: ProjectModel) => void;
   query?: string;
   onQueryChange?: (q: string) => void;
   // Blocks selection while a request is in flight. Filtering stays available:
   // it is local to the loaded list and touches no request.
-  selectionDisabled?: boolean;
-};
-
-export type ScenesTableProps = {
-  scenes: SceneModel[];
-  selectedScene?: SceneModel;
-  onSceneClick: (scene: SceneModel) => void;
-  onSceneDoubleClick: (scene: SceneModel) => void;
-  onSceneBookmark?: (scene: SceneModel) => void;
-  onSceneCopyCinema?: (scene: SceneModel) => void;
-  cinemaCopyDisabled?: boolean;
-  query?: string;
-  onQueryChange?: (q: string) => void;
   selectionDisabled?: boolean;
 };

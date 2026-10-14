@@ -1,8 +1,7 @@
 import React from 'react';
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ProjectModel } from '@/karabo/common/project/api';
-import { SceneModel } from '@/karabo/common/scenemodel/api';
 import { Hash, HashList } from '@/karabo/data/api';
 import { KaraboEvent } from '@/lib/events';
 import { Mediator } from '@/lib/singletons/Mediator';
@@ -69,7 +68,12 @@ jest.mock('../components/ProjectTable', () => {
   const ReactActual = jest.requireActual<typeof React>('react');
   return {
     __esModule: true,
-    default: ({ projects, onProjectClick, selectionDisabled }: any) =>
+    default: ({
+      projects,
+      onProjectClick,
+      onProjectDoubleClick,
+      selectionDisabled,
+    }: any) =>
       ReactActual.createElement(
         'div',
         null,
@@ -85,38 +89,10 @@ jest.mock('../components/ProjectTable', () => {
               key: project.uuid,
               disabled: selectionDisabled,
               onClick: () => onProjectClick(project),
+              onDoubleClick: () => onProjectDoubleClick?.(project),
             },
             'Project ',
             project.simple_name
-          )
-        )
-      ),
-  };
-});
-
-jest.mock('../components/ScenesTable', () => {
-  const ReactActual = jest.requireActual<typeof React>('react');
-  return {
-    __esModule: true,
-    default: ({ scenes, onSceneClick, selectionDisabled }: any) =>
-      ReactActual.createElement(
-        'div',
-        null,
-        ReactActual.createElement(
-          'span',
-          { 'data-testid': 'scene-selection-disabled' },
-          String(selectionDisabled)
-        ),
-        ...scenes.map((scene: SceneModel) =>
-          ReactActual.createElement(
-            'button',
-            {
-              key: scene.uuid,
-              disabled: selectionDisabled,
-              onClick: () => onSceneClick(scene),
-            },
-            'Scene ',
-            scene.simple_name
           )
         )
       ),
@@ -139,7 +115,7 @@ function renderDialog(open = true) {
   return render(
     <SelectProjectSceneDialog
       open={open}
-      onSceneSelected={jest.fn()}
+      onProjectSelected={jest.fn()}
       onCancel={jest.fn()}
     />
   );
@@ -177,45 +153,8 @@ function projectsReply(projects: ProjectModel[]) {
   });
 }
 
-function scenesReply(scenes: SceneModel[]) {
-  return new Hash({
-    reason: '',
-    reply: new Hash({
-      items: new HashList(
-        scenes.map(
-          (scene) =>
-            new Hash({
-              uuid: scene.uuid,
-              date: scene.date,
-              simple_name: scene.simple_name,
-            })
-        )
-      ),
-    }),
-  });
-}
-
-function sceneErrorReply(reason = 'Scene list failed') {
-  return new Hash({
-    reason,
-    reply: new Hash({ items: new HashList() }),
-  });
-}
-
-function busyReply(isProcessing: boolean) {
-  return new Hash({ is_processing: isProcessing });
-}
-
 function makeProject(uuid: string, name: string) {
   return new ProjectModel({
-    uuid,
-    simple_name: name,
-    date: '2026-07-01T00:00:00',
-  });
-}
-
-function makeScene(uuid: string, name: string) {
-  return new SceneModel({
     uuid,
     simple_name: name,
     date: '2026-07-01T00:00:00',
@@ -238,7 +177,7 @@ describe('SelectProjectSceneDialog loading state', () => {
     rerender(
       <SelectProjectSceneDialog
         open={false}
-        onSceneSelected={jest.fn()}
+        onProjectSelected={jest.fn()}
         onCancel={jest.fn()}
       />
     );
@@ -247,7 +186,7 @@ describe('SelectProjectSceneDialog loading state', () => {
     rerender(
       <SelectProjectSceneDialog
         open
-        onSceneSelected={jest.fn()}
+        onProjectSelected={jest.fn()}
         onCancel={jest.fn()}
       />
     );
@@ -255,81 +194,73 @@ describe('SelectProjectSceneDialog loading state', () => {
     expect(mockListDomains).toHaveBeenCalledTimes(2);
   });
 
-  it('clears stale scenes when a selected project scene request fails', async () => {
-    const user = userEvent.setup();
-    const firstProject = makeProject('project-a', 'First');
-    const secondProject = makeProject('project-b', 'Second');
+  it('retains a domain error until the dialog is closed and retries on reopening', () => {
+    const { rerender } = renderDialog();
+    emit(KaraboEvent.ListDomains, new Hash({ reason: 'Domains unavailable' }));
+    expect(screen.getByTestId('loading-status')).toHaveTextContent(
+      'Domains unavailable'
+    );
+    expect(mockListDomains).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: 'Open Project' })).toBeDisabled();
+    rerender(
+      <SelectProjectSceneDialog
+        open={false}
+        onProjectSelected={jest.fn()}
+        onCancel={jest.fn()}
+      />
+    );
+    rerender(
+      <SelectProjectSceneDialog
+        open
+        onProjectSelected={jest.fn()}
+        onCancel={jest.fn()}
+      />
+    );
+    expect(mockListDomains).toHaveBeenCalledTimes(2);
+  });
 
-    renderDialog();
+  it('selects a project without requesting scenes and opens only on the action', async () => {
+    const onProjectSelected = jest.fn();
+    render(
+      <SelectProjectSceneDialog
+        open
+        onProjectSelected={onProjectSelected}
+        onCancel={jest.fn()}
+      />
+    );
     emit(KaraboEvent.ListDomains, domainsReply());
     emit(
       KaraboEvent.ListProjects,
-      projectsReply([firstProject, secondProject])
+      projectsReply([
+        makeProject('project-b', 'Second'),
+        makeProject('project-a', 'First'),
+      ])
     );
-    emit(
-      KaraboEvent.ListScenes,
-      scenesReply([makeScene('scene-a', 'Old Scene')])
-    );
-    expect(screen.getByText('Scene Old Scene')).toBeInTheDocument();
-
-    await user.click(screen.getByText('Project Second'));
-    expect(screen.queryByText('Scene Old Scene')).not.toBeInTheDocument();
-
-    emit(KaraboEvent.ListScenes, sceneErrorReply());
-
-    expect(screen.queryByText('Scene Old Scene')).not.toBeInTheDocument();
-    expect(screen.getByTestId('scene-selection-disabled')).toHaveTextContent(
-      'false'
-    );
-  });
-
-  it('keeps selection disabled until the scene list reply arrives', async () => {
-    const user = userEvent.setup();
-    const firstProject = makeProject('project-a', 'First');
-    const secondProject = makeProject('project-b', 'Second');
-
-    renderDialog();
-    emit(KaraboEvent.ListDomains, domainsReply());
-    emit(
-      KaraboEvent.ListProjects,
-      projectsReply([firstProject, secondProject])
-    );
-    emit(
-      KaraboEvent.ListScenes,
-      scenesReply([makeScene('scene-a', 'Overview')])
-    );
-
-    await user.click(screen.getByText('Project Second'));
-    expect(mockOnListScenes).toHaveBeenLastCalledWith('project-b');
-
-    emit(KaraboEvent.DatabaseBusy, busyReply(false));
-
-    expect(screen.getByTestId('project-selection-disabled')).toHaveTextContent(
-      'true'
-    );
-    expect(screen.getByTestId('scene-selection-disabled')).toHaveTextContent(
-      'true'
-    );
-
-    emit(
-      KaraboEvent.ListScenes,
-      scenesReply([makeScene('scene-b', 'New Scene')])
-    );
-
+    expect(mockOnListScenes).not.toHaveBeenCalled();
+    expect(screen.queryByRole('region', { name: 'Scenes' })).toBeNull();
     expect(screen.getByTestId('project-selection-disabled')).toHaveTextContent(
       'false'
     );
-    expect(screen.getByText('Scene New Scene')).toBeInTheDocument();
+    await userEvent.setup().click(screen.getByText('Project Second'));
+    expect(onProjectSelected).not.toHaveBeenCalled();
+    await userEvent
+      .setup()
+      .click(screen.getByRole('button', { name: 'Open Project' }));
+    expect(onProjectSelected).toHaveBeenCalledWith(
+      'CONTROLS',
+      expect.objectContaining({ uuid: 'project-b' })
+    );
   });
-});
 
-describe('SelectProjectSceneDialog navigation', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockConfig.currentDomain = 'CONTROLS';
-  });
-
-  function loadProjectWithScene() {
+  it('opens the double-clicked project in the selected domain without requesting scenes', () => {
+    const onProjectSelected = jest.fn();
+    render(
+      <SelectProjectSceneDialog
+        open
+        onProjectSelected={onProjectSelected}
+        onCancel={jest.fn()}
+      />
+    );
     emit(KaraboEvent.ListDomains, domainsReply());
     emit(
       KaraboEvent.ListProjects,
@@ -338,35 +269,37 @@ describe('SelectProjectSceneDialog navigation', () => {
         makeProject('project-b', 'Second'),
       ])
     );
-    emit(
-      KaraboEvent.ListScenes,
-      scenesReply([makeScene('scene-a', 'Overview')])
+    fireEvent.doubleClick(screen.getByText('Project Second'));
+    expect(onProjectSelected).toHaveBeenCalledTimes(1);
+    expect(onProjectSelected).toHaveBeenCalledWith(
+      'CONTROLS',
+      expect.objectContaining({ uuid: 'project-b' })
     );
-  }
-
-  it('moves focus into the scenes pane when a project is chosen', async () => {
-    const user = userEvent.setup();
-
-    renderDialog();
-    loadProjectWithScene();
-    await user.click(screen.getByText('Project Second'));
-
-    expect(screen.getByRole('button', { name: 'Projects' })).toHaveFocus();
+    expect(mockOnListScenes).not.toHaveBeenCalled();
   });
 
-  // jsdom applies no CSS, so this checks the classes that hide the action
-  // below lg rather than what is rendered.
-  it('only offers Open Scene once the scene list is in view', async () => {
-    const user = userEvent.setup();
-
+  it('shows list errors and disables opening when no project is available', () => {
     renderDialog();
-    loadProjectWithScene();
+    emit(KaraboEvent.ListDomains, domainsReply());
+    emit(
+      KaraboEvent.ListProjects,
+      new Hash({ reason: 'Database unavailable' })
+    );
+    expect(screen.getByText('Database unavailable')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open Project' })).toBeDisabled();
+  });
 
-    const openScene = screen.getByRole('button', { name: 'Open Scene' });
-    expect(openScene).toHaveClass('hidden', 'lg:inline-flex');
-
-    await user.click(screen.getByText('Project Second'));
-
-    expect(openScene).not.toHaveClass('hidden');
+  it('prevents selection during domain and project retrieval', () => {
+    renderDialog();
+    expect(screen.getByRole('button', { name: 'Open Project' })).toBeDisabled();
+    emit(KaraboEvent.ListDomains, domainsReply());
+    expect(screen.getByTestId('project-selection-disabled')).toHaveTextContent(
+      'true'
+    );
+    emit(
+      KaraboEvent.ListProjects,
+      projectsReply([makeProject('project-a', 'First')])
+    );
+    expect(screen.getByRole('button', { name: 'Open Project' })).toBeEnabled();
   });
 });

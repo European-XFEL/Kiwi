@@ -6,7 +6,8 @@ import { getMediator, getProjectModel } from '../api';
 import { SceneControllerRegistry } from '@/features/scenepanel/SceneControllerRegistry';
 import { HOME_TAB_ID, PanelWrangler } from '../PanelWrangler';
 import { DisplayTextLogModel } from '@/karabo/common/api';
-import { createWorkspacePolicy } from '@/features/workspace/configuration';
+import { ProjectItemModel } from '../ProjectItemModel';
+import { SingletonContext } from '@/testing';
 
 jest.mock('@/store/api', () => ({
   ...jest.requireActual('@/store/api'),
@@ -86,7 +87,8 @@ describe('PanelWrangler', () => {
     'restores the cinema default on %s without changing normal saved-tab storage',
     (operation) => {
       wrangler.dispose();
-      wrangler = new PanelWrangler(createWorkspacePolicy('cinema'));
+      wrangler = new PanelWrangler();
+      wrangler.setMode('cinema');
       const storageKey = 'kiwi/workspace:activeTab';
       const stored = JSON.stringify({
         host: 'host-a',
@@ -125,16 +127,127 @@ describe('PanelWrangler', () => {
     }
   );
 
+  it('attaches a root with no center tab and retains it after the last scene closes', () => {
+    const scene = makeScene('scene-a');
+    const root = setProject('CONTROLS', 'ProjectA', [scene]);
+    expect(wrangler.getSnapshot().center.tabs).toEqual([]);
+    expect(wrangler.getSnapshot().center.activeTabId).toBeUndefined();
+    expect(wrangler.isSceneTabOpen()).toBe(false);
+    openScene(scene);
+    expect(wrangler.getSnapshot().center.tabs.map((tab) => tab.id)).toEqual([
+      'scene:scene-a',
+    ]);
+    const content = wrangler.getContent('scene:scene-a');
+    getProjectModel().setRoot('CONTROLS', root);
+    expect(wrangler.getContent('scene:scene-a')).toBe(content);
+    expect(wrangler.getSnapshot().center.activeTabId).toBe('scene:scene-a');
+    wrangler.closeTab('center', 'scene:scene-a');
+    expect(wrangler.getSnapshot().center.tabs).toEqual([]);
+    expect(wrangler.getSnapshot().center.activeTabId).toBeUndefined();
+    expect(wrangler.isSceneTabOpen()).toBe(false);
+    expect(getProjectModel().root).toBe(root);
+  });
+
+  it('seeds a previously loaded root, clears content on replacement and unsubscribes on disposal', () => {
+    const scene = makeScene('scene-a');
+    setProject('CONTROLS', 'ProjectA', [scene]);
+    wrangler.dispose();
+    wrangler = new PanelWrangler();
+    expect(wrangler.getSnapshot().center.activeTabId).toBeUndefined();
+    openScene(scene);
+    const registry =
+      wrangler.getContent('scene:scene-a')!.sceneControllerRegistry!;
+    const dispose = jest.spyOn(registry, 'dispose');
+    setProject('CONTROLS', 'ProjectB', []);
+    expect(dispose).toHaveBeenCalledTimes(1);
+    expect(wrangler.getContent('scene:scene-a')).toBeUndefined();
+    expect(wrangler.getSnapshot().center.tabs.map((tab) => tab.id)).toEqual([]);
+    getProjectModel().clearRoot();
+    expect(wrangler.getSnapshot().center.activeTabId).toBe(HOME_TAB_ID);
+    wrangler.dispose();
+    const snapshot = wrangler.getSnapshot();
+    setProject('CONTROLS', 'ProjectC', []);
+    expect(wrangler.getSnapshot()).toBe(snapshot);
+  });
+
+  it('receives project changes from a replacement project singleton through broadcasts', async () => {
+    const replacement = new ProjectItemModel();
+    await SingletonContext.run({ project_model: replacement }, () => {
+      const scene = makeScene('scene-a');
+      const root = setProject('CONTROLS', 'ProjectA', [scene]);
+      expect(wrangler.getSnapshot().center.tabs).toEqual([]);
+      openScene(scene);
+      const content = wrangler.getContent('scene:scene-a');
+      const dispose = jest.spyOn(content!.sceneControllerRegistry!, 'dispose');
+      replacement.setRoot('CONTROLS', root);
+      expect(wrangler.getContent('scene:scene-a')).toBe(content);
+      expect(wrangler.getSnapshot().center.activeTabId).toBe('scene:scene-a');
+      replacement.setRoot('OTHER_DOMAIN', root);
+      expect(dispose).toHaveBeenCalledTimes(1);
+      expect(wrangler.getContent('scene:scene-a')).toBeUndefined();
+      expect(wrangler.getSnapshot().center.tabs).toEqual([]);
+      replacement.clearRoot();
+      expect(wrangler.getSnapshot().center.activeTabId).toBe(HOME_TAB_ID);
+    });
+  });
+
+  it('clears unattached scene content even when the project root is already empty', () => {
+    openDeviceScene(makeScene('device-scene', 'DEVICE_A|overview'));
+    const dispose = jest.spyOn(
+      wrangler.getContent('DEVICE_A|overview')!.sceneControllerRegistry!,
+      'dispose'
+    );
+    getProjectModel().clearRoot();
+    expect(wrangler.getSnapshot().center.activeTabId).toBe(HOME_TAB_ID);
+    expect(wrangler.getContent('DEVICE_A|overview')).toBeUndefined();
+    expect(dispose).toHaveBeenCalledTimes(1);
+  });
+
+  it('omits Projects in cinema including mode changes and resets', () => {
+    setProject('CONTROLS', 'ProjectA', []);
+    wrangler.setMode('cinema');
+    for (const reset of ['resetCenter', 'resetWorkspace'] as const) {
+      wrangler[reset]();
+      expect(wrangler.getSnapshot().left.tabs.map((tab) => tab.id)).toEqual([
+        'system-topology',
+      ]);
+      expect(wrangler.getSnapshot().center.tabs.map((tab) => tab.id)).toEqual([
+        'cinema',
+      ]);
+    }
+    wrangler.setMode('normal');
+    expect(wrangler.getSnapshot().left.tabs.map((tab) => tab.id)).toEqual([
+      'system-topology',
+      'projects',
+    ]);
+    expect(wrangler.getSnapshot().center.activeTabId).toBeUndefined();
+  });
+
+  it('shows Projects after activation and ignores it without a root or in cinema', () => {
+    wrangler.showProjects();
+    expect(wrangler.getSnapshot().left.activeTabId).toBe('system-topology');
+    setProject('CONTROLS', 'ProjectA', []);
+    wrangler.showProjects();
+    expect(wrangler.getSnapshot().left.activeTabId).toBe('projects');
+    const activation = wrangler.getSnapshot().projectPanelActivation;
+    wrangler.showProjects();
+    expect(wrangler.getSnapshot().projectPanelActivation).toBe(activation + 1);
+    wrangler.setMode('cinema');
+    wrangler.showProjects();
+    expect(wrangler.getSnapshot().left.activeTabId).toBe('system-topology');
+  });
+
   it('starts with a selected, nonclosable SystemTopology tab', () => {
     expect(wrangler.getSnapshot().left).toEqual({
       id: 'left',
       tabs: [
         { id: 'system-topology', title: 'SystemTopology', closable: false },
+        { id: 'projects', title: 'Projects', closable: false },
       ],
       activeTabId: 'system-topology',
     });
     wrangler.closeTab('left', 'system-topology');
-    expect(wrangler.getSnapshot().left.tabs).toHaveLength(1);
+    expect(wrangler.getSnapshot().left.tabs).toHaveLength(2);
     expect(wrangler.getSnapshot().left.activeTabId).toBe('system-topology');
   });
 
@@ -148,12 +261,14 @@ describe('PanelWrangler', () => {
     wrangler.resetCenter();
     expect(wrangler.getSnapshot().left.tabs.map((tab) => tab.id)).toEqual([
       'system-topology',
+      'projects',
       'other-left',
     ]);
     expect(wrangler.getSnapshot().left.activeTabId).toBe('other-left');
     wrangler.resetWorkspace();
     expect(wrangler.getSnapshot().left.tabs.map((tab) => tab.id)).toEqual([
       'system-topology',
+      'projects',
     ]);
     expect(wrangler.getSnapshot().left.activeTabId).toBe('system-topology');
   });
@@ -448,6 +563,7 @@ describe('PanelWrangler', () => {
     });
     subproject.scenes = [subprojectScene];
     project.subprojects = [subproject];
+    getProjectModel().setRoot('CONTROLS', project);
 
     openScene(rootScene);
     openScene(subprojectScene);
@@ -681,17 +797,15 @@ describe('PanelWrangler', () => {
       expect(center.activeTabId).toBe('scene:s2');
     });
 
-    it('restores home tab when closing the last scene tab', () => {
+    it('leaves the center empty when closing the last scene tab', () => {
       const scene = makeScene('scene-a');
       setProject('CONTROLS', 'ProjectA', [scene]);
       openScene(scene);
 
       wrangler.closeTab('center', 'scene:scene-a');
 
-      expect(wrangler.getSnapshot().center.tabs).toEqual([
-        { id: HOME_TAB_ID, title: 'Home', closable: false },
-      ]);
-      expect(wrangler.getSnapshot().center.activeTabId).toBe(HOME_TAB_ID);
+      expect(wrangler.getSnapshot().center.tabs).toEqual([]);
+      expect(wrangler.getSnapshot().center.activeTabId).toBeUndefined();
     });
   });
 
@@ -708,7 +822,7 @@ describe('PanelWrangler', () => {
   });
 
   describe('resetWorkspace', () => {
-    it('restores the home tab and drops every scene tab', () => {
+    it('leaves the center empty and drops every scene tab', () => {
       const sceneA = makeScene('s1');
       const sceneB = makeScene('s2');
       setProject('CONTROLS', 'ProjectA', [sceneA, sceneB]);
@@ -718,10 +832,8 @@ describe('PanelWrangler', () => {
       wrangler.resetWorkspace();
 
       const center = wrangler.getSnapshot().center;
-      expect(center.tabs).toEqual([
-        { id: HOME_TAB_ID, title: 'Home', closable: false },
-      ]);
-      expect(center.activeTabId).toBe(HOME_TAB_ID);
+      expect(center.tabs).toEqual([]);
+      expect(center.activeTabId).toBeUndefined();
     });
 
     it('disposes the registry of every open scene tab', () => {
@@ -797,6 +909,7 @@ describe('PanelWrangler', () => {
         id: 'left',
         tabs: [
           { id: 'system-topology', title: 'SystemTopology', closable: false },
+          { id: 'projects', title: 'Projects', closable: false },
         ],
         activeTabId: 'system-topology',
       });
@@ -876,10 +989,6 @@ describe('PanelWrangler', () => {
 
     it.each([
       ['the Home button', () => broadcast_event(KaraboEvent.GoToHomeTab, {})],
-      [
-        'closing the last tab',
-        () => wrangler.closeTab('center', 'scene:scene-a'),
-      ],
     ])(
       'goes to the Home tab on %s: resets the tabs, the saved tab, and the project',
       (_trigger, goHome) => {
@@ -993,9 +1102,7 @@ describe('PanelWrangler', () => {
 
     openScene(scene);
 
-    expect(wrangler.getSnapshot().center.tabs).toEqual([
-      { id: HOME_TAB_ID, title: 'Home', closable: false },
-    ]);
+    expect(wrangler.getSnapshot().center.tabs).toEqual([]);
 
     wrangler = new PanelWrangler();
   });

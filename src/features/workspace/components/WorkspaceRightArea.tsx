@@ -15,7 +15,6 @@ function WorkspaceRightArea({
   isVisible,
   onExpandedChange,
 }: WorkspaceRightAreaProps) {
-  // TODO: Make usePanelArea subscribe only to this area to avoid unrelated updates.
   const { area: right, onTabSelect } = usePanelArea('right');
   const controllersActive = right.activeTabId === CONTROLLERS_TAB_ID;
   const panels = right.controllerPanels;

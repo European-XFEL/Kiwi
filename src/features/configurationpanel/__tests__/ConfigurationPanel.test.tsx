@@ -98,6 +98,32 @@ afterEach(() => {
   useGlobalStore.getState().reset();
 });
 
+test('skips schema queries on parent renders while keeping schema updates live', () => {
+  const hasSchema = jest.spyOn(root, 'hasSchema');
+  const { rerender } = render(
+    <div data-revision={0}>
+      <ConfigurationPanel />
+    </div>
+  );
+  show();
+  expect(hasSchema).toHaveBeenCalled();
+  hasSchema.mockClear();
+
+  rerender(
+    <div data-revision={1}>
+      <ConfigurationPanel />
+    </div>
+  );
+  expect(hasSchema).not.toHaveBeenCalled();
+  expect(
+    screen.getByRole('tree', { name: 'Device configuration' })
+  ).toBeVisible();
+
+  add('reading', new Int32Binding({ value: 12 }));
+  act(() => root.schema_update.fire());
+  expect(middle('reading')).toHaveTextContent('12');
+});
+
 test('renders three aligned columns, Qt values and units with a blank inert Value column', () => {
   add('boolean', new BoolBinding({ value: true }));
   add('vector', new VectorInt32Binding({ value: new Int32Array([1, 2]) }));

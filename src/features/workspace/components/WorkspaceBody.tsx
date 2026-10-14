@@ -1,4 +1,5 @@
 import { memo, useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { useProjectPanelActivation } from '@/features/projectpanel/api';
 import type { GroupImperativeHandle, Layout } from 'react-resizable-panels';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import WorkspaceRightArea from './WorkspaceRightArea';
@@ -134,6 +135,15 @@ function WorkspaceBody({
     },
     [panelArea, recordLayout]
   );
+
+  const setLeftExpanded = useCallback(
+    (expanded: boolean) => setSideExpanded('left', expanded),
+    [setSideExpanded]
+  );
+  useProjectPanelActivation({
+    enabled: showProjectNavigation,
+    onExpandedChange: setLeftExpanded,
+  });
 
   const setRightExpanded = useCallback(
     (expanded: boolean) => setSideExpanded('right', expanded),

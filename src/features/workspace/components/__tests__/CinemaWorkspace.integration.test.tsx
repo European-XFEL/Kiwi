@@ -10,7 +10,6 @@ import { AccessLevel } from '@/karabo/data/api';
 import { PanelWrangler } from '@/lib/singletons/PanelWrangler';
 import { broadcast_event, KaraboEvent } from '@/lib/events';
 import { SingletonContext } from '@/testing';
-import { createWorkspacePolicy } from '../../configuration';
 import { createDefaultWorkspaceModel } from '../../utils';
 import WorkspaceShell from '../WorkspaceShell';
 
@@ -21,7 +20,8 @@ jest.mock('@/app/api', () => ({
 }));
 
 it('keeps cinema controls available during loading and restores the empty tab after closing scenes', async () => {
-  const wrangler = new PanelWrangler(createWorkspacePolicy('cinema'));
+  const wrangler = new PanelWrangler();
+  wrangler.setMode('cinema');
   await SingletonContext.run({ panel_wrangler: wrangler }, () => {
     try {
       broadcast_event(KaraboEvent.OpenUnattachedScene, {

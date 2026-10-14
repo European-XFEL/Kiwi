@@ -11,7 +11,7 @@ export default function LoadProjectScene({
   size = 'sm',
   variant = 'default',
 }: LoadProjectSceneProps) {
-  const { openDialog, handleOpenDialog, handleCancel, handleSceneSelected } =
+  const { openDialog, handleOpenDialog, handleCancel, handleProjectSelected } =
     useLoadProjectScene();
 
   return (
@@ -29,7 +29,7 @@ export default function LoadProjectScene({
 
       <SelectProjectSceneDialog
         open={openDialog}
-        onSceneSelected={handleSceneSelected}
+        onProjectSelected={handleProjectSelected}
         onCancel={handleCancel}
       />
     </>

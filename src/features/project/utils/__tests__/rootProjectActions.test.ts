@@ -9,7 +9,7 @@ import { SingletonContext } from '@/testing';
 import {
   clearRootProject,
   loadRootProjectScene,
-  loadRootProjectFromDialogSelection,
+  loadRootProject,
 } from '../rootProjectActions';
 
 let mockMediator: Mediator;
@@ -61,13 +61,13 @@ function completeProject(project: ProjectModel, scenes: SceneModel[]) {
 // Capture the model as each event is delivered, not just its final state.
 function observeActivation() {
   const events: {
-    event: KaraboEvent;
+    event: KaraboEvent | 'root';
     root?: ProjectModel;
     scene?: SceneModel;
   }[] = [];
-  mockMediator.on(KaraboEvent.RootProjectChanged, () => {
+  mockProjectModel.subscribe(() => {
     events.push({
-      event: KaraboEvent.RootProjectChanged,
+      event: 'root',
       root: mockProjectModel.root,
     });
   });
@@ -122,7 +122,7 @@ describe('loadRootProjectScene', () => {
     expect(mockProjectModel.domain).toBe('CONTROLS');
     expect(mockLoadProject).toHaveBeenCalledWith('CONTROLS', root);
     expect(events).toEqual([
-      { event: KaraboEvent.RootProjectChanged, root },
+      { event: 'root', root },
       { event: KaraboEvent.OpenScene, root, scene },
     ]);
   });
@@ -151,7 +151,7 @@ describe('loadRootProjectScene', () => {
     expect(mockProjectModel.root).not.toBe(child);
     expect(mockProjectModel.root).not.toBe(parent);
     expect(events).toEqual([
-      { event: KaraboEvent.RootProjectChanged, root: mockProjectModel.root },
+      { event: 'root', root: mockProjectModel.root },
       {
         event: KaraboEvent.OpenScene,
         root: mockProjectModel.root,
@@ -325,37 +325,67 @@ describe('loadRootProjectScene', () => {
   });
 });
 
-describe('loadRootProjectFromDialogSelection', () => {
-  it('reloads the selected project and opens the full scene model in the selected domain', async () => {
-    const selected = makeProject('motors');
-    selected.initialized = true;
-    selected.scenes = [makeScene('motor-scene', 'Old Scene')];
-    mockProjectModel.setRoot('OTHER_DOMAIN', selected);
-    const partialScene = new SceneModel({ uuid: 'motor-scene' });
-    const fullScene = makeScene('motor-scene', 'Full Scene');
-    mockListProjects.mockImplementation(() => emitProjects([selected]));
+describe('loadRootProject', () => {
+  it('attaches a completed project without opening a scene', async () => {
+    mockListProjects.mockImplementation(() =>
+      emitProjects([makeProject('motors')])
+    );
     mockLoadProject.mockImplementation(
-      (_domain: string, loaded: ProjectModel) => {
-        completeProject(loaded, [fullScene]);
+      (_domain: string, project: ProjectModel) => {
+        completeProject(project, [makeScene('motor-scene')]);
       }
     );
     const events = observeActivation();
-
-    await loadRootProjectFromDialogSelection('CONTROLS', selected, partialScene)
+    await loadRootProject({ domain: 'CONTROLS', projectUuid: 'motors' })
       .promise;
+    expect(mockProjectModel.root?.uuid).toBe('motors');
+    expect(events).toEqual([{ event: 'root', root: mockProjectModel.root }]);
+  });
 
-    expect(mockListProjects).toHaveBeenCalledWith('CONTROLS');
-    expect(mockProjectModel.domain).toBe('CONTROLS');
-    expect(mockProjectModel.root?.uuid).toBe(selected.uuid);
-    expect(mockProjectModel.root).not.toBe(selected);
-    expect(events).toEqual([
-      { event: KaraboEvent.RootProjectChanged, root: mockProjectModel.root },
-      {
-        event: KaraboEvent.OpenScene,
-        root: mockProjectModel.root,
-        scene: fullScene,
-      },
-    ]);
+  it('does not publish a tree while scenes and nested projects are pending', async () => {
+    let loading: ProjectModel | undefined;
+    mockListProjects.mockImplementation(() =>
+      emitProjects([makeProject('motors')])
+    );
+    mockLoadProject.mockImplementation(
+      (_domain: string, project: ProjectModel) => {
+        loading = project;
+      }
+    );
+    const handle = loadRootProject({
+      domain: 'CONTROLS',
+      projectUuid: 'motors',
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(loading).toBeDefined();
+    loading!.initialized = true;
+    loading!.subprojects = [makeProject('child')];
+    expect(mockProjectModel.getSnapshot().nodes).toEqual([]);
+    loading!.subprojects[0].initialized = true;
+    loading!.subprojects[0].scenes = [makeScene('child-scene')];
+    completeProject(loading!, []);
+    await handle.promise;
+    expect(mockProjectModel.getSceneProject('child-scene')?.uuid).toBe('child');
+  });
+
+  it('prevents attachment if cancelled immediately after completion', async () => {
+    mockListProjects.mockImplementation(() =>
+      emitProjects([makeProject('motors')])
+    );
+    mockLoadProject.mockImplementation(
+      (_domain: string, project: ProjectModel) => {
+        completeProject(project, []);
+        handle.abort();
+      }
+    );
+    const handle = loadRootProject({
+      domain: 'CONTROLS',
+      projectUuid: 'motors',
+    });
+    await expect(handle.promise).rejects.toThrow('cancelled');
+    expect(mockProjectModel.root).toBeUndefined();
+    expect(showMessageBox).not.toHaveBeenCalled();
   });
 });
 
@@ -368,8 +398,6 @@ describe('clearRootProject', () => {
 
     expect(mockProjectModel.root).toBeUndefined();
     expect(mockProjectModel.domain).toBeUndefined();
-    expect(events).toEqual([
-      { event: KaraboEvent.RootProjectChanged, root: undefined },
-    ]);
+    expect(events).toEqual([{ event: 'root', root: undefined }]);
   });
 });

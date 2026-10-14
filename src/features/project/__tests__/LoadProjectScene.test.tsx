@@ -1,10 +1,15 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import type { ButtonHTMLAttributes, SVGProps } from 'react';
 import { ProjectModel } from '@/karabo/common/project/api';
-import { SceneModel } from '@/karabo/common/scenemodel/api';
 import type { SelectProjectSceneDialogProps } from '../types/project.types';
 import LoadProjectScene from '../LoadProjectScene';
-import { loadRootProjectFromDialogSelection } from '../utils/rootProjectActions';
+import { loadRootProject } from '../utils/rootProjectActions';
+
+const mockShowProjects = jest.fn();
+const mockPromise = Promise.resolve();
+jest.mock('@/lib/singletons/api', () => ({
+  getPanelWrangler: () => ({ showProjects: mockShowProjects }),
+}));
 
 let dialogProps: SelectProjectSceneDialogProps | undefined;
 
@@ -33,9 +38,9 @@ jest.mock('../SelectProjectSceneDialog', () => ({
 }));
 
 jest.mock('../utils/rootProjectActions', () => ({
-  loadRootProjectFromDialogSelection: jest.fn(() => ({
+  loadRootProject: jest.fn(() => ({
     controller: new AbortController(),
-    promise: Promise.resolve(),
+    promise: mockPromise,
     abort: jest.fn(),
   })),
 }));
@@ -48,24 +53,57 @@ describe('LoadProjectScene', () => {
 
   it('closes the dialog and delegates its selection to the root-loading action', async () => {
     const project = new ProjectModel({ uuid: 'motors', simple_name: 'Motors' });
-    const scene = new SceneModel({
-      uuid: 'motor-scene',
-      simple_name: 'Motor Scene',
-    });
     render(<LoadProjectScene />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Load Project' }));
     expect(dialogProps?.open).toBe(true);
     await act(async () => {
-      dialogProps?.onSceneSelected('CONTROLS', project, scene);
+      dialogProps?.onProjectSelected('CONTROLS', project);
     });
 
     expect(dialogProps?.open).toBe(false);
-    expect(loadRootProjectFromDialogSelection).toHaveBeenCalledWith(
-      'CONTROLS',
-      project,
-      scene
+    expect(mockShowProjects).toHaveBeenCalledTimes(1);
+    expect(loadRootProject).toHaveBeenCalledWith({
+      domain: 'CONTROLS',
+      projectUuid: project.uuid,
+    });
+  });
+
+  it('reveals Projects only after the complete load succeeds', async () => {
+    let resolve: (() => void) | undefined;
+    jest.mocked(loadRootProject).mockReturnValueOnce({
+      controller: new AbortController(),
+      abort: jest.fn(),
+      promise: new Promise<void>((done) => {
+        resolve = done;
+      }),
+    });
+    render(<LoadProjectScene />);
+    act(() =>
+      dialogProps?.onProjectSelected(
+        'CONTROLS',
+        new ProjectModel({ uuid: 'root' })
+      )
     );
+    expect(mockShowProjects).not.toHaveBeenCalled();
+    await act(async () => resolve!());
+    expect(mockShowProjects).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not reveal Projects when the load fails', async () => {
+    jest.mocked(loadRootProject).mockReturnValueOnce({
+      controller: new AbortController(),
+      abort: jest.fn(),
+      promise: Promise.reject(new Error('Load failed')),
+    });
+    render(<LoadProjectScene />);
+    await act(async () =>
+      dialogProps?.onProjectSelected(
+        'CONTROLS',
+        new ProjectModel({ uuid: 'root' })
+      )
+    );
+    expect(mockShowProjects).not.toHaveBeenCalled();
   });
 
   it('closes a cancelled dialog without loading a root', () => {
@@ -75,6 +113,6 @@ describe('LoadProjectScene', () => {
     act(() => dialogProps?.onCancel());
 
     expect(dialogProps?.open).toBe(false);
-    expect(loadRootProjectFromDialogSelection).not.toHaveBeenCalled();
+    expect(loadRootProject).not.toHaveBeenCalled();
   });
 });

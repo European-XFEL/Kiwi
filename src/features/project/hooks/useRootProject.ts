@@ -1,11 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState, useSyncExternalStore } from 'react';
 import type { RootProjectBrowser } from '../types/project.types';
-import { KaraboEvent, useKaraboEvent } from '@/lib/events';
 import { getProjectModel } from '@/lib/singletons/api';
-import {
-  createProjectBrowser,
-  type ProjectBrowserModel,
-} from '../utils/createProjectBrowser';
+import { createProjectBrowser } from '../utils/createProjectBrowser';
 import { filterByQuery } from '../utils/filterByQuery';
 import { findSceneModelInCurrentProject } from '../utils/openSceneLinkInWorkspace';
 import { openSceneInWorkspace } from '../utils/openSceneInWorkspace';
@@ -15,33 +11,14 @@ type Selection = {
   projectUuid: string;
 };
 
-// The announcement carries an empty Hash. The root is a live object graph that
-// a Hash cannot transport, so it is always read back from the singleton.
-function buildFromActiveRoot(): ProjectBrowserModel | undefined {
-  const root = getProjectModel().root;
-  return root ? createProjectBrowser(root) : undefined;
-}
-
-/**
- * Project navigation, selection, and filtering for the active root, rebuilt on
- * every root announcement.
- *
- * Rebuilt rather than cached because the project tree is filled in place while
- * loading: an unchanged root identity does not mean unchanged content, so the
- * announcement is the only reliable signal.
- */
+/** Project navigation, selection, and filtering for the active root. */
 export function useRootProject(): RootProjectBrowser {
-  // Seeded during the first render rather than from a mount effect, so a
-  // project activated before this mounted renders immediately instead of after
-  // a frame of empty navigation.
-  const [browser, setBrowser] = useState(buildFromActiveRoot);
+  const model = getProjectModel();
+  const snapshot = useSyncExternalStore(model.subscribe, model.getSnapshot);
+  const browser = useMemo(() => createProjectBrowser(snapshot), [snapshot]);
   const [selection, setSelection] = useState<Selection>();
   const [query, setQuery] = useState('');
   const [sceneQuery, setSceneQuery] = useState('');
-
-  useKaraboEvent(KaraboEvent.RootProjectChanged, () => {
-    setBrowser(buildFromActiveRoot());
-  });
 
   const rootUuid = browser?.rootProjectUuid;
   const [previousRootUuid, setPreviousRootUuid] = useState(rootUuid);

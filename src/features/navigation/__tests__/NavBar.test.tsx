@@ -82,11 +82,11 @@ describe('NavBar', () => {
     expect(screen.queryByText('No project loaded')).toBeNull();
   });
 
-  it('shows the loaded project without a Home button while no scene tab is open', () => {
+  it('keeps Go home available when a root is loaded without a scene', () => {
     renderNavBar({ sceneOpen: false });
 
     expect(mockProjectBrowser).toHaveBeenCalledWith(browser);
-    expect(screen.queryByTestId('workspace-home-button')).toBeNull();
+    expect(screen.getByTestId('workspace-home-button')).toBeEnabled();
   });
 
   it('says no project is loaded when there is none', () => {

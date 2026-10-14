@@ -22,8 +22,8 @@ export default function ProjectFavoritesList({
       <div className="space-y-1">
         {favorites.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            To bookmark a scene, open Load Project, right-click a scene, and
-            choose Add to Favorites.
+            To bookmark a scene, use Load Project, right-click a scene in the
+            Projects tab, and choose Add to Favorites.
           </p>
         ) : (
           favorites.map((favorite) => (

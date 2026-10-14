@@ -1,4 +1,3 @@
-import { ChevronRight } from 'lucide-react';
 import { ScrollArea } from '@/components/api';
 import {
   Table,
@@ -16,6 +15,7 @@ export default function ProjectsTable({
   projects,
   selectedProject,
   onProjectClick,
+  onProjectDoubleClick,
   query,
   onQueryChange,
   selectionDisabled = false,
@@ -45,16 +45,13 @@ export default function ProjectsTable({
                 <TableHead className="sticky top-0 hidden w-44 bg-background sm:table-cell lg:w-auto">
                   Last Modified
                 </TableHead>
-                <TableHead className="sticky top-0 w-10 bg-background lg:hidden">
-                  <span className="sr-only">Open</span>
-                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {projects.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={3}
+                    colSpan={2}
                     className="text-center text-muted-foreground"
                   >
                     {query ? 'No matching projects' : 'No projects found'}
@@ -69,6 +66,11 @@ export default function ProjectsTable({
                       selectionDisabled
                         ? undefined
                         : () => onProjectClick(project)
+                    }
+                    onDoubleClick={
+                      selectionDisabled || !onProjectDoubleClick
+                        ? undefined
+                        : () => onProjectDoubleClick(project)
                     }
                     aria-disabled={selectionDisabled || undefined}
                     data-selected={
@@ -107,9 +109,6 @@ export default function ProjectsTable({
                     </TableCell>
                     <TableCell className="hidden truncate sm:table-cell">
                       {asLocalDateTimeString(project.date)}
-                    </TableCell>
-                    <TableCell className="w-10 text-muted-foreground lg:hidden">
-                      <ChevronRight aria-hidden="true" className="size-5" />
                     </TableCell>
                   </TableRow>
                 ))

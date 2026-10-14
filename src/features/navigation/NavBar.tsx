@@ -72,7 +72,7 @@ export function NavBar({
           <NavItem className="flex-1 min-w-0 overflow-hidden">
             {showProjectNavigation && (
               <div className="flex items-center gap-2 overflow-hidden w-full sm:gap-3">
-                {sceneOpen && (
+                {(sceneOpen || browser?.rootProject) && (
                   <>
                     <Button
                       variant="ghost"

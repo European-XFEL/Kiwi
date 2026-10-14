@@ -10,8 +10,8 @@ enum KaraboEvent {
   ListItems = 'ListItems', // triggered by reception of GUI Server message of type
   LoadProjectItems = 'LoadProjectItems', // triggered by reception of GUI Server message of type
   ListScenes = 'ListScenes', // trigerred by reception of reply to slotGetScenes of the ProjectDbManager (via GUI's "requestGeneric")
-  // Every set/clear broadcasts, even when unchanged.
-  // Empty Hash; read root and domain from ProjectItemModel.
+  // Every set/clear broadcasts after synchronizing the snapshot and indexes.
+  // Empty Hash; read the current snapshot from ProjectItemModel.
   RootProjectChanged = 'RootProjectChanged',
   // Feature actions broadcast after storing favorites. Hash contains 'topic';
   // read the favorites from Configuration.
@@ -33,9 +33,8 @@ enum KaraboEvent {
   // workspace instead.
   // No payload; read the active scene tab from PanelWrangler.
   ActiveSceneTabChanged = 'ActiveSceneTabChanged',
-  // Shows the Home tab, which exists only while no scene tab is open: closes
-  // every scene tab and clears the project root. Sent by the Home buttons,
-  // "Back to Start", and closing the last tab. No payload.
+  // Closes scene tabs and clears the project root to restore Home.
+  // Sent by the Home buttons and "Back to Start". No payload.
   GoToHomeTab = 'GoToHomeTab',
   OpenSceneLink = 'OpenSceneLink',
   OpenSceneBrowser = 'OpenSceneBrowser',
