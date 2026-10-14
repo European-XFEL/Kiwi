@@ -26,6 +26,40 @@ type ProjectFavoritesByTopic = Record<string, readonly StoredProjectFavorite[]>;
 export const MAX_PROJECT_FAVORITES = 10;
 const emptyProjectFavorites: readonly StoredProjectFavorite[] = [];
 
+function isStoredProjectFavorite(
+  value: unknown
+): value is StoredProjectFavorite {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+  const favorite = value as Partial<StoredProjectFavorite>;
+  return (
+    typeof favorite.domain === 'string' &&
+    favorite.domain.length > 0 &&
+    typeof favorite.projectUuid === 'string' &&
+    favorite.projectUuid.length > 0 &&
+    typeof favorite.sceneUuid === 'string' &&
+    favorite.sceneUuid.length > 0 &&
+    typeof favorite.projectName === 'string' &&
+    typeof favorite.sceneName === 'string'
+  );
+}
+
+function normalizeProjectFavorites(value: unknown): ProjectFavoritesByTopic {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return {};
+  }
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>).map(([topic, entries]) => {
+      if (!Array.isArray(entries)) {
+        return [topic, emptyProjectFavorites];
+      }
+      const favorites = entries.filter(isStoredProjectFavorite);
+      return [topic, favorites.length === entries.length ? entries : favorites];
+    })
+  );
+}
+
 function matchesProjectFavorite(
   favorite: StoredProjectFavorite,
   selection: ProjectFavoriteSelection
@@ -203,8 +237,14 @@ export class ConfigurationStore {
       const decodedValue = configItem.encrypted
         ? decryptData(rawValue)
         : rawValue;
-      return coerceByDtype(deserialize(decodedValue), configItem);
+      const value = deserialize(decodedValue);
+      return configItem === this.storage_items.projectFavoritesByTopic
+        ? normalizeProjectFavorites(value)
+        : coerceByDtype(value, configItem);
     } catch (err) {
+      if (configItem === this.storage_items.projectFavoritesByTopic) {
+        return configItem.defaultValue;
+      }
       throw new Error(
         `Failed to initialize config item "${configItem.key}" from localStorage`,
         { cause: err }
@@ -221,7 +261,10 @@ export class ConfigurationStore {
   }
 
   private setItem(configItem: Item, value: any): void {
-    const coercedValue = coerceByDtype(value, configItem);
+    const coercedValue =
+      configItem === this.storage_items.projectFavoritesByTopic
+        ? normalizeProjectFavorites(value)
+        : coerceByDtype(value, configItem);
 
     if (!configItem.encrypted || !this.storage) {
       this.memory.set(configItem.key, coercedValue);
