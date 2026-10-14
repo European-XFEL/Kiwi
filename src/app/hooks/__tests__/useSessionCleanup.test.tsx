@@ -6,7 +6,6 @@ import { Mediator } from '@/lib/singletons/Mediator';
 import { ProjectItemModel } from '@/lib/singletons/ProjectItemModel';
 import { PanelWrangler } from '@/lib/singletons/PanelWrangler';
 import { CINEMA_TAB_ID } from '@/features/cinema/api';
-import { createWorkspacePolicy } from '@/features/workspace/configuration';
 
 let mockPanelWrangler: PanelWrangler;
 let mockResetWorkspace: jest.SpyInstance;
@@ -83,7 +82,8 @@ describe('useSessionCleanup', () => {
   it('keeps cinema failures active until the session actually ends', () => {
     login();
     mockPanelWrangler.dispose();
-    mockPanelWrangler = new PanelWrangler(createWorkspacePolicy('cinema'));
+    mockPanelWrangler = new PanelWrangler();
+    mockPanelWrangler.setMode('cinema');
     mockResetWorkspace = jest.spyOn(mockPanelWrangler, 'resetWorkspace');
     renderHook(() => useSessionCleanup());
 

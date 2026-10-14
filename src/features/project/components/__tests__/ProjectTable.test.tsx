@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ProjectModel } from '@/karabo/common/project/api';
 import ProjectsTable from '../ProjectTable';
@@ -20,6 +20,35 @@ describe('ProjectsTable', () => {
 
     expect(onProjectClick).toHaveBeenCalledTimes(1);
     expect(onProjectClick.mock.calls[0][0].uuid).toBe('project-b');
+  });
+
+  it('reports the double-clicked project once even when another row is selected', async () => {
+    const onProjectDoubleClick = jest.fn();
+    render(
+      <ProjectsTable
+        projects={projects}
+        selectedProject={projects[0]}
+        onProjectClick={jest.fn()}
+        onProjectDoubleClick={onProjectDoubleClick}
+      />
+    );
+    await userEvent.setup().dblClick(screen.getByText('Beamline'));
+    expect(onProjectDoubleClick).toHaveBeenCalledTimes(1);
+    expect(onProjectDoubleClick).toHaveBeenCalledWith(projects[1]);
+  });
+
+  it('ignores double clicks while project selection is disabled', () => {
+    const onProjectDoubleClick = jest.fn();
+    render(
+      <ProjectsTable
+        projects={projects}
+        onProjectClick={jest.fn()}
+        onProjectDoubleClick={onProjectDoubleClick}
+        selectionDisabled
+      />
+    );
+    fireEvent.doubleClick(screen.getByText('Beamline').closest('tr')!);
+    expect(onProjectDoubleClick).not.toHaveBeenCalled();
   });
 
   it('ignores clicks while selection is disabled', async () => {

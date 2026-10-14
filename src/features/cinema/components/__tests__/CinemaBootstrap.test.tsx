@@ -9,7 +9,6 @@ import { PanelWrangler } from '@/lib/singletons/PanelWrangler';
 import { SingletonContext } from '@/testing';
 import { showMessageBox } from '@/lib/messagebox';
 import CinemaBootstrap from '../CinemaBootstrap';
-import { createWorkspacePolicy } from '@/features/workspace/configuration';
 import { openSceneLinkInWorkspace } from '@/features/project/utils/openSceneLinkInWorkspace';
 
 jest.mock('@/lib/messagebox', () => ({ showMessageBox: jest.fn() }));
@@ -41,7 +40,8 @@ beforeEach(() => {
     sessionStartEpoc: 1,
   });
   topology = { initialized: true };
-  wrangler = new PanelWrangler(createWorkspacePolicy('cinema'));
+  wrangler = new PanelWrangler();
+  wrangler.setMode('cinema');
   context = new SingletonContext({
     panel_wrangler: wrangler,
     topology,

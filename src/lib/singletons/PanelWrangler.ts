@@ -28,7 +28,6 @@ import type {
   PanelTab,
   SceneTabSnapshot,
   RightPanelState,
-  WorkspacePolicy,
   PanelAreaState,
 } from '@/features/workspace/types';
 import {
@@ -36,10 +35,8 @@ import {
   CONFIGURATION_TAB_ID,
   SYSTEM_TOPOLOGY_TAB_ID,
 } from '@/features/workspace/utils';
-import {
-  findProjectModelInProject,
-  walkProjectModels,
-} from '@/karabo/common/project/api';
+import { PROJECTS_TAB_ID } from '@/features/projectpanel/configuration';
+import type { ProjectSnapshot } from './ProjectItemModel';
 import { getProjectModel } from './api';
 import {
   readActiveTab,
@@ -61,11 +58,14 @@ export { HOME_TAB_ID } from '@/features/workspace/configuration';
 
 const DEFAULT_FIT_MODE: FitMode = 'fit-page';
 
-function createLeftArea(): PanelState {
+function createLeftArea(showProjects: boolean): PanelState {
   return {
     id: 'left',
     tabs: [
       { id: SYSTEM_TOPOLOGY_TAB_ID, title: 'SystemTopology', closable: false },
+      ...(showProjects
+        ? [{ id: PROJECTS_TAB_ID, title: 'Projects', closable: false }]
+        : []),
     ],
     activeTabId: SYSTEM_TOPOLOGY_TAB_ID,
   };
@@ -124,24 +124,26 @@ function isSameSceneRef(
 export class PanelWrangler {
   // Mirrors DatabaseBusy: the database connection alone decides when a project
   // is loading, so resets leave this flag untouched.
-  private state: PanelAreaState & { projectLoading: boolean };
+  private state: PanelAreaState & {
+    projectLoading: boolean;
+    projectPanelActivation: number;
+  };
 
   private content = new Map<string, SceneTabContent>();
   private sceneTabs = new Map<string, SceneTabSnapshot>();
   private deviceSceneTabs = new Map<string, UnnatachedSceneTabSnapshot>();
   private listeners = new Set<() => void>();
   private readonly eventMap: KaraboEventMap;
+  private projectSnapshot: ProjectSnapshot;
+  private policy = createWorkspacePolicy();
 
-  public constructor(
-    private policy: Pick<
-      WorkspacePolicy,
-      'defaultCenterTab' | 'persistActiveTab'
-    > = createWorkspacePolicy()
-  ) {
+  public constructor() {
+    this.projectSnapshot = getProjectModel().getSnapshot();
     this.state = {
       projectLoading: false,
-      left: createLeftArea(),
-      center: createCenterArea(policy.defaultCenterTab),
+      projectPanelActivation: 0,
+      left: createLeftArea(this.policy.showProjectNavigation),
+      center: this.defaultCenter,
       right: createRightArea(),
     };
     this.eventMap = {
@@ -150,6 +152,7 @@ export class PanelWrangler {
       [KaraboEvent.OpenControllerPanel]: this.onEventOpenControllerPanel,
       [KaraboEvent.GoToHomeTab]: this.onEventGoToHomeTab,
       [KaraboEvent.DatabaseBusy]: this.onEventDatabaseBusy,
+      [KaraboEvent.RootProjectChanged]: this.onEventRootProjectChanged,
     };
 
     register_for_broadcasts(this.eventMap);
@@ -175,6 +178,7 @@ export class PanelWrangler {
     this.deviceSceneTabs.clear();
     this.commit({
       ...this.state,
+      center: { ...this.state.center },
       right: createRightArea(),
     });
   }
@@ -190,10 +194,25 @@ export class PanelWrangler {
     };
   };
 
-  isSceneTabOpen = (): boolean => !this.isDefaultOnly();
+  isSceneTabOpen = (): boolean =>
+    this.state.center.tabs.some(
+      (tab) => this.sceneTabs.has(tab.id) || this.deviceSceneTabs.has(tab.id)
+    );
 
   getContent(tabId: string): SceneTabContent | undefined {
     return this.content.get(tabId);
+  }
+
+  showProjects(): void {
+    if (!this.policy.showProjectNavigation || !this.projectSnapshot.root) {
+      return;
+    }
+    this.commit({
+      ...this.state,
+      left: { ...this.state.left, activeTabId: PROJECTS_TAB_ID },
+      // Also reveal an already selected Projects tab after a repeated load.
+      projectPanelActivation: this.state.projectPanelActivation + 1,
+    });
   }
 
   openControllerPanel(model: BaseWidgetObjectData): string | undefined {
@@ -277,6 +296,7 @@ export class PanelWrangler {
     return { ...data, sceneControllerRegistry, fitMode };
   }
 
+  // Content lives outside the snapshot; advance center identity for its subscribers.
   setContent(tabId: string, data: SceneTabContent): void {
     this.content.set(tabId, this.resolveTabContent(tabId, data));
 
@@ -284,8 +304,7 @@ export class PanelWrangler {
       this.updateSceneTitle(tabId, data.sceneRef.name);
     }
 
-    this.state = { ...this.state };
-    this.emit();
+    this.commit({ ...this.state, center: { ...this.state.center } });
   }
 
   // Update a single tab's fit mode and notify subscribers so the panel rescales.
@@ -296,8 +315,7 @@ export class PanelWrangler {
     }
 
     this.content.set(tabId, { ...existing, fitMode });
-    this.state = { ...this.state };
-    this.emit();
+    this.commit({ ...this.state, center: { ...this.state.center } });
   }
 
   resetCenter(): void {
@@ -320,7 +338,8 @@ export class PanelWrangler {
 
     this.commit({
       ...this.state,
-      left: createLeftArea(),
+      left: createLeftArea(this.policy.showProjectNavigation),
+      projectPanelActivation: 0,
       center,
       right: createRightArea(),
     });
@@ -337,7 +356,7 @@ export class PanelWrangler {
     }
 
     this.clearSavedActiveTab();
-    return createCenterArea(this.policy.defaultCenterTab);
+    return this.defaultCenter;
   }
 
   getSavedActiveTab(): SavedActiveTab | undefined {
@@ -394,7 +413,11 @@ export class PanelWrangler {
     this.sceneTabs.delete(tabId);
     this.deviceSceneTabs.delete(tabId);
 
-    if (nextTabs.length === 0 && area === 'center') {
+    if (
+      nextTabs.length === 0 &&
+      area === 'center' &&
+      (!this.projectSnapshot.root || !this.policy.showProjectNavigation)
+    ) {
       broadcast_event(KaraboEvent.GoToHomeTab, {});
       return;
     }
@@ -420,49 +443,6 @@ export class PanelWrangler {
   ): void {
     const center = this.state.center;
     const nextTab = toPanelTab(snapshot);
-
-    const hasDifferentProjectTab = center.tabs.some((tab) => {
-      if (tab.id === HOME_TAB_ID) {
-        return false;
-      }
-
-      const existing = this.sceneTabs.get(tab.id);
-      if (!existing) {
-        return false;
-      }
-
-      const root = getProjectModel().root;
-      return (
-        existing.domain !== snapshot.domain ||
-        !root ||
-        !findProjectModelInProject(root, existing.projectUuid)
-      );
-    });
-
-    if (hasDifferentProjectTab) {
-      for (const tab of center.tabs) {
-        if (tab.id !== HOME_TAB_ID) {
-          this.content.get(tab.id)?.sceneControllerRegistry?.dispose();
-          this.content.delete(tab.id);
-          this.sceneTabs.delete(tab.id);
-        }
-      }
-
-      this.sceneTabs.set(snapshot.id, snapshot);
-      this.content.set(
-        snapshot.id,
-        this.resolveTabContent(snapshot.id, content)
-      );
-      this.commitTabChange({
-        ...this.state,
-        center: {
-          ...center,
-          tabs: [nextTab],
-          activeTabId: snapshot.id,
-        },
-      });
-      return;
-    }
 
     this.sceneTabs.set(snapshot.id, snapshot);
     this.content.set(snapshot.id, this.resolveTabContent(snapshot.id, content));
@@ -578,10 +558,7 @@ export class PanelWrangler {
       return undefined;
     }
 
-    const sceneProject = Array.from(walkProjectModels(project)).find(
-      (projectModel) =>
-        projectModel.scenes?.some((scene) => scene.uuid === model.uuid)
-    );
+    const sceneProject = projectModel.getSceneProject(model.uuid);
     if (!sceneProject) {
       return undefined;
     }
@@ -650,26 +627,42 @@ export class PanelWrangler {
     };
   }
 
-  // A fresh project load starts from Home: the previous project's tabs and
-  // root are torn down as GoToHomeTab does, so a failed load also ends at Home.
+  private get defaultCenter(): PanelState {
+    if (this.policy.showProjectNavigation && this.projectSnapshot.root) {
+      return { id: 'center', tabs: [], activeTabId: undefined };
+    }
+    return createCenterArea(this.policy.defaultCenterTab);
+  }
+
+  private onEventRootProjectChanged = (): void => {
+    const snapshot = getProjectModel().getSnapshot();
+    const replaced =
+      snapshot.root !== this.projectSnapshot.root ||
+      snapshot.domain !== this.projectSnapshot.domain;
+    this.projectSnapshot = snapshot;
+    if (replaced || !snapshot.root) {
+      this.state = { ...this.state, projectPanelActivation: 0 };
+      this.resetCenter();
+    }
+  };
+
+  // The database owns progress. Starting a fresh read clears the previous root;
+  // subscribers see the final loading state together with the empty workspace.
   private onEventDatabaseBusy = (data: Hash): void => {
     const projectLoading = data.getValue<boolean>('is_processing');
     if (this.state.projectLoading === projectLoading) {
       return;
     }
-    if (!projectLoading) {
-      this.commit({ ...this.state, projectLoading });
-      return;
+    this.state = { ...this.state, projectLoading };
+    if (projectLoading) {
+      getProjectModel().clearRoot();
+    } else {
+      this.emit();
     }
-
-    const center = this.teardownCenter();
-    getProjectModel().clearRoot(); // Emits RootProjectChanged.
-    this.commit({ ...this.state, projectLoading, center });
   };
 
   private onEventGoToHomeTab = (): void => {
-    this.resetCenter();
-    getProjectModel().clearRoot(); // Emits RootProjectChanged.
+    getProjectModel().clearRoot();
   };
 
   private onEventOpenScene = (data: { model: SceneModel }): void => {

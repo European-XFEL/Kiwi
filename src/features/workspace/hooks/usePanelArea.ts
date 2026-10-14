@@ -18,10 +18,14 @@ export default function usePanelArea<Slot extends PanelSlot>(
 ): PanelAreaController<PanelAreaState[Slot]> {
   const wrangler = getPanelWrangler();
 
-  const state = useSyncExternalStore(
+  const getAreaSnapshot = useCallback(
+    () => wrangler.getSnapshot()[slot],
+    [slot, wrangler]
+  );
+  const area = useSyncExternalStore(
     wrangler.subscribe,
-    wrangler.getSnapshot,
-    wrangler.getSnapshot
+    getAreaSnapshot,
+    getAreaSnapshot
   );
 
   const onTabSelect = useCallback(
@@ -38,5 +42,5 @@ export default function usePanelArea<Slot extends PanelSlot>(
     [slot]
   );
 
-  return { area: state[slot], onTabSelect, onTabClose };
+  return { area, onTabSelect, onTabClose };
 }

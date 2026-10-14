@@ -80,6 +80,9 @@ async function loadProjectData(
   project: ProjectModel,
   signal?: AbortSignal
 ): Promise<void> {
+  if (signal?.aborted) {
+    throw new Error(cancelledMessage);
+  }
   const projectLoaded = waitForEvent(
     KaraboEvent.DatabaseBusy,
     signal,

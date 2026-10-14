@@ -2,6 +2,20 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Tabs, type TabItem } from '../tabs';
 
+const mockCloseIconRender = jest.fn();
+
+jest.mock('lucide-react', () => {
+  const React = jest.requireActual('react');
+  const icons = jest.requireActual('lucide-react');
+  return {
+    ...icons,
+    X: (props: unknown) => {
+      mockCloseIconRender();
+      return React.createElement(icons.X, props);
+    },
+  };
+});
+
 function makeItems(overrides: Partial<TabItem>[] = []): TabItem[] {
   const items: TabItem[] = [
     {
@@ -29,6 +43,52 @@ function makeItems(overrides: Partial<TabItem>[] = []): TabItem[] {
 }
 
 describe('Tabs', () => {
+  it('skips tab-header rendering when only panel content changes', () => {
+    const onTabClose = jest.fn();
+    const { rerender } = render(
+      <Tabs id="workspace-tabs" items={makeItems()} onTabClose={onTabClose} />
+    );
+    expect(mockCloseIconRender).toHaveBeenCalled();
+    mockCloseIconRender.mockClear();
+
+    rerender(
+      <Tabs
+        id="workspace-tabs"
+        items={makeItems([{ panel: <div>Updated panel</div> }])}
+        onTabClose={onTabClose}
+      />
+    );
+    expect(screen.getByText('Updated panel')).toBeVisible();
+    expect(mockCloseIconRender).not.toHaveBeenCalled();
+  });
+
+  it('uses updated callbacks and enabled tabs after a parent update', async () => {
+    const user = userEvent.setup();
+    const firstSelect = jest.fn();
+    const nextSelect = jest.fn();
+    const { rerender } = render(
+      <Tabs
+        id="workspace-tabs"
+        items={makeItems()}
+        activeTabId="tab-a"
+        onTabSelect={firstSelect}
+      />
+    );
+    rerender(
+      <Tabs
+        id="workspace-tabs"
+        items={makeItems([{}, { disabled: true }, { disabled: false }])}
+        activeTabId="tab-a"
+        onTabSelect={nextSelect}
+      />
+    );
+    await user.click(screen.getByRole('tab', { name: 'Tab A' }));
+    await user.keyboard('{ArrowRight}');
+    expect(screen.getByRole('tab', { name: 'Tab C' })).toHaveFocus();
+    expect(nextSelect).toHaveBeenLastCalledWith('tab-c');
+    expect(firstSelect).not.toHaveBeenCalled();
+  });
+
   it('selects and focuses enabled tabs with arrow, Home, and End keys', async () => {
     const user = userEvent.setup();
     render(<Tabs id="workspace-tabs" items={makeItems()} />);

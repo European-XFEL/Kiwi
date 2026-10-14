@@ -1,9 +1,12 @@
-import type { ReactNode, Ref } from 'react';
+import { memo, type ReactNode, type Ref } from 'react';
 import { cn, Tabs, type TabItem } from '@/components/api';
 import icons from '@/assets/icons';
 import { HOME_TAB_ID } from '@/lib/singletons/PanelWrangler';
 import usePanelArea from '../hooks/usePanelArea';
 import type { PanelSlot, PanelTab } from '../types';
+
+const homeTabIcon = <img alt="" className="h-4 w-4" src={icons.homeEdit} />;
+const sceneTabIcon = <img alt="" className="h-4 w-4" src={icons.image} />;
 
 interface PanelContainerProps {
   area: PanelSlot;
@@ -17,7 +20,7 @@ interface PanelContainerProps {
   panelClassName?: string;
 }
 
-export default function PanelContainer({
+function PanelContainer({
   area,
   renderPanel,
   emptyState,
@@ -25,7 +28,6 @@ export default function PanelContainer({
   containerRef,
   panelClassName,
 }: PanelContainerProps) {
-  // TODO: Make usePanelArea subscribe only to this area to avoid unrelated updates.
   const { area: areaModel, onTabSelect, onTabClose } = usePanelArea(area);
 
   if (areaModel.tabs.length === 0) {
@@ -44,20 +46,22 @@ export default function PanelContainer({
     );
   }
 
-  const items: TabItem[] = areaModel.tabs.map((tab) => ({
-    id: tab.id,
-    title: tab.title,
-    icon:
-      area === 'center' ? (
-        <img
-          alt=""
-          className="h-4 w-4"
-          src={tab.id === HOME_TAB_ID ? icons.homeEdit : icons.image}
-        />
-      ) : undefined,
-    closable: tab.closable,
-    panel: renderPanel(tab),
-  }));
+  const activeTab =
+    areaModel.tabs.find((tab) => tab.id === areaModel.activeTabId) ??
+    areaModel.tabs[0];
+  const items: TabItem[] = areaModel.tabs.map((tab) => {
+    let icon: ReactNode;
+    if (area === 'center') {
+      icon = tab.id === HOME_TAB_ID ? homeTabIcon : sceneTabIcon;
+    }
+    return {
+      id: tab.id,
+      title: tab.title,
+      icon,
+      closable: tab.closable,
+      panel: tab.id === activeTab.id ? renderPanel(tab) : null,
+    };
+  });
 
   return (
     <section
@@ -72,7 +76,7 @@ export default function PanelContainer({
       <Tabs
         id={`panel-container-${area}`}
         ariaLabel={`${area} panel`}
-        activeTabId={areaModel.activeTabId}
+        activeTabId={activeTab.id}
         items={items}
         panelClassName={panelClassName}
         onTabSelect={onTabSelect}
@@ -81,3 +85,5 @@ export default function PanelContainer({
     </section>
   );
 }
+
+export default memo(PanelContainer);

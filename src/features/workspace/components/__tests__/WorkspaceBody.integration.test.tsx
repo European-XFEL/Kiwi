@@ -15,6 +15,8 @@ import {
 } from '@/lib/binding/api';
 import { DisplayTextLogModel, SceneModel } from '@/karabo/common/api';
 import { broadcast_event, KaraboEvent } from '@/lib/events';
+import { ProjectModel } from '@/karabo/common/project/api';
+import { getProjectModel } from '@/lib/singletons/api';
 import { PanelWrangler } from '@/lib/singletons/PanelWrangler';
 import { SingletonContext } from '@/testing';
 import { SystemTree } from '@/lib/topology/SystemTree';
@@ -98,6 +100,48 @@ describe('WorkspaceBody layout lifetime', () => {
       } finally {
         cleanup();
         wrangler.dispose();
+      }
+    });
+  });
+
+  it('reveals Projects after a dialog activation, including after remount and repeated loads', async () => {
+    getProjectModel().clearRoot();
+    const wrangler = new PanelWrangler();
+    await SingletonContext.run({ panel_wrangler: wrangler }, async () => {
+      try {
+        getProjectModel().setRoot(
+          'CONTROLS',
+          new ProjectModel({ uuid: 'root', simple_name: 'Experiment' })
+        );
+        wrangler.showProjects(); // A loading view can keep the body unmounted.
+        mountWorkspace();
+        await waitFor(() =>
+          expect(
+            document.getElementById('workspace-left')!.style.flexGrow
+          ).toBe('24')
+        );
+        expect(screen.getByRole('tab', { name: 'Projects' })).toHaveAttribute(
+          'aria-selected',
+          'true'
+        );
+        fireEvent.click(
+          screen.getByRole('button', { name: 'Fold left panel' })
+        );
+        await waitFor(() =>
+          expect(
+            document.getElementById('workspace-left')!.style.flexGrow
+          ).toBe('0')
+        );
+        act(() => wrangler.showProjects());
+        await waitFor(() =>
+          expect(
+            document.getElementById('workspace-left')!.style.flexGrow
+          ).toBe('24')
+        );
+      } finally {
+        cleanup();
+        wrangler.dispose();
+        getProjectModel().clearRoot();
       }
     });
   });

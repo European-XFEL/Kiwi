@@ -7,6 +7,7 @@ import { SystemTree } from '@/lib/topology/SystemTree';
 import WorkspaceLeftArea from '../WorkspaceLeftArea';
 
 jest.mock('@/features/project/api', () => ({
+  ...jest.requireActual('@/features/project/api'),
   retrieveDefaultDeviceScene: jest.fn(),
 }));
 jest.mock('@/lib/messagebox', () => ({ showMessageBox: jest.fn() }));
@@ -55,14 +56,14 @@ describe('WorkspaceLeftArea', () => {
     expect(
       screen.queryByRole('button', { name: 'Service Manager' })
     ).toBeNull();
-    expect(screen.getAllByRole('tab')).toHaveLength(2);
+    expect(screen.getAllByRole('tab')).toHaveLength(3);
 
     fireEvent.click(topology);
     expect(wrangler.getSnapshot().left.activeTabId).toBe('system-topology');
     expect(
       screen.getByRole('button', { name: 'Service Manager' })
     ).toBeVisible();
-    expect(screen.getAllByRole('tab')).toHaveLength(2);
+    expect(screen.getAllByRole('tab')).toHaveLength(3);
   });
 
   it('reports an offline Service Manager without requesting its scene', () => {

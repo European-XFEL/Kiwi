@@ -1,6 +1,13 @@
 import { ProjectModel } from '@/karabo/common/project/api';
 import { SceneModel } from '@/karabo/common/scenemodel/api';
 import { createProjectBrowser } from '../createProjectBrowser';
+import { ProjectItemModel } from '@/lib/singletons/ProjectItemModel';
+
+function browserFor(root: ProjectModel) {
+  const model = new ProjectItemModel();
+  model.setRoot('CONTROLS', root);
+  return createProjectBrowser(model.getSnapshot())!;
+}
 
 it('builds navigation for a loaded tree without mutating it', () => {
   const root = new ProjectModel({ uuid: 'root', simple_name: 'Experiment' });
@@ -21,7 +28,7 @@ it('builds navigation for a loaded tree without mutating it', () => {
     Object.freeze(project);
   }
 
-  const browser = createProjectBrowser(root);
+  const browser = browserFor(root);
   expect(browser.rootProjectUuid).toBe('root');
   expect(browser.projectsByUuid.size).toBe(4);
   const rows = ['root', 'motors', 'camera', 'lens'].map((uuid) => {
@@ -41,7 +48,7 @@ it('builds a root-only navigation for a loaded leaf', () => {
   const root = new ProjectModel({ uuid: 'root', simple_name: 'Empty' });
   root.initialized = true;
   root.scenes = [];
-  const browser = createProjectBrowser(root);
+  const browser = browserFor(root);
   expect(browser.rootProjectUuid).toBe('root');
   expect([...browser.projectsByUuid.values()]).toStrictEqual([
     {
@@ -72,9 +79,9 @@ it('preserves both parent links and populated data regardless of visit order', (
   camera.subprojects = [calibration];
   root.subprojects = [motors, camera];
 
-  const motorsFirst = createProjectBrowser(root);
+  const motorsFirst = browserFor(root);
   root.subprojects.reverse();
-  const cameraFirst = createProjectBrowser(root);
+  const cameraFirst = browserFor(root);
 
   for (const browser of [cameraFirst, motorsFirst]) {
     const entries = browser.projectsByUuid;
@@ -108,7 +115,7 @@ it('visits descendants of repeated initialized project instances', () => {
   second.subprojects = [child];
   root.subprojects = [first, second];
 
-  const browser = createProjectBrowser(root);
+  const browser = browserFor(root);
   expect(browser.projectsByUuid.get('child')?.projectName).toBe('Loaded child');
 });
 
@@ -119,7 +126,7 @@ it('terminates cycles and keeps the populated root when its UUID reappears', () 
   root.subprojects = [child];
   child.subprojects = [root, new ProjectModel({ uuid: 'root' })];
 
-  const browser = createProjectBrowser(root);
+  const browser = browserFor(root);
   expect(browser.rootProjectUuid).toBe('root');
   expect(browser.projectsByUuid.size).toBe(2);
   expect(browser.projectsByUuid.get('root')).toStrictEqual({
@@ -139,7 +146,7 @@ it('lists a repeated child UUID once per parent', () => {
   first.initialized = true;
   root.subprojects = [first, second];
 
-  const browser = createProjectBrowser(root);
+  const browser = browserFor(root);
   expect(browser.projectsByUuid.get('root')?.subprojectUuids).toEqual([
     'shared',
   ]);
@@ -155,7 +162,7 @@ it('keeps every collected project reachable from the root', () => {
   stub.subprojects = [new ProjectModel({ uuid: 'discovered' })];
   root.subprojects = [loaded, stub];
 
-  const browser = createProjectBrowser(root);
+  const browser = browserFor(root);
   const reachable = new Set<string>();
   const walk = (uuid: string) => {
     if (reachable.has(uuid)) {
@@ -180,7 +187,7 @@ it('reports whether each project has been loaded', () => {
   root.initialized = true;
   root.subprojects = [new ProjectModel({ uuid: 'pending' })];
 
-  const browser = createProjectBrowser(root);
+  const browser = browserFor(root);
   expect(browser.projectsByUuid.get('root')?.isLoaded).toBe(true);
   const pending = browser.projectsByUuid.get('pending');
   expect(pending?.isLoaded).toBe(false);
@@ -195,7 +202,7 @@ it('lists the scenes of a loaded project in order', () => {
     new SceneModel({ uuid: 'alignment', simple_name: 'Alignment' }),
   ];
 
-  const browser = createProjectBrowser(root);
+  const browser = browserFor(root);
   expect(browser.projectsByUuid.get('root')?.scenes).toEqual([
     { sceneUuid: 'overview', sceneName: 'Overview' },
     { sceneUuid: 'alignment', sceneName: 'Alignment' },
@@ -207,7 +214,7 @@ it('reports no scenes for a project that has not been loaded', () => {
   root.initialized = true;
   root.subprojects = [new ProjectModel({ uuid: 'pending' })];
 
-  const browser = createProjectBrowser(root);
+  const browser = browserFor(root);
   const pending = browser.projectsByUuid.get('pending');
   expect(pending?.isLoaded).toBe(false);
   expect(pending?.scenes).toEqual([]);
@@ -221,7 +228,7 @@ it('takes scenes from the loaded copy when a UUID is repeated', () => {
   loaded.scenes = [new SceneModel({ uuid: 'scene-a', simple_name: 'Scene A' })];
   root.subprojects = [stub, loaded];
 
-  const browser = createProjectBrowser(root);
+  const browser = browserFor(root);
   expect(browser.projectsByUuid.get('shared')).toStrictEqual({
     projectUuid: 'shared',
     projectName: 'Shared',

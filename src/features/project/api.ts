@@ -27,6 +27,7 @@ export {
   removeProjectFavorite,
 } from './utils/projectFavoriteActions';
 export {
+  loadRootProject,
   loadRootProjectScene,
   clearRootProject,
 } from './utils/rootProjectActions';
@@ -36,7 +37,10 @@ export {
   retrieveDefaultDeviceScene,
 } from './utils/openSceneLinkInWorkspace';
 
-export { openUnattachedSceneInWorkspace } from './utils/openSceneInWorkspace';
+export {
+  openSceneInWorkspace,
+  openUnattachedSceneInWorkspace,
+} from './utils/openSceneInWorkspace';
 
 // Types
 export type {
@@ -46,5 +50,4 @@ export type {
   SelectProjectSceneDialogProps,
   DomainSelectorProps,
   ProjectsTableProps,
-  ScenesTableProps,
 } from './types/project.types';

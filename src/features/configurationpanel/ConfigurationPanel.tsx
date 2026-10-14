@@ -1,4 +1,5 @@
 import {
+  memo,
   useEffect,
   useState,
   useSyncExternalStore,
@@ -11,7 +12,7 @@ import { KaraboEvent, useKaraboEvent } from '@/lib/events';
 import { ConfigurationTreeModel } from './ConfigurationTreeModel';
 import ConfigurationTree from './components/ConfigurationTree';
 
-export default function ConfigurationPanel() {
+function ConfigurationPanel() {
   const [model] = useState(() => new ConfigurationTreeModel());
   const data = useSyncExternalStore(model.subscribe, model.getSnapshot);
   const [visibility, setVisibility] = useState(AccessLevel.OPERATOR);
@@ -78,3 +79,5 @@ export default function ConfigurationPanel() {
     </section>
   );
 }
+
+export default memo(ConfigurationPanel);

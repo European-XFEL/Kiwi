@@ -36,8 +36,7 @@ describe('useRootProject', () => {
     expect(result.current.projects).toEqual([]);
   });
 
-  // The announcement reaches only listeners that are already subscribed, so a
-  // project activated before this mounted is read directly from the singleton.
+  // Consumers also read snapshots published before they mounted.
   it('reads a root that was activated before it mounted', () => {
     const root = makeProject('root', 'Experiment');
     root.subprojects = [makeProject('motors', 'Motors')];
@@ -80,9 +79,7 @@ describe('useRootProject', () => {
     expect(result.current.rootProject?.projectName).toBe('Experiment');
   });
 
-  // The tree is filled in place while loading, so the root keeps its identity
-  // while gaining children. Rebuilding on the announcement rather than on a
-  // changed root reference is what makes those children appear.
+  // In-place edits publish a new snapshot even when the root is unchanged.
   it('rebuilds when the same root object gains subprojects', () => {
     const root = makeProject('root', 'Experiment');
     mockProjectModel.setRoot('CONTROLS', root);
@@ -115,6 +112,22 @@ describe('useRootProject', () => {
     expect(result.current.rootProject).toBeUndefined();
     expect(result.current.selectedProject).toBeUndefined();
     expect(result.current.projects).toEqual([]);
+  });
+
+  it('uses the indexed project graph instead of walking the root again', () => {
+    const root = makeProject('root', 'Experiment');
+    root.subprojects = [makeProject('motors', 'Motors')];
+    mockProjectModel.setRoot('CONTROLS', root);
+    Object.defineProperty(root, 'subprojects', {
+      get: () => {
+        throw new Error('The root was traversed again.');
+      },
+    });
+    const { result } = renderHook(() => useRootProject());
+    expect(
+      result.current.projects.map((project) => project.projectName)
+    ).toEqual(['Experiment', 'Motors']);
+    expect(result.current.rootProject?.subprojectUuids).toEqual(['motors']);
   });
 
   it('filters the list without changing selection and clears the query on selection', () => {

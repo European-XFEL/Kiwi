@@ -1,32 +1,11 @@
 import { memo, useRef } from 'react';
-import {
-  ScenePanel,
-  useFullscreen,
-  type ScenePanelContent,
-  type ScenePanelProps,
-} from '@/features/scenepanel/api';
-import { SceneOpenError } from '@/features/scene-view/components/SceneStatusViews';
-import { getPanelWrangler } from '@/lib/singletons/api';
-import {
-  HOME_TAB_ID,
-  type SceneTabContent,
-} from '@/lib/singletons/PanelWrangler';
+import { useFullscreen, type ScenePanelProps } from '@/features/scenepanel/api';
+import { HOME_TAB_ID } from '@/lib/singletons/PanelWrangler';
 import { CINEMA_TAB_ID } from '@/features/cinema/api';
 import HomePanel from '@/app/HomePanel';
 import type { PanelTab } from '../types';
 import PanelContainer from './PanelContainer';
-
-// A scene tab needs all its loaded fields before it can render.
-function isLoadedSceneContent(
-  content: SceneTabContent | undefined
-): content is ScenePanelContent {
-  return (
-    content?.sceneRef !== undefined &&
-    content.sceneModel !== undefined &&
-    content.sceneControllerRegistry !== undefined &&
-    content.fitMode !== undefined
-  );
-}
+import SceneTabPanel from './SceneTabPanel';
 
 function renderCenterPanel({
   tab,
@@ -53,33 +32,11 @@ function renderCenterPanel({
     return null;
   }
 
-  const wrangler = getPanelWrangler();
-  const content = wrangler.getContent(tab.id);
-  const snapshot = wrangler.getSceneTab(tab.id);
-  if (content?.error) {
-    return (
-      <SceneOpenError
-        message={content.error}
-        showHomeAction={showProjectNavigation}
-      />
-    );
-  }
-  if (!isLoadedSceneContent(content)) {
-    return (
-      <SceneOpenError
-        message="The scene is unavailable. Try opening it again."
-        showHomeAction={showProjectNavigation}
-      />
-    );
-  }
   return (
-    <ScenePanel
+    <SceneTabPanel
       {...fullscreen}
-      content={{
-        ...content,
-        isUnattachedScene: snapshot?.isUnattachedScene === true,
-      }}
-      onFitModeChange={(mode) => wrangler.setFitMode(tab.id, mode)}
+      tabId={tab.id}
+      showProjectNavigation={showProjectNavigation}
     />
   );
 }

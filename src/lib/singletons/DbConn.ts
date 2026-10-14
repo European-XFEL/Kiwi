@@ -7,8 +7,6 @@ import {
   get_item_type,
   BaseProjectObjectModel,
   ProjectDBCache,
-  findProjectModelInProject,
-  findSceneModelInProject,
 } from '@/karabo/common/project/api';
 import { SceneModel } from '@/karabo/common/scenemodel/api';
 import { getNetwork, getProjectModel } from '@/lib/singletons/api';
@@ -250,12 +248,7 @@ export class DbConnection {
       throw new Error('The project model is not loaded for this scene.');
     }
 
-    const sceneProject = findProjectModelInProject(project, projectUuid);
-    if (!sceneProject) {
-      throw new Error('The project model is not loaded for this scene.');
-    }
-
-    const scene = findSceneModelInProject(sceneProject, sceneUuid);
+    const scene = projectModel.getScene(sceneUuid);
 
     if (!scene) {
       throw new Error(

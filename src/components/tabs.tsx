@@ -3,6 +3,8 @@ import {
   type KeyboardEvent,
   type ReactNode,
   useCallback,
+  useLayoutEffect,
+  useRef,
   useState,
 } from 'react';
 import { X } from 'lucide-react';
@@ -34,9 +36,11 @@ export interface TabsProps {
   onTabClose?: (tabId: TabId) => void;
 }
 
-interface TabButtonProps {
+interface TabButtonProps extends Pick<
+  TabItem,
+  'id' | 'title' | 'icon' | 'closable' | 'disabled' | 'dirty'
+> {
   groupId: string;
-  tab: TabItem;
   isActive: boolean;
   onSelect: (tabId: TabId) => void;
   onKeyDown: (event: KeyboardEvent<HTMLButtonElement>, tabId: TabId) => void;
@@ -45,14 +49,19 @@ interface TabButtonProps {
 
 const TabButton = memo(function TabButton({
   groupId,
-  tab,
+  id: tabId,
+  title,
+  icon,
+  closable,
+  disabled,
+  dirty,
   isActive,
   onSelect,
   onKeyDown,
   onClose,
 }: TabButtonProps) {
-  const tabButtonId = `${groupId}-${tab.id}`;
-  const tabPanelId = `${groupId}-${tab.id}-panel`;
+  const tabButtonId = `${groupId}-${tabId}`;
+  const tabPanelId = `${groupId}-${tabId}-panel`;
 
   return (
     <div
@@ -64,18 +73,18 @@ const TabButton = memo(function TabButton({
         isActive
           ? 'bg-background after:bg-primary'
           : 'bg-muted/40 after:bg-transparent hover:bg-background',
-        tab.disabled && 'opacity-50'
+        disabled && 'opacity-50'
       )}
     >
       <button
         aria-controls={tabPanelId}
         aria-selected={isActive}
         data-active={isActive}
-        disabled={tab.disabled}
+        disabled={disabled}
         id={tabButtonId}
-        data-testid={`tab-${tab.id}`}
-        onClick={() => onSelect(tab.id)}
-        onKeyDown={(event) => onKeyDown(event, tab.id)}
+        data-testid={`tab-${tabId}`}
+        onClick={() => onSelect(tabId)}
+        onKeyDown={(event) => onKeyDown(event, tabId)}
         role="tab"
         tabIndex={isActive ? 0 : -1}
         type="button"
@@ -88,16 +97,16 @@ const TabButton = memo(function TabButton({
             : 'text-muted-foreground hover:text-foreground'
         )}
       >
-        {tab.icon ? (
+        {icon ? (
           <span aria-hidden="true" className="shrink-0">
-            {tab.icon}
+            {icon}
           </span>
         ) : null}
-        <span className="max-w-44 truncate">{tab.title}</span>
+        <span className="max-w-44 truncate">{title}</span>
 
-        {tab.dirty ? (
+        {dirty ? (
           <span
-            data-testid={`tab-dirty-${tab.id}`}
+            data-testid={`tab-dirty-${tabId}`}
             aria-label="Unsaved changes"
             title="Unsaved changes"
             className={cn(
@@ -108,11 +117,11 @@ const TabButton = memo(function TabButton({
         ) : null}
       </button>
 
-      {tab.closable && onClose ? (
+      {closable && onClose ? (
         <button
-          data-testid={`tab-close-${tab.id}`}
-          aria-label={`Close ${tab.title}`}
-          onClick={() => onClose(tab.id)}
+          data-testid={`tab-close-${tabId}`}
+          aria-label={`Close ${title}`}
+          onClick={() => onClose(tabId)}
           tabIndex={isActive ? 0 : -1}
           type="button"
           className={cn(
@@ -167,26 +176,30 @@ export function Tabs({
     items,
     isControlled ? controlledActiveTabId : localActiveTabId
   );
+  const eventState = useRef({ items, isControlled, onTabSelect });
+  // Keep handlers stable across panel updates and read only committed tab state.
+  useLayoutEffect(() => {
+    eventState.current = { items, isControlled, onTabSelect };
+  }, [items, isControlled, onTabSelect]);
 
-  const handleTabSelect = useCallback(
-    (tabId: TabId) => {
-      const selectedTab = items.find((tab) => tab.id === tabId);
+  const handleTabSelect = useCallback((tabId: TabId) => {
+    const { items, isControlled, onTabSelect } = eventState.current;
+    const selectedTab = items.find((tab) => tab.id === tabId);
 
-      if (!selectedTab || selectedTab.disabled) {
-        return;
-      }
+    if (!selectedTab || selectedTab.disabled) {
+      return;
+    }
 
-      if (!isControlled) {
-        setLocalActiveTabId(tabId);
-      }
+    if (!isControlled) {
+      setLocalActiveTabId(tabId);
+    }
 
-      onTabSelect?.(tabId);
-    },
-    [isControlled, items, onTabSelect]
-  );
+    onTabSelect?.(tabId);
+  }, []);
 
   const handleTabKeyDown = useCallback(
     (event: KeyboardEvent<HTMLButtonElement>, tabId: TabId) => {
+      const { items } = eventState.current;
       const enabledTabs = getEnabledTabs(items);
       let index = enabledTabs.findIndex((tab) => tab.id === tabId);
       if (index === -1) {
@@ -208,7 +221,7 @@ export function Tabs({
       handleTabSelect(nextTab.id);
       document.getElementById(`${id}-${nextTab.id}`)?.focus();
     },
-    [handleTabSelect, id, items]
+    [handleTabSelect, id]
   );
 
   return (
@@ -232,7 +245,12 @@ export function Tabs({
             onClose={onTabClose}
             onSelect={handleTabSelect}
             onKeyDown={handleTabKeyDown}
-            tab={tab}
+            id={tab.id}
+            title={tab.title}
+            icon={tab.icon}
+            closable={tab.closable}
+            disabled={tab.disabled}
+            dirty={tab.dirty}
           />
         ))}
       </div>

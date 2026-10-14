@@ -1,5 +1,4 @@
 import { type SceneModel } from '@/karabo/common/api';
-import { findSceneModelInProject } from '@/karabo/common/project/api';
 import { Capabilities } from '@/karabo/data/api';
 import { showMessageBox } from '@/lib/messagebox';
 import { PropertyProxy, ProxyStatus } from '@/lib/binding/api';
@@ -23,12 +22,7 @@ export function sceneUuidFromLinkTarget(target: string): string {
 export function findSceneModelInCurrentProject(
   uuid: string
 ): SceneModel | undefined {
-  const root = getProjectModel().root;
-  if (!root) {
-    return;
-  }
-
-  return findSceneModelInProject(root, uuid);
+  return getProjectModel().getScene(uuid);
 }
 
 export async function openSceneLinkInWorkspace(
