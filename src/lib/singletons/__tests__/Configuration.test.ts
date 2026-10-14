@@ -100,6 +100,126 @@ describe('ConfigurationStore', () => {
       sceneName: 'Overview',
     };
 
+    it('recovers from invalid favorites JSON while keeping other configuration', () => {
+      localStorage.setItem('kiwi/project:projectFavoritesByTopic', '{bad');
+      localStorage.setItem('kiwi/network:host', JSON.stringify('stored-host'));
+
+      const config = new ConfigurationStore();
+
+      expect(config.getValue('host')).toBe('stored-host');
+      expect(config.getProjectFavorites('TOPIC_A')).toEqual([]);
+      config.addProjectFavorite('TOPIC_A', favorite);
+      expect(new ConfigurationStore().getProjectFavorites('TOPIC_A')).toEqual([
+        favorite,
+      ]);
+    });
+
+    it('still reports invalid JSON in other configuration items', () => {
+      localStorage.setItem('kiwi/network:host', '{bad');
+
+      expect(() => new ConfigurationStore()).toThrow(
+        'Failed to initialize config item "host" from localStorage'
+      );
+    });
+
+    it.each(['null', '[]', '5', '"favorites"', 'false'])(
+      'treats a non-mapping favorites value %s as empty',
+      (stored) => {
+        localStorage.setItem('kiwi/project:projectFavoritesByTopic', stored);
+
+        const config = new ConfigurationStore();
+
+        expect(config.getProjectFavorites('TOPIC_A')).toEqual([]);
+        config.addProjectFavorite('TOPIC_A', favorite);
+        config.removeProjectFavorite('TOPIC_A', favorite);
+        expect(new ConfigurationStore().getProjectFavorites('TOPIC_A')).toEqual(
+          []
+        );
+      }
+    );
+
+    it.each(['null', '{}', '5', '"favorites"'])(
+      'ignores a non-array topic value %s and keeps the other topic',
+      (stored) => {
+        localStorage.setItem(
+          'kiwi/project:projectFavoritesByTopic',
+          JSON.stringify({ TOPIC_A: JSON.parse(stored), TOPIC_B: [favorite] })
+        );
+
+        const config = new ConfigurationStore();
+
+        expect(config.getProjectFavorites('TOPIC_A')).toEqual([]);
+        expect(config.getProjectFavorites('TOPIC_B')).toEqual([favorite]);
+        config.addProjectFavorite('TOPIC_A', favorite);
+        expect(new ConfigurationStore().getProjectFavorites('TOPIC_B')).toEqual(
+          [favorite]
+        );
+      }
+    );
+
+    it('keeps valid entries in order and drops malformed entries', () => {
+      const detail = { ...favorite, sceneUuid: 'detail', sceneName: '' };
+      localStorage.setItem(
+        'kiwi/project:projectFavoritesByTopic',
+        JSON.stringify({
+          TOPIC_A: [
+            null,
+            favorite,
+            { ...favorite, domain: '' },
+            { ...favorite, projectUuid: '' },
+            { ...favorite, sceneUuid: '' },
+            { ...favorite, domain: 42 },
+            { ...favorite, projectUuid: null },
+            { ...favorite, sceneUuid: undefined },
+            { ...favorite, projectName: 42 },
+            { ...favorite, sceneName: null },
+            detail,
+          ],
+        })
+      );
+
+      const config = new ConfigurationStore();
+
+      expect(config.getProjectFavorites('TOPIC_A')).toEqual([favorite, detail]);
+      config.removeProjectFavorite('TOPIC_A', favorite);
+      expect(new ConfigurationStore().getProjectFavorites('TOPIC_A')).toEqual([
+        detail,
+      ]);
+    });
+
+    it('preserves every valid favorite in a stored list longer than ten', () => {
+      const favorites = Array.from({ length: 12 }, (_, index) => ({
+        ...favorite,
+        sceneUuid: `scene-${index}`,
+      }));
+      localStorage.setItem(
+        'kiwi/project:projectFavoritesByTopic',
+        JSON.stringify({ TOPIC_A: favorites })
+      );
+      const config = new ConfigurationStore();
+
+      const snapshot = config.getProjectFavorites('TOPIC_A');
+
+      expect(snapshot).toEqual(favorites);
+      expect(config.getProjectFavorites('TOPIC_A')).toBe(snapshot);
+    });
+
+    it('validates favorites supplied through the generic configuration API', () => {
+      const config = new ConfigurationStore();
+      config.setValue('projectFavoritesByTopic', {
+        TOPIC_A: [favorite, { ...favorite, sceneUuid: '' }],
+        TOPIC_B: 5,
+      });
+
+      expect(config.getProjectFavorites('TOPIC_A')).toEqual([favorite]);
+      expect(config.getProjectFavorites('TOPIC_B')).toEqual([]);
+      expect(new ConfigurationStore().getProjectFavorites('TOPIC_A')).toEqual([
+        favorite,
+      ]);
+      config.setValue('projectFavoritesByTopic', null);
+      expect(config.getProjectFavorites('TOPIC_A')).toEqual([]);
+    });
+
     it('persists complete favorites and isolates them by topic', () => {
       const config = new ConfigurationStore();
       config.addProjectFavorite('TOPIC_A', favorite);
