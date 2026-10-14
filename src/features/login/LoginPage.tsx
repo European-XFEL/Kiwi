@@ -1,12 +1,16 @@
+import { useCallback, useMemo, useState } from 'react';
 import { Card, CardContent, CardFooter } from '@/components/api';
 import { Button } from '@/components/api';
-import ServerProbeForm from './components/ServerProbeForm';
+import { getConfig } from '@/lib/singletons/api';
+import HostPortForm from './components/HostPortForm';
+import TopicSelectForm from './components/TopicSelectForm';
 import AuthenticationForm from './components/AuthenticationForm';
 import AccessLevelForm from './components/AccesslevelForm';
 import LoginStatus from './components/LoginStatus';
-import { useServerProbe } from './hooks/useServerProbe';
 import { useAuth } from './hooks/useAuth';
-import { ActivityStatus } from './auth.types';
+import { ActivityStatus, GuiServerType, ServerProbeResult } from './auth.types';
+import { LoginContext } from './LoginContext';
+import { decodeTopicServerMap } from './utils';
 import ReadOnlyAccessForm from './components/ReadOnlyAccessForm';
 import { useApplicationModeStore, useAppSettingsStore } from '@/store/api';
 
@@ -14,7 +18,7 @@ import { useApplicationModeStore, useAppSettingsStore } from '@/store/api';
  * LoginPage - Main login interface
  *
  * Handles:
- * - Server probing (checking if GUI server is available)
+ * - Selecting the server form and reacting to its probe results
  * - User authentication (with or without auth server)
  * - Access level selection (for non-auth mode)
  */
@@ -25,32 +29,48 @@ export function LoginPage() {
     (state) => state.topicServerMapping
   );
 
-  // When there's a Topic-Server Map defined the debouncing timeout for launching
-  // a GUI Server probe should be as the user won't be typing host and port.
-  const debounceServerProbing = topicServerMapping.length > 0 ? 500 : 2_000;
-
-  // Server probe state and logic
-  const {
-    host,
-    port,
-    probedServerInfo,
-    activityStatus,
-    errorMsg,
-    setHost,
-    setPort,
-    doProbeServer,
-    setActivityStatus,
-    setErrorMessage,
-  } = useServerProbe({
-    debounceMs: debounceServerProbing,
-    initialHost: suppliedServer ? launch.host : undefined,
-    initialPort: suppliedServer ? String(launch.port) : undefined,
+  const topicServerMap = useMemo(
+    () =>
+      mode === 'cinema' ? undefined : decodeTopicServerMap(topicServerMapping),
+    [mode, topicServerMapping]
+  );
+  const hasTopicServerMap =
+    topicServerMap && Object.keys(topicServerMap).length > 0;
+  const [host, setHost] = useState(() =>
+    suppliedServer ? launch.host! : getConfig().lastHost
+  );
+  const [port, setPort] = useState(() => {
+    const initialPort = suppliedServer ? launch.port : getConfig().lastPort;
+    return initialPort ? String(initialPort) : '';
   });
+  const [probeResult, setProbeResult] = useState<ServerProbeResult>({
+    status: 'idle',
+  });
+  const probedServerInfo =
+    probeResult.status === 'success' ? probeResult.serverInfo : null;
+  const [activityStatus, setActivityStatus] = useState(
+    ActivityStatus.NO_ACTIVITY
+  );
+  const [loginError, setErrorMessage] = useState('');
+  const errorMsg =
+    probeResult.status === 'failure'
+      ? probeResult.error instanceof Error
+        ? probeResult.error.message
+        : String(probeResult.error)
+      : loginError;
+  const guiServerType = probedServerInfo
+    ? probedServerInfo.authRequired
+      ? GuiServerType.AUTH
+      : probedServerInfo.readOnly
+        ? GuiServerType.READ_ONLY
+        : GuiServerType.NON_AUTH
+    : null;
 
   // Auth state and logic
   const {
     userName,
     passwd,
+    accessLevel,
     setUserName,
     setPasswd,
     setAccessLevel,
@@ -61,6 +81,27 @@ export function LoginPage() {
     setActivityStatus,
     setErrorMessage,
   });
+
+  const handleUserNameChange = useCallback(
+    (name: string) => {
+      setUserName(name);
+      setErrorMessage('');
+    },
+    [setUserName]
+  );
+
+  const handlePasswordChange = useCallback(
+    (password: string) => {
+      setPasswd(password);
+      setErrorMessage('');
+    },
+    [setPasswd]
+  );
+
+  const handleProbeResult = useCallback((result: ServerProbeResult) => {
+    setProbeResult(result);
+    setErrorMessage('');
+  }, []);
 
   // Status text for loading states
   let statusText = '';
@@ -77,99 +118,84 @@ export function LoginPage() {
   }
 
   // Login button disabled state
-  const portNum = parseInt(port, 10);
+  const portNum = Number(port);
   const isLoginDisabled =
     activityStatus !== ActivityStatus.NO_ACTIVITY ||
-    !host ||
-    Number.isNaN(portNum) ||
-    (probedServerInfo?.authRequired
+    !host.trim() ||
+    !Number.isInteger(portNum) ||
+    portNum <= 0 ||
+    portNum > 65535 ||
+    (guiServerType === GuiServerType.AUTH
       ? !userName || !passwd
       : !userName || !probedServerInfo);
 
-  // Clear error when user makes changes
-  const clearError = () => {
-    if (errorMsg) setErrorMessage('');
-  };
-
   // Select the correct form to render based on server requirements
   let formContent: React.ReactElement | null = null;
-  if (probedServerInfo?.authRequired) {
+  if (guiServerType === GuiServerType.AUTH) {
     formContent = (
       <AuthenticationForm
-        onUserNameChange={(v) => {
-          setUserName(v);
-          clearError();
-        }}
-        onPasswordChange={(v) => {
-          setPasswd(v);
-          clearError();
-        }}
         onConnectObserver={() => doConnectObserver(host, port)}
         onSubmit={() => doLogin(host, port)}
-        disabled={activityStatus !== ActivityStatus.NO_ACTIVITY}
       />
     );
-  } else if (probedServerInfo && !probedServerInfo.readOnly) {
-    formContent = (
-      <AccessLevelForm
-        onUserNameChange={(v) => {
-          setUserName(v);
-          clearError();
-        }}
-        onAccessLevelChange={setAccessLevel}
-        disabled={activityStatus !== ActivityStatus.NO_ACTIVITY}
-      />
-    );
-  } else if (probedServerInfo) {
-    formContent = (
-      <ReadOnlyAccessForm
-        onUserNameChange={(v) => {
-          setUserName(v);
-          clearError();
-        }}
-        onSubmit={() => doLogin(host, port)}
-        disabled={activityStatus !== ActivityStatus.NO_ACTIVITY}
-      />
-    );
+  } else if (guiServerType === GuiServerType.NON_AUTH) {
+    formContent = <AccessLevelForm />;
+  } else if (guiServerType === GuiServerType.READ_ONLY) {
+    formContent = <ReadOnlyAccessForm onSubmit={() => doLogin(host, port)} />;
   }
 
   return (
-    <Card data-testid="login-page" className="shadow-lg">
-      <CardContent className="pt-2 space-y-5">
-        <ServerProbeForm
-          host={host}
-          port={port}
-          onHostChange={setHost}
-          onPortChange={setPort}
-          topicServerSettings={mode === 'cinema' ? '' : topicServerMapping}
-          topic={probedServerInfo?.topic}
-          disabled={activityStatus !== ActivityStatus.NO_ACTIVITY}
-          onCommit={(h, p) => {
-            const pNum = parseInt(p, 10);
-            if (!Number.isNaN(pNum)) doProbeServer(h.trim(), pNum);
-          }}
-        />
+    <LoginContext.Provider
+      value={{
+        host,
+        port,
+        userName,
+        password: passwd,
+        userAccessLevel: accessLevel,
+        guiServerType,
+        probeResult,
+        activityStatus,
+        setHost,
+        setPort,
+        setUserName: handleUserNameChange,
+        setPassword: handlePasswordChange,
+        setUserAccessLevel: setAccessLevel,
+        setProbeResult: handleProbeResult,
+        setActivityStatus,
+      }}
+    >
+      <Card data-testid="login-page" className="shadow-lg">
+        <CardContent className="pt-2 space-y-5">
+          {hasTopicServerMap ? (
+            <TopicSelectForm
+              key={topicServerMapping}
+              topicServerMap={topicServerMap}
+            />
+          ) : (
+            <HostPortForm />
+          )}
 
-        {formContent}
-      </CardContent>
+          {formContent}
+        </CardContent>
 
-      <CardFooter className="flex items-center justify-between">
-        <div className="flex-1">
-          <LoginStatus
-            isLoading={activityStatus !== ActivityStatus.NO_ACTIVITY}
-            loadingText={statusText}
-            error={errorMsg}
-          />
-        </div>
-        <Button
-          data-testid="login-submit"
-          onClick={() => doLogin(host, port)}
-          disabled={isLoginDisabled}
-          className="min-w-[100px]"
-        >
-          Login
-        </Button>
-      </CardFooter>
-    </Card>
+        <CardFooter className="flex items-center justify-between">
+          <div className="flex-1">
+            <LoginStatus
+              isLoading={activityStatus !== ActivityStatus.NO_ACTIVITY}
+              loadingText={statusText}
+              error={errorMsg}
+            />
+          </div>
+          <Button
+            data-testid="login-submit"
+            onClick={() => doLogin(host, port)}
+            disabled={isLoginDisabled}
+            className="min-w-[100px]"
+          >
+            Login
+          </Button>
+        </CardFooter>
+      </Card>
+    </LoginContext.Provider>
   );
 }

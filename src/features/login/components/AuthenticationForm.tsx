@@ -4,22 +4,21 @@ import { Input } from '@/components/api';
 import { Label } from '@/components/api';
 import { Button } from '@/components/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/api';
+import { ActivityStatus } from '../auth.types';
+import { useLoginContext } from '../LoginContext';
 
 export type AuthenticationFormProps = {
-  onUserNameChange: (username: string) => void;
-  onPasswordChange: (password: string) => void;
   onConnectObserver: () => void;
   onSubmit: () => void;
-  disabled?: boolean;
 };
 
 export default function AuthenticationForm({
-  onUserNameChange,
-  onPasswordChange,
   onConnectObserver,
   onSubmit,
-  disabled = false,
 }: AuthenticationFormProps) {
+  const { userName, password, setUserName, setPassword, activityStatus } =
+    useLoginContext();
+  const disabled = activityStatus !== ActivityStatus.NO_ACTIVITY;
   const [showPassword, setShowPassword] = useState(false);
   const userRef = useRef<HTMLInputElement>(null);
   const passwdRef = useRef<HTMLInputElement>(null);
@@ -35,6 +34,7 @@ export default function AuthenticationForm({
                 size="sm"
                 variant="outline"
                 onClick={() => onConnectObserver()}
+                disabled={disabled}
               >
                 <span className="text-xs font-normal">Connect Read-Only</span>
               </Button>
@@ -49,7 +49,8 @@ export default function AuthenticationForm({
             data-testid="login-username"
             id="username"
             ref={userRef}
-            onChange={(e) => onUserNameChange(e.target.value)}
+            value={userName}
+            onChange={(e) => setUserName(e.target.value)}
             disabled={disabled}
             autoComplete="username"
           />
@@ -63,7 +64,8 @@ export default function AuthenticationForm({
               id="password"
               ref={passwdRef}
               type={showPassword ? 'text' : 'password'}
-              onChange={(e) => onPasswordChange(e.target.value)}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !disabled) {
                   onSubmit();

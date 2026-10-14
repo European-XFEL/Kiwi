@@ -10,18 +10,18 @@ import {
 } from '@/components/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/api';
 import { AccessLevel } from '@/karabo/data/enums';
+import { ActivityStatus } from '../auth.types';
+import { useLoginContext } from '../LoginContext';
 
-export type AccessLevelFormProps = {
-  onUserNameChange: (username: string) => void;
-  onAccessLevelChange: (level: number) => void;
-  disabled?: boolean;
-};
-
-export default function AccessLevelForm({
-  onUserNameChange,
-  onAccessLevelChange,
-  disabled = false,
-}: AccessLevelFormProps) {
+export default function AccessLevelForm() {
+  const {
+    userName,
+    userAccessLevel,
+    setUserName,
+    setUserAccessLevel,
+    activityStatus,
+  } = useLoginContext();
+  const disabled = activityStatus !== ActivityStatus.NO_ACTIVITY;
   const userRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -38,7 +38,8 @@ export default function AccessLevelForm({
             data-testid="login-username"
             id="username-al"
             ref={userRef}
-            onChange={(e) => onUserNameChange(e.target.value)}
+            value={userName}
+            onChange={(e) => setUserName(e.target.value)}
             disabled={disabled}
           />
         </div>
@@ -46,9 +47,9 @@ export default function AccessLevelForm({
         <div className="space-y-2">
           <Label htmlFor="access-level">Access Level</Label>
           <Select
-            onValueChange={(value) => onAccessLevelChange(parseInt(value))}
+            onValueChange={(value) => setUserAccessLevel(parseInt(value, 10))}
             disabled={disabled}
-            defaultValue="0"
+            value={String(userAccessLevel)}
           >
             <SelectTrigger id="access-level" data-testid="login-access-level">
               <SelectValue placeholder="Select access level" />
