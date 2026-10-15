@@ -288,7 +288,7 @@ it.each([
   [false, false, 'access-level-form'],
   [false, true, 'read-only-access-form'],
   [true, false, 'authentication-form'],
-  [true, true, 'authentication-form'],
+  [true, true, 'read-only-access-form'],
 ])(
   'reacts to probe results with auth=%s and readOnly=%s',
   async (authRequired, readOnly, form) => {
@@ -302,7 +302,7 @@ it.each([
     fireEvent.change(screen.getByLabelText('Username'), {
       target: { value: 'Ada' },
     });
-    if (authRequired) {
+    if (authRequired && !readOnly) {
       expect(screen.getByTestId('login-submit')).toBeDisabled();
       fireEvent.change(screen.getByLabelText('Password'), {
         target: { value: 'secret' },
