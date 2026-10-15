@@ -59,10 +59,10 @@ export function LoginPage() {
         : String(probeResult.error)
       : loginError;
   const guiServerType = probedServerInfo
-    ? probedServerInfo.authRequired
-      ? GuiServerType.AUTH
-      : probedServerInfo.readOnly
-        ? GuiServerType.READ_ONLY
+    ? probedServerInfo.readOnly
+      ? GuiServerType.READ_ONLY
+      : probedServerInfo.authRequired
+        ? GuiServerType.AUTH
         : GuiServerType.NON_AUTH
     : null;
 
