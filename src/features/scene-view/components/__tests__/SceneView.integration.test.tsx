@@ -25,6 +25,7 @@ import {
   DeviceProxy,
   PropertyProxy,
 } from '@/lib/binding/api';
+import { HashAttributes } from '@/karabo/data/hash';
 import { ALL_OK_COLOR } from '@/lib/colors';
 import { SingletonContext } from '@/testing';
 
@@ -208,10 +209,18 @@ describe('SceneView integration', () => {
     jest.restoreAllMocks();
   });
 
-  it('opens the exact device from a nested widget at a non-default scale', async () => {
+  it('opens the exact device and primary property from a nested widget at a non-default scale', async () => {
     const { topology } = makeTopology();
     const device = topology.getDevice('DEV');
     device.isOnline = true;
+    device.binding = new BindingRoot();
+    device.binding.value!.set(
+      'speed',
+      new StringBinding({
+        value: 'fast',
+        attributes: new HashAttributes({ displayedName: 'Selected speed' }),
+      })
+    );
     await SingletonContext.run({ topology }, async () => {
       const opened = jest.fn();
       const unsubscribe = getMediator().on(
@@ -240,9 +249,65 @@ describe('SceneView integration', () => {
         ).toBe(false);
         expect(opened).toHaveBeenCalledTimes(1);
         expect(opened.mock.calls[0][0].proxy).toBe(device);
+        fireEvent.mouseDown(widget.firstElementChild!, {
+          altKey: true,
+          button: 2,
+          clientX: 70,
+          clientY: 105,
+        });
+        const tooltip = screen.getByRole('tooltip');
+        expect(tooltip).toHaveTextContent('DEV.speed');
+        expect(tooltip).toHaveTextContent('Selected speed');
+        expect(opened).toHaveBeenCalledTimes(1);
       } finally {
         unsubscribe();
       }
+    });
+  });
+
+  it('replaces the selected binding and dismisses it on scene leave while resetting Alt selection', async () => {
+    const { topology } = makeTopology();
+    const device = topology.getDevice('DEV');
+    device.isOnline = true;
+    device.binding = new BindingRoot();
+    device.binding.value!.set('speed', new StringBinding({ value: 'fast' }));
+    device.binding.value!.set(
+      'temperature',
+      new StringBinding({ value: 'warm' })
+    );
+    await SingletonContext.run({ topology }, async () => {
+      const { container } = render(
+        <SceneControllerRegistryProvider
+          registry={new SceneControllerRegistry()}
+        >
+          <SceneView
+            sceneModel={makeMixedScene('inspect')}
+            scale={1.75}
+            fitMode="fit-page"
+          />
+        </SceneControllerRegistryProvider>
+      );
+      const widgets = await screen.findAllByTestId('controller-container');
+      fireEvent.mouseDown(widgets[0].firstElementChild!, {
+        altKey: true,
+        button: 2,
+      });
+      expect(screen.getByRole('tooltip')).toHaveTextContent('DEV.speed');
+      fireEvent.mouseDown(widgets[1].firstElementChild!, {
+        altKey: true,
+        button: 2,
+      });
+      await act(async () => {});
+      expect(screen.getAllByRole('tooltip')).toHaveLength(1);
+      expect(screen.getByRole('tooltip')).toHaveTextContent('DEV.temperature');
+      expect(screen.getByRole('tooltip')).not.toHaveTextContent('DEV.speed');
+      const scene = container.querySelector('[id^="SceneView-Scene-Inner-"]')!;
+      expect(scene).toHaveAttribute('data-scene-alt-selection');
+      await act(async () => {
+        fireEvent.mouseLeave(scene);
+      });
+      expect(screen.queryByRole('tooltip')).toBeNull();
+      expect(scene).not.toHaveAttribute('data-scene-alt-selection');
     });
   });
 

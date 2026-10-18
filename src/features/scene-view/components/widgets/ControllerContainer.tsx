@@ -22,11 +22,11 @@ import {
 } from '@/features/controllers/utils/controller_edit_actions';
 import type { Renderer } from '../../renderRegistry';
 import { ControllerOverlay } from './ControllerOverlay';
+import { TOOLTIP_DURATION_MS } from '../../tooltipConstants';
 
 export type { ControllerContainerContext };
 
 const TOOLTIP_WAKEUP = 700;
-const TOOLTIP_FALL_ASLEEP = 2000;
 
 const EDITABLE_CONTENTS_PADDING: React.CSSProperties = {
   paddingTop: 1,
@@ -144,7 +144,7 @@ const ControllerTooltip = React.memo<ControllerTooltipProps>(
           tooltipAutoCloseRef.current = window.setTimeout(() => {
             setIsTooltipOpen(false);
             tooltipAutoCloseRef.current = null;
-          }, TOOLTIP_FALL_ASLEEP);
+          }, TOOLTIP_DURATION_MS);
         }
       },
       [clearTooltipAutoClose]

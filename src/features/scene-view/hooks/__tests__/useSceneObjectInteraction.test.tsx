@@ -1,5 +1,12 @@
 import { toast } from 'sonner';
-import { fireEvent, render, waitFor } from '@testing-library/react';
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { SceneControllerRegistryProvider } from '../../contexts/SceneControllerRegistryContext';
 import type {
   SceneControllerRecord,
@@ -117,10 +124,10 @@ describe('useSceneObjectInteraction', () => {
       expect(surface).not.toHaveAttribute('data-scene-alt-selection');
     });
 
-    it('does not mark a scene with design mode off and removes listeners on unmount', () => {
+    it('does not mark a scene with design mode on and removes listeners on unmount', () => {
       const registry = createSceneControllerRegistryMock();
       const { getByTestId, unmount } = renderSurface(registry, {
-        design_mode: false,
+        design_mode: true,
       });
       fireEvent.keyDown(window, { key: 'Alt', altKey: true });
       fireEvent.mouseEnter(getByTestId('surface'), { altKey: true });
@@ -139,6 +146,178 @@ describe('useSceneObjectInteraction', () => {
       expect(remove).toHaveBeenCalledWith('keyup', expect.any(Function), true);
       expect(remove).toHaveBeenCalledWith('blur', expect.any(Function));
       remove.mockRestore();
+    });
+  });
+
+  describe('Alt+right-button binding tooltip', () => {
+    beforeEach(() => jest.useFakeTimers());
+    afterEach(async () => {
+      await act(async () => cleanup());
+      jest.useRealTimers();
+    });
+
+    function setup() {
+      const controller = supportedController();
+      controller.ctx.proxy!.root.isOnline = true;
+      controller.ctx.proxies.push(
+        new PropertyProxy(controller.ctx.proxy!.root, 'secondary')
+      );
+      const view = renderSurface(
+        createSceneControllerRegistryMock(controller),
+        { design_mode: false }
+      );
+      const press = () =>
+        fireEvent.mouseDown(view.getByTestId('hit'), {
+          altKey: true,
+          button: 2,
+          clientX: 60,
+          clientY: 80,
+        });
+      return { ...view, controller, press };
+    }
+
+    it('inspects the primary property once for compatible mouse input at the client point', () => {
+      const view = setup();
+      fireEvent(
+        view.getByTestId('hit'),
+        new MouseEvent('pointerdown', {
+          bubbles: true,
+          altKey: true,
+          button: 2,
+        })
+      );
+      expect(screen.queryByRole('tooltip')).toBeNull();
+      view.press();
+      fireEvent.contextMenu(view.getByTestId('hit'), {
+        altKey: true,
+        button: 2,
+      });
+      expect(screen.getByRole('tooltip')).toHaveTextContent('DEV.speed');
+      expect(
+        document.querySelector('[data-slot="tooltip-trigger"]')
+      ).toHaveStyle({
+        position: 'fixed',
+        left: '60px',
+        top: '80px',
+      });
+    });
+
+    it('expires after five seconds', async () => {
+      const view = setup();
+      view.press();
+      await act(async () => jest.advanceTimersByTime(5000));
+      expect(screen.queryByRole('tooltip')).toBeNull();
+    });
+
+    it('dismisses on unmount without synchronously unmounting a nested root', async () => {
+      const view = setup();
+      view.press();
+      const error = jest.spyOn(console, 'error');
+      await act(async () => view.unmount());
+      expect(screen.queryByRole('tooltip')).toBeNull();
+      expect(error).not.toHaveBeenCalled();
+      error.mockRestore();
+    });
+
+    it('keeps a newer scene tooltip when an older scene unmounts', async () => {
+      const older = setup();
+      older.press();
+      const controller = supportedController();
+      controller.ctx.proxy!.root.isOnline = true;
+      const newer = renderSurface(
+        createSceneControllerRegistryMock(controller)
+      );
+      fireEvent.mouseDown(newer.container.querySelector('button')!, {
+        altKey: true,
+        button: 2,
+      });
+      await act(async () => older.unmount());
+      expect(screen.getAllByRole('tooltip')).toHaveLength(1);
+      expect(screen.getByRole('tooltip')).toHaveTextContent('DEV.speed');
+    });
+
+    it('keeps the selection on Escape keyup while tracking Alt', async () => {
+      const view = setup();
+      view.press();
+      fireEvent.keyUp(window, { key: 'Escape', altKey: true });
+      expect(screen.getByRole('tooltip')).toHaveTextContent('DEV.speed');
+      expect(view.getByTestId('surface')).toHaveAttribute(
+        'data-scene-alt-selection',
+        'true'
+      );
+      await act(async () => {
+        fireEvent.keyDown(document, { key: 'Escape', altKey: true });
+      });
+      expect(screen.queryByRole('tooltip')).toBeNull();
+      expect(view.getByTestId('surface')).toHaveAttribute(
+        'data-scene-alt-selection',
+        'true'
+      );
+      fireEvent.keyUp(window, { key: 'Alt', altKey: false });
+      expect(view.getByTestId('surface')).not.toHaveAttribute(
+        'data-scene-alt-selection'
+      );
+    });
+
+    it.each(['pointerdown', 'Escape', 'blur', 'leave', 'design mode'])(
+      'dismisses on %s',
+      async (kind) => {
+        const view = setup();
+        view.press();
+        fireEvent.keyDown(window, { key: 'Alt', altKey: true });
+        expect(screen.getByRole('tooltip')).toHaveTextContent('DEV.speed');
+        if (kind === 'Escape') {
+          fireEvent.keyDown(document, { key: 'Escape' });
+        } else if (kind === 'blur') {
+          fireEvent.blur(window);
+        } else if (kind === 'leave') {
+          fireEvent.mouseLeave(view.getByTestId('surface'));
+        } else if (kind === 'design mode') {
+          view.rerender(
+            <SceneControllerRegistryProvider
+              registry={createSceneControllerRegistryMock(view.controller)}
+            >
+              <Surface design_mode />
+            </SceneControllerRegistryProvider>
+          );
+        } else {
+          act(() => jest.advanceTimersByTime(0));
+          fireEvent(document.body, new MouseEvent(kind, { bubbles: true }));
+        }
+        await act(async () => {});
+        expect(screen.queryByRole('tooltip')).toBeNull();
+      }
+    );
+
+    it.each([
+      'offline',
+      'missing binding',
+      'missing proxy',
+      'middle',
+      'ordinary',
+      'disabled',
+    ])('does not open for %s', (kind) => {
+      const view = setup();
+      if (kind === 'offline') {
+        view.controller.ctx.proxy!.root.isOnline = false;
+      } else if (kind === 'missing binding') {
+        view.controller.ctx.proxy!.binding = undefined;
+      } else if (kind === 'missing proxy') {
+        view.controller.ctx.proxy = undefined;
+      } else if (kind === 'disabled') {
+        view.rerender(
+          <SceneControllerRegistryProvider
+            registry={createSceneControllerRegistryMock(view.controller)}
+          >
+            <Surface design_mode={true} />
+          </SceneControllerRegistryProvider>
+        );
+      }
+      fireEvent.mouseDown(view.getByTestId('hit'), {
+        altKey: kind !== 'ordinary',
+        button: kind === 'middle' ? 1 : 2,
+      });
+      expect(screen.queryByRole('tooltip')).toBeNull();
     });
   });
 
@@ -264,8 +443,8 @@ describe('useSceneObjectInteraction', () => {
     );
 
     it.each([
-      ['ordinary click', false, 0, true],
-      ['design mode off', true, 0, false],
+      ['ordinary click', false, 0, false],
+      ['design mode on', true, 0, true],
     ] as const)(
       'leaves %s unconsumed',
       (_name, altKey, button, design_mode) => {
@@ -443,7 +622,7 @@ describe('useSceneObjectInteraction', () => {
     expect(child).toHaveBeenCalledTimes(3);
   });
 
-  it.each([1, 2])(
+  it.each([1])(
     'suppresses Alt button %s without selecting a device',
     (button) => {
       const registry = createSceneControllerRegistryMock(supportedController());
@@ -457,7 +636,7 @@ describe('useSceneObjectInteraction', () => {
     }
   );
 
-  it('clears Alt selection when design mode is off and restores ordinary widget input', () => {
+  it('clears Alt selection when design mode is on and restores ordinary widget input', () => {
     const registry = createSceneControllerRegistryMock();
     const child = jest.fn();
     const { getByTestId, rerender } = renderSurface(registry, {
@@ -467,7 +646,7 @@ describe('useSceneObjectInteraction', () => {
     expect(getByTestId('surface')).toHaveAttribute('data-scene-alt-selection');
     rerender(
       <SceneControllerRegistryProvider registry={registry}>
-        <Surface design_mode={false} onWidgetEvent={child} />
+        <Surface design_mode={true} onWidgetEvent={child} />
       </SceneControllerRegistryProvider>
     );
     expect(getByTestId('surface')).not.toHaveAttribute(
@@ -573,9 +752,9 @@ describe('useSceneObjectInteraction', () => {
     expect(bubbled).toHaveBeenCalledTimes(1);
   });
 
-  it('skips hit testing and opening when design mode is off', () => {
+  it('skips hit testing and opening when design mode is on', () => {
     const registry = createSceneControllerRegistryMock(supportedController());
-    const { getByTestId } = renderSurface(registry, { design_mode: false });
+    const { getByTestId } = renderSurface(registry, { design_mode: true });
     expect(fireEvent.doubleClick(getByTestId('hit'))).toBe(true);
     expect(registry.getController).not.toHaveBeenCalled();
   });
