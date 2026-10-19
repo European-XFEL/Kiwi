@@ -1,4 +1,4 @@
-import type { PlotSettings } from '../buildModelConfig';
+import { type PlotSettings } from '@/karabo/common/api';
 import { resolveCurveStyle } from '../curveStyle';
 
 export function ChartLegend({

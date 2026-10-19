@@ -1,7 +1,7 @@
+import { type PlotSettings } from '@/karabo/common/api';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { ChartLegend } from '../components/ChartLegend';
 import { TRACE_COLORS } from '../constants';
-import type { PlotSettings } from '../buildModelConfig';
 
 test('uses saved duplicate labels and colors while toggling the original hidden key', () => {
   const toggleCurve = jest.fn();

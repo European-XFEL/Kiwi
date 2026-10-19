@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { type WebCamGraphModel, buildModelConfig } from '@/karabo/common/api';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
-import type { WebCamGraphModel } from '@/karabo/common/api';
+
 import { ImageBinding, ProxyStatus } from '@/lib/binding/api';
-import { useWebcam } from '../graph/image/useWebcam';
+import { useImageGraphView } from '../graph/image/useImageGraphView';
 import { getImageTimestamp } from '../graph/image/pixels';
 import { WebcamLiveIndicator } from '../graph/image/WebcamLiveIndicator';
 
@@ -15,40 +15,12 @@ export default function DisplayWebcamGraph({
   model: WebCamGraphModel;
   ctx?: ControllerContainerContext;
 }) {
-  const viewRef = useRef<HTMLDivElement>(null);
-  const [viewSize, setViewSize] = useState({ width: 0, height: 0 });
-  const { canvasRef, imageSize } = useWebcam(
-    ctx?.proxy,
-    model.colormap,
-    viewSize
-  );
-  useEffect(() => {
-    const view = viewRef.current;
-    if (!view) {
-      return;
-    }
-    const observer = new ResizeObserver(([entry]) => {
-      const { width, height } = entry.contentRect;
-      setViewSize((current) => {
-        if (current.width === width && current.height === height) {
-          return current;
-        }
-        return { width, height };
-      });
-    });
-    observer.observe(view);
-    return () => observer.disconnect();
-  }, []);
-  // object-fit centers the image within the canvas's full-size element box.
-  const scale =
-    imageSize.width > 0 && imageSize.height > 0
-      ? Math.min(
-          viewSize.width / imageSize.width,
-          viewSize.height / imageSize.height
-        )
-      : 0;
-  const imageWidth = imageSize.width * scale;
-  const imageHeight = imageSize.height * scale;
+  const plotConfig = buildModelConfig(model);
+  const view = useImageGraphView({
+    proxy: ctx?.proxy,
+    plotConfig,
+    imageOnly: true,
+  });
   const binding = ctx?.proxy?.binding;
   const timestamp =
     ctx?.proxy?.root.status !== ProxyStatus.OFFLINE &&
@@ -64,28 +36,17 @@ export default function DisplayWebcamGraph({
       }}
     >
       <div
-        ref={viewRef}
+        ref={view.containerRef}
+        role="img"
+        aria-label="Webcam image"
         style={{ position: 'absolute', inset: IMAGE_VIEW_INSET }}
       >
-        <canvas
-          ref={canvasRef}
-          aria-label="Webcam image"
-          style={{
-            display: 'block',
-            width: '100%',
-            height: '100%',
-            objectFit: 'contain',
-            objectPosition: 'center',
-          }}
-        />
+        <div ref={view.stageRef} />
         <div
+          ref={view.overlayRef}
           style={{
             position: 'absolute',
-            left: (viewSize.width - imageWidth) / 2,
-            top: (viewSize.height - imageHeight) / 2,
-            width: imageWidth,
-            height: imageHeight,
-            display: imageWidth > 0 && imageHeight > 0 ? undefined : 'none',
+            display: 'none',
             pointerEvents: 'none',
           }}
         >

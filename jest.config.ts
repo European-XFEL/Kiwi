@@ -36,6 +36,6 @@ export default {
     ],
   },
   transformIgnorePatterns: [
-    '/node_modules/(?!(react-arborist|react-dnd|react-dnd-html5-backend|dnd-core|@react-dnd|react-resizable-panels)/)',
+    '/node_modules/(?!(konva|react-arborist|react-dnd|react-dnd-html5-backend|dnd-core|@react-dnd|react-resizable-panels)/)',
   ],
 } satisfies Config;

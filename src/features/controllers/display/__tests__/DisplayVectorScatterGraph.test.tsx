@@ -1,3 +1,4 @@
+import { VectorScatterGraphModel, buildModelConfig } from '@/karabo/common/api';
 import React from 'react';
 import {
   act,
@@ -8,10 +9,10 @@ import {
 } from '@testing-library/react';
 import { Chart } from 'chart.js/auto';
 import { Chart as RealChart, BasicPlatform, registerables } from 'chart.js';
-import { VectorScatterGraphModel } from '@/karabo/common/api';
+
 import type { PropertyProxy } from '@/lib/binding/api';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
-import { buildModelConfig } from '../../graph/common/api';
+
 import { vectorScatterChartOption } from '../../graph/plotConfig';
 import { makeVectorProxy } from '../../graph/testing/vectorProxy';
 import DisplayVectorScatterGraph from '../DisplayVectorScatterGraph';

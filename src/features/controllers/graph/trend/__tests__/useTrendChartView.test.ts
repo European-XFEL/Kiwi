@@ -1,6 +1,6 @@
-import { buildModelConfig } from '../../common/api';
+import { DisplayTrendGraphModel, buildModelConfig } from '@/karabo/common/api';
 import { act, renderHook } from '@testing-library/react';
-import { DisplayTrendGraphModel } from '@/karabo/common/api';
+
 import { useTrendChart } from '../useTrendChart';
 
 const START = new Date(2027, 2, 29, 0, 30).getTime();

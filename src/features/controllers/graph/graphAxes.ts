@@ -1,14 +1,19 @@
+import { type PlotSettings } from '@/karabo/common/api';
 import type { ChartConfiguration, LinearScale, Scale } from 'chart.js';
-import type { PlotSettings } from './common/buildModelConfig';
+
 import {
-  GRAPH_AXIS_FONT,
   GRAPH_COLORS,
   GRAPH_LAYOUT,
   GRAPH_TICK_DENSITY,
   type Range,
 } from './common/constants';
 import { trendTimeTicks } from './trend/trendTimeTicks';
-import { formatValueTick } from './utils';
+import {
+  axisTitle,
+  roundedTickSpacing,
+  GRAPH_AXIS_FONT,
+  formatValueTick,
+} from './utils';
 
 export type AxisConfig = {
   kind: 'numeric' | 'time';
@@ -113,10 +118,6 @@ function formatLogDecade(value: number) {
   return `10${exponent}`;
 }
 
-export function axisTitle(label: string, units: string) {
-  return [label, units ? `(${units})` : ''].filter(Boolean).join(' ');
-}
-
 type ChartAxis = NonNullable<ChartScales[string]>;
 
 function minimumTickIntervals(scale: Scale) {
@@ -126,17 +127,6 @@ function minimumTickIntervals(scale: Scale) {
     minimum,
     minimum * density * Math.sqrt(length / referenceLength)
   );
-}
-
-function roundedTickSpacing(maximumSpacing: number) {
-  const unit = 10 ** Math.floor(Math.log10(maximumSpacing));
-  let spacing = unit;
-  if (maximumSpacing >= 5 * unit) {
-    spacing *= 5;
-  } else if (maximumSpacing >= 2 * unit) {
-    spacing *= 2;
-  }
-  return spacing;
 }
 
 function setLinearTickDensity(scale: Scale) {

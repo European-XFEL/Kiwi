@@ -1,9 +1,14 @@
+import {
+  type DisplayTrendGraphModel,
+  buildModelConfig,
+  type PlotSettings,
+} from '@/karabo/common/api';
 import React from 'react';
-import { buildModelConfig, type PlotSettings } from '../graph/common/api';
+
 import { Button } from '@/components/api';
 import icons from '@/assets/icons';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
-import type { DisplayTrendGraphModel } from '@/karabo/common/api';
+
 import type { TrendMode } from '../graph/trend/categories';
 import {
   formatTrendTime,

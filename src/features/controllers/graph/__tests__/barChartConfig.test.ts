@@ -1,6 +1,6 @@
+import { VectorBarGraphModel, buildModelConfig } from '@/karabo/common/api';
 import { BasicPlatform, BarElement, Chart, registerables } from 'chart.js';
-import { VectorBarGraphModel } from '@/karabo/common/api';
-import { buildModelConfig } from '../common/api';
+
 import { BAR_BLUE } from '../common/constants';
 import { barChartOption } from '../plotConfig';
 

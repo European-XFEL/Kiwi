@@ -1,5 +1,5 @@
+import { buildModelConfig } from '../widgets/utils';
 import { readScene } from '../api';
-import { buildModelConfig } from '@/features/controllers/graph/common/api';
 
 test.each([
   'VectorGraph',

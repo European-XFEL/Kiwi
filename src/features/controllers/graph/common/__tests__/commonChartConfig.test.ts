@@ -1,8 +1,8 @@
-import { buildModelConfig } from '../../common/api';
 import {
   DisplayTrendGraphModel,
   DisplayVectorGraphModel,
   VectorBarGraphModel,
+  buildModelConfig,
 } from '@/karabo/common/api';
 import { vectorChartOption, barChartOption } from '../../plotConfig';
 import { trendChartOption } from '../../trend/api';

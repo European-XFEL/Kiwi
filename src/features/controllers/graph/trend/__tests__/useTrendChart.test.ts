@@ -1,5 +1,4 @@
-import { buildModelConfig } from '../../common/api';
-import { DisplayTrendGraphModel } from '@/karabo/common/api';
+import { DisplayTrendGraphModel, buildModelConfig } from '@/karabo/common/api';
 import { trendChartOption, trendDatasets } from '../trendConfig';
 import { buildPlotAxes } from '../../graphAxes';
 import { formatValueTick } from '../../common/api';

@@ -8927,6 +8927,7 @@ __metadata:
     identity-obj-proxy: "npm:^3.0.0"
     jest: "npm:^30.1.3"
     jest-environment-jsdom: "npm:^30.1.2"
+    konva: "npm:^10.9.0"
     lodash: "npm:^4.17.21"
     lucide-react: "npm:^0.544.0"
     natsort: "npm:2.0.3"
@@ -8991,6 +8992,21 @@ __metadata:
   version: 6.0.3
   resolution: "kind-of@npm:6.0.3"
   checksum: 10c0/61cdff9623dabf3568b6445e93e31376bee1cdb93f8ba7033d86022c2a9b1791a1d9510e026e6465ebd701a6dd2f7b0808483ad8838341ac52f003f512e0b4c4
+  languageName: node
+  linkType: hard
+
+"konva@npm:^10.9.0":
+  version: 10.9.0
+  resolution: "konva@npm:10.9.0"
+  peerDependencies:
+    canvas: ^3.0.0
+    skia-canvas: ^3.0.0
+  peerDependenciesMeta:
+    canvas:
+      optional: true
+    skia-canvas:
+      optional: true
+  checksum: 10c0/89d1c79956283d331d19366254a61363812a739da28f3a51fd9920a86fa6b5d1aff65a60485060688198e5a9930d0663badafc2d49085f0b115cde520f714320
   languageName: node
   linkType: hard
 

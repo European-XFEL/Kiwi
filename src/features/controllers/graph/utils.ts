@@ -1,4 +1,4 @@
-import type { Range } from './common/constants';
+import type { Range } from './types';
 import { isTypedArray } from '@/karabo/data/api';
 
 export type VectorData = ArrayLike<number>;
@@ -120,4 +120,24 @@ export function getSamplingWindow({
     }
   }
   return { start, end };
+}
+
+export const GRAPH_AXIS_FONT = {
+  family: 'Source Sans Pro, sans-serif',
+  size: 13.333,
+};
+
+export function axisTitle(label: string, units: string) {
+  return [label, units ? `(${units})` : ''].filter(Boolean).join(' ');
+}
+
+export function roundedTickSpacing(maximumSpacing: number) {
+  const unit = 10 ** Math.floor(Math.log10(maximumSpacing));
+  let spacing = unit;
+  if (maximumSpacing >= 5 * unit) {
+    spacing *= 5;
+  } else if (maximumSpacing >= 2 * unit) {
+    spacing *= 2;
+  }
+  return spacing;
 }

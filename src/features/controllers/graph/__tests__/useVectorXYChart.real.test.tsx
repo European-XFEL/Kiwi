@@ -1,9 +1,9 @@
+import { VectorXYGraphModel, buildModelConfig } from '@/karabo/common/api';
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Chart } from 'chart.js/auto';
 import type { ChartConfiguration, LineElement } from 'chart.js';
-import { VectorXYGraphModel } from '@/karabo/common/api';
-import { buildModelConfig } from '../common/api';
+
 import { usePlotChart } from '../usePlotChart';
 
 jest.mock('chart.js/auto', () => {

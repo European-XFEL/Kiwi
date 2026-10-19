@@ -31,3 +31,6 @@ export {
   FONT_FAMILY_SERIF,
 } from './fontDefaults';
 export { FONT_SIZE_DEFAULT } from './constants';
+
+export { buildModelConfig } from './widgets/utils';
+export type { PlotSettings } from './widgets/utils';

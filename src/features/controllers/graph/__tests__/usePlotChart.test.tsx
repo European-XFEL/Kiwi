@@ -1,4 +1,9 @@
-import { buildModelConfig, type PlotSettings } from '../common/api';
+import {
+  DisplayVectorGraphModel,
+  VectorBarGraphModel,
+  buildModelConfig,
+  type PlotSettings,
+} from '@/karabo/common/api';
 import React from 'react';
 import {
   act,
@@ -8,10 +13,7 @@ import {
   waitFor,
 } from '@testing-library/react';
 import { Chart } from 'chart.js/auto';
-import {
-  DisplayVectorGraphModel,
-  VectorBarGraphModel,
-} from '@/karabo/common/api';
+
 import type { PropertyProxy } from '@/lib/binding/PropertyProxy';
 import { usePlotChart } from '../usePlotChart';
 import { useVectorSeries } from '../useVectorSeries';

@@ -1,7 +1,11 @@
+import {
+  type VectorBarGraphModel,
+  buildModelConfig,
+} from '@/karabo/common/api';
 import React from 'react';
-import { buildModelConfig } from '../graph/common/api';
+
 import type { ControllerContainerContext } from '@/features/scene-view/api';
-import type { VectorBarGraphModel } from '@/karabo/common/api';
+
 import { ChartLayout, ChartPlot } from '../graph/common/api';
 import { usePlotChart } from '../graph/usePlotChart';
 import { generateBaseline } from '../graph/utils';

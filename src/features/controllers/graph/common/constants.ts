@@ -1,4 +1,4 @@
-export type Range = [number, number];
+export type { Range } from '../types';
 
 export const TRACE_COLORS = [
   '#3399ff',
@@ -17,10 +17,6 @@ export const TRACE_COLORS = [
 export const SCATTER_BLUE = `rgba(51, 153, 255, ${200 / 255})`;
 export const SCATTER_RED = `rgba(255, 51, 51, ${200 / 255})`;
 export const BAR_BLUE = `rgba(51, 153, 255, ${180 / 255})`;
-export const GRAPH_AXIS_FONT = {
-  family: 'Source Sans Pro, sans-serif',
-  size: 13.333,
-};
 export const GRAPH_LAYOUT = {
   insets: { right: 2, top: 2 },
   titledTop: 18,

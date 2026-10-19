@@ -2,7 +2,7 @@ import React from 'react';
 import type { ChartConfiguration, DefaultDataPoint } from 'chart.js';
 import type { PlotAxesConfig } from '../graphAxes';
 import { GRAPH_LAYOUT, type Range } from './constants';
-import { useMouseGestures, type AxisRanges } from './useMouseGestures';
+import { useMouseGestures, type AxisRanges } from '../useMouseGestures';
 import type { ChartMouseTool } from './components/ChartToolBar';
 import { usePlotItem } from './usePlotItem';
 

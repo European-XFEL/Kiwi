@@ -1,9 +1,12 @@
-import { act, cleanup, render, screen } from '@testing-library/react';
 import {
-  DetectorGraphModel,
-  ImageGraphModel,
-  WebCamGraphModel,
-} from '@/karabo/common/api';
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from '@testing-library/react';
+import Konva from 'konva';
+import { DetectorGraphModel, WebCamGraphModel } from '@/karabo/common/api';
 import { AccessLevel, Encoding, HashType, Timestamp } from '@/karabo/data/api';
 import {
   BaseBinding,
@@ -45,6 +48,8 @@ beforeEach(() => {
     return observer;
   });
   context = {
+    canvas: document.createElement('canvas'),
+    getImageData: () => ({ data: new Uint8ClampedArray(4) }),
     fillStyle: '',
     fillRect: (...args: Parameters<CanvasRenderingContext2D['fillRect']>) => {
       fillColors.push(context.fillStyle as string);
@@ -59,9 +64,12 @@ beforeEach(() => {
     }),
     putImageData() {},
   } as unknown as CanvasRenderingContext2D;
-  jest
-    .spyOn(HTMLCanvasElement.prototype, 'getContext')
-    .mockReturnValue(context);
+  jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
+    new Proxy(context, {
+      get: (target, key) =>
+        key in target ? Reflect.get(target, key) : () => {},
+    })
+  );
 });
 
 afterEach(() => {
@@ -105,7 +113,7 @@ function overlay() {
     .parentElement!;
 }
 
-test.each([WebCamGraphModel, ImageGraphModel, DetectorGraphModel])(
+test.each([WebCamGraphModel, DetectorGraphModel])(
   '%p shows the placeholder when its device goes offline with a cached frame',
   async (Model) => {
     const topology = createMockSystemTopology();
@@ -167,11 +175,12 @@ test.each([
     width: `${width}px`,
     height: `${height}px`,
   });
-  expect(screen.getByLabelText('Webcam image')).toHaveProperty('width', width);
-  expect(screen.getByLabelText('Webcam image')).toHaveProperty(
-    'height',
-    height
-  );
+  expect(
+    screen.getByLabelText('Webcam image').querySelector('canvas')
+  ).toHaveProperty('width', width);
+  expect(
+    screen.getByLabelText('Webcam image').querySelector('canvas')
+  ).toHaveProperty('height', height);
   expect(fillRect).toHaveBeenLastCalledWith(0, 0, width, height);
   expect(fillColors.at(-1)).toBe('#000');
   expect(context.fillStyle).toBe('#fff');
@@ -199,6 +208,7 @@ test('follows frame dimension changes with the same pixel count', () => {
   );
   drawFrame();
   resize(600, 600);
+  drawFrame();
   expect(overlay()).toHaveStyle({
     left: '0px',
     top: '75px',
@@ -249,10 +259,57 @@ test('hides the overlay in a zero-size view and disconnects on unmount', () => {
   );
   drawFrame();
   resize(0, 0);
+  drawFrame();
   expect(screen.getByLabelText('Waiting for image')).not.toBeVisible();
   resize(400, 300);
   drawFrame();
   expect(screen.getByLabelText('Waiting for image')).toBeVisible();
   unmount();
   expect(disconnect).toHaveBeenCalledTimes(1);
+});
+
+test('uses a bounded Konva raster without axes, toolbar, or navigation', () => {
+  const draw = jest.spyOn(context, 'putImageData');
+  render(
+    <DisplayWebcamGraph
+      model={new WebCamGraphModel()}
+      ctx={frameContext(4096, 4096)}
+    />
+  );
+  resize(800, 600);
+  drawFrame();
+  expect(screen.queryByRole('toolbar')).toBeNull();
+  expect(
+    screen.getByLabelText('Webcam image').querySelector('.konvajs-content')
+  ).not.toBeNull();
+  const frame = draw.mock.calls.at(-1)![0];
+  expect(frame.width).toBeLessThanOrEqual(601);
+  expect(frame.height).toBeLessThanOrEqual(601);
+  expect(fillText).not.toHaveBeenCalled();
+  expect(overlay()).toHaveStyle({
+    left: '100px',
+    top: '0px',
+    width: '600px',
+    height: '600px',
+  });
+  draw.mockClear();
+  fireEvent.wheel(screen.getByLabelText('Webcam image'), {
+    clientX: 300,
+    clientY: 300,
+    deltaY: -100,
+  });
+  drawFrame();
+  expect(draw).not.toHaveBeenCalled();
+  resize(600, 800);
+  drawFrame();
+  const image = Konva.stages.at(-1)!.findOne<Konva.Image>('Image')!;
+  expect(image.width()).toBeCloseTo(600);
+  expect(image.height()).toBeCloseTo(600);
+  expect(image.position()).toEqual({ x: 0, y: 100 });
+  expect(overlay()).toHaveStyle({
+    left: '0px',
+    top: '100px',
+    width: '600px',
+    height: '600px',
+  });
 });

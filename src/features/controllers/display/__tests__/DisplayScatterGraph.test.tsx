@@ -1,4 +1,4 @@
-import { buildModelConfig } from '../../graph/common/api';
+import { ScatterGraphModel, buildModelConfig } from '@/karabo/common/api';
 import {
   act,
   cleanup,
@@ -10,7 +10,7 @@ import {
 import { Chart } from 'chart.js/auto';
 import type { ScriptableContext } from 'chart.js';
 import { Chart as RealChart, BasicPlatform, registerables } from 'chart.js';
-import { ScatterGraphModel } from '@/karabo/common/api';
+
 import { AccessLevel, Timestamp } from '@/karabo/data/api';
 import {
   BaseBinding,

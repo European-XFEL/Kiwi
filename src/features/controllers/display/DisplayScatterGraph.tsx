@@ -1,9 +1,10 @@
+import { type ScatterGraphModel, buildModelConfig } from '@/karabo/common/api';
 import React from 'react';
-import { buildModelConfig } from '../graph/common/api';
+
 import { Button } from '@/components/api';
 import icons from '@/assets/icons';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
-import type { ScatterGraphModel } from '@/karabo/common/api';
+
 import { ChartLayout, ChartPlot } from '../graph/common/api';
 import { usePlotChart } from '../graph/usePlotChart';
 import { useScatterData } from '../graph/useScatterData';
