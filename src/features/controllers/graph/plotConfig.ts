@@ -1,5 +1,6 @@
+import { type PlotSettings } from '@/karabo/common/api';
 import type { ChartConfiguration, Point, ScriptableContext } from 'chart.js';
-import type { PlotSettings } from './common/buildModelConfig';
+
 import {
   GRAPH_LAYOUT,
   BAR_BLUE,

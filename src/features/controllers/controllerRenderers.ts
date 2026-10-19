@@ -3,6 +3,7 @@ import DisplayAlarmFloat from '@/features/controllers/display/DisplayAlarmFloat'
 import DisplayBarGraph from './display/DisplayBarGraph';
 import DisplayAlarm from './display/DisplayAlarm';
 import DisplayWebcamGraph from './display/DisplayWebcamGraph';
+import DisplayImageGraph from './display/DisplayImageGraph';
 import DisplayScatterGraph from './display/DisplayScatterGraph';
 import {
   DisplayCheckBox,
@@ -91,7 +92,7 @@ export function bootstrapControllerRenderers(
   registerRenderer('VectorBarGraph', DisplayBarGraph);
   registerRenderer('ScatterGraph', DisplayScatterGraph);
   registerRenderer('WebCamGraph', DisplayWebcamGraph);
-  registerRenderer('ImageGraph', DisplayWebcamGraph);
+  registerRenderer('ImageGraph', DisplayImageGraph);
   registerRenderer('DetectorGraph', DisplayWebcamGraph);
   registerRenderer('IntLineEdit', IntLineEdit);
   registerRenderer('DoubleLineEdit', DoubleLineEdit);

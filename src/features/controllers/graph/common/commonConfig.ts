@@ -1,5 +1,6 @@
+import { type PlotSettings } from '@/karabo/common/api';
 import type { ChartConfiguration, Point } from 'chart.js';
-import type { PlotSettings } from './buildModelConfig';
+
 import { GRAPH_LAYOUT } from './constants';
 import { plotFrame } from './plotFrame';
 import { chartAxes, type PlotAxesConfig } from '../graphAxes';

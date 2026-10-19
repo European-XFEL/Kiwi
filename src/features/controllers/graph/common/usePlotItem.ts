@@ -2,13 +2,7 @@ import React from 'react';
 import { Chart } from 'chart.js/auto';
 import type { ChartConfiguration, DefaultDataPoint } from 'chart.js';
 import type { Range } from './constants';
-import type { AxisRanges, PlotBounds } from './useMouseGestures';
-
-export type PlotViewport = {
-  readBounds: () => PlotBounds | undefined;
-  readRanges: (fallback?: AxisRanges) => AxisRanges | undefined;
-  setRanges: (ranges: AxisRanges) => void;
-};
+import type { PlotViewport } from '../types';
 
 /**
  * Owns the Chart.js canvas and instance lifecycle for every graph type.

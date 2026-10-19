@@ -1,16 +1,8 @@
 import React from 'react';
-import type { Range } from './constants';
-import type { PlotViewport } from './usePlotItem';
+import type { AxisRanges, PlotBounds, PlotViewport, Range } from './types';
+export type { AxisRanges, PlotBounds } from './types';
 
 type Point = { x: number; y: number };
-export type PlotBounds = {
-  left: number;
-  right: number;
-  top: number;
-  bottom: number;
-};
-export type AxisRanges = { x: Range; y: Range };
-
 const PRIMARY_MOUSE_BUTTON = 0;
 const MIDDLE_MOUSE_BUTTON = 1;
 const RIGHT_MOUSE_BUTTON = 2;
@@ -72,7 +64,7 @@ function shiftedRange(
 }
 
 /** Scales a visible range around the data value at the initial clicked pixel. */
-function scaledRange(
+export function scaledRange(
   range: Range,
   anchorPixel: number,
   pixelAtMin: number,
@@ -223,6 +215,7 @@ export function useMouseGestures({
   inverted,
   logarithmicX = false,
   logarithmicY,
+  lockZoom = false,
   activeRef,
   getRanges,
   setRanges,
@@ -238,6 +231,8 @@ export function useMouseGestures({
   inverted: { x: boolean; y: boolean };
   logarithmicX?: boolean;
   logarithmicY: boolean;
+  /** Scale both axes together for image views with a locked aspect ratio. */
+  lockZoom?: boolean;
   activeRef: React.RefObject<boolean>;
   getRanges: () => AxisRanges | undefined;
   setRanges: (ranges: AxisRanges) => void;
@@ -267,6 +262,7 @@ export function useMouseGestures({
           dragged: boolean;
         }
       | undefined;
+    let zoomAxis: 'x' | 'y' | undefined;
     let frame: number | undefined;
     let pendingRanges: AxisRanges | undefined;
     const cancelFrame = () => {
@@ -345,11 +341,28 @@ export function useMouseGestures({
       // Exponential factors give equal drags the same proportional span change
       // at every zoom level. Horizontal and vertical movement act independently.
       // Negative X exponent: dragging right shrinks X (zoom in).
-      const scaleX =
+      let scaleX =
         ZOOM_FACTOR_PER_PIXEL ** -(event.clientX - startClientPosition.x);
       // clientY grows downward: down expands Y (zoom out), up shrinks it.
-      const scaleY =
+      let scaleY =
         ZOOM_FACTOR_PER_PIXEL ** (event.clientY - startClientPosition.y);
+      if (lockZoom) {
+        const dx = event.clientX - startClientPosition.x;
+        const dy = event.clientY - startClientPosition.y;
+        if (!zoomAxis) {
+          if (Math.hypot(dx, dy) < MIDDLE_CLICK_TOLERANCE_PIXELS) {
+            return ranges;
+          }
+          // Hold the first deliberate direction for this gesture. Combining
+          // opposing axis directions cancels diagonal drags; switching axes
+          // mid-drag abruptly reverses the zoom near the diagonal.
+          zoomAxis = Math.abs(dx) >= Math.abs(dy) ? 'x' : 'y';
+        }
+        const displacement = zoomAxis === 'x' ? -dx : dy;
+        const scale = ZOOM_FACTOR_PER_PIXEL ** displacement;
+        scaleX = scale;
+        scaleY = scale;
+      }
       return {
         x: scaledRange(
           ranges.x,
@@ -504,6 +517,7 @@ export function useMouseGestures({
             : tool === 'pan'
               ? 'pan'
               : 'zoom';
+      zoomAxis = undefined;
       gesture = {
         start,
         startClientPosition: { x: event.clientX, y: event.clientY },
@@ -564,6 +578,7 @@ export function useMouseGestures({
     inverted.y,
     logarithmicX,
     logarithmicY,
+    lockZoom,
     selectionRef,
     setRanges,
     tool,

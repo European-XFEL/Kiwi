@@ -1,6 +1,6 @@
+import { DisplayVectorGraphModel, buildModelConfig } from '@/karabo/common/api';
 import { Chart, BasicPlatform, registerables } from 'chart.js';
-import { DisplayVectorGraphModel } from '@/karabo/common/api';
-import { buildModelConfig } from '../common/api';
+
 import { vectorChartOption } from '../plotConfig';
 import {
   generateBaseline,

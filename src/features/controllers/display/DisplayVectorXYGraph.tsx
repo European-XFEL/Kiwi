@@ -1,12 +1,8 @@
+import { type VectorXYGraphModel, buildModelConfig } from '@/karabo/common/api';
 import React from 'react';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
-import type { VectorXYGraphModel } from '@/karabo/common/api';
-import {
-  buildModelConfig,
-  ChartLayout,
-  ChartPlot,
-  ChartLegend,
-} from '../graph/common/api';
+
+import { ChartLayout, ChartPlot, ChartLegend } from '../graph/common/api';
 import { useVectorSeries } from '../graph/useVectorSeries';
 import { usePlotChart } from '../graph/usePlotChart';
 

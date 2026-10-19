@@ -1,3 +1,4 @@
+import { DisplayTrendGraphModel, buildModelConfig } from '@/karabo/common/api';
 import React from 'react';
 import {
   act,
@@ -7,10 +8,9 @@ import {
   screen,
 } from '@testing-library/react';
 import { Chart } from 'chart.js/auto';
-import { DisplayTrendGraphModel } from '@/karabo/common/api';
+
 import { STATE_LABELS } from '../../trend/categories';
 import {
-  buildModelConfig,
   buildPlotAxes,
   commonChartOption,
   integerTickFormatter,
@@ -18,7 +18,7 @@ import {
   useChartRanges,
   type PlotAxesConfig,
 } from '../api';
-import { ZOOM_FACTOR_PER_PIXEL } from '../useMouseGestures';
+import { ZOOM_FACTOR_PER_PIXEL } from '../../useMouseGestures';
 
 type Point = { x: number; y: number };
 const MIDDLE_MOUSE_BUTTON = 1;

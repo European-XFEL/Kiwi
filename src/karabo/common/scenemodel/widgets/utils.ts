@@ -1,6 +1,6 @@
-import type { CurveOptions } from '@/karabo/common/api';
+import type { CurveOptions } from './display';
 
-export const KARABO_BASE_SAVABLE = [
+const KARABO_BASE_SAVABLE = [
   'x',
   'y',
   'width',
@@ -21,7 +21,9 @@ export type PlotSettings = {
 export function buildModelConfig(model: object): PlotSettings {
   const settings: PlotSettings = {};
   for (const [name, value] of Object.entries(model)) {
-    if (KARABO_BASE_SAVABLE.includes(name)) continue;
+    if (KARABO_BASE_SAVABLE.includes(name)) {
+      continue;
+    }
     settings[name] = value;
   }
   return settings;

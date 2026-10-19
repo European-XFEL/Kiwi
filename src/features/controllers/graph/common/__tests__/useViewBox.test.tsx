@@ -1,7 +1,7 @@
-import { buildModelConfig } from '../../common/api';
+import { DisplayTrendGraphModel, buildModelConfig } from '@/karabo/common/api';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Chart } from 'chart.js/auto';
-import { DisplayTrendGraphModel } from '@/karabo/common/api';
+
 import { useTrendChart } from '../../trend/api';
 
 const START = 1_800_000_000_000;

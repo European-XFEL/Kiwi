@@ -1,3 +1,4 @@
+import { VectorXYGraphModel, buildModelConfig } from '@/karabo/common/api';
 import {
   act,
   cleanup,
@@ -7,10 +8,10 @@ import {
 } from '@testing-library/react';
 import { Chart } from 'chart.js/auto';
 import { Chart as RealChart, BasicPlatform, registerables } from 'chart.js';
-import { VectorXYGraphModel } from '@/karabo/common/api';
+
 import type { PropertyProxy } from '@/lib/binding/api';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
-import { buildModelConfig, TRACE_COLORS } from '../../graph/common/api';
+import { TRACE_COLORS } from '../../graph/common/api';
 import { vectorXYChartOption } from '../../graph/plotConfig';
 import DisplayVectorXYGraph from '../DisplayVectorXYGraph';
 import { makeVectorProxy } from '../../graph/testing/vectorProxy';

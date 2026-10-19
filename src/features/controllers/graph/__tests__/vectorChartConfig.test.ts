@@ -1,7 +1,7 @@
+import { DisplayVectorGraphModel, buildModelConfig } from '@/karabo/common/api';
 import { buildPlotAxes } from '../graphAxes';
 import { TRACE_COLORS } from '../common/api';
-import { buildModelConfig } from '../common/api';
-import { DisplayVectorGraphModel } from '@/karabo/common/api';
+
 import {
   vectorChartOption,
   vectorXYChartOption,

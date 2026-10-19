@@ -18,6 +18,7 @@ export const WebcamLiveIndicator = memo(function WebcamLiveIndicator({
   timestamp?: Timestamp;
 }) {
   const time = timestamp?.toTimestamp();
+  // Format machine-readable and local display timestamps only when the frame timestamp changes.
   const formattedTimestamp = useMemo(
     () =>
       timestamp
@@ -30,7 +31,9 @@ export const WebcamLiveIndicator = memo(function WebcamLiveIndicator({
         : undefined,
     [timestamp]
   );
+  // Overlay-local status can expire without rerendering the image graph.
   const [live, setLive] = useState(false);
+  // Mark recent frames live, then expire the status; cancel the previous frame's timeout.
   useEffect(() => {
     const remaining =
       time === undefined

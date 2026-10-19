@@ -1,7 +1,11 @@
+import {
+  type DisplayVectorGraphModel,
+  buildModelConfig,
+} from '@/karabo/common/api';
 import React from 'react';
-import { buildModelConfig } from '../graph/common/api';
+
 import type { ControllerContainerContext } from '@/features/scene-view/api';
-import type { DisplayVectorGraphModel } from '@/karabo/common/api';
+
 import { ChartLayout, ChartPlot, ChartLegend } from '../graph/common/api';
 import { usePlotChart } from '../graph/usePlotChart';
 import { useVectorSeries } from '../graph/useVectorSeries';

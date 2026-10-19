@@ -1,4 +1,4 @@
-import type { PlotSettings } from './buildModelConfig';
+import { type PlotSettings } from '@/karabo/common/api';
 import { TRACE_COLORS } from './constants';
 
 export function resolveCurveStyle({

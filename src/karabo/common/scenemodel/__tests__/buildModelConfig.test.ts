@@ -1,10 +1,16 @@
+import { buildModelConfig } from '../widgets/utils';
 import {
   DisplayVectorGraphModel,
   VectorBarGraphModel,
   ScatterGraphModel,
   DisplayTrendGraphModel,
-} from '@/karabo/common/api';
-import { buildModelConfig } from '../api';
+  buildModelConfig as buildSharedModelConfig,
+  ImageGraphModel,
+  WebCamGraphModel,
+} from '../api';
+test('exports the model configuration builder from the scene model API', () => {
+  expect(buildSharedModelConfig).toBe(buildModelConfig);
+});
 
 test('excludes only base savable fields and copies all other settings', () => {
   const model = {
@@ -75,4 +81,32 @@ test.each([
     )
       expect(settings[name]).toBe(value);
   }
+});
+
+test('keeps image rendering settings while excluding widget geometry and binding keys', () => {
+  const model = new ImageGraphModel();
+  model.x = 10;
+  model.keys = ['CAMERA.image'];
+  model.x_label = 'Distance';
+  model.x_scale = 2;
+  model.color_levels = [10, 200];
+  const settings = buildModelConfig(model);
+  expect(settings).toMatchObject({
+    x_label: 'Distance',
+    x_scale: 2,
+    color_levels: [10, 200],
+    colormap: model.colormap,
+  });
+  expect(settings).not.toHaveProperty('x');
+  expect(settings).not.toHaveProperty('width');
+  expect(settings).not.toHaveProperty('keys');
+  expect(settings).not.toHaveProperty('klass');
+  model.x_label = 'Changed';
+  expect(settings.x_label).toBe('Distance');
+});
+
+test('supports the smaller webcam model without requiring image axes', () => {
+  const model = new WebCamGraphModel();
+  model.colormap = 'viridis';
+  expect(buildModelConfig(model)).toMatchObject({ colormap: 'viridis' });
 });

@@ -1,5 +1,6 @@
+import { type PlotSettings } from '@/karabo/common/api';
 import type { ChartConfiguration } from 'chart.js';
-import type { PlotSettings } from '../common/buildModelConfig';
+
 import { GRAPH_LAYOUT, type Range } from '../common/constants';
 import { resolveCurveStyle } from '../common/curveStyle';
 import { buildPlotAxes, type PlotAxesConfig } from '../graphAxes';

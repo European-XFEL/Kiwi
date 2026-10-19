@@ -1,9 +1,10 @@
-import { BasicPlatform, Chart, registerables } from 'chart.js';
 import {
   DisplayVectorGraphModel,
   VectorBarGraphModel,
+  buildModelConfig,
 } from '@/karabo/common/api';
-import { buildModelConfig } from '../common/buildModelConfig';
+import { BasicPlatform, Chart, registerables } from 'chart.js';
+
 import { commonChartOption } from '../common/commonConfig';
 import { buildPlotAxes } from '../graphAxes';
 import { STATE_LABELS, ALARM_LABELS } from '../trend/categories';

@@ -1,6 +1,7 @@
+import { type PlotSettings } from '@/karabo/common/api';
 import React from 'react';
 import { isTypedArray } from '@/karabo/data/api';
-import type { PlotSettings } from './common/api';
+
 import {
   vectorChartOption,
   vectorXYChartOption,
