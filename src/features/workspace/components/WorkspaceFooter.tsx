@@ -94,7 +94,7 @@ function WorkspaceConnectionTimer({
       </TooltipTrigger>
       <TooltipContent>
         <p>Messages Queued: {queuedMessageCount ?? 0}</p>
-        <p>Latest Latency (sec): {latestLatency!.toFixed(3) ?? '--'}</p>
+        <p>Latest Latency (sec): {latestLatency?.toFixed(3) ?? '--'}</p>
       </TooltipContent>
     </Tooltip>
   );
