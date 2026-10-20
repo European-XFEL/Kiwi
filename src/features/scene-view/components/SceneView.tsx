@@ -73,7 +73,7 @@ const SceneView: React.FC<SceneViewProps> = React.memo(
       >
         <div
           id={`SceneView-Scene-Inner-${sceneInnerId}`}
-          className="overflow-hidden rounded-md bg-canvas shadow-lg"
+          className="overflow-hidden rounded-md bg-canvas shadow-lg data-[scene-alt-selection]:cursor-pointer! data-[scene-alt-selection]:[&_*]:cursor-pointer!"
           {...sceneInteraction}
           style={{
             position: 'absolute',

@@ -1,4 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { useSceneObjectInteraction } from '@/features/scene-view/hooks/useSceneObjectInteraction';
 import type { ControllerContainerContext } from '@/features/controllers/useController';
 import { DisplayCommandModel } from '@/karabo/common/api';
 import { AccessLevel, Hash, HashAttributes } from '@/karabo/data/api';
@@ -44,6 +46,35 @@ function context(proxies: PropertyProxy[]): ControllerContainerContext {
 
 describe('DisplayCommand', () => {
   afterEach(() => jest.restoreAllMocks());
+
+  it('does not execute the command on Alt-click inside a scene', async () => {
+    const user = userEvent.setup();
+    const proxy = command('DEV', 'Start');
+    const execute = jest.spyOn(proxy, 'execute').mockImplementation(() => {});
+    const model = new DisplayCommandModel();
+    const ctx = context([proxy]);
+    function SceneCommand() {
+      const handlers = useSceneObjectInteraction({ scale: 1 });
+      return (
+        <div {...handlers}>
+          <DisplayCommand model={model} ctx={ctx} />
+        </div>
+      );
+    }
+    render(<SceneCommand />);
+    expect(
+      screen.getByRole('button', { name: 'Command: Start' })
+    ).toBeEnabled();
+    const caption = screen.getByText('Start');
+
+    await user.keyboard('{Alt>}');
+    await user.click(caption);
+    expect(execute).not.toHaveBeenCalled();
+
+    await user.keyboard('{/Alt}');
+    await user.click(caption);
+    expect(execute).toHaveBeenCalledTimes(1);
+  });
 
   it('shows the corner arrow only while multiple proxies are configured', () => {
     const first = command('DEV', 'Start');

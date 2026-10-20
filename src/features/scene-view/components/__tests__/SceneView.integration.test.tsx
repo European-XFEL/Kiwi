@@ -1,4 +1,14 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { SceneControllerRegistry } from '@/features/scenepanel/SceneControllerRegistry';
+import { SceneControllerRegistryProvider } from '../../contexts/SceneControllerRegistryContext';
+import { KaraboEvent } from '@/lib/events';
+import { getMediator } from '@/lib/singletons/api';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import React from 'react';
 import {
   BoxLayoutModel,
@@ -196,6 +206,44 @@ describe('SceneView integration', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+  });
+
+  it('opens the exact device from a nested widget at a non-default scale', async () => {
+    const { topology } = makeTopology();
+    const device = topology.getDevice('DEV');
+    device.isOnline = true;
+    await SingletonContext.run({ topology }, async () => {
+      const opened = jest.fn();
+      const unsubscribe = getMediator().on(
+        KaraboEvent.ShowConfiguration,
+        opened
+      );
+      try {
+        render(
+          <SceneControllerRegistryProvider
+            registry={new SceneControllerRegistry()}
+          >
+            <SceneView
+              sceneModel={makeNestedLayoutScene('alt-click')}
+              scale={1.75}
+              fitMode="fit-page"
+            />
+          </SceneControllerRegistryProvider>
+        );
+        const widget = await screen.findByTestId('controller-container');
+        expect(
+          fireEvent.mouseDown(widget.firstElementChild!, {
+            altKey: true,
+            clientX: 70,
+            clientY: 105,
+          })
+        ).toBe(false);
+        expect(opened).toHaveBeenCalledTimes(1);
+        expect(opened.mock.calls[0][0].proxy).toBe(device);
+      } finally {
+        unsubscribe();
+      }
+    });
   });
 
   it('stops monitoring and disposes the old nested controller widget on scene switch, then cleans up the new scene on unmount', async () => {
