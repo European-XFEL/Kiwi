@@ -1,7 +1,7 @@
 import React from 'react';
 import type { PropertyProxy } from '@/lib/binding/api';
-import { getArrayData } from '../utils/arrays';
-import { useIdleScheduler } from '../useIdleScheduler';
+import { getArrayData } from '../../utils/arrays';
+import { useIdleScheduler } from '../../useIdleScheduler';
 import { normalizeVector, type VectorData } from './utils';
 
 export type VectorSeries = { key: string; values: VectorData };

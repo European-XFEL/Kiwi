@@ -9,13 +9,15 @@ import { Button } from '@/components/api';
 import icons from '@/assets/icons';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 
-import type { TrendMode } from '../graph/trend/categories';
 import {
+  ChartLayout,
+  ChartPlot,
+  ChartLegend,
+  type TrendMode,
   formatTrendTime,
   useTrendChart,
   useTrendModel,
-} from '../graph/trend/api';
-import { ChartLayout, ChartPlot, ChartLegend } from '../graph/common/api';
+} from '../graph/api';
 
 const TIME_PRESETS = [
   { mode: 'week', label: 'One Week' },

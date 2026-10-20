@@ -15,7 +15,7 @@ import {
   NDArrayBinding,
   PropertyProxy,
 } from '@/lib/binding/api';
-import DisplayVectorGraph from '../../display/DisplayVectorGraph';
+import DisplayVectorGraph from '../../../display/DisplayVectorGraph';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 import { useVectorSeries } from '../useVectorSeries';
 

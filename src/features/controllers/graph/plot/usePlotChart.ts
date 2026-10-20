@@ -24,7 +24,7 @@ import {
   useCurveVisibility,
 } from './common/api';
 import type { VectorSeries } from './useVectorSeries';
-import { getSampleThreshold, lttbWithCoordinates } from '../utils/lttb';
+import { getSampleThreshold, lttbWithCoordinates } from '../../utils/lttb';
 
 function trimVector(values: VectorData, length: number): VectorData {
   if (values.length === length) {

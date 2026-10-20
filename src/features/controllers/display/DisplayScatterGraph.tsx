@@ -5,9 +5,12 @@ import { Button } from '@/components/api';
 import icons from '@/assets/icons';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 
-import { ChartLayout, ChartPlot } from '../graph/common/api';
-import { usePlotChart } from '../graph/usePlotChart';
-import { useScatterData } from '../graph/useScatterData';
+import {
+  ChartLayout,
+  ChartPlot,
+  usePlotChart,
+  useScatterData,
+} from '../graph/api';
 
 export default function DisplayScatterGraph({
   model,

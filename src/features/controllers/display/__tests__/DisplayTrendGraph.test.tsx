@@ -14,17 +14,17 @@ import {
   DisplayStateGraphModel,
   DisplayAlarmGraphModel,
 } from '@/karabo/common/api';
-import * as trendData from '../../graph/trend/api';
-import { useTrendModel } from '../../graph/trend/useTrendModel';
+import * as trendData from '../../graph/api';
 import DisplayTrendGraph from '../DisplayTrendGraph';
 
-jest.mock('../../graph/trend/api', () => ({
-  ...jest.requireActual('../../graph/trend/api'),
+jest.mock('../../graph/api', () => ({
+  ...jest.requireActual('../../graph/api'),
   useTrendModel: jest.fn(),
-  useTrendChart: jest.fn(
-    jest.requireActual('../../graph/trend/api').useTrendChart
-  ),
+  useTrendChart: jest.fn(jest.requireActual('../../graph/api').useTrendChart),
 }));
+
+const { useTrendModel } =
+  jest.requireActual<typeof import('../../graph/api')>('../../graph/api');
 
 const ctx = {
   proxies: [],

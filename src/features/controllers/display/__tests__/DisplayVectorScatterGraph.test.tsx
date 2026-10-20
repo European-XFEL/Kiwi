@@ -13,8 +13,8 @@ import { Chart as RealChart, BasicPlatform, registerables } from 'chart.js';
 import type { PropertyProxy } from '@/lib/binding/api';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 
-import { vectorScatterChartOption } from '../../graph/plotConfig';
-import { makeVectorProxy } from '../../graph/testing/vectorProxy';
+import { vectorScatterChartOption } from '../../graph/api';
+import { makeVectorProxy } from '../../graph/plot/testing/vectorProxy';
 import DisplayVectorScatterGraph from '../DisplayVectorScatterGraph';
 
 type MockChart = Chart<'line'> & { destroy: jest.Mock; update: jest.Mock };

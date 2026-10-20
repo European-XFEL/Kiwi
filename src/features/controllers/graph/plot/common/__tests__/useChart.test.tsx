@@ -18,7 +18,7 @@ import {
   useChartRanges,
   type PlotAxesConfig,
 } from '../api';
-import { ZOOM_FACTOR_PER_PIXEL } from '../../useMouseGestures';
+import { ZOOM_FACTOR_PER_PIXEL } from '../../../useMouseGestures';
 
 type Point = { x: number; y: number };
 const MIDDLE_MOUSE_BUTTON = 1;

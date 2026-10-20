@@ -12,8 +12,8 @@ import {
 } from '@/karabo/common/api';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 import type { PropertyProxy } from '@/lib/binding/api';
-import { makeVectorProxy } from '../../graph/testing/vectorProxy';
-import { TRACE_COLORS } from '../../graph/common/api';
+import { makeVectorProxy } from '../../graph/plot/testing/vectorProxy';
+import { TRACE_COLORS } from '../../graph/api';
 import DisplayVectorGraph from '../DisplayVectorGraph';
 
 const context = (proxies: (PropertyProxy | undefined)[]) =>

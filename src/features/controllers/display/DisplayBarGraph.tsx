@@ -6,10 +6,13 @@ import React from 'react';
 
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 
-import { ChartLayout, ChartPlot } from '../graph/common/api';
-import { usePlotChart } from '../graph/usePlotChart';
-import { generateBaseline } from '../graph/utils';
-import { useVectorSeries } from '../graph/useVectorSeries';
+import {
+  ChartLayout,
+  ChartPlot,
+  usePlotChart,
+  generateBaseline,
+  useVectorSeries,
+} from '../graph/api';
 
 export default function DisplayBarGraph({
   model,

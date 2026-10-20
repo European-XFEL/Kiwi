@@ -11,10 +11,10 @@ import { Chart as RealChart, BasicPlatform, registerables } from 'chart.js';
 
 import type { PropertyProxy } from '@/lib/binding/api';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
-import { TRACE_COLORS } from '../../graph/common/api';
-import { vectorXYChartOption } from '../../graph/plotConfig';
+import { TRACE_COLORS } from '../../graph/api';
+import { vectorXYChartOption } from '../../graph/api';
 import DisplayVectorXYGraph from '../DisplayVectorXYGraph';
-import { makeVectorProxy } from '../../graph/testing/vectorProxy';
+import { makeVectorProxy } from '../../graph/plot/testing/vectorProxy';
 
 const property = makeVectorProxy;
 const context = (proxies: PropertyProxy[]) =>

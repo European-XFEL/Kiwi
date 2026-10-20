@@ -7,7 +7,7 @@ import {
   getSamplingWindow,
   padViewportRange,
 } from '../utils';
-import { lttbWithCoordinates } from '../../utils/lttb';
+import { lttbWithCoordinates } from '../../../utils/lttb';
 
 test('generates the default baseline and handles empty data', () => {
   expect(generateBaseline([7, 8, 9])).toEqual(new Float64Array([0, 1, 2]));

@@ -2,9 +2,13 @@ import { type VectorXYGraphModel, buildModelConfig } from '@/karabo/common/api';
 import React from 'react';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 
-import { ChartLayout, ChartPlot, ChartLegend } from '../graph/common/api';
-import { useVectorSeries } from '../graph/useVectorSeries';
-import { usePlotChart } from '../graph/usePlotChart';
+import {
+  ChartLayout,
+  ChartPlot,
+  ChartLegend,
+  useVectorSeries,
+  usePlotChart,
+} from '../graph/api';
 
 const emptyVector = new Float64Array();
 

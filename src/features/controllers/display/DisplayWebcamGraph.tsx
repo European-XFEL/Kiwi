@@ -2,9 +2,12 @@ import { type WebCamGraphModel, buildModelConfig } from '@/karabo/common/api';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 
 import { ImageBinding, ProxyStatus } from '@/lib/binding/api';
-import { useImageGraphView } from '../graph/image/useImageGraphView';
-import { getImageTimestamp } from '../graph/image/pixels';
-import { WebcamLiveIndicator } from '../graph/image/WebcamLiveIndicator';
+
+import {
+  useImageGraphView,
+  getImageTimestamp,
+  WebcamLiveIndicator,
+} from '../graph/api';
 
 const IMAGE_VIEW_INSET = '5%';
 
