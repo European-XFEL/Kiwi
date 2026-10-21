@@ -13,13 +13,11 @@ export interface StoredProjectFavorite {
   domain: string;
   projectUuid: string;
   projectName: string;
-  sceneUuid: string;
-  sceneName: string;
 }
 
 export type ProjectFavoriteSelection = Pick<
   StoredProjectFavorite,
-  'domain' | 'projectUuid' | 'sceneUuid'
+  'domain' | 'projectUuid'
 >;
 
 type ProjectFavoritesByTopic = Record<string, readonly StoredProjectFavorite[]>;
@@ -38,10 +36,7 @@ function isStoredProjectFavorite(
     favorite.domain.length > 0 &&
     typeof favorite.projectUuid === 'string' &&
     favorite.projectUuid.length > 0 &&
-    typeof favorite.sceneUuid === 'string' &&
-    favorite.sceneUuid.length > 0 &&
-    typeof favorite.projectName === 'string' &&
-    typeof favorite.sceneName === 'string'
+    typeof favorite.projectName === 'string'
   );
 }
 
@@ -54,8 +49,29 @@ function normalizeProjectFavorites(value: unknown): ProjectFavoritesByTopic {
       if (!Array.isArray(entries)) {
         return [topic, emptyProjectFavorites];
       }
-      const favorites = entries.filter(isStoredProjectFavorite);
-      return [topic, favorites.length === entries.length ? entries : favorites];
+      const favorites: StoredProjectFavorite[] = [];
+      const seen = new Set<string>();
+      let changed = false;
+      for (const entry of entries) {
+        if (!isStoredProjectFavorite(entry)) {
+          changed = true;
+          continue;
+        }
+        const { domain, projectUuid, projectName } = entry;
+        const key = JSON.stringify([domain, projectUuid]);
+        if (seen.has(key)) {
+          changed = true;
+          continue;
+        }
+        seen.add(key);
+        if (Object.keys(entry).length !== 3) {
+          changed = true;
+          favorites.push({ domain, projectUuid, projectName });
+        } else {
+          favorites.push(entry);
+        }
+      }
+      return [topic, changed ? favorites : entries];
     })
   );
 }
@@ -66,8 +82,7 @@ function matchesProjectFavorite(
 ): boolean {
   return (
     favorite.domain === selection.domain &&
-    favorite.projectUuid === selection.projectUuid &&
-    favorite.sceneUuid === selection.sceneUuid
+    favorite.projectUuid === selection.projectUuid
   );
 }
 

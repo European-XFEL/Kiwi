@@ -14,6 +14,7 @@ import type {
 } from '@/lib/singletons/ProjectItemModel';
 import { openSceneInWorkspace } from '@/features/project/api';
 import SceneContextMenu from './SceneContextMenu';
+import ProjectContextMenu from './ProjectContextMenu';
 
 const ROW_HEIGHT = 20;
 const INDENT = 20;
@@ -101,6 +102,11 @@ function RowRenderer({
   );
   if (node.data.kind === 'scene') {
     return <SceneContextMenu scene={node.data.model}>{row}</SceneContextMenu>;
+  }
+  if (node.data.kind === 'project') {
+    return (
+      <ProjectContextMenu project={node.data.model}>{row}</ProjectContextMenu>
+    );
   }
   return row;
 }

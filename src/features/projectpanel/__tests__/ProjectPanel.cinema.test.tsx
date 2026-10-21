@@ -98,36 +98,38 @@ function Favorites() {
   );
 }
 
-it('adds the targeted nested scene to Favorites without opening it', async () => {
-  const user = userEvent.setup();
-  render(
-    <>
-      <ProjectPanel />
-      <Favorites />
-    </>
-  );
-  fireEvent.doubleClick(row('Motors'));
-  fireEvent.contextMenu(row('Child scene'));
-  await user.click(
-    await screen.findByRole('menuitem', { name: 'Add to Favorites' })
-  );
-  expect(config.getProjectFavorites('TOPIC_A')).toEqual([
-    {
-      domain: 'CONTROLS',
-      projectUuid: 'child',
-      projectName: 'Motors',
-      sceneUuid: 'scene/+?&',
-      sceneName: 'Child scene',
-    },
-  ]);
-  expect(new ConfigurationStore().getProjectFavorites('TOPIC_A')).toEqual(
-    config.getProjectFavorites('TOPIC_A')
-  );
-  expect(
-    screen.getByRole('button', { name: 'Open favorite Child scene' })
-  ).toBeInTheDocument();
-  expect(wrangler.isSceneTabOpen()).toBe(false);
-});
+it.each(['Experiment', 'Motors'])(
+  'bookmarks project %s without scenes or opening a tab',
+  async (name) => {
+    model.root!.scenes = [];
+    model.root!.subprojects[0].scenes = [];
+    const user = userEvent.setup();
+    render(
+      <>
+        <ProjectPanel />
+        <Favorites />
+      </>
+    );
+    fireEvent.contextMenu(row(name));
+    await user.click(
+      await screen.findByRole('menuitem', { name: 'Add to Favorites' })
+    );
+    expect(config.getProjectFavorites('TOPIC_A')).toEqual([
+      {
+        domain: 'CONTROLS',
+        projectUuid: name === 'Experiment' ? 'root' : 'child',
+        projectName: name,
+      },
+    ]);
+    expect(new ConfigurationStore().getProjectFavorites('TOPIC_A')).toEqual(
+      config.getProjectFavorites('TOPIC_A')
+    );
+    expect(
+      screen.getByRole('button', { name: `Open favorite ${name}` })
+    ).toBeInTheDocument();
+    expect(wrangler.isSceneTabOpen()).toBe(false);
+  }
+);
 
 it.each(['right click', 'ContextMenu', 'Shift+F10'])(
   'copies the targeted nested scene through %s without opening a scene',
@@ -176,12 +178,9 @@ it('disables copying when the GUI server connection is lost while the menu is op
   const item = await screen.findByRole('menuitem', { name: 'Copy cinema URL' });
   act(() => useGlobalStore.getState().setSessionExpired());
   expect(item).toHaveAttribute('aria-disabled', 'true');
-  const favoriteItem = screen.getByRole('menuitem', {
-    name: 'Add to Favorites',
-  });
-  expect(favoriteItem).toHaveAttribute('aria-disabled', 'true');
-  fireEvent.click(favoriteItem);
-  expect(config.getProjectFavorites('TOPIC_A')).toEqual([]);
+  expect(
+    screen.queryByRole('menuitem', { name: 'Add to Favorites' })
+  ).not.toBeInTheDocument();
   fireEvent.click(item);
   expect(await navigator.clipboard.readText()).toBe('');
   expect(wrangler.getSnapshot().center.tabs).toHaveLength(0);
@@ -236,4 +235,16 @@ it('does not offer a cinema URL for projects or groups', () => {
       screen.queryByRole('menuitem', { name: 'Copy cinema URL' })
     ).toBeNull();
   }
+});
+
+it('disables bookmarking when the session expires with the project menu open', async () => {
+  render(<ProjectPanel />);
+  fireEvent.contextMenu(row('Motors'));
+  const item = await screen.findByRole('menuitem', {
+    name: 'Add to Favorites',
+  });
+  act(() => useGlobalStore.getState().setSessionExpired());
+  expect(item).toHaveAttribute('aria-disabled', 'true');
+  fireEvent.click(item);
+  expect(config.getProjectFavorites('TOPIC_A')).toEqual([]);
 });

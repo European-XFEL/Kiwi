@@ -27,11 +27,7 @@ export function useProjectFavoritesList(
   }, [favorites, disabled]);
 
   return favorites.map((favorite, index) => {
-    const key = JSON.stringify([
-      favorite.domain,
-      favorite.projectUuid,
-      favorite.sceneUuid,
-    ]);
+    const key = JSON.stringify([favorite.domain, favorite.projectUuid]);
     const moveUpDisabled = disabled || index === 0;
     const moveDownDisabled = disabled || index === favorites.length - 1;
 
@@ -49,7 +45,7 @@ export function useProjectFavoritesList(
       onMoveDown: () => {
         if (!moveDownDisabled) onMove(favorite, index + 1);
       },
-      dragProps: {
+      handleProps: {
         draggable: !disabled,
         onDragStart: (event) => {
           if (disabled) {
@@ -62,6 +58,9 @@ export function useProjectFavoritesList(
           setDragged({ favorite, favorites, key });
           setDropTarget(null);
         },
+        onDragEnd: clearDrag,
+      } satisfies HTMLAttributes<HTMLSpanElement>,
+      dragProps: {
         onDragOver: (event) => {
           if (!activeDrag) return;
           event.preventDefault();
@@ -82,7 +81,6 @@ export function useProjectFavoritesList(
           clearDrag();
           onMove(activeDrag.favorite, index);
         },
-        onDragEnd: clearDrag,
       } satisfies HTMLAttributes<HTMLLIElement>,
     };
   });
