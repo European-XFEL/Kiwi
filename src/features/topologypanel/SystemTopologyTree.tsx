@@ -29,6 +29,20 @@ import { getTopology } from '@/lib/singletons/api';
 const ROW_HEIGHT = 20;
 const INDENT = 20;
 
+function searchMatch(node: NodeApi<SystemTreeNode>, term: string): boolean {
+  const query = term.toLowerCase();
+  for (
+    let current: SystemTreeNode | null = node.data;
+    current;
+    current = current.parent
+  ) {
+    if (current.name.toLowerCase().includes(query)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function Icon({ src, alt }: { src: string | undefined; alt: string }) {
   return src ? (
     <img className="h-4 w-4 shrink-0" src={src} alt={alt} draggable={false} />
@@ -162,17 +176,29 @@ function RowRenderer({
   );
 }
 
-function SystemTopologyTree({ model }: { model: SystemTree }) {
+function SystemTopologyTree({
+  model,
+  filter = '',
+  filterRevision = 0,
+  filterAction = 'apply',
+}: {
+  model: SystemTree;
+  filter?: string;
+  filterRevision?: number;
+  filterAction?: 'apply' | 'clear';
+}) {
   const data = useSyncExternalStore(model.subscribe, model.getSnapshot);
   const viewport = useRef<HTMLDivElement>(null);
   const tree = useRef<TreeApi<SystemTreeNode>>(null);
   useTopologyMonitoring(tree, model);
-  const focusedNode = useRef<SystemTreeNode | null>(null);
-  const expanded = useRef(true);
   const [size, setSize] = useState({ width: 0, height: 0 });
-  const onFocus = useCallback((node: NodeApi<SystemTreeNode>) => {
-    focusedNode.current = node.data;
-  }, []);
+  useLayoutEffect(() => {
+    if (filterAction === 'clear') {
+      tree.current?.closeAll();
+    } else {
+      tree.current?.openAll();
+    }
+  }, [filter, filterRevision, filterAction]);
 
   useLayoutEffect(() => {
     const element = viewport.current!;
@@ -191,48 +217,20 @@ function SystemTopologyTree({ model }: { model: SystemTree }) {
     return () => observer.disconnect();
   }, []);
 
-  useLayoutEffect(() => {
-    const api = tree.current;
-    if (!api) {
-      return;
-    }
-    const surviving = new Set<string>();
-    model.visit((node) => {
-      surviving.add(node.id);
-    });
-    for (const id of api.selectedIds) {
-      if (!surviving.has(id)) {
-        api.deselect(id);
-      }
-    }
-    let focused = focusedNode.current;
-    if (!focused || surviving.has(focused.id)) {
-      return;
-    }
-    while (focused && !surviving.has(focused.id)) {
-      focused = focused.parent;
-    }
-    focusedNode.current = focused;
-    if (focused && api.hasFocus) {
-      api.focus(focused.id, { scroll: false });
-    } else if (api.hasFocus) {
-      viewport.current
-        ?.querySelector<HTMLElement>('[role="tree"]')
-        ?.focus({ preventScroll: true });
-    }
-  }, [data, model]);
-
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col">
       <div
         className="flex h-6 shrink-0 cursor-pointer select-none items-center border-b bg-muted text-xs"
         onDoubleClick={() => {
-          if (expanded.current) {
-            tree.current?.closeAll();
-          } else {
-            tree.current?.openAll();
+          const api = tree.current;
+          if (!api) {
+            return;
           }
-          expanded.current = !expanded.current;
+          if (api.visibleNodes.some((node) => node.isInternal && node.isOpen)) {
+            api.closeAll();
+          } else {
+            api.openAll();
+          }
         }}
       >
         <span className="h-full w-7 shrink-0 border-r" />
@@ -242,6 +240,8 @@ function SystemTopologyTree({ model }: { model: SystemTree }) {
         <Tree<SystemTreeNode>
           ref={tree}
           data={data}
+          searchTerm={filter}
+          searchMatch={filter.trim() ? searchMatch : undefined}
           width={size.width}
           height={size.height}
           rowHeight={ROW_HEIGHT}
@@ -253,7 +253,6 @@ function SystemTopologyTree({ model }: { model: SystemTree }) {
           disableEdit
           renderRow={RowRenderer}
           onActivate={activate}
-          onFocus={onFocus}
           onSelect={(nodes) => {
             const selected = nodes[0];
             if (

@@ -125,7 +125,7 @@ export class SystemTopology {
 
   private instanceUpdated(updated: Hash, systemTopology: Hash): void {
     systemTopology.merge(updated);
-    this.systemTree.update(updated, systemTopology);
+    this.systemTree.instanceUpdate(updated);
     this.updateInstances(updated);
   }
 

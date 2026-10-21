@@ -96,10 +96,12 @@ export class SystemTree {
       update();
     } finally {
       this.batchDepth -= 1;
-      if (this.batchDepth === 0 && this.hierarchyChanged) {
-        this.hierarchyChanged = false;
-        this.roots = [...this.roots];
-        this.structureChanged.fire();
+      if (this.batchDepth === 0) {
+        if (this.hierarchyChanged) {
+          this.hierarchyChanged = false;
+          this.roots = [...this.roots];
+          this.structureChanged.fire();
+        }
       }
     }
   }
@@ -121,7 +123,7 @@ export class SystemTree {
     });
   }
 
-  /** Use merged attributes but only touch the instances named by this batch. */
+  /** Add missing instances using merged topology attributes, servers first. */
   public update(entries: Hash, topology: Hash): void {
     this.batch(() => {
       for (const kind of ['server', 'device', 'macro'] as const) {
@@ -130,15 +132,35 @@ export class SystemTree {
         }
         const instances = topology.getValue<Hash>(kind);
         for (const id of entries.getValue<Hash>(kind).keys()) {
+          if (this.instances.has(id)) {
+            continue;
+          }
           const attributes = instances.getAttributes(id);
-          const existing = this.instances.get(id);
-          if (existing) {
-            existing.updateAttributes(attributes);
-          } else if (kind === 'server') {
+          if (kind === 'server') {
             this.addServer(id, attributes);
           } else {
             this.addDevice(id, kind, attributes);
           }
+        }
+      }
+    });
+  }
+
+  /** Patch existing instances without adding or moving tree nodes. */
+  public instanceUpdate(entries: Hash): void {
+    this.batch(() => {
+      for (const kind of ['server', 'device', 'macro'] as const) {
+        if (!entries.has(kind)) {
+          continue;
+        }
+        const instances = entries.getValue<Hash>(kind);
+        for (const id of instances.keys()) {
+          const node = this.getInstanceNode(id);
+          if (!node) {
+            continue;
+          }
+          const attributes = instances.getAttributes(id);
+          node.updateAttributes(attributes);
         }
       }
     });
