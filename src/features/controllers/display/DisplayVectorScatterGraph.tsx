@@ -5,9 +5,12 @@ import {
 import React from 'react';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 
-import { ChartLayout, ChartPlot } from '../graph/common/api';
-import { useVectorSeries } from '../graph/useVectorSeries';
-import { usePlotChart } from '../graph/usePlotChart';
+import {
+  ChartLayout,
+  ChartPlot,
+  useVectorSeries,
+  usePlotChart,
+} from '../graph/api';
 
 const emptyVector = new Float64Array();
 

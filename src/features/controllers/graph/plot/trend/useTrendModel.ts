@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Hash, Timestamp } from '@/karabo/data/api';
 import type { Range } from '../common/api';
-import type { PropertyProxies } from '../../useController';
-import { useIdleScheduler } from '../../useIdleScheduler';
+import type { PropertyProxies } from '../../../useController';
+import { useIdleScheduler } from '../../../useIdleScheduler';
 import { trendValue, type TrendMode } from './categories';
 import {
   CategoricalTrendModel,

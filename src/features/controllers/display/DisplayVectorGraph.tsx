@@ -6,9 +6,13 @@ import React from 'react';
 
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 
-import { ChartLayout, ChartPlot, ChartLegend } from '../graph/common/api';
-import { usePlotChart } from '../graph/usePlotChart';
-import { useVectorSeries } from '../graph/useVectorSeries';
+import {
+  ChartLayout,
+  ChartPlot,
+  ChartLegend,
+  usePlotChart,
+  useVectorSeries,
+} from '../graph/api';
 
 export default function DisplayVectorGraph({
   model,

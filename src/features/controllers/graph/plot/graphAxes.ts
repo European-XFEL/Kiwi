@@ -13,7 +13,7 @@ import {
   roundedTickSpacing,
   GRAPH_AXIS_FONT,
   formatValueTick,
-} from './utils';
+} from '../utils';
 
 export type AxisConfig = {
   kind: 'numeric' | 'time';

@@ -1,8 +1,8 @@
 import React from 'react';
 import { Timestamp } from '@/karabo/data/api';
 import type { PropertyProxy } from '@/lib/binding/api';
-import { getBindingValue } from '../utils/getBindingValue';
-import { useIdleScheduler } from '../useIdleScheduler';
+import { getBindingValue } from '../../utils/getBindingValue';
+import { useIdleScheduler } from '../../useIdleScheduler';
 import type { VectorSeries } from './useVectorSeries';
 
 function numericValue(proxy: PropertyProxy | undefined) {

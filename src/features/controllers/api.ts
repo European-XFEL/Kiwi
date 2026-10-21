@@ -13,7 +13,7 @@ export type {
 } from './useController';
 export { useProxies } from './useProxies';
 export { useContainer } from './useContainer';
-export { useTrendModel } from './graph/trend/api';
+export { useTrendModel } from './graph/api';
 export { bootstrapControllerRenderers } from './controllerRenderers';
 
 export {

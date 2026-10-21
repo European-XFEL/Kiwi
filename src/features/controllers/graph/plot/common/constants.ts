@@ -1,4 +1,4 @@
-export type { Range } from '../types';
+export type { Range } from '../../types';
 
 export const TRACE_COLORS = [
   '#3399ff',

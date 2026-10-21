@@ -18,9 +18,9 @@ import type { PropertyProxy } from '@/lib/binding/PropertyProxy';
 import { usePlotChart } from '../usePlotChart';
 import { useVectorSeries } from '../useVectorSeries';
 import { generateBaseline } from '../utils';
-import * as sampling from '../../utils/lttb';
+import * as sampling from '../../../utils/lttb';
 import { makeVectorProxy } from '../testing/vectorProxy';
-import DisplayBarGraph from '../../display/DisplayBarGraph';
+import DisplayBarGraph from '../../../display/DisplayBarGraph';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 import { VectorBinding } from '@/lib/binding/api';
 

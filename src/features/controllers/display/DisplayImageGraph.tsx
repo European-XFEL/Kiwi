@@ -1,8 +1,7 @@
 import { type ImageGraphModel, buildModelConfig } from '@/karabo/common/api';
 import type { ControllerContainerContext } from '@/features/scene-view/api';
 
-import { ImageToolBar } from '../graph/image/ImageToolBar';
-import { useImageGraphView } from '../graph/image/useImageGraphView';
+import { ImageToolBar, useImageGraphView } from '../graph/api';
 
 export default function DisplayImageGraph({
   model,
