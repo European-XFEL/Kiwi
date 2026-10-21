@@ -1,0 +1,1 @@
+export const TOOLTIP_DURATION_MS = 2000;

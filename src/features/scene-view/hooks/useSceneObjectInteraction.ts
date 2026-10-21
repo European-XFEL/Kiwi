@@ -8,6 +8,10 @@ import {
   type SceneObjectInteraction,
 } from '../utils/sceneObjectInteraction';
 import { useSceneControllerRegistry } from './useSceneControllerRegistry';
+import { showBindingTooltip } from '../showBindingTooltip';
+
+const PRIMARY_MOUSE_BUTTON = 0;
+const RIGHT_MOUSE_BUTTON = 2;
 
 export interface UseSceneObjectInteractionOptions {
   scale: number;
@@ -42,10 +46,13 @@ function logSceneObjectInteraction(interaction: SceneObjectInteraction): void {
 
 export function useSceneObjectInteraction({
   scale,
-  design_mode = true,
+  design_mode = false,
 }: UseSceneObjectInteractionOptions) {
   const sceneRegistry = useSceneControllerRegistry();
   const [altPressed, setAltPressed] = React.useState(false);
+  const dismissBindingTooltip = React.useRef<(() => void) | undefined>(
+    undefined
+  );
   const insideScene = React.useRef(false);
   const widgetGesture = React.useRef({ mouse: false, pointer: false });
   const widgetReleases = React.useRef(new WeakSet<Event>());
@@ -55,12 +62,13 @@ export function useSceneObjectInteraction({
       insideScene.current = false;
       widgetGesture.current = { mouse: false, pointer: false };
       setAltPressed(false);
+      dismissBindingTooltip.current?.();
     };
-    if (!design_mode) {
+    if (design_mode) {
       reset();
       return;
     }
-    const updateAlt = (event: KeyboardEvent) => {
+    const onKey = (event: KeyboardEvent) => {
       setAltPressed(insideScene.current && event.altKey);
     };
     // Observe releases outside the scene too, before widgets can swallow them.
@@ -77,15 +85,16 @@ export function useSceneObjectInteraction({
         }
       }
     };
-    window.addEventListener('keydown', updateAlt, true);
-    window.addEventListener('keyup', updateAlt, true);
+    window.addEventListener('keydown', onKey, true);
+    window.addEventListener('keyup', onKey, true);
     window.addEventListener('mouseup', release, true);
     window.addEventListener('pointerup', release, true);
     window.addEventListener('pointercancel', release, true);
     window.addEventListener('blur', reset);
     return () => {
-      window.removeEventListener('keydown', updateAlt, true);
-      window.removeEventListener('keyup', updateAlt, true);
+      dismissBindingTooltip.current?.();
+      window.removeEventListener('keydown', onKey, true);
+      window.removeEventListener('keyup', onKey, true);
       window.removeEventListener('mouseup', release, true);
       window.removeEventListener('pointerup', release, true);
       window.removeEventListener('pointercancel', release, true);
@@ -95,9 +104,10 @@ export function useSceneObjectInteraction({
 
   const updateAltSelection = (event: React.MouseEvent<HTMLElement>) => {
     insideScene.current = true;
-    setAltPressed(design_mode && event.altKey);
+    setAltPressed(!design_mode && event.altKey);
   };
   const leaveScene = () => {
+    dismissBindingTooltip.current?.();
     insideScene.current = false;
     setAltPressed(false);
   };
@@ -112,7 +122,7 @@ export function useSceneObjectInteraction({
       registry: sceneRegistry,
     });
   const interceptSelection = (event: React.MouseEvent<HTMLElement>) => {
-    if (!design_mode || !isMouseInput(event)) {
+    if (design_mode || !isMouseInput(event)) {
       return false;
     }
     updateAltSelection(event);
@@ -133,7 +143,7 @@ export function useSceneObjectInteraction({
     return true;
   };
   const handlePress: React.MouseEventHandler<HTMLElement> = async (event) => {
-    if (!design_mode || !isMouseInput(event)) {
+    if (design_mode || !isMouseInput(event)) {
       return;
     }
     const isPointerDown = event.type === 'pointerdown';
@@ -146,12 +156,27 @@ export function useSceneObjectInteraction({
       return;
     }
     // Mouse input emits pointerdown followed by mousedown. Select only once.
-    if (isPointerDown || event.button !== 0) {
+    if (
+      isPointerDown ||
+      (event.button !== PRIMARY_MOUSE_BUTTON &&
+        event.button !== RIGHT_MOUSE_BUTTON)
+    ) {
       return;
     }
     const { controller } = resolveInteraction(event);
-    const device = controller?.ctx.proxy?.root;
+    const proxy = controller?.ctx.proxy;
+    const device = proxy?.root;
     if (!device) {
+      return;
+    }
+    if (event.button === RIGHT_MOUSE_BUTTON) {
+      if (device.isOnline && proxy?.binding) {
+        dismissBindingTooltip.current = showBindingTooltip({
+          proxy,
+          clientX: event.clientX,
+          clientY: event.clientY,
+        });
+      }
       return;
     }
     if (device.isOnline) {
@@ -165,7 +190,7 @@ export function useSceneObjectInteraction({
     }
   };
   const handleDoubleClick: React.MouseEventHandler<HTMLElement> = (event) => {
-    if (!design_mode || interceptSelection(event)) {
+    if (design_mode || interceptSelection(event)) {
       return;
     }
     const { controller } = resolveInteraction(event);
@@ -187,7 +212,7 @@ export function useSceneObjectInteraction({
   };
 
   return {
-    'data-scene-alt-selection': design_mode && altPressed ? true : undefined,
+    'data-scene-alt-selection': !design_mode && altPressed ? true : undefined,
     onMouseEnter: updateAltSelection,
     onMouseLeave: leaveScene,
     onMouseDownCapture: handlePress,

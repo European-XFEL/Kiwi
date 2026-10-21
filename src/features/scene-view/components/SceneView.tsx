@@ -44,7 +44,7 @@ const SceneView: React.FC<SceneViewProps> = React.memo(
     const scrollableAlignment = getScrollableAlignment(fitMode);
     const scaledSize = getScaledSceneSize(sceneDimensions, scale);
     const spacer = getSpacerSize(scaledSize.width, scaledSize.height);
-    const sceneInteraction = useSceneObjectInteraction({ scale });
+    const handlers = useSceneObjectInteraction({ scale });
     const sceneOuterId = useId();
     const sceneInnerId = useId();
     const scrollableId = useId();
@@ -74,7 +74,7 @@ const SceneView: React.FC<SceneViewProps> = React.memo(
         <div
           id={`SceneView-Scene-Inner-${sceneInnerId}`}
           className="overflow-hidden rounded-md bg-canvas shadow-lg data-[scene-alt-selection]:cursor-pointer! data-[scene-alt-selection]:[&_*]:cursor-pointer!"
-          {...sceneInteraction}
+          {...handlers}
           style={{
             position: 'absolute',
             left: 0,
