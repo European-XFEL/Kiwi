@@ -113,6 +113,44 @@ test('partial and unchanged updates preserve the snapshot and notify only change
   expect(other).not.toHaveBeenCalled();
 });
 
+test('instance updates skip unknown and removed instances without changing the hierarchy', () => {
+  const topology = new SystemTopology();
+  topology.initialize(initial());
+  const tree = topology.systemTree;
+  batch(topology, { gone: device('DEV') });
+  const snapshot = tree.getSnapshot();
+  const updates = device('DEV', { status: 'error' });
+  updates.merge(device('UNKNOWN', { status: 'error' }));
+  updates.merge(device('UNKNOWN_MACRO', {}, 'macro'));
+  updates.merge(entries('server', 'UNKNOWN_SERVER', { host: 'OTHER_HOST' }));
+  batch(topology, { update: updates });
+  for (const id of ['DEV', 'UNKNOWN', 'UNKNOWN_MACRO', 'UNKNOWN_SERVER']) {
+    expect(tree.getInstanceNode(id)).toBeUndefined();
+  }
+  expect(tree.getSnapshot()).toBe(snapshot);
+  batch(topology, { new: device('UNKNOWN') });
+  expect(tree.getInstanceNode('UNKNOWN')?.status).toBe(InstanceStatus.OK);
+});
+
+test('publishes structure against the completed source', () => {
+  const topology = new SystemTopology();
+  topology.initialize(initial());
+  const tree = topology.systemTree;
+  const events: string[] = [];
+  tree.subscribe(() => {
+    events.push('structure');
+    expect(tree.getInstanceNode('DEV')).toBeUndefined();
+    expect(tree.getInstanceNode('LATE')?.status).toBe(InstanceStatus.ERROR);
+  });
+  tree.batch(() => {
+    batch(topology, { update: entries('device', 'DEV', { status: 'error' }) });
+    batch(topology, { gone: device() });
+    batch(topology, { new: device('LATE') });
+    batch(topology, { update: entries('device', 'LATE', { status: 'error' }) });
+  });
+  expect(events).toEqual(['structure']);
+});
+
 test('prunes only emptied branches and preserves surviving identities in one mixed batch', () => {
   const topology = new SystemTopology();
   topology.initialize(initial());
