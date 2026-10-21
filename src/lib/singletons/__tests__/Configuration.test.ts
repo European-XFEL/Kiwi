@@ -96,9 +96,50 @@ describe('ConfigurationStore', () => {
       domain: 'CONTROLS',
       projectUuid: 'motors',
       projectName: 'Motors',
-      sceneUuid: 'overview',
-      sceneName: 'Overview',
     };
+
+    it('converts legacy scene favorites and merges projects using the first name and position', () => {
+      const other = { ...favorite, projectUuid: 'other' };
+      const otherDomain = { ...favorite, domain: 'OTHER' };
+      localStorage.setItem(
+        'kiwi/project:projectFavoritesByTopic',
+        JSON.stringify({
+          TOPIC_A: [
+            { ...favorite, sceneUuid: 'overview', sceneName: 'Overview' },
+            other,
+            {
+              ...favorite,
+              projectName: 'Later name',
+              sceneUuid: 'detail',
+              sceneName: 'Detail',
+            },
+            otherDomain,
+          ],
+          TOPIC_B: [{ ...favorite, sceneUuid: 'detail', sceneName: 'Detail' }],
+        })
+      );
+      const config = new ConfigurationStore();
+      expect(config.getProjectFavorites('TOPIC_A')).toEqual([
+        favorite,
+        other,
+        otherDomain,
+      ]);
+      expect(config.getProjectFavorites('TOPIC_B')).toEqual([favorite]);
+      config.moveProjectFavorite('TOPIC_A', otherDomain, 0);
+      expect(
+        JSON.parse(
+          localStorage.getItem('kiwi/project:projectFavoritesByTopic')!
+        )
+      ).toEqual({
+        TOPIC_A: [otherDomain, favorite, other],
+        TOPIC_B: [favorite],
+      });
+      expect(new ConfigurationStore().getProjectFavorites('TOPIC_A')).toEqual([
+        otherDomain,
+        favorite,
+        other,
+      ]);
+    });
 
     it('recovers from invalid favorites JSON while keeping other configuration', () => {
       localStorage.setItem('kiwi/project:projectFavoritesByTopic', '{bad');
@@ -158,7 +199,7 @@ describe('ConfigurationStore', () => {
     );
 
     it('keeps valid entries in order and drops malformed entries', () => {
-      const detail = { ...favorite, sceneUuid: 'detail', sceneName: '' };
+      const detail = { ...favorite, projectUuid: 'detail', projectName: '' };
       localStorage.setItem(
         'kiwi/project:projectFavoritesByTopic',
         JSON.stringify({
@@ -167,12 +208,11 @@ describe('ConfigurationStore', () => {
             favorite,
             { ...favorite, domain: '' },
             { ...favorite, projectUuid: '' },
-            { ...favorite, sceneUuid: '' },
             { ...favorite, domain: 42 },
             { ...favorite, projectUuid: null },
-            { ...favorite, sceneUuid: undefined },
+            { ...favorite, projectUuid: undefined },
             { ...favorite, projectName: 42 },
-            { ...favorite, sceneName: null },
+            { ...favorite, projectName: null },
             detail,
           ],
         })
@@ -190,7 +230,7 @@ describe('ConfigurationStore', () => {
     it('preserves every valid favorite in a stored list longer than ten', () => {
       const favorites = Array.from({ length: 12 }, (_, index) => ({
         ...favorite,
-        sceneUuid: `scene-${index}`,
+        projectUuid: `project-${index}`,
       }));
       localStorage.setItem(
         'kiwi/project:projectFavoritesByTopic',
@@ -207,7 +247,7 @@ describe('ConfigurationStore', () => {
     it('validates favorites supplied through the generic configuration API', () => {
       const config = new ConfigurationStore();
       config.setValue('projectFavoritesByTopic', {
-        TOPIC_A: [favorite, { ...favorite, sceneUuid: '' }],
+        TOPIC_A: [favorite, { ...favorite, projectUuid: '' }],
         TOPIC_B: 5,
       });
 
@@ -225,7 +265,7 @@ describe('ConfigurationStore', () => {
       config.addProjectFavorite('TOPIC_A', favorite);
       config.addProjectFavorite('TOPIC_B', {
         ...favorite,
-        sceneName: 'Other topic',
+        projectName: 'Other topic',
       });
 
       expect(
@@ -234,38 +274,36 @@ describe('ConfigurationStore', () => {
         )
       ).toEqual({
         TOPIC_A: [favorite],
-        TOPIC_B: [{ ...favorite, sceneName: 'Other topic' }],
+        TOPIC_B: [{ ...favorite, projectName: 'Other topic' }],
       });
       const restored = new ConfigurationStore();
       expect(restored.getProjectFavorites('TOPIC_A')).toEqual([favorite]);
       expect(restored.getProjectFavorites('TOPIC_B')).toEqual([
-        { ...favorite, sceneName: 'Other topic' },
+        { ...favorite, projectName: 'Other topic' },
       ]);
       expect(restored.getProjectFavorites('UNKNOWN')).toEqual([]);
     });
 
-    it('appends scenes and updates duplicate names in place', () => {
+    it('appends projects and updates duplicate names in place', () => {
       const config = new ConfigurationStore();
-      const secondScene = {
+      const secondProject = {
         ...favorite,
-        sceneUuid: 'detail',
-        sceneName: 'Detail',
+        projectUuid: 'detail',
+        projectName: 'Detail',
       };
       config.addProjectFavorite('TOPIC_A', favorite);
-      config.addProjectFavorite('TOPIC_A', secondScene);
+      config.addProjectFavorite('TOPIC_A', secondProject);
       config.addProjectFavorite('TOPIC_A', {
         ...favorite,
         projectName: 'Renamed Motors',
-        sceneName: 'Renamed Overview',
       });
 
       expect(config.getProjectFavorites('TOPIC_A')).toEqual([
         {
           ...favorite,
           projectName: 'Renamed Motors',
-          sceneName: 'Renamed Overview',
         },
-        secondScene,
+        secondProject,
       ]);
     });
 
@@ -273,7 +311,7 @@ describe('ConfigurationStore', () => {
       const config = new ConfigurationStore();
       const favorites = Array.from({ length: 10 }, (_, index) => ({
         ...favorite,
-        sceneUuid: `scene-${index}`,
+        projectUuid: `project-${index}`,
       }));
       favorites.forEach((entry) => config.addProjectFavorite('TOPIC_A', entry));
       const write = jest.spyOn(Storage.prototype, 'setItem');
@@ -292,13 +330,12 @@ describe('ConfigurationStore', () => {
       const config = new ConfigurationStore();
       const favorites = Array.from({ length: 10 }, (_, index) => ({
         ...favorite,
-        sceneUuid: `scene-${index}`,
+        projectUuid: `project-${index}`,
       }));
       favorites.forEach((entry) => config.addProjectFavorite('TOPIC_A', entry));
       const renamed = {
         ...favorites[4],
         projectName: 'Renamed project',
-        sceneName: 'Renamed scene',
       };
 
       expect(config.addProjectFavorite('TOPIC_A', renamed)).toBe(true);
@@ -313,7 +350,7 @@ describe('ConfigurationStore', () => {
     it('keeps legacy lists above the limit and allows moving and removing', () => {
       const favorites = Array.from({ length: 12 }, (_, index) => ({
         ...favorite,
-        sceneUuid: `scene-${index}`,
+        projectUuid: `project-${index}`,
       }));
       localStorage.setItem(
         'kiwi/project:projectFavoritesByTopic',
@@ -343,7 +380,7 @@ describe('ConfigurationStore', () => {
         const config = new ConfigurationStore();
         const favorites = Array.from({ length: 3 }, (_, index) => ({
           ...favorite,
-          sceneUuid: `scene-${index}`,
+          projectUuid: `project-${index}`,
         }));
         favorites.forEach((entry) =>
           config.addProjectFavorite('TOPIC_A', entry)
@@ -377,7 +414,7 @@ describe('ConfigurationStore', () => {
       );
       config.moveProjectFavorite(
         'TOPIC_A',
-        { ...favorite, sceneUuid: 'missing' },
+        { ...favorite, projectUuid: 'missing' },
         0
       );
       config.moveProjectFavorite('TOPIC_A', favorite, 0);
@@ -388,7 +425,7 @@ describe('ConfigurationStore', () => {
       write.mockRestore();
     });
 
-    it('distinguishes identical scene UUIDs in different domains and projects', () => {
+    it('distinguishes identical names in different domains and projects', () => {
       const config = new ConfigurationStore();
       const otherDomain = { ...favorite, domain: 'EXPERIMENT' };
       const otherProject = { ...favorite, projectUuid: 'detectors' };
@@ -404,17 +441,17 @@ describe('ConfigurationStore', () => {
       ]);
     });
 
-    it('deletes only the selected scene in the selected topic', () => {
+    it('deletes only the selected project in the selected topic', () => {
       const config = new ConfigurationStore();
-      const secondScene = { ...favorite, sceneUuid: 'detail' };
+      const secondProject = { ...favorite, projectUuid: 'detail' };
       config.addProjectFavorite('TOPIC_A', favorite);
-      config.addProjectFavorite('TOPIC_A', secondScene);
+      config.addProjectFavorite('TOPIC_A', secondProject);
       config.addProjectFavorite('TOPIC_B', favorite);
 
       config.removeProjectFavorite('TOPIC_A', favorite);
 
       const restored = new ConfigurationStore();
-      expect(restored.getProjectFavorites('TOPIC_A')).toEqual([secondScene]);
+      expect(restored.getProjectFavorites('TOPIC_A')).toEqual([secondProject]);
       expect(restored.getProjectFavorites('TOPIC_B')).toEqual([favorite]);
     });
 

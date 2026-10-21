@@ -3,11 +3,14 @@ import { Separator } from '@/components/api';
 import {
   ProjectFavoritesList,
   useProjectFavorites,
-  loadRootProjectScene,
+  loadRootProject,
   moveProjectFavorite,
   removeProjectFavorite,
 } from '@/features/project/api';
-import type { StoredProjectFavorite } from '@/lib/singletons/api';
+import {
+  getPanelWrangler,
+  type StoredProjectFavorite,
+} from '@/lib/singletons/api';
 import { useGlobalStore } from '@/store/api';
 import { appVersion } from './appVersion';
 
@@ -28,12 +31,12 @@ const HomePanel: React.FC = () => {
     setOpening(true);
     // ProjectLoading replaces Home during the request. The action must keep
     // running after this component unmounts and reports its own errors.
-    void loadRootProjectScene({
+    void loadRootProject({
       domain: favorite.domain,
       projectUuid: favorite.projectUuid,
-      sceneUuid: favorite.sceneUuid,
     })
-      .promise.catch(() => {})
+      .promise.then(() => getPanelWrangler().showProjects())
+      .catch(() => {})
       .finally(() => setOpening(false));
   };
 

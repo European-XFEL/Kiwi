@@ -31,26 +31,32 @@ export default function ProjectFavoritesList({
       </div>
       {rows.length === 0 ? (
         <p className="p-4 text-sm text-muted-foreground">
-          To bookmark a scene, use Load Project, right-click a scene in the
+          To bookmark a project, use Load Project, right-click a project in the
           Projects tab, and choose Add to Favorites.
         </p>
       ) : (
-        <ol aria-label="Favorite scenes" className="space-y-0.5 p-2">
+        <ol aria-label="Favorite projects" className="space-y-0.5 p-2">
           {rows.map((row) => (
             <li
               key={row.key}
               {...row.dragProps}
               className={cn(
                 'group flex items-center gap-2 rounded-lg border border-transparent px-2 py-1 transition-colors hover:bg-accent/50',
-                !disabled && 'cursor-grab active:cursor-grabbing',
+                !disabled && 'cursor-pointer',
                 row.dragging && 'opacity-50',
                 row.dropTarget && 'border-primary bg-accent/50'
               )}
             >
-              <GripVertical
-                aria-hidden="true"
-                className="size-4 shrink-0 text-muted-foreground"
-              />
+              <span
+                {...row.handleProps}
+                aria-label={`Drag favorite ${row.favorite.projectName}`}
+                className={cn(
+                  'inline-flex shrink-0 text-muted-foreground',
+                  !disabled && 'cursor-grab active:cursor-grabbing'
+                )}
+              >
+                <GripVertical aria-hidden="true" className="size-4" />
+              </span>
               <span className="text-sm tabular-nums text-muted-foreground">
                 {row.rank}
               </span>
@@ -58,13 +64,15 @@ export default function ProjectFavoritesList({
                 variant="ghost"
                 onClick={() => onOpen(row.favorite)}
                 disabled={disabled}
-                aria-label={`Open favorite ${row.favorite.sceneName}`}
-                title={`${row.favorite.projectName}:${row.favorite.sceneName}`}
-                className="h-8 min-w-0 flex-1 justify-start px-1 font-normal hover:bg-transparent dark:hover:bg-transparent"
+                aria-label={`Open favorite ${row.favorite.projectName}`}
+                title={`${row.favorite.projectName} (${row.favorite.domain})`}
+                className="h-8 min-w-0 flex-1 cursor-pointer justify-start px-1 font-normal hover:bg-transparent dark:hover:bg-transparent"
               >
                 <span className="truncate text-sm">
-                  <strong>{row.favorite.projectName}</strong>:
-                  {row.favorite.sceneName}
+                  <strong>{row.favorite.projectName}</strong>
+                  <span className="ml-2 text-muted-foreground">
+                    {row.favorite.domain}
+                  </span>
                 </span>
               </Button>
               <div className="flex shrink-0 items-center sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 [@media(hover:none)]:opacity-100">
@@ -73,9 +81,9 @@ export default function ProjectFavoritesList({
                   size="icon"
                   onClick={row.onMoveUp}
                   disabled={row.moveUpDisabled}
-                  aria-label={`Move ${row.favorite.sceneName} up`}
+                  aria-label={`Move ${row.favorite.projectName} up`}
                   title="Move up"
-                  className="size-8"
+                  className="size-8 transition-none"
                 >
                   <ArrowUp className="size-4" />
                 </Button>
@@ -84,9 +92,9 @@ export default function ProjectFavoritesList({
                   size="icon"
                   onClick={row.onMoveDown}
                   disabled={row.moveDownDisabled}
-                  aria-label={`Move ${row.favorite.sceneName} down`}
+                  aria-label={`Move ${row.favorite.projectName} down`}
                   title="Move down"
-                  className="size-8"
+                  className="size-8 transition-none"
                 >
                   <ArrowDown className="size-4" />
                 </Button>
@@ -95,7 +103,7 @@ export default function ProjectFavoritesList({
                   size="icon"
                   onClick={() => onRemove(row.favorite)}
                   disabled={disabled}
-                  aria-label={`Remove favorite ${row.favorite.sceneName}`}
+                  aria-label={`Remove favorite ${row.favorite.projectName}`}
                   title="Remove from favorites"
                   className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
                 >

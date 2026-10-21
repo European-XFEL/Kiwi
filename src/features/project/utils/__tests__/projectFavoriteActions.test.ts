@@ -17,8 +17,6 @@ const favorite = {
   domain: 'CONTROLS',
   projectUuid: 'motors',
   projectName: 'Motors',
-  sceneUuid: 'overview',
-  sceneName: 'Overview',
 };
 
 describe('project favorite actions', () => {
@@ -70,27 +68,27 @@ describe('project favorite actions', () => {
     });
 
     addProjectFavorite('TOPIC_A', favorite);
-    addProjectFavorite('TOPIC_B', { ...favorite, sceneName: 'Other topic' });
+    addProjectFavorite('TOPIC_B', { ...favorite, projectName: 'Other topic' });
     removeProjectFavorite('TOPIC_A', favorite);
 
     expect(changes).toEqual([
       { topic: 'TOPIC_A', favorites: [favorite], persisted: [favorite] },
       {
         topic: 'TOPIC_B',
-        favorites: [{ ...favorite, sceneName: 'Other topic' }],
-        persisted: [{ ...favorite, sceneName: 'Other topic' }],
+        favorites: [{ ...favorite, projectName: 'Other topic' }],
+        persisted: [{ ...favorite, projectName: 'Other topic' }],
       },
       { topic: 'TOPIC_A', favorites: [], persisted: [] },
     ]);
     expect(config.getProjectFavorites('TOPIC_B')).toEqual([
-      { ...favorite, sceneName: 'Other topic' },
+      { ...favorite, projectName: 'Other topic' },
     ]);
   });
 
   it('warns at the limit without broadcasting or changing stored favorites', () => {
     const favorites = Array.from({ length: 10 }, (_, index) => ({
       ...favorite,
-      sceneUuid: `scene-${index}`,
+      projectUuid: `project-${index}`,
     }));
     favorites.forEach((entry) => config.addProjectFavorite('TOPIC_A', entry));
     const changed = jest.fn();
@@ -112,21 +110,27 @@ describe('project favorite actions', () => {
   it('broadcasts a name refresh at the limit without warning', () => {
     const favorites = Array.from({ length: 10 }, (_, index) => ({
       ...favorite,
-      sceneUuid: `scene-${index}`,
+      projectUuid: `project-${index}`,
     }));
     favorites.forEach((entry) => config.addProjectFavorite('TOPIC_A', entry));
     const changed = jest.fn();
     mediator.on(KaraboEvent.ProjectFavoritesChanged, changed);
 
-    addProjectFavorite('TOPIC_A', { ...favorites[0], sceneName: 'Renamed' });
+    addProjectFavorite('TOPIC_A', { ...favorites[0], projectName: 'Renamed' });
 
     expect(showMessageBox).not.toHaveBeenCalled();
     expect(changed).toHaveBeenCalledTimes(1);
-    expect(config.getProjectFavorites('TOPIC_A')[0].sceneName).toBe('Renamed');
+    expect(config.getProjectFavorites('TOPIC_A')[0].projectName).toBe(
+      'Renamed'
+    );
   });
 
   it('persists the new priority order before broadcasting its topic', () => {
-    const detail = { ...favorite, sceneUuid: 'detail', sceneName: 'Detail' };
+    const detail = {
+      ...favorite,
+      projectUuid: 'detail',
+      projectName: 'Detail',
+    };
     config.addProjectFavorite('TOPIC_A', favorite);
     config.addProjectFavorite('TOPIC_A', detail);
     const changes: {

@@ -77,8 +77,6 @@ const favorite = {
   domain: 'CONTROLS',
   projectUuid: 'motors',
   projectName: 'Motors',
-  sceneUuid: 'motor-scene',
-  sceneName: 'Motor Scene',
 };
 
 describe('opening a favorite in the workspace', () => {
@@ -162,14 +160,14 @@ describe('opening a favorite in the workspace', () => {
     );
     await act(async () => {
       fireEvent.click(
-        screen.getByRole('button', { name: 'Open favorite Motor Scene' })
+        screen.getByRole('button', { name: 'Open favorite Motors' })
       );
     });
     expect(screen.getByTestId('project-loading')).toBeInTheDocument();
     expect(screen.queryByTestId('home-panel')).not.toBeInTheDocument();
   }
 
-  it('activates and opens the requested scene after the loading screen unmounts Home', async () => {
+  it('loads the requested project and activates Projects without opening a scene after the loading screen unmounts Home', async () => {
     await openFavorite();
     const scene = new SceneModel({
       uuid: 'motor-scene',
@@ -185,19 +183,14 @@ describe('opening a favorite in the workspace', () => {
       );
     });
 
-    expect(
-      await screen.findByText('Loaded Fresh Motor Scene')
-    ).toBeInTheDocument();
     expect(screen.queryByTestId('project-loading')).not.toBeInTheDocument();
     expect(projectModel.root).toBe(loadingProject);
     expect(projectModel.domain).toBe('CONTROLS');
     expect(listProjects).toHaveBeenCalledWith('CONTROLS');
     expect(loadProject).toHaveBeenCalledWith('CONTROLS', loadingProject);
-    expect(wrangler.getSceneTab('scene:motor-scene')).toMatchObject({
-      domain: 'CONTROLS',
-      projectUuid: 'motors',
-      uuid: 'motor-scene',
-    });
+    expect(wrangler.getSnapshot().left.activeTabId).toBe('projects');
+    expect(wrangler.getSnapshot().center.tabs).toHaveLength(0);
+    expect(wrangler.isSceneTabOpen()).toBe(false);
     expect(config.getProjectFavorites('TOPIC_A')).toEqual([favorite]);
     expect(showMessageBox).not.toHaveBeenCalled();
   });
@@ -211,13 +204,13 @@ describe('opening a favorite in the workspace', () => {
       );
     });
     const open = await screen.findByRole('button', {
-      name: 'Open favorite Motor Scene',
+      name: 'Open favorite Motors',
     });
     expect(open).toBeEnabled();
     expect(projectModel.root).toBeUndefined();
     expect(showMessageBox).toHaveBeenCalledWith({
       variant: 'error',
-      title: 'Could not open scene',
+      title: 'Could not open project',
       msg: 'Could not load project "Motors".',
     });
     expect(new ConfigurationStore().getProjectFavorites('TOPIC_A')).toEqual([
